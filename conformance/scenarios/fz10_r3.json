@@ -1,0 +1,107 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=SUM(Sheet1!A3:A1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=SUM(Sheet1!A10:A1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "=SUM(Sheet1!A1048570:A1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A4",
+   "input": "=Sheet1!A1048576"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A5",
+   "input": "=SUM(Sheet1!A1048575:A1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A6",
+   "input": "=SUM(Sheet1!A1:A1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A7",
+   "input": "=SUM(Sheet1!3:1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A8",
+   "input": "=SUM(Sheet1!1:1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A9",
+   "input": "=SUM(Sheet1!A1048576:A1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A10",
+   "input": "=SUM(Sheet1!B1048575:C1048575)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A11",
+   "input": "=SUM(Sheet1!1048575:1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A12",
+   "input": "=SUM(Sheet1!1:1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 1048576,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 1048570,
+   "count": 3
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 1048575,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A12"
+  }
+ ]
+}

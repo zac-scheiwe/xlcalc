@@ -1,0 +1,16 @@
+{"steps":[
+{"op":"set","cell":"Sheet1!B1","input":"5"},
+{"op":"set","cell":"Sheet1!B2","input":"7"},
+{"op":"array","range":"Sheet1!C1:C2","input":"=IF(B1:C2>2,B1:C2,0)"},
+{"op":"read","range":"Sheet1!C1:C2"},
+{"op":"set","cell":"Sheet1!B1","input":"6"},
+{"op":"read","range":"Sheet1!C1:C2"},
+{"op":"array","range":"Sheet1!E1:E2","input":"=B1:B2+E1"},
+{"op":"read","range":"Sheet1!E1:E2"},
+{"op":"set","cell":"Sheet1!B2","input":"8"},
+{"op":"read","range":"Sheet1!E1:E2"},
+{"op":"array","range":"Sheet1!G1:G2","input":"=B1:B2+G2"},
+{"op":"read","range":"Sheet1!G1:G2"},
+{"op":"insert_cols","sheet":"Sheet1","at":1,"count":1},
+{"op":"read","range":"Sheet1!C1:H2"}
+]}

@@ -1,0 +1,20 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B:B", "fmt": "0\"colB\""},
+    {"op": "format", "range": "Sheet1!3:3", "fmt": "0\"row3\""},
+    {"op": "format", "range": "Sheet1!D1", "fmt": "0\"cellD1\""},
+    {"op": "copy", "from": "Sheet1!B:B", "to": "Sheet1!E1"},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"},
+    {"op": "copy", "from": "Sheet1!3:3", "to": "Sheet1!A7"},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"},
+    {"op": "read", "range": "Sheet1!A7:E8"},
+    {"op": "cut", "from": "Sheet1!B:B", "to": "Sheet1!F1"},
+    {"op": "read", "range": "Sheet1!A1:G4"},
+    {"op": "read", "range": "Sheet1!F1000:G1000"}
+  ]
+}

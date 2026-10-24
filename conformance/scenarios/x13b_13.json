@@ -1,0 +1,32 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!B1","input":"=A1+1","op":"set"},
+    {"cell":"Sheet1!C1","input":"5","op":"set"},
+    {"cell":"Sheet1!D1","input":"txt","op":"set"},
+    {"cell":"Sheet1!C2","input":"txt","op":"set"},
+    {"cell":"Sheet1!D2","input":"3","op":"set"},
+    {"cell":"Sheet1!B3","input":"8","op":"set"},
+    {"cell":"Sheet1!C3","input":"=C1","op":"set"},
+    {"cell":"Sheet1!D3","input":"=$A$1*2","op":"set"},
+    {"cell":"Sheet1!A4","input":"txt","op":"set"},
+    {"cell":"Sheet1!B4","input":"2","op":"set"},
+    {"cell":"Sheet1!C4","input":"8","op":"set"},
+    {"cell":"Sheet1!D4","input":"4","op":"set"},
+    {"from":"Sheet1!C4:C5","op":"paste_special","paste":"all","to":"Sheet1!B6"},
+    {"op":"clear","range":"Sheet1!E7"},
+    {"from":"Sheet1!A1:C1","op":"paste_special","operation":"mul","paste":"formats","skip_blanks":true,"to":"Sheet1!H1","transpose":true},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"from":"Sheet1!A7:A8","op":"paste_special","paste":"all","to":"Sheet1!A7"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"from":"Sheet1!A1:A3","op":"paste_special","paste":"formulas","to":"Sheet1!E3"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read_text","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read","range":"Sheet3!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

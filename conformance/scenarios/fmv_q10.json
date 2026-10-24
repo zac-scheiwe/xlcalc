@@ -1,0 +1,12 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B:B", "fmt": "0\"colB\""},
+    {"op": "format", "range": "Sheet1!3:3", "fmt": "0\"row3\""},
+    {"op": "copy_sheet", "sheet": "Sheet1", "after": "Sheet2", "name": "Cp"},
+    {"op": "read", "range": "Cp!A1:E6"},
+    {"op": "read", "range": "Cp!A1000:E1000"}
+  ]
+}

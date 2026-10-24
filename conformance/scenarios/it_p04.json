@@ -1,0 +1,15 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":100,"max_change":0.001},
+{"op":"set","cell":"Sheet1!B1","input":"=A1"},
+{"op":"set","cell":"Sheet1!A1","input":"=B1/2+1"},
+{"op":"set","cell":"Sheet1!D1","input":"=SEQUENCE(2,1,A1*0+5)"},
+{"op":"read","range":"Sheet1!A1:D3"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:D3"},
+{"op":"set","cell":"Sheet1!A3","input":"=B3/2+1"},
+{"op":"set","cell":"Sheet1!B3","input":"=IF(A3>0,A3,\"t\")"},
+{"op":"set","cell":"Sheet1!C3","input":"=IF(A3>1.5,\"big\",\"small\")"},
+{"op":"read","range":"Sheet1!A1:D3"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:D3"}
+],"sheets":["Sheet1","Sheet2","Sheet3"]}

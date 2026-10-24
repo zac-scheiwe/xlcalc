@@ -1,0 +1,29 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!A1","input":"4","op":"set"},
+    {"cell":"Sheet1!B1","input":"6","op":"set"},
+    {"cell":"Sheet1!A2","input":"1","op":"set"},
+    {"cell":"Sheet1!B2","input":"6","op":"set"},
+    {"cell":"Sheet1!A3","input":"6","op":"set"},
+    {"cell":"Sheet1!B3","input":"3","op":"set"},
+    {"cell":"Sheet1!A4","input":"7","op":"set"},
+    {"cell":"Sheet1!B4","input":"9","op":"set"},
+    {"cell":"Sheet1!A5","input":"8","op":"set"},
+    {"cell":"Sheet1!B5","input":"9","op":"set"},
+    {"input":"=SORT(A1:A5)","op":"array","range":"Sheet1!E5:F7"},
+    {"input":"=SUM(A1:B2)","op":"array","range":"Sheet1!B5:C7"},
+    {"op":"read","range":"Sheet2!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"from":"Sheet1!F7","op":"cut","to":"Sheet1!C7"},
+    {"cell":"Sheet1!B3","input":"6","op":"set"},
+    {"op":"read","range":"Sheet2!A1:J12"},
+    {"at":3,"count":1,"op":"insert_rows","sheet":"Sheet1"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read","range":"Sheet3!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

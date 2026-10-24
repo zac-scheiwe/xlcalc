@@ -1,0 +1,174 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=C3+4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=MATCH(1,A1:A3,0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=IFERROR(B1,9)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=IFERROR(A3,5)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=C3+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=MATCH(5,A1:A3,0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SUM(A1:C3)+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=B2+7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=INDEX(C1:B3,2,1)+2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=SUMPRODUCT((C1:A3>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=C2&\"x\""
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=MATCH(1,A1:A3,0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=SUM(A1:B3)+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=C2+4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=C2+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  }
+ ]
+}

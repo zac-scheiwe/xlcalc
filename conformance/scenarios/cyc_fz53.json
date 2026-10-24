@@ -1,0 +1,196 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=ISERROR(SUM(A2:B3+0))"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=MAX(IF(B1:C2>2,B1:C2))"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=COUNT(B2:C3+0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=TAKE(A1:C3+0,1,1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=COUNT(A1:B3+0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=COUNT(A1:C3+0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=COLUMNS(IFERROR(B2:C3,0))"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=SUMPRODUCT((A1:C3>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "TRUE"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=TAKE(A1:B2+0,1,1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=SUMPRODUCT((A1:C3>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "clear",
+   "range": "Sheet1!B2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  }
+ ]
+}

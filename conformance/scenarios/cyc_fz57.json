@@ -1,0 +1,160 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=IFERROR(B2,9)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=COUNT(A1:B2)+C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SUM(A1:B2)+8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "#DIV/0!"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUMPRODUCT((A2:B3>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUMPRODUCT((B2:C3>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "text"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=C2+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=MAX(A1:B3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=INDEX(C1:A3,1,1)+8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=IFERROR(C1,7)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=MAX(B1:A3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  }
+ ]
+}

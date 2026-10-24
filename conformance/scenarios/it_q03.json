@@ -1,0 +1,15 @@
+{"steps":[
+{"op":"set","cell":"Sheet2!C2","input":"6"},
+{"op":"set","cell":"Sheet2!H4","input":"4"},
+{"op":"set","cell":"Sheet2!E3","input":"=\"v\"&C2"},
+{"op":"set","cell":"Sheet2!H3","input":"=INDIRECT(\"Sheet2!\"&ADDRESS(3,5))"},
+{"op":"set","cell":"Sheet2!B7","input":"=H3"},
+{"op":"set","cell":"Sheet2!F8","input":"=COUNT(H3:H4)"},
+{"op":"read","range":"Sheet2!A1:I8"},
+{"op":"set","cell":"Sheet2!E3","input":"=MIN(IFERROR(B7,0),50)+1"},
+{"op":"read","range":"Sheet2!A1:I8"},
+{"op":"calc"},
+{"op":"read","range":"Sheet2!A1:I8"},
+{"op":"set","cell":"Sheet2!C2","input":"7"},
+{"op":"read","range":"Sheet2!A1:I8"}
+],"sheets":["Sheet1","Sheet2"]}

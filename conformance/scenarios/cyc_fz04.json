@@ -1,0 +1,196 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=SUM(OFFSET(A1,0,0,B3,2))+2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=A1+3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=C2+9"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=IF(B1>4,A1,8)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=IF(B1>4,B1,2)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=SUM(OFFSET(A1,0,0,B3,2))+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=B1+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "9"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=INDIRECT(\"A\"&B1)+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "9"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=C3+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=IF(B3>4,A1,5)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=IF(B1>4,A1,5)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=IF(B3>4,C1,5)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=C1+4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  }
+ ]
+}

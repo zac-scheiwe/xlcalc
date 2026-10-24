@@ -1,0 +1,188 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SUM(A2:C3)+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=MATCH(6,A1:A3,0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=MAX(B1:C3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUM(A1:B2)+4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=MATCH(4,A1:A3,0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=COUNT(A1:C2)+C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=MAX(A2:C3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUM(B1:C2)+2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=MATCH(7,A1:A3,0)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "TRUE"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUMPRODUCT((A1:B3>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=MAX(A1:B2)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SUM(A1:C2)+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=IFERROR(C1,1)+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUMPRODUCT((A1:B2>2)*1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "clear",
+   "range": "Sheet1!C1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=B1+9"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=MAX(B1:C3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  }
+ ]
+}

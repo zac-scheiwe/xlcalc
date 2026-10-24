@@ -1,0 +1,9 @@
+{"sheets":["Sheet1","Sheet2"],"steps":[
+{"op":"set","cell":"Sheet1!J11","input":"9"},{"op":"set","cell":"Sheet1!K11","input":"=INDIRECT(\"R\"&(ROW()-4)&\"C\"&COLUMN(),FALSE)"},{"op":"set","cell":"Sheet1!J12","input":"5"},{"op":"set","cell":"Sheet1!K12","input":"nf"},
+{"op":"set","cell":"Sheet1!Q1","input":"=BYROW(J11:K12,LAMBDA(rw,SUM(rw)))"},
+{"op":"read","range":"Sheet1!P1:R4"},
+{"op":"set","cell":"Sheet1!K12","input":"=XLOOKUP(A4,Sheet2!K4:K7,Sheet2!L4:L7,\"nf\",0)"},
+{"op":"read","range":"Sheet1!P1:R4"},
+{"op":"insert_rows","sheet":"Sheet2","count":1,"at":3},
+{"op":"read","range":"Sheet1!P1:R4"}
+]}

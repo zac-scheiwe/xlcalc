@@ -1,0 +1,8 @@
+{"sheets":["Sheet1","Sheet2","Sheet3"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"1"},{"op":"set","cell":"Sheet1!A2","input":"2"},{"op":"set","cell":"Sheet1!A3","input":"4"},{"op":"set","cell":"Sheet2!A1","input":"10"},{"op":"set","cell":"Sheet2!A2","input":"20"},{"op":"set","cell":"Sheet2!A3","input":"40"},{"op":"set","cell":"Sheet3!A1","input":"100"},{"op":"set","cell":"Sheet3!A2","input":"200"},{"op":"set","cell":"Sheet3!A3","input":"400"},
+{"op":"name","name":"Ng","refers_to":"=SUM(Sheet3!A1:A3)+Sheet1!A$1","scope":"Sheet1"},
+{"op":"name","name":"Nq","refers_to":"=Sheet1!B1","scope":"Sheet1"},
+{"op":"set","cell":"Sheet1!E5","input":"=SUM(Ng)"},{"op":"set","cell":"Sheet1!E6","input":"=Nq+1"},
+{"op":"copy","from":"Sheet1!E5:E6","to":"Sheet2!K2"},
+{"op":"names"},{"op":"read","range":"Sheet1!A1:L8"},{"op":"read","range":"Sheet2!A1:L8"},{"op":"read","range":"Sheet3!A1:L8"}
+]}

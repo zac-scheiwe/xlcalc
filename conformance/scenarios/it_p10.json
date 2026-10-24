@@ -1,0 +1,11 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":1,"max_change":0},
+{"op":"rename_sheet","sheet":"Sheet3","name":"Alpha"},
+{"op":"set","cell":"Alpha!A1","input":"=Sheet1!A1+1"},
+{"op":"set","cell":"Sheet1!A1","input":"=Alpha!A1*2+1"},
+{"op":"read","range":"Sheet1!A1:A1"},{"op":"read","range":"Alpha!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:A1"},{"op":"read","range":"Alpha!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:A1"},{"op":"read","range":"Alpha!A1:A1"}
+],"sheets":["Sheet1","Sheet2","Sheet3"]}

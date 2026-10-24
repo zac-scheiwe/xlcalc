@@ -1,0 +1,95 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Bb!E1",
+   "input": "hx"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!E2",
+   "input": "1"
+  },
+  {
+   "op": "table",
+   "name": "Tx",
+   "range": "Bb!E1:E2"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!E1",
+   "input": "hz"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!E2",
+   "input": "1"
+  },
+  {
+   "op": "table",
+   "name": "Tz",
+   "range": "Cc!E1:E2"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Cc",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Cc",
+   "after": "Aa"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

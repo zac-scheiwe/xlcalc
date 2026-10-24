@@ -1,0 +1,122 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=SUM(1:1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=SUM(A:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "=SUM(A1:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A4",
+   "input": "=SUM(B1:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A5",
+   "input": "=SUM(XFD1:B1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A6",
+   "input": "=SUM(B:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A7",
+   "input": "=SUM($B1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A8",
+   "input": "=SUM(Sheet1!B1:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A9",
+   "input": "=SUM(B2:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A10",
+   "input": "=SUM(A1:XFC1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A11",
+   "input": "=SUM(B1048576:XFD1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A11"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A11"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A11"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A11"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A11"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A11"
+  }
+ ]
+}

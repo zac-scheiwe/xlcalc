@@ -1,0 +1,42 @@
+{
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "=ROW(A1)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "=IF(FALSE,A2,1)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "=ROWS(A1:A5)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A4",
+      "input": "=CELL(\"row\",A4)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A5",
+      "input": "=ISREF(A5)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A6",
+      "input": "=SUM(A1:A3)+A6*0"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:A6"
+    },
+    {
+      "op": "circ",
+      "sheet": "Sheet1"
+    }
+  ]
+}

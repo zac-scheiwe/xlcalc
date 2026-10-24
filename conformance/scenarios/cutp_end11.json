@@ -1,0 +1,25 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "1"},
+    {"op": "set", "cell": "Sheet1!A2", "input": "2"},
+    {"op": "set", "cell": "Sheet1!A3", "input": "3"},
+    {"op": "set", "cell": "Sheet1!A4", "input": "4"},
+    {"op": "set", "cell": "Sheet1!A5", "input": "5"},
+    {"op": "set", "cell": "Sheet1!A6", "input": "6"},
+    {"op": "set", "cell": "Sheet1!B1", "input": "7"},
+    {"op": "set", "cell": "Sheet1!B6", "input": "8"},
+    {"op": "set", "cell": "Sheet1!D1", "input": "=SUM(A1:A6)"},
+    {"op": "set", "cell": "Sheet1!D2", "input": "=SUM(A2:A5)"},
+    {"op": "set", "cell": "Sheet1!D3", "input": "=SUM(A1:B6)"},
+    {"op": "set", "cell": "Sheet1!D4", "input": "=SUM(A6:B6)"},
+    {"op": "set", "cell": "Sheet1!D5", "input": "=SUM(A1:A3)"},
+    {"op": "set", "cell": "Sheet1!D6", "input": "=SUM(A4:A6)"},
+    {"op": "set", "cell": "Sheet1!D7", "input": "=A6"},
+    {"op": "set", "cell": "Sheet1!D8", "input": "=SUM($A$1:$A$6)"},
+    {"op": "set", "cell": "Sheet1!D9", "input": "=SUM(A1:B1)"},
+    {"op": "set", "cell": "Sheet1!D10", "input": "=SUM(A$1:$B6)"},
+    {"op": "cut", "from": "Sheet1!B6", "to": "Sheet1!B9"},
+    {"op": "read", "range": "Sheet1!A1:D12"}
+  ]
+}

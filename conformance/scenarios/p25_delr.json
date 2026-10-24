@@ -1,0 +1,5 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"set","cell":"Sheet1!H3","input":"1"},{"op":"set","cell":"Sheet1!I3","input":"2"},{"op":"set","cell":"Sheet1!H4","input":"3"},{"op":"set","cell":"Sheet1!I4","input":"4"},{"op":"set","cell":"Sheet1!J6","input":"5"},{"op":"set","cell":"Sheet1!K7","input":"6"},{"op":"name","name":"Nc","refers_to":"=Sheet1!A1"},
+{"op":"delete_rows","sheet":"Sheet1","at":2,"count":1},
+{"op":"names"}
+]}

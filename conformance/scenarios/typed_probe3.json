@@ -1,0 +1,62 @@
+{
+  "check_format": true,
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "input": "1:61:60",
+      "cell": "Sheet1!A1",
+      "op": "typel"
+    },
+    {
+      "input": "0:60:60",
+      "cell": "Sheet1!A2",
+      "op": "typel"
+    },
+    {
+      "input": "0:60:59",
+      "cell": "Sheet1!A3",
+      "op": "typel"
+    },
+    {
+      "input": "0:59:60",
+      "cell": "Sheet1!A4",
+      "op": "typel"
+    },
+    {
+      "input": "61:61:61",
+      "cell": "Sheet1!A5",
+      "op": "typel"
+    },
+    {
+      "input": "1:60:60",
+      "cell": "Sheet1!A6",
+      "op": "typel"
+    },
+    {
+      "input": "12:60:60 PM",
+      "cell": "Sheet1!A7",
+      "op": "typel"
+    },
+    {
+      "input": "0:0:60",
+      "cell": "Sheet1!A8",
+      "op": "typel"
+    },
+    {
+      "input": "1:1:60",
+      "cell": "Sheet1!A9",
+      "op": "typel"
+    },
+    {
+      "input": "1:100:100",
+      "cell": "Sheet1!A10",
+      "op": "typel"
+    },
+    {
+      "range": "Sheet1!A1:A10",
+      "op": "read"
+    }
+  ]
+}

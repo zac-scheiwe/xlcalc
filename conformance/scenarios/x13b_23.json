@@ -1,0 +1,28 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!A1","input":"1","op":"set"},
+    {"cell":"Sheet1!A2","input":"2","op":"set"},
+    {"enabled":true,"max_change":0.001,"max_iter":5,"op":"iteration"},
+    {"cell":"Sheet1!B1","input":"=B2+1","op":"set"},
+    {"cell":"Sheet1!B2","input":"=B1*0.5+A1","op":"set"},
+    {"cell":"Sheet1!C1","input":"=C1+1","op":"set"},
+    {"cell":"Sheet1!C2","input":"=SUM(C1:C3)","op":"set"},
+    {"cell":"Sheet1!D1","input":"=D2","op":"set"},
+    {"cell":"Sheet1!D2","input":"=D1+A1","op":"set"},
+    {"cell":"Sheet1!E1","input":"=IF(E1>5,0,E1+2)","op":"set"},
+    {"cell":"Sheet1!E3","input":"=E2*A2","op":"set"},
+    {"op":"fullcalc"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"at":3,"count":1,"op":"insert_cols","sheet":"Sheet1"},
+    {"at":2,"count":1,"op":"insert_cols","sheet":"Sheet1"},
+    {"at":4,"count":1,"op":"insert_cols","sheet":"Sheet1"},
+    {"enabled":false,"max_change":0.5,"max_iter":5,"op":"iteration"},
+    {"op":"mode","value":"auto"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

@@ -1,0 +1,12 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":1,"max_change":0},
+{"op":"set","cell":"Sheet2!A1","input":"=Sheet1!A1+1"},
+{"op":"read","range":"Sheet1!A1:A1"},
+{"op":"read","range":"Sheet2!A1:A1"},
+{"op":"set","cell":"Sheet1!A1","input":"=Sheet2!A1*2+1"},
+{"op":"read","range":"Sheet1!A1:A1"},
+{"op":"read","range":"Sheet2!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:A1"},
+{"op":"read","range":"Sheet2!A1:A1"}
+],"sheets":["Sheet1","Sheet2"]}

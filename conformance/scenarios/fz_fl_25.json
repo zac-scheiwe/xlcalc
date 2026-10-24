@@ -1,0 +1,377 @@
+{
+    "sheets":  [
+                   "Sheet1"
+               ],
+    "check_all_formats":  true,
+    "steps":  [
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AK51",
+                      "input":  "Thu"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AL51",
+                      "input":  "Sat"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AM51",
+                      "input":  "Mon"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AN51",
+                      "input":  "Wed"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!AK51:AN51",
+                      "to":  "Sheet1!AB51:AN51",
+                      "type":  "series"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!AB51:AN51",
+                      "id":  "z25_01"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A1",
+                      "input":  "13"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A3",
+                      "input":  "21"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A4",
+                      "input":  "25"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!A1:A4",
+                      "to":  "Sheet1!A1:A13",
+                      "type":  "series"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!A1:A13",
+                      "id":  "z25_02"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B38",
+                      "input":  "Item 1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B39",
+                      "input":  "6"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B40",
+                      "input":  "Mon"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!B38:B40",
+                      "to":  "Sheet1!B35:B40",
+                      "type":  "series"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!B35:B40",
+                      "id":  "z25_03"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!C1",
+                      "input":  "3"
+                  },
+                  {
+                      "op":  "format",
+                      "range":  "Sheet1!C1:C1",
+                      "fmt":  "0%"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!C1:C1",
+                      "to":  "Sheet1!C1:C3",
+                      "type":  "weekdays"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!C1:C3",
+                      "id":  "z25_04"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A52",
+                      "input":  "26/2/2018"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B52",
+                      "input":  "1/3/2018"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!C52",
+                      "input":  "4/3/2018"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D52",
+                      "input":  "7/3/2018"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!A52:D52",
+                      "to":  "Sheet1!A52:I52",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!A52:I52",
+                      "id":  "z25_05"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D1",
+                      "input":  "11/3/2018"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D2",
+                      "input":  "11/4/2018"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D3",
+                      "input":  "11/5/2018"
+                  },
+                  {
+                      "op":  "format",
+                      "range":  "Sheet1!D1:D3",
+                      "fmt":  "dd-mmm-yy"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!D1:D3",
+                      "to":  "Sheet1!D1:D5",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!D1:D5",
+                      "id":  "z25_06"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A53",
+                      "input":  "Apr"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!A53:A53",
+                      "to":  "Sheet1!A53:E53",
+                      "type":  "formats"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!A53:E53",
+                      "id":  "z25_07"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!E1",
+                      "input":  "Row-30"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!E2",
+                      "input":  "Row-33"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!E3",
+                      "input":  "Row-36"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!E4",
+                      "input":  "Row-39"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!E1:E4",
+                      "to":  "Sheet1!E1:E9",
+                      "type":  "days"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!E1:E9",
+                      "id":  "z25_08"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!F1",
+                      "input":  "Item 1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!F2",
+                      "input":  "3"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!F3",
+                      "input":  "Mon"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!F1:F3",
+                      "to":  "Sheet1!F1:F5",
+                      "type":  "values"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!F1:F5",
+                      "id":  "z25_09"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!G1",
+                      "input":  "Item 1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!G2",
+                      "input":  "9"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!G1:G2",
+                      "to":  "Sheet1!G1:G7",
+                      "type":  "weekdays"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!G1:G7",
+                      "id":  "z25_10"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H38",
+                      "input":  "Item 1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H39",
+                      "input":  "8"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H40",
+                      "input":  "Mon"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!H38:H40",
+                      "to":  "Sheet1!H26:H40",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!H26:H40",
+                      "id":  "z25_11"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!I1",
+                      "input":  "June"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!I2",
+                      "input":  "August"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!I3",
+                      "input":  "October"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!I4",
+                      "input":  "December"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!I1:I4",
+                      "to":  "Sheet1!I1:I9",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!I1:I9",
+                      "id":  "z25_12"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AN54",
+                      "input":  "-7"
+                  },
+                  {
+                      "op":  "format",
+                      "range":  "Sheet1!AN54:AN54",
+                      "fmt":  "0%"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!AN54:AN54",
+                      "to":  "Sheet1!AL54:AN54",
+                      "type":  "days"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!AL54:AN54",
+                      "id":  "z25_13"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J1",
+                      "input":  "Fri"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J2",
+                      "input":  "Mon"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J3",
+                      "input":  "Thu"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J4",
+                      "input":  "Sun"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!J1:J4",
+                      "to":  "Sheet1!J1:J10",
+                      "type":  "values"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!J1:J10",
+                      "id":  "z25_14"
+                  }
+              ]
+}

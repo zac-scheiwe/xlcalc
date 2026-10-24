@@ -1,0 +1,36 @@
+{
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!C1",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "=B1+1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "=A1+C1"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:C1"
+    },
+    {
+      "op": "circ",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C1",
+      "input": "7"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:C1"
+    }
+  ]
+}

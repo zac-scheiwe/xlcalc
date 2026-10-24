@@ -1,0 +1,312 @@
+{
+  "steps": [
+    {
+      "cell": "Sheet1!A1",
+      "input": "30 December 2025 1:1:59",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A2",
+      "input": "1:1:59 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A3",
+      "input": "30 December 2025 1:1:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A4",
+      "input": "1:1:60 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A5",
+      "input": "30 December 2025 1:1:61",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A6",
+      "input": "1:1:61 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A7",
+      "input": "30 December 2025 1:1:99",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A8",
+      "input": "1:1:99 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A9",
+      "input": "30 December 2025 1:59:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A10",
+      "input": "1:59:60 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A11",
+      "input": "30 December 2025 1:60:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A12",
+      "input": "1:60:0 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A13",
+      "input": "30 December 2025 1:60:1",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A14",
+      "input": "1:60:1 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A15",
+      "input": "30 December 2025 1:61:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A16",
+      "input": "1:61:0 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A17",
+      "input": "30 December 2025 25:1:1",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A18",
+      "input": "25:1:1 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A19",
+      "input": "30 December 2025 24:0:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A20",
+      "input": "24:0:0 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A21",
+      "input": "30 December 2025 24:1:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A22",
+      "input": "24:1:0 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A23",
+      "input": "30 December 2025 1:61",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A24",
+      "input": "1:61 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A25",
+      "input": "30 December 2025 1:99",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A26",
+      "input": "1:99 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A27",
+      "input": "30 December 2025 1:100",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A28",
+      "input": "1:100 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A29",
+      "input": "30 December 2025 99:1",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A30",
+      "input": "99:1 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A31",
+      "input": "30 December 2025 0:0:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A32",
+      "input": "0:0:60 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A33",
+      "input": "30 December 2025 0:0:61",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A34",
+      "input": "0:0:61 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A35",
+      "input": "30 December 2025 0:60:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A36",
+      "input": "0:60:60 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A37",
+      "input": "30 December 2025 23:59:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A38",
+      "input": "23:59:60 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A39",
+      "input": "30 December 2025 1:1:60.5",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A40",
+      "input": "1:1:60.5 30 December 2025",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A41",
+      "input": "30/12/2025 1:1:59",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A42",
+      "input": "30/12/2025 1:1:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A43",
+      "input": "30/12/2025 1:1:61",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A44",
+      "input": "30/12/2025 1:1:99",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A45",
+      "input": "30/12/2025 1:59:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A46",
+      "input": "30/12/2025 1:60:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A47",
+      "input": "30/12/2025 1:60:1",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A48",
+      "input": "30/12/2025 1:61:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A49",
+      "input": "30/12/2025 25:1:1",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A50",
+      "input": "30/12/2025 24:0:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A51",
+      "input": "30/12/2025 24:1:0",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A52",
+      "input": "30/12/2025 1:61",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A53",
+      "input": "30/12/2025 1:99",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A54",
+      "input": "30/12/2025 1:100",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A55",
+      "input": "30/12/2025 99:1",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A56",
+      "input": "30/12/2025 0:0:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A57",
+      "input": "30/12/2025 0:0:61",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A58",
+      "input": "30/12/2025 0:60:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A59",
+      "input": "30/12/2025 23:59:60",
+      "op": "typel"
+    },
+    {
+      "cell": "Sheet1!A60",
+      "input": "30/12/2025 1:1:60.5",
+      "op": "typel"
+    },
+    {
+      "range": "Sheet1!A1:A60",
+      "op": "read"
+    }
+  ],
+  "check_format": true,
+  "sheets": [
+    "Sheet1"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B:B", "fmt": "0\"colB\""},
+    {"op": "insert_cells", "range": "Sheet1!A2:C3", "shift": "down"},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"},
+    {"op": "delete_cells", "range": "Sheet1!B2:B3", "shift": "up"},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"},
+    {"op": "sort", "range": "Sheet1!A1:C6", "keys": [{"key": 1, "order": "asc"}], "header": false},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"}
+  ]
+}

@@ -1,0 +1,589 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "check_all_formats": true,
+  "steps": [
+    {
+      "op": "typel",
+      "cell": "Sheet1!A1",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A2",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A1:A2",
+      "to": "Sheet1!A1:A11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:A11",
+      "id": "w1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B2",
+      "input": "14/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!B1:B2",
+      "to": "Sheet1!B1:B11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!B1:B11",
+      "id": "w2"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C2",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!C1:C2",
+      "to": "Sheet1!C1:C11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!C1:C11",
+      "id": "w3"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!D1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!D2",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!D1:D2",
+      "to": "Sheet1!D1:D11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!D1:D11",
+      "id": "w4"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!E1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!E2",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!E1:E2",
+      "to": "Sheet1!E1:E11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!E1:E11",
+      "id": "w5"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!F1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!F2",
+      "input": "20/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!F1:F2",
+      "to": "Sheet1!F1:F11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!F1:F11",
+      "id": "w6"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!G1",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!G2",
+      "input": "20/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!G1:G2",
+      "to": "Sheet1!G1:G11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!G1:G11",
+      "id": "w7"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!H1",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!H2",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!H1:H2",
+      "to": "Sheet1!H1:H11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!H1:H11",
+      "id": "w8"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!I1",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!I2",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!I1:I2",
+      "to": "Sheet1!I1:I11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!I1:I11",
+      "id": "w9"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!J1",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!J2",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!J1:J2",
+      "to": "Sheet1!J1:J11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!J1:J11",
+      "id": "w10"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!K1",
+      "input": "18/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!K2",
+      "input": "19/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!K1:K2",
+      "to": "Sheet1!K1:K11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!K1:K11",
+      "id": "w11"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!L1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!L2",
+      "input": "18/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!L1:L2",
+      "to": "Sheet1!L1:L11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!L1:L11",
+      "id": "w12"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!M1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!M2",
+      "input": "14/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!M3",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!M1:M3",
+      "to": "Sheet1!M1:M12",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!M1:M12",
+      "id": "w13"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!N1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!N2",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!N3",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!N1:N3",
+      "to": "Sheet1!N1:N12",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!N1:N12",
+      "id": "w14"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!O1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!O2",
+      "input": "14/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!O3",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!O1:O3",
+      "to": "Sheet1!O1:O12",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!O1:O12",
+      "id": "w15"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!P1",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!P2",
+      "input": "20/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!P3",
+      "input": "21/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!P1:P3",
+      "to": "Sheet1!P1:P12",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!P1:P12",
+      "id": "w16"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Q1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Q2",
+      "input": "27/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!Q1:Q2",
+      "to": "Sheet1!Q1:Q11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!Q1:Q11",
+      "id": "w17"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!R1",
+      "input": "14/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!R2",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!R1:R2",
+      "to": "Sheet1!R1:R11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!R1:R11",
+      "id": "w18"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!S1",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!S2",
+      "input": "20/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!S1:S2",
+      "to": "Sheet1!S1:S11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!S1:S11",
+      "id": "w19"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!T1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!T2",
+      "input": "14/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!T3",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!T4",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!T5",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!T1:T5",
+      "to": "Sheet1!T1:T14",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!T1:T14",
+      "id": "w20"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!U1",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!U2",
+      "input": "21/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!U1:U2",
+      "to": "Sheet1!U1:U11",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!U1:U11",
+      "id": "w21"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!V39",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!V40",
+      "input": "16/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!V39:V40",
+      "to": "Sheet1!V30:V40",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!V30:V40",
+      "id": "u1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!W39",
+      "input": "13/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!W40",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!W39:W40",
+      "to": "Sheet1!W30:W40",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!W30:W40",
+      "id": "u2"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!X39",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!X40",
+      "input": "20/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!X39:X40",
+      "to": "Sheet1!X30:X40",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!X30:X40",
+      "id": "u3"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Y39",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Y40",
+      "input": "15/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!Y39:Y40",
+      "to": "Sheet1!Y30:Y40",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!Y30:Y40",
+      "id": "u4"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Z39",
+      "input": "20/1/2020"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Z40",
+      "input": "17/1/2020"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!Z39:Z40",
+      "to": "Sheet1!Z30:Z40",
+      "type": "weekdays"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!Z30:Z40",
+      "id": "u5"
+    }
+  ]
+}

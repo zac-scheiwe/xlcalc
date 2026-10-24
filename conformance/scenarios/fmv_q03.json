@@ -1,0 +1,16 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B2", "fmt": "0\"x\""},
+    {"op": "format", "range": "Sheet1!B:B", "fmt": "0\"y\""},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"},
+    {"op": "format", "range": "Sheet1!B3", "fmt": "0\"z\""},
+    {"op": "format", "range": "Sheet1!D4", "fmt": "0\"w\""},
+    {"op": "format", "range": "Sheet1!D:D", "fmt": "General"},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"}
+  ]
+}

@@ -1,0 +1,14 @@
+[package]
+name = "xlcalc-cli"
+description = "Interactive console for the xlcalc engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "xlcalc"
+path = "src/main.rs"
+
+[dependencies]
+xlcalc.workspace = true
+serde_json.workspace = true

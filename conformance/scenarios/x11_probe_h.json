@@ -1,0 +1,12 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"=B1*0.1+1"},
+{"op":"set","cell":"Sheet1!B1","input":"=A1+22"},
+{"op":"iteration","enabled":true,"max_iter":10,"max_change":0.001},
+{"op":"read","range":"Sheet1!A1:B1"},
+{"op":"set","cell":"Sheet1!C1","input":"1"},
+{"op":"read","range":"Sheet1!A1:C1"},
+{"op":"iteration","enabled":true,"max_iter":100,"max_change":0.001},
+{"op":"read","range":"Sheet1!A1:B1"},
+{"op":"fullcalc"},
+{"op":"read","range":"Sheet1!A1:B1"}
+]}

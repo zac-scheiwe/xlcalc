@@ -1,0 +1,11 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":1,"max_change":0},
+{"op":"rename_sheet","sheet":"Sheet1","name":"abc"},{"op":"rename_sheet","sheet":"Sheet3","name":"ABD"},
+{"op":"set","cell":"ABD!A1","input":"=abc!A1+1"},
+{"op":"set","cell":"abc!A1","input":"=ABD!A1*2+1"},
+{"op":"read","range":"abc!A1:A1"},{"op":"read","range":"ABD!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"abc!A1:A1"},{"op":"read","range":"ABD!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"abc!A1:A1"},{"op":"read","range":"ABD!A1:A1"}
+],"sheets":["Sheet1","Sheet2","Sheet3"]}

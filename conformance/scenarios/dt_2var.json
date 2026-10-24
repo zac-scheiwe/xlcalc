@@ -1,0 +1,26 @@
+{
+  "steps": [
+    {"op":"set","cell":"Sheet1!A1","input":"0"},
+    {"op":"set","cell":"Sheet1!B1","input":"0"},
+    {"op":"set","cell":"Sheet1!C1","input":"=A1*10+B1"},
+    {"op":"set","cell":"Sheet1!D5","input":"=C1+100*COUNTIF(E6:F8,\">0\")"},
+    {"op":"set","cell":"Sheet1!E5","input":"1"},
+    {"op":"set","cell":"Sheet1!F5","input":"2"},
+    {"op":"set","cell":"Sheet1!D6","input":"3"},
+    {"op":"set","cell":"Sheet1!D7","input":"4"},
+    {"op":"set","cell":"Sheet1!D8","input":"x"},
+    {"op":"data_table","range":"Sheet1!D5:F8","row_input":"Sheet1!A1","col_input":"Sheet1!B1"},
+    {"op":"read","range":"Sheet1!A1:F8"},
+    {"op":"set","cell":"Sheet1!E5","input":"7"},
+    {"op":"read","range":"Sheet1!A1:F8"},
+    {"op":"set","cell":"Sheet1!B1","input":"1"},
+    {"op":"read","range":"Sheet1!A1:F8"},
+    {"op":"set","cell":"Sheet1!D10","input":"=A1+B1"},
+    {"op":"set","cell":"Sheet1!E10","input":"1"},
+    {"op":"set","cell":"Sheet1!F10","input":"2"},
+    {"op":"set","cell":"Sheet1!D11","input":"10"},
+    {"op":"set","cell":"Sheet1!D12","input":"20"},
+    {"op":"data_table","range":"Sheet1!D10:F12","row_input":"Sheet1!B1","col_input":"Sheet1!A1"},
+    {"op":"read","range":"Sheet1!A1:F12"}
+  ]
+}

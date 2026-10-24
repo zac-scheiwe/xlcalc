@@ -1,0 +1,11 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":1,"max_change":0},
+
+{"op":"set","cell":"Alpha!A1","input":"=Zulu!A1+1"},
+{"op":"set","cell":"Zulu!A1","input":"=Alpha!A1*2+1"},
+{"op":"read","range":"Zulu!A1:A1"},{"op":"read","range":"Alpha!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Zulu!A1:A1"},{"op":"read","range":"Alpha!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Zulu!A1:A1"},{"op":"read","range":"Alpha!A1:A1"}
+],"sheets":["Zulu","Alpha"]}

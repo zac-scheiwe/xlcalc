@@ -1,0 +1,92 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "=SUM(Bb:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "=SUM(Bb:Bb!A1)"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "before": "Cc",
+   "name": "Mid"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "set",
+   "cell": "Mid!A1",
+   "input": "10"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A2"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Cc",
+   "name": "Tail"
+  },
+  {
+   "op": "set",
+   "cell": "Tail!A1",
+   "input": "100"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A2"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Cc",
+   "before": "Bb",
+   "name": "Head"
+  },
+  {
+   "op": "set",
+   "cell": "Head!A1",
+   "input": "1000"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A2"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "before": "Mid",
+   "name": "bb"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "before": "Mid",
+   "name": "Bad:name"
+  }
+ ]
+}

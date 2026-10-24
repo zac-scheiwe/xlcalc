@@ -1,0 +1,372 @@
+{
+    "sheets":  [
+                   "Sheet1"
+               ],
+    "check_all_formats":  true,
+    "steps":  [
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A51",
+                      "input":  "No. 0"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!A51:A51",
+                      "to":  "Sheet1!A51:J51",
+                      "type":  "weekdays"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!A51:J51",
+                      "id":  "z19_01"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A1",
+                      "input":  "-5"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A2",
+                      "input":  "-8"
+                  },
+                  {
+                      "op":  "format",
+                      "range":  "Sheet1!A1:A2",
+                      "fmt":  "0.00"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!A1:A2",
+                      "to":  "Sheet1!A1:A14",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!A1:A14",
+                      "id":  "z19_02"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AK52",
+                      "input":  "13"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AL52",
+                      "input":  "15"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AM52",
+                      "input":  "17"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AN52",
+                      "input":  "19"
+                  },
+                  {
+                      "op":  "format",
+                      "range":  "Sheet1!AK52:AN52",
+                      "fmt":  "General"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!AK52:AN52",
+                      "to":  "Sheet1!AJ52:AN52",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!AJ52:AN52",
+                      "id":  "z19_03"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!A53",
+                      "input":  "Friday"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B53",
+                      "input":  "Monday"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!A53:B53",
+                      "to":  "Sheet1!A53:D53",
+                      "type":  "linear"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!A53:D53",
+                      "id":  "z19_04"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B1",
+                      "input":  "Qtr2"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B2",
+                      "input":  "Qtr1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!B3",
+                      "input":  "Qtr4"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!B1:B3",
+                      "to":  "Sheet1!B1:B15",
+                      "type":  "days"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!B1:B15",
+                      "id":  "z19_05"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AM54",
+                      "input":  "Item 1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!AN54",
+                      "input":  "6"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!AM54:AN54",
+                      "to":  "Sheet1!AD54:AN54",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!AD54:AN54",
+                      "id":  "z19_06"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!C1",
+                      "input":  "Jan"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!C2",
+                      "input":  "Mar"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!C3",
+                      "input":  "May"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!C4",
+                      "input":  "Jul"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!C1:C4",
+                      "to":  "Sheet1!C1:C16",
+                      "type":  "copy"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!C1:C16",
+                      "id":  "z19_07"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D1",
+                      "input":  "Qtr2"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D2",
+                      "input":  "Qtr1"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D3",
+                      "input":  "Qtr4"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!D4",
+                      "input":  "Qtr3"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!D1:D4",
+                      "to":  "Sheet1!D1:D5",
+                      "type":  "months"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!D1:D5",
+                      "id":  "z19_08"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!E1",
+                      "input":  "No. 3"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!E2",
+                      "input":  "No. 6"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!E1:E2",
+                      "to":  "Sheet1!E1:E12",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!E1:E12",
+                      "id":  "z19_09"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!F1",
+                      "input":  "11"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!F3",
+                      "input":  "17"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!F4",
+                      "input":  "20"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!F1:F4",
+                      "to":  "Sheet1!F1:F7",
+                      "type":  "default"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!F1:F7",
+                      "id":  "z19_10"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!G1",
+                      "input":  "Qtr2"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!G2",
+                      "input":  "Qtr3"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!G3",
+                      "input":  "Qtr4"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!G4",
+                      "input":  "Qtr1"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!G1:G4",
+                      "to":  "Sheet1!G1:G12",
+                      "type":  "years"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!G1:G12",
+                      "id":  "z19_11"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H37",
+                      "input":  "15"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H38",
+                      "input":  "11"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H39",
+                      "input":  "7"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!H40",
+                      "input":  "3"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!H37:H40",
+                      "to":  "Sheet1!H30:H40",
+                      "type":  "series"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!H30:H40",
+                      "id":  "z19_12"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!I1",
+                      "input":  "-6"
+                  },
+                  {
+                      "op":  "format",
+                      "range":  "Sheet1!I1:I1",
+                      "fmt":  "General"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!I1:I1",
+                      "to":  "Sheet1!I1:I2",
+                      "type":  "series"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!I1:I2",
+                      "id":  "z19_13"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J38",
+                      "input":  "Sunday"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J39",
+                      "input":  "Wednesday"
+                  },
+                  {
+                      "op":  "typel",
+                      "cell":  "Sheet1!J40",
+                      "input":  "Saturday"
+                  },
+                  {
+                      "op":  "autofill",
+                      "from":  "Sheet1!J38:J40",
+                      "to":  "Sheet1!J35:J40",
+                      "type":  "series"
+                  },
+                  {
+                      "op":  "read",
+                      "range":  "Sheet1!J35:J40",
+                      "id":  "z19_14"
+                  }
+              ]
+}

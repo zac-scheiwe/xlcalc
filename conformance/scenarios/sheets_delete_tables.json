@@ -1,0 +1,99 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Bb!E1",
+   "input": "hx"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!E2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!E3",
+   "input": "2"
+  },
+  {
+   "op": "table",
+   "name": "Tq",
+   "range": "Bb!E1:E3"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "=SUM(Tq[hx])"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "=ROWS(Tq)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A3",
+   "input": "=Tq[[#Headers],[hx]]"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A4",
+   "input": "=SUM(Tq)"
+  },
+  {
+   "op": "name",
+   "name": "gtq",
+   "refers_to": "=Tq[hx]"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A5",
+   "input": "=SUM(gtq)"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "=SUM(Tq[hx])"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A5"
+  },
+  {
+   "op": "read",
+   "range": "Cc!A1:A1"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Bb"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A5"
+  },
+  {
+   "op": "read",
+   "range": "Cc!A1:A1"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A6",
+   "input": "=SUM(Tq[hx])"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A6:A6"
+  }
+ ]
+}

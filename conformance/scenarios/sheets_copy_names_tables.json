@@ -1,0 +1,335 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A2",
+   "input": "=A1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A3",
+   "input": "=Bb!A1+1"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A4",
+   "input": "=Cc!A1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!E1",
+   "input": "hx"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!F1",
+   "input": "hy"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!E2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!E3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!F2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!F3",
+   "input": "4"
+  },
+  {
+   "op": "name",
+   "name": "gnb",
+   "refers_to": "=Bb!$A$2"
+  },
+  {
+   "op": "name",
+   "name": "gnc",
+   "refers_to": "=Cc!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "gnboth",
+   "refers_to": "=Bb!$A$1+Cc!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "gk",
+   "refers_to": "=7"
+  },
+  {
+   "op": "name",
+   "name": "gsp",
+   "refers_to": "=Bb:Cc!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "grel",
+   "refers_to": "=Bb!A1"
+  },
+  {
+   "op": "name",
+   "name": "snb",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "snc",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "sk",
+   "refers_to": "=8",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "scc",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Cc"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A5",
+   "input": "=snb"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A6",
+   "input": "=gnb"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A7",
+   "input": "=INDIRECT(\"A1\")"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A8",
+   "input": "=SUM(Bb!A1:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A9",
+   "input": "=gnc"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A10",
+   "input": "=snc"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A11",
+   "input": "=gk+sk"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A12",
+   "input": "=SUM(Bb:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A13",
+   "input": "=grel"
+  },
+  {
+   "op": "table",
+   "name": "Tx",
+   "range": "Bb!E1:F3"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!H1",
+   "input": "=SUM(Tx[hx])"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!H2",
+   "input": "=SUM(Tx)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "=SUM(Tx[hy])"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "=gnb"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A3",
+   "input": "=Bb!snb"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A4",
+   "input": "=gsp"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "before": "Cc"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "Bb (2)!A1:A13"
+  },
+  {
+   "op": "read",
+   "range": "Bb (2)!E1:H3"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A4"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Cc"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "Bb (3)!A1:A13"
+  },
+  {
+   "op": "read",
+   "range": "Bb (3)!E1:H3"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A4"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb (2)",
+   "before": "Aa"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "Bb (4)!A1:A13"
+  },
+  {
+   "op": "read",
+   "range": "Bb (4)!E1:H3"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A4"
+  },
+  {
+   "op": "set",
+   "cell": "Bb (2)!A1",
+   "input": "50"
+  },
+  {
+   "op": "read",
+   "range": "Bb (2)!A1:A13"
+  },
+  {
+   "op": "read",
+   "range": "Bb!A1:A13"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Bb (2)",
+   "name": "Zed"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "Zed!A1:A13"
+  },
+  {
+   "op": "read",
+   "range": "Zed!H1:H2"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Zed"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:A4"
+  },
+  {
+   "op": "read",
+   "range": "Bb!A1:A13"
+  }
+ ]
+}

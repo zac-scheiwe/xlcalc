@@ -1,0 +1,47 @@
+{
+ "sheets": [
+  "Q",
+  "Q (3)",
+  "Q (7)",
+  "R (2)",
+  "R"
+ ],
+ "steps": [
+  {
+   "op": "copy_sheet",
+   "sheet": "Q",
+   "after": "Q"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Q",
+   "after": "Q"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Q",
+   "after": "Q"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Q (7)",
+   "after": "Q"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "R (2)",
+   "after": "Q"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "R (2)",
+   "after": "Q"
+  },
+  {
+   "op": "sheets"
+  }
+ ]
+}

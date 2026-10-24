@@ -1,0 +1,24 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet2!A1","input":"3","op":"set"},
+    {"cell":"Sheet2!A2","input":"5","op":"set"},
+    {"cell":"Sheet2!A3","input":"2","op":"set"},
+    {"cell":"Sheet2!C1","input":"=SEQUENCE(2,3)","op":"set"},
+    {"cell":"Sheet2!E2","input":"=SORT(A1:A3)","op":"set"},
+    {"cell":"Sheet2!C5","input":"=SEQUENCE(2,3)","op":"set"},
+    {"cell":"Sheet2!F1","input":"=A1:A3*2","op":"set"},
+    {"cell":"Sheet2!H3","input":"=C1","op":"set"},
+    {"at":4,"count":2,"op":"delete_cols","sheet":"Sheet1"},
+    {"from":"Sheet2!A1:A3","op":"cut","to":"Sheet2!F1"},
+    {"op":"read","range":"Sheet2!A1:J12"},
+    {"op":"read","range":"Sheet3!A1:J12"},
+    {"from":"Sheet2!C1:F2","op":"cut","to":"Sheet2!C3"},
+    {"op":"read","range":"Sheet2!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read","range":"Sheet3!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

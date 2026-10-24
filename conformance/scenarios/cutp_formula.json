@@ -1,0 +1,20 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "1"},
+    {"op": "set", "cell": "Sheet1!A2", "input": "2"},
+    {"op": "set", "cell": "Sheet1!A3", "input": "3"},
+    {"op": "set", "cell": "Sheet1!B1", "input": "=A1+A2"},
+    {"op": "set", "cell": "Sheet1!B2", "input": "=SUM(A1:A3)"},
+    {"op": "set", "cell": "Sheet1!B3", "input": "=B1*2"},
+    {"op": "set", "cell": "Sheet1!B4", "input": "=ROW()"},
+    {"op": "set", "cell": "Sheet1!B5", "input": "=A$1+$A2"},
+    {"op": "set", "cell": "Sheet1!C1", "input": "=B1"},
+    {"op": "set", "cell": "Sheet1!C2", "input": "=SUM(B1:B3)"},
+    {"op": "cut", "from": "Sheet1!B1:B5", "to": "Sheet1!E2"},
+    {"op": "read", "range": "Sheet1!A1:F8"},
+    {"op": "cut", "from": "Sheet1!E2", "to": "Sheet2!B2"},
+    {"op": "read", "range": "Sheet1!A1:F8"},
+    {"op": "read", "range": "Sheet2!A1:C3"}
+  ]
+}

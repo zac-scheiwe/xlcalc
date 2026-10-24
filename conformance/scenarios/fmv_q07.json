@@ -1,0 +1,11 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B1:C300000", "fmt": "0\"big\""},
+    {"op": "read", "range": "Sheet1!B299999:C300000"},
+    {"op": "read", "range": "Sheet1!B1:C2"},
+    {"op": "read", "range": "Sheet1!B300001:C300001"}
+  ]
+}

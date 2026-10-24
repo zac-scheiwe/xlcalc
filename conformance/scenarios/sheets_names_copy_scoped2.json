@@ -1,0 +1,175 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc",
+  "Dd",
+  "Ee"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Ee!A1",
+   "input": "1"
+  },
+  {
+   "op": "name",
+   "name": "n_aa",
+   "refers_to": "=SUM(Bb:Dd!$A$1:$A$3)",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "m_aa",
+   "refers_to": "=SUM(Bb:Dd!$A$1)",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "p_aa",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "q_aa",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "n_bb",
+   "refers_to": "=SUM(Bb:Dd!$A$1:$A$3)",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "m_bb",
+   "refers_to": "=SUM(Bb:Dd!$A$1)",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "p_bb",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "q_bb",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "n_cc",
+   "refers_to": "=SUM(Bb:Dd!$A$1:$A$3)",
+   "scope": "Cc"
+  },
+  {
+   "op": "name",
+   "name": "m_cc",
+   "refers_to": "=SUM(Bb:Dd!$A$1)",
+   "scope": "Cc"
+  },
+  {
+   "op": "name",
+   "name": "p_cc",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Cc"
+  },
+  {
+   "op": "name",
+   "name": "q_cc",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Cc"
+  },
+  {
+   "op": "name",
+   "name": "n_dd",
+   "refers_to": "=SUM(Bb:Dd!$A$1:$A$3)",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "m_dd",
+   "refers_to": "=SUM(Bb:Dd!$A$1)",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "p_dd",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "q_dd",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "n_ee",
+   "refers_to": "=SUM(Bb:Dd!$A$1:$A$3)",
+   "scope": "Ee"
+  },
+  {
+   "op": "name",
+   "name": "m_ee",
+   "refers_to": "=SUM(Bb:Dd!$A$1)",
+   "scope": "Ee"
+  },
+  {
+   "op": "name",
+   "name": "p_ee",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Ee"
+  },
+  {
+   "op": "name",
+   "name": "q_ee",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Ee"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "after": "Dd"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Cc",
+   "before": "Aa"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

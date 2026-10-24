@@ -1,0 +1,5 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"set","cell":"Sheet1!F2","input":"2"},{"op":"set","cell":"Sheet1!G1","input":"9"},{"op":"set","cell":"Sheet1!H2","input":"4"},{"op":"set","cell":"Sheet1!H3","input":"x"},{"op":"set","cell":"Sheet1!I1","input":"3"},{"op":"set","cell":"Sheet1!J2","input":"6"},{"op":"set","cell":"Sheet1!K1","input":"t"},{"op":"set","cell":"Sheet1!K2","input":"7"},
+{"op":"dataseries","range":"Sheet1!H1:K4","rowcol":"cols","type":"linear"},
+{"op":"read","range":"Sheet1!E1:L5"}
+]}

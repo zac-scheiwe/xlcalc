@@ -1,0 +1,16 @@
+{"steps":[
+{"op":"set","cell":"Sheet1!B1","input":"=SEQUENCE(3)"},
+{"op":"set","cell":"Sheet1!C1","input":"=SUM(B1:B8)"},
+{"op":"set","cell":"Sheet1!D1","input":"=C1+1"},
+{"op":"set","cell":"Sheet1!A1","input":"1"},
+{"op":"set","cell":"Sheet1!D2","input":"=A1+C1"},
+{"op":"mode","value":"manual"},
+{"op":"set","cell":"Sheet1!A1","input":"10"},
+{"op":"read","range":"Sheet1!A1:D2"},
+{"op":"set","cell":"Sheet1!B1","input":"=SEQUENCE(2,2)"},
+{"op":"read","range":"Sheet1!A1:D2"},
+{"op":"set","cell":"Sheet1!E1","input":"=B1#"},
+{"op":"read","range":"Sheet1!A1:E2"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:E3"}
+]}

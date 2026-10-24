@@ -1,0 +1,160 @@
+> A1 10
+  0 evaluations in <t>: A1=10
+> A2 20
+  0 evaluations in <t>: A2=20
+> A3 =A1+A2
+  1 evaluation in <t>: A3=30
+> R1C3 =SEQUENCE(A1/5,2)
+  1 evaluation in <t>: C1=1 (spills C1:D2)
+> F1 =SUM(C1#)
+  1 evaluation in <t>: F1=10
+> A1 15
+  3 evaluations in <t>: A1=15, A3=35, C1=1 (spills C1:D3), F1=21
+> show A1:F4
+                  A            B            C            D            E            F 
+     1           15                         1            2                        21 
+     2           20                         3            4                           
+     3           35                         5            6                           
+     4                                                                               
+> A3
+  A3: =A1+A2 = 35 (number)
+  precedents: Sheet1!A1, Sheet1!A2
+> format A3 0.00
+  0 evaluations in <t>
+> A3
+  A3: =A1+A2 = 35 (number)
+  format 0.00: shown as 35.00
+  precedents: Sheet1!A1, Sheet1!A2
+> used
+  A1:F3
+> sheet Orders
+  on sheet Orders
+> A1 Item
+  3 evaluations in <t>: A1=Item
+> B1 Qty
+  0 evaluations in <t>: B1=Qty
+> A2 apple
+  0 evaluations in <t>: A2=apple
+> B2 3
+  0 evaluations in <t>: B2=3
+> table Sales A1:B2
+  table Sales on A1:B2 with columns: Item, Qty
+  0 evaluations in <t>
+> C2 =Sales[@Qty]*2
+  0 evaluations in <t>: C2=6
+> sheet Sheet1
+  on sheet Sheet1
+> 'Orders'!B2 5
+  1 evaluation in <t>: Orders!B2=5, Orders!C2=10
+> 'Orders'!C2
+  Orders!C2: =[@Qty]*2 = 10 (number)
+  precedents: table Sales, Orders!B2
+> insert rows 1
+  4 evaluations in <t>: C2=1 (spills C2:D4)
+> A4
+  A4: =A2+A3 = 35 (number)
+  format 0.00: shown as 35.00
+  precedents: Sheet1!A2, Sheet1!A3
+> delete cols B
+  4 evaluations in <t>: B2=1 (spills B2:C4)
+> name tax =0.15
+  0 evaluations in <t>
+> name
+  tax = 0.15
+> delname tax
+  0 evaluations in <t>
+> mode manual
+  calculation mode: manual
+  0 evaluations in <t>
+> A1 1
+  0 evaluations in <t>: A1=1
+> A4
+  A4: =A2+A3 = 35 (number)
+  format 0.00: shown as 35.00
+  precedents: Sheet1!A2, Sheet1!A3
+> calc
+  0 evaluations in <t>
+> A4
+  A4: =A2+A3 = 35 (number)
+  format 0.00: shown as 35.00
+  precedents: Sheet1!A2, Sheet1!A3
+> mode semi
+  calculation mode: semiautomatic (automatic except data tables)
+  0 evaluations in <t>
+> mode auto
+  calculation mode: automatic
+  0 evaluations in <t>
+> iter on 50 0.0001
+  iteration on (max 50 iterations, max change 0.0001)
+> iter off
+  iteration off (max 50 iterations, max change 0.0001)
+> precision on
+  4 evaluations in <t>
+> precision off
+  4 evaluations in <t>
+> legacy H1 =A1:A3
+  =@A1:A3
+  1 evaluation in <t>: H1=1
+> array J1:J3 =A1:A3*2
+  1 evaluation in <t>: J1=2 (spills J1:J3)
+> J2
+  J2: =A1:A3*2 = 30 (number)
+  spilled from J1
+> MERGE L1:M2
+  0 evaluations in <t>
+> unmerge L1:M2
+  0 evaluations in <t>
+> sheet Calc
+  on sheet Calc
+> B1 0.5
+  6 evaluations in <t>: B1=0.5
+> B2 =100*B1
+  1 evaluation in <t>: B2=50
+> goalseek B2 30 B1
+  goal seek found a solution: B1 = 0.3, B2 = 30
+> B1
+  B1: 0.3 (number)
+  dependents: B2
+> C1 0
+  0 evaluations in <t>: C1=0
+> C2 1
+  0 evaluations in <t>: C2=1
+> D1 =C1*2
+  1 evaluation in <t>: D1=0
+> D2 2
+  0 evaluations in <t>: D2=2
+> D3 3
+  0 evaluations in <t>: D3=3
+> datatable C1:D3 col B1
+  3 evaluations in <t>: B2=30
+> sort D2:D3 1 desc
+  0 evaluations in <t>
+> D2
+  D2: =TABLE(,B1) = 0 (number)
+  precedents: Calc!B1, Calc!D1, Calc!C2
+> fill C2 C2:C4
+  6 evaluations in <t>: C2=1, B2=30, C3=1, C4=1
+> sheet Sheet1
+  on sheet Sheet1
+> sheets
+  Sheet1  (current)
+  Orders
+  Calc
+> bogus command
+  unknown command or cell 'bogus' (try help)
+> A1048577 1
+  unknown command or cell 'A1048577' (try help)
+> XFD1048576 =1
+  1 evaluation in <t>: XFD1048576=1
+> insert rows x
+  usage: insert|delete rows N [count]
+> insert rows 0
+  usage: insert|delete rows N [count]
+> copy A1
+  usage: copy A1:B2 D1 | fill A1 A2:A10
+> goalseek A1
+  usage: goalseek TARGET GOAL CHANGING   e.g. goalseek B4 15000 B2
+> mode sideways
+  usage: mode [auto|manual|semi]
+> sheet
+  usage: sheet NAME   (switches to it, creating it if needed)

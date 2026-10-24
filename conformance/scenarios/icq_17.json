@@ -1,0 +1,20 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "h1"},
+    {"op": "set", "cell": "Sheet1!B1", "input": "h2"},
+    {"op": "set", "cell": "Sheet1!A2", "input": "1"},
+    {"op": "set", "cell": "Sheet1!B2", "input": "2"},
+    {"op": "set", "cell": "Sheet1!A3", "input": "3"},
+    {"op": "set", "cell": "Sheet1!B3", "input": "4"},
+    {"op": "table", "range": "Sheet1!A1:B3", "name": "T"},
+    {"op": "set", "cell": "Sheet1!E1", "input": "=SUM(T[h1])"},
+    {"op": "set", "cell": "Sheet1!E2", "input": "=ROWS(T)"},
+    {"op": "set", "cell": "Sheet1!H1", "input": "=SEQUENCE(4)"},
+    {"op": "set", "cell": "Sheet1!I1", "input": "=SUM(H1#)"},
+    {"op": "set", "cell": "Sheet1!I2", "input": "=H3"},
+    {"op": "insert_cells", "range": "Sheet1!C1:C3", "shift": "right"},
+    {"op": "read", "range": "Sheet1!A1:I8"},
+    {"op": "tables"}
+  ]
+}

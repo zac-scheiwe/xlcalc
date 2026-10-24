@@ -1,0 +1,14 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "1"},
+    {"op": "set", "cell": "Sheet1!A2", "input": "2"},
+    {"op": "name", "name": "nra", "refers_to": "=Sheet1!B2:C4"},
+    {"op": "name", "name": "nrb", "refers_to": "=Sheet1!D8"},
+    {"op": "name", "name": "nrc", "refers_to": "=Sheet1!A$3:B$5"},
+    {"op": "name", "name": "nab", "refers_to": "=Sheet1!$B$2:$C$4"},
+    {"op": "set", "cell": "Sheet1!F1", "input": "=SUM(nra)"},
+    {"op": "insert_cells", "range": "Sheet1!A1:A9", "shift": "right"},
+    {"op": "names"}
+  ]
+}

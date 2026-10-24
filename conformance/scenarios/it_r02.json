@@ -1,0 +1,12 @@
+{"steps":[
+{"op":"iteration","enabled":false,"max_iter":100,"max_change":0.001},
+{"op":"set","cell":"Sheet2!D8","input":"=Sheet3!E2+1"},
+{"op":"set","cell":"Sheet3!E2","input":"=INDEX(Sheet1!E1,1,1)"},
+{"op":"set","cell":"Sheet3!F5","input":"=LEN(Sheet1!E1&\"\")"},
+{"op":"set","cell":"Sheet1!E1","input":"=Sheet2!D8*0.5"},
+{"op":"read","range":"Sheet1!E1:E1"},{"op":"read","range":"Sheet2!D8:D8"},{"op":"read","range":"Sheet3!E2:F5"},
+{"op":"iteration","enabled":true,"max_iter":100,"max_change":0.001},
+{"op":"read","range":"Sheet1!E1:E1"},{"op":"read","range":"Sheet2!D8:D8"},{"op":"read","range":"Sheet3!E2:F5"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!E1:E1"},{"op":"read","range":"Sheet2!D8:D8"},{"op":"read","range":"Sheet3!E2:F5"}
+],"sheets":["Sheet1","Sheet2","Sheet3"]}

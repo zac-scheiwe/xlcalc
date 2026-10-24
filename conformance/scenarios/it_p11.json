@@ -1,0 +1,11 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":1,"max_change":0},
+{"op":"rename_sheet","sheet":"Sheet1","name":"Sheet1x"},
+{"op":"set","cell":"Sheet3!A1","input":"=Sheet1x!A1+1"},
+{"op":"set","cell":"Sheet1x!A1","input":"=Sheet3!A1*2+1"},
+{"op":"read","range":"Sheet1x!A1:A1"},{"op":"read","range":"Sheet3!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1x!A1:A1"},{"op":"read","range":"Sheet3!A1:A1"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1x!A1:A1"},{"op":"read","range":"Sheet3!A1:A1"}
+],"sheets":["Sheet1","Sheet2","Sheet3"]}

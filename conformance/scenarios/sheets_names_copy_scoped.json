@@ -1,0 +1,151 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc",
+  "Dd"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!A1",
+   "input": "1"
+  },
+  {
+   "op": "name",
+   "name": "gA",
+   "refers_to": "=Bb!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "gS",
+   "refers_to": "=SUM(Bb:Cc!$A$1)"
+  },
+  {
+   "op": "name",
+   "name": "gM",
+   "refers_to": "=SUM(Aa:Cc!$A$1)"
+  },
+  {
+   "op": "name",
+   "name": "gE",
+   "refers_to": "=SUM(Aa:Bb!$A$1)"
+  },
+  {
+   "op": "name",
+   "name": "gC",
+   "refers_to": "=Cc!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "gB",
+   "refers_to": "=Bb!$A$1+Cc!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "sa_1",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "sa_2",
+   "refers_to": "=SUM(Bb:Cc!$A$1)",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "sa_3",
+   "refers_to": "=SUM(Aa:Cc!$A$1)",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "sa_4",
+   "refers_to": "=Bb!$A$1+Aa!$A$1",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "sa_5",
+   "refers_to": "=Aa!$A$1",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "sa_6",
+   "refers_to": "=SUM(Aa:Bb!$A$1)",
+   "scope": "Aa"
+  },
+  {
+   "op": "name",
+   "name": "sb_1",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "sb_2",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "sb_3",
+   "refers_to": "=SUM(Bb:Cc!$A$1)",
+   "scope": "Bb"
+  },
+  {
+   "op": "name",
+   "name": "sd_1",
+   "refers_to": "=Bb!$A$1",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "sd_2",
+   "refers_to": "=SUM(Aa:Dd!$A$1)",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "sd_3",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Dd"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Bb",
+   "before": "Cc"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Cc",
+   "after": "Dd"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

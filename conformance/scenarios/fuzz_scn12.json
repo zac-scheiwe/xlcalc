@@ -1,0 +1,227 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "21"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "22"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "29"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "28"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C7",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "27"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "4"
+  },
+  {
+   "op": "name",
+   "name": "Nm1",
+   "refers_to": "=Sheet1!$A$4:$B$4"
+  },
+  {
+   "op": "name",
+   "name": "Nm3",
+   "refers_to": "=Sheet1!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F1",
+   "input": "=SUM(A3:B6)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=SUM(A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=MAX(A6:D3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E7",
+   "input": "=INDEX(D2,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D7",
+   "input": "=SUM(A4:C3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F5",
+   "input": "=MAX(E2:D6)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E5",
+   "input": "=B5+C8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J1",
+   "input": "=SEQUENCE(1,2)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H4",
+   "input": "7"
+  },
+  {
+   "op": "name",
+   "name": "Nm1",
+   "refers_to": "=Sheet1!$B$6"
+  },
+  {
+   "op": "clear",
+   "range": "Sheet1!C4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H6",
+   "input": "6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I2",
+   "input": "3"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!D2:D2",
+   "to": "Sheet1!D4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 7,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H3",
+   "input": "=SEQUENCE(1,2)"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 4,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "iteration",
+   "enabled": false,
+   "max_iter": 20,
+   "max_change": 0.001
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "=A$5*6"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F7",
+   "input": "=$E$4+E6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 6,
+   "count": 1
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "#N/A"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  }
+ ]
+}

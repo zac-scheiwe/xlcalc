@@ -1,0 +1,245 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "23"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "19"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "28"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "21"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "25"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "24"
+  },
+  {
+   "op": "name",
+   "name": "Nm1",
+   "refers_to": "=Sheet1!$C$2"
+  },
+  {
+   "op": "name",
+   "name": "Nm2",
+   "refers_to": "=Sheet1!$A$4:$C$5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D7",
+   "input": "=IF(B1>14,C2,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F5",
+   "input": "=AVERAGE(E1:B5)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E6",
+   "input": "=C$7+D1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F4",
+   "input": "=A1+$B$8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F8",
+   "input": "=E3*7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D8",
+   "input": "=SUM(C2:A6)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=SUM(C6:B4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F7",
+   "input": "=A6*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F2",
+   "input": "=A$8+$E$8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=B3*9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F2",
+   "input": "=B8+D4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H10"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J4",
+   "input": "7"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 3,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "TRUE"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=SUM(Nm2)+C5"
+  },
+  {
+   "op": "clear",
+   "range": "Sheet1!C1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 3,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "iteration",
+   "enabled": true,
+   "max_iter": 20,
+   "max_change": 0.001
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J5",
+   "input": "3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F2",
+   "input": "=SUM(A2:C5)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 5,
+   "count": 1
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 7,
+   "count": 2
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "#N/A"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  }
+ ]
+}

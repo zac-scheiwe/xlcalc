@@ -1,0 +1,15 @@
+{"steps":[
+{"op":"mode","value":"manual"},
+{"op":"set","cell":"Sheet1!C1","input":"5"},
+{"op":"set","cell":"Sheet1!D1","input":"=C1*2"},
+{"op":"set","cell":"Sheet1!C1","input":"6"},
+{"op":"read","range":"Sheet1!C1:G1"},
+{"op":"set","cell":"Sheet1!E1","input":"=D1+1"},
+{"op":"read","range":"Sheet1!C1:G1"},
+{"op":"set","cell":"Sheet1!F1","input":"=E1+C1"},
+{"op":"read","range":"Sheet1!C1:G1"},
+{"op":"set","cell":"Sheet1!C1","input":"=D1/2+1"},
+{"op":"read","range":"Sheet1!C1:G1"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!C1:G1"}
+]}

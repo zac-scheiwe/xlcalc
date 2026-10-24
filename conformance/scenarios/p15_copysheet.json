@@ -1,0 +1,6 @@
+{"sheets":["Sheet1","Sheet2"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"1"},{"op":"set","cell":"Sheet1!C3","input":"3"},{"op":"set","cell":"Sheet1!C4","input":"1"},{"op":"set","cell":"Sheet1!C5","input":"2"},
+{"op":"name","name":"Nr","refers_to":"=Sheet1!B2"},{"op":"name","name":"Nl","refers_to":"=Sheet1!B2","scope":"Sheet2"},
+{"op":"copy_sheet","sheet":"Sheet1","name":"Cpy1","after":"Sheet2"},
+{"op":"move_sheet","sheet":"Sheet1","before":"Sheet2"},{"op":"names"}
+]}

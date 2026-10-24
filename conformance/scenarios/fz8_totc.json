@@ -1,0 +1,123 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "H1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "H2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "H3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "15"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "18"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "24"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "2"
+  },
+  {
+   "op": "table",
+   "range": "Sheet1!A2:C6",
+   "name": "MyTab"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H22"
+  },
+  {
+   "op": "table_totals",
+   "sheet": "Sheet1",
+   "name": "MyTab",
+   "value": true
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H22"
+  },
+  {
+   "op": "table_totals",
+   "sheet": "Sheet1",
+   "name": "MyTab",
+   "value": false
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H22"
+  },
+  {
+   "op": "table_totals",
+   "sheet": "Sheet1",
+   "name": "MyTab",
+   "value": true
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H22"
+  }
+ ]
+}

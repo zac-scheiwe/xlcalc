@@ -1,0 +1,15 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B:B", "fmt": "0\"colB\""},
+    {"op": "set", "cell": "Sheet1!B2", "input": "5"},
+    {"op": "set", "cell": "Sheet1!B3", "input": "12%"},
+    {"op": "set", "cell": "Sheet1!C2", "input": "12%"},
+    {"op": "format", "range": "Sheet1!3:3", "fmt": "0\"row3\""},
+    {"op": "set", "cell": "Sheet1!D3", "input": "5"},
+    {"op": "set", "cell": "Sheet1!D4", "input": "7%"},
+    {"op": "read", "range": "Sheet1!A1:E6"}
+  ]
+}

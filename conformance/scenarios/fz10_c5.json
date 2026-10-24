@@ -1,0 +1,87 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=SUM(Sheet1!C1:XFD1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=SUM(Sheet1!J1:XFD1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "=SUM(Sheet1!XFB1:XFD1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A4",
+   "input": "=Sheet1!XFD1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A5",
+   "input": "=SUM(Sheet1!XFC1:XFD1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A6",
+   "input": "=SUM(Sheet1!A1:XFD1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A7",
+   "input": "=SUM(Sheet1!C:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A8",
+   "input": "=SUM(Sheet1!A:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A9",
+   "input": "=SUM(Sheet1!XFD1:XFD1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A10",
+   "input": "=SUM(Sheet1!XFC2:XFC3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A11",
+   "input": "=SUM(Sheet1!XFC:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A12",
+   "input": "=SUM(Sheet1!A:A)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A12"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 16383
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A12"
+  }
+ ]
+}

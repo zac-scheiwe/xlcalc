@@ -1,0 +1,183 @@
+{
+   "sheets" : [
+      "Sheet1"
+   ],
+   "steps" : [
+      {
+         "cell" : "Sheet1!A1",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "input" : "={1,2;3,4;5,6;7,8}",
+         "op" : "array",
+         "range" : "Sheet1!A4:B7"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A1:A5",
+         "rowcol" : "cols",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A1:H11"
+      },
+      {
+         "cell" : "Sheet1!A13",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "input" : "={1;2;3;4}",
+         "op" : "array",
+         "range" : "Sheet1!A16:A19"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A13:A17",
+         "rowcol" : "cols",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A13:H23"
+      },
+      {
+         "cell" : "Sheet1!A25",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "input" : "={1,2,3,4}",
+         "op" : "array",
+         "range" : "Sheet1!C25:F25"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A25:D25",
+         "rowcol" : "rows",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A25:H35"
+      },
+      {
+         "cell" : "Sheet1!A37",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "input" : "={1,2;3,4}",
+         "op" : "array",
+         "range" : "Sheet1!B37:C38"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A37:D37",
+         "rowcol" : "rows",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A37:H47"
+      },
+      {
+         "cell" : "Sheet1!A49",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "input" : "={1,2;3,4}",
+         "op" : "array",
+         "range" : "Sheet1!B49:C50"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A49:D50",
+         "rowcol" : "rows",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A49:H59"
+      },
+      {
+         "cell" : "Sheet1!A61",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "op" : "merge",
+         "range" : "Sheet1!A63:B64"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A61:A66",
+         "rowcol" : "cols",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A61:H71"
+      },
+      {
+         "cell" : "Sheet1!A73",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "op" : "merge",
+         "range" : "Sheet1!A75:A76"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A73:A78",
+         "rowcol" : "cols",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A73:H83"
+      },
+      {
+         "cell" : "Sheet1!A85",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "op" : "merge",
+         "range" : "Sheet1!A87:B88"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A85:A90",
+         "rowcol" : "cols",
+         "type" : "autofill"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A85:H95"
+      },
+      {
+         "cell" : "Sheet1!A109",
+         "input" : "1",
+         "op" : "set"
+      },
+      {
+         "op" : "merge",
+         "range" : "Sheet1!A111:B112"
+      },
+      {
+         "op" : "dataseries",
+         "range" : "Sheet1!A109:B114",
+         "rowcol" : "cols",
+         "type" : "linear"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A109:H119"
+      }
+   ]
+}

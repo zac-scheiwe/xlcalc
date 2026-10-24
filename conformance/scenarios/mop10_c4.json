@@ -1,0 +1,50 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "h1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "h2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "3"
+    },
+    {
+      "op": "table",
+      "range": "Sheet1!A1:B3",
+      "name": "T"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "=A2*2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "7"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:C6"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+ "sheets": [
+  "abcdefghijklmnopqrstuvwxyz12345",
+  "Sheet9",
+  "a (2)"
+ ],
+ "steps": [
+  {
+   "op": "copy_sheet",
+   "sheet": "abcdefghijklmnopqrstuvwxyz12345",
+   "after": "a (2)"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet9",
+   "after": "a (2)"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "a (2)",
+   "after": "a (2)"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "a (2)",
+   "after": "a (2)"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet9",
+   "after": "a (2)"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet9",
+   "after": "a (2)"
+  },
+  {
+   "op": "sheets"
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+{
+  "steps": [
+    {"op":"set","cell":"Sheet1!A1","input":"1"},
+    {"op":"set","cell":"Sheet1!A2","input":"2"},
+    {"op":"set","cell":"Sheet1!A3","input":"3"},
+    {"op":"set","cell":"Sheet1!B1","input":"=A1*10"},
+    {"op":"set","cell":"Sheet1!C1","input":"=$A$1+A1+A$1+$A1"},
+    {"op":"set","cell":"Sheet1!D1","input":"=SUM(A$1:A1)"},
+    {"op":"copy","from":"Sheet1!B1:D1","to":"Sheet1!B2"},
+    {"op":"copy","from":"Sheet1!B1:D1","to":"Sheet1!B3"},
+    {"op":"read","range":"Sheet1!A1:D3"},
+    {"op":"set","cell":"Sheet1!E5","input":"=A1+B2"},
+    {"op":"copy","from":"Sheet1!E5","to":"Sheet1!A1"},
+    {"op":"copy","from":"Sheet1!E5","to":"Sheet1!F6"},
+    {"op":"read","range":"Sheet1!A1:F6"},
+    {"op":"set","cell":"Sheet1!H1","input":"=SEQUENCE(3)"},
+    {"op":"copy","from":"Sheet1!H1:H3","to":"Sheet1!J1"},
+    {"op":"read","range":"Sheet1!H1:J3"},
+    {"op":"set","cell":"Sheet1!L1","input":"hello"},
+    {"op":"copy","from":"Sheet1!L1","to":"Sheet1!L2"},
+    {"op":"read","range":"Sheet1!L1:L2"}
+  ]
+}

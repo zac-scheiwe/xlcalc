@@ -1,0 +1,5 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"format","range":"Sheet1!D4","fmt":"0.00"},
+{"op":"merge","range":"Sheet1!C3:D4"},
+{"op":"read","range":"Sheet1!B2:F5"}
+]}

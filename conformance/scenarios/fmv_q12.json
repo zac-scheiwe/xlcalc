@@ -1,0 +1,14 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B:B", "fmt": "0\"colB\""},
+    {"op": "set", "cell": "Sheet1!B2", "input": "5"},
+    {"op": "clear", "range": "Sheet1!B2"},
+    {"op": "set", "cell": "Sheet1!B3", "input": "=1"},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "copy", "from": "Sheet1!A3:C3", "to": "Sheet1!A9"},
+    {"op": "read", "range": "Sheet1!A9:E9"}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!A1","input":"1","op":"set"},
+    {"cell":"Sheet1!A2","input":"2","op":"set"},
+    {"enabled":true,"max_change":0.0001,"max_iter":100,"op":"iteration"},
+    {"cell":"Sheet1!B1","input":"=B2+1","op":"set"},
+    {"cell":"Sheet1!B2","input":"=B1*0.5+A1","op":"set"},
+    {"cell":"Sheet1!C2","input":"=SUM(C1:C3)","op":"set"},
+    {"cell":"Sheet1!C3","input":"=C2/2+1","op":"set"},
+    {"op":"insert_cells","range":"Sheet1!A1:A2","shift":"right"},
+    {"at":4,"count":1,"op":"delete_rows","sheet":"Sheet1"},
+    {"from":"Sheet1!D6:D7","op":"copy","to":"Sheet1!B1"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"cell":"Sheet1!A2","input":"6","op":"set"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"cell":"Sheet1!A2","input":"9","op":"set"},
+    {"cell":"Sheet1!A1","input":"1","op":"set"},
+    {"op":"mode","value":"auto"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

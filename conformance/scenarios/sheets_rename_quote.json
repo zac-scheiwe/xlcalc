@@ -1,0 +1,980 @@
+{
+ "sheets": [
+  "Zz",
+  "Qq",
+  "Xx"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Zz!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Qq!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Xx!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Xx!B2",
+   "input": "4"
+  },
+  {
+   "op": "name",
+   "name": "nm",
+   "refers_to": "=Xx!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "snm",
+   "refers_to": "=Xx!$B$2",
+   "scope": "Xx"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B1",
+   "input": "=Xx!A1"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B2",
+   "input": "=SUM(Xx!A1:B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B3",
+   "input": "=SUM(Xx!A:A)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B4",
+   "input": "=SUM(Xx!2:2)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B5",
+   "input": "=Xx!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B6",
+   "input": "=Xx!snm"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B7",
+   "input": "=SUM(Xx:Qq!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B8",
+   "input": "=SUM(Qq:Xx!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B9",
+   "input": "=nm"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B10",
+   "input": "=Xx!A1+Qq!A1"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B11",
+   "input": "=SUM(Xx!A1,Qq!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B12",
+   "input": "=ROWS(Xx!A1:A3)"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B13",
+   "input": "=INDIRECT(\"Xx!A1\")"
+  },
+  {
+   "op": "set",
+   "cell": "Zz!B14",
+   "input": "=Xx!A1:B2"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Xx",
+   "name": "My Sheet"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "My Sheet",
+   "name": "a.b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a.b",
+   "name": "_x"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "_x",
+   "name": "1abc"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "1abc",
+   "name": "abc1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "abc1",
+   "name": "A1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "A1",
+   "name": "AB12"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "AB12",
+   "name": "XFD1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "XFD1",
+   "name": "XFE1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "XFE1",
+   "name": "R1C1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "R1C1",
+   "name": "RC"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "RC",
+   "name": "R"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "R",
+   "name": "C"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "C",
+   "name": "r2"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "r2",
+   "name": "c5"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "c5",
+   "name": "R2C"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "R2C",
+   "name": "TRUE"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "TRUE",
+   "name": "false"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "false",
+   "name": "x-y"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "x-y",
+   "name": "x+y"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "x+y",
+   "name": "\u00e9"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u00e9",
+   "name": "\u00f1and\u00fa"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u00f1and\u00fa",
+   "name": "\u65e5\u672c\u8a9e"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u65e5\u672c\u8a9e",
+   "name": "a b c"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a b c",
+   "name": "a'b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a'b",
+   "name": "a&b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a&b",
+   "name": "a(b)"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a(b)",
+   "name": "a,b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a,b",
+   "name": "a;b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a;b",
+   "name": "a!b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a!b",
+   "name": "a#b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a#b",
+   "name": "a$b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a$b",
+   "name": "a%b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a%b",
+   "name": "a@b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a@b",
+   "name": "a{b}"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a{b}",
+   "name": "=x"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "=x",
+   "name": "-x"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "-x",
+   "name": "1.5"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "1.5",
+   "name": "1e5"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "1e5",
+   "name": "Sheet1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet1",
+   "name": "x_y"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "x_y",
+   "name": "x.y."
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "x.y.",
+   "name": "TRUE1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "TRUE1",
+   "name": "NA"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "NA",
+   "name": "a\"b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a\"b",
+   "name": "a<b>"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a<b>",
+   "name": "a|b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a|b",
+   "name": "`"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "`",
+   "name": "~"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "~",
+   "name": "^"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "^",
+   "name": "1"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "1",
+   "name": "12"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "12",
+   "name": "0"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "0",
+   "name": "aaa"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "aaa",
+   "name": "ABC"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "ABC",
+   "name": "abc"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "abc",
+   "name": "bb"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "bb",
+   "name": "1a"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "1a",
+   "name": "A"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "A",
+   "name": "a1b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a1b",
+   "name": "\u00df"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u00df",
+   "name": "\u00c5\u00c5"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u00c5\u00c5",
+   "name": "ab\u00a0cd"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "ab\u00a0cd",
+   "name": "a\tb"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a\tb",
+   "name": "\u00b2"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u00b2",
+   "name": "x\u00b2"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "x\u00b2",
+   "name": "\u0661\u0662"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u0661\u0662",
+   "name": "a\u2013b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a\u2013b",
+   "name": "a\u00b7b"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "a\u00b7b",
+   "name": "\u03a9"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\u03a9",
+   "name": "\ud83d\ude00"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "\ud83d\ude00",
+   "name": "\u00a3"
+  },
+  {
+   "op": "read",
+   "range": "Zz!B1:B14"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "sheets"
+  }
+ ]
+}

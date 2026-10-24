@@ -1,0 +1,40 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2"
+  ],
+  "steps": [
+    {
+      "op": "table",
+      "range": "Sheet1!A3:C5",
+      "name": "T"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C3",
+      "input": "=SEQUENCE(4)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A6",
+      "input": "=SUM(F6#)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "=H6+$E$4"
+    },
+    {
+      "op": "cut",
+      "from": "Sheet1!C3",
+      "to": "Sheet1!H1"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A3:F7"
+    }
+  ]
+}

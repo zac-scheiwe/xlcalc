@@ -1,0 +1,33 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!B1","input":"=SUM(A1:B1)","op":"set"},
+    {"cell":"Sheet1!C1","input":"4","op":"set"},
+    {"cell":"Sheet1!D1","input":"txt","op":"set"},
+    {"cell":"Sheet1!A2","input":"=SUM(A2:B2)","op":"set"},
+    {"cell":"Sheet1!B2","input":"=A1+2","op":"set"},
+    {"cell":"Sheet1!D2","input":"=C1","op":"set"},
+    {"cell":"Sheet1!B3","input":"txt","op":"set"},
+    {"cell":"Sheet1!C3","input":"=C2","op":"set"},
+    {"cell":"Sheet1!D3","input":"=$A$1*2","op":"set"},
+    {"cell":"Sheet1!A4","input":"=A1+4","op":"set"},
+    {"cell":"Sheet1!B4","input":"6","op":"set"},
+    {"cell":"Sheet1!C4","input":"=A1+4","op":"set"},
+    {"from":"Sheet1!A2:B2","op":"paste_special","paste":"all","to":"Sheet1!B6","transpose":true},
+    {"op":"clear","range":"Sheet1!F5:F6"},
+    {"from":"Sheet1!C2:D4","op":"paste_special","paste":"values","to":"Sheet1!F5","transpose":true},
+    {"from":"Sheet1!D1","op":"paste_special","paste":"formulas","skip_blanks":true,"to":"Sheet1!B6","transpose":true},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"from":"Sheet1!D1","op":"paste_special","paste":"formats","skip_blanks":true,"to":"Sheet1!D5","transpose":true},
+    {"from":"Sheet1!D3","op":"paste_special","paste":"formulas","to":"Sheet1!D5"},
+    {"from":"Sheet1!B4","op":"paste_special","paste":"values","to":"Sheet1!H1","transpose":true},
+    {"op":"clear","range":"Sheet1!A3"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read_text","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read","range":"Sheet3!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

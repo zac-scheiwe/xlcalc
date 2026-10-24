@@ -1,0 +1,13 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"set","cell":"Sheet1!B1","input":"3"},
+{"op":"set","cell":"Sheet1!C1","input":"=B1*2"},
+{"op":"set","cell":"Sheet1!D1","input":"=ISNUMBER(C1)*5+ISFORMULA(C1)"},
+{"op":"set","cell":"Sheet1!E1","input":"=\"v\"&C1"},
+{"op":"read","range":"Sheet1!A1:F2"},
+{"op":"set","cell":"Sheet1!B1","input":"=MIN(IFERROR(C1,0),50)+1"},
+{"op":"read","range":"Sheet1!A1:F2"},
+{"op":"set","cell":"Sheet1!A5","input":"7"},
+{"op":"read","range":"Sheet1!A1:F2"},
+{"op":"fullcalc"},
+{"op":"read","range":"Sheet1!A1:F2"}
+]}

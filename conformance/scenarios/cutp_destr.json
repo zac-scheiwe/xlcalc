@@ -1,0 +1,27 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "1"},
+    {"op": "set", "cell": "Sheet1!A2", "input": "2"},
+    {"op": "set", "cell": "Sheet1!A3", "input": "3"},
+    {"op": "set", "cell": "Sheet1!X1", "input": "10"},
+    {"op": "set", "cell": "Sheet1!X2", "input": "20"},
+    {"op": "set", "cell": "Sheet1!X3", "input": "30"},
+    {"op": "set", "cell": "Sheet1!Y1", "input": "=SUM(X1:X2)"},
+    {"op": "set", "cell": "Sheet1!Y2", "input": "=SUM(X1:X1)"},
+    {"op": "set", "cell": "Sheet1!Y3", "input": "=SUM(X1:X3)"},
+    {"op": "set", "cell": "Sheet1!Y4", "input": "=SUM(X2:X3)"},
+    {"op": "set", "cell": "Sheet1!Y5", "input": "=X1:X2"},
+    {"op": "set", "cell": "Sheet1!Y7", "input": "=SUM(W1:Y2)"},
+    {"op": "set", "cell": "Sheet2!A1", "input": "=Sheet1!X2"},
+    {"op": "set", "cell": "Sheet2!A2", "input": "=SUM(Sheet1!X1:X2)"},
+    {"op": "name", "name": "nd", "refers_to": "=Sheet1!$X$1:$X$2"},
+    {"op": "set", "cell": "Sheet1!Z1", "input": "=SUM(nd)"},
+    {"op": "cut", "from": "Sheet1!A1:A2", "to": "Sheet1!X1"},
+    {"op": "read", "range": "Sheet1!X1:Z8"},
+    {"op": "read", "range": "Sheet2!A1:A2"},
+    {"op": "names"},
+    {"op": "cut", "from": "Sheet1!A3", "to": "Sheet2!B1"},
+    {"op": "read", "range": "Sheet2!A1:B2"}
+  ]
+}

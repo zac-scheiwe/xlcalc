@@ -1,0 +1,894 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "check_all_formats": true,
+  "steps": [
+    {
+      "op": "typel",
+      "cell": "Sheet1!A1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A1:A1",
+      "fmt": "mmm-yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A1:A1",
+      "to": "Sheet1!A1:A5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:A5",
+      "id": "f1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!B1:B1",
+      "fmt": "mmmm-yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!B1:B1",
+      "to": "Sheet1!B1:B5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!B1:B5",
+      "id": "f2"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!C1:C1",
+      "fmt": "mmm yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!C1:C1",
+      "to": "Sheet1!C1:C5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!C1:C5",
+      "id": "f3"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!D1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!D1:D1",
+      "fmt": "mmm-yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!D1:D1",
+      "to": "Sheet1!D1:D5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!D1:D5",
+      "id": "f4"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!E1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!E1:E1",
+      "fmt": "mmmm yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!E1:E1",
+      "to": "Sheet1!E1:E5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!E1:E5",
+      "id": "f5"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!F1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!F1:F1",
+      "fmt": "mmm yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!F1:F1",
+      "to": "Sheet1!F1:F5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!F1:F5",
+      "id": "f6"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!G1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!G1:G1",
+      "fmt": "mmm/yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!G1:G1",
+      "to": "Sheet1!G1:G5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!G1:G5",
+      "id": "f7"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!H1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!H1:H1",
+      "fmt": "m/yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!H1:H1",
+      "to": "Sheet1!H1:H5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!H1:H5",
+      "id": "f8"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!I1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!I1:I1",
+      "fmt": "mm/yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!I1:I1",
+      "to": "Sheet1!I1:I5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!I1:I5",
+      "id": "f9"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!J1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!J1:J1",
+      "fmt": "h:mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!J1:J1",
+      "to": "Sheet1!J1:J5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!J1:J5",
+      "id": "f10"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!K1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!K1:K1",
+      "fmt": "h:mm:ss"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!K1:K1",
+      "to": "Sheet1!K1:K5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!K1:K5",
+      "id": "f11"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!L1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!L1:L1",
+      "fmt": "h:mm AM/PM"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!L1:L1",
+      "to": "Sheet1!L1:L5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!L1:L5",
+      "id": "f12"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!M1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!M1:M1",
+      "fmt": "hh:mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!M1:M1",
+      "to": "Sheet1!M1:M5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!M1:M5",
+      "id": "f13"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!N1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!N1:N1",
+      "fmt": "[h]:mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!N1:N1",
+      "to": "Sheet1!N1:N5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!N1:N5",
+      "id": "f14"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!O1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!O1:O1",
+      "fmt": "mm:ss"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!O1:O1",
+      "to": "Sheet1!O1:O5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!O1:O5",
+      "id": "f15"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!P1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!P1:P1",
+      "fmt": "h"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!P1:P1",
+      "to": "Sheet1!P1:P5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!P1:P5",
+      "id": "f16"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Q1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!Q1:Q1",
+      "fmt": "h AM/PM"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!Q1:Q1",
+      "to": "Sheet1!Q1:Q5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!Q1:Q5",
+      "id": "f17"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!R1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!R1:R1",
+      "fmt": "m/d/yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!R1:R1",
+      "to": "Sheet1!R1:R5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!R1:R5",
+      "id": "f18"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!S1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!S1:S1",
+      "fmt": "dd/mm/yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!S1:S1",
+      "to": "Sheet1!S1:S5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!S1:S5",
+      "id": "f19"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!T1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!T1:T1",
+      "fmt": "yyyy-mm-dd"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!T1:T1",
+      "to": "Sheet1!T1:T5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!T1:T5",
+      "id": "f20"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!U1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!U1:U1",
+      "fmt": "d mmm yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!U1:U1",
+      "to": "Sheet1!U1:U5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!U1:U5",
+      "id": "f21"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!V1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!V1:V1",
+      "fmt": "ddd d mmm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!V1:V1",
+      "to": "Sheet1!V1:V5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!V1:V5",
+      "id": "f22"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!W1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!W1:W1",
+      "fmt": "d/m"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!W1:W1",
+      "to": "Sheet1!W1:W5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!W1:W5",
+      "id": "f23"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!X1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!X1:X1",
+      "fmt": "d-mmm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!X1:X1",
+      "to": "Sheet1!X1:X5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!X1:X5",
+      "id": "f24"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Y1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!Y1:Y1",
+      "fmt": "yyyy mmm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!Y1:Y1",
+      "to": "Sheet1!Y1:Y5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!Y1:Y5",
+      "id": "f25"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!Z1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!Z1:Z1",
+      "fmt": "yyyy-mm-dd hh:mm:ss"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!Z1:Z1",
+      "to": "Sheet1!Z1:Z5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!Z1:Z5",
+      "id": "f26"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AA1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AA1:AA1",
+      "fmt": "dd/mm/yyyy h:mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AA1:AA1",
+      "to": "Sheet1!AA1:AA5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AA1:AA5",
+      "id": "f27"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AB1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AB1:AB1",
+      "fmt": "mm/dd/yy hh:mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AB1:AB1",
+      "to": "Sheet1!AB1:AB5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AB1:AB5",
+      "id": "f28"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AC1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AC1:AC1",
+      "fmt": "0.00"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AC1:AC1",
+      "to": "Sheet1!AC1:AC5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AC1:AC5",
+      "id": "f29"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AD1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AD1:AD1",
+      "fmt": "@"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AD1:AD1",
+      "to": "Sheet1!AD1:AD5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AD1:AD5",
+      "id": "f30"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AE1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AE1:AE1",
+      "fmt": "d/mm/yyyy;@"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AE1:AE1",
+      "to": "Sheet1!AE1:AE5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AE1:AE5",
+      "id": "f31"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AF1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AF1:AF1",
+      "fmt": "[$-409]mmm-yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AF1:AF1",
+      "to": "Sheet1!AF1:AF5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AF1:AF5",
+      "id": "f32"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AG1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AG1:AG1",
+      "fmt": "mmm-yy;@"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AG1:AG1",
+      "to": "Sheet1!AG1:AG5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AG1:AG5",
+      "id": "f33"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AH1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AH1:AH1",
+      "fmt": "yy/mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AH1:AH1",
+      "to": "Sheet1!AH1:AH5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AH1:AH5",
+      "id": "f34"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AI1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AI1:AI1",
+      "fmt": "mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AI1:AI1",
+      "to": "Sheet1!AI1:AI5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AI1:AI5",
+      "id": "f35"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AJ1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AJ1:AJ1",
+      "fmt": "yyyy/mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AJ1:AJ1",
+      "to": "Sheet1!AJ1:AJ5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AJ1:AJ5",
+      "id": "f36"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AK1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AK2",
+      "input": "43846.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AK1:AK2",
+      "fmt": "mmm-yy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AK1:AK2",
+      "to": "Sheet1!AK1:AK6",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AK1:AK6",
+      "id": "g1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AL1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AL2",
+      "input": "43846.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AL1:AL2",
+      "fmt": "h:mm"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AL1:AL2",
+      "to": "Sheet1!AL1:AL6",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AL1:AL6",
+      "id": "g2"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AM1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AM2",
+      "input": "43846.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AM1:AM2",
+      "fmt": "h:mm:ss"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AM1:AM2",
+      "to": "Sheet1!AM1:AM6",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AM1:AM6",
+      "id": "g3"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AN1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AN2",
+      "input": "43846.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AN1:AN2",
+      "fmt": "mm:ss"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AN1:AN2",
+      "to": "Sheet1!AN1:AN6",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AN1:AN6",
+      "id": "g4"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AO1",
+      "input": "43845.4375"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!AO2",
+      "input": "43846.4375"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!AO1:AO2",
+      "fmt": "m/yyyy"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!AO1:AO2",
+      "to": "Sheet1!AO1:AO6",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!AO1:AO6",
+      "id": "g5"
+    }
+  ]
+}

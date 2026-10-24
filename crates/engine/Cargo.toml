@@ -1,0 +1,14 @@
+[package]
+name = "xlcalc"
+description = "A faithful clone of Excel's calculation engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+rustc-hash.workspace = true
+smallvec.workspace = true
+rstar.workspace = true
+chrono.workspace = true
+stacker = "0.1"
+rayon = "1.10"

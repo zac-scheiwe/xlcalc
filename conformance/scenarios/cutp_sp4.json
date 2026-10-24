@@ -1,0 +1,16 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "=SEQUENCE(3)"},
+    {"op": "set", "cell": "Sheet1!B1", "input": "=A1#"},
+    {"op": "set", "cell": "Sheet1!B4", "input": "=SUM(A1:A3)"},
+    {"op": "set", "cell": "Sheet1!B5", "input": "=A2"},
+    {"op": "set", "cell": "Sheet1!B6", "input": "=SUM(A1#)"},
+    {"op": "set", "cell": "Sheet1!C1", "input": "=ROWS(A1#)"},
+    {"op": "set", "cell": "Sheet1!X1", "input": "9"},
+    {"op": "cut", "from": "Sheet1!X1", "to": "Sheet1!A2"},
+    {"op": "read", "range": "Sheet1!A1:F6"},
+    {"op": "cut", "from": "Sheet1!A2", "to": "Sheet1!X1"},
+    {"op": "read", "range": "Sheet1!A1:F6"}
+  ]
+}

@@ -1,0 +1,11 @@
+{"sheets":["Sheet1"],"check_all_formats":true,"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"3/4/2020"},
+{"op":"set","cell":"Sheet1!A2","input":"13/4/2020"},
+{"op":"set","cell":"Sheet1!A3","input":"4/13/2020"},
+{"op":"set","cell":"Sheet1!A6","input":"3/4/20 13:45"},
+{"op":"set","cell":"Sheet1!A7","input":"1 1/2"},
+{"op":"set","cell":"Sheet1!A8","input":"=DATEVALUE(\"3/4/2020\")"},
+{"op":"set","cell":"Sheet1!A9","input":"3-4-2020"},
+{"op":"set","cell":"Sheet1!A10","input":"=SUM(1.5,2)"},
+{"op":"read","range":"Sheet1!A1:A10"}
+]}

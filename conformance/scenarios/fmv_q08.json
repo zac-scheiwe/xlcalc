@@ -1,0 +1,14 @@
+{
+  "sheets": ["Sheet1"],
+  "check_all_formats": true,
+  "check_empty_formats": true,
+  "steps": [
+    {"op": "format", "range": "Sheet1!B:C", "fmt": "0\"colBC\""},
+    {"op": "format", "range": "Sheet1!2:3", "fmt": "0\"rows\""},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"},
+    {"op": "format", "range": "Sheet1!A:XFD", "fmt": "0\"all\""},
+    {"op": "read", "range": "Sheet1!A1:E6"},
+    {"op": "read", "range": "Sheet1!A1000:E1000"}
+  ]
+}

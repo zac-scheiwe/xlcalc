@@ -1,0 +1,70 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A5",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B5",
+      "input": "bx9"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C5",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D5",
+      "input": "d"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A6",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B6",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C6",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D6",
+      "input": "4"
+    },
+    {
+      "op": "table",
+      "range": "Sheet1!A5:D6",
+      "name": "T"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A7",
+      "input": "=1"
+    },
+    {
+      "op": "cut",
+      "from": "Sheet1!C5",
+      "to": "Sheet1!H1"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:H8"
+    }
+  ]
+}

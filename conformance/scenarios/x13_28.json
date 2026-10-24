@@ -1,0 +1,21 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!A1","input":"3","op":"set"},
+    {"cell":"Sheet1!A2","input":"5","op":"set"},
+    {"cell":"Sheet1!A3","input":"2","op":"set"},
+    {"cell":"Sheet1!C1","input":"=SEQUENCE(3,2)","op":"set"},
+    {"cell":"Sheet1!C5","input":"=TRANSPOSE(A1:A3)","op":"set"},
+    {"cell":"Sheet1!C5","input":"13","op":"set"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"from":"Sheet1!C5","op":"cut","to":"Sheet1!G6"},
+    {"from":"Sheet1!E2","op":"cut","to":"Sheet1!D4"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read","range":"Sheet3!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

@@ -1,0 +1,8 @@
+{"steps":[
+{"op":"iteration","enabled":true,"max_iter":100,"max_change":0.001},
+{"op":"set","cell":"Sheet1!A1","input":"=C1+0"},
+{"op":"set","cell":"Sheet1!C1","input":"=SEQUENCE(2,1,A1/2+1)"},
+{"op":"read","range":"Sheet1!A1:D3"},
+{"op":"calc"},
+{"op":"read","range":"Sheet1!A1:D3"}
+],"sheets":["Sheet1","Sheet2","Sheet3"]}

@@ -1,0 +1,113 @@
+{
+  "steps": [
+    {
+      "input": "Item",
+      "op": "set",
+      "cell": "Sheet1!A1"
+    },
+    {
+      "input": "Qty",
+      "op": "set",
+      "cell": "Sheet1!B1"
+    },
+    {
+      "input": "Price",
+      "op": "set",
+      "cell": "Sheet1!C1"
+    },
+    {
+      "input": "a",
+      "op": "set",
+      "cell": "Sheet1!A2"
+    },
+    {
+      "input": "2",
+      "op": "set",
+      "cell": "Sheet1!B2"
+    },
+    {
+      "input": "3",
+      "op": "set",
+      "cell": "Sheet1!C2"
+    },
+    {
+      "input": "b",
+      "op": "set",
+      "cell": "Sheet1!A3"
+    },
+    {
+      "input": "4",
+      "op": "set",
+      "cell": "Sheet1!B3"
+    },
+    {
+      "input": "5",
+      "op": "set",
+      "cell": "Sheet1!C3"
+    },
+    {
+      "op": "table",
+      "name": "Inv",
+      "range": "Sheet1!A1:C3"
+    },
+    {
+      "input": "=SUM(Inv[Qty])",
+      "op": "set",
+      "cell": "Sheet1!F1"
+    },
+    {
+      "input": "=Inv[[#Headers],[Qty]]",
+      "op": "set",
+      "cell": "Sheet1!F2"
+    },
+    {
+      "input": "Quantity",
+      "op": "set",
+      "cell": "Sheet1!B1"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F4"
+    },
+    {
+      "input": "Item",
+      "op": "set",
+      "cell": "Sheet1!C1"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:D1"
+    },
+    {
+      "input": "",
+      "op": "set",
+      "cell": "Sheet1!B1"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F2"
+    },
+    {
+      "input": "=[@Quantity]*2",
+      "op": "set",
+      "cell": "Sheet1!D2"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F4"
+    },
+    {
+      "input": "c",
+      "op": "set",
+      "cell": "Sheet1!A4"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F5"
+    },
+    {
+      "op": "circ",
+      "sheet": "Sheet1"
+    }
+  ]
+}

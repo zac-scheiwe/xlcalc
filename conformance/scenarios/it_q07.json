@@ -1,0 +1,12 @@
+{"steps":[
+
+{"op":"set","cell":"Sheet2!H4","input":"4"},
+{"op":"set","cell":"Sheet2!E3","input":"5"},
+{"op":"set","cell":"Sheet2!H3","input":"=INDIRECT(\"Sheet2!E3\")"},
+{"op":"set","cell":"Sheet2!B7","input":"=COUNTIFS(G1:G4,\">0\",H1:H4,\"<50\")"},
+{"op":"read","range":"Sheet2!A1:H8"},
+{"op":"set","cell":"Sheet2!E3","input":"=MIN(IFERROR(B7,0),50)+1"},
+{"op":"read","range":"Sheet2!A1:H8"},
+{"op":"calc"},
+{"op":"read","range":"Sheet2!A1:H8"}
+],"sheets":["Sheet1","Sheet2"]}

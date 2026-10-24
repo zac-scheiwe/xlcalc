@@ -1,0 +1,1632 @@
+{
+"sheets": [
+"Sheet1",
+"Data"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "hello"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "Data!A1",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Data!A2",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Data!A3",
+"input": "30"
+},
+{
+"op": "name",
+"name": "R2",
+"refers_to": "=Sheet1!$A$1:$A$3 Sheet1!$A$2:$B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=ISERROR(R2)"
+},
+{
+"op": "set",
+"cell": "Data!E1",
+"input": "=SUM(R2(2))"
+},
+{
+"op": "name",
+"name": "x1",
+"refers_to": "=Sheet1!$A$1:$B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=COUNTA(x1)"
+},
+{
+"op": "set",
+"cell": "Data!E2",
+"input": "=COLUMNS(x1)"
+},
+{
+"op": "name",
+"name": "x1",
+"refers_to": "=Tax_Rate*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=ISFORMULA(x1)"
+},
+{
+"op": "set",
+"cell": "Data!E3",
+"input": "=ISREF(x1)"
+},
+{
+"op": "name",
+"name": "X1Y",
+"refers_to": "=INDEX(Sheet1!$A$1:$A$5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=MAX(X1Y)"
+},
+{
+"op": "set",
+"cell": "Data!E4",
+"input": "=COUNTA(X1Y)"
+},
+{
+"op": "name",
+"name": "N",
+"refers_to": "=5"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=AREAS(N)"
+},
+{
+"op": "set",
+"cell": "Data!E5",
+"input": "=AREAS(N)"
+},
+{
+"op": "name",
+"name": "Data",
+"refers_to": "=#REF!",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=Data(3)"
+},
+{
+"op": "set",
+"cell": "Data!E6",
+"input": "=IFERROR(Data,\"e\")"
+},
+{
+"op": "name",
+"name": "C",
+"refers_to": "=1/0"
+},
+{
+"op": "set",
+"cell": "Sheet1!E7",
+"input": "=N(C)"
+},
+{
+"op": "set",
+"cell": "Data!E7",
+"input": "=COLUMNS(C)"
+},
+{
+"op": "name",
+"name": "SUM",
+"refers_to": "=(Sheet1!$A$1,Sheet1!$A$3)",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=ISREF(SUM)"
+},
+{
+"op": "set",
+"cell": "Data!E8",
+"input": "=MAX(SUM)"
+},
+{
+"op": "name",
+"name": "LAMBDA",
+"refers_to": "abc",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=T(LAMBDA)"
+},
+{
+"op": "set",
+"cell": "Data!E9",
+"input": "=SUM(LAMBDA(2))"
+},
+{
+"op": "name",
+"name": "a-b",
+"refers_to": "=INDIRECT(\"A1\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=ROWS(a-b)"
+},
+{
+"op": "set",
+"cell": "Data!E10",
+"input": "=N(a-b)"
+},
+{
+"op": "name",
+"name": "AAA1",
+"refers_to": "=Foo"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=ROWS(AAA1)"
+},
+{
+"op": "set",
+"cell": "Data!E11",
+"input": "=LEN(AAA1)"
+},
+{
+"op": "name",
+"name": "a.b",
+"refers_to": "=Sheet1!$A$1:$A$3 Sheet1!$A$2:$B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E12",
+"input": "=ISFORMULA(a.b)"
+},
+{
+"op": "set",
+"cell": "Data!E12",
+"input": "=T(a.b)"
+},
+{
+"op": "name",
+"name": "a..b",
+"refers_to": "=Sheet1!$A$1*Data!$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E13",
+"input": "=SUM(a..b(2))"
+},
+{
+"op": "set",
+"cell": "Data!E13",
+"input": "=LEN(a..b)"
+},
+{
+"op": "name",
+"name": "Data",
+"refers_to": "=TRUE"
+},
+{
+"op": "set",
+"cell": "Sheet1!E14",
+"input": "=Data+1"
+},
+{
+"op": "set",
+"cell": "Data!E14",
+"input": "=MAX(Data)"
+},
+{
+"op": "name",
+"name": "n",
+"refers_to": "=Sheet1!A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=ISFORMULA(n)"
+},
+{
+"op": "set",
+"cell": "Data!E15",
+"input": "=IFERROR(n,\"e\")"
+},
+{
+"op": "name",
+"name": "AB12",
+"refers_to": "=Sheet1!$B$1&\"x\""
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=LEN(AB12)"
+},
+{
+"op": "set",
+"cell": "Data!E16",
+"input": "=AB12+1"
+},
+{
+"op": "name",
+"name": "\u00e9",
+"refers_to": "=(Sheet1!$A$1,Sheet1!$A$3)",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E17",
+"input": "=COLUMNS(\u00e9)"
+},
+{
+"op": "set",
+"cell": "Data!E17",
+"input": "=\u00e9(1,2)"
+},
+{
+"op": "name",
+"name": "1.5",
+"refers_to": "=LAMBDA(x,y,x+y)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E18",
+"input": "=INDEX(1.5,1)"
+},
+{
+"op": "set",
+"cell": "Data!E18",
+"input": "=SUM(1.5(2))"
+},
+{
+"op": "name",
+"name": "a b",
+"refers_to": "=Sheet1!$Z$99"
+},
+{
+"op": "set",
+"cell": "Sheet1!E19",
+"input": "=ROWS(a b)"
+},
+{
+"op": "set",
+"cell": "Data!E19",
+"input": "=COLUMNS(a b)"
+},
+{
+"op": "name",
+"name": "R2",
+"refers_to": "=Sheet1!$A$1,Sheet1!$A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!E20",
+"input": "=R2+1"
+},
+{
+"op": "set",
+"cell": "Data!E20",
+"input": "=AREAS(R2)"
+},
+{
+"op": "name",
+"name": "a..b",
+"refers_to": "=Sheet1!A$1",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E21",
+"input": "=COLUMNS(a..b)"
+},
+{
+"op": "set",
+"cell": "Data!E21",
+"input": "=MAX(a..b)"
+},
+{
+"op": "name",
+"name": "1.5",
+"refers_to": "=LET(a,2,a*3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E22",
+"input": "=SUM(1.5(2))"
+},
+{
+"op": "set",
+"cell": "Data!E22",
+"input": "=ISREF(1.5)"
+},
+{
+"op": "name",
+"name": "A$1",
+"refers_to": "=)("
+},
+{
+"op": "set",
+"cell": "Sheet1!E23",
+"input": "=A$1(3)"
+},
+{
+"op": "set",
+"cell": "Data!E23",
+"input": "=ISREF(A$1)"
+},
+{
+"op": "name",
+"name": "SUM",
+"refers_to": "="
+},
+{
+"op": "set",
+"cell": "Sheet1!E24",
+"input": "=MAX(SUM)"
+},
+{
+"op": "set",
+"cell": "Data!E24",
+"input": "=SUM(SUM(2))"
+},
+{
+"op": "name",
+"name": "Foo_",
+"refers_to": "=5+",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E25",
+"input": "=COLUMNS(Foo_)"
+},
+{
+"op": "set",
+"cell": "Data!E25",
+"input": "=LEN(Foo_)"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E25"
+},
+{
+"op": "read",
+"range": "Data!E1:E25"
+},
+{
+"op": "name",
+"name": "x",
+"refers_to": "=",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E26",
+"input": "=ROWS(x)"
+},
+{
+"op": "set",
+"cell": "Data!E26",
+"input": "=x(3)"
+},
+{
+"op": "name",
+"name": "a-b",
+"refers_to": "=)(",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E27",
+"input": "=COUNTA(a-b)"
+},
+{
+"op": "set",
+"cell": "Data!E27",
+"input": "=a-b(3)"
+},
+{
+"op": "name",
+"name": "Sheet1",
+"refers_to": "=Tax_Rate*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E28",
+"input": "=TYPE(Sheet1)"
+},
+{
+"op": "set",
+"cell": "Data!E28",
+"input": "=Sheet1+1"
+},
+{
+"op": "name",
+"name": "TRUE",
+"refers_to": "=Sheet1!A$1",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E29",
+"input": "=T(TRUE)"
+},
+{
+"op": "set",
+"cell": "Data!E29",
+"input": "=TRUE(1,2)"
+},
+{
+"op": "name",
+"name": "Sheet1",
+"refers_to": "=A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E30",
+"input": "=INDEX(Sheet1,1)"
+},
+{
+"op": "set",
+"cell": "Data!E30",
+"input": "=INDEX(Sheet1,1)"
+},
+{
+"op": "name",
+"name": "_",
+"refers_to": "=Sheet1!$A:$A",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E31",
+"input": "=SUM(_)"
+},
+{
+"op": "set",
+"cell": "Data!E31",
+"input": "=AREAS(_)"
+},
+{
+"op": "name",
+"name": "ROW",
+"refers_to": "=Tax_Rate*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E32",
+"input": "=ROW(3)"
+},
+{
+"op": "set",
+"cell": "Data!E32",
+"input": "=MAX(ROW)"
+},
+{
+"op": "name",
+"name": "TAX",
+"refers_to": "=Sheet1!$A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E33",
+"input": "=TAX(3)"
+},
+{
+"op": "set",
+"cell": "Data!E33",
+"input": "=TAX(3)"
+},
+{
+"op": "name",
+"name": "A$1",
+"refers_to": "=#REF!"
+},
+{
+"op": "set",
+"cell": "Sheet1!E34",
+"input": "=A$1+1"
+},
+{
+"op": "set",
+"cell": "Data!E34",
+"input": "=ISERROR(A$1)"
+},
+{
+"op": "name",
+"name": "_x",
+"refers_to": "=Foo"
+},
+{
+"op": "set",
+"cell": "Sheet1!E35",
+"input": "=IFERROR(_x,\"e\")"
+},
+{
+"op": "set",
+"cell": "Data!E35",
+"input": "=LEN(_x)"
+},
+{
+"op": "name",
+"name": "R1C",
+"refers_to": "=LAMBDA(x,y,x+y)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E36",
+"input": "=R1C+1"
+},
+{
+"op": "set",
+"cell": "Data!E36",
+"input": "=R1C+1"
+},
+{
+"op": "name",
+"name": "a.b",
+"refers_to": "=TRUE",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E37",
+"input": "=COUNTA(a.b)"
+},
+{
+"op": "set",
+"cell": "Data!E37",
+"input": "=INDEX(a.b,1)"
+},
+{
+"op": "name",
+"name": "XFD1048576",
+"refers_to": "="
+},
+{
+"op": "set",
+"cell": "Sheet1!E38",
+"input": "=XFD1048576+1"
+},
+{
+"op": "set",
+"cell": "Data!E38",
+"input": "=SUM(XFD1048576(2))"
+},
+{
+"op": "name",
+"name": "Rate2",
+"refers_to": "=LAMBDA(x,x*2)",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E39",
+"input": "=Rate2(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E39",
+"input": "=MAX(Rate2)"
+},
+{
+"op": "name",
+"name": "Sales_2024",
+"refers_to": "=(Sheet1!$A$1,Sheet1!$A$3)",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E40",
+"input": "=AREAS(Sales_2024)"
+},
+{
+"op": "set",
+"cell": "Data!E40",
+"input": "=COUNTA(Sales_2024)"
+},
+{
+"op": "name",
+"name": "SQRT",
+"refers_to": "=Sheet1!$A$1:INDEX(Sheet1!$A:$A,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E41",
+"input": "=COUNTA(SQRT)"
+},
+{
+"op": "set",
+"cell": "Data!E41",
+"input": "=T(SQRT)"
+},
+{
+"op": "name",
+"name": "C5",
+"refers_to": "=Sheet1!$A$1+1",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E42",
+"input": "=AREAS(C5)"
+},
+{
+"op": "set",
+"cell": "Data!E42",
+"input": "=ISREF(C5)"
+},
+{
+"op": "name",
+"name": "a?b",
+"refers_to": "=Sheet1!$A$1:$A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!E43",
+"input": "=ISERROR(a?b)"
+},
+{
+"op": "set",
+"cell": "Data!E43",
+"input": "=COUNTA(a?b)"
+},
+{
+"op": "name",
+"name": "\\",
+"refers_to": "=Sheet1!$A$1*Data!$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E44",
+"input": "=MAX(\\)"
+},
+{
+"op": "set",
+"cell": "Data!E44",
+"input": "=AREAS(\\)"
+},
+{
+"op": "name",
+"name": "ISO",
+"refers_to": "=NOW()"
+},
+{
+"op": "set",
+"cell": "Sheet1!E45",
+"input": "=MAX(ISO)"
+},
+{
+"op": "set",
+"cell": "Data!E45",
+"input": "=ISFORMULA(ISO)"
+},
+{
+"op": "name",
+"name": "n",
+"refers_to": "=Data!$A$1:$A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!E46",
+"input": "=INDEX(n,1)"
+},
+{
+"op": "set",
+"cell": "Data!E46",
+"input": "=COUNTA(n)"
+},
+{
+"op": "name",
+"name": "B",
+"refers_to": "=Sheet1!$A$1+1",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E47",
+"input": "=ROWS(B)"
+},
+{
+"op": "set",
+"cell": "Data!E47",
+"input": "=SUM(B(2))"
+},
+{
+"op": "name",
+"name": "x1",
+"refers_to": "=Sheet1!$A$1:INDEX(Sheet1!$A:$A,3)",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E48",
+"input": "=ROWS(x1)"
+},
+{
+"op": "set",
+"cell": "Data!E48",
+"input": "=ISERROR(x1)"
+},
+{
+"op": "name",
+"name": "n",
+"refers_to": "=Sheet1!$A$1,Sheet1!$A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!E49",
+"input": "=SUM(n(2))"
+},
+{
+"op": "set",
+"cell": "Data!E49",
+"input": "=ROWS(n)"
+},
+{
+"op": "name",
+"name": "\\",
+"refers_to": "=Sheet1!$A$1,Sheet1!$A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!E50",
+"input": "=ISERROR(\\)"
+},
+{
+"op": "set",
+"cell": "Data!E50",
+"input": "=ISFORMULA(\\)"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E50"
+},
+{
+"op": "read",
+"range": "Data!E1:E50"
+},
+{
+"op": "name",
+"name": "a-b",
+"refers_to": "=COLUMN()"
+},
+{
+"op": "set",
+"cell": "Sheet1!E51",
+"input": "=ROWS(a-b)"
+},
+{
+"op": "set",
+"cell": "Data!E51",
+"input": "=ISFORMULA(a-b)"
+},
+{
+"op": "name",
+"name": "1.5",
+"refers_to": "=COLUMN()"
+},
+{
+"op": "set",
+"cell": "Sheet1!E52",
+"input": "=1.5(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E52",
+"input": "=SUM(1.5)"
+},
+{
+"op": "name",
+"name": "a\\b",
+"refers_to": "=INDIRECT(\"A1\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E53",
+"input": "=ISERROR(a\\b)"
+},
+{
+"op": "set",
+"cell": "Data!E53",
+"input": "=ISREF(a\\b)"
+},
+{
+"op": "name",
+"name": "ABC",
+"refers_to": "=5"
+},
+{
+"op": "set",
+"cell": "Sheet1!E54",
+"input": "=N(ABC)"
+},
+{
+"op": "set",
+"cell": "Data!E54",
+"input": "=INDEX(ABC,1)"
+},
+{
+"op": "name",
+"name": "PI",
+"refers_to": "=OFFSET(Sheet1!$A$1,0,0,2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E55",
+"input": "=TYPE(PI)"
+},
+{
+"op": "set",
+"cell": "Data!E55",
+"input": "=PI(1,2)"
+},
+{
+"op": "name",
+"name": "B",
+"refers_to": "={1,2,3}"
+},
+{
+"op": "set",
+"cell": "Sheet1!E56",
+"input": "=N(B)"
+},
+{
+"op": "set",
+"cell": "Data!E56",
+"input": "=B(1,2)"
+},
+{
+"op": "name",
+"name": "r",
+"refers_to": "=5+"
+},
+{
+"op": "set",
+"cell": "Sheet1!E57",
+"input": "=r(3)"
+},
+{
+"op": "set",
+"cell": "Data!E57",
+"input": "=MAX(r)"
+},
+{
+"op": "name",
+"name": "Foo.Bar",
+"refers_to": "=Sheet1!$A$1:$A$3 Sheet1!$A$2:$B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E58",
+"input": "=Foo.Bar(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E58",
+"input": "=TYPE(Foo.Bar)"
+},
+{
+"op": "name",
+"name": "Sheet1",
+"refers_to": "=\"txt\""
+},
+{
+"op": "set",
+"cell": "Sheet1!E59",
+"input": "=COUNTA(Sheet1)"
+},
+{
+"op": "set",
+"cell": "Data!E59",
+"input": "=MAX(Sheet1)"
+},
+{
+"op": "name",
+"name": "Rc",
+"refers_to": "=Sheet1!$A$1",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E60",
+"input": "=COLUMNS(Rc)"
+},
+{
+"op": "set",
+"cell": "Data!E60",
+"input": "=Rc(1,2)"
+},
+{
+"op": "name",
+"name": "E",
+"refers_to": "=Foo"
+},
+{
+"op": "set",
+"cell": "Sheet1!E61",
+"input": "=ROWS(E)"
+},
+{
+"op": "set",
+"cell": "Data!E61",
+"input": "=TYPE(E)"
+},
+{
+"op": "name",
+"name": "SQRT",
+"refers_to": "=Sheet1!$Z$99",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E62",
+"input": "=COLUMNS(SQRT)"
+},
+{
+"op": "set",
+"cell": "Data!E62",
+"input": "=COLUMNS(SQRT)"
+},
+{
+"op": "name",
+"name": "\\",
+"refers_to": "=RAND()",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E63",
+"input": "=AREAS(\\)"
+},
+{
+"op": "set",
+"cell": "Data!E63",
+"input": "=ROWS(\\)"
+},
+{
+"op": "name",
+"name": "SUM",
+"refers_to": "=Sheet1!$A$1:Data!$A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E64",
+"input": "=ISREF(SUM)"
+},
+{
+"op": "set",
+"cell": "Data!E64",
+"input": "=IFERROR(SUM,\"e\")"
+},
+{
+"op": "name",
+"name": "R2",
+"refers_to": "=Sheet1!$A$1:INDEX(Sheet1!$A:$A,3)",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E65",
+"input": "=COUNTA(R2)"
+},
+{
+"op": "set",
+"cell": "Data!E65",
+"input": "=ROWS(R2)"
+},
+{
+"op": "name",
+"name": "a-b",
+"refers_to": "=NOW()"
+},
+{
+"op": "set",
+"cell": "Sheet1!E66",
+"input": "=ISFORMULA(a-b)"
+},
+{
+"op": "set",
+"cell": "Data!E66",
+"input": "=T(a-b)"
+},
+{
+"op": "name",
+"name": "TAX",
+"refers_to": "=Sheet1!$A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E67",
+"input": "=N(TAX)"
+},
+{
+"op": "set",
+"cell": "Data!E67",
+"input": "=TAX+1"
+},
+{
+"op": "name",
+"name": "Print_Area",
+"refers_to": "=SUM(Sheet1!$A$1:$A$5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E68",
+"input": "=Print_Area(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E68",
+"input": "=TYPE(Print_Area)"
+},
+{
+"op": "name",
+"name": "R2",
+"refers_to": "=Sheet1!$A$1:$B$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E69",
+"input": "=R2(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E69",
+"input": "=ISERROR(R2)"
+},
+{
+"op": "name",
+"name": "tax",
+"refers_to": "=)("
+},
+{
+"op": "set",
+"cell": "Sheet1!E70",
+"input": "=N(tax)"
+},
+{
+"op": "set",
+"cell": "Data!E70",
+"input": "=T(tax)"
+},
+{
+"op": "name",
+"name": "LET",
+"refers_to": "=Sheet1!$A$1+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E71",
+"input": "=INDEX(LET,1)"
+},
+{
+"op": "set",
+"cell": "Data!E71",
+"input": "=ISERROR(LET)"
+},
+{
+"op": "name",
+"name": "a#",
+"refers_to": "=Sheet1!$A$1+1",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E72",
+"input": "=a#(3)"
+},
+{
+"op": "set",
+"cell": "Data!E72",
+"input": "=SUM(a#(2))"
+},
+{
+"op": "name",
+"name": "PI",
+"refers_to": "=)(",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E73",
+"input": "=LEN(PI)"
+},
+{
+"op": "set",
+"cell": "Data!E73",
+"input": "=ISERROR(PI)"
+},
+{
+"op": "name",
+"name": "_x",
+"refers_to": "=SUM(Sheet1!$A$1:$A$5)",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E74",
+"input": "=ISREF(_x)"
+},
+{
+"op": "set",
+"cell": "Data!E74",
+"input": "=ROWS(_x)"
+},
+{
+"op": "name",
+"name": "XFE1",
+"refers_to": "=Data!A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E75",
+"input": "=XFE1(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E75",
+"input": "=T(XFE1)"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E75"
+},
+{
+"op": "read",
+"range": "Data!E1:E75"
+},
+{
+"op": "name",
+"name": "c",
+"refers_to": "=NOW()"
+},
+{
+"op": "set",
+"cell": "Sheet1!E76",
+"input": "=N(c)"
+},
+{
+"op": "set",
+"cell": "Data!E76",
+"input": "=c(3)"
+},
+{
+"op": "name",
+"name": "Sales_2024",
+"refers_to": "=#REF!",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E77",
+"input": "=Sales_2024+1"
+},
+{
+"op": "set",
+"cell": "Data!E77",
+"input": "=COLUMNS(Sales_2024)"
+},
+{
+"op": "name",
+"name": "ROW",
+"refers_to": "=INDIRECT(\"A1\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E78",
+"input": "=INDEX(ROW,1)"
+},
+{
+"op": "set",
+"cell": "Data!E78",
+"input": "=SUM(ROW)"
+},
+{
+"op": "name",
+"name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"refers_to": "=Tax_Rate*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E79",
+"input": "=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E79",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "name",
+"name": "Days",
+"refers_to": "=Foo"
+},
+{
+"op": "set",
+"cell": "Sheet1!E80",
+"input": "=COLUMNS(Days)"
+},
+{
+"op": "set",
+"cell": "Data!E80",
+"input": "=ISREF(Days)"
+},
+{
+"op": "name",
+"name": "Q",
+"refers_to": "=OFFSET(Sheet1!$A$1,0,0,2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E81",
+"input": "=Q+1"
+},
+{
+"op": "set",
+"cell": "Data!E81",
+"input": "=N(Q)"
+},
+{
+"op": "name",
+"name": "_x",
+"refers_to": "=Sheet1!$A$1:INDEX(Sheet1!$A:$A,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E82",
+"input": "=AREAS(_x)"
+},
+{
+"op": "set",
+"cell": "Data!E82",
+"input": "=_x+1"
+},
+{
+"op": "name",
+"name": "$A",
+"refers_to": "=Sheet1!$B$1&\"x\""
+},
+{
+"op": "set",
+"cell": "Sheet1!E83",
+"input": "=MAX($A)"
+},
+{
+"op": "set",
+"cell": "Data!E83",
+"input": "=COLUMNS($A)"
+},
+{
+"op": "name",
+"name": "X1Y",
+"refers_to": "=Foo+1",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E84",
+"input": "=IFERROR(X1Y,\"e\")"
+},
+{
+"op": "set",
+"cell": "Data!E84",
+"input": "=X1Y(1,2)"
+},
+{
+"op": "name",
+"name": "c",
+"refers_to": "=RAND()",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E85",
+"input": "=ISREF(c)"
+},
+{
+"op": "set",
+"cell": "Data!E85",
+"input": "=T(c)"
+},
+{
+"op": "name",
+"name": "X1Y",
+"refers_to": "=Sheet1!$A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E86",
+"input": "=ISERROR(X1Y)"
+},
+{
+"op": "set",
+"cell": "Data!E86",
+"input": "=ISREF(X1Y)"
+},
+{
+"op": "name",
+"name": "Q",
+"refers_to": "=\"txt\""
+},
+{
+"op": "set",
+"cell": "Sheet1!E87",
+"input": "=TYPE(Q)"
+},
+{
+"op": "set",
+"cell": "Data!E87",
+"input": "=MAX(Q)"
+},
+{
+"op": "name",
+"name": "T",
+"refers_to": "=OFFSET(Sheet1!$A$1,0,0,2,1)",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E88",
+"input": "=T(1,2)"
+},
+{
+"op": "set",
+"cell": "Data!E88",
+"input": "=COLUMNS(T)"
+},
+{
+"op": "name",
+"name": "a.b",
+"refers_to": "=",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E89",
+"input": "=N(a.b)"
+},
+{
+"op": "set",
+"cell": "Data!E89",
+"input": "=COLUMNS(a.b)"
+},
+{
+"op": "name",
+"name": "N",
+"refers_to": "=INDIRECT(\"A1\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E90",
+"input": "=LEN(N)"
+},
+{
+"op": "set",
+"cell": "Data!E90",
+"input": "=ISREF(N)"
+},
+{
+"op": "name",
+"name": "B",
+"refers_to": "=NOW()"
+},
+{
+"op": "set",
+"cell": "Sheet1!E91",
+"input": "=T(B)"
+},
+{
+"op": "set",
+"cell": "Data!E91",
+"input": "=T(B)"
+},
+{
+"op": "name",
+"name": "_x",
+"refers_to": "Sheet1!$A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E92",
+"input": "=SUM(_x)"
+},
+{
+"op": "set",
+"cell": "Data!E92",
+"input": "=MAX(_x)"
+},
+{
+"op": "name",
+"name": "A$1",
+"refers_to": "abc",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E93",
+"input": "=MAX(A$1)"
+},
+{
+"op": "set",
+"cell": "Data!E93",
+"input": "=INDEX(A$1,1)"
+},
+{
+"op": "name",
+"name": "12",
+"refers_to": "=Foo+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E94",
+"input": "=TYPE(12)"
+},
+{
+"op": "set",
+"cell": "Data!E94",
+"input": "=N(12)"
+},
+{
+"op": "name",
+"name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"refers_to": "=ROW(Sheet1!$A$3)",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E95",
+"input": "=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(3)"
+},
+{
+"op": "set",
+"cell": "Data!E95",
+"input": "=COLUMNS(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "name",
+"name": "a..b",
+"refers_to": "={1,2,3}",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E96",
+"input": "=IFERROR(a..b,\"e\")"
+},
+{
+"op": "set",
+"cell": "Data!E96",
+"input": "=T(a..b)"
+},
+{
+"op": "name",
+"name": "1abc",
+"refers_to": "=Sheet1!$A$1:$B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E97",
+"input": "=1abc+1"
+},
+{
+"op": "set",
+"cell": "Data!E97",
+"input": "=ISERROR(1abc)"
+},
+{
+"op": "name",
+"name": "TRUE",
+"refers_to": "=-Sheet1!$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E98",
+"input": "=AREAS(TRUE)"
+},
+{
+"op": "set",
+"cell": "Data!E98",
+"input": "=TRUE(3)"
+},
+{
+"op": "name",
+"name": "ROW",
+"refers_to": "=Sheet1!$A$1,Sheet1!$A$3",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E99",
+"input": "=ROW(3)"
+},
+{
+"op": "set",
+"cell": "Data!E99",
+"input": "=ROW+1"
+},
+{
+"op": "name",
+"name": "Sheet1",
+"refers_to": "=Data!A1",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E100",
+"input": "=COUNTA(Sheet1)"
+},
+{
+"op": "set",
+"cell": "Data!E100",
+"input": "=ROWS(Sheet1)"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E100"
+},
+{
+"op": "read",
+"range": "Data!E1:E100"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E100"
+},
+{
+"op": "read",
+"range": "Data!E1:E100"
+}
+]
+}

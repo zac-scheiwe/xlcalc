@@ -1,0 +1,414 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!XFD2",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G5",
+   "input": "=INDEX($B$7:D$9,3,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J7",
+   "input": "=ROW(XFC1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G8",
+   "input": "=SUM(Sheet1!A:A)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J5",
+   "input": "=COUNTA(1:2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I7",
+   "input": "=COUNT(D1:D$2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J2",
+   "input": "=COUNTA(1:2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H6",
+   "input": "=SUM(A1048570:A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G4",
+   "input": "=SUM(Sheet1!B1048576:XFC1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048576:A1048576"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1:XFD1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD2:XFD2"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 3,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD2:XFD2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048574:A1048574"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048570:A1048570"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1000
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1048576:XFD1048576"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD2:XFD2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048570:A1048570"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 5,
+   "count": 3
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1:XFC1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048575:A1048575"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD2:XFD2"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!I8",
+   "to": "Sheet1!XFC1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1:XFC1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1048576:XFD1048576"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1048575:XFC1048575"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1:XFD1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I6",
+   "input": "=SUM(A1048575:A1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048575:A1048575"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1048575:XFC1048575"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1048576:XFD1048576"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 5,
+   "count": 1
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!H4",
+   "to": "Sheet1!XFD1048576"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1048576:XFD1048576"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!H8",
+   "to": "Sheet1!C1048570"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!C1048570:C1048570"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1048576:XFD1048576"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1:XFD1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1048575:XFC1048575"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!G8",
+   "to": "Sheet1!B1048575"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!B1048575:B1048575"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048570:A1048570"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1:XFC1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048575:A1048575"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!J1:J3",
+   "to": "Sheet1!I4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1048576:XFD1048576"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFC1:XFC1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048570:A1048570"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!J7",
+   "to": "Sheet1!A1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A1"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 16380,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!XFD1:XFD1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048570:A1048570"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1048576:A1048576"
+  }
+ ]
+}

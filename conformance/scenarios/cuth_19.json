@@ -1,0 +1,16 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "steps": [
+    {"op": "set", "cell": "Sheet1!A1", "input": "h1"},
+    {"op": "set", "cell": "Sheet1!B1", "input": "h2"},
+    {"op": "set", "cell": "Sheet1!C1", "input": "h3"},
+    {"op": "set", "cell": "Sheet1!A2", "input": "1"},
+    {"op": "set", "cell": "Sheet1!B2", "input": "2"},
+    {"op": "set", "cell": "Sheet1!C2", "input": "3"},
+    {"op": "table", "range": "Sheet1!A1:C3", "name": "T"},
+    {"op": "set", "cell": "Sheet1!E1", "input": "=SUM(T[h2])"},
+    {"op": "cut", "from": "Sheet1!C1:D2", "to": "Sheet1!A5"},
+    {"op": "read", "range": "Sheet1!A1:E5"},
+    {"op": "tables"}
+  ]
+}

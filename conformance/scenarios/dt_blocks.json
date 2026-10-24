@@ -1,0 +1,30 @@
+{
+  "steps": [
+    {"op":"set","cell":"Sheet1!A1","input":"10"},{"op":"set","cell":"Sheet1!D2","input":"1"},{"op":"set","cell":"Sheet1!D3","input":"2"},{"op":"set","cell":"Sheet1!D4","input":"3"},{"op":"set","cell":"Sheet1!E1","input":"=A1*2"},{"op":"data_table","range":"Sheet1!D1:E4","col_input":"Sheet1!A1"},
+    {"op":"array","range":"Sheet1!E2:E3","input":"=A1+1"},
+    {"op":"read","range":"Sheet1!D1:E4"},
+    {"op":"array","range":"Sheet1!E2:E4","input":"=A1+1"},
+    {"op":"read","range":"Sheet1!D1:E4"},
+    {"op":"set","cell":"Sheet1!H2","input":"1"},
+    {"op":"set","cell":"Sheet1!H3","input":"2"},
+    {"op":"set","cell":"Sheet1!I1","input":"=A1*3"},
+    {"op":"data_table","range":"Sheet1!H1:I3","col_input":"Sheet1!A1"},
+    {"op":"merge","range":"Sheet1!I2:I3"},
+    {"op":"read","range":"Sheet1!H1:I3"},
+    {"op":"merge","range":"Sheet1!H3:I4"},
+    {"op":"read","range":"Sheet1!H1:I4"},
+    {"op":"array","range":"Sheet1!L2:M3","input":"=A1"},
+    {"op":"set","cell":"Sheet1!K2","input":"1"},
+    {"op":"set","cell":"Sheet1!L1","input":"=A1*4"},
+    {"op":"data_table","range":"Sheet1!K1:L3","col_input":"Sheet1!A1"},
+    {"op":"read","range":"Sheet1!K1:M3"},
+    {"op":"merge","range":"Sheet1!P2:P3"},
+    {"op":"set","cell":"Sheet1!O2","input":"1"},
+    {"op":"set","cell":"Sheet1!O3","input":"2"},
+    {"op":"set","cell":"Sheet1!P1","input":"=A1*5"},
+    {"op":"data_table","range":"Sheet1!O1:P3","col_input":"Sheet1!A1"},
+    {"op":"read","range":"Sheet1!O1:P3"},
+    {"op":"set","cell":"Sheet1!A1","input":"20"},
+    {"op":"read","range":"Sheet1!A1:P4"}
+  ]
+}

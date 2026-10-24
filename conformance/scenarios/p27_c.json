@@ -1,0 +1,6 @@
+{"sheets":["Sheet1","Sheet2","Sheet3"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"1"},{"op":"name","name":"Nc","refers_to":"=Sheet1!A1"},
+{"op":"paste_special","from":"Sheet1!A1","to":"Sheet2!K7","paste":"values"},
+{"op":"delete_sheet","sheet":"Sheet3"},
+{"op":"names"}
+]}

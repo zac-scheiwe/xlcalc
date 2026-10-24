@@ -1,0 +1,2495 @@
+{
+"sheets": [
+"Sheet1",
+"Data"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "name",
+"name": "Foo",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=SUM(Foo)"
+},
+{
+"op": "set",
+"cell": "Data!E1",
+"input": "=SUM(Foo)"
+},
+{
+"op": "name",
+"name": "_x",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=SUM(_x)"
+},
+{
+"op": "set",
+"cell": "Data!E2",
+"input": "=SUM(_x)"
+},
+{
+"op": "name",
+"name": "a.b",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=SUM(a.b)"
+},
+{
+"op": "set",
+"cell": "Data!E3",
+"input": "=SUM(a.b)"
+},
+{
+"op": "name",
+"name": "Rate2",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=SUM(Rate2)"
+},
+{
+"op": "set",
+"cell": "Data!E4",
+"input": "=SUM(Rate2)"
+},
+{
+"op": "name",
+"name": "X1Y",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=SUM(X1Y)"
+},
+{
+"op": "set",
+"cell": "Data!E5",
+"input": "=SUM(X1Y)"
+},
+{
+"op": "name",
+"name": "Tax_Rate",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=SUM(Tax_Rate)"
+},
+{
+"op": "set",
+"cell": "Data!E6",
+"input": "=SUM(Tax_Rate)"
+},
+{
+"op": "name",
+"name": "Q",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E7",
+"input": "=SUM(Q)"
+},
+{
+"op": "set",
+"cell": "Data!E7",
+"input": "=SUM(Q)"
+},
+{
+"op": "name",
+"name": "q1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=SUM(q1)"
+},
+{
+"op": "set",
+"cell": "Data!E8",
+"input": "=SUM(q1)"
+},
+{
+"op": "name",
+"name": "A1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=SUM(A1)"
+},
+{
+"op": "set",
+"cell": "Data!E9",
+"input": "=SUM(A1)"
+},
+{
+"op": "name",
+"name": "AB12",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=SUM(AB12)"
+},
+{
+"op": "set",
+"cell": "Data!E10",
+"input": "=SUM(AB12)"
+},
+{
+"op": "name",
+"name": "XFD1048576",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=SUM(XFD1048576)"
+},
+{
+"op": "set",
+"cell": "Data!E11",
+"input": "=SUM(XFD1048576)"
+},
+{
+"op": "name",
+"name": "XFE1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E12",
+"input": "=SUM(XFE1)"
+},
+{
+"op": "set",
+"cell": "Data!E12",
+"input": "=SUM(XFE1)"
+},
+{
+"op": "name",
+"name": "R1C1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E13",
+"input": "=SUM(R1C1)"
+},
+{
+"op": "set",
+"cell": "Data!E13",
+"input": "=SUM(R1C1)"
+},
+{
+"op": "name",
+"name": "RC",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E14",
+"input": "=SUM(RC)"
+},
+{
+"op": "set",
+"cell": "Data!E14",
+"input": "=SUM(RC)"
+},
+{
+"op": "name",
+"name": "R",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=SUM(R)"
+},
+{
+"op": "set",
+"cell": "Data!E15",
+"input": "=SUM(R)"
+},
+{
+"op": "name",
+"name": "C",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=SUM(C)"
+},
+{
+"op": "set",
+"cell": "Data!E16",
+"input": "=SUM(C)"
+},
+{
+"op": "name",
+"name": "r",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E17",
+"input": "=SUM(r)"
+},
+{
+"op": "set",
+"cell": "Data!E17",
+"input": "=SUM(r)"
+},
+{
+"op": "name",
+"name": "c",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E18",
+"input": "=SUM(c)"
+},
+{
+"op": "set",
+"cell": "Data!E18",
+"input": "=SUM(c)"
+},
+{
+"op": "name",
+"name": "R2",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E19",
+"input": "=SUM(R2)"
+},
+{
+"op": "set",
+"cell": "Data!E19",
+"input": "=SUM(R2)"
+},
+{
+"op": "name",
+"name": "C5",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E20",
+"input": "=SUM(C5)"
+},
+{
+"op": "set",
+"cell": "Data!E20",
+"input": "=SUM(C5)"
+},
+{
+"op": "name",
+"name": "R1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E21",
+"input": "=SUM(R1)"
+},
+{
+"op": "set",
+"cell": "Data!E21",
+"input": "=SUM(R1)"
+},
+{
+"op": "name",
+"name": "C1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E22",
+"input": "=SUM(C1)"
+},
+{
+"op": "set",
+"cell": "Data!E22",
+"input": "=SUM(C1)"
+},
+{
+"op": "name",
+"name": "RC1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E23",
+"input": "=SUM(RC1)"
+},
+{
+"op": "set",
+"cell": "Data!E23",
+"input": "=SUM(RC1)"
+},
+{
+"op": "name",
+"name": "SUM",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E24",
+"input": "=SUM(SUM)"
+},
+{
+"op": "set",
+"cell": "Data!E24",
+"input": "=SUM(SUM)"
+},
+{
+"op": "name",
+"name": "PI",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E25",
+"input": "=SUM(PI)"
+},
+{
+"op": "set",
+"cell": "Data!E25",
+"input": "=SUM(PI)"
+},
+{
+"op": "name",
+"name": "TRUE",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E26",
+"input": "=SUM(TRUE)"
+},
+{
+"op": "set",
+"cell": "Data!E26",
+"input": "=SUM(TRUE)"
+},
+{
+"op": "name",
+"name": "FALSE",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E27",
+"input": "=SUM(FALSE)"
+},
+{
+"op": "set",
+"cell": "Data!E27",
+"input": "=SUM(FALSE)"
+},
+{
+"op": "name",
+"name": "LET",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E28",
+"input": "=SUM(LET)"
+},
+{
+"op": "set",
+"cell": "Data!E28",
+"input": "=SUM(LET)"
+},
+{
+"op": "name",
+"name": "LAMBDA",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E29",
+"input": "=SUM(LAMBDA)"
+},
+{
+"op": "set",
+"cell": "Data!E29",
+"input": "=SUM(LAMBDA)"
+},
+{
+"op": "name",
+"name": "NA",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E30",
+"input": "=SUM(NA)"
+},
+{
+"op": "set",
+"cell": "Data!E30",
+"input": "=SUM(NA)"
+},
+{
+"op": "name",
+"name": "ROW",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E31",
+"input": "=SUM(ROW)"
+},
+{
+"op": "set",
+"cell": "Data!E31",
+"input": "=SUM(ROW)"
+},
+{
+"op": "name",
+"name": "Name With Space",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E32",
+"input": "=SUM(Name With Space)"
+},
+{
+"op": "set",
+"cell": "Data!E32",
+"input": "=SUM(Name With Space)"
+},
+{
+"op": "name",
+"name": "1abc",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E33",
+"input": "=SUM(1abc)"
+},
+{
+"op": "set",
+"cell": "Data!E33",
+"input": "=SUM(1abc)"
+},
+{
+"op": "name",
+"name": "a-b",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E34",
+"input": "=SUM(a-b)"
+},
+{
+"op": "set",
+"cell": "Data!E34",
+"input": "=SUM(a-b)"
+},
+{
+"op": "name",
+"name": "\u00e9",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E35",
+"input": "=SUM(\u00e9)"
+},
+{
+"op": "set",
+"cell": "Data!E35",
+"input": "=SUM(\u00e9)"
+},
+{
+"op": "name",
+"name": "a?b",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E36",
+"input": "=SUM(a?b)"
+},
+{
+"op": "set",
+"cell": "Data!E36",
+"input": "=SUM(a?b)"
+},
+{
+"op": "name",
+"name": "\\",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E37",
+"input": "=SUM(\\)"
+},
+{
+"op": "set",
+"cell": "Data!E37",
+"input": "=SUM(\\)"
+},
+{
+"op": "name",
+"name": "\\a",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E38",
+"input": "=SUM(\\a)"
+},
+{
+"op": "set",
+"cell": "Data!E38",
+"input": "=SUM(\\a)"
+},
+{
+"op": "name",
+"name": "a\\b",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E39",
+"input": "=SUM(a\\b)"
+},
+{
+"op": "set",
+"cell": "Data!E39",
+"input": "=SUM(a\\b)"
+},
+{
+"op": "name",
+"name": "Print_Area",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E40",
+"input": "=SUM(Print_Area)"
+},
+{
+"op": "set",
+"cell": "Data!E40",
+"input": "=SUM(Print_Area)"
+},
+{
+"op": "name",
+"name": "_xlnm.Print_Area",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E41",
+"input": "=SUM(_xlnm.Print_Area)"
+},
+{
+"op": "set",
+"cell": "Data!E41",
+"input": "=SUM(_xlnm.Print_Area)"
+},
+{
+"op": "name",
+"name": "Print_Titles",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E42",
+"input": "=SUM(Print_Titles)"
+},
+{
+"op": "set",
+"cell": "Data!E42",
+"input": "=SUM(Print_Titles)"
+},
+{
+"op": "name",
+"name": "Foo.Bar",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E43",
+"input": "=SUM(Foo.Bar)"
+},
+{
+"op": "set",
+"cell": "Data!E43",
+"input": "=SUM(Foo.Bar)"
+},
+{
+"op": "name",
+"name": "x",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E44",
+"input": "=SUM(x)"
+},
+{
+"op": "set",
+"cell": "Data!E44",
+"input": "=SUM(x)"
+},
+{
+"op": "name",
+"name": "Z",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E45",
+"input": "=SUM(Z)"
+},
+{
+"op": "set",
+"cell": "Data!E45",
+"input": "=SUM(Z)"
+},
+{
+"op": "name",
+"name": "Foo_",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E46",
+"input": "=SUM(Foo_)"
+},
+{
+"op": "set",
+"cell": "Data!E46",
+"input": "=SUM(Foo_)"
+},
+{
+"op": "name",
+"name": "_",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E47",
+"input": "=SUM(_)"
+},
+{
+"op": "set",
+"cell": "Data!E47",
+"input": "=SUM(_)"
+},
+{
+"op": "name",
+"name": "__",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E48",
+"input": "=SUM(__)"
+},
+{
+"op": "set",
+"cell": "Data!E48",
+"input": "=SUM(__)"
+},
+{
+"op": "name",
+"name": ".a",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E49",
+"input": "=SUM(.a)"
+},
+{
+"op": "set",
+"cell": "Data!E49",
+"input": "=SUM(.a)"
+},
+{
+"op": "name",
+"name": "a.",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E50",
+"input": "=SUM(a.)"
+},
+{
+"op": "set",
+"cell": "Data!E50",
+"input": "=SUM(a.)"
+},
+{
+"op": "name",
+"name": "a..b",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E51",
+"input": "=SUM(a..b)"
+},
+{
+"op": "set",
+"cell": "Data!E51",
+"input": "=SUM(a..b)"
+},
+{
+"op": "name",
+"name": "ABC",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E52",
+"input": "=SUM(ABC)"
+},
+{
+"op": "set",
+"cell": "Data!E52",
+"input": "=SUM(ABC)"
+},
+{
+"op": "name",
+"name": "ABCD",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E53",
+"input": "=SUM(ABCD)"
+},
+{
+"op": "set",
+"cell": "Data!E53",
+"input": "=SUM(ABCD)"
+},
+{
+"op": "name",
+"name": "AAA1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E54",
+"input": "=SUM(AAA1)"
+},
+{
+"op": "set",
+"cell": "Data!E54",
+"input": "=SUM(AAA1)"
+},
+{
+"op": "name",
+"name": "AAAA1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E55",
+"input": "=SUM(AAAA1)"
+},
+{
+"op": "set",
+"cell": "Data!E55",
+"input": "=SUM(AAAA1)"
+},
+{
+"op": "name",
+"name": "ISO",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E56",
+"input": "=SUM(ISO)"
+},
+{
+"op": "set",
+"cell": "Data!E56",
+"input": "=SUM(ISO)"
+},
+{
+"op": "name",
+"name": "Rc",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E57",
+"input": "=SUM(Rc)"
+},
+{
+"op": "set",
+"cell": "Data!E57",
+"input": "=SUM(Rc)"
+},
+{
+"op": "name",
+"name": "rC",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E58",
+"input": "=SUM(rC)"
+},
+{
+"op": "set",
+"cell": "Data!E58",
+"input": "=SUM(rC)"
+},
+{
+"op": "name",
+"name": "R1C",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E59",
+"input": "=SUM(R1C)"
+},
+{
+"op": "set",
+"cell": "Data!E59",
+"input": "=SUM(R1C)"
+},
+{
+"op": "name",
+"name": "RC2",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E60",
+"input": "=SUM(RC2)"
+},
+{
+"op": "set",
+"cell": "Data!E60",
+"input": "=SUM(RC2)"
+},
+{
+"op": "name",
+"name": "Days",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E61",
+"input": "=SUM(Days)"
+},
+{
+"op": "set",
+"cell": "Data!E61",
+"input": "=SUM(Days)"
+},
+{
+"op": "name",
+"name": "Sales2024",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E62",
+"input": "=SUM(Sales2024)"
+},
+{
+"op": "set",
+"cell": "Data!E62",
+"input": "=SUM(Sales2024)"
+},
+{
+"op": "name",
+"name": "Sales_2024",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E63",
+"input": "=SUM(Sales_2024)"
+},
+{
+"op": "set",
+"cell": "Data!E63",
+"input": "=SUM(Sales_2024)"
+},
+{
+"op": "name",
+"name": "TAX",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E64",
+"input": "=SUM(TAX)"
+},
+{
+"op": "set",
+"cell": "Data!E64",
+"input": "=SUM(TAX)"
+},
+{
+"op": "name",
+"name": "tax",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E65",
+"input": "=SUM(tax)"
+},
+{
+"op": "set",
+"cell": "Data!E65",
+"input": "=SUM(tax)"
+},
+{
+"op": "name",
+"name": "Tax",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E66",
+"input": "=SUM(Tax)"
+},
+{
+"op": "set",
+"cell": "Data!E66",
+"input": "=SUM(Tax)"
+},
+{
+"op": "name",
+"name": "x1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E67",
+"input": "=SUM(x1)"
+},
+{
+"op": "set",
+"cell": "Data!E67",
+"input": "=SUM(x1)"
+},
+{
+"op": "name",
+"name": "y2",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E68",
+"input": "=SUM(y2)"
+},
+{
+"op": "set",
+"cell": "Data!E68",
+"input": "=SUM(y2)"
+},
+{
+"op": "name",
+"name": "n",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E69",
+"input": "=SUM(n)"
+},
+{
+"op": "set",
+"cell": "Data!E69",
+"input": "=SUM(n)"
+},
+{
+"op": "name",
+"name": "N",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E70",
+"input": "=SUM(N)"
+},
+{
+"op": "set",
+"cell": "Data!E70",
+"input": "=SUM(N)"
+},
+{
+"op": "name",
+"name": "T",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E71",
+"input": "=SUM(T)"
+},
+{
+"op": "set",
+"cell": "Data!E71",
+"input": "=SUM(T)"
+},
+{
+"op": "name",
+"name": "E",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E72",
+"input": "=SUM(E)"
+},
+{
+"op": "set",
+"cell": "Data!E72",
+"input": "=SUM(E)"
+},
+{
+"op": "name",
+"name": "SQRT",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E73",
+"input": "=SUM(SQRT)"
+},
+{
+"op": "set",
+"cell": "Data!E73",
+"input": "=SUM(SQRT)"
+},
+{
+"op": "name",
+"name": "_xlfn.CONCAT",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E74",
+"input": "=SUM(_xlfn.CONCAT)"
+},
+{
+"op": "set",
+"cell": "Data!E74",
+"input": "=SUM(_xlfn.CONCAT)"
+},
+{
+"op": "name",
+"name": "CONCAT",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E75",
+"input": "=SUM(CONCAT)"
+},
+{
+"op": "set",
+"cell": "Data!E75",
+"input": "=SUM(CONCAT)"
+},
+{
+"op": "name",
+"name": "A",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E76",
+"input": "=SUM(A)"
+},
+{
+"op": "set",
+"cell": "Data!E76",
+"input": "=SUM(A)"
+},
+{
+"op": "name",
+"name": "B",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E77",
+"input": "=SUM(B)"
+},
+{
+"op": "set",
+"cell": "Data!E77",
+"input": "=SUM(B)"
+},
+{
+"op": "name",
+"name": "$A",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E78",
+"input": "=SUM($A)"
+},
+{
+"op": "set",
+"cell": "Data!E78",
+"input": "=SUM($A)"
+},
+{
+"op": "name",
+"name": "A$1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E79",
+"input": "=SUM(A$1)"
+},
+{
+"op": "set",
+"cell": "Data!E79",
+"input": "=SUM(A$1)"
+},
+{
+"op": "name",
+"name": "#a",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E80",
+"input": "=SUM(#a)"
+},
+{
+"op": "set",
+"cell": "Data!E80",
+"input": "=SUM(#a)"
+},
+{
+"op": "name",
+"name": "a#",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E81",
+"input": "=SUM(a#)"
+},
+{
+"op": "set",
+"cell": "Data!E81",
+"input": "=SUM(a#)"
+},
+{
+"op": "name",
+"name": "a b",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E82",
+"input": "=SUM(a b)"
+},
+{
+"op": "set",
+"cell": "Data!E82",
+"input": "=SUM(a b)"
+},
+{
+"op": "name",
+"name": "\u00dcn\u00ef",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E83",
+"input": "=SUM(\u00dcn\u00ef)"
+},
+{
+"op": "set",
+"cell": "Data!E83",
+"input": "=SUM(\u00dcn\u00ef)"
+},
+{
+"op": "name",
+"name": "\u540d\u524d",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E84",
+"input": "=SUM(\u540d\u524d)"
+},
+{
+"op": "set",
+"cell": "Data!E84",
+"input": "=SUM(\u540d\u524d)"
+},
+{
+"op": "name",
+"name": "1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E85",
+"input": "=SUM(1)"
+},
+{
+"op": "set",
+"cell": "Data!E85",
+"input": "=SUM(1)"
+},
+{
+"op": "name",
+"name": "12",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E86",
+"input": "=SUM(12)"
+},
+{
+"op": "set",
+"cell": "Data!E86",
+"input": "=SUM(12)"
+},
+{
+"op": "name",
+"name": "1.5",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E87",
+"input": "=SUM(1.5)"
+},
+{
+"op": "set",
+"cell": "Data!E87",
+"input": "=SUM(1.5)"
+},
+{
+"op": "name",
+"name": "TRUE1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E88",
+"input": "=SUM(TRUE1)"
+},
+{
+"op": "set",
+"cell": "Data!E88",
+"input": "=SUM(TRUE1)"
+},
+{
+"op": "name",
+"name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E89",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "set",
+"cell": "Data!E89",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "name",
+"name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E90",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "set",
+"cell": "Data!E90",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "name",
+"name": "Sheet1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E91",
+"input": "=SUM(Sheet1)"
+},
+{
+"op": "set",
+"cell": "Data!E91",
+"input": "=SUM(Sheet1)"
+},
+{
+"op": "name",
+"name": "Data",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E92",
+"input": "=SUM(Data)"
+},
+{
+"op": "set",
+"cell": "Data!E92",
+"input": "=SUM(Data)"
+},
+{
+"op": "name",
+"name": "Sheet1!x",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E93",
+"input": "=SUM(Sheet1!x)"
+},
+{
+"op": "set",
+"cell": "Data!E93",
+"input": "=SUM(Sheet1!x)"
+},
+{
+"op": "name",
+"name": "Aa1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E94",
+"input": "=SUM(Aa1)"
+},
+{
+"op": "set",
+"cell": "Data!E94",
+"input": "=SUM(Aa1)"
+},
+{
+"op": "name",
+"name": "ZZ1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E95",
+"input": "=SUM(ZZ1)"
+},
+{
+"op": "set",
+"cell": "Data!E95",
+"input": "=SUM(ZZ1)"
+},
+{
+"op": "name",
+"name": "XFD1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E96",
+"input": "=SUM(XFD1)"
+},
+{
+"op": "set",
+"cell": "Data!E96",
+"input": "=SUM(XFD1)"
+},
+{
+"op": "name",
+"name": "XFD1048577",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E97",
+"input": "=SUM(XFD1048577)"
+},
+{
+"op": "set",
+"cell": "Data!E97",
+"input": "=SUM(XFD1048577)"
+},
+{
+"op": "name",
+"name": "A1048576",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E98",
+"input": "=SUM(A1048576)"
+},
+{
+"op": "set",
+"cell": "Data!E98",
+"input": "=SUM(A1048576)"
+},
+{
+"op": "name",
+"name": "A1048577",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E99",
+"input": "=SUM(A1048577)"
+},
+{
+"op": "set",
+"cell": "Data!E99",
+"input": "=SUM(A1048577)"
+},
+{
+"op": "name",
+"name": "R1C1:R2C2",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E100",
+"input": "=SUM(R1C1:R2C2)"
+},
+{
+"op": "set",
+"cell": "Data!E100",
+"input": "=SUM(R1C1:R2C2)"
+},
+{
+"op": "name",
+"name": "R[1]C",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E101",
+"input": "=SUM(R[1]C)"
+},
+{
+"op": "set",
+"cell": "Data!E101",
+"input": "=SUM(R[1]C)"
+},
+{
+"op": "name",
+"name": "R-1C",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E102",
+"input": "=SUM(R-1C)"
+},
+{
+"op": "set",
+"cell": "Data!E102",
+"input": "=SUM(R-1C)"
+},
+{
+"op": "name",
+"name": "a1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E103",
+"input": "=SUM(a1)"
+},
+{
+"op": "set",
+"cell": "Data!E103",
+"input": "=SUM(a1)"
+},
+{
+"op": "name",
+"name": "xfd1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E104",
+"input": "=SUM(xfd1)"
+},
+{
+"op": "set",
+"cell": "Data!E104",
+"input": "=SUM(xfd1)"
+},
+{
+"op": "name",
+"name": "XfD1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E105",
+"input": "=SUM(XfD1)"
+},
+{
+"op": "set",
+"cell": "Data!E105",
+"input": "=SUM(XfD1)"
+},
+{
+"op": "name",
+"name": "\\x",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E106",
+"input": "=SUM(\\x)"
+},
+{
+"op": "set",
+"cell": "Data!E106",
+"input": "=SUM(\\x)"
+},
+{
+"op": "name",
+"name": "x\\",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E107",
+"input": "=SUM(x\\)"
+},
+{
+"op": "set",
+"cell": "Data!E107",
+"input": "=SUM(x\\)"
+},
+{
+"op": "name",
+"name": "x.1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E108",
+"input": "=SUM(x.1)"
+},
+{
+"op": "set",
+"cell": "Data!E108",
+"input": "=SUM(x.1)"
+},
+{
+"op": "name",
+"name": "x..",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E109",
+"input": "=SUM(x..)"
+},
+{
+"op": "set",
+"cell": "Data!E109",
+"input": "=SUM(x..)"
+},
+{
+"op": "name",
+"name": "_.",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E110",
+"input": "=SUM(_.)"
+},
+{
+"op": "set",
+"cell": "Data!E110",
+"input": "=SUM(_.)"
+},
+{
+"op": "name",
+"name": "_1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E111",
+"input": "=SUM(_1)"
+},
+{
+"op": "set",
+"cell": "Data!E111",
+"input": "=SUM(_1)"
+},
+{
+"op": "name",
+"name": "_a1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E112",
+"input": "=SUM(_a1)"
+},
+{
+"op": "set",
+"cell": "Data!E112",
+"input": "=SUM(_a1)"
+},
+{
+"op": "name",
+"name": "a_1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E113",
+"input": "=SUM(a_1)"
+},
+{
+"op": "set",
+"cell": "Data!E113",
+"input": "=SUM(a_1)"
+},
+{
+"op": "name",
+"name": "\u00e91",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E114",
+"input": "=SUM(\u00e91)"
+},
+{
+"op": "set",
+"cell": "Data!E114",
+"input": "=SUM(\u00e91)"
+},
+{
+"op": "name",
+"name": "\u00f1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E115",
+"input": "=SUM(\u00f1)"
+},
+{
+"op": "set",
+"cell": "Data!E115",
+"input": "=SUM(\u00f1)"
+},
+{
+"op": "name",
+"name": "\u65e5\u672c",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E116",
+"input": "=SUM(\u65e5\u672c)"
+},
+{
+"op": "set",
+"cell": "Data!E116",
+"input": "=SUM(\u65e5\u672c)"
+},
+{
+"op": "name",
+"name": "Ab.Cd",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E117",
+"input": "=SUM(Ab.Cd)"
+},
+{
+"op": "set",
+"cell": "Data!E117",
+"input": "=SUM(Ab.Cd)"
+},
+{
+"op": "name",
+"name": "NAME",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E118",
+"input": "=SUM(NAME)"
+},
+{
+"op": "set",
+"cell": "Data!E118",
+"input": "=SUM(NAME)"
+},
+{
+"op": "name",
+"name": "Name",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E119",
+"input": "=SUM(Name)"
+},
+{
+"op": "set",
+"cell": "Data!E119",
+"input": "=SUM(Name)"
+},
+{
+"op": "name",
+"name": "name",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E120",
+"input": "=SUM(name)"
+},
+{
+"op": "set",
+"cell": "Data!E120",
+"input": "=SUM(name)"
+},
+{
+"op": "name",
+"name": "True",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E121",
+"input": "=SUM(True)"
+},
+{
+"op": "set",
+"cell": "Data!E121",
+"input": "=SUM(True)"
+},
+{
+"op": "name",
+"name": "true",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E122",
+"input": "=SUM(true)"
+},
+{
+"op": "set",
+"cell": "Data!E122",
+"input": "=SUM(true)"
+},
+{
+"op": "name",
+"name": "false",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E123",
+"input": "=SUM(false)"
+},
+{
+"op": "set",
+"cell": "Data!E123",
+"input": "=SUM(false)"
+},
+{
+"op": "name",
+"name": "#REF!",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E124",
+"input": "=SUM(#REF!)"
+},
+{
+"op": "set",
+"cell": "Data!E124",
+"input": "=SUM(#REF!)"
+},
+{
+"op": "name",
+"name": "#N/A",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E125",
+"input": "=SUM(#N/A)"
+},
+{
+"op": "set",
+"cell": "Data!E125",
+"input": "=SUM(#N/A)"
+},
+{
+"op": "name",
+"name": "Null",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E126",
+"input": "=SUM(Null)"
+},
+{
+"op": "set",
+"cell": "Data!E126",
+"input": "=SUM(Null)"
+},
+{
+"op": "name",
+"name": "nul",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E127",
+"input": "=SUM(nul)"
+},
+{
+"op": "set",
+"cell": "Data!E127",
+"input": "=SUM(nul)"
+},
+{
+"op": "name",
+"name": "AUX",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E128",
+"input": "=SUM(AUX)"
+},
+{
+"op": "set",
+"cell": "Data!E128",
+"input": "=SUM(AUX)"
+},
+{
+"op": "name",
+"name": "CON",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E129",
+"input": "=SUM(CON)"
+},
+{
+"op": "set",
+"cell": "Data!E129",
+"input": "=SUM(CON)"
+},
+{
+"op": "name",
+"name": "COM1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E130",
+"input": "=SUM(COM1)"
+},
+{
+"op": "set",
+"cell": "Data!E130",
+"input": "=SUM(COM1)"
+},
+{
+"op": "name",
+"name": "Rate%",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E131",
+"input": "=SUM(Rate%)"
+},
+{
+"op": "set",
+"cell": "Data!E131",
+"input": "=SUM(Rate%)"
+},
+{
+"op": "name",
+"name": "Rate$",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E132",
+"input": "=SUM(Rate$)"
+},
+{
+"op": "set",
+"cell": "Data!E132",
+"input": "=SUM(Rate$)"
+},
+{
+"op": "name",
+"name": "Rate@",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E133",
+"input": "=SUM(Rate@)"
+},
+{
+"op": "set",
+"cell": "Data!E133",
+"input": "=SUM(Rate@)"
+},
+{
+"op": "name",
+"name": "Rate!",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E134",
+"input": "=SUM(Rate!)"
+},
+{
+"op": "set",
+"cell": "Data!E134",
+"input": "=SUM(Rate!)"
+},
+{
+"op": "name",
+"name": "Rate[1]",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E135",
+"input": "=SUM(Rate[1])"
+},
+{
+"op": "set",
+"cell": "Data!E135",
+"input": "=SUM(Rate[1])"
+},
+{
+"op": "name",
+"name": "Rate(1)",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E136",
+"input": "=SUM(Rate(1))"
+},
+{
+"op": "set",
+"cell": "Data!E136",
+"input": "=SUM(Rate(1))"
+},
+{
+"op": "name",
+"name": "Rate~",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E137",
+"input": "=SUM(Rate~)"
+},
+{
+"op": "set",
+"cell": "Data!E137",
+"input": "=SUM(Rate~)"
+},
+{
+"op": "name",
+"name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E138",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "set",
+"cell": "Data!E138",
+"input": "=SUM(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)"
+},
+{
+"op": "name",
+"name": "a\\\\\\",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E139",
+"input": "=SUM(a\\\\\\)"
+},
+{
+"op": "set",
+"cell": "Data!E139",
+"input": "=SUM(a\\\\\\)"
+},
+{
+"op": "name",
+"name": "\u00d1_1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E140",
+"input": "=SUM(\u00d1_1)"
+},
+{
+"op": "set",
+"cell": "Data!E140",
+"input": "=SUM(\u00d1_1)"
+},
+{
+"op": "name",
+"name": "K9",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E141",
+"input": "=SUM(K9)"
+},
+{
+"op": "set",
+"cell": "Data!E141",
+"input": "=SUM(K9)"
+},
+{
+"op": "name",
+"name": "K9K9",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E142",
+"input": "=SUM(K9K9)"
+},
+{
+"op": "set",
+"cell": "Data!E142",
+"input": "=SUM(K9K9)"
+},
+{
+"op": "name",
+"name": "R9C9X",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E143",
+"input": "=SUM(R9C9X)"
+},
+{
+"op": "set",
+"cell": "Data!E143",
+"input": "=SUM(R9C9X)"
+},
+{
+"op": "name",
+"name": "r1c",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E144",
+"input": "=SUM(r1c)"
+},
+{
+"op": "set",
+"cell": "Data!E144",
+"input": "=SUM(r1c)"
+},
+{
+"op": "name",
+"name": "rc1",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E145",
+"input": "=SUM(rc1)"
+},
+{
+"op": "set",
+"cell": "Data!E145",
+"input": "=SUM(rc1)"
+},
+{
+"op": "name",
+"name": "Rc1c1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E146",
+"input": "=SUM(Rc1c1)"
+},
+{
+"op": "set",
+"cell": "Data!E146",
+"input": "=SUM(Rc1c1)"
+},
+{
+"op": "name",
+"name": "CELL",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E147",
+"input": "=SUM(CELL)"
+},
+{
+"op": "set",
+"cell": "Data!E147",
+"input": "=SUM(CELL)"
+},
+{
+"op": "name",
+"name": "INDIRECT",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E148",
+"input": "=SUM(INDIRECT)"
+},
+{
+"op": "set",
+"cell": "Data!E148",
+"input": "=SUM(INDIRECT)"
+},
+{
+"op": "name",
+"name": "ABS",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E149",
+"input": "=SUM(ABS)"
+},
+{
+"op": "set",
+"cell": "Data!E149",
+"input": "=SUM(ABS)"
+},
+{
+"op": "name",
+"name": "pi",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E150",
+"input": "=SUM(pi)"
+},
+{
+"op": "set",
+"cell": "Data!E150",
+"input": "=SUM(pi)"
+},
+{
+"op": "name",
+"name": "Pi",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E151",
+"input": "=SUM(Pi)"
+},
+{
+"op": "set",
+"cell": "Data!E151",
+"input": "=SUM(Pi)"
+},
+{
+"op": "name",
+"name": "Pi1",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E152",
+"input": "=SUM(Pi1)"
+},
+{
+"op": "set",
+"cell": "Data!E152",
+"input": "=SUM(Pi1)"
+},
+{
+"op": "name",
+"name": "LOG10",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E153",
+"input": "=SUM(LOG10)"
+},
+{
+"op": "set",
+"cell": "Data!E153",
+"input": "=SUM(LOG10)"
+},
+{
+"op": "name",
+"name": "LOG10A",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E154",
+"input": "=SUM(LOG10A)"
+},
+{
+"op": "set",
+"cell": "Data!E154",
+"input": "=SUM(LOG10A)"
+},
+{
+"op": "name",
+"name": "ATAN2",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E155",
+"input": "=SUM(ATAN2)"
+},
+{
+"op": "set",
+"cell": "Data!E155",
+"input": "=SUM(ATAN2)"
+},
+{
+"op": "name",
+"name": "DAYS360",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E156",
+"input": "=SUM(DAYS360)"
+},
+{
+"op": "set",
+"cell": "Data!E156",
+"input": "=SUM(DAYS360)"
+},
+{
+"op": "name",
+"name": "DEC2BIN",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E157",
+"input": "=SUM(DEC2BIN)"
+},
+{
+"op": "set",
+"cell": "Data!E157",
+"input": "=SUM(DEC2BIN)"
+},
+{
+"op": "name",
+"name": "X2",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E158",
+"input": "=SUM(X2)"
+},
+{
+"op": "set",
+"cell": "Data!E158",
+"input": "=SUM(X2)"
+},
+{
+"op": "name",
+"name": "XFD",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E159",
+"input": "=SUM(XFD)"
+},
+{
+"op": "set",
+"cell": "Data!E159",
+"input": "=SUM(XFD)"
+},
+{
+"op": "name",
+"name": "XFE",
+"refers_to": "=Sheet1!$A$1:$A$2",
+"scope": "Data"
+},
+{
+"op": "set",
+"cell": "Sheet1!E160",
+"input": "=SUM(XFE)"
+},
+{
+"op": "set",
+"cell": "Data!E160",
+"input": "=SUM(XFE)"
+},
+{
+"op": "name",
+"name": "xfd",
+"refers_to": "=Sheet1!$A$1:$A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E161",
+"input": "=SUM(xfd)"
+},
+{
+"op": "set",
+"cell": "Data!E161",
+"input": "=SUM(xfd)"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E161"
+},
+{
+"op": "read",
+"range": "Data!E1:E161"
+}
+]
+}

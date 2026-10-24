@@ -1,0 +1,1 @@
+{"steps":[{"cell":"Sheet1!A1","input":"7","op":"set"},{"cell":"Sheet1!B1","input":"4","op":"set"},{"cell":"Sheet1!A3","op":"set","input":"2"},{"input":"5","op":"set","cell":"Sheet1!B3"},{"op":"set","input":"3","cell":"Sheet1!A4"},{"op":"array","input":"=A1:A5*B1:B5","range":"Sheet1!A2:B2"},{"op":"read","range":"Sheet1!A1:F8"}],"sheets":["Sheet1"]}

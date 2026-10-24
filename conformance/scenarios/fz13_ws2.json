@@ -1,0 +1,112 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=SUM($B$1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=SUM(B$1:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "=SUM(B1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A4",
+   "input": "=SUM(B$1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A5",
+   "input": "=SUM($B$1:$XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A6",
+   "input": "=SUM($A1:$XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A7",
+   "input": "=SUM(A$1:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A8",
+   "input": "=SUM($A$1:XFD1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A9",
+   "input": "=SUM(A1:$XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A10",
+   "input": "=SUM(A$1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A11",
+   "input": "=SUM(A1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A12",
+   "input": "=SUM($A1:XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A13",
+   "input": "=SUM($A$1:$XFD$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A14",
+   "input": "=SUM($A:$XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A15",
+   "input": "=SUM(A:$XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A16",
+   "input": "=SUM($A:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A17",
+   "input": "=SUM($1:1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A18",
+   "input": "=SUM(1:$1048576)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A19",
+   "input": "=SUM($1:$1048576)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A19"
+  }
+ ]
+}

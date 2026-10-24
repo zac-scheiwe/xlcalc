@@ -1,0 +1,249 @@
+{
+   "sheets" : [
+      "Sheet1"
+   ],
+   "steps" : [
+      {
+         "cell" : "Sheet1!A1",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A2",
+         "input" : "x",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A3",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A1:A3",
+         "op" : "autofill",
+         "to" : "Sheet1!A1:E3",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A5",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A6",
+         "input" : "7",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A7",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A5:A7",
+         "op" : "autofill",
+         "to" : "Sheet1!A5:E7",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A9",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A11",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A9:A11",
+         "op" : "autofill",
+         "to" : "Sheet1!A9:E11",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A13",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A14",
+         "input" : "=NA()",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A15",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A13:A15",
+         "op" : "autofill",
+         "to" : "Sheet1!A13:E15",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A17",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A18",
+         "input" : "6",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A17:A18",
+         "op" : "autofill",
+         "to" : "Sheet1!A17:E18",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A20",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A21",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A22",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A20:A22",
+         "op" : "autofill",
+         "to" : "Sheet1!A20:E22",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A24",
+         "input" : "x",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A25",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A24:A25",
+         "op" : "autofill",
+         "to" : "Sheet1!A24:E25",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A27",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A27:A27",
+         "op" : "autofill",
+         "to" : "Sheet1!A27:E27",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!A29",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!A30",
+         "input" : "=1+1",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!A29:A30",
+         "op" : "autofill",
+         "to" : "Sheet1!A29:E30",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!H1",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!I1",
+         "input" : "x",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!J1",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!H1:J1",
+         "op" : "autofill",
+         "to" : "Sheet1!H1:J5",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!L1",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!M1",
+         "input" : "7",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!N1",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!L1:N1",
+         "op" : "autofill",
+         "to" : "Sheet1!L1:N5",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!P1",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!R1",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!P1:R1",
+         "op" : "autofill",
+         "to" : "Sheet1!P1:R5",
+         "type" : "default"
+      },
+      {
+         "cell" : "Sheet1!T1",
+         "input" : "5",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!U1",
+         "input" : "=NA()",
+         "op" : "set"
+      },
+      {
+         "cell" : "Sheet1!V1",
+         "input" : "y",
+         "op" : "set"
+      },
+      {
+         "from" : "Sheet1!T1:V1",
+         "op" : "autofill",
+         "to" : "Sheet1!T1:V5",
+         "type" : "default"
+      },
+      {
+         "op" : "read",
+         "range" : "Sheet1!A1:Z30"
+      }
+   ]
+}

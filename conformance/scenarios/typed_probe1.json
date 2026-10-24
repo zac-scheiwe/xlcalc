@@ -1,0 +1,307 @@
+{
+  "check_format": true,
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "typel",
+      "input": "1/1/ 2024",
+      "cell": "Sheet1!A1"
+    },
+    {
+      "op": "typel",
+      "input": "1 /1/2024",
+      "cell": "Sheet1!A2"
+    },
+    {
+      "op": "typel",
+      "input": "1 / 1 / 2024",
+      "cell": "Sheet1!A3"
+    },
+    {
+      "op": "typel",
+      "input": "1/ 1/2024",
+      "cell": "Sheet1!A4"
+    },
+    {
+      "op": "typel",
+      "input": "1/1 /2024",
+      "cell": "Sheet1!A5"
+    },
+    {
+      "op": "typel",
+      "input": "1 /1",
+      "cell": "Sheet1!A6"
+    },
+    {
+      "op": "typel",
+      "input": "1/ 1",
+      "cell": "Sheet1!A7"
+    },
+    {
+      "op": "typel",
+      "input": "1 / 1",
+      "cell": "Sheet1!A8"
+    },
+    {
+      "op": "typel",
+      "input": "1 1/2",
+      "cell": "Sheet1!A9"
+    },
+    {
+      "op": "typel",
+      "input": "1 1 /2",
+      "cell": "Sheet1!A10"
+    },
+    {
+      "op": "typel",
+      "input": "1 1/ 2",
+      "cell": "Sheet1!A11"
+    },
+    {
+      "op": "typel",
+      "input": "1 1 / 2",
+      "cell": "Sheet1!A12"
+    },
+    {
+      "op": "typel",
+      "input": "1 1/2 ",
+      "cell": "Sheet1!A13"
+    },
+    {
+      "op": "typel",
+      "input": "1/2 ",
+      "cell": "Sheet1!A14"
+    },
+    {
+      "op": "typel",
+      "input": "  1/2",
+      "cell": "Sheet1!A15"
+    },
+    {
+      "op": "typel",
+      "input": "1/2/ 24",
+      "cell": "Sheet1!A16"
+    },
+    {
+      "op": "typel",
+      "input": "1-1- 2024",
+      "cell": "Sheet1!A17"
+    },
+    {
+      "op": "typel",
+      "input": "1 -1-2024",
+      "cell": "Sheet1!A18"
+    },
+    {
+      "op": "typel",
+      "input": "1- 1-2024",
+      "cell": "Sheet1!A19"
+    },
+    {
+      "op": "typel",
+      "input": "1.1. 2024",
+      "cell": "Sheet1!A20"
+    },
+    {
+      "op": "typel",
+      "input": "1 .1.2024",
+      "cell": "Sheet1!A21"
+    },
+    {
+      "op": "typel",
+      "input": "Jan 1, 2024",
+      "cell": "Sheet1!A22"
+    },
+    {
+      "op": "typel",
+      "input": "Jan 1 , 2024",
+      "cell": "Sheet1!A23"
+    },
+    {
+      "op": "typel",
+      "input": "1 Jan 2024",
+      "cell": "Sheet1!A24"
+    },
+    {
+      "op": "typel",
+      "input": "1  Jan 2024",
+      "cell": "Sheet1!A25"
+    },
+    {
+      "op": "typel",
+      "input": "1 Jan  2024",
+      "cell": "Sheet1!A26"
+    },
+    {
+      "op": "typel",
+      "input": "1/Jan/2024",
+      "cell": "Sheet1!A27"
+    },
+    {
+      "op": "typel",
+      "input": "1 /Jan/2024",
+      "cell": "Sheet1!A28"
+    },
+    {
+      "op": "typel",
+      "input": "1/ Jan/2024",
+      "cell": "Sheet1!A29"
+    },
+    {
+      "op": "typel",
+      "input": "1:2 :3",
+      "cell": "Sheet1!A30"
+    },
+    {
+      "op": "typel",
+      "input": "1: 2:3",
+      "cell": "Sheet1!A31"
+    },
+    {
+      "op": "typel",
+      "input": "1 :2:3",
+      "cell": "Sheet1!A32"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01T05:30:00",
+      "cell": "Sheet1!A33"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01T05:30",
+      "cell": "Sheet1!A34"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01T05",
+      "cell": "Sheet1!A35"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01 05:30:00",
+      "cell": "Sheet1!A36"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01t05:30:00",
+      "cell": "Sheet1!A37"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01T05:30:00Z",
+      "cell": "Sheet1!A38"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01T05:30:00.5",
+      "cell": "Sheet1!A39"
+    },
+    {
+      "op": "typel",
+      "input": "2024-01-01T",
+      "cell": "Sheet1!A40"
+    },
+    {
+      "op": "typel",
+      "input": "$\t5",
+      "cell": "Sheet1!A41"
+    },
+    {
+      "op": "typel",
+      "input": "$ 5",
+      "cell": "Sheet1!A42"
+    },
+    {
+      "op": "typel",
+      "input": "$\t5\t",
+      "cell": "Sheet1!A43"
+    },
+    {
+      "op": "typel",
+      "input": "\t5",
+      "cell": "Sheet1!A44"
+    },
+    {
+      "op": "typel",
+      "input": "5\t",
+      "cell": "Sheet1!A45"
+    },
+    {
+      "op": "typel",
+      "input": "$5\t",
+      "cell": "Sheet1!A46"
+    },
+    {
+      "op": "typel",
+      "input": "1:61:60 30 December 2025",
+      "cell": "Sheet1!A47"
+    },
+    {
+      "op": "typel",
+      "input": "1:61 30 December 2025",
+      "cell": "Sheet1!A48"
+    },
+    {
+      "op": "typel",
+      "input": "30 December 2025 1:61:60",
+      "cell": "Sheet1!A49"
+    },
+    {
+      "op": "typel",
+      "input": "30 December 2025 1:59:59",
+      "cell": "Sheet1!A50"
+    },
+    {
+      "op": "typel",
+      "input": "30 December 2025 1:61",
+      "cell": "Sheet1!A51"
+    },
+    {
+      "op": "typel",
+      "input": "1:60",
+      "cell": "Sheet1!A52"
+    },
+    {
+      "op": "typel",
+      "input": "1:61",
+      "cell": "Sheet1!A53"
+    },
+    {
+      "op": "typel",
+      "input": "0:0:60",
+      "cell": "Sheet1!A54"
+    },
+    {
+      "op": "typel",
+      "input": "1:1:60",
+      "cell": "Sheet1!A55"
+    },
+    {
+      "op": "typel",
+      "input": "1:1:61",
+      "cell": "Sheet1!A56"
+    },
+    {
+      "op": "typel",
+      "input": "1:1:59.5",
+      "cell": "Sheet1!A57"
+    },
+    {
+      "op": "typel",
+      "input": "12/31/2024",
+      "cell": "Sheet1!A58"
+    },
+    {
+      "op": "typel",
+      "input": "31/12/2024",
+      "cell": "Sheet1!A59"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:A59"
+    }
+  ]
+}

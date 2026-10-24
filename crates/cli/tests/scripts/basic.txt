@@ -1,0 +1,68 @@
+A1 10
+A2 20
+A3 =A1+A2
+R1C3 =SEQUENCE(A1/5,2)
+F1 =SUM(C1#)
+A1 15
+show A1:F4
+A3
+format A3 0.00
+A3
+used
+sheet Orders
+A1 Item
+B1 Qty
+A2 apple
+B2 3
+table Sales A1:B2
+C2 =Sales[@Qty]*2
+sheet Sheet1
+'Orders'!B2 5
+'Orders'!C2
+insert rows 1
+A4
+delete cols B
+name tax =0.15
+name
+delname tax
+mode manual
+A1 1
+A4
+calc
+A4
+mode semi
+mode auto
+iter on 50 0.0001
+iter off
+precision on
+precision off
+legacy H1 =A1:A3
+array J1:J3 =A1:A3*2
+J2
+MERGE L1:M2
+unmerge L1:M2
+sheet Calc
+B1 0.5
+B2 =100*B1
+goalseek B2 30 B1
+B1
+C1 0
+C2 1
+D1 =C1*2
+D2 2
+D3 3
+datatable C1:D3 col B1
+sort D2:D3 1 desc
+D2
+fill C2 C2:C4
+sheet Sheet1
+sheets
+bogus command
+A1048577 1
+XFD1048576 =1
+insert rows x
+insert rows 0
+copy A1
+goalseek A1
+mode sideways
+sheet

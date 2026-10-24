@@ -1,0 +1,26 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet2!A1","input":"1","op":"set"},
+    {"cell":"Sheet2!B1","input":"5","op":"set"},
+    {"cell":"Sheet2!A2","input":"7","op":"set"},
+    {"cell":"Sheet2!B2","input":"5","op":"set"},
+    {"cell":"Sheet2!A3","input":"5","op":"set"},
+    {"cell":"Sheet2!B3","input":"2","op":"set"},
+    {"cell":"Sheet2!A4","input":"7","op":"set"},
+    {"cell":"Sheet2!B4","input":"8","op":"set"},
+    {"cell":"Sheet2!A5","input":"8","op":"set"},
+    {"cell":"Sheet2!B5","input":"9","op":"set"},
+    {"input":"=A1:A3*2","op":"array","range":"Sheet2!C4:D5"},
+    {"at":8,"count":2,"op":"delete_rows","sheet":"Sheet2"},
+    {"op":"read","range":"Sheet2!A1:J12"},
+    {"keys":[{"key":1,"order":"asc"}],"op":"sort","range":"Sheet2!A3:B4"},
+    {"at":5,"count":2,"op":"delete_cols","sheet":"Sheet2"},
+    {"from":"Sheet2!C5","op":"copy","to":"Sheet2!H2"},
+    {"op":"read","range":"Sheet2!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

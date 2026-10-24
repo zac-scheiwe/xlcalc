@@ -1,0 +1,339 @@
+{
+ "sheets": [
+  "S1",
+  "S2"
+ ],
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "S1!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D3",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B4",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C4",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B5",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C5",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C6",
+   "input": "8"
+  },
+  {
+   "op": "table",
+   "range": "S1!B3:D6",
+   "name": "Fz_12_1"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D4",
+   "input": "=[@a]+[@b]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K3",
+   "input": "=SUM(Fz_12_1[a])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K4",
+   "input": "=SUM(Fz_12_1[c])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K5",
+   "input": "=ROWS(Fz_12_1)"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K6",
+   "input": "=COLUMNS(Fz_12_1[#All])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K7",
+   "input": "=SUM(Fz_12_1[[a]:[c]])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K8",
+   "input": "=SUM(Fz_12_1[[#Headers],[#Data]])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K9",
+   "input": "=SUM(B4:B6)"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K10",
+   "input": "=INDEX(Fz_12_1[b],2)"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D3",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C4",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B5",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B6",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C6",
+   "input": "6"
+  },
+  {
+   "op": "table",
+   "range": "S2!B3:D6",
+   "name": "Fz_12_2"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K3",
+   "input": "=SUM(Fz_12_2[a])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K4",
+   "input": "=SUM(Fz_12_2[c])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K5",
+   "input": "=ROWS(Fz_12_2)"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K6",
+   "input": "=COLUMNS(Fz_12_2[#All])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K7",
+   "input": "=SUM(Fz_12_2[[a]:[c]])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K8",
+   "input": "=SUM(Fz_12_2[[#Headers],[#Data]])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K9",
+   "input": "=SUM(B4:B6)"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K10",
+   "input": "=INDEX(Fz_12_2[b],2)"
+  },
+  {
+   "op": "set",
+   "cell": "S2!M3",
+   "input": "=SUM(Fz_12_1[a])+ROWS(Fz_12_1)"
+  },
+  {
+   "op": "set",
+   "cell": "S1!M3",
+   "input": "=SUM(Fz_12_2[b])"
+  },
+  {
+   "op": "name",
+   "name": "fzn_1",
+   "refers_to": "=Fz_12_1[b]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!M4",
+   "input": "=SUM(fzn_1)"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B4",
+   "input": "=B4+1"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "table_resize",
+   "name": "Fz_12_1",
+   "range": "S1!B3:D7"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D5",
+   "input": "89"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "table_resize",
+   "name": "Fz_12_1",
+   "range": "S1!B3:C9"
+  },
+  {
+   "op": "table_delete",
+   "name": "Fz_12_2"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "S1",
+   "at": 9,
+   "count": 1
+  },
+  {
+   "op": "table_resize",
+   "name": "Fz_12_1",
+   "range": "S1!B2:D10"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "table_resize",
+   "name": "Fz_12_1",
+   "range": "S1!B3:C9"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C6",
+   "input": "=[@a]*2"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  },
+  {
+   "op": "read",
+   "range": "S1!A1:O16"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:O16"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

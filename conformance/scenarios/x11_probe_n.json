@@ -1,0 +1,9 @@
+{"sheets":["Sheet1","Delta x","Sheet3","Gam z"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"1"},{"op":"set","cell":"Delta x!A1","input":"2"},{"op":"set","cell":"Sheet3!A1","input":"3"},{"op":"set","cell":"Gam z!A1","input":"4"},
+{"op":"set","cell":"Sheet1!B1","input":"=SUM('Delta x':Sheet3!A1)"},
+{"op":"set","cell":"Sheet1!B2","input":"=SUM(Sheet1:'Delta x'!A1)"},
+{"op":"set","cell":"Sheet1!B4","input":"=SUM('Delta x:Sheet3'!A1)"},
+{"op":"set","cell":"Sheet1!B5","input":"=SUM('Delta x:Gam z'!A1:A2)"},
+{"op":"set","cell":"Sheet1!B6","input":"=SUM(Sheet3:'Gam z'!A1)"},
+{"op":"read","range":"Sheet1!A1:C7"}
+]}

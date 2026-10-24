@@ -1,0 +1,258 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "27"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "11"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "21"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B8",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "-4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "15"
+  },
+  {
+   "op": "name",
+   "name": "Nm1",
+   "refers_to": "=Sheet1!$B$5:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm2",
+   "refers_to": "=Sheet1!$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm3",
+   "refers_to": "=Sheet1!$A$5"
+  },
+  {
+   "op": "iteration",
+   "enabled": true,
+   "max_iter": 20,
+   "max_change": 0.001
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F3",
+   "input": "=MIN(A7:E2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "=C8+C8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "=COUNT(A5:B3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=$B$5+$D$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F7",
+   "input": "=INDEX(D7:B8,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "=ROWS(B3:B3)+COLUMNS(B4:B6)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D6",
+   "input": "=SUM(C3:C4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F4",
+   "input": "=INDEX(B1:B3,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=$C$6/A3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F7",
+   "input": "3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "=SUM(C7:B5)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 4,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!E4:E4",
+   "to": "Sheet1!E3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 2
+  },
+  {
+   "op": "iteration",
+   "enabled": false,
+   "max_iter": 20,
+   "max_change": 0.001
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 3,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F7",
+   "input": "=A7+$E$4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "2.5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 5,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "=SUM(Nm2)+A7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I2",
+   "input": "=SEQUENCE(1,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F3",
+   "input": "#N/A"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "delete_cols",
+   "sheet": "Sheet1",
+   "at": 5,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:K12"
+  }
+ ]
+}

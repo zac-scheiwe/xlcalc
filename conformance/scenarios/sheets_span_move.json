@@ -1,0 +1,187 @@
+{
+ "sheets": [
+  "Aa",
+  "Bb",
+  "Cc",
+  "Dd",
+  "Ee"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!A1",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!B2",
+   "input": "200"
+  },
+  {
+   "op": "set",
+   "cell": "Ee!A1",
+   "input": "1000"
+  },
+  {
+   "op": "set",
+   "cell": "Ee!B2",
+   "input": "2000"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "=SUM(Bb:Dd!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "=SUM(Bb:Dd!A1:B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A3",
+   "input": "=COUNT(Bb:Dd!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A4",
+   "input": "=SUM(Dd:Bb!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A5",
+   "input": "=SUM(Cc:Dd!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A6",
+   "input": "=SUM(Bb:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A7",
+   "input": "=SUM(Bb:Ee!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A8",
+   "input": "=SUM(Cc:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A9",
+   "input": "=SUM(Bb:Dd!A:A)"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A10",
+   "input": "=COUNTA(Bb:Dd!B2)"
+  },
+  {
+   "op": "name",
+   "name": "sp",
+   "refers_to": "=Bb:Dd!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B1",
+   "input": "=SUM(sp)"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:B10"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Cc",
+   "after": "Ee"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:B10"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Cc",
+   "before": "Dd"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:B10"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Dd",
+   "before": "Bb"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:B10"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Ee",
+   "before": "Aa"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:B10"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Bb",
+   "after": "Ee"
+  },
+  {
+   "op": "sheets"
+  },
+  {
+   "op": "read",
+   "range": "Aa!A1:B10"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

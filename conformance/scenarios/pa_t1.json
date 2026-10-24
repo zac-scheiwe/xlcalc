@@ -1,0 +1,11 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"format","range":"Sheet1!A1:A5","fmt":"0"},
+{"op":"set","cell":"Sheet1!A1","input":"2.7"},
+{"op":"read","range":"Sheet1!A1:A2"},
+{"op":"precision","value":true},
+{"op":"read","range":"Sheet1!A1:A2"},
+{"op":"set","cell":"Sheet1!A2","input":"3.7"},
+{"op":"read","range":"Sheet1!A1:A2"},
+{"op":"precision","value":false},
+{"op":"read","range":"Sheet1!A1:A2"}
+]}

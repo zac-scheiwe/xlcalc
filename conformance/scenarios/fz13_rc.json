@@ -1,0 +1,227 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=SUM(C:D)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=SUM(A:C)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "=SUM(C:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A4",
+   "input": "=SUM(R:S)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A5",
+   "input": "=SUM(c:d)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A6",
+   "input": "=SUM(R:R)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A7",
+   "input": "=SUM(C:C)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A8",
+   "input": "=SUM(R1:R2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A9",
+   "input": "=SUM(C1:C2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A10",
+   "input": "=SUM(R:C)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A11",
+   "input": "=SUM(C:R)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A12",
+   "input": "=SUM($C:$D)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A13",
+   "input": "=SUM(R:XFD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A14",
+   "input": "=SUM(A:R)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A15",
+   "input": "=SUM(RC:RC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A16",
+   "input": "=SUM(RC1:RC2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A17",
+   "input": "=SUM(R[1]:R[2])"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A18",
+   "input": "=SUM(C[1]:C[2])"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A19",
+   "input": "=SUM(R1C1:R2C2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A20",
+   "input": "=SUM(R2C2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A21",
+   "input": "=SUM(RC[1])"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A22",
+   "input": "=SUM(R[-1]C)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A23",
+   "input": "=R"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A24",
+   "input": "=C"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A25",
+   "input": "=SUM(R)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A26",
+   "input": "=SUM(C)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A27",
+   "input": "=SUM(R:R[1])"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A28",
+   "input": "=SUM(C:C[1])"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A29",
+   "input": "=SUM(A1:C)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A30",
+   "input": "=SUM(Sheet1!C:D)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A31",
+   "input": "=SUM(Sheet1!R:S)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A32",
+   "input": "=SUM(Sheet1!C1:D2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A33",
+   "input": "=SUM(1:1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A34",
+   "input": "=SUM(R1:R1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A35",
+   "input": "=SUM(RC5)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A36",
+   "input": "=SUM(RC:R)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A37",
+   "input": "=SUM(C1:R1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A38",
+   "input": "=SUM(R1:C1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A39",
+   "input": "=SUM(r:s)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A40",
+   "input": "=SUM(rc)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A41",
+   "input": "=SUM(C:XFD)+SUM(R:XFD)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A41"
+  }
+ ]
+}

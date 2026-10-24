@@ -1,0 +1,6 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"3"},{"op":"name","name":"Nx","refers_to":"=SUM(Sheet1!A1:A3)"},
+{"op":"set","cell":"Sheet1!F10","input":"=ROWS(Nx)"},
+{"op":"name","name":"Nx","refers_to":"=Sheet1!A1:B2"},
+{"op":"read","range":"Sheet1!E1:G19"}
+]}

@@ -1,0 +1,308 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=B2+8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=B1*2+C2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=B2*2+A1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=Sheet1!C2+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=A1*2+Sheet2!A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=Sheet1!A3+2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=C2+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=Sheet1!B2+3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=A1+3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=C2*2+Sheet2!A2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=Sheet2!A2+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "9"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=C1*2+Sheet2!A1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=C2+6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=A1+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=Sheet2!A2+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=Sheet1!C1+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=B1+3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=A1*2+B1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:A2"
+  }
+ ],
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ]
+}

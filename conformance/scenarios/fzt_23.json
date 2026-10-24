@@ -1,0 +1,864 @@
+{
+    "sheets":  [
+                   "Aa",
+                   "Bb",
+                   "Cc",
+                   "Dd"
+               ],
+    "steps":  [
+                  {
+                      "input":  "1",
+                      "cell":  "Aa!A1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "10",
+                      "cell":  "Aa!A2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "100",
+                      "cell":  "Aa!A3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h1",
+                      "cell":  "Aa!H1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h2",
+                      "cell":  "Aa!I1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "1",
+                      "cell":  "Aa!H2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "2",
+                      "cell":  "Aa!I2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "3",
+                      "cell":  "Aa!H3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "4",
+                      "cell":  "Aa!I3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "5",
+                      "cell":  "Aa!H4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "6",
+                      "cell":  "Aa!I4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "2",
+                      "cell":  "Bb!A1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "20",
+                      "cell":  "Bb!A2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "200",
+                      "cell":  "Bb!A3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h1",
+                      "cell":  "Bb!H1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h2",
+                      "cell":  "Bb!I1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "2",
+                      "cell":  "Bb!H2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "3",
+                      "cell":  "Bb!I2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "4",
+                      "cell":  "Bb!H3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "5",
+                      "cell":  "Bb!I3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "6",
+                      "cell":  "Bb!H4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "7",
+                      "cell":  "Bb!I4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "3",
+                      "cell":  "Cc!A1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "30",
+                      "cell":  "Cc!A2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "300",
+                      "cell":  "Cc!A3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h1",
+                      "cell":  "Cc!H1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h2",
+                      "cell":  "Cc!I1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "3",
+                      "cell":  "Cc!H2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "4",
+                      "cell":  "Cc!I2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "5",
+                      "cell":  "Cc!H3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "6",
+                      "cell":  "Cc!I3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "7",
+                      "cell":  "Cc!H4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "8",
+                      "cell":  "Cc!I4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "4",
+                      "cell":  "Dd!A1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "40",
+                      "cell":  "Dd!A2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "400",
+                      "cell":  "Dd!A3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h1",
+                      "cell":  "Dd!H1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "h2",
+                      "cell":  "Dd!I1",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "4",
+                      "cell":  "Dd!H2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "5",
+                      "cell":  "Dd!I2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "6",
+                      "cell":  "Dd!H3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "7",
+                      "cell":  "Dd!I3",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "8",
+                      "cell":  "Dd!H4",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "9",
+                      "cell":  "Dd!I4",
+                      "op":  "set"
+                  },
+                  {
+                      "sheet":  "Cc",
+                      "op":  "move_sheet",
+                      "after":  "Dd"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "input":  "=SUMPRODUCT(Bb!A1:A3,Cc!A1:A3)",
+                      "cell":  "\u0027Dd\u0027!D4",
+                      "op":  "set"
+                  },
+                  {
+                      "sheet":  "Dd",
+                      "op":  "delete_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "Aa!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Cc\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "sheet":  "Cc",
+                      "op":  "rename_sheet",
+                      "name":  "Dd"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "input":  "=SUM(Dd:Aa!A1)",
+                      "cell":  "Bb!B5",
+                      "op":  "set"
+                  },
+                  {
+                      "sheet":  "Aa",
+                      "op":  "rename_sheet",
+                      "name":  "Q r"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "\u0027Q r\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Dd!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "sheet":  "Q r",
+                      "op":  "copy_sheet",
+                      "name":  "M-x",
+                      "after":  "Bb"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "scope":  "Q r",
+                      "op":  "name",
+                      "name":  "sname_1",
+                      "refers_to":  "=Dd!A2"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "sheet":  "Q r",
+                      "op":  "delete_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Dd\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "op":  "table",
+                      "name":  "Tbl_1",
+                      "range":  "\u0027M-x\u0027!H1:I4"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "sheet":  "Bb",
+                      "before":  "M-x",
+                      "op":  "move_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "sheet":  "Bb",
+                      "op":  "move_sheet",
+                      "after":  "Dd"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Dd\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "scope":  "Dd",
+                      "op":  "name",
+                      "name":  "sname_2",
+                      "refers_to":  "=\u0027M-x\u0027!A2"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "input":  "=SEQUENCE(5)",
+                      "cell":  "Dd!E4",
+                      "op":  "set"
+                  },
+                  {
+                      "sheet":  "Bb",
+                      "op":  "move_sheet",
+                      "after":  "Dd"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Dd!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Bb\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "op":  "name",
+                      "name":  "gname_3",
+                      "refers_to":  "=\u0027M-x\u0027!$A$1:$A$3"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "sheet":  "M-x",
+                      "op":  "move_sheet",
+                      "after":  "Dd"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "scope":  "Dd",
+                      "op":  "name",
+                      "name":  "sname_4",
+                      "refers_to":  "=INDIRECT(\"\u0027Dd\u0027!A1\")"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "range":  "\u0027Dd\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "input":  "=INDIRECT(CHAR(39)\u0026\"M-x\"\u0026CHAR(39)\u0026\"!A3\")",
+                      "cell":  "Dd!E7",
+                      "op":  "set"
+                  },
+                  {
+                      "sheet":  "M-x",
+                      "op":  "move_sheet",
+                      "after":  "Dd"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "sheet":  "M-x",
+                      "before":  "Dd",
+                      "op":  "copy_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "\u0027M-x (2)\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Dd!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "input":  "=INDEX(\u0027M-x (2):Bb\u0027!A1:B2,1,2)",
+                      "cell":  "\u0027M-x\u0027!E2",
+                      "op":  "set"
+                  },
+                  {
+                      "input":  "=SHEET(Bb!A1)",
+                      "cell":  "Bb!B8",
+                      "op":  "set"
+                  },
+                  {
+                      "sheet":  "M-x (2)",
+                      "op":  "rename_sheet",
+                      "name":  "Yy_z"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "Yy_z!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Dd!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Bb\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "sheet":  "Dd",
+                      "op":  "delete_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "sheet":  "M-x",
+                      "before":  "Bb",
+                      "op":  "move_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "input":  "=gname_3",
+                      "cell":  "Yy_z!C3",
+                      "op":  "set"
+                  },
+                  {
+                      "range":  "Yy_z!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Bb\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "sheet":  "Bb",
+                      "before":  "M-x",
+                      "op":  "move_sheet"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "sheet":  "Bb",
+                      "before":  "Bb",
+                      "op":  "copy_sheet",
+                      "name":  "Nwa"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "input":  "=\u0027Nwa\u0027!A1+1",
+                      "cell":  "Bb!C3",
+                      "op":  "set"
+                  },
+                  {
+                      "range":  "Yy_z!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwa!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "scope":  "Yy_z",
+                      "op":  "name",
+                      "name":  "sname_5",
+                      "refers_to":  "=SUM(Yy_z:Nwa!$A$1:$A$3)"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "name",
+                      "name":  "gname_6",
+                      "refers_to":  "=\u0027Nwa:M-x\u0027!$A$1"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "input":  "=SUM(Tbl_1[h1])",
+                      "cell":  "Yy_z!E2",
+                      "op":  "set"
+                  },
+                  {
+                      "range":  "\u0027Yy_z\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwa!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "sheet":  "Nwa",
+                      "op":  "rename_sheet",
+                      "name":  "Nwb"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "input":  "=SUMPRODUCT(\u0027Bb\u0027!A1:A3,\u0027M-x\u0027!A1:A3)",
+                      "cell":  "Nwb!E2",
+                      "op":  "set"
+                  },
+                  {
+                      "op":  "table",
+                      "name":  "Tbl_2",
+                      "range":  "Nwb!H1:I4"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "\u0027Yy_z\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "scope":  "Yy_z",
+                      "op":  "name",
+                      "name":  "sname_7",
+                      "refers_to":  "=Yy_z!$A$1:$A$3"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "sheet":  "Nwb",
+                      "before":  "Nwb",
+                      "op":  "copy_sheet",
+                      "name":  "Nwa"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "sheet":  "Nwa",
+                      "op":  "copy_sheet",
+                      "name":  "Dd",
+                      "after":  "Bb"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  },
+                  {
+                      "range":  "Yy_z!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwa!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Dd\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "input":  "=MAX(Nwa:Nwb!A1:A3)*2",
+                      "cell":  "Nwa!E5",
+                      "op":  "set"
+                  },
+                  {
+                      "range":  "Yy_z!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwa!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Nwb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "Bb!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027Dd\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "range":  "\u0027M-x\u0027!A1:I8",
+                      "op":  "read"
+                  },
+                  {
+                      "op":  "sheets"
+                  },
+                  {
+                      "op":  "names"
+                  },
+                  {
+                      "op":  "tables"
+                  }
+              ]
+}

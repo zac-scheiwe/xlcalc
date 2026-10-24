@@ -1,0 +1,28 @@
+{
+  "sheets": ["Sheet1", "Sheet2"],
+  "check_all_formats": true,
+  "steps": [
+    {"cell":"Sheet1!A1","input":"1","op":"set"},
+    {"cell":"Sheet1!A2","input":"2","op":"set"},
+    {"enabled":false,"max_change":0.5,"max_iter":100,"op":"iteration"},
+    {"cell":"Sheet1!C2","input":"=SUM(C1:C3)","op":"set"},
+    {"cell":"Sheet1!C3","input":"=C2/2+1","op":"set"},
+    {"cell":"Sheet1!D2","input":"=D1+A1","op":"set"},
+    {"cell":"Sheet1!E1","input":"=IF(E1>5,0,E1+2)","op":"set"},
+    {"cell":"Sheet1!E2","input":"=E1+E3","op":"set"},
+    {"cell":"Sheet1!E3","input":"=E2*A2","op":"set"},
+    {"at":1,"count":1,"op":"insert_cols","sheet":"Sheet1"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"insert_cells","range":"Sheet1!E3:E4","shift":"down"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"delete_cells","range":"Sheet1!B2:C2","shift":"left"},
+    {"op":"calc"},
+    {"from":"Sheet1!E1","op":"copy","to":"Sheet1!B8"},
+    {"at":3,"count":1,"op":"insert_cols","sheet":"Sheet1"},
+    {"op":"mode","value":"auto"},
+    {"op":"read","range":"Sheet1!A1:J12"},
+    {"op":"read","range":"Sheet1!A1:J14"},
+    {"op":"read","range":"Sheet2!A1:J14"},
+    {"op":"read_text","range":"Sheet1!A1:J14"}
+  ]
+}

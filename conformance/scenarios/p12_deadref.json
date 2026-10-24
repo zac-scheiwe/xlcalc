@@ -1,0 +1,10 @@
+{"sheets":["Sheet1","Sheet2"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"=Sheet2!F1+Sheet2!G$2"},
+{"op":"set","cell":"Sheet1!B1","input":"=SUM(Sheet2!F1:G2)"},
+{"op":"delete_sheet","sheet":"Sheet2"},
+{"op":"read","range":"Sheet1!A1:B1"},
+{"op":"copy","from":"Sheet1!A1:B1","to":"Sheet1!A4"},
+{"op":"autofill","from":"Sheet1!A1:B1","to":"Sheet1!A1:B3","type":"default"},
+{"op":"copy","from":"Sheet1!A1:B1","to":"Sheet1!D5"},
+{"op":"read","range":"Sheet1!A1:F8"}
+]}
