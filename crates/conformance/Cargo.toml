@@ -4,6 +4,7 @@ description = "Records Excel results and replays them against xlcalc"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [[bin]]
 name = "conform"
