@@ -5,7 +5,7 @@ use crate::address::{MAX_COLS, MAX_ROWS};
 use crate::eval::{Area, EvalCtx, Operand};
 use crate::value::{Value, XlError};
 
-use super::super::args::R;
+use super::super::args::{sfix, R};
 
 struct Line {
     data: LineData,
@@ -225,13 +225,22 @@ fn lookup_src(op: &Operand) -> R<Src> {
 fn int_mode(ctx: &EvalCtx, op: Option<&Operand>, default: i32, allowed: &[i32]) -> R<i32> {
     let n = match super::opt_number(ctx, op)? {
         None => return Ok(default),
-        Some(n) => n.floor(),
+        Some(n) => sfix(n) as f64,
     };
     allowed
         .iter()
         .copied()
         .find(|&m| m as f64 == n)
         .ok_or(XlError::Value)
+}
+
+fn modes(ctx: &EvalCtx, mm: Option<&Operand>, sm: Option<&Operand>) -> R<(i32, i32)> {
+    super::opt_number(ctx, mm)?;
+    super::opt_number(ctx, sm)?;
+    Ok((
+        int_mode(ctx, mm, 0, &[0, -1, 1, 2])?,
+        int_mode(ctx, sm, 1, &[1, -1, 2, -2])?,
+    ))
 }
 
 fn xfind(line: &Line, t: &Value, mm: i32, sm: i32) -> Option<u32> {
@@ -354,8 +363,7 @@ pub fn xmatch(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             if !union_src {
                 src.as_ref().map_err(|e| *e)?;
             }
-            let mm = int_mode(ctx, ops.get(2), 0, &[0, -1, 1, 2])?;
-            let sm = int_mode(ctx, ops.get(3), 1, &[1, -1, 2, -2])?;
+            let (mm, sm) = modes(ctx, ops.get(2), ops.get(3))?;
             let src = src.as_ref().map_err(|e| *e)?;
             let (_, orient) = line_shape(src)?;
             if mm == 2 && sm.abs() == 2 {
@@ -384,13 +392,18 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         Some(Operand::Ref(r)) => r.single().map_or(true, |a| !a.rect.is_cell()),
         _ => false,
     });
+
+    let blank = matches!(ops.get(1), Some(Operand::Val(Value::Blank)))
+        || matches!(ops.get(2), Some(Operand::Val(Value::Blank)));
     lift_values(ctx, ops, &[0, 4, 5], |ctx, ops| {
         let r = (|| -> R<Operand> {
             let target = target_of(&ops[0])?;
+            if blank {
+                return Err(XlError::Value);
+            }
             let src = src.as_ref().map_err(|e| *e)?;
             let ret = ret.as_ref().map_err(|e| *e)?;
-            let mm = int_mode(ctx, ops.get(4), 0, &[0, -1, 1, 2])?;
-            let sm = int_mode(ctx, ops.get(5), 1, &[1, -1, 2, -2])?;
+            let (mm, sm) = modes(ctx, ops.get(4), ops.get(5))?;
             let (len, orient) = line_shape(src)?;
 
             let vertical = match orient {
@@ -430,6 +443,16 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     })
 }
 
+fn approx_cmp255(a: &Value, b: &Value) -> Ordering {
+    match (a, b) {
+        (Value::Text(x), Value::Text(y)) => xl_cmp(
+            &Value::text(crate::text::cut255(x)),
+            &Value::text(crate::text::cut255(y)),
+        ),
+        _ => xl_cmp(a, b),
+    }
+}
+
 fn approx_find(line: &Line, t: &Value) -> Option<u32> {
     let len = line.len as i64;
     let mat = line.materialized() as i64;
@@ -447,10 +470,10 @@ fn approx_find(line: &Line, t: &Value) -> Option<u32> {
             hi = mid - 1;
             continue;
         }
-        match xl_cmp(&line.get(i as u32), t) {
+        match approx_cmp255(&line.get(i as u32), t) {
             Ordering::Equal => {
                 let mut j = i;
-                while j + 1 < mat && xl_cmp(&line.get(j as u32 + 1), t) == Ordering::Equal {
+                while j + 1 < mat && approx_cmp255(&line.get(j as u32 + 1), t) == Ordering::Equal {
                     j += 1;
                 }
                 return Some(j as u32);

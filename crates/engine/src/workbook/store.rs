@@ -40,6 +40,8 @@ pub struct CellStore {
     row_counts: BTreeMap<u32, u32>,
     col_counts: BTreeMap<u32, u32>,
     len: usize,
+
+    sticky: Option<Rect>,
 }
 
 impl std::fmt::Debug for CellStore {
@@ -76,6 +78,8 @@ impl CellStore {
             .or_insert_with(Block::new);
         let slot = &mut block.cells[(row & MASK) as usize];
         let prev = slot.replace(e);
+        let cell = Rect::new(row, col, row, col);
+        self.sticky = Some(self.sticky.map_or(cell, |b| b.union_bounds(&cell)));
         if prev.is_none() {
             block.count += 1;
             self.len += 1;
@@ -109,6 +113,10 @@ impl CellStore {
 
     pub fn is_empty(&self) -> bool {
         self.len == 0
+    }
+
+    pub fn sticky_bounds(&self) -> Option<Rect> {
+        self.sticky
     }
 
     pub fn bounds(&self) -> Option<Rect> {

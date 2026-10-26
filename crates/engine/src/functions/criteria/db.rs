@@ -40,9 +40,10 @@ pub fn dfunc(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> Operand {
     let field = std::mem::replace(&mut ops[1], Operand::Missing);
     ops[1] = match field {
         Operand::Ref(r) => match r.single() {
-            Some(a) if a.rect.is_cell() => {
-                Operand::Val(ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0))
-            }
+            Some(a) if a.rect.is_cell() => match ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0) {
+                Value::Error(_) => Operand::err(XlError::Value),
+                v => Operand::Val(v),
+            },
             _ => Operand::err(XlError::Value),
         },
         other => other,

@@ -1,0 +1,109 @@
+{
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "h3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "6"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B2",
+   "fmt": "0.00"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B3",
+   "fmt": "0.00"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B4",
+   "fmt": "0.00"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B5",
+   "fmt": "0.00"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B6",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T1",
+   "range": "Sheet1!A1:C6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  }
+ ]
+}

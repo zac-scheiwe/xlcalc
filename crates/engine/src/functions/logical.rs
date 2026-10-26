@@ -127,7 +127,10 @@ fn dims_of(v: &Value) -> (u32, u32) {
 
 fn elem(v: &Value, r: u32, c: u32) -> Value {
     match v {
-        Value::Array(a) => a.broadcast_get(r, c),
+        Value::Array(a) => match a.broadcast_get(r, c) {
+            Value::Blank => Value::Number(0.0),
+            x => x,
+        },
         Value::Blank => Value::Number(0.0),
         other => other.clone(),
     }
@@ -139,7 +142,6 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
     let mut tail_err: Option<XlError> = None;
 
     let mut shapes: Vec<Value> = Vec::new();
-    let mut skipped = false;
     let mut stop = args.len().div_ceil(2);
     for (pi, pair) in args.chunks(2).enumerate() {
         let c = ctx.eval(&pair[0]);
@@ -147,10 +149,14 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
         match &c {
             Value::Array(_) => {}
 
-            Value::Text(_) if coerce::to_bool(&c).is_err() && (lifted.len() > 0 || !skipped) => {}
+            Value::Text(_) if coerce::to_bool(&c).is_err() => {}
             Value::Error(e) => {
                 tail_err = Some(*e);
                 stop = pi + 1;
+                if !lifted.is_empty() {
+                    let v = branch(ctx, pair, 1, Value::Number(0.0));
+                    shapes.push(ctx.deref(v));
+                }
                 break;
             }
             v => match coerce::to_bool(v) {
@@ -164,7 +170,6 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
                     break;
                 }
                 Ok(false) => {
-                    skipped = true;
                     if !lifted.is_empty() {
                         let v = branch(ctx, pair, 1, Value::Number(0.0));
                         shapes.push(ctx.deref(v));
@@ -241,7 +246,10 @@ fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Op
             let alt = branch(ctx, args, 1, Value::Number(0.0));
             let alt = ctx.deref(alt);
             let alt_get = |r: u32, c: u32| match &alt {
-                Value::Array(b) => b.broadcast_get(r, c),
+                Value::Array(b) => match b.broadcast_get(r, c) {
+                    Value::Blank => Value::Number(0.0),
+                    x => x,
+                },
                 Value::Blank => Value::Number(0.0),
                 other => other.clone(),
             };
@@ -426,6 +434,12 @@ fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
             _ => {}
         }
     };
+
+    for op in ops {
+        if let Operand::Val(Value::Error(e)) = op {
+            return Operand::err(*e);
+        }
+    }
     for op in ops {
         match op {
             Operand::Missing => take(&Value::Bool(false), true, &mut failure),

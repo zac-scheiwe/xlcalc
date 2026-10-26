@@ -1,0 +1,150 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "Item"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "Qty"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "Price"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "Tot"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "15"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!X1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B8",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "m"
+  },
+  {
+   "op": "table",
+   "name": "Tb",
+   "range": "Sheet1!A1:D5"
+  },
+  {
+   "op": "paste_special",
+   "from": "Sheet1!X1",
+   "to": "Sheet1!G1"
+  },
+  {
+   "op": "dataseries",
+   "range": "Sheet1!B2:B9",
+   "rowcol": "cols",
+   "type": "linear"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H20"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

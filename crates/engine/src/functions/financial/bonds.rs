@@ -4,7 +4,7 @@ use crate::datetime::DateSystem;
 use crate::eval::EvalCtx;
 use crate::functions::args::{boolean, R};
 use crate::value::{Value, XlError};
-use crate::xmath;
+use crate::{x87, xmath};
 
 fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
@@ -83,7 +83,12 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
                 }
                 acc + b.days(issue, qdate(k0 + 1)) / e_of(k0)
             } else {
-                b.days(issue, settle) / e_of(k0)
+                let e = if !calc_method && b.basis == 1 {
+                    own_len(-1)
+                } else {
+                    e_of(k0)
+                };
+                b.days(issue, settle) / e
             }
         };
         let acc = if !calc_method {
@@ -95,11 +100,19 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             let mut k = k0;
             while qdate(k) < settle {
                 let (p0, p1) = (qdate(k), qdate(k + 1));
-                terms.push(if issue <= p0 && p1 <= settle {
-                    1.0
-                } else {
-                    b.days(issue.max(p0), settle.min(p1)) / e_of(k)
-                });
+
+                terms.push(
+                    if k > k0 && p1 >= settle
+                        || (k == k0 && p1 >= settle && b.basis == 1 && issue > first)
+                    {
+                        let e = if b.basis == 1 { own_len(-1) } else { e_of(k) };
+                        b.days(p0.max(issue), settle) / e
+                    } else if issue <= p0 && p1 <= settle {
+                        1.0
+                    } else {
+                        b.days(issue.max(p0), settle.min(p1)) / e_of(k)
+                    },
+                );
                 k += 1;
             }
             terms.iter().rev().fold(0.0, |acc, t| acc + t)
@@ -161,11 +174,15 @@ pub fn received(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if inv <= 0.0 || discount <= 0.0 {
             return Err(XlError::Num);
         }
-        let d = 1.0 - discount * b.days(s, m) / b.year(s, m);
+
+        let d = x87::sub(
+            1.0,
+            x87::div(x87::mul(discount, b.days(s, m)), b.year(s, m)),
+        );
         if d <= 0.0 {
             return Err(XlError::Num);
         }
-        finite(inv / d)
+        finite(x87::div(inv, d))
     })())
 }
 
@@ -439,22 +456,38 @@ fn yield_deriv(y: f64, f: f64, dsc: f64, e: f64, n: f64, rate: f64, redemption: 
 }
 
 fn yield_iterate(
+    y: f64,
+    pr: f64,
+    price: impl FnMut(f64) -> R<f64>,
+    deriv: impl Fn(f64) -> f64,
+) -> R<f64> {
+    yield_iterate_ex(y, pr, price, deriv, false)
+}
+
+fn yield_iterate_ex(
     mut y: f64,
     pr: f64,
     mut price: impl FnMut(f64) -> R<f64>,
     deriv: impl Fn(f64) -> f64,
+    oddf: bool,
 ) -> R<f64> {
     use crate::x87::{add, div, sub};
-    for _ in 0..100 {
+    for count in 1..=100 {
         let p = price(y)?;
         let step = div(sub(pr, p), deriv(y));
         if !step.is_finite() {
             return Err(XlError::Num);
         }
         if step.abs() < 1e-10 {
+            if oddf && count == 100 {
+                return Err(XlError::Num);
+            }
             return finite(y);
         }
         y = add(y, step);
+    }
+    if oddf {
+        return finite(y);
     }
     Err(XlError::Num)
 }
@@ -587,19 +620,19 @@ fn oddf_args(ctx: &EvalCtx, a: &[Arg]) -> R<(OddF, f64, f64, f64)> {
         return Err(XlError::Num);
     }
     schedule_reaches(b.sys, first, freq, issue)?;
-    Ok((
-        OddF {
-            settle,
-            mat,
-            issue,
-            first,
-            freq,
-            b,
-        },
-        rate,
-        x,
-        redemption,
-    ))
+    let o = OddF {
+        settle,
+        mat,
+        issue,
+        first,
+        freq,
+        b,
+    };
+
+    if o.b.days(issue, first) == oddf_e(&o) {
+        return Err(XlError::Num);
+    }
+    Ok((o, rate, x, redemption))
 }
 
 struct OddFlows {
@@ -627,6 +660,24 @@ fn oddfprice_core(o: &OddF, rate: f64, yld: f64, redemption: f64) -> R<f64> {
         div(red.0, xmath::pow(base, red.1)),
     );
     finite(sub(add(acc, tail), fl.accrued))
+}
+
+fn oddf_e(o: &OddF) -> f64 {
+    let months = (12 / o.freq) as i64;
+    let fc = days::ymd(o.b.sys, o.first);
+    let eom = fc.d >= days::dim(fc.y, fc.m);
+    let (y, m, d) = days::add_months(fc.y, fc.m, fc.d, -months, eom);
+    let pcd_first = days::serial(o.b.sys, y, m, d);
+    if o.b.basis == 1 {
+        (o.first - pcd_first) as f64
+    } else {
+        let c0 = Coupons {
+            pcd: pcd_first,
+            ncd: o.first,
+            num: 1,
+        };
+        o.b.coupdays(&c0, o.mat, o.freq)
+    }
 }
 
 fn oddf_flows(o: &OddF, rate: f64, redemption: f64) -> OddFlows {
@@ -657,17 +708,7 @@ fn oddf_flows(o: &OddF, rate: f64, redemption: f64) -> OddFlows {
         days::serial(sys, cur.0, cur.1, cur.2)
     };
     let pcd_first = q(-1);
-    let c0 = Coupons {
-        pcd: pcd_first,
-        ncd: o.first,
-        num: 1,
-    };
-
-    let e = if b.basis == 1 {
-        (o.first - pcd_first) as f64
-    } else {
-        b.coupdays(&c0, o.mat, o.freq)
-    };
+    let e = oddf_e(o);
     if o.issue >= pcd_first {
         let dfc = b.days(o.issue, o.first);
         let dsc = b.days(o.settle, o.first);
@@ -722,7 +763,7 @@ fn oddf_flows(o: &OddF, rate: f64, redemption: f64) -> OddFlows {
 
         dc_sum = add(
             dc_sum,
-            if s == c0 {
+            if o.issue < c0 {
                 1.0
             } else {
                 div(b.days(s, c1), nl_c)
@@ -798,7 +839,7 @@ pub fn oddfyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let nn = days::yield_years(o.b.sys, o.b.basis, o.settle, o.mat);
         let price = |y: f64| oddfprice_core(&o, rate, y, redemption);
         let deriv = |y: f64| yield_deriv(y, f, fl.dsc, fl.e, fl.n, rate, redemption);
-        yield_iterate(yield_start(rate, nn, pr), pr, price, deriv)
+        yield_iterate_ex(yield_start(rate, nn, pr), pr, price, deriv, true)
     })())
 }
 

@@ -137,17 +137,19 @@ impl Workbook {
             ));
         }
 
-        let mut same = None;
+        let mut doomed = Vec::new();
         for (i, t) in self.data_tables.iter().enumerate() {
-            if t.sheet == sheet && t.rect.intersects(&rect) {
-                if t.rect == rect {
-                    same = Some(i);
-                } else {
-                    return Err(EditError::Compile(PART_ERROR.into()));
-                }
+            let old = t.interior();
+            if t.sheet != sheet || !old.intersects(&int) {
+                continue;
+            }
+            if int.intersection(&old) == Some(old) {
+                doomed.push(i);
+            } else {
+                return Err(EditError::Compile(PART_ERROR.into()));
             }
         }
-        if let Some(i) = same {
+        for i in doomed.into_iter().rev() {
             self.data_tables.remove(i);
         }
         for b in inner {
@@ -348,10 +350,41 @@ fn compute(wb: &mut Workbook, t: &DataTable, report: &mut RecalcReport) {
     let Some([(has_row, row_in), (has_col, col_in)]) = inputs(wb, t) else {
         return;
     };
-    if (has_row && row_in.is_none()) || (has_col && col_in.is_none()) {
+    let int = t.interior();
+
+    let spills = |a: Option<CellAddr>| {
+        a.and_then(|a| wb.formula_at(a)).is_some_and(|fid| {
+            wb.formula(fid).spill.is_some()
+                || wb
+                    .sheet(t.sheet)
+                    .is_some_and(|sh| sh.spills.is_blocked(fid))
+        })
+    };
+    if (has_row && row_in.is_none())
+        || (has_col && col_in.is_none())
+        || spills(row_in)
+        || spills(col_in)
+    {
+        let v = Value::Error(crate::XlError::Ref);
+        for r in int.r0..=int.r1 {
+            for c in int.c0..=int.c1 {
+                let dst = CellAddr::new(t.sheet, r, c);
+                if let Some(fid) = wb.formula_at(dst) {
+                    if is_table_formula(&wb.formula(fid).formula) {
+                        if !wb.formula(fid).value.same_as(&v) {
+                            report.changed.push(dst);
+                        }
+                        wb.formula_mut(fid).value = v.clone();
+                    }
+                }
+            }
+        }
+        calc::rect_changed(wb, t.sheet, int);
+        let r = calc::recalc_cells(wb);
+        report.evaluations += r.evaluations;
+        report.changed.extend(r.changed);
         return;
     }
-    let int = t.interior();
     let at = |r, c| CellAddr::new(t.sheet, r, c);
 
     type Unit = (Vec<(CellAddr, CellAddr)>, Vec<(CellAddr, CellAddr)>);

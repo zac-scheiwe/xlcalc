@@ -31,7 +31,7 @@ fn sys(ctx: &EvalCtx) -> DateSystem {
 
 pub fn serial_arg(ctx: &EvalCtx, v: &Value) -> R<f64> {
     let n = ctx.to_number(v)?;
-    if n < 0.0 || n >= sys(ctx).max_serial() + 1.0 {
+    if n < 0.0 || n + 0.5 / 86_400.0 >= sys(ctx).max_serial() + 1.0 {
         return Err(XlError::Num);
     }
     Ok(n)
@@ -88,8 +88,9 @@ fn hms_part(ctx: &mut EvalCtx, a: &[Value], which: usize) -> Value {
 
 fn weekday(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let s = dt::split_serial(serial_arg(ctx, &a[0])?).0;
-        let ty = opt_num(ctx, a, 1, 1.0)?.trunc() as i64;
+        let n0 = ctx.to_number(&a[0])?;
+        let ty = ifuzz(opt_num(ctx, a, 1, 1.0)?) as i64;
+        let s = dt::split_serial(serial_arg(ctx, &Value::Number(n0))?).0;
         let wd = dt::weekday_from_serial(sys(ctx), s) as i64;
         let r = match ty {
             1 | 17 => wd + 1,
@@ -110,11 +111,9 @@ fn datevalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = text(&a[0])?;
         let p = crate::coerce::parse_number_text(&s, ctx.parse_env()).ok_or(XlError::Value)?;
         match p.kind {
-            crate::coerce::NumberKind::Date | crate::coerce::NumberKind::DateTime => {
-                Ok(Value::Number(p.value.floor()))
-            }
-
-            crate::coerce::NumberKind::Time { .. } => Ok(Value::Number(0.0)),
+            crate::coerce::NumberKind::Date
+            | crate::coerce::NumberKind::DateTime
+            | crate::coerce::NumberKind::Time { .. } => Ok(Value::Number(p.value.floor())),
             _ => Err(XlError::Value),
         }
     })())
@@ -185,8 +184,17 @@ fn days(ctx: &mut EvalCtx, a: &[Value]) -> Value {
                 return Err(*e);
             }
         }
-        let e = serial_arg(ctx, &a[0])?.floor();
-        let s = serial_arg(ctx, &a[1])?.floor();
+
+        let lim = sys(ctx).max_serial() + 1.0;
+        let get = |v: &Value| -> R<f64> {
+            let n = ctx.to_number(v)?;
+            if n < 0.0 || n >= lim {
+                return Err(XlError::Num);
+            }
+            Ok(n.floor())
+        };
+        let e = get(&a[0])?;
+        let s = get(&a[1])?;
         Ok(Value::Number(e - s))
     })())
 }

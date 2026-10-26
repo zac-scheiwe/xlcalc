@@ -1,0 +1,6 @@
+=TOROW(IFERROR(Data!B4:B9,1),1)
+=TOROW(IFERROR(Data!B8:B9,1),1)
+=TOROW(RIGHT(Data!B1:B12),3)
+=TOROW(TRANSPOSE(Data!B4:B9),3)
+=TOROW(CHOOSE(TRUE,IFERROR(Data!B4:B9,AND(IFNA((1/3),{10,1,"-4";3,0,"Hello"}),CHOOSE(3,{"0",0.5,10,"ABC"},32768,Data!B7),SORT({TRUE;3;TRUE;0}),IFS(#NULL!,(2/3),MATCH(9,{1,2},0),"12abc",TRUE,Data!D6))),SWITCH(LOOKUP(LET(fn,LAMBDA(item,1E-5),fn(43832.5)&fn("c")),TOCOL({7;"1 2";0}),LET(u,{1,5,10;3,0.5,1;"1 2",1,3},v,{"é",7,0.5;0,"1e",7;-1,#DIV/0!,"Hello"},acc,2.5,acc)),SORTBY({#NAME?,"a","3";#REF!,10,"1E2"},{3,5},-1),SWITCH(Data!D1<=Data!Z1,1E-5,MATCH("+3",{"x y";10},"0"),DAYS360(FALSE(),Data!E3),SCAN({"1E2"},Data!J1:J5,LAMBDA(acc,v,Data!B2)),N(FALSE)),MMULT({0.5,2,2,7},#N/A),{3;"$5";2;TRUE},7,Data!B4,LAMBDA(arr,u,IFERROR(u,3.14159265358979))({"é",3;FALSE,TRUE},"12:30")),NOT(Data!B3)),3)
+=TOROW(WRAPROWS(LET(fn,LAMBDA(item,Data!B4:B9),fn(XLOOKUP((-2),Data!D1:D10,Data!D1:D10))&fn(BITOR(#NULL!,Data!A8))),UNICODE(XOR({3,"-4";"a",TRUE;2,4},{"Hello",1;TRUE,4;TRUE,10}))),1)

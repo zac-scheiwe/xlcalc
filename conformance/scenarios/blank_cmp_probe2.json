@@ -1,0 +1,4 @@
+{"steps":[
+{"op":"set","cell":"Sheet1!D9","input":"=A1=A2"},
+{"op":"set","cell":"Sheet1!D10","input":"=A1=A2:B2"},
+{"op":"read","range":"Sheet1!D9:E10"}]}

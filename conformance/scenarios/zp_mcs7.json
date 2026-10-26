@@ -1,0 +1,56 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=A1:A4*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "x"
+  },
+  {
+   "op": "mode",
+   "value": "manual"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": ""
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!C1",
+   "to": "Sheet1!E8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H12"
+  }
+ ]
+}

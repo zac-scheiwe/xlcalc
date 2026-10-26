@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "check_all_formats": true, "steps": [{"col_input": "Sheet1!$J$1", "op": "data_table", "range": "Sheet1!K5:M8", "row_input": "Sheet1!$I$1"}, {"from": "Sheet1!I4:K5", "op": "cut", "to": "Sheet1!A14"}]}

@@ -216,6 +216,7 @@ struct TextNum {
 }
 
 fn text_num(s: &str) -> Option<TextNum> {
+    let s = s.trim_end_matches(' ');
     let b = s.as_bytes();
     let lead = b.iter().take_while(|c| c.is_ascii_digit()).count();
     let mk = |a: usize, z: usize, ordinal: bool| -> Option<TextNum> {
@@ -246,7 +247,7 @@ fn text_num(s: &str) -> Option<TextNum> {
             if matches!(lower.as_str(), "st" | "nd" | "rd" | "th") {
                 return mk(0, lead, true);
             }
-        } else {
+        } else if first == ' ' {
             return mk(0, lead, false);
         }
     }
@@ -1293,6 +1294,9 @@ impl Workbook {
                 Value::Number(n) => {
                     let fmt = self.number_format(addr);
                     match fmt_kind(fmt) {
+                        FmtKind::Date { .. } | FmtKind::Time if *n < 0.0 => {
+                            Kind::Num(*n, num_class(fmt))
+                        }
                         FmtKind::Number => Kind::Num(*n, num_class(fmt)),
                         FmtKind::Time => Kind::Time(*n),
                         FmtKind::Date { time } => Kind::Date {
@@ -1323,15 +1327,76 @@ impl Workbook {
         dst: Rect,
         ty: FillType,
     ) -> Result<RecalcReport, EditError> {
+        let r = self.autofill_body(sheet, src, dst, ty);
+        if r.is_ok() {
+            self.view_touch_row_pub(sheet, dst.r1);
+        }
+        r
+    }
+
+    fn autofill_body(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        dst: Rect,
+        ty: FillType,
+    ) -> Result<RecalcReport, EditError> {
+        let r = self.autofill_inner(sheet, src, dst, ty);
+
+        let both_ways = crate::cse::inside(&src, &dst)
+            && ((dst.c0 == src.c0 && dst.c1 == src.c1 && dst.r0 < src.r0 && dst.r1 > src.r1)
+                || (dst.r0 == src.r0 && dst.r1 == src.r1 && dst.c0 < src.c0 && dst.c1 > src.c1));
+        if both_ways && ty == FillType::Formats && r.is_err() {
+            self.extra_recalc();
+            return Ok(RecalcReport::default());
+        }
+
+        let unrelated =
+            (dst.c0 != src.c0 || dst.c1 != src.c1) && (dst.r0 != src.r0 || dst.r1 != src.r1);
+        if r.is_err() && !unrelated && self.sheet(sheet).is_some() {
+            self.extra_recalc();
+        }
+        r
+    }
+
+    fn autofill_inner(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        dst: Rect,
+        ty: FillType,
+    ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         let bad = || EditError::Compile("cannot fill that range".into());
+
+        let both_ways = |wb: &mut Self| {
+            if crate::cse::inside(&src, &dst) && !matches!(ty, FillType::Values | FillType::Formats)
+            {
+                let next = if dst.c0 == src.c0 && dst.c1 == src.c1 {
+                    Rect::new(src.r1 + 1, src.c0, src.r1 + 1, src.c1)
+                } else {
+                    Rect::new(src.r0, src.c1 + 1, src.r1, src.c1 + 1)
+                };
+                let out: Vec<Rect> = wb
+                    .merges(sheet)
+                    .into_iter()
+                    .filter(|m| m.intersects(&next))
+                    .collect();
+                let mode = std::mem::replace(&mut wb.settings.mode, CalcMode::Manual);
+                for m in out {
+                    wb.unmerge_cells(sheet, m);
+                }
+                wb.settings.mode = mode;
+            }
+            bad()
+        };
         let dir = if dst.c0 == src.c0 && dst.c1 == src.c1 {
             if dst.r0 == src.r0 && dst.r1 > src.r1 {
                 Dir::Down
             } else if dst.r1 == src.r1 && dst.r0 < src.r0 {
                 Dir::Up
             } else {
-                return Err(bad());
+                return Err(both_ways(self));
             }
         } else if dst.r0 == src.r0 && dst.r1 == src.r1 {
             if dst.c0 == src.c0 && dst.c1 > src.c1 {
@@ -1339,7 +1404,7 @@ impl Workbook {
             } else if dst.c1 == src.c1 && dst.c0 < src.c0 {
                 Dir::Left
             } else {
-                return Err(bad());
+                return Err(both_ways(self));
             }
         } else {
             return Err(bad());
@@ -1356,9 +1421,29 @@ impl Workbook {
             Dir::Right => Rect::new(dst.r0, src.c1 + 1, dst.r1, dst.c1),
             Dir::Left => Rect::new(dst.r0, dst.c0, dst.r1, src.c0 - 1),
         };
-        self.guard_merges_rect(sheet, dst)?;
 
-        {
+        if self.merge_intersects(sheet, &dest_part) {
+            return Err(EditError::Compile(
+                "To do this, all the merged cells need to be the same size.".into(),
+            ));
+        }
+        let sideways = self
+            .merges(sheet)
+            .iter()
+            .any(|m| m.intersects(&src) && !crate::cse::inside(m, &src));
+        let sideways = sideways || self.series_autofill;
+        if sideways && count % len != 0 && !self.series_autofill {
+            return Err(EditError::Compile(
+                "To do this, all the merged cells need to be the same size.".into(),
+            ));
+        }
+        if !sideways {
+            self.guard_merges_rect(sheet, dst)?;
+        }
+
+        let src_merges: Vec<Rect> = if sideways {
+            Vec::new()
+        } else {
             let ms: Vec<Rect> = self
                 .merges(sheet)
                 .into_iter()
@@ -1375,6 +1460,13 @@ impl Workbook {
                     ));
                 }
             }
+            ms
+        };
+
+        if !src_merges.is_empty() && count % len != 0 {
+            return Err(EditError::Compile(
+                "To do this, all the merged cells need to be the same size.".into(),
+            ));
         }
         self.guard_arrays_rect(sheet, dest_part)?;
         self.data_tables_overwritten(sheet, dest_part)?;
@@ -1421,12 +1513,14 @@ impl Workbook {
             plans.push(plan_line(&ctx, &items, count as usize));
         }
         if dir == Dir::Down {
-            self.fill_grow_tables(sheet, dest_part, &[dest_part]);
+            self.fill_grow_tables(sheet, dst.r0, dest_part, &[dest_part]);
         }
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
         let mut report = RecalcReport::default();
         let mut failed = None;
+
+        self.no_auto_expand = true;
         'outer: for (l, plan) in plans.iter().enumerate() {
             for (j, act) in plan.iter().enumerate() {
                 let (slot, _) = match act {
@@ -1455,6 +1549,22 @@ impl Workbook {
                             self.set_number_format(sheet, Rect::cell(dr, dc), &f);
                         }
                     }
+                }
+            }
+        }
+        self.no_auto_expand = false;
+
+        if failed.is_none() && ty != FillType::Values {
+            for k in 1..=count / len {
+                let d = k * len;
+                for m in &src_merges {
+                    let t = match dir {
+                        Dir::Down => Rect::new(m.r0 + d, m.c0, m.r1 + d, m.c1),
+                        Dir::Up => Rect::new(m.r0 - d, m.c0, m.r1 - d, m.c1),
+                        Dir::Right => Rect::new(m.r0, m.c0 + d, m.r1, m.c1 + d),
+                        Dir::Left => Rect::new(m.r0, m.c0 - d, m.r1, m.c1 - d),
+                    };
+                    self.put_merge(sheet, t);
                 }
             }
         }

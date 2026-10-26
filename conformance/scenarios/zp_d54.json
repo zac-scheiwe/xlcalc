@@ -1,0 +1,137 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "check_all_formats": true,
+ "steps": [
+  {
+   "cell": "Sheet1!K1",
+   "input": "0",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K2",
+   "input": "5",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K3",
+   "input": "10",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K4",
+   "input": "15",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K5",
+   "input": "20",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K13",
+   "input": "60",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!H1",
+   "input": "Item",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!I1",
+   "input": "Qty",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!J1",
+   "input": "Price",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K1",
+   "input": "Tot",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!H2",
+   "input": "a",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!I2",
+   "input": "1 1/2",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!J2",
+   "input": "1",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!H3",
+   "input": "d",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!I3",
+   "input": "7",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!J3",
+   "input": "12:00",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!H4",
+   "input": "c",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!I4",
+   "input": "7",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!J4",
+   "input": "$2.50",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!H5",
+   "input": "b",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!I5",
+   "input": "7",
+   "op": "typel"
+  },
+  {
+   "cell": "Sheet1!J5",
+   "input": "3/4",
+   "op": "typel"
+  },
+  {
+   "name": "Tb",
+   "op": "table",
+   "range": "Sheet1!H1:K5"
+  },
+  {
+   "op": "dataseries",
+   "range": "Sheet1!K1:K13",
+   "rowcol": "cols",
+   "type": "linear"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!H1:N26"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

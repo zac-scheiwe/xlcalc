@@ -260,7 +260,7 @@ pub fn arabic(_: &mut EvalCtx, a: &[Value]) -> Value {
         if s.encode_utf16().count() > 255 {
             return Err(XlError::Value);
         }
-        let t = s.trim_matches(' ');
+        let t = s.trim_matches(|c| matches!(c, ' ' | '\t' | '\n' | '\r'));
         let (neg, body) = match t.strip_prefix('-') {
             Some(b) => {
                 if b.is_empty() {
@@ -343,7 +343,7 @@ pub fn bitshift(ctx: &mut EvalCtx, a: &[Value], dir: f64) -> Value {
 }
 
 pub fn delta(ctx: &mut EvalCtx, ops: &[Operand], ge: bool) -> Operand {
-    atp::call(ctx, ops, "a", |ctx, a, _| {
+    atp::call(ctx, ops, "b", |ctx, a, _| {
         val((|| {
             let x = atp::req_num(ctx, a, 0);
             let y = atp::opt_num(ctx, a, 1)?.unwrap_or(0.0);

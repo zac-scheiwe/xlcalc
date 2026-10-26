@@ -253,6 +253,74 @@ impl Workbook {
         dst: Rect,
         spec: &PasteSpecial,
     ) -> Result<RecalcReport, EditError> {
+        let r = self.paste_special_body(src_sheet, src, dst_sheet, dst, spec);
+        if r.is_ok() {
+            self.view_touch_paste(dst_sheet, src, dst);
+        }
+        r
+    }
+
+    fn paste_special_body(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        spec: &PasteSpecial,
+    ) -> Result<RecalcReport, EditError> {
+        let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst_sheet, dst);
+        let outer = self.calc.paste_block.replace((dst_sheet, dst));
+        let r = self.paste_special_raw(src_sheet, src, dst_sheet, dst, spec);
+        self.calc.paste_block = outer;
+        if pending {
+            self.restore_totals(src_sheet, src, None);
+            self.restore_totals(dst_sheet, dst, Some(dst));
+        }
+
+        if r.is_ok() && self.tables.iter().any(|t| t.sheet == dst_sheet) {
+            self.extra_recalc();
+        }
+        r
+    }
+
+    pub(crate) fn paste_special_raw(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        spec: &PasteSpecial,
+    ) -> Result<RecalcReport, EditError> {
+        if !spec.transpose {
+            if let Some(Ok((steps, _, _))) = self.view_copy_plan(src_sheet, src, dst_sheet, dst) {
+                if steps.len() > 1 || steps[0].0 != src {
+                    let mut report = RecalcReport::default();
+                    for (run, to) in steps {
+                        let d = Rect::new(
+                            to.row,
+                            to.col,
+                            to.row + run.rows() - 1,
+                            to.col + run.cols() - 1,
+                        );
+                        let r = self.paste_special_one(src_sheet, run, dst_sheet, d, spec)?;
+                        report.changed.extend(r.changed);
+                        report.evaluations += r.evaluations;
+                    }
+                    return Ok(report);
+                }
+            }
+        }
+        self.paste_special_one(src_sheet, src, dst_sheet, dst, spec)
+    }
+
+    pub(crate) fn paste_special_one(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        spec: &PasteSpecial,
+    ) -> Result<RecalcReport, EditError> {
         if matches!(spec.what, PasteWhat::All | PasteWhat::Formulas) {
             self.names_follow(src_sheet, src, dst_sheet, true);
         }
@@ -324,6 +392,38 @@ impl Workbook {
         } else {
             (src.rows(), src.cols())
         };
+
+        let mut dst = dst;
+        let mut keep_merge_one = false;
+        let mut dst_merge: Option<Rect> = None;
+        if spec.what != PasteWhat::Values && dst.is_cell() {
+            dst_merge = self
+                .merges(dst_sheet)
+                .into_iter()
+                .find(|m| m.contains(dst.r0, dst.c0));
+        }
+        if let Some(m) = dst_merge {
+            if spec.what == PasteWhat::All && lr == 1 && lc == 1 {
+                keep_merge_one = true;
+                dst = Rect::new(m.r0, m.c0, m.r0, m.c0);
+            } else if spec.what == PasteWhat::Formats {
+                dst = m;
+            } else {
+                let dim = |s: u32, l: u32| {
+                    if s < l {
+                        Some(l)
+                    } else if s % l == 0 {
+                        Some(s)
+                    } else {
+                        None
+                    }
+                };
+                let (Some(pr), Some(pc)) = (dim(m.rows(), lr), dim(m.cols(), lc)) else {
+                    return Err(crate::merge::merged_cell());
+                };
+                dst = Rect::new(m.r0, m.c0, m.r0 + pr - 1, m.c0 + pc - 1);
+            }
+        }
 
         let ok_r = dst.rows() % lr == 0 || dst.rows() == 1;
         let ok_c = dst.cols() % lc == 0 || dst.cols() == 1;
@@ -416,7 +516,15 @@ impl Workbook {
                 return Err(crate::cse::part_of_array());
             }
         }
+        let orig_tables: Vec<Rect> = self.tables.iter().map(|t| t.rect).collect();
+        let (unmerge, suspend) =
+            self.guard_paste_merges(dst_sheet, target, dst, keep_merge_one, spec)?;
         let arrays = self.paste_special_arrays(src_sheet, src, dst_sheet, target, spec)?;
+        for m in unmerge {
+            self.remove_merge(dst_sheet, m);
+        }
+
+        self.suspend_merges(dst_sheet, &suspend, true);
         let mut plan: Vec<(CellAddr, Act)> = Vec::new();
         let mut fmt_pairs: Vec<(CellAddr, CellAddr)> = Vec::new();
         for rr in 0..reps_r {
@@ -436,6 +544,7 @@ impl Workbook {
                         let skipped = spec.skip_blanks && self.src_blank(from);
                         if spec.what != PasteWhat::Values
                             && spec.what != PasteWhat::Formulas
+                            && !keep_merge_one
                             && !skipped
                         {
                             fmt_pairs.push((from, to));
@@ -494,6 +603,15 @@ impl Workbook {
             report.changed.push(to);
         }
         self.paste_arrays(arrays);
+        if self
+            .tables
+            .iter()
+            .map(|t| t.rect)
+            .ne(orig_tables.iter().copied())
+        {
+            self.fmt_copy_pairs(&fmt_pairs);
+        }
+        self.suspend_merges(dst_sheet, &suspend, false);
         self.settings.mode = mode;
         if mode == CalcMode::Automatic {
             let r = calc::recalc(self);
@@ -518,6 +636,24 @@ impl Workbook {
             let v = self.value(a);
             let text = self.header_text(a, &v);
             self.set_value(a, Value::from(text.as_str()));
+        }
+
+        if spec.what != PasteWhat::Formats {
+            if let Some((ti, rect, rows, edge)) = self.paste_growth(
+                dst_sheet,
+                target,
+                None,
+                Some(&orig_tables),
+                Some((src_sheet, src)),
+                true,
+            ) {
+                let info = crate::moves::PasteInfo {
+                    block: target,
+                    carries_fmt: matches!(spec.what, PasteWhat::All | PasteWhat::Formats),
+                    protect_blanks: !edge,
+                };
+                self.grow_table_by_paste(ti, rect, rows, Some(info));
+            }
         }
         Ok(calc::finish_report(report))
     }

@@ -6,7 +6,7 @@ use crate::workbook::{CalcMode, EditError, Workbook};
 
 pub const MERGED_CELL: &str = "We can't do that to a merged cell.";
 
-fn merged_cell() -> EditError {
+pub(crate) fn merged_cell() -> EditError {
     EditError::Compile(MERGED_CELL.into())
 }
 
@@ -88,6 +88,7 @@ impl Workbook {
         };
 
         let mut areas = Vec::new();
+        let mut wiped = Vec::new();
         for mut a in rows {
             while !across {
                 let grown = self
@@ -99,6 +100,22 @@ impl Workbook {
                     break;
                 }
                 a = grown;
+            }
+            if !across {
+                let ms: Vec<Rect> = self
+                    .merges(sheet)
+                    .into_iter()
+                    .filter(|m| m.intersects(&a))
+                    .collect();
+                let staggered = ms.iter().any(|l| {
+                    l.c0 == a.c0
+                        && ms
+                            .iter()
+                            .any(|r| r.r0 == a.r0 && r.c0 > l.c1 && r.r0 < l.r0 && l.r0 <= r.r1)
+                });
+                if staggered {
+                    wiped.push(a);
+                }
             }
             areas.push(a);
         }
@@ -128,6 +145,28 @@ impl Workbook {
             }
         }
 
+        for a in &wiped {
+            let cells: Vec<(u32, u32)> = self
+                .sheet(sheet)
+                .unwrap()
+                .cells
+                .iter_rect(*a)
+                .map(|(r, c, _)| (r, c))
+                .collect();
+            for (r, c) in cells {
+                let x = CellAddr::new(sheet, r, c);
+                if self.remove_cell(x) {
+                    calc::cell_changed(self, x);
+                }
+            }
+            if a.rows() as u64 * a.cols() as u64 <= (1 << 16) {
+                for r in a.r0..=a.r1 {
+                    for c in a.c0..=a.c1 {
+                        self.store_format(CellAddr::new(sheet, r, c), "General");
+                    }
+                }
+            }
+        }
         let hull = areas.iter().fold(areas[0], |x, a| x.union_bounds(a));
         self.merges
             .areas
@@ -182,6 +221,18 @@ impl Workbook {
     }
 
     pub fn unmerge_cells(&mut self, sheet: SheetId, rect: Rect) -> RecalcReport {
+        let mut rect = rect;
+        loop {
+            let grown = self
+                .merges(sheet)
+                .into_iter()
+                .filter(|m| m.intersects(&rect))
+                .fold(rect, |x, m| x.union_bounds(&m));
+            if grown == rect {
+                break;
+            }
+            rect = grown;
+        }
         let gone: Vec<Rect> = self
             .merges(sheet)
             .into_iter()
@@ -239,6 +290,47 @@ impl Workbook {
             ));
         }
         Ok(())
+    }
+
+    pub(crate) fn guard_paste_merges(
+        &self,
+        sheet: SheetId,
+        target: Rect,
+        dst: Rect,
+        keep_one: bool,
+        spec: &crate::pastespecial::PasteSpecial,
+    ) -> Result<(Vec<Rect>, Vec<Rect>), EditError> {
+        use crate::pastespecial::PasteWhat;
+        if spec.what == PasteWhat::Values {
+            self.guard_merges_touch(sheet, target)?;
+            return Ok((vec![], vec![]));
+        }
+        if keep_one {
+            return Ok((vec![], vec![]));
+        }
+        let region = if spec.what == PasteWhat::Formats && (dst.rows() > 1 || dst.cols() > 1) {
+            dst
+        } else {
+            Rect::new(
+                target.r0.min(dst.r0),
+                target.c0.min(dst.c0),
+                target.r1.max(dst.r1),
+                target.c1.max(dst.c1),
+            )
+        };
+        let hit: Vec<Rect> = self
+            .merges(sheet)
+            .into_iter()
+            .filter(|m| m.intersects(&region))
+            .collect();
+        if hit.iter().any(|m| !inside(m, &region)) {
+            return Err(merged_cell());
+        }
+        Ok(if spec.what == PasteWhat::Formulas {
+            (vec![], hit)
+        } else {
+            (hit, vec![])
+        })
     }
 
     pub(crate) fn guard_merge_array(&self, sheet: SheetId, rect: Rect) -> Result<(), EditError> {
@@ -320,7 +412,23 @@ impl Workbook {
                 out.push((sheet, r));
             }
         }
+
+        let unmerged = out.len() < self.merges.areas.len();
         self.merges.areas = out;
+        if unmerged {
+            self.extra_recalc();
+        }
+    }
+
+    pub(crate) fn unmerge_cut_sideways(&mut self, s: &Shift) {
+        let Some((l0, l1)) = s.limit else { return };
+        self.merges.areas.retain(|&(sheet, m)| {
+            let (q, u, v) = match s.axis {
+                Axis::Rows => (m.r1, m.c0, m.c1),
+                Axis::Cols => (m.c1, m.r0, m.r1),
+            };
+            sheet != s.sheet || v < l0 || u > l1 || q < s.at || (l0 <= u && v <= l1)
+        });
     }
 
     pub(crate) fn move_merges(
@@ -394,6 +502,83 @@ impl Workbook {
         ds: SheetId,
         dr: Rect,
     ) -> Result<RecalcReport, EditError> {
+        let r = self.copy_to_range_body(ss, src, ds, dr);
+        if r.is_ok() {
+            self.view_touch_paste(ds, src, dr);
+        }
+        r
+    }
+
+    fn copy_to_range_body(
+        &mut self,
+        ss: SheetId,
+        src: Rect,
+        ds: SheetId,
+        dr: Rect,
+    ) -> Result<RecalcReport, EditError> {
+        let keep = Rect::new(
+            dr.r0,
+            dr.c0,
+            dr.r1.max(dr.r0 + src.rows() - 1),
+            dr.c1.max(dr.c0 + src.cols() - 1),
+        );
+        let pending = self.totals_pending(ss, src) || self.totals_pending(ds, keep);
+        let outer = self.calc.paste_block.replace((ds, keep));
+        let r = self.copy_to_range_raw(ss, src, ds, dr);
+        self.select_paste(ds, dr.r0, dr.c0);
+        self.calc.paste_block = outer;
+        if pending {
+            self.restore_totals(ss, src, None);
+            self.restore_totals(ds, keep, Some(keep));
+        }
+
+        if r.is_ok() && self.tables.iter().any(|t| t.sheet == ds) {
+            self.extra_recalc();
+        }
+        r
+    }
+
+    fn copy_to_range_raw(
+        &mut self,
+        ss: SheetId,
+        src: Rect,
+        ds: SheetId,
+        dr: Rect,
+    ) -> Result<RecalcReport, EditError> {
+        if let Some(plan) = self.view_copy_plan(ss, src, ds, dr) {
+            let (steps, whole, from_filtered) = plan?;
+            self.guard_merges_rect(ds, whole)?;
+            self.guard_arrays_rect(ds, whole)?;
+            self.remove_arrays_in(ds, whole);
+            let mut report = RecalcReport::default();
+            let last = steps.len();
+            for (i, (run, to)) in steps.into_iter().enumerate() {
+                self.defer_paste_recalc = i + 1 < last;
+                let r = self.copy_range(ss, run, to);
+                self.defer_paste_recalc = false;
+                let r = r?;
+                report.changed.extend(r.changed);
+                report.evaluations += r.evaluations;
+
+                if from_filtered {
+                    let d = Rect::new(
+                        to.row,
+                        to.col,
+                        to.row + run.rows() - 1,
+                        to.col + run.cols() - 1,
+                    );
+                    let spec = crate::pastespecial::PasteSpecial {
+                        what: crate::pastespecial::PasteWhat::Values,
+                        ..Default::default()
+                    };
+                    self.defer_paste_recalc = i + 1 < last;
+                    let r = self.paste_special_one(ss, run, ds, d, &spec);
+                    self.defer_paste_recalc = false;
+                    r?;
+                }
+            }
+            return Ok(report);
+        }
         let (nr, nc) = if dr.rows() % src.rows() == 0 && dr.cols() % src.cols() == 0 {
             (dr.rows() / src.rows(), dr.cols() / src.cols())
         } else {
@@ -417,12 +602,30 @@ impl Workbook {
         for ti in 0..nr {
             for tj in 0..nc {
                 let to = CellAddr::new(ds, dr.r0 + ti * src.rows(), dr.c0 + tj * src.cols());
-                let r = self.copy_range(ss, src, to)?;
+                self.defer_paste_recalc = ti + 1 < nr || tj + 1 < nc;
+                let r = self.copy_range(ss, src, to);
+                self.defer_paste_recalc = false;
+                let r = r?;
                 report.changed.extend(r.changed);
                 report.evaluations += r.evaluations;
             }
         }
         Ok(report)
+    }
+
+    pub(crate) fn suspend_merges(&mut self, sheet: SheetId, ms: &[Rect], off: bool) {
+        if off {
+            self.merges
+                .areas
+                .retain(|(s, x)| !(*s == sheet && ms.contains(x)));
+        } else {
+            self.merges.areas.extend(ms.iter().map(|m| (sheet, *m)));
+        }
+    }
+
+    pub(crate) fn remove_merge(&mut self, sheet: SheetId, r: Rect) {
+        self.merges.areas.retain(|(s, x)| !(*s == sheet && *x == r));
+        calc::rect_changed(self, sheet, r);
     }
 
     pub(crate) fn put_merge(&mut self, sheet: SheetId, r: Rect) {

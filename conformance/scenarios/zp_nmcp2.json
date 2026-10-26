@@ -1,0 +1,25 @@
+{
+  "sheets": ["S1", "S2"],
+  "steps": [
+    {"cell": "S1!A1", "input": "1", "op": "set"},
+    {"cell": "S1!A2", "input": "2", "op": "set"},
+    {"name": "Loc", "op": "name", "refers_to": "=S1!$A$1:$A$2", "scope": "S1"},
+    {"name": "Lv", "op": "name", "refers_to": "=5", "scope": "S1"},
+    {"cell": "S1!C1", "input": "=ABS(S1!Loc)", "op": "set"},
+    {"cell": "S1!C3", "input": "=SUM(S1!Loc*1)", "op": "set"},
+    {"cell": "S1!C4", "input": "=IF(TRUE,S1!Loc)", "op": "set"},
+    {"cell": "S1!C6", "input": "=(S1!Loc)", "op": "set"},
+    {"cell": "S1!C8", "input": "=-S1!Loc", "op": "set"},
+    {"cell": "S1!C10", "input": "=@S1!Loc", "op": "set"},
+    {"cell": "S1!C11", "input": "=S1!Lv", "op": "set"},
+    {"cell": "S1!C12", "input": "=SUM(S1!Lv)", "op": "set"},
+    {"cell": "S1!C13", "input": "=S1!Loc&\"\"", "op": "set"},
+    {"cell": "S1!C15", "input": "=INDEX(S1!Loc,1)", "op": "set"},
+    {"cell": "S1!C16", "input": "=S1!Lv+S1!Lv", "op": "set"},
+    {"cell": "S1!C17", "input": "=Lv", "op": "set"},
+    {"cell": "S1!C18", "input": "=S1!A1+S1!Lv", "op": "set"},
+    {"cell": "S1!C19", "input": "=LET(x,S1!Lv,x)", "op": "set"},
+    {"after": "S2", "name": "K1", "op": "copy_sheet", "sheet": "S1"},
+    {"op": "read", "range": "K1!C1:C20"}
+  ]
+}

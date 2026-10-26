@@ -1,0 +1,65 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "7"
+  },
+  {
+   "op": "name",
+   "name": "Loc",
+   "refers_to": "=Sheet2!$A$1",
+   "scope": "Sheet2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=SUM(Sheet2!Loc)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=Sheet2!Loc"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Sheet2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet3",
+   "name": "Cp",
+   "after": "Sheet3"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet1",
+   "name": "Cq",
+   "after": "Cp"
+  },
+  {
+   "op": "read",
+   "range": "'Cq'!A1:C1"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

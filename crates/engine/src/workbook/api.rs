@@ -52,9 +52,29 @@ impl Workbook {
         self.settings.mode == CalcMode::Automatic && self.settings.except_tables
     }
 
+    pub fn delete_name_active(
+        &mut self,
+        name: &str,
+        scope: Option<SheetId>,
+    ) -> Option<RecalcReport> {
+        let key = name.to_uppercase();
+        let active = self.active_sheet();
+        let first = self.sheets.first().map(|s| s.id);
+        let scope = match scope {
+            None if first.is_some_and(|f| self.names.get(&key, Some(f)).is_some()) => first,
+            None if self.names.get(&key, None).is_some()
+                && self.names.get(&key, Some(active)).is_some() =>
+            {
+                Some(active)
+            }
+            s => s,
+        };
+        self.delete_name(name, scope)
+    }
+
     pub fn delete_name(&mut self, name: &str, scope: Option<SheetId>) -> Option<RecalcReport> {
         let key = name.to_uppercase();
-        self.names.remove(&key, scope)?;
+        self.names.delete(&key, scope)?;
         calc::name_changed(self, &key);
         Some(self.after_edit(vec![]))
     }

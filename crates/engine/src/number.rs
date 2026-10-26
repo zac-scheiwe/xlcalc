@@ -272,6 +272,35 @@ fn digits15(x: f64) -> (String, i32) {
     (digits, exp)
 }
 
+fn round_digits(digits: &str, n: usize) -> (String, bool) {
+    let b = digits.as_bytes();
+    let mut v: Vec<u8> = b[..n].to_vec();
+    let mut carry = false;
+    if b[n] >= b'5' {
+        let mut i = n;
+        loop {
+            if i == 0 {
+                v.insert(0, b'1');
+                v.pop();
+                carry = true;
+                break;
+            }
+            i -= 1;
+            if v[i] == b'9' {
+                v[i] = b'0';
+            } else {
+                v[i] += 1;
+                break;
+            }
+        }
+    }
+    let mut s = String::from_utf8(v).unwrap();
+    while s.len() > 1 && s.ends_with('0') {
+        s.pop();
+    }
+    (s, carry)
+}
+
 fn fixed_from_digits(digits: &str, exp: i32) -> String {
     let n = digits.len() as i32;
     if exp >= 0 {
@@ -328,7 +357,12 @@ pub fn format_general(x: f64) -> String {
     if x == 0.0 {
         return "0".to_string();
     }
-    let (digits, exp) = digits15(x);
+    let (mut digits, mut exp) = digits15(x);
+    if exp.abs() >= 99 && digits.len() == 15 {
+        let (d, carry) = round_digits(&digits, 14);
+        digits = d;
+        exp += carry as i32;
+    }
     let fixed = fixed_from_digits(&digits, exp);
     let body = if fixed.len() <= 20 {
         fixed

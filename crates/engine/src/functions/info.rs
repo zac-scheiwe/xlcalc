@@ -210,8 +210,16 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Value::Text(_) => "l",
             _ => "v",
         }),
+
         "prefix" => Value::from(match value() {
-            Value::Text(_) => "'",
+            Value::Text(_)
+                if ctx
+                    .wb
+                    .formula_at(crate::address::CellAddr::new(sheet, row, col))
+                    .is_none() =>
+            {
+                "'"
+            }
             _ => "",
         }),
         "protect" => Value::Number(1.0),
@@ -271,7 +279,12 @@ fn parity(ctx: &EvalCtx, v: &Value, even: bool) -> Value {
     }
     match ctx.to_number(v) {
         Ok(n) => {
-            let n = n.trunc();
+            let r = n.round();
+            let n = if (n - r).abs() < 1.1642e-10 {
+                r
+            } else {
+                n.trunc()
+            };
             Value::Bool((n % 2.0 == 0.0) == even)
         }
         Err(e) => err(e),

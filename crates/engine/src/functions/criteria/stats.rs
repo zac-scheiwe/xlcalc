@@ -4,12 +4,12 @@ use crate::value::XlError;
 type R<T> = Result<T, XlError>;
 
 pub fn snapped_sum(v: &[f64]) -> f64 {
-    let mut acc = 0.0f64;
+    let (mut acc, mut last) = (0.0f64, (0.0f64, 0.0f64));
     for &x in v {
-        let s = acc + x;
-        acc = number::snap_add(acc, x, s);
+        last = (acc, x);
+        acc = crate::x87::add(acc, x);
     }
-    acc
+    number::snap_add(last.0, last.1, acc)
 }
 
 pub fn max(v: &[f64]) -> f64 {
@@ -29,7 +29,7 @@ pub fn min(v: &[f64]) -> f64 {
 pub fn var(v: &[f64], sample: bool) -> R<f64> {
     use crate::x87;
     let n = v.len();
-    if n == 0 || (sample && n < 2) {
+    if n == 0 {
         return Err(XlError::Div0);
     }
     let hz = |x: f64| x.to_bits() & 0xFFFF_0000_0000_0000 == 0;
@@ -39,6 +39,13 @@ pub fn var(v: &[f64], sample: bool) -> R<f64> {
     for &x in v {
         s = x87::add(s, x);
         q = x87::add(x87::mul(x, x), q);
+    }
+    if sample && n < 2 {
+        return Err(if q.is_finite() {
+            XlError::Div0
+        } else {
+            XlError::Num
+        });
     }
     let t = x87::mul(s, s);
     let (d, c, div) = if sample {
@@ -102,7 +109,7 @@ pub fn median(v: &[f64]) -> R<f64> {
     Ok(if n % 2 == 1 {
         s[n / 2]
     } else {
-        (s[n / 2 - 1] + s[n / 2]) / 2.0
+        s[n / 2 - 1] + 0.5 * (s[n / 2] - s[n / 2 - 1])
     })
 }
 

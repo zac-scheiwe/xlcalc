@@ -159,11 +159,20 @@ fn norm_pdf_checked(z: f64) -> R<f64> {
 }
 
 pub fn phi(ctx: &mut EvalCtx, a: &[Value]) -> Value {
-    fin(num(ctx, &a[0]).and_then(norm_pdf_checked))
+    fin(num(ctx, &a[0]).and_then(|z| {
+        norm_pdf_checked(z)?;
+        Ok(norm_pdf_xl(z, 0.0, 1.0))
+    }))
 }
 
 pub fn gauss(ctx: &mut EvalCtx, a: &[Value]) -> Value {
-    fin(num(ctx, &a[0]).map(|x| norm_cdf(x) - 0.5))
+    fin(num(ctx, &a[0]).map(|x| {
+        if x.abs() <= 1e-15 {
+            x87::mul(sp::erf(x87::mul(-std::f64::consts::FRAC_1_SQRT_2, x)), -0.5)
+        } else {
+            norm_cdf(x) - 0.5
+        }
+    }))
 }
 
 pub fn norm_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -256,7 +265,12 @@ fn lognorm(x: f64, m: f64, s: f64, cum: bool) -> R<f64> {
     } else {
         let lx = x87::ln(x);
         let d = x87::sub(lx, m);
-        let q = x87::div(x87::mul(d, d), x87::mul(2.0, x87::mul(s, s)));
+
+        let den = x87::mul(2.0, x87::mul(s, s));
+        if den == 0.0 {
+            return Err(XlError::Div0);
+        }
+        let q = x87::div(x87::mul(d, d), den);
         let mut t = XlLogSum::new(x87::ln(s));
         t.add(q);
         t.add(LN_SQRT_2PI);
@@ -309,9 +323,6 @@ pub(super) fn t_2t(t: f64, df: f64) -> f64 {
 }
 
 fn t_xl(t: f64, df: f64) -> f64 {
-    if df > 2e7 {
-        return t_2t(t.abs(), df);
-    }
     let t2 = x87::mul(t, t);
     let s = x87::add(t2, df);
     hp::beta_inc_xy(x87::div(df, 2.0), 0.5, x87::div(df, s), x87::div(t2, s)).0
@@ -366,9 +377,14 @@ pub fn t_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let cum = flag(a, 2)?;
 
         if !cum && raw_df < 1.0 {
-            return Err(XlError::Div0);
+            let lim = if t == 0.0 { 0.0 } else { -1.0 };
+            return Err(if raw_df < lim {
+                XlError::Num
+            } else {
+                XlError::Div0
+            });
         }
-        let df = t_df(ctx, a, 1)?;
+        let df = if cum { t_df(ctx, a, 1)? } else { raw_df };
         Ok(if cum {
             t_tails_xl(t, df).0
         } else {
@@ -403,7 +419,7 @@ pub fn tdist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         coerce_all(ctx, a, "nnn")?;
         let t = check_t(num(ctx, &a[0])?)?;
         let df = t_df(ctx, a, 1)?;
-        let tails = int(ctx, a, 2)?;
+        let tails = crate::functions::args::sfix(num(ctx, &a[2])?) as f64;
         if t < 0.0 || !(tails == 1.0 || tails == 2.0) {
             return Err(XlError::Num);
         }
@@ -551,6 +567,16 @@ fn bracket(start: f64, target: f64, f: &impl Fn(f64) -> f64) -> f64 {
     hi
 }
 
+fn inv_status(x: f64) -> R<f64> {
+    if x.is_nan() {
+        Err(XlError::Num)
+    } else if x == f64::NEG_INFINITY {
+        Err(XlError::Div0)
+    } else {
+        Ok(x)
+    }
+}
+
 fn gamma_inv_unit(p: f64, k: f64) -> f64 {
     if k == 0.5 {
         let t = super::invnorm::inverse_erf(p);
@@ -605,6 +631,12 @@ fn gamma_inv_halley(t: f64, upper: bool, a: f64, mut x: f64) -> f64 {
     if x == 0.0 {
         return 0.0;
     }
+    if x < 0.0 || x.is_nan() {
+        return f64::NAN;
+    }
+    if x < f64::MIN_POSITIVE {
+        return f64::NEG_INFINITY;
+    }
 
     let (t, upper) = if t > 0.9999 {
         (x87::sub(1.0, t), !upper)
@@ -621,16 +653,29 @@ fn gamma_inv_halley(t: f64, upper: bool, a: f64, mut x: f64) -> f64 {
         }
         let f = x87::mul(poisson_pmf(a, x), x87::div(a, x));
         let f = if upper { -f } else { f };
+        if f == 0.0 {
+            return x;
+        }
         let c = x87::sub(x87::div(am1, x), 1.0);
         let den = x87::sub(x87::mul(2.0, f), x87::mul(r, c));
         let xn = x87::sub(x, x87::div(x87::mul(2.0, r), den));
+        if xn == 0.0 {
+            return f64::NEG_INFINITY;
+        }
+        if !(xn > 0.0) {
+            return f64::NAN;
+        }
         if x87::sub(xn, x).abs() <= x87::mul(x, f64::EPSILON) {
             return x;
         }
         x = xn;
     }
 
-    best.1
+    if x87::div(best.0, t) <= 1e-12 {
+        best.1
+    } else {
+        f64::NAN
+    }
 }
 
 fn gamma_inv_upper(q: f64, k: f64) -> f64 {
@@ -640,6 +685,11 @@ fn gamma_inv_upper(q: f64, k: f64) -> f64 {
     }
     if k != 1.0 {
         return gamma_inv_xl(q, true, k);
+    }
+
+    if q > 0.5 {
+        let y = x87::mul(x87::sub(1.0, q), -1.0);
+        return x87::mul(xl_log1p(y), -1.0);
     }
     if q <= 0.5 {
         let f = |x: f64| -hp::gamma_q_cr(k, x);
@@ -663,7 +713,7 @@ pub fn chisq_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if p == 0.0 {
             return Ok(0.0);
         }
-        Ok(2.0 * gamma_inv_unit(p, df / 2.0))
+        Ok(2.0 * inv_status(gamma_inv_unit(p, df / 2.0))?)
     })())
 }
 
@@ -678,7 +728,7 @@ pub fn chisq_inv_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if p == 1.0 {
             return Ok(0.0);
         }
-        Ok(2.0 * gamma_inv_upper(p, df / 2.0))
+        Ok(2.0 * inv_status(gamma_inv_upper(p, df / 2.0))?)
     })())
 }
 
@@ -957,6 +1007,9 @@ fn inv_ibeta_start(al: f64, pp: f64, qq: f64) -> f64 {
     } else {
         xl_pow(c, 3.0)
     };
+    if !c3.is_finite() {
+        return 0.5;
+    }
     let t = x87::mul(r, c3);
     let num = x87::sub(x87::add(x87::mul(pp, 4.0), r), 2.0);
     if t <= 0.0 {
@@ -1078,7 +1131,8 @@ pub fn beta_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             return Err(XlError::Num);
         }
         let z = inv_ibeta_xy(p, false, al, be)?.0;
-        Ok(lo + z * (hi - lo))
+
+        Ok(x87::add(lo, x87::mul(z, x87::sub(hi, lo))))
     })())
 }
 
@@ -1110,7 +1164,7 @@ pub fn gamma_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if p == 0.0 {
             return Ok(0.0);
         }
-        Ok(x87::mul(gamma_inv_unit(p, al), be))
+        Ok(x87::mul(inv_status(gamma_inv_unit(p, al))?, be))
     })())
 }
 
@@ -1210,11 +1264,15 @@ const MAX_TRIALS: f64 = 2147483647.0;
 
 pub fn binom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let k = int(ctx, a, 0)?;
-        let n = int(ctx, a, 1)?;
+        let k = num(ctx, &a[0])?;
+        let n = num(ctx, &a[1])?;
+        if k < 0.0 || n < 0.0 {
+            return Err(XlError::Num);
+        }
+        let (k, n) = (k.trunc(), n.trunc());
         let p = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
-        if k < 0.0 || n < 0.0 || k > n || !(0.0..=1.0).contains(&p) || n > MAX_TRIALS {
+        if k < 0.0 || n < 0.0 || k > n || !(0.0..=1.0).contains(&p) || n >= MAX_TRIALS {
             return Err(XlError::Num);
         }
         if !cum && k == 0.0 && p == 1.0 && n > 0.0 {
@@ -1243,26 +1301,70 @@ pub fn binom_dist_range(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if s == s2 {
             return Ok(binom_pmf(s, n, p));
         }
-
-        if s > n * p {
-            let up = |k: f64| {
-                if k <= 0.0 {
-                    1.0
-                } else if k > n {
-                    0.0
-                } else {
-                    hp::beta_inc(k, n - k + 1.0, p, 1.0 - p)
-                }
-            };
-            return Ok(up(s) - up(s2 + 1.0));
-        }
-        let lo = if s == 0.0 {
-            0.0
-        } else {
-            binom_cdf(s - 1.0, n, p)
-        };
-        Ok(binom_cdf(s2, n, p) - lo)
+        Ok(binom_range(n, p, s, s2))
     })())
+}
+
+fn comp_sum(hi: f64, lo: f64) -> f64 {
+    let t = x87::mul(-1.0, lo);
+    let sum = x87::add(hi, t);
+    let bv = x87::sub(sum, hi);
+    let av = x87::sub(sum, bv);
+    let br = x87::sub(t, bv);
+    let err = x87::add(br, x87::sub(hi, av));
+    x87::add(sum, err)
+}
+
+fn binom_range(n: f64, p: f64, s: f64, s2: f64) -> f64 {
+    if s == 0.0 {
+        return binom_cdf(s2, n, p);
+    }
+    let lo_cdf = binom_cdf(x87::sub(s, 1.0), n, p);
+    let (hi, lo) = if lo_cdf > 0.9 {
+        let t = x87::mul(-1.0, p);
+        let q0 = x87::add(1.0, t);
+        let bv = x87::sub(q0, 1.0);
+        let av = x87::sub(q0, bv);
+        let br = x87::sub(t, bv);
+        let err = x87::add(br, x87::sub(1.0, av));
+        let q = x87::add(x87::add(q0, err), err);
+        let upper = |a: f64, b: f64| match super::ibeta::xl_ibeta(q, p, a, b) {
+            Some((_, c)) => c,
+            None => hp::beta_inc(b, a, p, q),
+        };
+        let from_s = || upper(x87::add(1.0, x87::sub(n, s)), s);
+        if s2 == n {
+            return from_s();
+        }
+        let above = upper(x87::sub(n, s2), x87::add(1.0, s2));
+        (from_s(), above)
+    } else {
+        (binom_cdf(s2, n, p), lo_cdf)
+    };
+    let r = comp_sum(hi, lo);
+    let ratio = if lo != 0.0 { x87::div(r, lo) } else { 1.0 };
+    if ratio > 0.001 {
+        return r;
+    }
+    let (mut k, mut acc) = (s, 0.0);
+    let mut i = 0;
+    while k <= s2 {
+        if i > 100 {
+            return r;
+        }
+        let next = x87::add(acc, binom_pmf(k, n, p));
+        if next == acc {
+            break;
+        }
+        acc = next;
+        k = x87::add(k, 1.0);
+        i += 1;
+    }
+    if i > 100 {
+        r
+    } else {
+        acc
+    }
 }
 
 pub fn binom_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -1356,7 +1458,7 @@ fn hypgeom_cdf_sum(k: f64, n: f64, kk: f64, nn: f64) -> f64 {
 }
 
 fn hypgeom(k: f64, n: f64, kk: f64, nn: f64, cum: bool) -> R<f64> {
-    if [k, n, kk, nn].iter().any(|v| *v >= 2147483648.0) {
+    if [k, n, kk, nn].iter().any(|v| *v >= 2147483647.0) {
         return Err(XlError::Num);
     }
     if k < 0.0 || n < 0.0 || kk < 0.0 || nn <= 0.0 || n > nn || kk > nn {

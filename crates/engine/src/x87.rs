@@ -254,7 +254,7 @@ fn scale(v: DD, n: i32) -> Option<DD> {
 }
 
 pub fn exp(x: f64) -> f64 {
-    if x == 0.0 || !x.is_finite() || x.abs() > 709.0 {
+    if x == 0.0 || !x.is_finite() || x.abs() > 710.0 {
         return x.exp();
     }
     let t = round64_dd(round64_dd(LOG2E_DD).mul_f(x));
@@ -270,15 +270,41 @@ pub fn exp(x: f64) -> f64 {
     if f.0 < 0.0 {
         h = round64_dd(DD::new(1.0).div(h));
     }
-    scale(h, n as i32).and_then(round_dd).unwrap_or(x.exp())
+
+    round_dd(h)
+        .and_then(|r| scale(DD::new(r), n as i32))
+        .map(|r| r.0)
+        .unwrap_or(x.exp())
 }
 
 fn dd_ln2() -> DD {
     crate::functions::statdist::dd::LN2
 }
 
+fn ln_dd(x: f64) -> DD {
+    let d = x - 1.0;
+    if d.abs() >= 0.0625 {
+        return DD::new(x).ln();
+    }
+    let u = DD::new(d).div(DD::new(2.0).add_f(d));
+    let u2 = u.mul(u);
+    let mut term = u;
+    let mut sum = u;
+    let mut k = 3.0;
+    while k < 60.0 {
+        term = term.mul(u2);
+        let t = term.div(DD::new(k));
+        if t.hi().abs() <= sum.hi().abs() * 1e-34 {
+            break;
+        }
+        sum = sum.add(t);
+        k += 2.0;
+    }
+    sum.mul_f(2.0)
+}
+
 fn yl2x(x: f64, c: DD) -> f64 {
-    let l2 = DD::new(x).ln().div(dd_ln2());
+    let l2 = ln_dd(x).div(dd_ln2());
     round_dd(round64_dd(c).mul(l2)).unwrap_or(f64::NAN)
 }
 
@@ -391,6 +417,69 @@ pub fn expm1(x: f64) -> f64 {
         return -1.0;
     }
     div(mul(x, em1), ln(u))
+}
+
+#[derive(Default)]
+pub struct MpFlag(pub u8);
+
+impl MpFlag {
+    fn ovf(&mut self, v: f64) -> f64 {
+        if v.is_finite() {
+            v
+        } else {
+            self.0 = 1;
+            0.0
+        }
+    }
+    pub fn add(&mut self, a: f64, b: f64) -> f64 {
+        let v = add(a, b);
+        self.ovf(v)
+    }
+    pub fn sub(&mut self, a: f64, b: f64) -> f64 {
+        let v = sub(a, b);
+        self.ovf(v)
+    }
+
+    pub fn exp(&mut self, x: f64) -> f64 {
+        let v = exp(x);
+        self.ovf(v)
+    }
+    pub fn mul(&mut self, a: f64, b: f64) -> f64 {
+        let v = mul(a, b);
+        self.ovf(v)
+    }
+    pub fn div(&mut self, a: f64, b: f64) -> f64 {
+        if b == 0.0 || b.abs() < f64::MIN_POSITIVE {
+            self.0 = 4;
+            return 0.0;
+        }
+        let v = div(a, b);
+        self.ovf(v)
+    }
+    pub fn sqrt(&mut self, x: f64) -> f64 {
+        let v = sqrt(x);
+        if !v.is_finite() {
+            self.0 = 8;
+        }
+        v
+    }
+
+    pub fn result(&self, v: f64) -> Result<f64, crate::value::XlError> {
+        use crate::value::XlError;
+        match self.0 {
+            0 => Ok(v),
+            4 => Err(XlError::Div0),
+            _ => Err(XlError::Num),
+        }
+    }
+}
+
+pub fn chk(v: f64) -> Result<f64, crate::value::XlError> {
+    if v.is_finite() {
+        Ok(v)
+    } else {
+        Err(crate::value::XlError::Num)
+    }
 }
 
 #[cfg(test)]

@@ -82,6 +82,8 @@ fn counta(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Operand::Val(Value::Array(a)) => n += a.data.len() as f64,
             Operand::Val(Value::Blank) => {}
             Operand::Val(_) => n += 1.0,
+
+            Operand::Ref(crate::eval::Reference::Grid(g)) => n += g.items.len() as f64,
             Operand::Ref(r) => {
                 for area in r.areas() {
                     ctx.visit_area(area, |_, _, v| {
@@ -130,8 +132,12 @@ fn agg(
     )
 }
 
-fn mean(v: &[f64]) -> f64 {
-    v.iter().sum::<f64>() / v.len() as f64
+fn x87_mean(v: &[f64]) -> f64 {
+    let mut s = 0.0;
+    for &x in v {
+        s = crate::x87::add(s, x);
+    }
+    crate::x87::div(s, v.len() as f64)
 }
 
 fn average(v: &mut Vec<f64>) -> R<f64> {
@@ -139,11 +145,8 @@ fn average(v: &mut Vec<f64>) -> R<f64> {
         return Err(XlError::Div0);
     }
 
-    let mut acc = 0.0f64;
-    for &x in v.iter() {
-        acc = crate::number::snap_add(acc, x, acc + x);
-    }
-    Ok(acc / v.len() as f64)
+    let acc = crate::functions::criteria::stats::snapped_sum(v);
+    Ok(crate::x87::div(acc, v.len() as f64))
 }
 
 fn min(v: &mut Vec<f64>) -> R<f64> {
@@ -169,7 +172,7 @@ fn median(v: &mut Vec<f64>) -> R<f64> {
     Ok(if n % 2 == 1 {
         v[n / 2]
     } else {
-        (v[n / 2 - 1] + v[n / 2]) / 2.0
+        v[n / 2 - 1] + 0.5 * (v[n / 2] - v[n / 2 - 1])
     })
 }
 
@@ -177,13 +180,19 @@ fn devsq(v: &mut Vec<f64>) -> R<f64> {
     if v.is_empty() {
         return Err(XlError::Num);
     }
-    let m = mean(v);
-    Ok(v.iter().map(|x| (x - m) * (x - m)).sum())
+
+    let m = x87_mean(v);
+    let mut acc = 0.0;
+    for &x in v.iter() {
+        let d = crate::x87::sub(x, m);
+        acc = crate::x87::add(acc, crate::x87::mul(d, d));
+    }
+    Ok(acc)
 }
 
 fn var(v: &mut Vec<f64>, sample: bool) -> R<f64> {
     let n = v.len() as f64;
-    if (sample && n < 2.0) || n < 1.0 {
+    if n < 1.0 {
         return Err(XlError::Div0);
     }
     crate::functions::criteria::stats::var(v, sample)
@@ -197,8 +206,12 @@ fn avedev(v: &mut Vec<f64>) -> R<f64> {
     if v.is_empty() {
         return Err(XlError::Num);
     }
-    let m = mean(v);
-    Ok(v.iter().map(|x| (x - m).abs()).sum::<f64>() / v.len() as f64)
+    let m = x87_mean(v);
+    let mut acc = 0.0;
+    for &x in v.iter() {
+        acc = crate::x87::add(acc, crate::x87::sub(x, m).abs());
+    }
+    Ok(crate::x87::div(acc, v.len() as f64))
 }
 
 fn geomean(v: &mut Vec<f64>) -> R<f64> {

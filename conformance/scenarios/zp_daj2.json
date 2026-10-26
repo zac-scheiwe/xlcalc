@@ -1,0 +1,57 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "40"
+  },
+  {
+   "op": "name",
+   "name": "Gl",
+   "refers_to": "=Sheet1!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=IF(A1>0,Gl,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "=SUM(Gl)+Gl"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=INDEX(Gl,1)+0"
+  },
+  {
+   "op": "name",
+   "name": "Gl",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F8"
+  }
+ ]
+}

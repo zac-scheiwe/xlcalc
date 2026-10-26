@@ -69,7 +69,7 @@ fn scalar_num(ctx: &EvalCtx, op: &Operand) -> R<f64> {
     }
 }
 
-fn is_subtotal_formula(wb: &Workbook, fid: FormulaId) -> bool {
+pub(crate) fn is_subtotal_formula(wb: &Workbook, fid: FormulaId) -> bool {
     let mut found = false;
     walk(&wb.formula(fid).formula.root, &mut |n| {
         if let Node::Func { id, .. } = n {
@@ -82,11 +82,31 @@ fn is_subtotal_formula(wb: &Workbook, fid: FormulaId) -> bool {
     found
 }
 
+pub(crate) fn is_bare_subtotal_cell(wb: &Workbook, addr: crate::address::CellAddr) -> bool {
+    let Some(Entry::Formula(fid)) = wb
+        .sheet(addr.sheet)
+        .and_then(|s| s.cells.get(addr.row, addr.col))
+    else {
+        return false;
+    };
+    matches!(&wb.formula(*fid).formula.root, Node::Func { id, .. } if functions::def(*id).name == "SUBTOTAL")
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Hide {
+    No,
+
+    Always,
+
+    IfFiltered,
+}
+
 fn gather_ref(
     ctx: &mut EvalCtx,
     r: &Reference,
     skip_nested: bool,
     skip_errors: bool,
+    hide: Hide,
     out: &mut Vec<Value>,
 ) -> R<()> {
     let areas = r.areas();
@@ -98,30 +118,41 @@ fn gather_ref(
     for area in areas {
         let sh = wb.sheet(area.sheet);
         let (r0, c0) = (area.rect.r0, area.rect.c0);
-        ctx.visit_area(area, |r, c, v| {
-            if skip_errors && v.is_error() {
-                return;
-            }
-            if skip_nested {
-                if let Some(sh) = sh {
-                    let (ar, ac) = (r0 + r, c0 + c);
-                    let fid = match sh.cells.get(ar, ac) {
-                        Some(Entry::Formula(f)) => Some(*f),
-                        Some(Entry::Const(_)) => None,
-                        None => sh.spills.owner_of(ar, ac),
-                    };
-                    if let Some(fid) = fid {
-                        if *cache
-                            .entry(fid)
-                            .or_insert_with(|| is_subtotal_formula(wb, fid))
-                        {
-                            return;
+        let skip_hidden = match hide {
+            Hide::No => false,
+            Hide::Always => true,
+            Hide::IfFiltered => wb.filter_mode(area.sheet),
+        };
+        let sheet_id = area.sheet;
+        ctx.visit_area_lazy(
+            area,
+            |r, _| !(skip_hidden && wb.row_hidden(sheet_id, r0 + r)),
+            |r, c, v| {
+                if skip_errors && v.is_error() {
+                    return true;
+                }
+                if skip_nested {
+                    if let Some(sh) = sh {
+                        let (ar, ac) = (r0 + r, c0 + c);
+                        let fid = match sh.cells.get(ar, ac) {
+                            Some(Entry::Formula(f)) => Some(*f),
+                            Some(Entry::Const(_)) => None,
+                            None => sh.spills.owner_of(ar, ac),
+                        };
+                        if let Some(fid) = fid {
+                            if *cache
+                                .entry(fid)
+                                .or_insert_with(|| is_subtotal_formula(wb, fid))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
-            }
-            out.push(v.clone());
-        });
+                out.push(v.clone());
+                true
+            },
+        );
     }
     Ok(())
 }
@@ -200,9 +231,14 @@ pub fn subtotal(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
         .ok_or(XlError::Value)?;
         let mut vals = Vec::new();
+        let hide = if n >= 100.0 {
+            Hide::Always
+        } else {
+            Hide::IfFiltered
+        };
         for op in &ops[1..] {
             match op {
-                Operand::Ref(r) => gather_ref(ctx, r, true, false, &mut vals)?,
+                Operand::Ref(r) => gather_ref(ctx, r, true, false, hide, &mut vals)?,
                 Operand::Val(Value::Error(e)) => return Err(*e),
                 _ => return Err(XlError::Value),
             }
@@ -293,6 +329,7 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let opt = opt as u32;
         let skip_nested = opt <= 3;
         let skip_errors = matches!(opt, 2 | 3 | 6 | 7);
+        let hide = if opt % 2 == 1 { Hide::Always } else { Hide::No };
         let mut vals = Vec::new();
         if n < 14.0 {
             if let Some(Operand::Val(Value::Array(a))) = ops.get(3).filter(|_| ops.len() == 4) {
@@ -305,7 +342,9 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             }
             for op in &ops[2..] {
                 match op {
-                    Operand::Ref(r) => gather_ref(ctx, r, skip_nested, skip_errors, &mut vals)?,
+                    Operand::Ref(r) => {
+                        gather_ref(ctx, r, skip_nested, skip_errors, hide, &mut vals)?
+                    }
                     Operand::Val(Value::Error(e)) => return Err(*e),
                     _ => return Err(XlError::Value),
                 }
@@ -319,7 +358,7 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             return Err(XlError::Value);
         }
         match &ops[2] {
-            Operand::Ref(r) => gather_ref(ctx, r, skip_nested, skip_errors, &mut vals)?,
+            Operand::Ref(r) => gather_ref(ctx, r, skip_nested, skip_errors, hide, &mut vals)?,
             Operand::Val(Value::Array(a)) => {
                 vals.extend(
                     a.data
@@ -360,5 +399,27 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             k => one(ctx, k),
         })
     })();
+
+    let text_head = ops.iter().take(2).any(|o| match o {
+        Operand::Val(v @ Value::Text(_)) => ctx.to_number(v).is_err(),
+        _ => false,
+    });
+    if let (Err(XlError::Value), false) = (&r, text_head) {
+        for (i, op) in ops.iter().enumerate().skip(1) {
+            let e = match op {
+                Operand::Val(Value::Error(e)) => Some(*e),
+                Operand::Ref(rf) if i == 1 && rf.single().is_some() => {
+                    match ctx.deref(op.clone()) {
+                        Value::Error(e) => Some(e),
+                        _ => None,
+                    }
+                }
+                _ => None,
+            };
+            if let Some(e) = e {
+                return Operand::Val(Value::Error(e));
+            }
+        }
+    }
     Operand::Val(r.unwrap_or_else(Value::Error))
 }

@@ -1,0 +1,32 @@
+{
+  "sheets": ["S1", "S2", "S3", "S4"],
+  "steps": [
+    {"name": "X", "op": "name", "refers_to": "=1"},
+    {"name": "X", "op": "name", "refers_to": "=2", "scope": "S2"},
+    {"name": "X", "op": "name", "refers_to": "=3", "scope": "S3"},
+    {"name": "Y", "op": "name", "refers_to": "=1"},
+    {"name": "Y", "op": "name", "refers_to": "=2", "scope": "S2"},
+    {"name": "Y", "op": "name", "refers_to": "=3", "scope": "S3"},
+    {"name": "Z", "op": "name", "refers_to": "=3", "scope": "S3"},
+    {"name": "Z", "op": "name", "refers_to": "=2", "scope": "S2"},
+    {"name": "Z", "op": "name", "refers_to": "=1"},
+    {"op": "names"},
+    {"name": "X", "op": "delete_name"},
+    {"op": "names"},
+    {"name": "Z", "op": "delete_name"},
+    {"op": "names"},
+    {"after": "S3", "op": "move_sheet", "sheet": "S2"},
+    {"name": "Y", "op": "delete_name"},
+    {"op": "names"},
+    {"name": "Q", "op": "name", "refers_to": "=1"},
+    {"name": "Q", "op": "name", "refers_to": "=2", "scope": "S4"},
+    {"name": "Q", "op": "name", "refers_to": "=3", "scope": "S1"},
+    {"name": "T4", "op": "rename_sheet", "sheet": "S4"},
+    {"name": "Q", "op": "delete_name"},
+    {"op": "names"},
+    {"name": "Q", "op": "delete_name"},
+    {"op": "names"},
+    {"name": "Q", "op": "delete_name"},
+    {"op": "names"}
+  ]
+}

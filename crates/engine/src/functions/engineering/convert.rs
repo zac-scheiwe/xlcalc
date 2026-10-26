@@ -337,28 +337,29 @@ fn temp_kind(u: &Unit) -> Temp {
 }
 
 fn temperature(x: f64, a: Temp, b: Temp) -> f64 {
+    use crate::x87::{add, div, mul, sub};
     use Temp::*;
     match (a, b) {
-        (C, F) => x / 5.0 * 9.0 + 32.0,
-        (C, K) => x + 273.15,
-        (C, Rank) => (x + 273.15) * 1.8,
-        (C, Reau) => x * 0.8,
-        (F, C) => (x - 32.0) / 1.8,
-        (F, K) => (x - 32.0) / 1.8 + 273.15,
-        (F, Rank) => (x - 32.0) / 1.8 * 1.8 + 491.67,
-        (F, Reau) => (x - 32.0) * 0.8 / 1.8,
-        (K, C) => x - 273.15,
-        (K, F) => (x - 273.15) / 5.0 * 9.0 + 32.0,
-        (K, Rank) => x * 1.8,
-        (K, Reau) => (x - 273.15) * 0.8,
-        (Rank, C) => x / 1.8 - 273.15,
-        (Rank, F) => x / 1.8 * 1.8 - 459.67,
-        (Rank, K) => x / 1.8,
-        (Rank, Reau) => (x / 1.8 - 273.15) * 0.8,
-        (Reau, C) => x / 0.8,
-        (Reau, F) => x / 0.8 / 5.0 * 9.0 + 32.0,
-        (Reau, K) => x / 0.8 + 273.15,
-        (Reau, Rank) => (x / 0.8 + 273.15) * 1.8,
+        (C, F) => add(mul(x, 1.8), 32.0),
+        (C, K) => add(273.15, x),
+        (C, Rank) => mul(add(x, 273.15), 1.8),
+        (C, Reau) => mul(x, 0.8),
+        (F, C) => div(sub(x, 32.0), 1.8),
+        (F, K) => add(div(sub(x, 32.0), 1.8), 273.15),
+        (F, Rank) => add(x, 459.67),
+        (F, Reau) => div(mul(sub(x, 32.0), 0.8), 1.8),
+        (K, C) => sub(x, 273.15),
+        (K, F) => add(mul(sub(x, 273.15), 1.8), 32.0),
+        (K, Rank) => mul(x, 1.8),
+        (K, Reau) => mul(sub(x, 273.15), 0.8),
+        (Rank, C) => sub(div(x, 1.8), 273.15),
+        (Rank, F) => sub(x, 459.67),
+        (Rank, K) => div(x, 1.8),
+        (Rank, Reau) => mul(sub(div(x, 1.8), 273.15), 0.8),
+        (Reau, C) => div(x, 0.8),
+        (Reau, F) => add(div(mul(x, 1.8), 0.8), 32.0),
+        (Reau, K) => add(div(x, 0.8), 273.15),
+        (Reau, Rank) => mul(add(div(x, 0.8), 273.15), 1.8),
         _ => x,
     }
 }
@@ -389,7 +390,14 @@ fn convert_value(x: f64, from: &Parsed, to: &Parsed) -> R<f64> {
         } else {
             x87::div(m, fb)
         };
-        if from.dec != to.dec {
+        if (from.bin != 0 || to.bin != 0) && to.unit.name == "bit" {
+            if from.dec != 0 {
+                r = x87::mul(r, pow10(from.dec));
+            }
+            if to.dec != 0 {
+                r = x87::div(r, pow10(to.dec));
+            }
+        } else if from.dec != to.dec {
             r *= pow10(from.dec - to.dec);
         }
         if from.bin != to.bin {

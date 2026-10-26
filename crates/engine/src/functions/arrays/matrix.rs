@@ -196,7 +196,7 @@ pub fn mmult(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         if ac != br {
             return Err(XlError::Value);
         }
-        check_result_size(ar as u64, bc as u64)?;
+        check_result_size(ctx, ar as u64, bc as u64)?;
         let mut data = Vec::with_capacity(ar * bc);
         for i in 0..ar {
             for j in 0..bc {
@@ -219,6 +219,11 @@ pub fn munit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         };
         if n < 1.0 {
             return Err(XlError::Value);
+        }
+
+        if n * n + n > crate::workbook::ABANDON_CELLS as f64 {
+            ctx.abandoned = true;
+            return Err(XlError::Num);
         }
         if n * n > crate::workbook::MAX_ARRAY_CELLS as f64 {
             return Err(XlError::Num);

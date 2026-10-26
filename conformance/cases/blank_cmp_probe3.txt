@@ -1,0 +1,6 @@
+=Data!Z1=Data!Z2
+=Data!Z1=Data!Z1
+=(Data!Z1)=(Data!Z2)
+=Data!Z1=0
+=Data!Z1=""
+=Data!Z1:Z2=Data!Z3

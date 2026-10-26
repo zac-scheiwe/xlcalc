@@ -32,6 +32,7 @@ pub mod sort;
 pub mod structure;
 pub mod text;
 pub mod value;
+pub mod view;
 pub mod workbook;
 pub mod x87;
 pub mod xmath;

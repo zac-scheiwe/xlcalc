@@ -1,0 +1,429 @@
+{
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "3"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B2:B4",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T1",
+   "range": "Sheet1!A1:B4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "x"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!D2:D4",
+   "to": "Sheet1!B2"
+  },
+  {
+   "op": "table_resize",
+   "name": "T1",
+   "range": "Sheet1!A1:B6",
+   "sheet": "Sheet1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A40",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B40",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A41",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A42",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A43",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B41",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B42",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B43",
+   "input": "3"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B41:B43",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T5",
+   "range": "Sheet1!A40:B43"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D40",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D41",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D42",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D43",
+   "input": "x"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!D41:D43",
+   "fmt": "h:mm"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!D41:D43",
+   "to": "Sheet1!B41"
+  },
+  {
+   "op": "table_resize",
+   "name": "T5",
+   "range": "Sheet1!A40:B45",
+   "sheet": "Sheet1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B10",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A13",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B11",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B12",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B13",
+   "input": "3"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B11:B13",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T2",
+   "range": "Sheet1!A10:B13"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D10",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D11",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D12",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D13",
+   "input": "x"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!D11",
+   "fmt": "h:mm"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!D11:D13",
+   "to": "Sheet1!B11"
+  },
+  {
+   "op": "table_resize",
+   "name": "T2",
+   "range": "Sheet1!A10:B15",
+   "sheet": "Sheet1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A20",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B20",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A21",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A22",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A23",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B21",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B22",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B23",
+   "input": "3"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B21:B23",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T3",
+   "range": "Sheet1!A20:B23"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D20",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D21",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D22",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D23",
+   "input": "x"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!D21:D23",
+   "to": "Sheet1!B21"
+  },
+  {
+   "op": "table_resize",
+   "name": "T3",
+   "range": "Sheet1!A20:B25",
+   "sheet": "Sheet1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A30",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B30",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A31",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A32",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A33",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B31",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B32",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B33",
+   "input": "3"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B31:B33",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T4",
+   "range": "Sheet1!A30:B33"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D30",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D31",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D32",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D33",
+   "input": "x"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!D31:D33",
+   "fmt": "h:mm"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!D31:D33",
+   "to": "Sheet1!B31"
+  },
+  {
+   "op": "table_resize",
+   "name": "T4",
+   "range": "Sheet1!A30:B35",
+   "sheet": "Sheet1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B46"
+  }
+ ]
+}

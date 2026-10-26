@@ -1,0 +1,21 @@
+{
+  "sheets": ["S1", "S2"],
+  "steps": [
+    {"cell": "S1!A1", "input": "1", "op": "set"},
+    {"cell": "S1!A2", "input": "2", "op": "set"},
+    {"name": "Loc", "op": "name", "refers_to": "=S1!$A$1:$A$2", "scope": "S1"},
+    {"name": "Loc", "op": "name", "refers_to": "=S2!$A$1"},
+    {"cell": "S1!C1", "input": "=S1!Loc", "op": "set"},
+    {"cell": "S1!C4", "input": "=SUM(S1!Loc)", "op": "set"},
+    {"cell": "S1!C5", "input": "=S1!Loc+0", "op": "set"},
+    {"cell": "S1!C8", "input": "=ROWS(S1!Loc)", "op": "set"},
+    {"cell": "S1!C9", "input": "=Loc", "op": "set"},
+    {"cell": "S2!C1", "input": "=S2!Loc", "op": "set"},
+    {"cell": "S2!C2", "input": "=SUM(S2!Loc)", "op": "set"},
+    {"after": "S2", "name": "K1", "op": "copy_sheet", "sheet": "S1"},
+    {"after": "S2", "name": "K2", "op": "copy_sheet", "sheet": "S2"},
+    {"op": "names"},
+    {"op": "read", "range": "K1!C1:C12"},
+    {"op": "read", "range": "K2!C1:C3"}
+  ]
+}

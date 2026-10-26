@@ -1,0 +1,152 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SEQUENCE(3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "=1/0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=SEQUENCE(1,2)*0+9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=1/0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E6",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E7",
+   "input": "x"
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!A1:B7",
+   "keys": [
+    {
+     "key": 2,
+     "order": "asc"
+    }
+   ]
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B7"
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!D1:E7",
+   "keys": [
+    {
+     "key": 2,
+     "order": "asc"
+    }
+   ]
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:F7"
+  }
+ ]
+}

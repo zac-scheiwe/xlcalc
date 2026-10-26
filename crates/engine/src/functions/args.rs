@@ -72,6 +72,46 @@ pub fn opt_bool(args: &[Value], i: usize, default: bool) -> R<bool> {
 }
 
 #[inline]
+pub fn sfix(x: f64) -> i64 {
+    if x.is_nan() {
+        return i32::MIN as i64;
+    }
+    let s = crate::x87::add(x, 2147483648.0);
+    if s < 0.0 {
+        return i32::MIN as i64;
+    }
+    let f = s.floor();
+    if f >= 4294967296.0 {
+        return i32::MAX as i64;
+    }
+    f as i64 - 2147483648
+}
+
+#[inline]
+pub fn lfix(x: f64) -> i64 {
+    let t = x.trunc();
+    if t >= -2147483648.0 && t < 2147483648.0 {
+        t as i64
+    } else {
+        i32::MIN as i64
+    }
+}
+
+#[inline]
+pub fn ifuzz(x: f64) -> f64 {
+    if x < 0.0 {
+        -(sfix(-x) as f64)
+    } else {
+        sfix(x) as f64
+    }
+}
+
+#[inline]
+pub fn ffuzz(x: f64) -> f64 {
+    sfix(x) as f64
+}
+
+#[inline]
 pub fn trunc(n: f64) -> f64 {
     n.trunc()
 }
@@ -156,6 +196,24 @@ pub fn visit_numbers(
                 }
                 Value::Array(_) => unreachable!(),
             },
+
+            Operand::Ref(crate::eval::Reference::Grid(_))
+                if !p.propagate_errors && !p.a_variant => {}
+
+            Operand::Ref(crate::eval::Reference::Grid(g)) if p.propagate_errors => {
+                for item in &g.items {
+                    match item {
+                        Err(e) => return Err(*e),
+                        Ok(a) => match ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0) {
+                            Value::Number(n) => f(n),
+                            Value::Error(e) => return Err(e),
+                            Value::Text(_) if p.a_variant => f(0.0),
+                            Value::Bool(b) if p.a_variant => f(if b { 1.0 } else { 0.0 }),
+                            _ => {}
+                        },
+                    }
+                }
+            }
             Operand::Ref(r) => {
                 let mut failure = None;
                 for area in r.areas() {
@@ -213,6 +271,7 @@ impl Grid {
 
     pub fn from_operand(op: &Operand) -> R<Grid> {
         Ok(match op {
+            Operand::Ref(crate::eval::Reference::Grid(g)) => Grid::Array(g.value_array()),
             Operand::Ref(r) => Grid::Area(*r.single().ok_or(XlError::Value)?),
             Operand::Val(Value::Array(a)) => Grid::Array(a.clone()),
             Operand::Val(v) => Grid::Scalar(v.clone()),

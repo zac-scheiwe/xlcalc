@@ -7,18 +7,49 @@ pub type Arg = Option<Value>;
 
 pub type Imp = fn(&mut EvalCtx, &[Arg]) -> Value;
 
-pub fn call(ctx: &mut EvalCtx, ops: &[Operand], array_params: &[usize], f: Imp) -> Operand {
+pub fn call(
+    ctx: &mut EvalCtx,
+    ops: &[Operand],
+    array_params: &[usize],
+    quirk: bool,
+    f: Imp,
+) -> Operand {
+    call_ex(ctx, ops, array_params, quirk, false, f)
+}
+
+pub fn call_ex(
+    ctx: &mut EvalCtx,
+    ops: &[Operand],
+    array_params: &[usize],
+    quirk: bool,
+    late: bool,
+    f: Imp,
+) -> Operand {
     let mut vals: Vec<Arg> = Vec::with_capacity(ops.len());
+    let mut multi: Vec<(usize, Value, Value)> = Vec::new();
     for (i, op) in ops.iter().enumerate() {
         let is_array_param = array_params.contains(&i);
         let v = match op {
             Operand::Missing => None,
+            Operand::Ref(crate::eval::Reference::Grid(g)) => Some(ctx.grid_cells(g)),
             Operand::Ref(r) => {
                 let Some(area) = r.single() else {
                     return Operand::err(XlError::Value);
                 };
                 if !is_array_param && !area.rect.is_cell() {
-                    return Operand::err(XlError::Value);
+                    if quirk {
+                        let first = ctx.cell_value(area.sheet, area.rect.r0, area.rect.c0);
+                        let last = ctx.cell_value(area.sheet, area.rect.r1, area.rect.c1);
+                        multi.push((i, first, last));
+                    } else {
+                        multi.push((
+                            i,
+                            Value::Error(XlError::Value),
+                            Value::Error(XlError::Value),
+                        ));
+                    }
+                    vals.push(Some(Value::Error(XlError::Value)));
+                    continue;
                 }
                 Some(ctx.deref(op.clone()))
             }
@@ -42,6 +73,9 @@ pub fn call(ctx: &mut EvalCtx, ops: &[Operand], array_params: &[usize], f: Imp) 
         }
     }
     let Some((rows, cols)) = shape else {
+        if !multi.is_empty() && !late {
+            return Operand::err(XlError::Value);
+        }
         return Operand::Val(f(ctx, &vals));
     };
     let mut elem = vals.clone();
@@ -52,6 +86,13 @@ pub fn call(ctx: &mut EvalCtx, ops: &[Operand], array_params: &[usize], f: Imp) 
                 if let Some(Value::Array(a)) = &vals[i] {
                     elem[i] = Some(a.broadcast_get(r, c));
                 }
+            }
+            for (i, first, last) in &multi {
+                elem[*i] = Some(match r * cols + c {
+                    0 => Value::Error(XlError::Value),
+                    1 => first.clone(),
+                    _ => last.clone(),
+                });
             }
             data.push(f(ctx, &elem));
         }

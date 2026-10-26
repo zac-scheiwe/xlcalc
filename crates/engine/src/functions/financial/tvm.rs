@@ -105,6 +105,10 @@ pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
     if r == 0.0 {
         return Ok(-(fv + pmt * n));
     }
+
+    if r == -1.0 && n == 0.0 {
+        return Err(XlError::Num);
+    }
     let (g, ann) = annuity(r, n, t);
     if g.is_nan() || g.is_infinite() {
         return Err(XlError::Num);
@@ -141,7 +145,12 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if !(x > 0.0) || !x.is_finite() {
             return Err(XlError::Num);
         }
-        finite(xmath::ln(x) / xmath::ln(1.0 + r)).map(Value::num)
+
+        let l = xmath::ln(1.0 + r);
+        if l == 0.0 {
+            return Err(XlError::Div0);
+        }
+        finite(xmath::ln(x) / l).map(Value::num)
     })())
 }
 
@@ -234,7 +243,12 @@ pub fn pduration(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if r <= 0.0 || pv <= 0.0 || fv <= 0.0 {
             return Err(XlError::Num);
         }
-        finite((xmath::ln(fv) - xmath::ln(pv)) / xmath::ln(1.0 + r)).map(Value::num)
+
+        let l = x87::ln(x87::add(r, 1.0));
+        if l == 0.0 {
+            return Err(XlError::Div0);
+        }
+        finite(x87::div(x87::sub(x87::ln(fv), x87::ln(pv)), l)).map(Value::num)
     })())
 }
 
@@ -245,12 +259,19 @@ pub fn rri(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if n <= 0.0 || pv == 0.0 {
             return Err(XlError::Num);
         }
-        let q = fv / pv;
-        let p = xmath::pow(q, 1.0 / n);
-        if p.is_nan() {
+
+        let q = x87::div(fv, pv);
+        if q < 0.0 {
             return Err(XlError::Num);
         }
-        finite(p - 1.0).map(Value::num)
+        if n == 1.0 {
+            return finite(x87::sub(q, 1.0)).map(Value::num);
+        }
+        if q == 0.0 {
+            return Ok(Value::num(-1.0));
+        }
+        let p = x87::exp(x87::mul(x87::ln(q), x87::div(1.0, n)));
+        finite(x87::sub(p, 1.0)).map(Value::num)
     })())
 }
 
@@ -322,7 +343,19 @@ pub fn effect(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if nominal <= 0.0 || p < 1.0 {
             return Err(XlError::Num);
         }
-        finite(xmath::pow(1.0 + nominal / p, p) - 1.0)
+
+        let base = x87::add(x87::div(nominal, p), 1.0);
+        let (mut r, mut a, mut n) = (1.0, base, p as u64);
+        while n != 0 {
+            if n & 1 == 1 {
+                r = x87::mul(r, a);
+            }
+            n >>= 1;
+            if n != 0 {
+                a = x87::mul(a, a);
+            }
+        }
+        finite(x87::sub(r, 1.0))
     })())
 }
 

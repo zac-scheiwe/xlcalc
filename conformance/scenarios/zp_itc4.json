@@ -1,0 +1,117 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!H1",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I1",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I5",
+   "input": "10"
+  },
+  {
+   "op": "table",
+   "name": "Tb",
+   "range": "Sheet1!H1:I5"
+  },
+  {
+   "op": "table_totals",
+   "sheet": "Sheet1",
+   "name": "Tb",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!L1",
+   "input": "=L1/2+1"
+  },
+  {
+   "op": "iteration",
+   "enabled": true,
+   "max_change": 0.001,
+   "max_iter": 100
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!L1",
+   "input": "=L1/2+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!L1"
+  },
+  {
+   "op": "table_totals",
+   "sheet": "Sheet1",
+   "name": "Tb",
+   "value": false
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!H1:M8"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!I5",
+   "input": "1/2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!H1:M8"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!I5",
+   "input": "1/2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!H1:M8"
+  }
+ ]
+}

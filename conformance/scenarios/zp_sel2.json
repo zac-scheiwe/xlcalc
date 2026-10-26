@@ -1,0 +1,85 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3"
+ ],
+ "steps": [
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet1",
+   "after": "Sheet3"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet3",
+   "before": "Sheet2"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet1",
+   "before": "Sheet2"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Sheet2"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Sheet1 (2)"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet3",
+   "after": "Sheet1",
+   "name": "X"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet1",
+   "before": "Sheet3"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "X"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet1",
+   "name": "Q"
+  },
+  {
+   "op": "selinfo"
+  },
+  {
+   "op": "sheets"
+  }
+ ]
+}

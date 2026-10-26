@@ -1,0 +1,20 @@
+{
+  "sheets": ["S1", "S2"],
+  "steps": [
+    {"cell": "S1!A1", "input": "1", "op": "set"},
+    {"cell": "S1!A2", "input": "2", "op": "set"},
+    {"name": "Loc", "op": "name", "refers_to": "=S1!$A$1:$A$2", "scope": "S1"},
+    {"name": "Lg", "op": "name", "refers_to": "=S1!$A$1:$A$2"},
+    {"cell": "S1!C1", "input": "=S1!A1:A2", "op": "set"},
+    {"cell": "S1!C3", "input": "=S1!A1:A2*1", "op": "set"},
+    {"cell": "S1!C5", "input": "=S1!Loc+S1!A1", "op": "set"},
+    {"cell": "S1!C7", "input": "=S1!Loc+S2!A1", "op": "set"},
+    {"cell": "S1!C9", "input": "=S1!Loc+Lg*0", "op": "set"},
+    {"cell": "S1!C11", "input": "=SEQUENCE(2)+S1!Loc", "op": "set"},
+    {"cell": "S1!C13", "input": "=IF(S1!A1,S1!Loc)", "op": "set"},
+    {"cell": "S1!E1", "input": "=SUM(S1!Loc)+SUM(S1!A1:A2)", "op": "set"},
+    {"after": "S2", "name": "K1", "op": "copy_sheet", "sheet": "S1"},
+    {"cell": "S1!A1", "input": "10", "op": "set"},
+    {"op": "read", "range": "K1!C1:E14"}
+  ]
+}

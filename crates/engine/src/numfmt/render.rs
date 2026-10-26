@@ -77,6 +77,15 @@ pub(super) fn choose(f: &NumberFormat, x: f64) -> Result<(Option<usize>, bool), 
                 Err(XlError::Value)
             }
         }
+
+        None if n >= 3
+            && matches!(
+                (f.code_lens.first(), f.code_lens.get(2)),
+                (Some(Some(a)), Some(Some(b))) if a % 256 == b % 256
+            ) =>
+        {
+            Ok((Some(1), !else_drops_sign(c1)))
+        }
         None if n >= 3 => {
             if x < 0.0 {
                 Ok((Some(1), false))
@@ -425,7 +434,6 @@ fn render_sci(l: &SciLayout, a: f64, loc: &Locale) -> String {
     let frac = mant.frac_digits(l.n_frac);
     let show = frac_mask(&l.items, &frac);
     let edigits = uint_digits(exp.unsigned_abs() as u64);
-    let edigits: Vec<u8> = if exp == 0 { Vec::new() } else { edigits };
 
     let int = if mant.is_zero() {
         vec![0; l.n_int]
@@ -443,8 +451,9 @@ fn render_sci(l: &SciLayout, a: f64, loc: &Locale) -> String {
     let mut el = IntLayout {
         digits: &edigits,
         n: l.n_exp,
-        grouping: false,
-        sep: ',',
+
+        grouping: l.grouping,
+        sep: loc.thousands_sep,
         idx: 0,
     };
     let mut fi = 0;
@@ -483,33 +492,175 @@ fn render_sci(l: &SciLayout, a: f64, loc: &Locale) -> String {
     out
 }
 
-pub(super) fn approximate(x: f64, d: f64) -> (f64, f64) {
+pub(super) fn frac_spec(den: &Den) -> i16 {
+    match *den {
+        Den::Max(n) => n.min(i16::MAX as u32) as i16,
+        Den::Fixed(v) => (v as i32).wrapping_neg() as i16,
+    }
+}
+
+fn mp_lfix(x: f64) -> i32 {
+    let t = x.trunc();
+    if t > -2_147_483_649.0 && t < 2_147_483_648.0 {
+        t as i32
+    } else {
+        i32::MIN
+    }
+}
+
+fn mp_fix(x: f64) -> u32 {
+    let t = x.abs().trunc();
+    if t < 4_294_967_296.0 {
+        t as u32
+    } else {
+        u32::MAX
+    }
+}
+
+fn muldiv1(a: i32, b: i32) -> i32 {
+    let p = a as i64 * b as i64;
+    if p > i32::MAX as i64 || p < i32::MIN as i64 {
+        -1
+    } else {
+        p as i32
+    }
+}
+
+pub(super) fn mp_frac(x: f64) -> f64 {
+    let d = x87::sub(x.trunc(), x);
+    if d.to_bits() & 0xFFFF_0000_0000_0000 != 0 {
+        -d
+    } else {
+        d
+    }
+}
+
+pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)> {
+    let mut x = if mixed { mp_frac(x) } else { x };
+    if spec < 0 && x < 137_438_953_472.0 {
+        x = x87::mul(x, f64::from_bits(0x3FF0_0000_0000_0001));
+    }
+    if mixed {
+        x = mp_frac(x);
+    }
+    if spec < 0 {
+        let d = -(spec as i32);
+        let n2 = mp_lfix(x87::mul((2 * d) as f64, x));
+        if n2 as u32 > 0xFFFE {
+            return None;
+        }
+        return Some(((n2 as u32 + 1) >> 1, d as u32));
+    }
+    let limit: i32 = match spec {
+        1 => 10,
+        2 => 100,
+        3 => 1_000,
+        4 => 10_000,
+        5 => 100_000,
+        6 => 1_000_000,
+        _ => 10_000_000,
+    };
     let mut b = x;
-    let (mut p2, mut p1, mut p) = (0.0f64, 1.0f64, 0.0f64);
-    let (mut q2, mut q1, mut q) = (1.0f64, 0.0f64, 0.0f64);
-    while q1 < d {
-        let a = b.floor();
-        p = a * p1 + p2;
-        q = a * q1 + q2;
-        if b - a < 0.000_000_05 {
+    let mut bi = b.trunc();
+    let mut a = mp_fix(b);
+    if a > 0x7FFF_FFFE {
+        return None;
+    }
+
+    let (mut n, mut d, mut pn, mut pd) = (1i32, 0i32, 0i32, 1i32);
+    loop {
+        let t1 = muldiv1(n, a as i32);
+        let t2 = muldiv1(d, a as i32);
+        let nd = t2.wrapping_add(pd);
+        if t1 < 0 || t2 < 0 || nd >= limit {
+            if d == 1 && a == 2 && x87::sub(bi, b).to_bits() & 0xFFFF_0000_0000_0000 == 0 {
+                n = n.wrapping_add(1);
+            }
             break;
         }
-        b = 1.0 / (b - a);
-        p2 = p1;
-        p1 = p;
-        q2 = q1;
-        q1 = q;
-    }
-    if q > d {
-        if q1 > d {
-            q = q2;
-            p = p2;
-        } else {
-            q = q1;
-            p = p1;
+        let nn = t1.wrapping_add(pn);
+        pn = n;
+        pd = d;
+        n = nn;
+        d = nd;
+        let diff = x87::sub(bi, b);
+        if diff.to_bits() & 0xFFFF_0000_0000_0000 == 0 || !diff.is_finite() {
+            break;
+        }
+        b = x87::div(1.0, -diff);
+        bi = b.trunc();
+        a = mp_fix(b);
+        if (a as i32) < 0 {
+            break;
         }
     }
-    (p, q)
+    if d == 0 {
+        return Some((1, 1));
+    }
+    Some((n as u32, d as u32))
+}
+
+fn den_layout(kinds: &[Ph], digits: &[u8]) -> Vec<String> {
+    let mut cells = vec![String::new(); kinds.len()];
+    let mut p = kinds.len() as i64;
+    let mut d = digits.len() as i64;
+    let mut buf = digits.iter().copied();
+    let mut i = 0;
+    while i < kinds.len() {
+        let kind = kinds[i];
+        let mut j = i;
+        while j < kinds.len() && kinds[j] == kind {
+            j += 1;
+        }
+        let run = (j - i) as i64;
+        let mut pos = i;
+        if kind == Ph::Q {
+            let mut r = run;
+            if d < 0 {
+                let z = r.min(-d);
+                for _ in 0..z {
+                    cells[pos].push('0');
+                    pos += 1;
+                }
+                d += z;
+                r -= z;
+            }
+            for _ in 0..r {
+                cells[pos].push(buf.next().map_or(' ', digit));
+                pos += 1;
+            }
+            p -= r;
+            d -= r;
+        } else {
+            let mut r = run;
+            if p > d {
+                let e = r.min(p - d);
+                for _ in 0..e {
+                    if kind == Ph::Zero {
+                        cells[pos].push('0');
+                    }
+                    pos += 1;
+                }
+                p -= e;
+                r -= e;
+            } else {
+                r += d - p;
+                p = d;
+            }
+
+            let extra = r - (j - pos) as i64;
+            for k in 0..r {
+                cells[pos].push(buf.next().map_or('0', digit));
+                if k >= extra {
+                    pos += 1;
+                }
+                p -= 1;
+                d -= 1;
+            }
+        }
+        i = j;
+    }
+    cells
 }
 
 #[derive(PartialEq)]
@@ -521,43 +672,23 @@ enum Blank {
 
 fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), XlError> {
     let v = if l.scale != 0 {
-        a * 10f64.powi(l.scale)
+        x87::mul(10f64.powi(l.scale), a)
     } else {
         a
     };
-    let (int, num, den) = match l.den {
-        Den::Fixed(d) => {
-            let d = d as f64;
-            let rr = (v * d + 0.5).floor();
-            if l.has_int {
-                let base = (rr / d).floor();
-                (base, rr - base * d, d)
-            } else {
-                (0.0, rr, d)
-            }
-        }
-        Den::Max(n) => {
-            let maxd = 10f64.powi(n as i32) - 1.0;
-            let (p, q) = approximate(v, maxd);
-            if l.has_int {
-                let base = (p / q).floor();
-                (base, p - base * q, q)
-            } else {
-                (0.0, p, q)
-            }
-        }
-    };
-
-    if !l.has_int {
-        let max = if matches!(l.den, Den::Fixed(_)) {
-            32_767.0
+    let (num, den) = calc_fraction(v, frac_spec(&l.den), l.has_int).ok_or(XlError::Value)?;
+    let (int_digits_raw, num) = if l.has_int {
+        let dec = Dec::from_f64(v);
+        if num == den || num == 0 {
+            (dec.round_to(0).int_digits(), 0.0)
         } else {
-            2_147_483_647.0
-        };
-        if num > max {
-            return Err(XlError::Value);
+            (dec.int_digits(), num as f64)
         }
-    }
+    } else {
+        (Vec::new(), num as f64)
+    };
+    let den = den as f64;
+    let int = if int_digits_raw.is_empty() { 0.0 } else { 1.0 };
 
     let blank = if l.has_int && num == 0.0 {
         if l.num_has_zero {
@@ -571,20 +702,37 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
         Blank::Show
     };
     let all_zero = int == 0.0 && num == 0.0;
+    let last_int = l.items.iter().rev().find_map(|it| match it {
+        Item::Int(k) => Some(*k),
+        _ => None,
+    });
+    let first_num = l.items.iter().find_map(|it| match it {
+        Item::Num(k) => Some(*k),
+        _ => None,
+    });
+
     let int_digits: Vec<u8> = if int > 0.0 {
-        Dec::from_f64(int).round_to(0).int_digits()
-    } else if all_zero && !(blank == Blank::Show && !l.int_has_q && !l.int_has_zero) {
+        int_digits_raw
+    } else if all_zero
+        && (blank != Blank::Show || last_int == Some(Ph::Q) || first_num != Some(Ph::Zero))
+    {
         vec![0]
     } else {
         Vec::new()
     };
-    let int_empty = int_digits.is_empty() && !l.int_has_zero;
 
-    let (num_digits, den_digits) = if blank == Blank::Show {
-        (uint_digits(num as u64), uint_digits(den as u64))
+    let int_empty = int_digits.is_empty() && last_int != Some(Ph::Zero);
+
+    if l.has_int && l.n_num == 0 && int_empty {
+        return Err(XlError::Value);
+    }
+
+    let num_digits = if blank == Blank::Show {
+        uint_digits(num as u64)
     } else {
-        (vec![0], vec![0])
+        vec![0]
     };
+    let den_digits = uint_digits(den as u64);
     let sep_as_spaces = num != 0.0 && (l.int_has_q || l.num_first_q);
     let mut out = String::new();
     let mut il = IntLayout {
@@ -609,53 +757,59 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
             _ => None,
         })
         .collect();
+    let den_cells = den_layout(&den_kinds, &den_digits);
     let mut den_i = 0;
+    let mut den_dec_i = 0;
+    let mut den_q_seen = false;
     let mut tmp = String::new();
     for (i, it) in l.items.iter().enumerate() {
         tmp.clear();
         match it {
             Item::Int(k) => il.placeholder(&mut tmp, *k),
             Item::Num(k) => nl.placeholder(&mut tmp, *k),
-            Item::Slash => tmp.push('/'),
-            Item::Den(k) => {
-                let n = den_kinds.len();
-                let len = den_digits.len();
-                if l.den_left {
-                    if den_i < len {
-                        if den_i == n - 1 {
-                            for d in &den_digits[den_i..] {
-                                tmp.push(digit(*d));
-                            }
-                        } else {
-                            tmp.push(digit(den_digits[den_i]));
-                        }
-                    } else if let Some(c) = pad(*k) {
-                        tmp.push(c);
-                    }
-                } else {
-                    let pos = n - 1 - den_i;
-                    if den_i == 0 && len > n {
-                        for d in &den_digits[..len - n] {
-                            tmp.push(digit(*d));
-                        }
-                    }
-                    if pos < len {
-                        tmp.push(digit(den_digits[len - 1 - pos]));
-                    } else if let Some(c) = pad(*k) {
-                        tmp.push(c);
-                    }
+            Item::NumAll => tmp.extend(num_digits.iter().map(|d| digit(*d))),
+            Item::DenDec(k) => {
+                match den_digits.get(den_dec_i) {
+                    Some(d) => tmp.push(digit(*d)),
+                    None => tmp.extend(pad(*k)),
                 }
+                den_dec_i += 1;
+            }
+            Item::Slash => tmp.push('/'),
+            Item::Den(_) => {
+                tmp.push_str(&den_cells[den_i]);
                 den_i += 1;
             }
-            Item::DenFixed(s) => tmp.push_str(s),
+            Item::DenFixed(s) => {
+                let lit: Vec<char> = s.chars().collect();
+                for (j, d) in den_digits.iter().enumerate() {
+                    match lit.get(j) {
+                        Some(c) => tmp.push(*c),
+                        None if !(l.num_has_q || l.int_has_q) => tmp.push(digit(*d)),
+                        None => {}
+                    }
+                }
+                if l.num_has_q || l.int_has_q {
+                    let k = den_digits.len().min(lit.len());
+                    tmp.extend(std::iter::repeat_n(' ', lit.len() - k));
+                }
+            }
             other => push_literal(&mut tmp, other),
         }
         let width = tmp.chars().count();
         let in_span = l.has_int && i >= l.sep_start && i < l.den_end;
         if in_span && blank != Blank::Show {
+            if matches!(it, Item::Den(Ph::Q) | Item::DenDec(Ph::Q)) {
+                den_q_seen = true;
+            }
             let shown = match blank {
                 Blank::Spaces => true,
-                _ => matches!(it, Item::Num(Ph::Q) | Item::Den(Ph::Q)),
+                _ => {
+                    matches!(
+                        it,
+                        Item::Num(Ph::Q) | Item::Den(Ph::Q) | Item::DenDec(Ph::Q)
+                    ) || (den_q_seen && matches!(it, Item::Den(Ph::Zero) | Item::DenDec(Ph::Zero)))
+                }
             };
             if shown {
                 out.extend(std::iter::repeat_n(' ', width));
@@ -731,12 +885,29 @@ fn set_num_cascade(x: f64, k: u8) -> Cascade {
     }
 }
 
-fn elapsed_head(y: f64, unit: u8) -> i64 {
+fn elapsed_head(y: f64, unit: u8) -> f64 {
     let mut v = y;
     for _ in 1..unit {
         v = x87::mul(v, 60.0);
     }
-    x87::mul(v, 24.0).floor() as i64
+    x87::mul(v, 24.0).floor()
+}
+
+fn head_text(v: f64, w: usize) -> String {
+    if v.is_finite() && v.abs() < 1e15 {
+        return format!("{:0w$}", v as i64);
+    }
+    let digits: String = if !v.is_finite() || v < 0.0 {
+        "0".into()
+    } else {
+        Dec::from_f64(v)
+            .round_to(0)
+            .int_digits()
+            .iter()
+            .map(|&d| digit(d))
+            .collect()
+    };
+    format!("{digits:0>w$}")
 }
 
 const HIJRI_MONTHS: [&str; 12] = [
@@ -775,6 +946,18 @@ fn render_date(
         let ms = hu(x * 86_400_000.0);
         let t = hu(ms / (1000 / scale) as f64);
         if t > 9.0e18 {
+            let heads_only = l.subsec == 0
+                && x >= 0.0
+                && l.items.iter().all(|it| {
+                    !matches!(it, Item::Date(d) if !matches!(d, DateTok::ElapsedH(_) | DateTok::ElapsedM(_) | DateTok::ElapsedS(_)))
+                });
+            if !heads_only {
+                return Err(XlError::Value);
+            }
+        }
+        let t = t.min(9.0e18);
+
+        if l.subsec > 0 && (t / per_day as f64).floor() > ds.max_serial() {
             return Err(XlError::Value);
         }
         let t = t as i64;
@@ -864,7 +1047,7 @@ fn render_date(
     if let (Some(c), true) = (traced, l.subsec > 0) {
         (mi, s, sub) = (c.m, c.s, c.sub);
     }
-    let head = |unit: u8, old: i64| traced.map_or(old, |c| elapsed_head(c.y, unit));
+    let head = |unit: u8, old: i64| traced.map_or(old as f64, |c| elapsed_head(c.y, unit));
     let hour12 = if h24 % 12 == 0 { 12 } else { h24 % 12 };
     let num = |v: i64, n: u8| {
         if n >= 2 {
@@ -942,20 +1125,14 @@ fn render_date(
                 out.push(loc.decimal_sep);
                 out.push_str(&digits[..n as usize]);
             }
-            DateTok::ElapsedH(n) => out.push_str(&format!(
-                "{:0w$}",
-                head(1, total_secs / 3600),
-                w = n as usize
-            )),
-            DateTok::ElapsedM(n) => {
-                out.push_str(&format!("{:0w$}", head(2, total_secs / 60), w = n as usize))
+            DateTok::ElapsedH(n) => {
+                out.push_str(&head_text(head(1, total_secs / 3600), n as usize))
             }
-            DateTok::ElapsedS(n) => {
-                out.push_str(&format!("{:0w$}", head(3, total_secs), w = n as usize))
-            }
-            DateTok::LeftH(n) => out.push_str(&format!("{:0w$}", left(1), w = n as usize)),
-            DateTok::LeftM(n) => out.push_str(&format!("{:0w$}", left(2), w = n as usize)),
-            DateTok::LeftS(n) => out.push_str(&format!("{:0w$}", left(3), w = n as usize)),
+            DateTok::ElapsedM(n) => out.push_str(&head_text(head(2, total_secs / 60), n as usize)),
+            DateTok::ElapsedS(n) => out.push_str(&head_text(head(3, total_secs), n as usize)),
+            DateTok::LeftH(n) => out.push_str(&head_text(left(1), n as usize)),
+            DateTok::LeftM(n) => out.push_str(&head_text(left(2), n as usize)),
+            DateTok::LeftS(n) => out.push_str(&head_text(left(3), n as usize)),
             DateTok::General(serial) => {
                 let v = if serial { x } else { stale() };
                 out.push_str(&super::general::format_general_width(

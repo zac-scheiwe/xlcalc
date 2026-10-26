@@ -125,6 +125,15 @@ impl DepGraph {
 pub fn collect_precedents(wb: &Workbook, formula: &Formula, host: CellAddr) -> Vec<Prec> {
     let mut out = Vec::new();
     let mut seen_names: SmallVec<[Text; 4]> = SmallVec::new();
+
+    if crate::datatable::is_table_formula(formula) {
+        if let Node::Func { args, .. } = &formula.root {
+            for a in args.iter().skip(2) {
+                collect_node(wb, a, host, false, &mut out, &mut seen_names);
+            }
+            return out;
+        }
+    }
     collect_node(wb, &formula.root, host, false, &mut out, &mut seen_names);
     out
 }
@@ -158,6 +167,22 @@ fn collect_node(
                     } else {
                         Prec::Range(s, rect)
                     });
+                }
+            }
+        }
+
+        Node::Binary(crate::parser::ast::BinOp::Range, a, b) => {
+            if let (Node::Ref(sa, ca), Node::Ref(sb, cb)) = (a.unwrap_ws(), b.unwrap_ws()) {
+                if let (Some(ra), Some(rb)) =
+                    (resolve_rect(ca, host, wrap), resolve_rect(cb, host, wrap))
+                {
+                    let (xa, xb) = (sheets_of(wb, sa, host), sheets_of(wb, sb, host));
+                    if xa == xb {
+                        let rect = ra.union_bounds(&rb);
+                        for s in xa {
+                            out.push(Prec::Range(s, rect));
+                        }
+                    }
                 }
             }
         }

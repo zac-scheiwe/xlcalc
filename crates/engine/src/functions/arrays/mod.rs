@@ -137,6 +137,7 @@ impl Src {
 
     fn from_operand(op: &Operand) -> R<Src> {
         Ok(match op {
+            Operand::Ref(Reference::Grid(g)) => Src::Array(g.value_array()),
             Operand::Ref(r) => Src::Area(*r.single().ok_or(XlError::Value)?),
             Operand::Val(Value::Error(e)) => return Err(*e),
             Operand::Val(Value::Array(a)) => Src::Array(a.clone()),
@@ -163,7 +164,9 @@ impl Src {
         match self {
             Src::Array(a) => Ok(a.clone()),
             Src::Area(area) => {
-                if area.rect.rows() as u64 * area.rect.cols() as u64 > MAX_ARRAY_CELLS {
+                let n = area.rect.rows() as u64 * area.rect.cols() as u64;
+                if n > MAX_ARRAY_CELLS {
+                    ctx.too_big(n as f64);
                     return Err(XlError::Num);
                 }
                 Ok(match ctx.area_array(area) {
@@ -245,8 +248,8 @@ fn array_value(rows: u32, cols: u32, data: Vec<Value>) -> Value {
     Array::new(rows, cols, data).into_value()
 }
 
-fn check_result_size(rows: u64, cols: u64) -> R<()> {
-    if rows * cols > MAX_ARRAY_CELLS {
+fn check_result_size(ctx: &mut EvalCtx, rows: u64, cols: u64) -> R<()> {
+    if ctx.too_big((rows * cols) as f64) || rows * cols > MAX_ARRAY_CELLS {
         Err(XlError::Num)
     } else {
         Ok(())
@@ -257,7 +260,7 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let area = match &ops[0] {
         Operand::Ref(r) => r.areas()[0],
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
-        _ => return Operand::err(XlError::NA),
+        _ => return Operand::err(XlError::Value),
     };
     let wb = ctx.wb;
     let text_at = |row: u32, col: u32| -> Value {
@@ -269,11 +272,16 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     };
     let rect = area.rect;
     if rect.is_cell() {
-        return Operand::Val(text_at(rect.r0, rect.c0));
+        return Operand::Val(match text_at(rect.r0, rect.c0) {
+            e @ Value::Error(_) => {
+                crate::value::Array::from_fn(1, 1, |_, _| e.clone()).into_value()
+            }
+            t => t,
+        });
     }
 
     let (rows, cols) = (rect.rows(), rect.cols());
-    if check_result_size(rows as u64, cols as u64).is_err() {
+    if check_result_size(ctx, rows as u64, cols as u64).is_err() {
         return Operand::err(XlError::Num);
     }
     let used = wb.sheet(area.sheet).and_then(|s| s.bounded(&rect));

@@ -61,7 +61,7 @@ pub const DEFS: &[FnDef] = &[
             if x < 0.0 {
                 Err(XlError::Num)
             } else {
-                Ok(x.sqrt())
+                Ok(crate::x87::sqrt(x))
             }
         })
     }),
@@ -167,7 +167,7 @@ fn sum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let (mut acc, mut last) = (0.0f64, (0.0f64, 0.0f64));
     let r = visit_numbers(ctx, ops, SUM_POLICY, |x| {
         last = (acc, x);
-        acc += x;
+        acc = crate::x87::add(acc, x);
     });
     let acc = number::snap_add(last.0, last.1, acc);
     opval(r.map(|_| Value::num(acc)))
@@ -183,7 +183,7 @@ fn product(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         .cloned()
         .collect();
     let r = visit_numbers(ctx, &ops, SUM_POLICY, |x| {
-        acc *= x;
+        acc = crate::x87::mul(acc, x);
         any = true;
     });
     opval(r.map(|_| Value::num(if any { acc } else { 0.0 })))
@@ -191,7 +191,10 @@ fn product(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 fn sumsq(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let mut acc = 0.0f64;
-    let r = visit_numbers(ctx, ops, SUM_POLICY, |x| acc += x * x);
+
+    let r = visit_numbers(ctx, ops, SUM_POLICY, |x| {
+        acc = crate::x87::add(acc, crate::x87::mul(x, x))
+    });
     opval(r.map(|_| Value::num(acc)))
 }
 
@@ -199,6 +202,9 @@ fn sumproduct(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let mut grids = Vec::with_capacity(ops.len());
     for op in ops {
         if let Operand::Ref(crate::eval::Reference::Grid(g)) = op {
+            if let Some(e) = g.first_error() {
+                return Operand::err(e);
+            }
             grids.push(std::sync::Arc::new(crate::value::Array::new(
                 g.rows,
                 g.cols,
@@ -225,17 +231,25 @@ fn sumproduct(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
         return Operand::err(XlError::Value);
     }
+
+    for g in &grids {
+        for v in g.data.iter() {
+            if let Value::Error(e) = v {
+                return Operand::err(*e);
+            }
+        }
+    }
     let mut acc = 0.0;
     for i in 0..grids[0].len() {
         let mut p = 1.0;
         for g in &grids {
             match &g.data[i] {
-                Value::Number(n) => p *= n,
+                Value::Number(n) => p = crate::x87::mul(p, *n),
                 Value::Error(e) => return Operand::err(*e),
                 _ => p = 0.0,
             }
         }
-        acc += p;
+        acc = crate::x87::add(acc, p);
     }
     Operand::Val(Value::num(acc))
 }
@@ -276,7 +290,7 @@ fn integers(ctx: &mut EvalCtx, ops: &[Operand]) -> R<Vec<f64>> {
     nums.into_iter()
         .map(|n| {
             let t = n.trunc();
-            if t < 0.0 || t > 9.007_199_254_740_992e15 {
+            if n < 0.0 || t > 9.007_199_254_740_992e15 {
                 Err(XlError::Num)
             } else {
                 Ok(t)
@@ -392,20 +406,48 @@ pub fn round_decimal(x: f64, digits: i32, mode: RoundMode) -> f64 {
 fn round_fn(ctx: &mut EvalCtx, a: &[Value], mode: RoundMode) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
-        let d = num(ctx, &a[1])?.trunc();
+        let d = num(ctx, &a[1])?;
+        let d = if matches!(mode, RoundMode::HalfAway) {
+            let d = ifuzz(d);
 
-        if d >= 2147483647.0 && matches!(mode, RoundMode::HalfAway) {
-            return Ok(Value::num(0.0));
-        }
-        let d = d.clamp(-400.0, 400.0) as i32;
+            if d >= 2147483647.0 {
+                return Ok(Value::num(0.0));
+            }
+            d.clamp(-400.0, 400.0) as i32
+        } else {
+            let n = trunc_digits(d);
+
+            let lo = (if d.abs() < 4294967296.0 {
+                d.abs() as u32
+            } else {
+                u32::MAX
+            }) as u16 as i16;
+            if matches!(mode, RoundMode::Up) && d < 0.0 && lo < 0 {
+                -400
+            } else {
+                n
+            }
+        };
         Ok(Value::num(round_decimal(x, d, mode)))
     })())
+}
+
+fn trunc_digits(d: f64) -> i32 {
+    let a = d.abs().trunc();
+    let u = if a < 4294967296.0 { a as u32 } else { u32::MAX };
+    let lo = u as u16 as i16;
+    let n = if lo < 0 { 100 } else { lo as i32 };
+    if d > 0.0 {
+        n
+    } else {
+        -n
+    }
 }
 
 fn trunc_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
-        let d = opt_num(ctx, a, 1, 0.0)?.trunc().clamp(-400.0, 400.0) as i32;
+        let d = trunc_digits(opt_num(ctx, a, 1, 0.0)?);
         Ok(Value::num(round_decimal(x, d, RoundMode::Down)))
     })())
 }
@@ -417,7 +459,7 @@ fn sqrtpi(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             if x < 0.0 {
                 Err(XlError::Num)
             } else {
-                Ok((x * std::f64::consts::PI).sqrt())
+                Ok(crate::x87::sqrt(crate::x87::mul(x, std::f64::consts::PI)))
             }
         })())
     })
@@ -620,7 +662,7 @@ fn modulo(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 }
 
 fn quotient(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-    atp::call(ctx, ops, "aa", |ctx, a, _| {
+    atp::call(ctx, ops, "bb", |ctx, a, _| {
         val((|| {
             let n = atp::req_num(ctx, a, 0)?;
             let d = atp::req_num(ctx, a, 1)?;
@@ -659,7 +701,7 @@ fn fact(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if n < 0.0 {
             return Err(XlError::Num);
         }
-        let n = n.trunc();
+        let n = ifuzz(n);
 
         let mut acc = 1.0f64;
         let mut i = n;
@@ -696,11 +738,19 @@ fn fact_double(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     })
 }
 
+fn comb_test(x: f64) -> Result<f64, XlError> {
+    let tiny = x.to_bits() & 0x7FFF_0000_0000_0000 == 0;
+    if (x < 0.0 && !tiny) || x >= 2147483647.0 {
+        return Err(XlError::Num);
+    }
+    Ok(x.trunc())
+}
+
 fn combin(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let n = num(ctx, &a[0])?.trunc();
-        let k = num(ctx, &a[1])?.trunc();
-        if n < 0.0 || k < 0.0 || k > n {
+        let (n, k) = (num(ctx, &a[0])?, num(ctx, &a[1])?);
+        let (n, k) = (comb_test(n)?, comb_test(k)?);
+        if k > n {
             return Err(XlError::Num);
         }
         Ok(Value::num(xl_combin(n, k)))
@@ -723,16 +773,16 @@ pub(crate) fn xl_combin(n: f64, k: f64) -> f64 {
 
 fn permut(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let n = num(ctx, &a[0])?.trunc();
-        let k = num(ctx, &a[1])?.trunc();
-        if n < 0.0 || k < 0.0 || k > n {
+        let (n, k) = (num(ctx, &a[0])?, num(ctx, &a[1])?);
+        let (n, k) = (comb_test(n)?, comb_test(k)?);
+        if k > n {
             return Err(XlError::Num);
         }
         let mut acc = 1.0f64;
-        let mut i = 0.0;
-        while i < k {
+        let mut i = k - 1.0;
+        while i >= 0.0 {
             acc *= n - i;
-            i += 1.0;
+            i -= 1.0;
         }
         Ok(Value::num(acc))
     })())
@@ -751,13 +801,17 @@ fn atan2(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn randbetween(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let lo = num(ctx, &a[0])?.ceil();
-        let hi = num(ctx, &a[1])?.floor();
+        let lo = num(ctx, &a[0])?;
+        let hi = num(ctx, &a[1])?;
         if lo > hi {
             return Err(XlError::Num);
         }
+        let (c, f) = (lo.ceil(), hi.floor());
+        let range = crate::x87::add(crate::x87::sub(f, c), 1.0);
         let r = ctx.wb.random();
-        Ok(Value::num(lo + (r * (hi - lo + 1.0)).floor()))
+        Ok(Value::num(
+            crate::x87::add(crate::x87::mul(r, range).floor(), c) + 0.0,
+        ))
     })())
 }
 

@@ -1,0 +1,23 @@
+{
+  "sheets": ["Sheet1", "A", "B", "C", "S"],
+  "steps": [
+    {"name": "Lf", "op": "name", "refers_to": "=4", "scope": "S"},
+    {"name": "Lg", "op": "name", "refers_to": "=5", "scope": "A"},
+    {"name": "Ga", "op": "name", "refers_to": "=Ku+S!Lf"},
+    {"name": "La", "op": "name", "refers_to": "=S!Lf+1", "scope": "A"},
+    {"name": "Lb", "op": "name", "refers_to": "=A!Lg+1", "scope": "A"},
+    {"name": "Lc", "op": "name", "refers_to": "=S!Lf+2", "scope": "B"},
+    {"cell": "B!C1", "input": "=Lc", "op": "set"},
+    {"name": "Ld", "op": "name", "refers_to": "=SUM(S!Lf,Kq)", "scope": "C"},
+    {"name": "Le", "op": "name", "refers_to": "=Sheet1!$A$1+S!Lf", "scope": "C"},
+    {"op": "names"},
+    {"after": "S", "op": "copy_sheet", "sheet": "A"},
+    {"op": "names"},
+    {"after": "S", "op": "copy_sheet", "sheet": "B"},
+    {"op": "names"},
+    {"after": "S", "op": "copy_sheet", "sheet": "C"},
+    {"op": "names"},
+    {"cell": "'B (2)'!C2", "input": "=Lc", "op": "set"},
+    {"op": "read", "range": "'B (2)'!C1:C2"}
+  ]
+}

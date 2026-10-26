@@ -94,7 +94,7 @@ pub fn days_in_month(y: i64, m: u32) -> u32 {
 }
 
 pub fn date_serial(sys: DateSystem, year: f64, month: f64, day: f64) -> Option<f64> {
-    let fl = |x: f64| ((x * 1e6).round() / 1e6).floor().max(-1e9).min(1e9) as i64;
+    let fl = |x: f64| crate::functions::args::ffuzz(x).max(-1e9).min(1e9) as i64;
     let mut y = fl(year);
     let m = fl(month);
     let mut d = fl(day);
@@ -130,7 +130,7 @@ pub fn date_serial(sys: DateSystem, year: f64, month: f64, day: f64) -> Option<f
 }
 
 pub fn time_fraction(h: f64, m: f64, s: f64) -> Option<f64> {
-    let fl = |x: f64| ((x * 1e6).round() / 1e6).floor();
+    let fl = |x: f64| crate::functions::args::ffuzz(x);
     let total = fl(h) * 3600.0 + fl(m) * 60.0 + fl(s);
     if total < 0.0 {
         return None;

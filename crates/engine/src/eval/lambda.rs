@@ -17,7 +17,7 @@ impl LambdaValue {
 }
 
 pub fn invoke(ctx: &mut EvalCtx, lam: &LambdaValue, args: Vec<Operand>) -> Operand {
-    if args.len() != lam.def.params.len() {
+    if args.len() < lam.def.required || args.len() > lam.def.params.len() {
         return Operand::err(XlError::Value);
     }
     if ctx.depth >= MAX_CALL_DEPTH {

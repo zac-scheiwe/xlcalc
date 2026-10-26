@@ -58,8 +58,13 @@ pub fn run(
             for c in rec["cells"].as_array().into_iter().flatten() {
                 let a1 = c["cell"].as_str().unwrap();
                 let addr = parse_cell_ref(wb, a1, s).unwrap();
-                let got2 = wb.formula_text(addr).unwrap_or_default();
-                let got1 = wb.legacy_formula_text(addr).unwrap_or_default();
+
+                let constant = || match (wb.formula_at(addr), wb.value(addr)) {
+                    (None, xlcalc::Value::Text(t)) => t.to_string(),
+                    _ => String::new(),
+                };
+                let got2 = wb.formula_text(addr).unwrap_or_else(constant);
+                let got1 = wb.legacy_formula_text(addr).unwrap_or_else(constant);
                 for (what, want, got) in [
                     ("Formula2", c["formula2"].as_str().unwrap_or(""), got2),
                     ("Formula", c["formula"].as_str().unwrap_or(""), got1),

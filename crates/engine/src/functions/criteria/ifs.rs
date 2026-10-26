@@ -180,7 +180,7 @@ fn evaluate(
                 }
                 match agg {
                     Agg::Sum | Agg::Average => {
-                        sum += x;
+                        sum = crate::x87::add(sum, x);
                         count += 1;
                     }
                     Agg::Max => best = Some(best.map_or(x, |m| if x > m { x } else { m })),
@@ -251,6 +251,9 @@ pub fn countif(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 pub fn sumif(ctx: &mut EvalCtx, ops: &[Operand], agg: Agg) -> Operand {
     let r = run(|| {
+        if let Some(Operand::Val(Value::Error(e))) = ops.get(2) {
+            return Err(*e);
+        }
         let area = area_of(&ops[0])?;
         let crit = Criterion::parse(ctx, &crit_value(&ops[1]), Flavor::Ifs)?;
         let (rows, cols) = dims(&area);

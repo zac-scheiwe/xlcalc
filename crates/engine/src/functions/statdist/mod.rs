@@ -1,6 +1,8 @@
 pub(crate) mod dd;
 mod desc;
 mod dist;
+mod ets;
+mod ets_seas;
 pub(crate) use dist::{xl_expm1, xl_log1p};
 mod hp;
 mod htest;
@@ -25,6 +27,18 @@ pub const DEFS: &[FnDef] = &[
     args("STEYX", 2, 2, "RR", desc::steyx),
     args("FORECAST", 3, 3, "VRR", desc::forecast),
     args("FORECAST.LINEAR", 3, 3, "VRR", desc::forecast),
+    args("FORECAST.ETS", 3, 6, "VRRV", |c, o| {
+        ets::ets(c, o, ets::Kind::Value)
+    }),
+    args("FORECAST.ETS.CONFINT", 3, 7, "VRRV", |c, o| {
+        ets::ets(c, o, ets::Kind::Confint)
+    }),
+    args("FORECAST.ETS.SEASONALITY", 2, 4, "RRV", |c, o| {
+        ets::ets(c, o, ets::Kind::Seasonality)
+    }),
+    args("FORECAST.ETS.STAT", 3, 6, "RRV", |c, o| {
+        ets::ets(c, o, ets::Kind::Stat)
+    }),
     args("COVAR", 2, 2, "RR", |c, o| desc::covar(c, o, false)),
     args("COVARIANCE.P", 2, 2, "RR", |c, o| desc::covar(c, o, false)),
     args("COVARIANCE.S", 2, 2, "RR", |c, o| desc::covar(c, o, true)),

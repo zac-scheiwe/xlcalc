@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2", "Sheet3"], "check_all_formats": true, "steps": [{"cell": "Sheet1!A2", "input": "17", "op": "set"}, {"name": "Vn", "op": "name", "refers_to": "=Sheet1!A2"}, {"cell": "Sheet1!G1", "input": "=INDIRECT(\"Vn\")", "op": "set"}, {"op": "read", "range": "Sheet1!A1:P16"}]}

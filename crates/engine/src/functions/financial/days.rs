@@ -81,18 +81,23 @@ pub fn yield_years(sys: DateSystem, basis: i32, settle: i64, mat: i64) -> f64 {
     let r = match basis {
         0 => {
             let feb_end = |y: i64, mo: u32, d: u32| mo == 2 && d >= dim(y, 2);
-            let (mut sd, mut ed) = (s.d as i64, m.d as i64);
-            if feb_end(ay, m.m, m.d) && feb_end(s.y, s.m, s.d) {
+            let ys = s.y + years;
+            let (sm, sday) = if s.m == 2 && s.d > dim(ys, 2) {
+                (3, s.d - dim(ys, 2))
+            } else {
+                (s.m, s.d)
+            };
+            let (mut sd, mut ed) = (sday as i64, m.d as i64);
+            if feb_end(m.y, m.m, m.d) && feb_end(ys, sm, sday) {
                 ed = 30;
             }
-            if sd == 31 || feb_end(s.y, s.m, s.d) {
-                sd = 30;
-            }
-
             if ed == 31 && sd >= 30 {
                 ed = 30;
             }
-            x87::div(d360(sd, s.m, s.y, ed, m.m, ay) as f64, 360.0)
+            if sd == 31 || feb_end(ys, sm, sday) {
+                sd = 30;
+            }
+            x87::div(d360(sd, sm, ys, ed, m.m, m.y) as f64, 360.0)
         }
         4 => {
             let d = d360(
@@ -250,9 +255,13 @@ pub fn yearfrac(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if let Some(Some(Value::Error(e))) = a.get(2) {
             return Err(*e);
         }
+
+        if atp::opt(ctx, a, 2, 0.0)? < 0.0 {
+            return Err(XlError::Num);
+        }
+        let basis = atp::basis(ctx, a, 2)?;
         let s = atp::date(ctx, a, 0)?;
         let e = atp::date(ctx, a, 1)?;
-        let basis = atp::basis(ctx, a, 2)?;
 
         let sys = atp::date_system(ctx);
         if sys == DateSystem::D1904 && (s > 2_955_541 || e > 2_955_541) {
@@ -274,12 +283,17 @@ pub fn days360(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let sys = ctx.wb.settings.date_system;
 
         let day = |x: f64| ((x * 86400.0).round() / 86400.0).floor() as i64;
-        let s = day(crate::functions::datetime::serial_arg(ctx, &a[0])?);
-        let e = day(crate::functions::datetime::serial_arg(ctx, &a[1])?);
+
+        let (n0, n1) = (ctx.to_number(&a[0]), ctx.to_number(&a[1]));
         let european = match a.get(2) {
-            None => false,
-            Some(v) => boolean(v)?,
+            None => Ok(false),
+            Some(v) => boolean(v),
         };
+        let (n0, n1) = (n0?, n1?);
+        let european = european?;
+        let range = |x: f64| crate::functions::datetime::serial_arg(ctx, &Value::Number(x));
+        let s = day(range(n0)?);
+        let e = day(range(n1)?);
         let _ = num;
         let d = if european {
             days360_eu(sys, s, e)

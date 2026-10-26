@@ -25,8 +25,13 @@ pub const DEFS: &[FnDef] = &[
         val(text(&a[0]).map(|s| Value::from(trim(&s))))
     }),
     scalar("CLEAN", 1, 1, |_, a| {
-        val(text(&a[0])
-            .map(|s| Value::from(s.chars().filter(|&c| c as u32 >= 32).collect::<String>())))
+        val(text(&a[0]).map(|s| {
+            Value::from(
+                s.chars()
+                    .filter(|&c| c as u32 >= 32 && !(0x80..=0x9F).contains(&(c as u32)))
+                    .collect::<String>(),
+            )
+        }))
     }),
     scalar("CONCATENATE", 1, MANY, concatenate),
     args("CONCAT", 1, MANY254, "R", concat),
@@ -84,7 +89,7 @@ fn count_arg(ctx: &EvalCtx, a: &[Value], i: usize, default: f64) -> R<usize> {
     if n < 0.0 {
         return Err(XlError::Value);
     }
-    Ok(n.trunc().min(1e9) as usize)
+    Ok(ifuzz(n).min(1e9) as usize)
 }
 
 pub(super) fn left_right(ctx: &mut EvalCtx, a: &[Value], left: bool) -> Value {
@@ -118,70 +123,69 @@ pub(super) fn mid(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
-fn map_char(c: char, upper: bool, next_letter: bool) -> char {
+use super::casemap;
+
+fn table_map(table: &[(u16, u16)], c: char) -> char {
     let n = c as u32;
-    if upper {
-        match n {
-            181 | 383 | 837 | 1011 | 8126 | 8560..=8575 | 5112..=5117 => return c,
-            912 => return '\u{3AA}',
-            _ => {}
-        }
-    } else {
-        match n {
-            304 => return 'i',
-            931 => return if next_letter { '\u{3C3}' } else { '\u{3C2}' },
-            7838
-            | 8486
-            | 8490
-            | 8491
-            | 8544..=8559
-            | 5024..=5109
-            | 8124
-            | 8072..=8079
-            | 8088..=8095
-            | 8104..=8111 => return c,
-            _ => {}
-        }
+    if n > 0xFFFF {
+        return c;
     }
-    let mut it: Box<dyn Iterator<Item = char>> = if upper {
-        Box::new(c.to_uppercase())
-    } else {
-        Box::new(c.to_lowercase())
-    };
-    match (it.next(), it.next()) {
-        (Some(m), None) => m,
-        _ => c,
+    match table.binary_search_by_key(&(n as u16), |e| e.0) {
+        Ok(i) => char::from_u32(table[i].1 as u32).unwrap_or(c),
+        Err(_) => c,
     }
 }
+
+const SIGMA_FINAL_BEFORE: &str = ".,;?!:/\\|{}[]-_'\"<>@#$%&+= \t\r\n";
 
 pub fn map_case(s: &str, upper: bool) -> String {
     let mut out = String::with_capacity(s.len());
     let mut it = s.chars().peekable();
     while let Some(c) = it.next() {
-        let next_letter = it.peek().is_some_and(|n| n.is_alphabetic());
-        out.push(map_char(c, upper, next_letter));
+        if !upper && c == '\u{3A3}' {
+            let fin = it.peek().map_or(true, |n| SIGMA_FINAL_BEFORE.contains(*n));
+            out.push(if fin { '\u{3C2}' } else { '\u{3C3}' });
+            continue;
+        }
+        out.push(table_map(
+            if upper {
+                casemap::UPPER
+            } else {
+                casemap::LOWER
+            },
+            c,
+        ));
     }
     out
 }
 
+fn xl_letter(c: char) -> bool {
+    let n = c as u32;
+    if n > 0xFFFF {
+        return false;
+    }
+    let n = n as u16;
+    let i = casemap::LETTERS.partition_point(|r| r.1 < n);
+    i < casemap::LETTERS.len() && casemap::LETTERS[i].0 <= n
+}
+
 fn proper(s: &str) -> String {
+    let lowered = map_case(s, false);
     let mut out = String::with_capacity(s.len());
     let mut prev_letter = false;
-    let mut it = s.chars().peekable();
-    while let Some(c) = it.next() {
-        if c.is_alphabetic() {
-            let next_letter = it.peek().is_some_and(|n| n.is_alphabetic());
-
-            out.push(if c == '\u{130}' && !prev_letter {
-                'I'
+    for (orig, c) in s.chars().zip(lowered.chars()) {
+        let letter = xl_letter(orig);
+        if letter && !prev_letter {
+            let p = table_map(casemap::PROPER_UPPER, c);
+            out.push(if p != c {
+                p
             } else {
-                map_char(c, !prev_letter, next_letter)
+                table_map(casemap::UPPER, c)
             });
-            prev_letter = true;
         } else {
             out.push(c);
-            prev_letter = false;
         }
+        prev_letter = letter;
     }
     out
 }
@@ -242,6 +246,11 @@ fn each_text(ctx: &mut EvalCtx, op: &Operand, mut f: impl FnMut(&str, bool)) -> 
 }
 
 fn concat(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    for op in ops {
+        if let Operand::Val(Value::Error(e)) = op {
+            return Operand::err(*e);
+        }
+    }
     let mut out = String::new();
     for op in ops {
         if let Err(e) = each_text(ctx, op, |s, _| out.push_str(s)) {
@@ -315,10 +324,11 @@ fn textjoin(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 fn rept(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let n = num(ctx, &a[1])?.trunc();
+        let n = num(ctx, &a[1])?;
         if n < 0.0 {
             return Err(XlError::Value);
         }
+        let n = n.trunc();
         if utf16_len(&s) as f64 * n > MAX_TEXT_LEN as f64 {
             return Err(XlError::Value);
         }
@@ -336,7 +346,7 @@ fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             None => None,
             Some(Value::Bool(_)) => return Err(XlError::Value),
             Some(v) => {
-                let k = num(ctx, v)?.trunc();
+                let k = ifuzz(num(ctx, v)?);
                 if k < 1.0 || k >= 2147483647.0 {
                     return Err(XlError::Value);
                 }
@@ -365,13 +375,13 @@ fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 pub(super) fn replace(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let start = num(ctx, &a[1])?.trunc();
+        let start = ifuzz(num(ctx, &a[1])?);
         let n = num(ctx, &a[2])?;
         let new = text(&a[3])?;
         if start < 1.0 || n < 0.0 || start > 32767.0 || n > 32767.0 {
             return Err(XlError::Value);
         }
-        let n = n.trunc();
+        let n = ifuzz(n);
         let start = (start as usize - 1).min(utf16_len(&s));
         let mut out = utf16_slice(&s, 0, start);
         out.push_str(&new);
@@ -388,7 +398,7 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
     val((|| {
         let needle = text(&a[0])?;
         let hay = text(&a[1])?;
-        let start = opt_num(ctx, a, 2, 1.0)?.trunc();
+        let start = ifuzz(opt_num(ctx, a, 2, 1.0)?);
         let len = utf16_len(&hay);
 
         if start < 1.0
@@ -433,63 +443,75 @@ fn value(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     match &a[0] {
         Value::Number(n) => Value::Number(*n),
         Value::Blank => Value::Number(0.0),
-        Value::Text(_) => val(ctx.to_number(&a[0]).map(Value::Number)),
+        Value::Text(s) => val(crate::coerce::parse_number_text(s, ctx.parse_env())
+            .map(|p| Value::Number(p.value))
+            .ok_or(XlError::Value)),
         Value::Error(e) => Value::Error(*e),
         _ => err(XlError::Value),
     }
 }
 
-fn numbervalue(_: &mut EvalCtx, a: &[Value]) -> Value {
+fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
+        let env = ctx.parse_env();
+        let first =
+            |v: &Value| -> Result<char, XlError> { text(v)?.chars().next().ok_or(XlError::Value) };
+        let ldec = env.locale.decimal_sep;
         let dec = match a.get(1) {
-            Some(v) => text(v)?.chars().next().ok_or(XlError::Value)?,
-            None => '.',
+            Some(v) => first(v)?,
+            None => ldec,
         };
-        let group = match a.get(2) {
-            Some(v) => text(v)?.chars().next().ok_or(XlError::Value)?,
-            None if dec == ',' => '.',
-            None => ',',
+        let mut group = match a.get(2) {
+            Some(v) => first(v)?,
+            None => env.locale.thousands_sep,
         };
         if dec == group {
-            return Err(XlError::Value);
+            if a.len() != 2 {
+                return Err(XlError::Value);
+            }
+            group = ldec;
         }
-        let mut cleaned = String::new();
-        let mut pct = 0;
+        let mut cleaned: Vec<char> = Vec::new();
         let mut seen_dec = false;
-        for c in s.chars().filter(|c| !c.is_whitespace()) {
-            if c == group {
-                if seen_dec {
-                    return Err(XlError::Value);
-                }
+        for c in s.chars() {
+            if matches!(c, '\t' | '\n' | '\r' | ' ') || (!seen_dec && c == group) {
                 continue;
+            }
+            if cleaned.len() >= 255 {
+                return Err(XlError::Value);
             }
             if c == dec {
                 seen_dec = true;
-                cleaned.push('.');
-            } else if c == '%' {
-                pct += 1;
+                cleaned.push(ldec);
             } else {
                 cleaned.push(c);
             }
         }
+        let mut pct = 0;
+        while cleaned.last() == Some(&'%') {
+            cleaned.pop();
+            pct += 1;
+        }
         if cleaned.is_empty() {
             return Ok(Value::Number(0.0));
         }
-        let (neg, body) = match cleaned.strip_prefix('-') {
-            Some(b) => (true, b.to_string()),
-            None => (false, cleaned.trim_start_matches('+').to_string()),
-        };
-
-        let (neg, body) = match body.strip_prefix('(').and_then(|b| b.strip_suffix(')')) {
-            Some(inner) if !neg => (true, inner.to_string()),
-            _ => (neg, body),
-        };
-        let mut n = crate::number::parse_literal(&body).ok_or(XlError::Value)?;
+        let mut loc = env.locale.clone();
+        loc.date_order = crate::locale::DateOrder::DMY;
+        let body: String = cleaned.into_iter().collect();
+        let mut n = coerce::parse_number_text(
+            &body,
+            coerce::ParseEnv {
+                locale: &loc,
+                ..env
+            },
+        )
+        .ok_or(XlError::Value)?
+        .value;
         for _ in 0..pct {
             n /= 100.0;
         }
-        Ok(Value::num(if neg { -n } else { n }))
+        Ok(Value::num(n))
     })())
 }
 
@@ -501,7 +523,7 @@ const CP1252_HIGH: [u32; 32] = [
 
 fn char_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let n = num(ctx, &a[0])?.trunc();
+        let n = ifuzz(num(ctx, &a[0])?);
         if !(1.0..=255.0).contains(&n) {
             return Err(XlError::Value);
         }
@@ -519,7 +541,10 @@ fn code(_: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
         let c = s.chars().next().ok_or(XlError::Value)? as u32;
-        let code = if c < 128 || (160..256).contains(&c) {
+        let code = if c < 128
+            || (128..160).contains(&c) && !CP1252_HIGH.contains(&c)
+            || (160..256).contains(&c)
+        {
             c
         } else {
             CP1252_HIGH
@@ -534,10 +559,17 @@ fn code(_: &mut EvalCtx, a: &[Value]) -> Value {
 fn unichar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let n = num(ctx, &a[0])?.trunc();
-        if n < 1.0 || n > 0x10FFFF as f64 {
+        if n < 1.0 || n >= 2147483648.0 {
             return Err(XlError::Value);
         }
         let u = n as u32;
+
+        if (u & 0xFFFE) == 0xFFFE {
+            return Err(XlError::NA);
+        }
+        if u > 0x10FFFF {
+            return Err(XlError::Value);
+        }
 
         if (0xFDD0..=0xFDEF).contains(&u) || (u & 0xFFFE) == 0xFFFE {
             return Err(XlError::NA);

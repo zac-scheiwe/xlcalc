@@ -3,18 +3,18 @@ resolver = "2"
 members = ["crates/engine", "crates/cli", "crates/conformance"]
 
 [workspace.package]
-version = "0.1.1"
+version = "0.2.0"
 edition = "2021"
 license = "0BSD"
 repository = "https://github.com/zac-scheiwe/xlcalc"
 
 [workspace.dependencies]
-xlcalc = { path = "crates/engine", version = "0.1.1" }
+xlcalc = { path = "crates/engine", version = "0.2.0" }
 rustc-hash = "2.0"
 smallvec = { version = "1.13", features = ["union"] }
 rstar = "0.12"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 
 [profile.release]

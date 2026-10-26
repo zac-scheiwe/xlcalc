@@ -28,6 +28,8 @@ pub struct Names {
     map: FxHashMap<(Option<SheetId>, Text), NameDef>,
 
     placeholders: FxHashMap<Text, Text>,
+
+    deleted_scoped: rustc_hash::FxHashSet<(SheetId, Text)>,
 }
 
 impl Names {
@@ -51,11 +53,26 @@ impl Names {
 
     pub fn insert(&mut self, def: NameDef) -> Option<NameDef> {
         let key = (def.scope, Text::from(def.name.to_uppercase()));
+        if let Some(s) = def.scope {
+            self.deleted_scoped.remove(&(s, key.1.clone()));
+        }
         self.map.insert(key, def)
     }
 
     pub fn remove(&mut self, key: &str, scope: Option<SheetId>) -> Option<NameDef> {
         self.map.remove(&(scope, Text::from(key)))
+    }
+
+    pub fn delete(&mut self, key: &str, scope: Option<SheetId>) -> Option<NameDef> {
+        let d = self.remove(key, scope)?;
+        if let Some(s) = scope {
+            self.deleted_scoped.insert((s, Text::from(key)));
+        }
+        Some(d)
+    }
+
+    pub fn was_deleted(&self, key: &str, sheet: SheetId) -> bool {
+        self.deleted_scoped.contains(&(sheet, Text::from(key)))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &NameDef> {

@@ -1,0 +1,7 @@
+=SUM(B:B)
+=SUM(B:B,1:1)
+=SUM(C[1])
+=SUM($B:$B)
+=SUM(A:A)
+=SUM(1:1)
+=SUM(B:B 1:1)

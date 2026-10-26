@@ -64,6 +64,25 @@ impl RefGrid {
         }
     }
 
+    pub fn value_array(&self) -> Arc<crate::value::Array> {
+        Arc::new(crate::value::Array::new(
+            self.rows,
+            self.cols,
+            self.items
+                .iter()
+                .map(|i| Value::Error(i.err().unwrap_or(XlError::Value)))
+                .collect(),
+        ))
+    }
+
+    pub fn first_error(&self) -> Option<XlError> {
+        self.items.iter().find_map(|i| i.err())
+    }
+
+    pub fn all_errors(&self) -> bool {
+        self.items.iter().all(|i| i.is_err())
+    }
+
     pub fn broadcast_get(&self, r: u32, c: u32) -> Operand {
         let rr = if self.rows == 1 { 0 } else { r };
         let cc = if self.cols == 1 { 0 } else { c };
@@ -181,6 +200,10 @@ pub struct EvalCtx<'a> {
 
     pub(crate) own: Option<FormulaId>,
     pub(crate) read_own: bool,
+
+    pub(crate) abandoned: bool,
+
+    pub(crate) name_scope: Option<Option<crate::address::SheetId>>,
 }
 
 impl<'a> EvalCtx<'a> {
@@ -205,7 +228,16 @@ impl<'a> EvalCtx<'a> {
             circ_lifted: false,
             own: None,
             read_own: false,
+            abandoned: false,
+            name_scope: None,
         }
+    }
+
+    pub(crate) fn too_big(&mut self, cells: f64) -> bool {
+        if cells > crate::workbook::ABANDON_CELLS as f64 {
+            self.abandoned = true;
+        }
+        self.abandoned
     }
 
     #[inline]
@@ -330,6 +362,17 @@ impl<'a> EvalCtx<'a> {
         self.visit_area_where(area, |_, _| true, f);
     }
 
+    pub(crate) fn visit_area_lazy(
+        &mut self,
+        area: &Area,
+        keep: impl Fn(u32, u32) -> bool,
+        f: impl FnMut(u32, u32, &Value) -> bool,
+    ) {
+        let defer = std::mem::replace(&mut self.defer_cycles, !self.iterative);
+        self.visit_area_where(area, keep, f);
+        self.defer_cycles = defer;
+    }
+
     pub fn visit_area_where(
         &mut self,
         area: &Area,
@@ -404,6 +447,7 @@ impl<'a> EvalCtx<'a> {
         }
         let n = rows as u64 * cols as u64;
         if n > crate::workbook::MAX_ARRAY_CELLS {
+            self.too_big(n as f64);
             return Value::Error(XlError::Num);
         }
         let mut data = vec![Value::Blank; n as usize];
@@ -428,6 +472,19 @@ impl<'a> EvalCtx<'a> {
         });
         self.defer_cycles = defer;
         Array::new(rows, cols, data).into_value()
+    }
+
+    pub fn grid_cells(&mut self, g: &RefGrid) -> Value {
+        let data = g
+            .items
+            .iter()
+            .map(|i| match i {
+                Ok(a) if a.rect.is_cell() => self.cell_value(a.sheet, a.rect.r0, a.rect.c0),
+                Ok(_) => Value::Error(XlError::Value),
+                Err(e) => Value::Error(*e),
+            })
+            .collect();
+        Array::new(g.rows, g.cols, data).into_value()
     }
 
     pub fn deref_marked(&mut self, op: Operand) -> Value {
@@ -455,15 +512,7 @@ impl<'a> EvalCtx<'a> {
         match op {
             Operand::Val(v) => v,
             Operand::Missing => Value::Blank,
-            Operand::Ref(Reference::Grid(g)) => Array::new(
-                g.rows,
-                g.cols,
-                g.items
-                    .iter()
-                    .map(|i| Value::Error(i.err().unwrap_or(XlError::Value)))
-                    .collect(),
-            )
-            .into_value(),
+            Operand::Ref(Reference::Grid(g)) => Value::Array(g.value_array()),
             Operand::Ref(r) => match r.single() {
                 Some(a) => {
                     let a = *a;
@@ -526,7 +575,7 @@ impl<'a> EvalCtx<'a> {
                     let r = self.eval(b);
 
                     let dead = |n: &Node, o: &Operand| {
-                        matches!(n, Node::Ref(..))
+                        matches!(n, Node::Ref(crate::formula::SheetRef::Missing(_), _))
                             && matches!(o, Operand::Val(Value::Error(XlError::Ref)))
                     };
                     if *op == BinOp::Range
@@ -600,7 +649,20 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
         }
     };
     if ctx.has_placeholders() && contains_circ(&v) {
-        ctx.circ_used();
+        let block = ctx
+            .wb
+            .formula_at(ctx.host)
+            .and_then(|f| ctx.wb.formula(f).array);
+        let used = match block {
+            Some((r, c)) => contains_circ(&crate::cse::fit(v.clone(), r, c)),
+            None => true,
+        };
+        if used {
+            ctx.circ_used();
+        }
+    }
+    if ctx.abandoned {
+        return Value::Number(0.0);
     }
     finalize(v)
 }

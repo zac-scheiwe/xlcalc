@@ -414,8 +414,61 @@ fn all_abs(cref: &CRef) -> bool {
     }
 }
 
+#[derive(Clone, Copy)]
+pub(crate) struct PasteInfo {
+    pub block: Rect,
+    pub carries_fmt: bool,
+    pub protect_blanks: bool,
+}
+
 impl Workbook {
     pub fn move_range(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+    ) -> Result<RecalcReport, EditError> {
+        let r = self.move_range_body(src_sheet, src, dst);
+        if r.is_ok() {
+            self.view_touch_row_pub(src_sheet, src.r1);
+            self.view_touch_row_pub(dst.sheet, dst.row.saturating_add(src.rows() - 1));
+        }
+        r
+    }
+
+    fn move_range_body(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+    ) -> Result<RecalcReport, EditError> {
+        let d = Rect::new(
+            dst.row,
+            dst.col,
+            dst.row.saturating_add(src.rows() - 1),
+            dst.col.saturating_add(src.cols() - 1),
+        );
+        let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst.sheet, d);
+        let r = self.move_range_raw(src_sheet, src, dst);
+        self.select_paste(dst.sheet, dst.row, dst.col);
+        if pending {
+            self.restore_totals(src_sheet, src, Some(d));
+            self.restore_totals(dst.sheet, d, Some(d));
+        }
+
+        if r.is_ok()
+            && self
+                .tables
+                .iter()
+                .any(|t| t.sheet == src_sheet || t.sheet == dst.sheet)
+        {
+            self.extra_recalc();
+            self.extra_recalc();
+        }
+        r
+    }
+
+    fn move_range_raw(
         &mut self,
         src_sheet: SheetId,
         src: Rect,
@@ -447,7 +500,19 @@ impl Workbook {
         let mut dt_moving: Vec<usize> = Vec::new();
         for (i, t) in self.data_tables.iter().enumerate() {
             if t.sheet == src_sheet && t.rect.intersects(&src) {
+                let corner = src.intersection(&t.rect) == Some(Rect::cell(t.rect.r0, t.rect.c0));
+                if corner {
+                    continue;
+                }
                 if !inside(&t.rect, &src) {
+                    let doomed: Vec<Rect> = self
+                        .merges(dst.sheet)
+                        .into_iter()
+                        .filter(|m| m.intersects(&dest))
+                        .collect();
+                    for m in doomed {
+                        self.remove_merge(dst.sheet, m);
+                    }
                     return Err(EditError::Compile(crate::datatable::PART_ERROR.into()));
                 }
                 dt_moving.push(i);
@@ -484,6 +549,18 @@ impl Workbook {
             !dt_doomed.contains(&(i - 1))
         });
         self.fmt_move_block(src_sheet, src, dst.sheet, (dst.row, dst.col));
+
+        let moved_blocked: Vec<FormulaId> = match self.sheet(src_sheet) {
+            Some(sh) => sh
+                .cells
+                .iter_rect(src)
+                .filter_map(|(_, _, e)| match e {
+                    Entry::Formula(f) if sh.spills.is_blocked(*f) => Some(*f),
+                    _ => None,
+                })
+                .collect(),
+            None => Vec::new(),
+        };
 
         let moving: Vec<(u32, u32, Entry)> = {
             let sh = self.sheet_mut(src_sheet).unwrap();
@@ -611,8 +688,49 @@ impl Workbook {
                 }
             }
         }
-        let grow = self.paste_growth(dst.sheet, dest, Some((src_sheet, src)));
+
+        for t in self.tables.iter_mut() {
+            if t.sheet != dst.sheet
+                || !t.headers
+                || !dest.contains(t.rect.r0, dest.c0.max(t.rect.c0))
+            {
+                continue;
+            }
+            for c in dest.c0.max(t.rect.c0)..=dest.c1.min(t.rect.c1) {
+                if let Some(name) = t.columns.get((c - t.rect.c0) as usize) {
+                    let k: String = name.chars().map(crate::text::fold_upper).collect();
+                    t.dxf.retain(|(n, _)| *n != k);
+                }
+            }
+        }
+        self.note_pasted_col_formats(dst.sheet, dest);
+        let grow = self.paste_growth(
+            dst.sheet,
+            dest,
+            Some((src_sheet, src)),
+            None,
+            None,
+            self.sheet_count() == 1,
+        );
         let mut report = self.relink_and_recalc();
+        if self.settings.mode == crate::workbook::CalcMode::Manual {
+            for fid in moved_blocked {
+                let (addr, spill) = {
+                    let f = self.formula(fid);
+                    (f.addr, f.spill)
+                };
+                if let Some(rect) = spill {
+                    if let Some(sh) = self.sheet_mut(addr.sheet) {
+                        sh.spills.set_blocked(fid, rect);
+                    }
+                    let f = self.formula_mut(fid);
+                    f.spill = None;
+                    f.value = crate::value::Value::Error(crate::value::XlError::Spill);
+                    self.set_dirty(fid, true);
+                    self.calc.dirty_list.push(fid);
+                }
+            }
+        }
         if !headers.is_empty() {
             headers.sort_by_key(|a| (a.sheet.0, a.row, a.col));
             for a in headers {
@@ -646,15 +764,20 @@ impl Workbook {
                             .flatten()
                     });
                     if let Some(n) = next {
-                        self.set_value(a, crate::value::Value::from(n.as_str()));
+                        self.sheet_mut(a.sheet).unwrap().cells.set(
+                            a.row,
+                            a.col,
+                            crate::workbook::Entry::Const(crate::value::Value::from(n.as_str())),
+                        );
+                        crate::calc::cell_changed(self, a);
                     }
                 }
-                self.header_edited(a);
+                self.header_edited_in_cut(a);
             }
             report = self.relink_and_recalc();
         }
-        if let Some((ti, rect, added_rows)) = grow {
-            report = self.grow_table_by_paste(ti, rect, added_rows);
+        if let Some((ti, rect, added_rows, _)) = grow {
+            report = self.grow_table_by_paste(ti, rect, added_rows, None);
         }
         Ok(report)
     }
@@ -664,12 +787,17 @@ impl Workbook {
         sheet: SheetId,
         d: Rect,
         cut_from: Option<(SheetId, Rect)>,
-    ) -> Option<(usize, Rect, bool)> {
+        orig: Option<&[Rect]>,
+        copied_from: Option<(SheetId, Rect)>,
+        active: bool,
+    ) -> Option<(usize, Rect, bool, bool)> {
         self.tables.iter().enumerate().find_map(|(i, t)| {
             if t.sheet != sheet {
                 return None;
             }
             let r = t.rect;
+
+            let r_old = orig.and_then(|o| o.get(i)).copied().unwrap_or(r);
             let mut rect = r;
             let rows = !t.totals
                 && r.c0 <= d.c0
@@ -703,39 +831,110 @@ impl Workbook {
             let sh = self.sheet(sheet)?;
 
             let past = if rows {
-                Rect::new(r.r1 + 1, d.c0, d.r1, d.c1)
+                Rect::new(r_old.r1 + 1, d.c0, d.r1, d.c1)
             } else {
-                Rect::new(d.r0, r.c1 + 1, d.r1, d.c1)
+                Rect::new(d.r0, r_old.c1 + 1, d.r1, d.c1)
             };
+            let edge_nonblank = sh.cells.iter_rect(past).next().is_some();
 
             let from_table = cut_from.is_some_and(|(s, c)| s == sheet && c.intersects(&r));
-            if !from_table {
+
+            let inside = if rows { d.r0 <= r.r1 } else { d.c0 <= r.c1 };
+
+            let outside_src = !copied_from.is_some_and(|(s, c)| s == sheet && c.intersects(&r));
+            if !from_table && !(inside && rows && outside_src && active) {
                 sh.cells.iter_rect(past).next()?;
             }
 
-            let inside = if rows { d.r0 <= r.r1 } else { d.c0 <= r.c1 };
             let busy = !(from_table && inside)
                 && sh.cells.iter_rect(added).any(|(y, x, _)| !d.contains(y, x));
-            (!busy).then_some((i, rect, rows))
+            (!busy).then_some((i, rect, rows, edge_nonblank))
         })
     }
 
-    pub(crate) fn fill_grow_tables(&mut self, sheet: SheetId, range: Rect, written: &[Rect]) {
+    pub(crate) fn table_selected(&self, ti: usize) -> bool {
+        let t = &self.tables[ti];
+        let cell = if t.sheet == self.active {
+            Some(self.selection.get(&t.sheet).copied().unwrap_or((0, 0)))
+        } else {
+            self.fill_selected.get(&t.sheet).copied()
+        };
+        cell.is_some_and(|(r, c)| t.rect.contains(r, c))
+    }
+
+    fn first_busy_row(&self, sheet: SheetId, area: Rect) -> Option<u32> {
+        let mut first = self
+            .sheet(sheet)
+            .and_then(|sh| sh.cells.iter_rect(area).map(|(y, _, _)| y).min());
+        let ids: Vec<FormulaId> = self.formula_ids().collect();
+        for fid in ids {
+            let f = self.formula(fid);
+            let host = f.addr;
+            edit_refs(&f.formula.root, &mut |s, cref| {
+                let t = match s {
+                    SheetRef::Current => host.sheet,
+                    SheetRef::Sheet(id) => *id,
+                    _ => return RefEdit::Keep,
+                };
+                if t == sheet {
+                    let rect = match *cref {
+                        CRef::Cols { c0, c1 } => {
+                            let c = |rc: Rc| rc.resolve(host.col, MAX_COLS, false);
+                            c(c0)
+                                .zip(c(c1))
+                                .map(|(a, b)| Rect::new(0, a.min(b), MAX_ROWS - 1, a.max(b)))
+                        }
+                        CRef::Rows { r0, r1 } => {
+                            let r = |rc: Rc| rc.resolve(host.row, MAX_ROWS, false);
+                            r(r0)
+                                .zip(r(r1))
+                                .map(|(a, b)| Rect::new(a.min(b), 0, a.max(b), MAX_COLS - 1))
+                        }
+                        _ => cref_rect(cref, host),
+                    };
+                    if let Some(r) = rect {
+                        if r.intersects(&area) {
+                            let y = r.r0.max(area.r0);
+                            first = Some(first.map_or(y, |f: u32| f.min(y)));
+                        }
+                    }
+                }
+                RefEdit::Keep
+            });
+        }
+        first
+    }
+
+    pub(crate) fn fill_grow_tables(
+        &mut self,
+        sheet: SheetId,
+        start: u32,
+        range: Rect,
+        written: &[Rect],
+    ) {
         let reaches =
             |r: Rect, w: Rect| w.r0 <= r.r1 + 1 && w.r1 > r.r1 && w.c0 <= r.c1 && w.c1 >= r.c0;
         let hits: Vec<usize> = self
             .tables
             .iter()
             .enumerate()
-            .filter(|(_, t)| t.sheet == sheet && !t.totals && reaches(t.rect, range))
+            .filter(|(_, t)| {
+                t.sheet == sheet && !t.totals && start < t.rect.r1 && reaches(t.rect, range)
+            })
             .map(|(i, _)| i)
             .collect();
         for ti in hits {
             let old = self.tables[ti].rect;
-            let add = range.r1 - old.r1;
-            let ins = Rect::new(old.r1 + 1, old.c0, old.r1 + add, old.c1);
-            if self.insert_cells(sheet, ins, true).is_err() {
-                continue;
+            let active = self.table_selected(ti);
+            if active {
+                let area = Rect::new(old.r1 + 1, old.c0, range.r1, old.c1);
+                if let Some(first) = self.first_busy_row(sheet, area) {
+                    let add = range.r1 - first + 1;
+                    let ins = Rect::new(old.r1 + 1, old.c0, old.r1 + add, old.c1);
+                    if self.insert_cells(sheet, ins, true).is_err() {
+                        continue;
+                    }
+                }
             }
             let grow = written
                 .iter()
@@ -743,8 +942,19 @@ impl Workbook {
                 .map(|w| w.r1 - old.r1)
                 .max();
             if let Some(g) = grow {
+                if !active {
+                    let added = Rect::new(old.r1 + 1, old.c0, old.r1 + g, old.c1);
+                    let blocked = self.sheet(sheet).is_some_and(|sh| {
+                        sh.cells
+                            .iter_rect(added)
+                            .any(|(_, x, _)| !written.iter().any(|w| w.c0 <= x && x <= w.c1))
+                    });
+                    if blocked {
+                        continue;
+                    }
+                }
                 let grown = Rect::new(old.r0, old.c0, old.r1 + g, old.c1);
-                self.grow_table(ti, grown, true, true);
+                self.grow_table(ti, grown, true, true, None);
             }
         }
     }
@@ -811,8 +1021,20 @@ impl Workbook {
         ti: usize,
         rect: Rect,
         rows: bool,
+        pasted: Option<PasteInfo>,
     ) -> RecalcReport {
-        self.grow_table(ti, rect, rows, false)
+        if rows {
+            let t = &self.tables[ti];
+            let (sheet, old) = (t.sheet, t.rect);
+            let mut grown = old;
+            for r in old.r1 + 1..=rect.r1 {
+                grown.r1 = r;
+                self.tables[ti].rect = grown;
+                self.extend_row_formats(sheet, grown);
+            }
+            self.tables[ti].rect = old;
+        }
+        self.grow_table(ti, rect, rows, false, pasted)
     }
 
     pub(crate) fn grow_table(
@@ -821,6 +1043,7 @@ impl Workbook {
         rect: Rect,
         rows: bool,
         header_too: bool,
+        pasted: Option<PasteInfo>,
     ) -> RecalcReport {
         let old = self.tables[ti].rect;
         let sheet = self.tables[ti].sheet;
@@ -839,6 +1062,20 @@ impl Workbook {
                 let col = t.rect.c0 + idx as u32;
                 let order: Vec<u32> = (d0..=old.r1).collect();
                 let Some(sr) = self.calc_source_row(&t, idx, &order) else {
+                    if let Some(snap) = self.calc_snapshot(&t, idx) {
+                        for r in old.r1 + 1..=rect.r1 {
+                            let to = CellAddr::new(sheet, r, col);
+                            if !pasted.is_some_and(|p| p.protect_blanks && p.block.contains(r, col))
+                                && self
+                                    .sheet(sheet)
+                                    .is_some_and(|s| s.cells.get(r, col).is_none())
+                            {
+                                let text = print_node(self, &snap.root, to);
+                                self.set_compiled_formula(to, snap.clone(), text);
+                                filled.push(to);
+                            }
+                        }
+                    }
                     continue;
                 };
                 let Some(sf) = self.formula_at(CellAddr::new(sheet, sr, col)) else {
@@ -850,6 +1087,15 @@ impl Workbook {
                     let empty = self
                         .sheet(sheet)
                         .is_some_and(|s| s.cells.get(r, col).is_none());
+
+                    if let Some(p) = pasted.filter(|p| p.block.contains(r, col)) {
+                        if !empty || p.protect_blanks {
+                            if !p.carries_fmt {
+                                self.fmt_copy_pairs(&[(CellAddr::new(sheet, sr, col), to)]);
+                            }
+                            continue;
+                        }
+                    }
                     if empty && self.fill_fits(sf, sheet, col, r..=r) {
                         let _ = self.copy_range(sheet, from, to);
                         filled.push(to);

@@ -1,8 +1,8 @@
 use super::decimal::Dec;
-use super::parse::Den;
 use super::parse::{Body, DateTok, Item};
-use super::render::approximate;
+use super::render::{calc_fraction, frac_spec, mp_frac};
 use super::NumberFormat;
+use crate::x87;
 
 fn to_f64(d: &Dec) -> f64 {
     if d.is_zero() {
@@ -78,38 +78,12 @@ impl NumberFormat {
                 signed(to_f64(&m.shifted(e)))
             }
             Body::Frac(l) => {
-                let v = a * 10f64.powi(l.scale);
-                let (int, num, den) = match l.den {
-                    Den::Fixed(d) => {
-                        let d = d as f64;
-                        let rr = (v * d + 0.5).floor();
-                        if l.has_int {
-                            let base = (rr / d).floor();
-                            (base, rr - base * d, d)
-                        } else {
-                            (0.0, rr, d)
-                        }
-                    }
-                    Den::Max(n) => {
-                        let maxd = 10f64.powi(n as i32) - 1.0;
-                        let (p, q) = approximate(v, maxd);
-                        if l.has_int {
-                            let base = (p / q).floor();
-                            (base, p - base * q, q)
-                        } else {
-                            (0.0, p, q)
-                        }
-                    }
-                };
-                if !(den > 0.0) || !int.is_finite() || !num.is_finite() {
-                    return general();
+                let int = a.trunc();
+                let frac = mp_frac(a);
+                match calc_fraction(frac, frac_spec(&l.den), l.has_int) {
+                    Some((num, den)) => signed(x87::add(x87::div(num as f64, den as f64), int)),
+                    None => frac,
                 }
-                let shown = int + num / den;
-                signed(if l.scale != 0 {
-                    shown / 10f64.powi(l.scale)
-                } else {
-                    shown
-                })
             }
             _ => general(),
         }

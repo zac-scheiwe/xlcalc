@@ -1,0 +1,16 @@
+{
+  "sheets": ["S1", "S2", "S3", "S4"],
+  "steps": [
+    {"name": "Ja", "op": "name", "refers_to": "=2", "scope": "S1"},
+    {"name": "Ja", "op": "name", "refers_to": "=1"},
+    {"name": "Jb", "op": "name", "refers_to": "=2", "scope": "S2"},
+    {"name": "Jb", "op": "name", "refers_to": "=1"},
+    {"name": "Jc", "op": "name", "refers_to": "=2", "scope": "S1"},
+    {"name": "Jc", "op": "name", "refers_to": "=3", "scope": "S4"},
+    {"name": "Jc", "op": "name", "refers_to": "=1"},
+    {"name": "Jd", "op": "name", "refers_to": "=0"},
+    {"name": "Jd", "op": "name", "refers_to": "=2", "scope": "S1"},
+    {"name": "Jd", "op": "name", "refers_to": "=1"},
+    {"op": "names"}
+  ]
+}

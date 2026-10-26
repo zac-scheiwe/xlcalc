@@ -95,7 +95,7 @@ pub fn z_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
 }
 
 fn int_op(ctx: &EvalCtx, o: &Operand) -> R<f64> {
-    Ok(opnum(ctx, o)?.trunc())
+    Ok(crate::functions::args::sfix(opnum(ctx, o)?) as f64)
 }
 
 pub fn t_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {

@@ -87,14 +87,10 @@ pub fn run(
             verdict(tally, err);
         }
         "table_sort" => {
-            let Some(t) = wb.table_by_name(step["name"].as_str().unwrap()) else {
+            let name = step["name"].as_str().unwrap();
+            if wb.table_by_name(name).is_none() {
                 verdict(tally, Some("no such table".into()));
                 return true;
-            };
-            let (s, mut rect) = (t.sheet, t.rect);
-            rect.r0 += 1;
-            if t.totals_row().is_some() {
-                rect.r1 -= 1;
             }
             let spec = SortSpec {
                 keys: step["keys"]
@@ -110,7 +106,7 @@ pub fn run(
                 by_columns: false,
                 match_case: step["matchcase"].as_bool().unwrap_or(false),
             };
-            let err = wb.sort_range(s, rect, &spec).err().map(|e| e.to_string());
+            let err = wb.sort_table(name, &spec).err().map(|e| e.to_string());
             verdict(tally, err);
         }
         "paste_special" => {
@@ -147,6 +143,38 @@ pub fn run(
                 parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
             wb.set_number_format(s, rect, step["fmt"].as_str().unwrap());
         }
+        "delete_name" => {
+            let scope = step["scope"]
+                .as_str()
+                .and_then(|n| wb.sheet_by_name(n).map(|x| x.id));
+            let missing = step["scope"].as_str().is_some() && scope.is_none();
+            let err = if missing
+                || wb
+                    .delete_name_active(step["name"].as_str().unwrap(), scope)
+                    .is_none()
+            {
+                Some("no such name".to_string())
+            } else {
+                None
+            };
+            verdict(tally, err);
+        }
+        "clear_formats" | "clear_all" => {
+            let (s, rect) =
+                parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
+            let mut err = None;
+            if op == "clear_all" {
+                err = wb.clear_range(s, rect).err().map(|e| e.to_string());
+            }
+            if err.is_none() {
+                if op == "clear_formats" {
+                    wb.clear_formats(s, rect);
+                } else {
+                    wb.reset_number_format(s, rect);
+                }
+            }
+            verdict(tally, err);
+        }
         "autofill" => {
             use xlcalc::autofill::FillType;
             let (ss, src) =
@@ -177,6 +205,148 @@ pub fn run(
             };
             let err = wb.data_series(s, rect, &spec).err().map(|e| e.to_string());
             verdict(tally, err);
+        }
+        "hide_rows" | "unhide_rows" | "hide_cols" | "unhide_cols" | "group_rows"
+        | "ungroup_rows" | "outline_show" | "autofilter" | "autofilter_clear"
+        | "autofilter_reapply" | "autofilter_off" => {
+            let Some(sh) = step["sheet"]
+                .as_str()
+                .or_else(|| {
+                    step["range"]
+                        .as_str()
+                        .and_then(|r| r.split_once('!'))
+                        .map(|x| x.0)
+                })
+                .or_else(|| {
+                    step["table"]
+                        .as_str()
+                        .and_then(|t| wb.table_by_name(t))
+                        .map(|_| "")
+                })
+            else {
+                verdict(tally, Some("no sheet".into()));
+                return true;
+            };
+            let sid = if sh.is_empty() {
+                wb.table_by_name(step["table"].as_str().unwrap())
+                    .map(|t| t.sheet)
+            } else {
+                wb.sheet_by_name(sh.trim_matches('\'')).map(|s| s.id)
+            };
+            let Some(sid) = sid else {
+                verdict(tally, Some("no such sheet".into()));
+                return true;
+            };
+            let at = step["at"].as_u64().unwrap_or(1) as u32 - 1;
+            let count = step["count"].as_u64().unwrap_or(1) as u32;
+            let r = match op {
+                "hide_rows" => wb.set_rows_hidden(sid, at, count, true).map(|_| ()),
+                "unhide_rows" => wb.set_rows_hidden(sid, at, count, false).map(|_| ()),
+                "hide_cols" => Ok(wb.set_cols_hidden(sid, at, count, true)),
+                "unhide_cols" => Ok(wb.set_cols_hidden(sid, at, count, false)),
+                "group_rows" => wb.group_rows(sid, at, count, true).map(|_| ()),
+                "ungroup_rows" => wb.group_rows(sid, at, count, false).map(|_| ()),
+                "outline_show" => {
+                    wb.outline_show(sid, step["level"].as_u64().unwrap_or(1) as u32);
+                    Ok(())
+                }
+                "autofilter" => {
+                    let table = step["table"].as_str();
+                    let rect = match step["range"].as_str() {
+                        Some(r) => parse_range_ref(wb, r, default_sheet).map(|x| x.1),
+                        None => Some(xlcalc::Rect::new(0, 0, 0, 0)),
+                    };
+                    let joined: Option<String> = match &step["criteria1"] {
+                        serde_json::Value::Array(a) => Some(
+                            a.iter()
+                                .filter_map(|x| x.as_str())
+                                .collect::<Vec<_>>()
+                                .join(&xlcalc::view::VALUES_SEP.to_string()),
+                        ),
+                        x => x.as_str().map(str::to_string),
+                    };
+                    match (rect, step["field"].as_u64()) {
+                        (Some(rect), Some(f)) => wb
+                            .autofilter(
+                                sid,
+                                rect,
+                                table,
+                                f as u32,
+                                joined.as_deref(),
+                                step["operator"].as_str(),
+                                step["criteria2"].as_str(),
+                            )
+                            .map(|_| ()),
+                        (Some(rect), None) if table.is_none() => {
+                            wb.autofilter_toggle(sid, rect).map(|_| ())
+                        }
+                        _ => Err(xlcalc::EditError::Compile("bad autofilter".into())),
+                    }
+                }
+                "autofilter_clear" => wb.show_all_data(sid).map(|_| ()),
+                "autofilter_reapply" => wb.reapply_filter(sid).map(|_| ()),
+                _ => wb.autofilter_off(sid, step["table"].as_str()).map(|_| ()),
+            };
+            verdict(tally, r.err().map(|e| e.to_string()));
+        }
+        "rowstate" => {
+            let Some(sid) = step["sheet"]
+                .as_str()
+                .and_then(|n| wb.sheet_by_name(n))
+                .map(|s| s.id)
+            else {
+                return true;
+            };
+            let rows = step["rows"].as_u64().unwrap_or(20) as u32;
+            let ints = |k: &str| -> Vec<u32> {
+                rec[k]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .filter_map(|v| v.as_u64())
+                    .map(|v| v as u32)
+                    .collect()
+            };
+            let hid: Vec<u32> = wb
+                .hidden_rows(sid)
+                .into_iter()
+                .filter(|r| *r < rows)
+                .map(|r| r + 1)
+                .collect();
+            let hc: Vec<u32> = wb
+                .hidden_cols(sid)
+                .into_iter()
+                .filter(|c| *c < 26)
+                .map(|c| c + 1)
+                .collect();
+            let lv: Vec<u32> = (0..rows).map(|r| wb.row_level(sid, r)).collect();
+            let checks: [(&str, bool, String); 4] = [
+                (
+                    "hidden rows",
+                    hid == ints("hidden_rows"),
+                    format!("{:?} vs Excel {:?}", hid, ints("hidden_rows")),
+                ),
+                (
+                    "hidden cols",
+                    hc == ints("hidden_cols"),
+                    format!("{:?} vs Excel {:?}", hc, ints("hidden_cols")),
+                ),
+                (
+                    "outline levels",
+                    lv == ints("levels"),
+                    format!("{:?} vs Excel {:?}", lv, ints("levels")),
+                ),
+                (
+                    "filter mode",
+                    wb.filter_mode(sid) == rec["filter_mode"].as_bool().unwrap_or(false),
+                    format!("{} vs Excel {}", wb.filter_mode(sid), rec["filter_mode"]),
+                ),
+            ];
+            for (what, ok, msg) in checks {
+                tally.add(if ok { Outcome::Exact } else { Outcome::Wrong }, || {
+                    format!("step {n}: rowstate {what}: {msg}")
+                });
+            }
         }
         "precision" => {
             wb.set_precision_as_displayed(step["value"].as_bool().unwrap_or(true));

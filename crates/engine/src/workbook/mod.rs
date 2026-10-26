@@ -28,7 +28,9 @@ pub use store::{CellStore, Entry};
 
 pub type FormulaId = u32;
 
-pub const MAX_ARRAY_CELLS: u64 = 1 << 24;
+pub const MAX_ARRAY_CELLS: u64 = 536_870_912 / 10;
+
+pub const ABANDON_CELLS: u64 = 536_870_912 / 10;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CalcMode {
@@ -179,7 +181,13 @@ pub struct CalcState {
 
     pub(crate) spilling: FxHashSet<FormulaId>,
 
+    pub(crate) shifted: FxHashSet<FormulaId>,
+
     pub(crate) stale_tables: bool,
+
+    pub(crate) hold_iter: bool,
+
+    pub(crate) paste_block: Option<(SheetId, Rect)>,
 
     pub(crate) stale_copy: Vec<FormulaId>,
     pub(crate) volatile: FxHashSet<FormulaId>,
@@ -187,6 +195,8 @@ pub struct CalcState {
     pub(crate) dirty_list: Vec<FormulaId>,
 
     pub circular_ref: Option<CellAddr>,
+
+    pub circ_iterating: bool,
 
     pub fixed_now: Option<f64>,
 
@@ -253,7 +263,17 @@ pub struct Workbook {
     pub(crate) active: SheetId,
     pub(crate) selection: FxHashMap<SheetId, (u32, u32)>,
 
+    pub(crate) fill_selected: FxHashMap<SheetId, (u32, u32)>,
+
     pub(crate) arrays_seen: bool,
+
+    pub(crate) no_auto_expand: bool,
+
+    pub(crate) series_autofill: bool,
+
+    pub(crate) defer_paste_recalc: bool,
+
+    pub(crate) views: FxHashMap<SheetId, crate::view::SheetView>,
 }
 
 impl Default for Workbook {
@@ -299,6 +319,10 @@ impl Workbook {
             sheets: Vec::new(),
             active: SheetId(0),
             selection: Default::default(),
+            fill_selected: Default::default(),
+            no_auto_expand: false,
+            series_autofill: false,
+            defer_paste_recalc: false,
             next_sheet: 1,
             formulas: Vec::new(),
             free: Vec::new(),
@@ -315,12 +339,16 @@ impl Workbook {
                 next_done_seq: 1,
                 next_born: 0,
                 spilling: FxHashSet::default(),
+                shifted: FxHashSet::default(),
                 stale_tables: false,
+                hold_iter: false,
+                paste_block: None,
                 stale_copy: Vec::new(),
                 volatile: FxHashSet::default(),
                 circular: FxHashSet::default(),
                 dirty_list: Vec::new(),
                 circular_ref: None,
+                circ_iterating: false,
                 fixed_now: None,
                 dt_block: false,
                 dt_seed: Vec::new(),
@@ -331,6 +359,7 @@ impl Workbook {
             data_tables: Vec::new(),
             merges: Default::default(),
             arrays_seen: false,
+            views: Default::default(),
         }
     }
 
@@ -589,13 +618,34 @@ impl Workbook {
         Ok((f, text))
     }
 
+    pub fn typed_text<'a>(&mut self, addr: CellAddr, input: &'a str) -> std::borrow::Cow<'a, str> {
+        if self.fraction_first(addr) {
+            if let Some(t) = crate::coerce::bare_fraction_as_mixed(input) {
+                return t.into();
+            }
+        }
+        input.into()
+    }
+
     pub fn set_input(&mut self, addr: CellAddr, input: &str) -> Result<RecalcReport, EditError> {
+        let one = Rect::new(addr.row, addr.col, addr.row, addr.col);
+        let pending = self.totals_pending(addr.sheet, one);
+        let r = self.set_input_raw(addr, input);
+        if pending {
+            self.restore_totals(addr.sheet, one, Some(one));
+        }
+        r
+    }
+
+    fn set_input_raw(&mut self, addr: CellAddr, input: &str) -> Result<RecalcReport, EditError> {
         if !input.is_empty() && self.is_text_format(addr) {
             return Ok(self.set_value(addr, Value::from(input)));
         }
+        let input = &*self.typed_text(addr, input);
         match input::interpret(input, &self.input_env()) {
             Entered::Formula(text) => self.set_formula(addr, &text),
 
+            Entered::Value(_) if self.in_multi_cell_array(addr) => Err(EditError::Locked),
             Entered::Value(v) => {
                 let grown = self.table_expansion(addr, false).and_then(|(ti, _, col)| {
                     (col && self.tables[ti].totals && addr.row == self.tables[ti].rect.r1)
@@ -674,6 +724,13 @@ impl Workbook {
             self.tables[ti].rect = old;
         }
         let (formula, body) = compiled?;
+
+        let formula = match crate::legacy::scalar_entry_expr(self, &body, addr)
+            .and_then(|e| self.compile_expr_normalized(&e, addr).ok())
+        {
+            Some((f, _)) => f,
+            None => formula,
+        };
         self.note_placeholders(&formula, addr);
         let formula = Arc::new(formula);
         self.remove_cell(addr);
@@ -804,7 +861,11 @@ impl Workbook {
         {
             return false;
         }
+        let was_formula = !self.tables.is_empty() && self.formula_at(addr).is_some();
         let had = self.remove_cell(addr);
+        if was_formula {
+            self.forget_calc_snapshot(addr);
+        }
         if had {
             calc::cell_changed(self, addr);
         }
@@ -815,6 +876,12 @@ impl Workbook {
             self.header_edited(addr);
         }
         true
+    }
+
+    pub(crate) fn extra_recalc(&mut self) {
+        if self.settings.mode == CalcMode::Automatic && self.settings.iteration {
+            calc::recalc(self);
+        }
     }
 
     pub(crate) fn after_edit(&mut self, edited: Vec<CellAddr>) -> RecalcReport {
@@ -867,6 +934,9 @@ impl Workbook {
             None => false,
             Some(Entry::Const(_)) => true,
             Some(Entry::Formula(fid)) => {
+                if !self.tables.is_empty() {
+                    self.snapshot_calc_formula(addr, fid);
+                }
                 let sh = self.sheet_mut(addr.sheet).unwrap();
                 sh.dirty.remove(addr.row, addr.col);
                 let old_spill = sh.spills.remove(fid);
@@ -973,6 +1043,21 @@ impl Workbook {
         self.calc.dt_block = false;
         let names: Vec<NameDef> = self.names.iter().cloned().collect();
         for mut def in names {
+            let mut missing = false;
+            formula::walk(&def.formula.root, &mut |n| {
+                missing |= matches!(
+                    n,
+                    formula::Node::Ref(formula::SheetRef::Missing(_), _)
+                        | formula::Node::DeadRef(formula::SheetRef::Missing(_))
+                        | formula::Node::Name {
+                            sheet: Some(formula::SheetRef::Missing(_)),
+                            ..
+                        }
+                );
+            });
+            if !missing {
+                continue;
+            }
             let host = def.host();
             if let Ok(f) = self.compile_formula(&def.refers_to, host) {
                 def.formula = Arc::new(f);
@@ -1019,8 +1104,76 @@ impl Workbook {
         }
     }
 
+    pub(crate) fn select_paste(&mut self, sheet: SheetId, row: u32, col: u32) {
+        if sheet != self.active {
+            if let Some(p) = self.fill_selected.get_mut(&sheet) {
+                *p = (row, col);
+            }
+        }
+    }
+
     pub(crate) fn select(&mut self, sheet: SheetId, row: u32, col: u32) {
         self.selection.insert(sheet, (row, col));
+        self.fill_selected.remove(&sheet);
+    }
+
+    fn backward_cellish_span(&self, body: &str) -> bool {
+        let b: Vec<char> = body.chars().collect();
+        let word = |c: char| c.is_alphanumeric() || c == '_' || c == '.';
+        let mut i = 0;
+        while i < b.len() {
+            match b[i] {
+                q @ ('"' | '\'') => {
+                    i += 1;
+                    while i < b.len() {
+                        if b[i] == q {
+                            if b.get(i + 1) == Some(&q) {
+                                i += 1;
+                            } else {
+                                break;
+                            }
+                        }
+                        i += 1;
+                    }
+                    i += 1;
+                }
+                c if word(c) && (i == 0 || !word(b[i - 1])) => {
+                    let s = i;
+                    while i < b.len() && word(b[i]) {
+                        i += 1;
+                    }
+                    if b.get(i) != Some(&':') {
+                        continue;
+                    }
+                    let m = i + 1;
+                    let mut e = m;
+                    while e < b.len() && word(b[e]) {
+                        e += 1;
+                    }
+                    if e == m || b.get(e) != Some(&'!') {
+                        continue;
+                    }
+                    let x: String = b[s..i].iter().collect();
+                    let y: String = b[m..e].iter().collect();
+                    if crate::address::parse_a1_cell(&y).is_none()
+                        || crate::address::parse_a1_cell(&x).is_some()
+                    {
+                        continue;
+                    }
+                    let pos = |n: &str| {
+                        self.sheet_by_name(n)
+                            .and_then(|sh| self.sheet_position(sh.id))
+                    };
+                    if let (Some(px), Some(py)) = (pos(&x), pos(&y)) {
+                        if py < px {
+                            return true;
+                        }
+                    }
+                }
+                _ => i += 1,
+            }
+        }
+        false
     }
 
     pub fn define_name(
@@ -1052,13 +1205,62 @@ impl Workbook {
                 text.as_str()
             }
         };
+        if self.backward_cellish_span(body) {
+            return Err(EditError::Compile(
+                "There's a problem with this formula.".into(),
+            ));
+        }
         let compiled = self.compile_formula(body, host)?;
 
         self.note_placeholders(&compiled, host);
         if bad_name {
             return Err(EditError::BadName(name.to_string()));
         }
+
+        let ctx = scope.unwrap_or(self.active);
+        let compiled = {
+            let mut changed = false;
+            let root = formula::map_node(&compiled.root, &mut |n| match n {
+                formula::Node::Name {
+                    key,
+                    display,
+                    sheet: None,
+                } if self.names.get(key, Some(ctx)).is_some() => {
+                    changed = true;
+                    Some(formula::Node::Name {
+                        key: key.clone(),
+                        display: display.clone(),
+                        sheet: Some(formula::SheetRef::Sheet(ctx)),
+                    })
+                }
+
+                formula::Node::Ref(formula::SheetRef::Current, c) => {
+                    changed = true;
+                    Some(formula::Node::Ref(formula::SheetRef::Sheet(ctx), *c))
+                }
+                _ => None,
+            });
+            if changed {
+                Formula {
+                    root,
+                    volatile: compiled.volatile,
+                }
+            } else {
+                compiled
+            }
+        };
         let formula = Arc::new(compiled);
+
+        if let Some(s) = scope {
+            let key = name.to_uppercase();
+
+            if self.names.get(&key, Some(s)).is_none()
+                && !self.names.was_deleted(&key, s)
+                && self.names.get(&key, None).is_some()
+            {
+                self.pin_book_level(&key, s);
+            }
+        }
         self.names.insert(NameDef {
             name: name.to_string(),
             scope,
@@ -1067,6 +1269,51 @@ impl Workbook {
         });
         calc::name_changed(self, &name.to_uppercase());
         Ok(self.after_edit(vec![]))
+    }
+
+    fn pin_book_level(&mut self, key: &str, s: SheetId) {
+        let dead = Some(formula::SheetRef::Sheet(SheetId(0)));
+        let map = |root: &formula::Node| {
+            let mut changed = false;
+            let r = formula::map_node(root, &mut |n| match n {
+                formula::Node::Name {
+                    key: k,
+                    display,
+                    sheet: Some(formula::SheetRef::Sheet(x)),
+                } if *x == s && &**k == key => {
+                    changed = true;
+                    Some(formula::Node::Name {
+                        key: k.clone(),
+                        display: display.clone(),
+                        sheet: dead.clone(),
+                    })
+                }
+                _ => None,
+            });
+            changed.then_some(r)
+        };
+        let fids: Vec<FormulaId> = self.formula_ids().collect();
+        for fid in fids {
+            let f = self.formula(fid).formula.clone();
+            if let Some(root) = map(&f.root) {
+                self.formula_mut(fid).formula = Arc::new(Formula {
+                    root,
+                    volatile: f.volatile,
+                });
+            }
+        }
+        let defs: Vec<NameDef> = self.names.iter().cloned().collect();
+        for d in defs {
+            if let Some(root) = map(&d.formula.root) {
+                self.names.insert(NameDef {
+                    formula: Arc::new(Formula {
+                        root,
+                        volatile: d.formula.volatile,
+                    }),
+                    ..d
+                });
+            }
+        }
     }
 
     pub fn set_mode(&mut self, mode: CalcMode) -> RecalcReport {
@@ -1095,6 +1342,10 @@ impl Workbook {
             }
         };
         self.settings.iteration = enabled;
+
+        if self.settings.mode == CalcMode::Automatic {
+            self.calc.circ_iterating = enabled;
+        }
         step(self);
         if let Some(n) = max_iter {
             self.settings.max_iterations = n.min(32_767);

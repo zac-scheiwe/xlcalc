@@ -44,10 +44,18 @@ pub struct ParseEnv<'a> {
 }
 
 pub fn parse_number_text(s: &str, env: ParseEnv) -> Option<ParsedNumber> {
+    parse_number_text_with(s, env, false)
+}
+
+pub fn parse_number_text_arith(s: &str, env: ParseEnv) -> Option<ParsedNumber> {
+    parse_number_text_with(s, env, true)
+}
+
+fn parse_number_text_with(s: &str, env: ParseEnv, keep_lead: bool) -> Option<ParsedNumber> {
     if !s.is_ascii() {
         let n = normalize_digits(s);
         if n != s {
-            return parse_number_text(&n, env);
+            return parse_number_text_with(&n, env, keep_lead);
         }
     }
     let t = s.trim_matches(' ');
@@ -57,11 +65,8 @@ pub fn parse_number_text(s: &str, env: ParseEnv) -> Option<ParsedNumber> {
     if let Some(p) = parse_plain(t, env.locale) {
         return Some(p);
     }
-    if let Some(p) = parse_fraction_text(t) {
-        return Some(p);
-    }
-    if let Some(p) = parse_time(t, env.locale) {
-        return Some(p);
+    if keep_lead && s.starts_with(' ') {
+        return parse_datetime_text_lead(t, env, true);
     }
     parse_date_time(t, env)
 }
@@ -81,40 +86,6 @@ fn normalize_digits(s: &str) -> String {
             }
         })
         .collect()
-}
-
-fn parse_fraction_text(t: &str) -> Option<ParsedNumber> {
-    let (neg, body) = match t.strip_prefix('-') {
-        Some(b) => (true, b),
-        None => (false, t.strip_prefix('+').unwrap_or(t)),
-    };
-    let (body, pct) = match body.strip_suffix('%') {
-        Some(b) => (b.trim_end(), true),
-        None => (body, false),
-    };
-    let (whole, frac) = body.split_once(' ')?;
-    let (n, d) = frac.trim_start().split_once('/')?;
-    if n.contains(' ') || d.trim_end().contains(' ') || d.starts_with(' ') {
-        return None;
-    }
-    let w = parse_uint(whole)?;
-    let n = parse_uint(n)?;
-    let d = parse_uint(d)?;
-    if d == 0.0 {
-        return None;
-    }
-    let v = w + n / d;
-    let v = if pct { v / 100.0 } else { v };
-    let mut p = ParsedNumber::new(
-        if neg { -v } else { v },
-        if pct {
-            NumberKind::Percent
-        } else {
-            NumberKind::Plain
-        },
-    );
-    p.format = Some(if pct { "0.00%" } else { "# ?/?" }.to_string());
-    Some(p)
 }
 
 fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
@@ -235,8 +206,16 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
     if grouped && !clean.bytes().any(|c| (b'1'..=b'9').contains(&c)) {
         return None;
     }
+
+    let mut fraction = None;
+    if int_digits > 0 && b.get(i) == Some(&b' ') {
+        if let Some((n, d, end)) = scan_fraction(b, i + 1) {
+            fraction = Some((n, d));
+            i = end;
+        }
+    }
     let mut sci = false;
-    if i < b.len() && b[i] as char == loc.decimal_sep {
+    if fraction.is_none() && i < b.len() && b[i] as char == loc.decimal_sep {
         clean.push('.');
         i += 1;
         while i < b.len() && b[i].is_ascii_digit() {
@@ -244,7 +223,7 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
             i += 1;
         }
     }
-    if i < b.len() && (b[i] == b'e' || b[i] == b'E') {
+    if fraction.is_none() && i < b.len() && (b[i] == b'e' || b[i] == b'E') {
         sci = true;
         clean.push('e');
         i += 1;
@@ -272,6 +251,11 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
         };
     }
     let mut v = number::parse_literal(&clean)?;
+
+    if let Some((n, d)) = fraction {
+        let q = n / d;
+        v += if percent { q / 100.0 } else { q };
+    }
     if percent {
         kind = NumberKind::Percent;
     } else if kind == NumberKind::Plain {
@@ -289,6 +273,18 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
     let exp = t.bytes().any(|c| c == b'e' || c == b'E');
     p.format = match p.kind {
         _ if exp => Some("0.00E+00".to_string()),
+        NumberKind::Percent if fraction.is_some() => Some("0.00%".to_string()),
+
+        NumberKind::Plain | NumberKind::Thousands | NumberKind::Currency if fraction.is_some() => {
+            Some(
+                if fraction.is_some_and(|(_, d)| d >= 10.0) {
+                    "# ??/??"
+                } else {
+                    "# ?/?"
+                }
+                .to_string(),
+            )
+        }
         NumberKind::Percent => Some(if dec { "0.00%" } else { "0%" }.to_string()),
         NumberKind::Thousands => Some(if dec { "#,##0.00" } else { "#,##0" }.to_string()),
         NumberKind::Currency => {
@@ -300,153 +296,550 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
     Some(p)
 }
 
-fn parse_time(t: &str, loc: &Locale) -> Option<ParsedNumber> {
-    let (body, ampm) = split_ampm(t);
-    let body = body.trim_end();
-
-    let (body, trailing) = match body.strip_suffix(loc.time_sep) {
-        Some(b) => (b, true),
-        None => (body, false),
-    };
-    let parts: Vec<&str> = body.split(loc.time_sep).collect();
-    let (mut h, m, sec, seconds);
-    match parts.as_slice() {
-        [hh] if ampm.is_some() || trailing => {
-            h = parse_uint(hh)?;
-            m = 0.0;
-            sec = 0.0;
-            seconds = false;
-        }
-        [hh, mm] => {
-            if let Some((mi, frac)) = mm.split_once(loc.decimal_sep) {
-                let mins = parse_uint(hh)?;
-                let secs = parse_uint(mi)? + parse_fraction(frac)?;
-                if secs >= 60.0 {
-                    return None;
-                }
-                let v = (mins * 60.0 + secs) / 86_400.0;
-                let mut p = ParsedNumber::new(
-                    v,
-                    NumberKind::Time {
-                        seconds: true,
-                        ampm: false,
-                    },
-                );
-                p.format = Some("mm:ss.0".to_string());
-                return Some(p);
-            }
-            h = parse_uint(hh)?;
-            m = parse_uint(mm)?;
-            sec = 0.0;
-            seconds = false;
-        }
-        [hh, mm, ss] => {
-            h = parse_uint(hh)?;
-            m = parse_uint(mm)?;
-            sec = match ss.split_once(loc.decimal_sep) {
-                Some((a, f)) => parse_uint(a)? + parse_fraction(f)?,
-                None => parse_uint(ss)?,
-            };
-            seconds = true;
-        }
-        _ => return None,
+pub fn bare_fraction_as_mixed(s: &str) -> Option<String> {
+    let t = s.trim_matches(' ');
+    let b = t.as_bytes();
+    if t.starts_with(['=', '\'']) {
+        return None;
     }
+    let start = b.iter().position(|c| c.is_ascii_digit())?;
+    if !t[..start].chars().all(|c| {
+        matches!(c, '(' | '+' | '-' | ' ')
+            || !c.is_alphanumeric() && c != '/' && c != '.' && c != ','
+    }) {
+        return None;
+    }
+    let (n, d, end) = scan_fraction(b, start)?;
+    if n == 0.0 || d == 0.0 || !t[end..].chars().all(|c| matches!(c, ')' | '%' | ' ')) {
+        return None;
+    }
+    Some(format!("{}0 {}", &t[..start], &t[start..]))
+}
 
-    if let Some(pm) = ampm {
-        if h > 12.0 || m >= 60.0 || sec >= 60.0 {
+fn scan_fraction(b: &[u8], i: usize) -> Option<(f64, f64, usize)> {
+    let int = |mut j: usize| -> Option<(f64, usize)> {
+        let st = j;
+        while j < b.len() && b[j].is_ascii_digit() {
+            j += 1;
+        }
+        if j == st || j - st > 5 {
             return None;
         }
-        if h == 12.0 {
-            h = 0.0;
-        }
-        if pm {
-            h += 12.0;
+        let v: u32 = std::str::from_utf8(&b[st..j]).ok()?.parse().ok()?;
+        (v <= 32767).then_some((v as f64, j))
+    };
+    let (n, j) = int(i)?;
+    if b.get(j) != Some(&b'/') {
+        return None;
+    }
+    let (d, j) = int(j + 1)?;
+    (d != 0.0).then_some((n, d, j))
+}
+
+const MISSING: i32 = -10000;
+
+const CODE_AM: i32 = -22;
+const CODE_PM: i32 = -21;
+
+const SEP_NONE: i32 = 0;
+const SEP_SPACE: i32 = 1;
+const SEP_DATE: i32 = 2;
+const SEP_TIME: i32 = 3;
+const SEP_DECIMAL: i32 = 4;
+
+const SEP_INTL: [&str; 3] = [" ", ", ", ""];
+
+#[derive(Clone, Copy)]
+struct DtToken {
+    d: f64,
+
+    v: i32,
+}
+
+fn alpha_code(word: &str) -> i32 {
+    if word.chars().count() >= 3 {
+        if let Some(m) = month_from_name(word) {
+            return -(m as i32);
         }
     }
-    if parts[0].len() >= 3 && parts[0].starts_with('0') {
+    let lower = word.to_ascii_lowercase();
+    if !lower.is_empty() && lower.len() <= 2 {
+        if "am".starts_with(&lower) {
+            return CODE_AM;
+        }
+        if "pm".starts_with(&lower) {
+            return CODE_PM;
+        }
+    }
+    0
+}
+
+fn next_sep(cs: &[char], pos: &mut usize, prev: i32, loc: &Locale) -> i32 {
+    let mut cls = SEP_NONE;
+    while cs.get(*pos) == Some(&' ') {
+        *pos += 1;
+        cls = SEP_SPACE;
+    }
+    let c = match cs.get(*pos) {
+        Some(&c) if !c.is_alphanumeric() => c,
+        _ => {
+            if cls == SEP_SPACE {
+                if loc.date_sep == ' ' {
+                    return SEP_DATE;
+                }
+                if loc.time_sep == ' ' {
+                    return SEP_TIME;
+                }
+                if loc.decimal_sep == ' ' && prev == SEP_TIME {
+                    return SEP_DECIMAL;
+                }
+            }
+            return cls;
+        }
+    };
+    if c == loc.date_sep || c == '-' || c == '/' {
+        *pos += 1;
+        return SEP_DATE;
+    }
+    if c == loc.time_sep || c == ':' {
+        *pos += 1;
+        return SEP_TIME;
+    }
+    if c == loc.decimal_sep && prev == SEP_TIME {
+        *pos += 1;
+        return SEP_DECIMAL;
+    }
+    for (k, s) in SEP_INTL.iter().enumerate() {
+        let sc: Vec<char> = s.chars().collect();
+        if !sc.is_empty() && cs[*pos..].starts_with(&sc) {
+            *pos += sc.len();
+            return 5 + k as i32;
+        }
+    }
+    -1
+}
+
+fn expand_year(y: i32) -> i32 {
+    if y < 30 {
+        2000 + y
+    } else {
+        1900 + y
+    }
+}
+
+fn parse_datetime_text(t: &str, env: ParseEnv) -> Option<ParsedNumber> {
+    parse_datetime_text_lead(t, env, false)
+}
+
+fn parse_datetime_text_lead(t: &str, env: ParseEnv, lead: bool) -> Option<ParsedNumber> {
+    let loc = env.locale;
+    if !t.bytes().any(|b| b.is_ascii_digit()) {
         return None;
+    }
+    let cs: Vec<char> = t.chars().collect();
+    let mut toks: Vec<DtToken> = Vec::new();
+
+    let mut seps: Vec<i32> = Vec::new();
+    let mut prev = SEP_NONE;
+    let mut month_seen = false;
+    let mut ampm_seen = false;
+    let mut frac_digits = 0usize;
+    let mut pos = 0;
+    while pos < cs.len() {
+        if toks.len() >= 9 {
+            return None;
+        }
+        let c = cs[pos];
+        if c.is_alphabetic() {
+            let start = pos;
+            while pos < cs.len() && cs[pos].is_alphabetic() {
+                pos += 1;
+            }
+            let word: String = cs[start..pos].iter().collect();
+            let code = alpha_code(&word);
+            if code == 0 {
+                return None;
+            }
+            if code > -20 {
+                if month_seen {
+                    return None;
+                }
+                month_seen = true;
+            } else {
+                let k = toks.len();
+                if ampm_seen || k == 0 || seps[k - 1] != SEP_SPACE {
+                    return None;
+                }
+                ampm_seen = true;
+                seps[k - 1] = SEP_TIME;
+                prev = SEP_TIME;
+            }
+
+            toks.push(DtToken {
+                d: code as u32 as f64,
+                v: code,
+            });
+        } else if c.is_ascii_digit() {
+            let mut d = 0.0f64;
+            let mut digits = 0usize;
+            while pos < cs.len() && cs[pos].is_ascii_digit() {
+                d = d * 10.0 + (cs[pos] as u8 - b'0') as f64;
+                digits += 1;
+                pos += 1;
+            }
+            let v = if d >= 2_147_483_648.0 {
+                MISSING
+            } else {
+                d as i32
+            };
+            if prev == SEP_DECIMAL {
+                frac_digits = digits;
+            } else if digits > 4 || digits > 2 && v < 100 {
+                return None;
+            }
+            toks.push(DtToken {
+                d,
+                v: v.max(MISSING),
+            });
+        } else {
+            return None;
+        }
+        let sep = next_sep(&cs, &mut pos, prev, loc);
+        if sep == -1 {
+            return None;
+        }
+        seps.push(sep);
+        prev = sep;
+        while cs.get(pos) == Some(&' ') {
+            pos += 1;
+        }
+    }
+    if lead {
+        seps.insert(0, SEP_SPACE);
+    }
+    let n = toks.len() + lead as usize;
+    let tk = |k: usize| {
+        toks.get(k).copied().unwrap_or(DtToken {
+            d: MISSING as f64,
+            v: MISSING,
+        })
+    };
+    let sep_at = |k: usize| seps.get(k).copied().unwrap_or(SEP_NONE);
+    let is_time_sep = |s: i32| s == SEP_TIME || s == 8;
+
+    let (mut hour_i, mut min_i, mut sec_i, mut frac_i, mut ampm_i) = (None, None, None, None, None);
+    let has_time;
+    let (first, last): (i64, i64);
+    match (0..n).find(|&k| is_time_sep(seps[k])) {
+        None => {
+            has_time = false;
+            first = 0;
+            last = n as i64 - 1;
+        }
+        Some(t0) => {
+            has_time = true;
+            if t0 != 0 && seps[t0 - 1] != SEP_SPACE {
+                return None;
+            }
+            let mut e = t0;
+            if e + 1 < n {
+                loop {
+                    let s = seps[e];
+                    if is_time_sep(s) {
+                        e += 1;
+                        if e + 1 < n {
+                            continue;
+                        }
+                    } else if s == SEP_DECIMAL {
+                        e += 1;
+                        frac_i = Some(e);
+                        while e + 1 < n && is_time_sep(seps[e]) {
+                            e += 1;
+                        }
+                    }
+                    break;
+                }
+            }
+            if tk(e).v == CODE_AM || tk(e).v == CODE_PM {
+                ampm_i = Some(e);
+            }
+            let cnt = e as i64 - frac_i.is_some() as i64 - ampm_i.is_some() as i64 - t0 as i64;
+            if frac_i.is_some() && cnt == 1 {
+                min_i = Some(t0);
+                sec_i = Some(t0 + 1);
+            } else {
+                match cnt {
+                    0 => hour_i = Some(t0),
+                    1 => {
+                        hour_i = Some(t0);
+                        min_i = Some(t0 + 1);
+                    }
+                    2 => {
+                        hour_i = Some(t0);
+                        min_i = Some(t0 + 1);
+                        sec_i = Some(t0 + 2);
+                    }
+                    _ => return None,
+                }
+            }
+            if (e + 1..n).any(|k| is_time_sep(seps[k])) {
+                return None;
+            }
+
+            if t0 != 0 {
+                first = 0;
+                last = t0 as i64 - 1;
+            } else {
+                first = e as i64 + 1;
+                last = n as i64 - 1;
+            }
+        }
     }
 
-    if parts.len() == 3 && m >= 60.0 && sec >= 60.0 {
-        return None;
-    }
-    let v = (h * 3600.0 + m * 60.0 + sec) / 86_400.0;
-    let frac = parts.last().is_some_and(|l| l.contains(loc.decimal_sep));
-    let mut p = ParsedNumber::new(
-        v,
-        NumberKind::Time {
-            seconds,
-            ampm: ampm.is_some(),
-        },
-    );
-    p.format = if frac {
-        Some("mm:ss.0")
-    } else if m >= 60.0 || sec >= 60.0 {
-        Some("General")
-    } else if h >= 24.0 {
-        Some("[h]:mm:ss")
-    } else if ampm.is_some() {
-        Some(if seconds {
-            "h:mm:ss am/pm"
+    let (mut day, mut month, mut year) = (MISSING, MISSING, MISSING);
+    let mut numeric = false;
+    if first <= last {
+        let (f, l) = (first as usize, last as usize);
+        let span = l - f;
+        if span > 2 || sep_at(l) > SEP_SPACE {
+            return None;
+        }
+
+        let v = |k: usize| toks.get(k).map_or(MISSING, |t| t.v);
+        if !month_seen {
+            numeric = true;
+            match span {
+                1 => {
+                    if sep_at(f) != SEP_DATE {
+                        return None;
+                    }
+                    numeric = false;
+                    let (a, b) = (v(f), v(l));
+                    match loc.date_order {
+                        DateOrder::YMD => {
+                            if a > 12 {
+                                year = a;
+                                month = b;
+                            } else {
+                                month = a;
+                                day = b;
+                            }
+                        }
+                        DateOrder::DMY => {
+                            if b > 12 {
+                                year = b;
+                                month = a;
+                            } else {
+                                day = a;
+                                month = b;
+                            }
+                        }
+                        DateOrder::MDY => {
+                            month = a;
+                            if (1..=12).contains(&a)
+                                && b != 0
+                                && b <= days_in_month_1900(env.current_year as i32, a)
+                            {
+                                day = b;
+                            } else {
+                                year = b;
+                            }
+                        }
+                    }
+                }
+                2 => {
+                    if sep_at(f) != SEP_DATE || sep_at(f + 1) != SEP_DATE {
+                        return None;
+                    }
+                    let order = if v(f) > 999 {
+                        DateOrder::YMD
+                    } else {
+                        loc.date_order
+                    };
+                    (day, month, year) = match order {
+                        DateOrder::YMD => (v(l), v(f + 1), v(f)),
+                        DateOrder::DMY => (v(f), v(f + 1), v(l)),
+                        DateOrder::MDY => (v(f + 1), v(f), v(l)),
+                    };
+                }
+                _ => return None,
+            }
+        } else if sep_at(f) <= SEP_DATE && sep_at(f + 1) <= SEP_DATE {
+            let a = v(f);
+            if a < 0 {
+                if span > 1 {
+                    return None;
+                }
+                year = v(l);
+                month = -a;
+            } else {
+                let b = v(f + 1);
+                if b >= 0 {
+                    return None;
+                }
+                day = a;
+                month = -b;
+                if f + 1 < l {
+                    year = v(l);
+                }
+            }
         } else {
-            "h:mm am/pm"
-        })
-    } else {
-        None
+            if span != 2 {
+                return None;
+            }
+            for k in f..=l {
+                if sep_at(k) <= SEP_SPACE && SEP_INTL[k - f].chars().any(|c| c != ' ') {
+                    return None;
+                }
+            }
+            let (di, mi) = if loc.date_order == DateOrder::MDY {
+                (f + 1, f)
+            } else {
+                (f, f + 1)
+            };
+            day = v(di);
+            month = v(mi).abs();
+            if day < 0 {
+                return None;
+            }
+            year = v(l);
+        }
     }
-    .map(str::to_string);
+
+    let date = if month == MISSING {
+        if day != MISSING || year != MISSING || !has_time {
+            return None;
+        }
+        None
+    } else {
+        if !(1..=12).contains(&month) {
+            return None;
+        }
+        if (0..=99).contains(&year) {
+            if loc.date_order != DateOrder::DMY
+                && day == MISSING
+                && year >= 1
+                && year <= days_in_month_1900(env.current_year as i32, month)
+            {
+                day = year;
+                year = MISSING;
+            } else {
+                year = expand_year(year);
+            }
+        }
+        if numeric && (year == MISSING || day < 0) {
+            return None;
+        }
+        if day == MISSING && year == MISSING {
+            return None;
+        }
+        let y = if year == MISSING {
+            env.current_year as i32
+        } else {
+            year
+        };
+        let d = if day == MISSING { 1 } else { day };
+        if !(1900..=9999).contains(&y) || d < 1 || d > days_in_month_1900(y, month) {
+            return None;
+        }
+        let s = if env.date_system == DateSystem::D1900 && y == 1900 && month == 2 && d == 29 {
+            60
+        } else {
+            datetime::serial_from_ymd(env.date_system, y as i64, month as i64, d as i64)
+        };
+        if s < 0 || s as f64 > env.date_system.max_serial() {
+            return None;
+        }
+        let shape = if numeric {
+            None
+        } else if day == MISSING {
+            Some("mmm-yy")
+        } else if year == MISSING {
+            Some("d-mmm")
+        } else {
+            Some("d-mmm-yy")
+        };
+        Some((s as f64, shape))
+    };
+
+    if !has_time {
+        let (d, shape) = date?;
+        let mut p = ParsedNumber::new(d, NumberKind::Date);
+        p.format = shape.map(str::to_string);
+        return Some(p);
+    }
+
+    let mut overflow: Option<(usize, u8)> = None;
+    let mut field = |idx: Option<usize>, limit: f64, kind: u8| -> Option<f64> {
+        let Some(i) = idx else { return Some(0.0) };
+        if tk(i).d <= limit {
+            return Some(tk(i).v as f64);
+        }
+        if overflow.is_some() {
+            return None;
+        }
+        overflow = Some((i, kind));
+        Some(tk(i).d)
+    };
+    let mut h = field(hour_i, 23.0, 0)?;
+    let m = field(min_i, 59.0, 1)?;
+    let s = field(sec_i, 59.0, 2)?;
+    let mut frac = 0.0;
+    if let Some(i) = frac_i {
+        let mut x = if i < toks.len() { toks[i].d } else { 0.0 };
+        let mut dg = frac_digits;
+        while dg > 3 {
+            x /= 10.0;
+            dg -= 1;
+        }
+        let ms = (x + 0.5).trunc();
+        frac = ms / 10f64.powi(dg as i32);
+    }
+    if let Some(i) = ampm_i {
+        if overflow.is_some() || h > 12.0 {
+            return None;
+        }
+        if tk(i).v == CODE_PM {
+            if h < 12.0 {
+                h += 12.0;
+            }
+        } else if h == 12.0 {
+            h = 0.0;
+        }
+    }
+    let time = (h * 3600.0 + m * 60.0 + (s + frac)) / 86_400.0;
+    let format = if frac_i.is_some() {
+        Some("mm:ss.0")
+    } else {
+        match overflow {
+            Some((_, 0)) if date.is_none() => Some("[h]:mm:ss"),
+            Some(_) => Some("General"),
+            None => None,
+        }
+    };
+    let mut p = match date {
+        None => ParsedNumber::new(
+            time,
+            NumberKind::Time {
+                seconds: sec_i.is_some(),
+                ampm: ampm_i.is_some(),
+            },
+        ),
+        Some((d, _)) => ParsedNumber::new(d + time, NumberKind::DateTime),
+    };
+    p.format = format.map(str::to_string);
     Some(p)
 }
 
-fn split_ampm(t: &str) -> (&str, Option<bool>) {
-    let lower = t.to_ascii_lowercase();
-    for (suffix, pm) in [(" am", false), (" pm", true), (" a", false), (" p", true)] {
-        if lower.ends_with(suffix) {
-            let body = &t[..t.len() - suffix.len()];
-            if body.ends_with(|c: char| c.is_ascii_digit()) {
-                return (body, Some(pm));
-            }
-        }
+fn days_in_month_1900(y: i32, m: i32) -> i32 {
+    if y == 1900 && m == 2 {
+        29
+    } else {
+        datetime::days_in_month(y as i64, m as u32) as i32
     }
-    (t, None)
-}
-
-fn parse_uint(s: &str) -> Option<f64> {
-    let s = s.trim();
-    if s.is_empty() || s.len() > 9 || !s.bytes().all(|b| b.is_ascii_digit()) {
-        return None;
-    }
-    s.parse::<u64>().ok().map(|v| v as f64)
-}
-
-fn parse_fraction(s: &str) -> Option<f64> {
-    if s.is_empty() {
-        return Some(0.0);
-    }
-    if !s.bytes().all(|b| b.is_ascii_digit()) {
-        return None;
-    }
-
-    let f: f64 = format!("0.{s}").parse().ok()?;
-    Some((f * 1000.0).round() / 1000.0)
-}
-
-enum DatePart {
-    Num(u32, usize),
-    Month(u32),
 }
 
 fn parse_date_time(t: &str, env: ParseEnv) -> Option<ParsedNumber> {
-    let combined = |d: f64, tm: ParsedNumber| {
-        let mut p = ParsedNumber::new(d + tm.value, NumberKind::DateTime);
-        p.format = match tm.format.as_deref() {
-            Some("mm:ss.0") => tm.format,
-            Some("General" | "[h]:mm:ss") => Some("General".to_string()),
-            _ => None,
-        };
-        p
-    };
-
     if let Some((dp, tp)) = t.split_once('T').filter(|_| env.iso_t) {
         let tp = tp.strip_suffix('Z').unwrap_or(tp);
         let tp = tp.split('.').next().unwrap_or(tp);
@@ -459,186 +852,21 @@ fn parse_date_time(t: &str, env: ParseEnv) -> Option<ParsedNumber> {
                 }
             });
         if iso_date && tp.matches(':').count() == 2 {
-            if let (Some((d, _)), Some(tm)) = (parse_date(dp, env), parse_time(tp, env.locale)) {
-                return Some(combined(d, tm));
+            let d = parse_datetime_text(dp, env).filter(|p| p.kind == NumberKind::Date);
+            let tm =
+                parse_datetime_text(tp, env).filter(|p| matches!(p.kind, NumberKind::Time { .. }));
+            if let (Some(d), Some(tm)) = (d, tm) {
+                let mut p = ParsedNumber::new(d.value + tm.value, NumberKind::DateTime);
+                p.format = match tm.format.as_deref() {
+                    Some("mm:ss.0") => tm.format,
+                    Some("General" | "[h]:mm:ss") => Some("General".to_string()),
+                    _ => None,
+                };
+                return Some(p);
             }
         }
     }
-
-    if let Some((d, shape)) = parse_date(t, env) {
-        let mut p = ParsedNumber::new(d, NumberKind::Date);
-        p.format = shape.map(str::to_string);
-        return Some(p);
-    }
-    let mut idx = t.len();
-    while let Some(sp) = t[..idx].rfind(' ') {
-        let (dp, tp) = (&t[..sp], t[sp + 1..].trim());
-        if let (Some((d, _)), Some(tm)) = (parse_date(dp.trim(), env), parse_time(tp, env.locale)) {
-            return Some(combined(d, tm));
-        }
-        idx = sp;
-    }
-
-    for (sp, _) in t.match_indices(' ') {
-        let (tp, dp) = (t[..sp].trim(), t[sp + 1..].trim());
-        if tp.ends_with(env.locale.time_sep) {
-            continue;
-        }
-        if let (Some(tm), Some((d, _))) = (parse_time(tp, env.locale), parse_date(dp, env)) {
-            return Some(combined(d, tm));
-        }
-    }
-    None
-}
-
-fn expand_year(y: u32, digits: usize) -> Option<i64> {
-    if digits == 1 && y == 0 {
-        None
-    } else if digits <= 2 {
-        Some(if y < 30 {
-            2000 + y as i64
-        } else {
-            1900 + y as i64
-        })
-    } else if digits == 4 && (1900..=9999).contains(&y) {
-        Some(y as i64)
-    } else {
-        None
-    }
-}
-
-fn parse_date(t: &str, env: ParseEnv) -> Option<(f64, Option<&'static str>)> {
-    let is_sep = |c: char| c == env.locale.date_sep || c == '-' || c == '/';
-    if t.contains(' ') {
-        let cs: Vec<char> = t.chars().collect();
-        let mut out = String::with_capacity(t.len());
-        let mut k = 0;
-        while k < cs.len() {
-            if cs[k] == ' ' {
-                let mut e = k;
-                while e < cs.len() && cs[e] == ' ' {
-                    e += 1;
-                }
-                let prev_sep = out.chars().next_back().is_some_and(is_sep);
-                let next_sep = cs.get(e).copied().is_some_and(is_sep);
-                if !prev_sep && !next_sep && !out.is_empty() && e < cs.len() {
-                    out.push(' ');
-                }
-                k = e;
-            } else {
-                out.push(cs[k]);
-                k += 1;
-            }
-        }
-        let b = out.as_bytes();
-        if b.windows(3)
-            .any(|w| w[0].is_ascii_digit() && w[1] == b' ' && w[2].is_ascii_digit())
-            && out.chars().any(is_sep)
-        {
-            return None;
-        }
-        if out != t {
-            return parse_date(&out, env);
-        }
-    }
-    let seps: &[char] = &[env.locale.date_sep, '-', ' ', '/'];
-    let raw: Vec<&str> = t.split(|c| seps.contains(&c)).collect();
-    if raw.len() > 3 || raw.iter().any(|p| p.is_empty()) {
-        return None;
-    }
-
-    if raw
-        .iter()
-        .all(|p| p.bytes().all(|b| b.is_ascii_digit() || b == b','))
-        && !t
-            .chars()
-            .any(|c| c == env.locale.date_sep || c == '-' || c == '/')
-    {
-        return None;
-    }
-
-    let mut split: Vec<&str> = Vec::new();
-    for p in &raw {
-        let mut start = 0;
-        let pb = p.as_bytes();
-        for k in 1..pb.len() {
-            if pb[k].is_ascii_digit() != pb[k - 1].is_ascii_digit()
-                && pb[k].is_ascii_alphanumeric()
-                && pb[k - 1].is_ascii_alphanumeric()
-            {
-                split.push(&p[start..k]);
-                start = k;
-            }
-        }
-        split.push(&p[start..]);
-    }
-    if split.len() < 2 || split.len() > 3 {
-        return None;
-    }
-    let mut parts = Vec::with_capacity(3);
-    for p in &split {
-        let p = p.trim_end_matches(',');
-        if p.bytes().all(|b| b.is_ascii_digit()) {
-            if p.len() > 4 {
-                return None;
-            }
-            parts.push(DatePart::Num(p.parse().ok()?, p.len()));
-        } else {
-            parts.push(DatePart::Month(month_from_name(p)?));
-        }
-    }
-    let ymd = |y: i64, m: u32, d: u32| -> Option<f64> {
-        if !(1..=12).contains(&m)
-            || d == 0
-            || d > datetime::days_in_month(y, m) && !(y == 1900 && m == 2 && d == 29)
-        {
-            return None;
-        }
-        let s = if env.date_system == DateSystem::D1900 && y == 1900 && m == 2 && d == 29 {
-            60
-        } else {
-            datetime::serial_from_ymd(env.date_system, y, m as i64, d as i64)
-        };
-        (s >= 0 && (s as f64) <= env.date_system.max_serial()).then_some(s as f64)
-    };
-    use DatePart::*;
-    match parts.as_slice() {
-        [Num(y, 4), Num(m, _), Num(d, _)] => ymd(*y as i64, *m, *d).map(|v| (v, None)),
-        [Num(a, al), Num(b, bl), Num(c, cl)] => {
-            let (d, m, y, yl) = match env.locale.date_order {
-                DateOrder::DMY => (*a, *b, *c, *cl),
-                DateOrder::MDY => (*b, *a, *c, *cl),
-                DateOrder::YMD => (*c, *b, *a, *al),
-            };
-            let _ = bl;
-            ymd(expand_year(y, yl)?, m, d).map(|v| (v, None))
-        }
-        [Num(a, _), Num(b, bl)] => {
-            let (d, m) = match env.locale.date_order {
-                DateOrder::MDY => (*b, *a),
-                _ => (*a, *b),
-            };
-            if (1..=12).contains(&m) && d >= 1 && d <= 31 && *bl <= 2 {
-                if let Some(v) = ymd(env.current_year, m, d) {
-                    return Some((v, Some("d-mmm")));
-                }
-            }
-
-            if (1..=12).contains(a) && *b != 0 {
-                return ymd(expand_year(*b, *bl)?, *a, 1).map(|v| (v, Some("mmm-yy")));
-            }
-            None
-        }
-        [Num(d, _), Month(m), Num(y, yl)] => {
-            ymd(expand_year(*y, *yl)?, *m, *d).map(|v| (v, Some("d-mmm-yy")))
-        }
-        [Num(d, dl), Month(m)] if *dl <= 2 => {
-            ymd(env.current_year, *m, *d).map(|v| (v, Some("d-mmm")))
-        }
-
-        [Month(m), Num(y, yl)] => ymd(expand_year(*y, *yl)?, *m, 1).map(|v| (v, Some("mmm-yy"))),
-        _ => None,
-    }
+    parse_datetime_text(t, env)
 }
 
 pub fn to_number(v: &Value, env: ParseEnv) -> Result<f64, XlError> {
@@ -646,7 +874,7 @@ pub fn to_number(v: &Value, env: ParseEnv) -> Result<f64, XlError> {
         Value::Number(n) => Ok(*n),
         Value::Blank => Ok(0.0),
         Value::Bool(b) => Ok(if *b { 1.0 } else { 0.0 }),
-        Value::Text(s) => parse_number_text(s, env)
+        Value::Text(s) => parse_number_text_arith(s, env)
             .map(|p| p.value)
             .ok_or(XlError::Value),
         Value::Error(e) => Err(*e),

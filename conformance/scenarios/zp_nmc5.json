@@ -1,0 +1,32 @@
+{
+  "sheets": ["Sheet1", "A", "B", "C", "D", "E", "G", "H"],
+  "steps": [
+    {"cell": "Sheet1!H1", "input": "1", "op": "set"},
+    {"name": "Kf", "op": "name", "refers_to": "=Sheet1!H1:H3*2"},
+    {"name": "Kg", "op": "name", "refers_to": "=7"},
+    {"name": "Kr", "op": "name", "refers_to": "=C!$A$1"},
+    {"name": "Kr2", "op": "name", "refers_to": "=G!$A$1+Kg"},
+    {"name": "Kr3", "op": "name", "refers_to": "=H!$A$1+Kg"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kf+Kg", "scope": "A"},
+    {"name": "Km", "op": "name", "refers_to": "=Kn+1", "scope": "A"},
+    {"cell": "A!C1", "input": "=Km", "op": "set"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kf+Kg", "scope": "B"},
+    {"cell": "B!C1", "input": "=Kg", "op": "set"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kr+Kg", "scope": "C"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kf", "scope": "D"},
+    {"name": "Km", "op": "name", "refers_to": "=Kn+Kg", "scope": "D"},
+    {"cell": "D!C1", "input": "=Kn", "op": "set"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kf+Kg", "scope": "E"},
+    {"cell": "E!C1", "input": "=Kf", "op": "set"},
+    {"cell": "G!C1", "input": "=Kr2", "op": "set"},
+    {"op": "names"},
+    {"after": "H", "op": "copy_sheet", "sheet": "A"},
+    {"after": "H", "op": "copy_sheet", "sheet": "B"},
+    {"after": "H", "op": "copy_sheet", "sheet": "C"},
+    {"after": "H", "op": "copy_sheet", "sheet": "D"},
+    {"after": "H", "op": "copy_sheet", "sheet": "E"},
+    {"after": "H", "op": "copy_sheet", "sheet": "G"},
+    {"after": "H", "op": "copy_sheet", "sheet": "H"},
+    {"op": "names"}
+  ]
+}

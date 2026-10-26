@@ -1,0 +1,26 @@
+{
+  "sheets": ["S1", "S2"],
+  "steps": [
+    {"cell": "S1!A1", "input": "1", "op": "set"},
+    {"cell": "S1!A2", "input": "2", "op": "set"},
+    {"name": "Loc", "op": "name", "refers_to": "=S1!$A$1:$A$2", "scope": "S1"},
+    {"name": "Lc", "op": "name", "refers_to": "=S1!$A$1", "scope": "S1"},
+    {"name": "Lo", "op": "name", "refers_to": "=OFFSET(S1!$A$1,0,0,2,1)", "scope": "S1"},
+    {"name": "Lu", "op": "name", "refers_to": "=S1!$A$1:$A$2+0", "scope": "S1"},
+    {"name": "Lw", "op": "name", "refers_to": "={1;2}", "scope": "S1"},
+    {"cell": "S1!C1", "input": "=S1!Lc", "op": "set"},
+    {"cell": "S1!C2", "input": "=S1!Lo", "op": "set"},
+    {"cell": "S1!C4", "input": "=S1!Lu", "op": "set"},
+    {"cell": "S1!C6", "input": "=SUM(S1!Lu)", "op": "set"},
+    {"cell": "S1!C7", "input": "=ISREF(S1!Loc)", "op": "set"},
+    {"cell": "S1!C8", "input": "=SUMPRODUCT(S1!Loc)", "op": "set"},
+    {"cell": "S1!C9", "input": "=N(S1!Loc)", "op": "set"},
+    {"cell": "S1!C10", "input": "=CHOOSE(1,S1!Loc)", "op": "set"},
+    {"cell": "S1!C12", "input": "=S1!Lw", "op": "set"},
+    {"cell": "S1!C14", "input": "=S1!Lc+1", "op": "set"},
+    {"cell": "S1!C15", "input": "=SUM(S1!Loc,S1!Loc*1)", "op": "set"},
+    {"cell": "S1!C16", "input": "=S1!Loc", "op": "set"},
+    {"after": "S2", "name": "K1", "op": "copy_sheet", "sheet": "S1"},
+    {"op": "read", "range": "K1!C1:C20"}
+  ]
+}

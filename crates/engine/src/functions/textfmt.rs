@@ -38,7 +38,7 @@ pub const DEFS: &[FnDef] = &[
     }),
     scalar("LEFTB", 1, 2, |c, a| left_right(c, a, true)),
     scalar("RIGHTB", 1, 2, |c, a| left_right(c, a, false)),
-    scalar("MIDB", 3, 3, mid),
+    scalar("MIDB", 3, 3, midb),
     scalar("FINDB", 2, 3, |c, a| find(c, a, false)),
     scalar("SEARCHB", 2, 3, |c, a| find(c, a, true)),
     scalar("REPLACEB", 4, 4, replace),
@@ -85,7 +85,7 @@ fn decimals_arg(ctx: &EvalCtx, a: &[Value], blank_default: f64) -> R<i32> {
     let d = match a.get(1) {
         None => 2.0,
         Some(Value::Blank) => blank_default,
-        Some(v) => num(ctx, v)?.trunc(),
+        Some(v) => ifuzz(num(ctx, v)?),
     };
     if d > 127.0 {
         return Err(XlError::Value);
@@ -96,11 +96,18 @@ fn decimals_arg(ctx: &EvalCtx, a: &[Value], blank_default: f64) -> R<i32> {
 fn fixed(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
-        let d = decimals_arg(ctx, a, 0.0)?;
+
+        if let Some(v) = a.get(1) {
+            if !matches!(v, Value::Blank) {
+                num(ctx, v)?;
+            }
+        }
+        let d = decimals_arg(ctx, a, 0.0);
         let no_commas = match a.get(2) {
             None | Some(Value::Blank) => false,
             Some(v) => boolean(v)?,
         };
+        let d = d?;
         let (body, zero) = fixed_text(x, d, !no_commas, &ctx.wb.locale);
         let s = if x < 0.0 && !zero {
             format!("-{body}")
@@ -131,7 +138,7 @@ fn dollar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn strict_arg(ctx: &EvalCtx, v: Option<&Value>) -> R<bool> {
     let f = match v {
         None | Some(Value::Blank) => 0.0,
-        Some(v) => num(ctx, v)?.trunc(),
+        Some(v) => sfix(num(ctx, v)?) as f64,
     };
     match f as i64 {
         0 => Ok(false),
@@ -305,19 +312,23 @@ impl Matcher {
     }
 }
 
-fn int_flag(ctx: &EvalCtx, op: Option<&Operand>) -> R<bool> {
+fn flag_value(ctx: &EvalCtx, op: Option<&Operand>) -> R<Option<f64>> {
     match op {
-        None | Some(Operand::Missing) => Ok(false),
-        Some(Operand::Val(v)) => {
-            let x = num(ctx, v)?.floor();
-            if x == 0.0 {
-                Ok(false)
-            } else if x == 1.0 {
-                Ok(true)
-            } else {
-                Err(XlError::Value)
-            }
-        }
+        None | Some(Operand::Missing) => Ok(None),
+        Some(Operand::Val(v)) => Ok(Some(num(ctx, v)?.floor())),
+        Some(_) => Err(XlError::Value),
+    }
+}
+
+fn int_flag(ctx: &EvalCtx, op: Option<&Operand>) -> R<bool> {
+    flag_bool(flag_value(ctx, op)?)
+}
+
+fn flag_bool(x: Option<f64>) -> R<bool> {
+    match x {
+        None => Ok(false),
+        Some(x) if x == 0.0 => Ok(false),
+        Some(x) if x == 1.0 => Ok(true),
         Some(_) => Err(XlError::Value),
     }
 }
@@ -335,11 +346,12 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
         let explicit = matches!(ops.get(2), Some(Operand::Val(_)));
         let n = match ops.get(2) {
             None | Some(Operand::Missing) => 1.0,
-            Some(Operand::Val(v)) => num(ctx, v)?.floor(),
+            Some(Operand::Val(v)) => ffuzz(num(ctx, v)?),
             Some(_) => return Err(XlError::Value),
         };
-        let fold = int_flag(ctx, ops.get(3))?;
-        let match_end = int_flag(ctx, ops.get(4))?;
+
+        let (fold, match_end) = (flag_value(ctx, ops.get(3))?, flag_value(ctx, ops.get(4))?);
+        let (fold, match_end) = (flag_bool(fold)?, flag_bool(match_end)?);
         let not_found = match ops.get(5) {
             None | Some(Operand::Missing) => None,
             Some(Operand::Val(v)) => Some(v.clone()),
@@ -362,8 +374,9 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
             return Ok(if before { slice(0, at) } else { slice(at, len) });
         }
 
-        let min_len = delims.iter().map(Vec::len).min().unwrap_or(0) as f64;
-        let max_instance = len as f64 - min_len + 1.0;
+        let u16len = |s: &[char]| s.iter().map(|c| c.len_utf16()).sum::<usize>();
+        let min_len = delims.iter().map(|d| u16len(d)).min().unwrap_or(0) as f64;
+        let max_instance = u16len(&t) as f64 - min_len + 1.0;
         if explicit && n.abs() > max_instance {
             return Err(XlError::Value);
         }
@@ -453,8 +466,13 @@ fn textsplit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 _ => return Err(XlError::Value),
             },
         };
-        let col = split_delims(ctx, ops.get(1))?;
-        let row = split_delims(ctx, ops.get(2))?;
+        let col = split_delims(ctx, ops.get(1));
+        let row = split_delims(ctx, ops.get(2));
+
+        if t.is_empty() && (col.is_err() || row.is_err()) {
+            return Err(XlError::Value);
+        }
+        let (col, row) = (col?, row?);
         if col.is_none() && row.is_none() {
             return Err(XlError::Value);
         }
@@ -599,11 +617,27 @@ fn bahttext(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
+fn midb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
+    let chk = (|| {
+        text(&a[0])?;
+        let start = lfix(num(ctx, &a[1])?);
+        let n = lfix(num(ctx, &a[2])?);
+        if start < 1 || n < 0 {
+            return Err(XlError::Value);
+        }
+        Ok(())
+    })();
+    match chk {
+        Ok(()) => mid(ctx, a),
+        Err(e) => err(e),
+    }
+}
+
 fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
     val((|| {
         let needle = text(&a[0])?;
         let hay = text(&a[1])?;
-        let start = opt_num(ctx, a, 2, 1.0)?.trunc();
+        let start = ifuzz(opt_num(ctx, a, 2, 1.0)?);
         let len = hay.chars().count();
 
         if start < 1.0

@@ -1,0 +1,22 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "steps": [
+    {"cell": "Sheet1!B2", "input": "1", "op": "set"},
+    {"cell": "Sheet2!B2", "input": "2", "op": "set"},
+    {"cell": "Sheet3!B2", "input": "3", "op": "set"},
+    {"name": "Qa", "op": "name", "refers_to": "=$B$2"},
+    {"name": "Qb", "op": "name", "refers_to": "=Cpy3:Sheet2!A1:B2"},
+    {"name": "Qc", "op": "name", "refers_to": "=$B$2", "scope": "Sheet2"},
+    {"name": "Qd", "op": "name", "refers_to": "=SUM($B$2:$B$3)", "scope": "Sheet3"},
+    {"cell": "Sheet3!A1", "input": "=Qa", "op": "set"},
+    {"cell": "Sheet3!A2", "input": "=Qd", "op": "set"},
+    {"cell": "Sheet2!A3", "input": "=Qc", "op": "set"},
+    {"op": "names"},
+    {"after": "Sheet3", "op": "move_sheet", "sheet": "Sheet2"},
+    {"name": "Qe", "op": "name", "refers_to": "=$B$2+1"},
+    {"cell": "Sheet3!A4", "input": "=Qe", "op": "set"},
+    {"op": "names"},
+    {"op": "read", "range": "Sheet3!A1:A4"},
+    {"op": "read", "range": "Sheet2!A3"}
+  ]
+}

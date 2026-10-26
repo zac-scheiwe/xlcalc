@@ -44,7 +44,7 @@ fn element_number(ctx: &EvalCtx, v: &Value) -> R<f64> {
 }
 
 fn order_of(n: f64) -> R<bool> {
-    let n = n.floor();
+    let n = super::super::args::sfix(n) as f64;
     if n == 1.0 {
         Ok(false)
     } else if n == -1.0 {
@@ -121,7 +121,7 @@ fn sort_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
         let mut keys = Vec::with_capacity(indexes.len());
         for (k, ix) in indexes.iter().enumerate() {
-            let ix = ix.floor();
+            let ix = super::super::args::sfix(*ix) as f64;
             if ix < 1.0 || ix > width as f64 {
                 return Err(XlError::Value);
             }
@@ -254,6 +254,10 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
         let src = Src::from_operand_3d(&ops[0])?;
         let a = src.to_array(ctx)?;
+
+        if let (Src::Area(_), 1, Value::Error(e)) = (&src, a.len(), &a.data[0]) {
+            return Err(*e);
+        }
         let mut keys: Vec<(Arc<Array>, bool)> = Vec::new();
         let mut by_col: Option<bool> = None;
 
@@ -274,7 +278,8 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     order_of(ctx.to_number(&v.data[0])?)?
                 }
             };
-            if let (1, Value::Error(e)) = (by.len(), &by.data[0]) {
+
+            if let (Operand::Ref(_), 1, Value::Error(e)) = (&ops[i], by.len(), &by.data[0]) {
                 return Err(*e);
             }
             if *shape.get_or_insert((by.rows, by.cols)) != (by.rows, by.cols) {
@@ -540,6 +545,9 @@ pub fn take_drop(ctx: &mut EvalCtx, ops: &[Operand], take: bool) -> Operand {
         let (r2, c2) = g2.as_ref().map_or((1, 1), |a| (a.rows, a.cols));
         let (rows, cols) = (r1.max(r2), c1.max(c2));
         let range_src = matches!(ops[0], Operand::Ref(_));
+
+        let area_src = matches!(ops[0], Operand::Ref(crate::eval::Reference::Area(_)));
+        let mut items = Vec::new();
         let mut data = Vec::new();
         for r in 0..rows {
             for c in 0..cols {
@@ -562,6 +570,14 @@ pub fn take_drop(ctx: &mut EvalCtx, ops: &[Operand], take: bool) -> Operand {
                 };
                 let call = [ops[0].clone(), pick(&g1, ops.get(1)), pick(&g2, ops.get(2))];
                 let res = take_drop(ctx, &call, take);
+                if area_src {
+                    items.push(match res {
+                        Operand::Ref(crate::eval::Reference::Area(a)) => Ok(a),
+                        Operand::Val(Value::Error(e)) => Err(e),
+                        _ => Err(XlError::Value),
+                    });
+                    continue;
+                }
                 let v = match res {
                     Operand::Val(Value::Array(a)) => {
                         a.data.first().cloned().unwrap_or(Value::Blank)
@@ -575,6 +591,11 @@ pub fn take_drop(ctx: &mut EvalCtx, ops: &[Operand], take: bool) -> Operand {
                 };
                 data.push(v);
             }
+        }
+        if area_src {
+            return Operand::Ref(crate::eval::Reference::Grid(Arc::new(
+                crate::eval::RefGrid::new(rows, cols, items),
+            )));
         }
         return Operand::Val(array_value(rows, cols, data));
     }
@@ -609,47 +630,56 @@ pub fn choose_lines(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         let src = Src::from_operand(&ops[0])?;
         let n = if rows { src.rows() } else { src.cols() };
 
-        let mut picks: Vec<f64> = Vec::new();
-        for op in &ops[1..] {
-            match op {
-                Operand::Missing => return Err(XlError::Value),
-                Operand::Val(Value::Error(e)) => return Err(*e),
-                Operand::Val(Value::Array(a)) => {
-                    if a.rows > 1 && a.cols > 1 {
-                        return Err(XlError::Value);
-                    }
-                    for v in &a.data {
-                        picks.push(ctx.to_number(v)?);
-                    }
-                }
-                Operand::Val(v) => picks.push(ctx.to_number(v)?),
-                Operand::Ref(_) => {
-                    let a = Src::from_operand_3d(op)?.to_array(ctx)?;
-                    if a.rows > 1 && a.cols > 1 {
-                        return Err(XlError::Value);
-                    }
-                    for v in &a.data {
-                        picks.push(ctx.to_number(v)?);
-                    }
-                }
-            }
+        enum Idx {
+            One(f64),
+            Many(Arc<Array>),
         }
-        let mut idx = Vec::with_capacity(picks.len());
-        for k in picks {
+        let mut args = Vec::with_capacity(ops.len() - 1);
+        for op in &ops[1..] {
+            args.push(match op {
+                Operand::Missing => return Err(XlError::Value),
+                Operand::Val(Value::Array(a)) => Idx::Many(a.clone()),
+                Operand::Val(v) => Idx::One(ctx.to_number(v)?),
+                Operand::Ref(r) if r.single().is_some_and(|a| a.rect.is_cell()) => {
+                    let v = ctx.deref(op.clone());
+                    Idx::One(ctx.to_number(&v)?)
+                }
+                Operand::Ref(_) => Idx::Many(Src::from_operand_3d(op)?.to_array(ctx)?),
+            });
+        }
+        let pick = |k: f64| -> R<u32> {
             let k = k.trunc();
             if k == 0.0 || k.abs() > n as f64 {
                 return Err(XlError::Value);
             }
-            idx.push(if k > 0.0 {
+            Ok(if k > 0.0 {
                 k as u32 - 1
             } else {
                 n - (-k) as u32
-            });
+            })
+        };
+        let mut idx = Vec::new();
+        for a in &args {
+            match a {
+                Idx::One(k) => idx.push(pick(*k)?),
+                Idx::Many(a) => {
+                    if a.rows > 1 && a.cols > 1 {
+                        return Err(XlError::Value);
+                    }
+                    for v in &a.data {
+                        match v {
+                            Value::Number(k) => idx.push(pick(*k)?),
+                            Value::Error(e) => return Err(*e),
+                            _ => return Err(XlError::Value),
+                        }
+                    }
+                }
+            }
         }
         let a = src.to_array(ctx)?;
         let m = idx.len() as u32;
         let (out_r, out_c) = if rows { (m, a.cols) } else { (a.rows, m) };
-        check_result_size(out_r as u64, out_c as u64)?;
+        check_result_size(ctx, out_r as u64, out_c as u64)?;
         let mut data = Vec::with_capacity((out_r * out_c) as usize);
         for r in 0..out_r {
             for c in 0..out_c {
@@ -705,14 +735,26 @@ pub fn expand(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 }
             }
         };
+
+        let (nr, nc) = (opt_number(ctx, ops.get(1)), opt_number(ctx, ops.get(2)));
+        if let (Err(e), _) | (_, Err(e)) = (&nr, &nc) {
+            return Err(*e);
+        }
         let rows = dim(ctx, 1, sr)?;
         let cols = dim(ctx, 2, sc)?;
-        if rows > MAX_ROWS as u64 {
+
+        if rows > MAX_ROWS as u64 || cols > MAX_ROWS as u64 {
             return Err(XlError::Num);
         }
-        check_result_size(rows, cols)?;
+        check_result_size(ctx, rows, cols)?;
         let pad = pad_value(ctx, ops.get(3), Value::Blank)?;
         let a = src.to_array(ctx)?;
+
+        if a.rows == 1 && a.cols == 1 && matches!(ops[0], Operand::Ref(_)) {
+            if let Value::Error(e) = a.get(0, 0) {
+                return Err(*e);
+            }
+        }
         let (rows, cols) = (rows as u32, cols as u32);
         let mut data = Vec::with_capacity((rows * cols) as usize);
         for r in 0..rows {
@@ -742,6 +784,39 @@ pub fn to_line(ctx: &mut EvalCtx, ops: &[Operand], col: bool) -> Operand {
             return crate::functions::dynamic::stack(ctx, &parts, col);
         }
     }
+
+    if let Operand::Ref(crate::eval::Reference::Grid(g)) = &ops[0] {
+        let g = g.clone();
+        let mut o = ops.to_vec();
+
+        let marked: Vec<Value> = g
+            .items
+            .iter()
+            .enumerate()
+            .map(|(k, i)| match i {
+                Ok(_) => Value::Number(k as f64),
+                Err(e) => Value::Error(*e),
+            })
+            .collect();
+        o[0] = Operand::Val(Array::new(g.rows, g.cols, marked).into_value());
+        let back = |v: &Value| match v {
+            Value::Number(k) => g.items[*k as usize],
+            Value::Error(e) => Err(*e),
+            _ => Err(XlError::Value),
+        };
+        let grid = |rows: u32, cols: u32, items| {
+            Operand::Ref(crate::eval::Reference::Grid(Arc::new(
+                crate::eval::RefGrid::new(rows, cols, items),
+            )))
+        };
+        return match to_line(ctx, &o, col) {
+            Operand::Val(Value::Array(a)) => {
+                grid(a.rows, a.cols, a.data.iter().map(back).collect())
+            }
+            Operand::Val(v @ Value::Number(_)) => grid(1, 1, vec![back(&v)]),
+            r => r,
+        };
+    }
     finish((|| {
         arg_error_typed(ctx, &ops[1..], "nb")?;
         let src = Src::from_operand(&ops[0])?;
@@ -757,11 +832,10 @@ pub fn to_line(ctx: &mut EvalCtx, ops: &[Operand], col: bool) -> Operand {
         };
         let by_col = opt_flag(ops.get(2))?;
 
-        let computed = matches!(src, Src::Array(_));
         let a = src.to_array(ctx)?;
         let mut data = Vec::new();
         let mut visit = |v: &Value| {
-            let blank = v.is_blank() || (computed && v.is_cell_empty());
+            let blank = v.is_blank();
             let skip = (ignore & 1 != 0 && blank) || (ignore & 2 != 0 && v.is_error());
             if !skip {
                 data.push(v.clone());
@@ -814,7 +888,7 @@ pub fn wrap(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         let width = (k as u64).min(n);
         let lines = n.div_ceil(width);
         let (out_r, out_c) = if rows { (lines, width) } else { (width, lines) };
-        check_result_size(out_r, out_c)?;
+        check_result_size(ctx, out_r, out_c)?;
         let (out_r, out_c) = (out_r as u32, out_c as u32);
         let mut data = vec![pad; (out_r * out_c) as usize];
         for (i, v) in a.data.iter().enumerate() {

@@ -490,7 +490,12 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
         Expr::Func { name, args } => {
             let bare = crate::formula::strip_prefixes(name);
             s.push_str(&name[..name.len() - bare.len()]);
-            s.push_str(&bare.to_uppercase());
+
+            if crate::functions::lookup(&bare.to_uppercase()).is_some() {
+                s.push_str(&bare.to_uppercase());
+            } else {
+                s.push_str(bare);
+            }
             write_args(s, args);
         }
         Expr::Call { callee, args } => {

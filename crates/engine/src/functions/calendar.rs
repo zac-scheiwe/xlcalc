@@ -1,4 +1,4 @@
-use super::args::{num, text, val};
+use super::args::{ifuzz, num, text, val};
 use super::engineering::atp::{self, R};
 use super::{args, scalar, FnDef};
 use crate::datetime::{self as dt, DateSystem};
@@ -161,9 +161,14 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
                 return Ok(Value::Number(s as f64));
             }
 
+            if s as f64 + days < 0.0 || s as f64 + days > sys(ctx).max_serial() {
+                return Err(XlError::Num);
+            }
             let w = if intl {
                 let w = weekend_arg(ctx, a.get(2).and_then(|v| v.as_ref()), true);
-                if w.is_err() {
+
+                let scalar = matches!(raw.get(hol_idx), Some(Operand::Val(v)) if !matches!(v, Value::Array(_)));
+                if w.is_err() && scalar {
                     holidays(ctx, raw.get(hol_idx))?;
                 }
                 w?
@@ -210,7 +215,7 @@ fn iso_week(cal: DateSystem, s: i64) -> i64 {
 }
 
 fn weeknum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-    atp::call(ctx, ops, "a", |ctx, a, _| {
+    atp::call(ctx, ops, "b", |ctx, a, _| {
         val((|| {
             let s = atp_date(ctx, a, 0)?;
 
@@ -220,7 +225,7 @@ fn weeknum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             } else {
                 (sys(ctx), s)
             };
-            let ty = atp::opt_num(ctx, a, 1)?.unwrap_or(1.0).trunc();
+            let ty = ifuzz(atp::opt_num(ctx, a, 1)?.unwrap_or(1.0));
             let start = match ty as i64 {
                 1 | 17 => 0,
                 2 | 11 => 1,
@@ -258,6 +263,11 @@ fn datedif(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let e = num(ctx, &a[1])?;
         let unit = text(&a[2])?;
         let (sf, ef) = (s, e);
+
+        let lim = sys(ctx).max_serial() as f64 + 1.0;
+        if s + 0.5 / 86_400.0 >= lim || e + 0.5 / 86_400.0 >= lim {
+            return Err(XlError::Num);
+        }
         let s = day(ctx, s)?;
         let e = day(ctx, e)?;
         if s > e {

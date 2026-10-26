@@ -43,7 +43,7 @@ impl Table {
 }
 
 impl Workbook {
-    fn table_position(&self, name: &str) -> Result<usize, EditError> {
+    pub(crate) fn table_position(&self, name: &str) -> Result<usize, EditError> {
         self.tables
             .iter()
             .position(|t| crate::text::eq_ordinal_ci(&t.name, name))
@@ -73,6 +73,28 @@ impl Workbook {
                     volatile: formula.volatile,
                 });
                 c.text = text;
+            }
+        }
+        for ti in 0..self.tables.len() {
+            for k in 0..self.tables[ti].calc_snap.len() {
+                let formula = self.tables[ti].calc_snap[k].1.clone();
+                let host = CellAddr::new(
+                    self.tables[ti].sheet,
+                    self.tables[ti].rect.r0,
+                    self.tables[ti].rect.c0,
+                );
+                let mut changed = false;
+                let root = map_node(&formula.root, &mut |n| {
+                    let r = f(n, host);
+                    changed |= r.is_some();
+                    r
+                });
+                if changed {
+                    self.tables[ti].calc_snap[k].1 = Arc::new(Formula {
+                        root,
+                        volatile: formula.volatile,
+                    });
+                }
             }
         }
         let names: Vec<_> = self.names.iter().cloned().collect();
@@ -126,6 +148,7 @@ impl Workbook {
             }
             _ => None,
         });
+        self.view_drop_table(t.sheet, &t.name);
         self.tables.remove(ti);
         let report = self.relink_and_recalc();
         for (fid, v) in stale {
@@ -148,6 +171,7 @@ impl Workbook {
             }
             _ => None,
         });
+        self.view_drop_table(t.sheet, &t.name);
         self.tables.remove(ti);
         self.relink_and_recalc();
         self.clear_range(t.sheet, t.rect)
@@ -169,6 +193,8 @@ impl Workbook {
         }
         let old = self.tables[ti].name.clone();
         self.tables[ti].name = new.to_string();
+
+        self.view_rename_table(sheet, &old, new);
         let new_text: crate::value::Text = new.into();
         self.rewrite_nodes(&mut |n, _| match n {
             Node::StructRef {
@@ -250,9 +276,18 @@ impl Workbook {
         Ok(self.table_changed(&name))
     }
 
-    fn new_resized_column(&mut self, t: &Table, col: u32, taken: &[String]) -> String {
+    fn new_resized_column(
+        &mut self,
+        t: &Table,
+        col: u32,
+        assigned: &[String],
+        old: &[String],
+        left: Option<&str>,
+    ) -> String {
         let key = |s: &str| s.chars().map(crate::text::fold_upper).collect::<String>();
-        let used = |n: &str| taken.iter().any(|x| key(x) == key(n));
+        let used = |n: &str| assigned.iter().any(|x| key(x) == key(n));
+        let used_all = |n: &str| used(n) || old.iter().any(|x| key(x) == key(n));
+        let mut generated = false;
         let addr = CellAddr::new(t.sheet, t.rect.r0, col);
         let given = if t.headers {
             match self.value(addr) {
@@ -274,27 +309,88 @@ impl Workbook {
                 n
             }
             None => {
-                let mut k = 1;
-                while used(&format!("Column{k}")) {
-                    k += 1;
+                generated = true;
+                let all: Vec<String> = assigned.iter().chain(old).cloned().collect();
+                match left.and_then(|l| super::tables::next_header_name(l, &all)) {
+                    Some(n) => n,
+                    None => {
+                        let mut k = 1;
+                        while used_all(&format!("Column{k}")) {
+                            k += 1;
+                        }
+                        format!("Column{k}")
+                    }
                 }
-                format!("Column{k}")
             }
         };
-        if t.headers && !matches!(self.value(addr), Value::Text(ref x) if **x == *name) {
-            if self.formula_at(addr).is_some() {
-                self.remove_cell(addr);
+        if t.headers {
+            self.write_header_text(addr, &name);
+        }
+        if generated {
+            if let Some(ti) = self.tables.iter().position(|x| x.name == t.name) {
+                self.tables[ti].mark_auto(&name);
             }
-            if let Some(sh) = self.sheet_mut(t.sheet) {
-                sh.cells
-                    .set(addr.row, addr.col, Entry::Const(Value::from(name.as_str())));
-            }
-            calc::cell_changed(self, addr);
         }
         name
     }
 
+    fn write_header_text(&mut self, addr: CellAddr, name: &str) {
+        if !matches!(self.value(addr), Value::Text(ref x) if **x == *name) {
+            if self.formula_at(addr).is_some() {
+                self.remove_cell(addr);
+            }
+            if let Some(sh) = self.sheet_mut(addr.sheet) {
+                sh.cells
+                    .set(addr.row, addr.col, Entry::Const(Value::from(name)));
+            }
+            calc::cell_changed(self, addr);
+        }
+    }
+
     pub fn resize_table(&mut self, name: &str, rect: Rect) -> Result<RecalcReport, EditError> {
+        let before = self
+            .table_position(name)
+            .ok()
+            .map(|i| (self.tables[i].rect, self.tables[i].totals));
+        let filtered = before.is_some_and(|_| {
+            let i = self.table_position(name).unwrap();
+            self.table_filtered(self.tables[i].sheet, name)
+        });
+        let mut mid = 0;
+        let r = self.resize_table_inner(name, rect, &mut mid);
+
+        if let (Ok(_), Some((old, _)), true) = (&r, before, filtered) {
+            if let Ok(i) = self.table_position(name) {
+                let (sheet, now) = (self.tables[i].sheet, self.tables[i].rect);
+                if now.r1 < old.r1 {
+                    self.view_show_rows(sheet, now.r1 + 1, old.r1);
+                }
+            }
+        }
+
+        if r.is_ok() {
+            let mut n = 0;
+            if let Some((old, totals)) = before {
+                n += u32::from(old.c0 != rect.c0) + u32::from(old.c1 != rect.c1);
+
+                let end = self.table_position(name).map(|i| self.tables[i].rect.r1);
+                if end.is_ok_and(|e| e != old.r1) {
+                    n += 1 + u32::from(totals);
+                }
+            }
+            for _ in mid..n {
+                self.extra_recalc();
+            }
+        }
+        r
+    }
+
+    fn resize_table_inner(
+        &mut self,
+        name: &str,
+        rect: Rect,
+        mid: &mut u32,
+    ) -> Result<RecalcReport, EditError> {
         let ti = self.table_position(name)?;
         let t = self.tables[ti].clone();
         let invalid = || {
@@ -313,6 +409,16 @@ impl Workbook {
         let data_end = new_end - u32::from(t.totals);
         if data_end < t.data_start() {
             return Err(invalid());
+        }
+
+        if t.totals && new_end != t.rect.r1 && self.table_filtered(t.sheet, &t.name) {
+            return Err(EditError::Compile(if new_end > t.rect.r1 {
+                "Can't move cells in a filtered range or table.".into()
+            } else {
+                "You can't rearrange cells within a table this way, because it might affect \
+                 other table cells in an unexpected way."
+                    .into()
+            }));
         }
         let newrect = Rect::new(rect.r0, rect.c0, new_end, rect.c1);
         crate::structure::range_too_large(&newrect)?;
@@ -339,6 +445,8 @@ impl Workbook {
         if newrect == t.rect {
             return Ok(RecalcReport::default());
         }
+        self.resync_table_headers(ti, None);
+        let t = self.tables[ti].clone();
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
 
@@ -364,7 +472,7 @@ impl Workbook {
                     }
                     match crate::moves::cref_rect(cref, host) {
                         Some(r)
-                            if r.r0 >= d0
+                            if (r.r0 >= d0 || r.r0 == t.rect.r0 && r.r1 == old_de)
                                 && r.r0 <= data_end
                                 && r.r1 > data_end
                                 && r.r1 <= old_de
@@ -396,19 +504,69 @@ impl Workbook {
             }
         }
 
-        let (oc0, oc1) = (t.rect.c0, t.rect.c1);
+        if shrunk {
+            let d0 = t.data_start();
+            for (idx, &is_calc) in t.calc.iter().enumerate() {
+                if !is_calc {
+                    continue;
+                }
+                let col = t.rect.c0 + idx as u32;
+                if (d0..=data_end)
+                    .any(|r| self.formula_at(CellAddr::new(t.sheet, r, col)).is_some())
+                {
+                    continue;
+                }
+                let order: Vec<u32> = (data_end + 1..=old_de).collect();
+                let Some(r) = self.calc_source_row(&t, idx, &order) else {
+                    continue;
+                };
+                let fid = self.formula_at(CellAddr::new(t.sheet, r, col)).unwrap();
 
-        let kc1 = oc1.min(rect.c1);
-        let mut tn = t.clone();
-        if kc1 < oc1 {
-            let w = (kc1 - oc0 + 1) as usize;
-            tn.rect.c1 = kc1;
-            tn.columns.truncate(w);
-            tn.calc.truncate(w);
-            self.tables[ti] = tn.clone();
+                let f = self.formula(fid).formula.clone();
+                let name = t.columns[idx].to_lowercase();
+                let snaps = &mut self.tables[ti].calc_snap;
+                snaps.retain(|(n, _)| *n != name);
+                snaps.push((name, f));
+            }
         }
+
+        if rect.c1 < t.rect.c1 {
+            self.resize_table_columns(ti, &t, rect, mode == CalcMode::Automatic);
+            self.resize_table_rows(ti, &t, new_end);
+        } else {
+            self.resize_table_rows(ti, &t, new_end);
+
+            if new_end != t.rect.r1 && (rect.c1 > t.rect.c1 || rect.c0 < t.rect.c0) {
+                let held = std::mem::replace(&mut self.settings.mode, mode);
+                let kept = self.tables[ti].rect;
+                self.tables[ti].rect = Rect::new(t.rect.r0, t.rect.c0, new_end, t.rect.c1);
+                calc::name_changed(self, &super::tables::table_dep_key(&t.name));
+                calc::name_changed(self, &t.name.to_uppercase());
+                *mid = 1 + u32::from(t.totals);
+                for _ in 0..*mid {
+                    self.extra_recalc();
+                }
+                self.tables[ti].rect = kept;
+                self.settings.mode = held;
+            }
+            self.resize_table_columns(ti, &t, rect, mode == CalcMode::Automatic);
+        }
+        self.tables[ti].rect = newrect;
+        self.settings.mode = mode;
+        let name = self.tables[ti].name.clone();
+        if shrunk {
+            return Ok(self.relink_and_recalc());
+        }
+        Ok(self.table_changed(&name))
+    }
+
+    fn resize_table_rows(&mut self, ti: usize, t: &Table, new_end: u32) {
+        let tn = self.tables[ti].clone();
+        let (oc0, kc1) = (tn.rect.c0, tn.rect.c1);
         let old_t = t.rect.r1;
         let mut rows_grew = None;
+        let mut own_fmts: Vec<Option<Arc<str>>> = Vec::new();
+        let mut sums: Vec<u32> = Vec::new();
         if t.totals && new_end != old_t {
             self.tables.remove(ti);
             let sheet = t.sheet;
@@ -422,6 +580,12 @@ impl Workbook {
                 limit: Some((oc0, kc1)),
                 cells: false,
             };
+
+            for c in oc0..=kc1 {
+                let own = self.cellfmt.get(CellAddr::new(sheet, old_t, c)).cloned();
+                own_fmts.push(own.filter(|f| !f.eq_ignore_ascii_case("general")));
+                self.store_format(CellAddr::new(sheet, old_t, c), "General");
+            }
             let _ = self.move_range(
                 sheet,
                 Rect::new(old_t, oc0, old_t, kc1),
@@ -429,11 +593,27 @@ impl Workbook {
             );
             let _ = self.shift(row_shift(old_t, false));
             let _ = self.shift(row_shift(new_end, true));
+
             let _ = self.move_range(
                 sheet,
                 Rect::new(tmp, oc0, tmp, kc1),
                 CellAddr::new(sheet, new_end, oc0),
             );
+            for (i, c) in (oc0..=kc1).enumerate() {
+                let a = CellAddr::new(sheet, new_end, c);
+                let subtotal = self.formula_at(a).is_some_and(|f| {
+                    let t = self.formula(f).text.to_ascii_uppercase();
+                    let t = t.trim_start_matches('=');
+
+                    t.starts_with("SUBTOTAL(")
+                        && !t.starts_with("SUBTOTAL(102,")
+                        && !t.starts_with("SUBTOTAL(103,")
+                });
+                self.store_format(a, "General");
+                if subtotal {
+                    sums.push(i as u32);
+                }
+            }
             self.tables.insert(ti, tn.clone());
             if new_end > old_t {
                 rows_grew = Some((old_t, new_end - 1));
@@ -449,17 +629,27 @@ impl Workbook {
             self.tables[ti].totals = false;
             let mut grown = r;
             grown.r1 = last;
-            self.grow_table_by_paste(ti, grown, true);
+            self.grow_table(ti, grown, true, true, None);
             self.tables[ti].totals = t.totals;
 
-            for row in r.r1 + 1..=last {
-                let mut g = r;
-                g.r1 = row;
-                self.extend_row_formats(t.sheet, g);
+            self.apply_col_dxf(ti, r.r1 + 1, last);
+        }
+        for i in sums {
+            let c = oc0 + i;
+            let f = own_fmts[i as usize].clone().or_else(|| {
+                self.cellfmt
+                    .get(CellAddr::new(t.sheet, new_end - 1, c))
+                    .cloned()
+            });
+            if let Some(f) = f {
+                self.store_format(CellAddr::new(t.sheet, new_end, c), &f);
             }
         }
         self.tables[ti].rect.r1 = new_end;
+    }
 
+    fn resize_table_columns(&mut self, ti: usize, t: &Table, rect: Rect, auto: bool) {
+        let (oc0, oc1) = (t.rect.c0, t.rect.c1);
         let mut columns: Vec<String> = Vec::new();
         let mut calc: Vec<bool> = Vec::new();
         for c in rect.c0..=rect.c1 {
@@ -472,23 +662,16 @@ impl Workbook {
                 calc.push(false);
             }
         }
-        let kept: Vec<String> = columns.iter().filter(|c| !c.is_empty()).cloned().collect();
-        let mut taken = kept;
-        let mut shown = self.tables[ti].clone();
-        shown.rect = newrect;
-        for (i, c) in (rect.c0..=rect.c1).enumerate() {
-            if columns[i].is_empty() {
-                let n = self.new_resized_column(&shown, c, &taken);
-                taken.push(n.clone());
-                columns[i] = n;
-            }
-        }
 
         let gone: Vec<String> = t
             .columns
             .iter()
-            .filter(|c| !columns.iter().any(|k| crate::text::eq_ordinal_ci(k, c)))
-            .cloned()
+            .enumerate()
+            .filter(|(j, _)| {
+                let c = oc0 + *j as u32;
+                c < rect.c0 || c > rect.c1
+            })
+            .map(|(_, c)| c.clone())
             .collect();
         if !gone.is_empty() {
             self.rewrite_nodes(&mut |n, _| match n {
@@ -504,17 +687,115 @@ impl Workbook {
                 _ => None,
             });
         }
+        if t.headers && auto && !self.settings.iteration {
+            let hdr: Vec<CellAddr> = (rect.c0..=rect.c1)
+                .filter(|&c| c < oc0 || c > oc1)
+                .map(|c| CellAddr::new(t.sheet, t.rect.r0, c))
+                .filter(|&a| self.formula_at(a).is_some())
+                .collect();
+            for &a in &hdr {
+                let fid = self.formula_at(a).unwrap();
+                self.unlink_formula(fid);
+                self.link_formula(fid);
+                calc::mark_dirty(self, fid);
+            }
+            if !hdr.is_empty() {
+                calc::recalc_only(self, &hdr);
+            }
+        }
+
+        let mut assigned: Vec<String> = Vec::new();
+        let mut shown = self.tables[ti].clone();
+        shown.rect.c0 = rect.c0;
+        shown.rect.c1 = rect.c1;
+        for (i, c) in (rect.c0..=rect.c1).enumerate() {
+            if columns[i].is_empty() {
+                let left = (i > 0).then(|| columns[i - 1].clone());
+                let n = self.new_resized_column(&shown, c, &assigned, &t.columns, left.as_deref());
+                assigned.push(n.clone());
+                columns[i] = n;
+            }
+        }
+        let mut olds = t.columns.clone();
+        if !assigned.is_empty() {
+            let key = |s: &str| s.chars().map(crate::text::fold_upper).collect::<String>();
+            for j in 0..olds.len() {
+                let n = olds[j].clone();
+                if !assigned.iter().any(|a| key(a) == key(&n)) {
+                    continue;
+                }
+                let used = |x: &str, olds: &[String]| {
+                    assigned.iter().chain(olds.iter()).any(|a| key(a) == key(x))
+                };
+                let mut k = 2;
+                while used(&format!("{n}{k}"), &olds) {
+                    k += 1;
+                }
+                let nn = format!("{n}{k}");
+                olds[j] = nn.clone();
+                let c = oc0 + j as u32;
+                if t.headers {
+                    self.write_header_text(CellAddr::new(t.sheet, t.rect.r0, c), &nn);
+                }
+                for (n2, _) in self.tables[ti].calc_snap.iter_mut() {
+                    if *n2 == n.to_lowercase() {
+                        *n2 = nn.to_lowercase();
+                    }
+                }
+                for (n2, _) in self.tables[ti].calc_key.iter_mut() {
+                    if *n2 == n.to_lowercase() {
+                        *n2 = nn.to_lowercase();
+                    }
+                }
+                self.rename_table_column(ti, &n, &nn);
+                if c >= rect.c0 && c <= rect.c1 {
+                    columns[(c - rect.c0) as usize] = nn;
+                }
+            }
+        }
+
+        if t.headers {
+            for (j, n) in t.columns.iter().enumerate() {
+                let c = oc0 + j as u32;
+                if (c < rect.c0 || c > rect.c1) && self.tables[ti].is_auto(n) {
+                    let a = CellAddr::new(t.sheet, t.rect.r0, c);
+                    self.remove_cell(a);
+                    calc::cell_changed(self, a);
+                    self.tables[ti].unmark_auto(n);
+                }
+            }
+        }
+
+        if t.totals {
+            let row = self.tables[ti].rect.r1;
+            for c in rect.c0..=rect.c1 {
+                if c >= oc0 && c <= oc1 {
+                    continue;
+                }
+                let a = CellAddr::new(t.sheet, row, c);
+                if self.formula_at(a).is_none() && matches!(self.value(a), Value::Number(_)) {
+                    let text = self.display_text(a);
+                    if let Some(sh) = self.sheet_mut(t.sheet) {
+                        sh.cells
+                            .set(a.row, a.col, Entry::Const(Value::from(text.as_str())));
+                    }
+                    self.store_format(a, "General");
+                    calc::cell_changed(self, a);
+                }
+            }
+        }
         let live: Vec<String> = columns.iter().map(|c| c.to_lowercase()).collect();
         let tb = &mut self.tables[ti];
-        tb.rect = newrect;
+        tb.rect.c0 = rect.c0;
+        tb.rect.c1 = rect.c1;
         tb.columns = columns;
         tb.calc = calc;
         tb.calc_key.retain(|(k, _)| live.contains(k));
-        self.settings.mode = mode;
-        let name = self.tables[ti].name.clone();
-        if shrunk {
-            return Ok(self.relink_and_recalc());
+        tb.calc_snap.retain(|(k, _)| live.contains(k));
+        for c in rect.c0..=rect.c1 {
+            if c < oc0 || c > oc1 {
+                self.init_col_dxf(ti, c);
+            }
         }
-        Ok(self.table_changed(&name))
     }
 }

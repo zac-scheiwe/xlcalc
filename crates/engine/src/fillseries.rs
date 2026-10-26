@@ -83,7 +83,26 @@ impl Workbook {
         range: Rect,
         spec: &SeriesSpec,
     ) -> Result<RecalcReport, EditError> {
+        let r = self.data_series_body(sheet, range, spec);
+        if r.is_ok() {
+            self.view_touch_row_pub(sheet, range.r1);
+        }
+        r
+    }
+
+    fn data_series_body(
+        &mut self,
+        sheet: SheetId,
+        range: Rect,
+        spec: &SeriesSpec,
+    ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
+
+        if self.filter_mode(sheet) {
+            return Err(EditError::Compile(
+                "DataSeries method of Range class failed".into(),
+            ));
+        }
         let rows = spec.rows.unwrap_or(range.cols() >= range.rows());
         let ty = spec.ty.unwrap_or(SeriesType::Linear);
         let nlines = if rows { range.rows() } else { range.cols() };
@@ -111,6 +130,57 @@ impl Workbook {
             && len > 1
             && (0..nlines).any(|l| self.series_seed(at(l, 0)).is_some())
         {
+            let band = |m: &Rect| {
+                if rows {
+                    m.c0 == range.c0 && m.c1 == range.c1 && m.r0 >= range.r0 && m.r1 <= range.r1
+                } else {
+                    m.r0 == range.r0 && m.r1 == range.r1 && m.c0 >= range.c0 && m.c1 <= range.c1
+                }
+            };
+            let hit: Vec<Rect> = self
+                .merges(sheet)
+                .into_iter()
+                .filter(|m| m.intersects(&range))
+                .collect();
+            let first = at(0, 0);
+            if let Some(m0) = hit
+                .iter()
+                .find(|m| (m.r0, m.c0) == (first.row, first.col))
+                .copied()
+            {
+                if band(&m0)
+                    && hit
+                        .iter()
+                        .all(|m| m.rows() == m0.rows() && m.cols() == m0.cols())
+                {
+                    let last_active = (0..nlines)
+                        .rev()
+                        .find(|&l| self.series_seed(at(l, 0)).is_some())
+                        .unwrap_or(0);
+                    let mode = self.settings.mode;
+                    self.settings.mode = CalcMode::Manual;
+                    let mut report = RecalcReport::default();
+                    for l in 0..=last_active {
+                        for k in 1..len {
+                            report.changed.extend(self.clear(at(l, k)).changed);
+                        }
+                    }
+                    self.settings.mode = mode;
+                    if mode == CalcMode::Automatic {
+                        let r = calc::recalc(self);
+                        report.evaluations = r.evaluations;
+                        report.circular = r.circular;
+                        report.changed.extend(r.changed);
+                    }
+                    return Ok(calc::finish_report(report));
+                }
+            }
+        }
+
+        if ty != SeriesType::AutoFill
+            && len > 1
+            && (0..nlines).any(|l| self.series_seed(at(l, 0)).is_some())
+        {
             let seeds = if rows {
                 Rect::new(range.r0, range.c0, range.r1, range.c0)
             } else {
@@ -132,6 +202,10 @@ impl Workbook {
                 ));
             }
         }
+        let last_active = (0..nlines)
+            .rev()
+            .find(|&l| self.series_seed(at(l, 0)).is_some())
+            .unwrap_or(0);
         let mut blocks: Vec<Rect> = Vec::new();
         let mut grows: Vec<Rect> = Vec::new();
         for l in 0..nlines {
@@ -143,11 +217,18 @@ impl Workbook {
             } else if self.series_seed(at(l, 0)).is_some() && len > 1 {
                 1
             } else {
+                if ty != SeriesType::AutoFill && len > 1 && l < last_active {
+                    let (a, z) = (at(l, 1), at(l, len - 1));
+                    self.guard_merges_touch(sheet, Rect::new(a.row, a.col, z.row, z.col))?;
+                }
                 continue;
             };
             let (a, z) = (at(l, from), at(l, len - 1));
             let written = Rect::new(a.row, a.col, z.row, z.col);
-            self.guard_merges_touch(sheet, written)?;
+
+            if !no_fill {
+                self.guard_merges_touch(sheet, written)?;
+            }
             self.guard_arrays_rect(sheet, written)?;
             self.data_tables_overwritten(sheet, written)?;
             if ty != SeriesType::AutoFill {
@@ -164,7 +245,9 @@ impl Workbook {
             self.clear_range(sheet, b)?;
         }
 
-        self.fill_grow_tables(sheet, range, &grows);
+        if !rows {
+            self.fill_grow_tables(sheet, range.r0, range, &grows);
+        }
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
         let mut report = RecalcReport::default();
@@ -191,14 +274,22 @@ impl Workbook {
             let first = at(l, 0);
             let cells: Vec<(CellAddr, Value)> = match ty {
                 SeriesType::AutoFill => {
-                    let last = (0..len).rev().find(|&k| !self.series_is_blank(at(l, k)));
+                    if l > 0 {
+                        continue;
+                    }
+                    let last = (0..len)
+                        .rev()
+                        .find(|&k| (0..nlines).any(|m| !self.series_is_blank(at(m, k))));
                     match last {
                         Some(last) if last + 1 < len => {
-                            let (a, b) = (at(l, 0), at(l, last));
-                            let (z, _) = (at(l, len - 1), 0);
+                            let (a, b) = (at(0, 0), at(nlines - 1, last));
+                            let (z, _) = (at(nlines - 1, len - 1), 0);
                             let src = Rect::new(a.row, a.col, b.row, b.col);
                             let dst = Rect::new(a.row, a.col, z.row, z.col);
-                            match self.autofill(sheet, src, dst, FillType::Default) {
+                            self.series_autofill = true;
+                            let r = self.autofill(sheet, src, dst, FillType::Default);
+                            self.series_autofill = false;
+                            match r {
                                 Ok(r) => report.changed.extend(r.changed),
                                 Err(e) => failed = Some(e),
                             }
@@ -215,12 +306,12 @@ impl Workbook {
             };
             let fmt = self.number_format(first).to_string();
             for (addr, v) in cells {
+                self.no_auto_expand = true;
                 report.changed.extend(self.set_value_exact(addr, v).changed);
+                self.no_auto_expand = false;
+
                 if self.number_format(addr) != fmt {
-                    report.changed.extend(
-                        self.set_number_format(sheet, Rect::cell(addr.row, addr.col), &fmt)
-                            .changed,
-                    );
+                    self.set_number_format_unrounded(sheet, Rect::cell(addr.row, addr.col), &fmt);
                 }
             }
         }
@@ -324,7 +415,19 @@ impl Workbook {
                 _ => match unit {
                     DateUnit::Day => seed + kf * step,
                     DateUnit::Weekday => {
-                        add_weekdays_fast(sys, base, (kf * step).trunc() as i64) as f64 + frac
+                        let n = (kf * step).trunc() as i64;
+                        if n == 0 {
+                            let wd = crate::datetime::weekday_from_serial(sys, base);
+                            (base
+                                + match wd {
+                                    6 => 2,
+                                    0 => 1,
+                                    _ => 0,
+                                }) as f64
+                                + frac
+                        } else {
+                            add_weekdays_fast(sys, base, n) as f64 + frac
+                        }
                     }
                     DateUnit::Month | DateUnit::Year => {
                         let n = (kf * step).trunc() as i64;

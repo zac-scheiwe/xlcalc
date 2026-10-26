@@ -438,9 +438,9 @@ fn bessi(n: i32, x: f64) -> f64 {
         bip = bi;
         bi = bim;
         if bi.abs() > BIGNO {
-            ans *= BIGNI;
-            bi *= BIGNI;
-            bip *= BIGNI;
+            ans = mul(ans, BIGNI);
+            bi = mul(bi, BIGNI);
+            bip = mul(bip, BIGNI);
         }
         if j == n {
             ans = bip;
@@ -553,11 +553,12 @@ pub fn bessel(ctx: &mut EvalCtx, ops: &[Operand], kind: Kind) -> Operand {
     atp::call(ctx, ops, "b", |ctx, a, _| {
         val((|| {
             let x = atp::req_num(ctx, a, 0)?;
-            let n = atp::req_num(ctx, a, 1)?.trunc();
-            if n < 0.0 {
+
+            let n = atp::req_num(ctx, a, 1)?.floor();
+            if !(0.0..=1e7).contains(&n) {
                 return Err(XlError::Num);
             }
-            let n = n.min(i32::MAX as f64 / 4.0) as i32;
+            let n = n as i32;
             let r = match kind {
                 Kind::J => {
                     if x.abs() >= xlmath::TRIG_LIMIT {

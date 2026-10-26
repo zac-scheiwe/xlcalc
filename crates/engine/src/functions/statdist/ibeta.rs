@@ -15,6 +15,9 @@ enum Tail {
     Upper(f64),
 }
 
+const LN_0_7: f64 = f64::from_bits(0xBFD6_D3C3_24E1_3F4F);
+const LN_0_9: f64 = f64::from_bits(0xBFBA_F8E8_210A_415D);
+
 pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
     if !(x > 0.0) {
         return Some((0.0, 1.0));
@@ -34,7 +37,8 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
 
     if b == 1.0 {
         if x > 0.9 {
-            return Some(pair(flip(-xl_expm1(x87::mul(x87::ln(x), a)))));
+            let w1 = -xl_expm1(x87::mul(x87::ln(x), a));
+            return Some((flip(w1), w1));
         }
         return Some(pair(xl_pow(x, a)));
     }
@@ -55,7 +59,7 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
                 Tail::Lower(bpser(a0, b0, x0)?)
             } else if x0 >= 0.3 {
                 Tail::Upper(bpser(b0, a0, y0)?)
-            } else if x0 < 0.1 && x87::mul(x87::ln(x87::mul(b0, x0)), a0) <= 0.7f64.ln() {
+            } else if x0 < 0.1 && x87::mul(x87::ln(x87::mul(b0, x0)), a0) <= LN_0_7 {
                 Tail::Lower(bpser(a0, b0, x0)?)
             } else if b0 > 15.0 {
                 Tail::Upper(bgrat(b0, a0, y0, x0, 0.0)?)
@@ -63,7 +67,7 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
                 let w1 = bup(b0, a0, y0, x0, 20);
                 Tail::Upper(bgrat(x87::add(b0, 20.0), a0, y0, x0, w1)?)
             }
-        } else if a0 >= 0.2f64.min(b0) || x87::mul(x87::ln(x0), a0) <= 0.9f64.ln() {
+        } else if a0 >= 0.2f64.min(b0) || x87::mul(x87::ln(x0), a0) <= LN_0_9 {
             Tail::Lower(bpser(a0, b0, x0)?)
         } else if x0 >= 0.3 {
             Tail::Upper(bpser(b0, a0, y0)?)

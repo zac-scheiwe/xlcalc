@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "check_all_formats": true, "steps": [{"op": "mode", "value": "manual"}, {"cell": "Sheet1!C1", "input": "=A1+B1", "op": "set"}, {"cell": "Sheet1!C1", "changing": "Sheet1!A1", "goal": 30, "op": "goal_seek"}, {"cell": "Sheet1!A1", "input": "4", "op": "set"}, {"cell": "Sheet1!C1", "changing": "Sheet1!A1", "goal": 12, "op": "goal_seek"}]}

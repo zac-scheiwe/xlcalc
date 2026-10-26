@@ -1,0 +1,32 @@
+{
+  "sheets": ["Sheet1", "A", "B", "C", "D"],
+  "steps": [
+    {"name": "Kc", "op": "name", "refers_to": "=3"},
+    {"name": "Ga", "op": "name", "refers_to": "=Ku+1"},
+    {"name": "Gb", "op": "name", "refers_to": "=Kv+1"},
+    {"name": "Gc", "op": "name", "refers_to": "=Kc+1"},
+    {"name": "Gd", "op": "name", "refers_to": "=SUM(Kw)+Kc"},
+    {"name": "Ge", "op": "name", "refers_to": "=Gd*2"},
+    {"cell": "A!C1", "input": "=Ga", "op": "set"},
+    {"cell": "B!C1", "input": "=Kc", "op": "set"},
+    {"cell": "C!C1", "input": "=Gc", "op": "set"},
+    {"cell": "D!C1", "input": "=Ge", "op": "set"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "A"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "B"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "C"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "D"},
+    {"op": "names"},
+    {"name": "Ku", "op": "name", "refers_to": "=10"},
+    {"name": "Kw", "op": "name", "refers_to": "=100"},
+    {"op": "read", "range": "'A (2)'!C1"},
+    {"op": "read", "range": "'D (2)'!C1"},
+    {"name": "Ku", "op": "name", "refers_to": "=20", "scope": "A (2)"},
+    {"op": "names"},
+    {"op": "read", "range": "'A (2)'!C1"},
+    {"op": "read", "range": "A!C1"}
+  ]
+}

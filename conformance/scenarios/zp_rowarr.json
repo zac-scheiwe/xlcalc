@@ -1,0 +1,23 @@
+{
+  "sheets": ["Sheet1"],
+  "steps": [
+    {"name": "Kq", "op": "name", "refers_to": "=ROW(Sheet1!$G$2)"},
+    {"name": "Kh", "op": "name", "refers_to": "=\"hi\""},
+    {"name": "Kp", "op": "name", "refers_to": "=Kh+Kq"},
+    {"cell": "Sheet1!A1", "input": "=ROWS(\"hi\"+ROW(A1))", "op": "set"},
+    {"cell": "Sheet1!A2", "input": "=ROWS(1+ROW(A1))", "op": "set"},
+    {"cell": "Sheet1!A3", "input": "=ROWS(\"hi\"+1)", "op": "set"},
+    {"cell": "Sheet1!A4", "input": "=ROWS(1/0)", "op": "set"},
+    {"cell": "Sheet1!A5", "input": "=ROWS(ROW(A1)/0)", "op": "set"},
+    {"cell": "Sheet1!A6", "input": "=ROWS(\"hi\"+COLUMN(A1))", "op": "set"},
+    {"cell": "Sheet1!A7", "input": "=ROWS(Kp)", "op": "set"},
+    {"cell": "Sheet1!A8", "input": "=ROWS(\"hi\"+Kq)", "op": "set"},
+    {"cell": "Sheet1!A9", "input": "=ISERROR(ROW(A1)/0)", "op": "set"},
+    {"cell": "Sheet1!A10", "input": "=COLUMNS(SQRT(-ROW(A1)))", "op": "set"},
+    {"cell": "Sheet1!A11", "input": "=ROWS(ROW())", "op": "set"},
+    {"cell": "Sheet1!A12", "input": "=ROWS(1/0+ROW())", "op": "set"},
+    {"cell": "Sheet1!A13", "input": "=TYPE(ROW(A1))", "op": "set"},
+    {"cell": "Sheet1!A14", "input": "=ROWS(Kh+ROW(A1))", "op": "set"},
+    {"op": "read", "range": "Sheet1!A1:A14"}
+  ]
+}

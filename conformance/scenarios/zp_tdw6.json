@@ -1,0 +1,93 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "Item"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "Qty"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "P"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "a2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "a3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "a4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "a5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "5"
+  },
+  {
+   "op": "table",
+   "name": "Tb",
+   "range": "Sheet1!A1:C5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=[@Qty]*2"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!C2:C4",
+   "fmt": "0.000"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "e"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D8"
+  }
+ ]
+}

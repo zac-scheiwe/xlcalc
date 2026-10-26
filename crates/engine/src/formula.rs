@@ -51,6 +51,8 @@ pub enum SheetRef {
 #[derive(Debug)]
 pub struct LambdaDef {
     pub params: Vec<Text>,
+
+    pub required: usize,
     pub base: u32,
     pub body: Node,
 }
@@ -428,6 +430,15 @@ impl<'a> Compiler<'a> {
             Expr::Array(rows) => {
                 let r = rows.len() as u32;
                 let c = rows[0].len() as u32;
+                if rows
+                    .iter()
+                    .flatten()
+                    .any(|it| matches!(it, ArrayItem::Text(s) if s.encode_utf16().count() > 255))
+                {
+                    return Err(CompileError(
+                        "text values in formulas are limited to 255 characters".into(),
+                    ));
+                }
                 let data = rows
                     .iter()
                     .flatten()
@@ -653,13 +664,32 @@ impl<'a> Compiler<'a> {
                 }
                 let base = self.scope.len() as u32;
                 let mut params = Vec::new();
+                let mut required = None;
                 for p in &args[..args.len() - 1] {
-                    let n = self.param_name(p)?;
+                    let (n, optional) = match p.unwrap_ws() {
+                        Expr::StructRef { table: None, spec } => {
+                            let inner = spec.trim_matches(|c| c == '[' || c == ']');
+                            let e = Expr::Name {
+                                sheet: None,
+                                name: inner.to_string(),
+                            };
+                            (self.param_name(&e)?, true)
+                        }
+                        _ => (self.param_name(p)?, false),
+                    };
+                    if optional {
+                        required.get_or_insert(params.len());
+                    } else if required.is_some() {
+                        return Err(CompileError(
+                            "a required parameter follows an optional one".into(),
+                        ));
+                    }
                     if params.iter().any(|q: &Text| q.eq_ignore_ascii_case(&n)) {
                         return Err(CompileError("duplicate LAMBDA parameter".into()));
                     }
                     params.push(n);
                 }
+                let required = required.unwrap_or(params.len());
                 self.scope.extend(params.iter().cloned());
                 let body = if matches!(args[args.len() - 1], Expr::Missing) {
                     Err(CompileError("LAMBDA needs a calculation".into()))
@@ -669,6 +699,7 @@ impl<'a> Compiler<'a> {
                 self.scope.truncate(base as usize);
                 return Ok(Node::Lambda(Arc::new(LambdaDef {
                     params,
+                    required,
                     base,
                     body: body?,
                 })));
@@ -827,6 +858,7 @@ fn map_node_inner(node: &Node, f: &mut dyn FnMut(&Node) -> Option<Node>) -> Node
         },
         Node::Lambda(def) => Node::Lambda(Arc::new(LambdaDef {
             params: def.params.clone(),
+            required: def.required,
             base: def.base,
             body: m(&def.body),
         })),

@@ -1,0 +1,232 @@
+{
+ "check_format": true,
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "typel",
+   "cell": "Sheet1!A1",
+   "input": "24:00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A2",
+   "input": "24:00:00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A3",
+   "input": "24:30"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A4",
+   "input": "1/1/2024 24:00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A5",
+   "input": "1/1/2024 25:00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A6",
+   "input": "1/1/2024 10:61"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A7",
+   "input": "10:30 PM."
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A8",
+   "input": "1:2.5:3"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A9",
+   "input": "5 Mar , 2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A10",
+   "input": "5 Mar, 2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A11",
+   "input": "5, Mar, 2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A12",
+   "input": "5/3/0"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A13",
+   "input": "5-Mar-0"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A14",
+   "input": "10:30/5/3/2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A15",
+   "input": "10:30 PM/5/3/2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A16",
+   "input": "5/3/2024 10:30 7"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A17",
+   "input": "5Mar24"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A18",
+   "input": "Mar24"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A19",
+   "input": "Mar5"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A20",
+   "input": "0100:00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A21",
+   "input": "100:00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A22",
+   "input": "1:30.25 PM"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A23",
+   "input": "12:30.25 AM"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A24",
+   "input": "0:0:0.1235"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A25",
+   "input": "1:0.1235"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A26",
+   "input": "10 PM"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A27",
+   "input": "10 AM 5/3/2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A28",
+   "input": "5 Mar 2024 10 PM"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A29",
+   "input": "29 Mar, 0"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A30",
+   "input": "1899/12/31"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A31",
+   "input": "1900/1/1"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A32",
+   "input": "12/1900"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A33",
+   "input": "Mar 1900"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A34",
+   "input": "10:"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A35",
+   "input": "5/3/2024 10:"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A36",
+   "input": "0:0."
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A37",
+   "input": "10:30:"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A38",
+   "input": "23:60"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A39",
+   "input": "1:9999:2"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A40",
+   "input": "5/3/2024 10:30.5"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A41",
+   "input": "10:30.5 5/3/2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A42",
+   "input": "05Mar2024"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A43",
+   "input": "3/13"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A44",
+   "input": "13/3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A44"
+  }
+ ]
+}

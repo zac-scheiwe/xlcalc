@@ -1,0 +1,17 @@
+{"steps":[
+{"op":"setv","cell":"Sheet1!A1","value":{"t":"s","v":"5"}},
+{"op":"setv","cell":"Sheet1!A2","value":{"t":"s","v":"+5"}},
+{"op":"setv","cell":"Sheet1!A3","value":{"t":"s","v":"x"}},
+{"op":"setv","cell":"Sheet1!A4","value":{"t":"n","v":3}},
+{"op":"setv","cell":"Sheet1!A5","value":{"t":"s","v":""}},
+{"op":"set","cell":"Sheet1!C1","input":"=SERIESSUM(2,0,1,A1)"},
+{"op":"set","cell":"Sheet1!C2","input":"=SERIESSUM(2,0,1,A2)"},
+{"op":"set","cell":"Sheet1!C3","input":"=SERIESSUM(2,0,1,A1:A2)"},
+{"op":"set","cell":"Sheet1!C4","input":"=SERIESSUM(2,0,1,{\"5\"})"},
+{"op":"set","cell":"Sheet1!C5","input":"=SERIESSUM(2,0,1,\"5\")"},
+{"op":"set","cell":"Sheet1!C6","input":"=SERIESSUM(2,0,1,A4:A5)"},
+{"op":"set","cell":"Sheet1!C7","input":"=SERIESSUM(\"2\",\"0\",\"1\",A4)"},
+{"op":"set","cell":"Sheet1!C8","input":"=SERIESSUM(2,0,1,A4:A4)"},
+{"op":"set","cell":"Sheet1!C9","input":"=SERIESSUM(2,0,1,A4:A6)"},
+{"op":"set","cell":"Sheet1!C10","input":"=SERIESSUM(2,0,1,{3,\"5\"})"},
+{"op":"read","range":"Sheet1!C1:C10"}]}

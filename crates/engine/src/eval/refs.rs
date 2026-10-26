@@ -74,6 +74,8 @@ pub fn resolve(ctx: &mut EvalCtx, sheet: &SheetRef, cref: &CRef) -> Operand {
 pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Operand {
     let scope = match sheet {
         None => Some(ctx.host.sheet),
+
+        Some(SheetRef::Sheet(id)) if ctx.wb.sheet(*id).is_none() => None,
         Some(s) => match resolve_sheets(ctx, s).as_slice() {
             [id] => Some(*id),
             _ => return Operand::err(XlError::Ref),
@@ -81,11 +83,21 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
     };
     let wb = ctx.wb;
     let def = match sheet {
+        Some(_) if scope.is_some_and(|s| wb.names.was_deleted(key, s)) => wb.names.get(key, scope),
         Some(_) => wb.names.get(key, scope).or_else(|| wb.names.get(key, None)),
-        None => wb.names.lookup(key, ctx.host.sheet),
+
+        None => match ctx.name_scope {
+            Some(Some(sid)) => wb.names.lookup(key, sid),
+            Some(None) => wb.names.get(key, None),
+            None => wb.names.lookup(key, ctx.host.sheet),
+        },
     };
     let Some(def) = def else {
-        return Operand::err(XlError::Name);
+        return Operand::err(if sheet.is_some() && scope.is_none() {
+            XlError::Ref
+        } else {
+            XlError::Name
+        });
     };
     if ctx.depth > 64 {
         return Operand::err(XlError::Name);
@@ -94,7 +106,9 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
     let env = std::mem::take(&mut ctx.env);
     let wrap = std::mem::replace(&mut ctx.wrap, true);
     ctx.depth += 1;
+    let outer = ctx.name_scope.replace(def.scope);
     let out = ctx.eval(&formula.root);
+    ctx.name_scope = outer;
     ctx.depth -= 1;
     ctx.wrap = wrap;
     ctx.env = env;

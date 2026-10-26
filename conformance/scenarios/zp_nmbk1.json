@@ -1,0 +1,18 @@
+{
+  "sheets": ["S1", "S2"],
+  "steps": [
+    {"cell": "S2!A1", "input": "7", "op": "set"},
+    {"cell": "S1!A1", "input": "3", "op": "set"},
+    {"name": "Loc", "op": "name", "refers_to": "=S2!$A$1"},
+    {"cell": "S1!C1", "input": "=S1!Loc", "op": "set"},
+    {"cell": "S1!C2", "input": "=SUM(S1!Loc)", "op": "set"},
+    {"cell": "S2!C1", "input": "=S1!Loc", "op": "set"},
+    {"name": "Lx", "op": "name", "refers_to": "=S1!Loc+1"},
+    {"op": "read", "range": "S1!C1:C2"},
+    {"name": "Loc", "op": "name", "refers_to": "=S1!$A$1", "scope": "S1"},
+    {"cell": "S1!C3", "input": "=S1!Loc", "op": "set"},
+    {"op": "names"},
+    {"op": "read", "range": "S1!C1:C3"},
+    {"op": "read", "range": "S2!C1"}
+  ]
+}

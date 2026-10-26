@@ -73,6 +73,7 @@ pub fn name_changed(wb: &mut Workbook, key: &str) {
     wb.graph.dependents_of_name(key, &mut deps);
 
     for fid in deps {
+        wb.refresh_scalar_entry(fid);
         wb.unlink_formula(fid);
         wb.link_formula(fid);
 
@@ -117,6 +118,7 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
     wb.calc.pass += 1;
     wb.calc.now = wb.calc.fixed_now.unwrap_or_else(current_serial);
     wb.calc.circular_ref = None;
+    wb.calc.circ_iterating = wb.settings.iteration;
     let volatile: Vec<FormulaId> = wb.calc.volatile.iter().copied().collect();
     for fid in volatile {
         mark_dirty(wb, fid);
@@ -179,7 +181,7 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
             break;
         }
     }
-    if iterative {
+    if iterative && !wb.calc.hold_iter {
         let pass = wb.calc.pass;
         let members: Vec<FormulaId> = wb
             .calc

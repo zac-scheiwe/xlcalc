@@ -3,6 +3,7 @@ use super::xlmath;
 use crate::eval::{EvalCtx, Operand};
 use crate::functions::args::{check_array_args, num, val, Grid};
 use crate::value::{Value, XlError};
+use crate::x87;
 
 pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let r: R<f64> = (|| {
@@ -99,24 +100,39 @@ pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             if coef.is_missing() {
                 return Err(XlError::NA);
             }
+            let mut vals = Vec::new();
+            atp::visit_list(ctx, coef, |_, v| {
+                vals.push(v.clone());
+                Ok(())
+            })?;
+
+            let multi = matches!(coef, Operand::Val(Value::Array(_))) || vals.len() > 1;
             let mut cs = Vec::new();
-            atp::visit_list(ctx, coef, |ctx, v| {
+            for v in &vals {
                 match v {
                     Value::Blank => cs.push(0.0),
                     Value::Bool(_) => return Err(XlError::Value),
+                    Value::Text(_) if multi => return Err(XlError::Value),
                     other => cs.push(ctx.to_number(other)?),
                 }
-                Ok(())
-            })?;
+            }
             let mut sum = 0.0;
+
+            let mut p = n;
             for (i, c) in cs.iter().enumerate() {
-                let p = n + i as f64 * m;
+                if i > 0 {
+                    p = crate::x87::add(p, m);
+                }
                 if x == 0.0 && p <= 0.0 {
                     return Err(XlError::Num);
                 }
-                let t = c * x.powf(p);
+                let t = if x < 0.0 && p.fract() != 0.0 {
+                    f64::NAN
+                } else {
+                    crate::x87::mul(*c, crate::xmath::pow(x, p))
+                };
                 if !t.is_nan() {
-                    sum += t;
+                    sum = crate::x87::add(sum, t);
                 }
             }
             Ok(sum)
@@ -142,21 +158,32 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
         let mut sum = 0.0;
         let mut any = false;
         for (x, y) in gx.data.iter().zip(gy.data.iter()) {
-            if let Value::Error(e) = x {
-                return Err(*e);
-            }
-            if let Value::Error(e) = y {
-                return Err(*e);
+            for v in [x, y] {
+                if let Value::Error(e) = v {
+                    return Err(if *e == XlError::Spill {
+                        XlError::Value
+                    } else {
+                        *e
+                    });
+                }
             }
             let (Value::Number(x), Value::Number(y)) = (x, y) else {
                 continue;
             };
             any = true;
-            sum += match kind {
-                SumKind::X2MY2 => x * x - y * y,
-                SumKind::X2PY2 => x * x + y * y,
-                SumKind::XMY2 => (x - y) * (x - y),
-            };
+
+            let (x, y) = (*x, *y);
+            sum = x87::add(
+                sum,
+                match kind {
+                    SumKind::X2MY2 => x87::sub(x87::mul(x, x), x87::mul(y, y)),
+                    SumKind::X2PY2 => x87::add(x87::mul(x, x), x87::mul(y, y)),
+                    SumKind::XMY2 => {
+                        let d = x87::sub(x, y);
+                        x87::mul(d, d)
+                    }
+                },
+            );
         }
         if !any {
             return Err(XlError::Div0);
@@ -200,7 +227,7 @@ pub fn permutationa(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if n >= INT_LIMIT || k >= INT_LIMIT {
             return Err(XlError::Num);
         }
-        Ok(Value::num(n.powf(k)))
+        Ok(Value::num(crate::xmath::pow(n, k)))
     })())
 }
 
@@ -258,9 +285,9 @@ pub fn acot(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if x == 0.0 {
             std::f64::consts::FRAC_PI_2
         } else if x > 0.0 {
-            xlmath::atan(1.0 / x)
+            xlmath::atan(crate::x87::div(1.0, x))
         } else {
-            std::f64::consts::PI + xlmath::atan(1.0 / x)
+            std::f64::consts::PI + xlmath::atan(crate::x87::div(1.0, x))
         }
     }))
 }

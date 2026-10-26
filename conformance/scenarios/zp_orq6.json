@@ -1,0 +1,93 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "9"
+  },
+  {
+   "op": "name",
+   "name": "Loc",
+   "refers_to": "=Sheet1!$A$1",
+   "scope": "Sheet1"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet1",
+   "after": "Sheet2"
+  },
+  {
+   "op": "name",
+   "name": "Loc",
+   "refers_to": "=Sheet2!$A$1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=Sheet1!Loc"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=SUM(Sheet1!Loc)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=Loc"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=Sheet2!Loc"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F1",
+   "input": "=Sheet1!A1"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet1",
+   "name": "Cp",
+   "after": "Sheet2"
+  },
+  {
+   "op": "read",
+   "range": "'Cp'!A1:F1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "6"
+  },
+  {
+   "op": "read",
+   "range": "'Cp'!A1:F1"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet1",
+   "name": "Zed"
+  },
+  {
+   "op": "read",
+   "range": "'Cp'!A1:F1"
+  }
+ ]
+}

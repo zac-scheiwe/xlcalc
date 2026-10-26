@@ -1,0 +1,23 @@
+{
+  "sheets": ["Alpha", "Cpy1", "Beta", "Cpy3", "Ab"],
+  "steps": [
+    {"name": "Ta", "op": "name", "refers_to": "=Beta:Cpy1!$A$1"},
+    {"name": "Tb", "op": "name", "refers_to": "=Alpha:Cpy1!$A$1"},
+    {"name": "Tcc", "op": "name", "refers_to": "=Cpy1:Beta!$A$1"},
+    {"name": "Td", "op": "name", "refers_to": "=Alpha:Cpy3!$A$1"},
+    {"name": "Te", "op": "name", "refers_to": "=Cpy3:Alpha!$A$1"},
+    {"name": "Tf", "op": "name", "refers_to": "=Beta:Cpy3!$A$1"},
+    {"name": "Tg", "op": "name", "refers_to": "=Cpy3:Beta!$A$1"},
+    {"name": "Th", "op": "name", "refers_to": "=Ab:Cpy1!$A$1"},
+    {"name": "Ti", "op": "name", "refers_to": "=Cpy1:Ab!$A$1"},
+    {"name": "Tj", "op": "name", "refers_to": "=Alpha:Beta!$A$1"},
+    {"name": "Tk", "op": "name", "refers_to": "=Beta:Alpha!$A$1"},
+    {"name": "Tl", "op": "name", "refers_to": "=Cpy1:Cpy3!$A$1"},
+    {"name": "Tm", "op": "name", "refers_to": "=Cpy3:Cpy1!$A$1"},
+    {"cell": "Ab!B1", "input": "=SUM(Beta:Cpy1!A1)", "op": "set"},
+    {"cell": "Ab!B2", "input": "=SUM(Alpha:Cpy3!A1)", "op": "set"},
+    {"cell": "Ab!B3", "input": "=SUM(Cpy3:Beta!A1)", "op": "set"},
+    {"op": "names"},
+    {"op": "read", "range": "Ab!B1:B3"}
+  ]
+}

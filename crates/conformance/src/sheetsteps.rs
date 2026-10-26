@@ -101,6 +101,14 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
             });
         }
         "names" => {
+            if std::env::var("CONF_ACTIVE").is_ok() {
+                let s = wb.active_sheet();
+                eprintln!(
+                    "step {n} active {:?} cell {:?}",
+                    wb.sheet(s).map(|x| &x.name),
+                    wb.active_cell()
+                );
+            }
             let mut got: Vec<String> = wb
                 .names
                 .iter()
@@ -117,7 +125,9 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
             got.sort();
             let mut want = strings(&rec["names"], |x| {
                 if x["name"].as_str().is_some_and(|s| {
-                    s.starts_with("_xlpm.") || (s.starts_with("_xlfn.") && x["visible"] == false)
+                    s.starts_with("_xlpm.")
+                        || s.starts_with("_xlop.")
+                        || (s.starts_with("_xlfn.") && x["visible"] == false)
                 }) {
                     return String::new();
                 }

@@ -1,0 +1,157 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "Item"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "Qty"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "Price"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "Tot"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B12",
+   "input": "m"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!X1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!X2",
+   "input": "1"
+  },
+  {
+   "op": "table",
+   "name": "Tb",
+   "range": "Sheet1!B1:E5"
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!C3:D4",
+   "keys": [
+    {
+     "key": 1,
+     "order": "asc"
+    }
+   ],
+   "header": false
+  },
+  {
+   "op": "dataseries",
+   "range": "Sheet1!C2:C9",
+   "rowcol": "cols",
+   "type": "linear"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H20"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

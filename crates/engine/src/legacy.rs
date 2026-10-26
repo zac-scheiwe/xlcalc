@@ -67,6 +67,7 @@ fn legacy_params(name: &str) -> Option<&'static str> {
     Some(match name {
         "MATCH" => "VRV",
         "VLOOKUP" | "HLOOKUP" => "VRVV",
+        "LOOKUP" => "VRR",
         "TRANSPOSE" => "V",
         "IFERROR" | "IFNA" => "VV",
         _ => return None,
@@ -124,7 +125,12 @@ fn array_capable(e: &Expr) -> bool {
 }
 
 fn returns_array(name: &str, args: &[Expr]) -> bool {
-    let zero_or_missing = |e: &Expr| matches!(e.unwrap_ws(), Expr::Missing | Expr::Number(0.0));
+    let zero_or_missing = |e: &Expr| {
+        matches!(
+            e.unwrap_ws(),
+            Expr::Missing | Expr::Number(0.0) | Expr::Name { .. }
+        )
+    };
     match name {
         "INDEX" => args.iter().skip(1).any(zero_or_missing),
         "OFFSET" => args.len() > 3 || args.first().is_some_and(|a| is_multi_ref(a.unwrap_ws())),
@@ -233,6 +239,26 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
 }
 
 fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
+    if name == "LET" && args.len() % 2 == 1 {
+        let n = args.len();
+        let mut out = Vec::with_capacity(n);
+        let mut added = Vec::new();
+        let mut it = args.into_iter();
+        while out.len() + 1 < n {
+            let var = it.next().unwrap();
+            let val = it.next().unwrap();
+            if is_multi_ref(val.unwrap_ws()) {
+                if let Expr::Name { name, .. } = var.unwrap_ws() {
+                    added.push(name.to_uppercase());
+                }
+            }
+            out.push(var);
+            out.push(walk(val, Ctx::Ref));
+            MULTI_NAMES.with(|m| m.borrow_mut().extend(added.drain(..)));
+        }
+        out.push(walk(it.next().unwrap(), Ctx::Value));
+        return out;
+    }
     if ARRAY_ARGS.contains(&name) {
         return args.into_iter().map(|a| walk(a, Ctx::Array)).collect();
     }
@@ -365,6 +391,14 @@ impl Workbook {
         if t.contains("!#REF!") && !t.contains('@') {
             return Some(t);
         }
+
+        if t.contains("@#REF!")
+            || t.contains("@INDEX(#REF!")
+            || t.contains("@OFFSET(#REF!")
+            || (t.contains("@CHOOSE(") && t.contains(",#REF!,#REF!)"))
+        {
+            return Some(t);
+        }
         match parse(&t) {
             Ok(e) => Some(format!("={}", print(&strip_at(e)))),
             Err(_) => Some(t),
@@ -375,4 +409,380 @@ impl Workbook {
 pub(crate) fn legacy_quiet_expr(text: &str) -> Option<Expr> {
     let e = parse(text.trim_start_matches('=')).ok()?;
     Some(rewrite_at(walk(e, Ctx::Value), true))
+}
+
+thread_local! {
+    static UNDEFINED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+const SCALAR_RESULT: &[&str] = &[
+    "ABS",
+    "AND",
+    "AVERAGE",
+    "AVERAGEA",
+    "AVERAGEIF",
+    "AVERAGEIFS",
+    "CHAR",
+    "CHOOSE",
+    "CODE",
+    "COLUMN",
+    "COLUMNS",
+    "CONCAT",
+    "CONCATENATE",
+    "COUNT",
+    "COUNTA",
+    "COUNTBLANK",
+    "COUNTIF",
+    "COUNTIFS",
+    "DATE",
+    "DAY",
+    "EXACT",
+    "EXP",
+    "FALSE",
+    "FIND",
+    "HLOOKUP",
+    "HOUR",
+    "IF",
+    "IFERROR",
+    "IFNA",
+    "INDEX",
+    "INT",
+    "ISBLANK",
+    "ISERR",
+    "ISERROR",
+    "ISEVEN",
+    "ISLOGICAL",
+    "ISNA",
+    "ISNONTEXT",
+    "ISNUMBER",
+    "ISODD",
+    "ISREF",
+    "ISTEXT",
+    "LARGE",
+    "LEFT",
+    "LEN",
+    "LN",
+    "LOG",
+    "LOG10",
+    "LOWER",
+    "MATCH",
+    "MAX",
+    "MAXA",
+    "MEDIAN",
+    "MID",
+    "MIN",
+    "MINA",
+    "MINUTE",
+    "MOD",
+    "MONTH",
+    "N",
+    "NA",
+    "NOT",
+    "NOW",
+    "OR",
+    "PI",
+    "POWER",
+    "PRODUCT",
+    "PROPER",
+    "RAND",
+    "RANK",
+    "REPT",
+    "RIGHT",
+    "ROUND",
+    "ROUNDDOWN",
+    "ROUNDUP",
+    "ROW",
+    "ROWS",
+    "SEARCH",
+    "SECOND",
+    "SIGN",
+    "SMALL",
+    "SQRT",
+    "STDEV",
+    "SUBSTITUTE",
+    "SUBTOTAL",
+    "SUM",
+    "SUMIF",
+    "SUMIFS",
+    "SUMPRODUCT",
+    "SUMSQ",
+    "T",
+    "TEXT",
+    "TEXTJOIN",
+    "TODAY",
+    "TRIM",
+    "TRUE",
+    "TRUNC",
+    "TYPE",
+    "UPPER",
+    "VALUE",
+    "VAR",
+    "VLOOKUP",
+    "XOR",
+    "YEAR",
+    "LET",
+];
+
+fn scalar_definition(refers_to: &str) -> bool {
+    if refers_to.contains("!#REF!") {
+        return false;
+    }
+    match parse(refers_to.trim_start_matches('=')) {
+        Ok(e) => matches!(
+            e.unwrap_ws(),
+            Expr::Ref {
+                kind: RefKind::Cell { .. },
+                ..
+            } | Expr::Number(_)
+                | Expr::Text(_)
+                | Expr::Bool(_)
+                | Expr::Error(_)
+        ),
+        Err(_) => false,
+    }
+}
+
+fn may_array(
+    e: &Expr,
+    wb: &Workbook,
+    sheet: crate::address::SheetId,
+    locals: &mut Vec<(String, bool)>,
+) -> bool {
+    match e {
+        Expr::Ws { expr, .. } | Expr::Paren(expr) | Expr::Percent(expr) => {
+            may_array(expr, wb, sheet, locals)
+        }
+        Expr::Number(_) | Expr::Text(_) | Expr::Bool(_) | Expr::Error(_) | Expr::Missing => false,
+        Expr::Ref { kind, .. } => !matches!(kind, RefKind::Cell { .. }),
+        Expr::Name { sheet: q, name } => {
+            if q.is_none() {
+                let up = name.to_uppercase();
+                if let Some((_, a)) = locals.iter().rev().find(|(n, _)| *n == up) {
+                    return *a;
+                }
+            }
+            let key = name.to_uppercase();
+            let def = match q {
+                Some(crate::parser::ast::SheetSpec::Single(s)) => {
+                    let id = wb.sheet_by_name(s).map(|s| s.id);
+                    id.and_then(|id| wb.names.get(&key, Some(id)))
+                        .or_else(|| wb.names.get(&key, None))
+                }
+                Some(_) => None,
+                None => wb.names.lookup(&key, sheet),
+            };
+            if def.is_none() {
+                UNDEFINED.with(|u| u.set(true));
+            }
+            !def.is_some_and(|d| scalar_definition(&d.refers_to))
+        }
+        Expr::Unary { op, expr } => {
+            !matches!(op, UnaryOp::Implicit | UnaryOp::ImplicitQuiet)
+                && may_array(expr, wb, sheet, locals)
+        }
+        Expr::Binary { op, left, right } => {
+            matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union)
+                || may_array(left, wb, sheet, locals)
+                || may_array(right, wb, sheet, locals)
+        }
+        Expr::Func { name, args } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+            if bare == "LET" && args.len() % 2 == 1 {
+                let n = locals.len();
+                for pair in args[..args.len() - 1].chunks(2) {
+                    let a = may_array(&pair[1], wb, sheet, locals);
+
+                    if a {
+                        locals.truncate(n);
+                        return true;
+                    }
+                    if let Expr::Name { name, .. } = pair[0].unwrap_ws() {
+                        locals.push((name.to_uppercase(), a));
+                    }
+                }
+                let r = may_array(&args[args.len() - 1], wb, sheet, locals);
+                locals.truncate(n);
+                return r;
+            }
+
+            if matches!(bare, "ROW" | "COLUMN" | "OFFSET")
+                && args
+                    .first()
+                    .is_some_and(|a| may_array(a, wb, sheet, locals))
+            {
+                return true;
+            }
+            if returns_array(bare, args) || !SCALAR_RESULT.contains(&bare) {
+                return true;
+            }
+            let params = match legacy_params(bare) {
+                Some(p) => p,
+                None => {
+                    let Some(id) = functions::lookup(bare) else {
+                        return true;
+                    };
+                    let def = functions::def(id);
+                    if matches!(def.imp, functions::Imp::Lazy(_)) || bare == "LAMBDA" {
+                        return bare == "LAMBDA"
+                            || args.iter().any(|a| may_array(a, wb, sheet, locals));
+                    }
+                    def.params
+                }
+            };
+            let b = params.as_bytes();
+
+            let reference = |a: &Expr| match a.unwrap_ws() {
+                Expr::Ref { .. } | Expr::Name { .. } | Expr::Spill(_) => true,
+                Expr::Binary { op, .. } => {
+                    matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union)
+                }
+                _ => false,
+            };
+            args.iter().enumerate().any(|(i, a)| {
+                let letter = if b.is_empty() {
+                    b'V'
+                } else {
+                    b[i.min(b.len() - 1)]
+                };
+                (letter == b'V' || !reference(a)) && may_array(a, wb, sheet, locals)
+            })
+        }
+        _ => true,
+    }
+}
+
+fn uses_name(e: &Expr, wb: &Workbook) -> Option<bool> {
+    let mut names = Vec::new();
+    collect_names(e, &mut names);
+    if names.iter().any(|n| wb.table_by_name(n).is_some()) {
+        return None;
+    }
+
+    let mut vars = Vec::new();
+    let_vars(e, &mut vars);
+    let defined = |n: &str| {
+        let k = n.to_uppercase();
+        wb.names.iter().any(|d| d.name.to_uppercase() == k) || vars.contains(&k)
+    };
+    if !names.iter().all(|n| defined(n)) {
+        return None;
+    }
+    Some(!names.is_empty())
+}
+
+fn let_vars(e: &Expr, out: &mut Vec<String>) {
+    match e {
+        Expr::Func { name, args } => {
+            if name.eq_ignore_ascii_case("LET") || name.eq_ignore_ascii_case("_xlfn.LET") {
+                for a in args.iter().step_by(2).take(args.len() / 2) {
+                    if let Expr::Name { name, .. } = a.unwrap_ws() {
+                        out.push(name.to_uppercase());
+                    }
+                }
+            }
+            args.iter().for_each(|a| let_vars(a, out));
+        }
+        Expr::Ws { expr, .. }
+        | Expr::Paren(expr)
+        | Expr::Percent(expr)
+        | Expr::Spill(expr)
+        | Expr::Unary { expr, .. }
+        | Expr::Field { expr, .. } => let_vars(expr, out),
+        Expr::Binary { left, right, .. } => {
+            let_vars(left, out);
+            let_vars(right, out);
+        }
+        _ => {}
+    }
+}
+
+fn collect_names<'a>(e: &'a Expr, out: &mut Vec<&'a str>) {
+    match e {
+        Expr::Name { name, .. } => out.push(name),
+        Expr::Ws { expr, .. }
+        | Expr::Paren(expr)
+        | Expr::Percent(expr)
+        | Expr::Spill(expr)
+        | Expr::Unary { expr, .. }
+        | Expr::Field { expr, .. } => collect_names(expr, out),
+        Expr::Binary { left, right, .. } => {
+            collect_names(left, out);
+            collect_names(right, out);
+        }
+        Expr::Func { args, .. } => args.iter().for_each(|a| collect_names(a, out)),
+        Expr::Call { callee, args } => {
+            collect_names(callee, out);
+            args.iter().for_each(|a| collect_names(a, out));
+        }
+        _ => {}
+    }
+}
+
+fn multi_names(wb: &Workbook) -> Vec<String> {
+    wb.names
+        .iter()
+        .filter(|n| parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| is_multi_ref(&e)))
+        .map(|n| n.name.to_uppercase())
+        .collect()
+}
+
+pub(crate) fn scalar_entry_expr(wb: &Workbook, body: &str, host: CellAddr) -> Option<Expr> {
+    if body.contains('@') || body.contains('[') || body.contains("#REF!") || body.contains("Book1!")
+    {
+        return None;
+    }
+    let e = parse(body).ok()?;
+    UNDEFINED.with(|u| u.set(false));
+
+    if uses_name(&e, wb) != Some(true)
+        || may_array(&e, wb, host.sheet, &mut Vec::new())
+        || UNDEFINED.with(|u| u.get())
+    {
+        return None;
+    }
+    legacy_eval_expr(wb, body)
+}
+
+pub(crate) fn legacy_eval_expr(wb: &Workbook, body: &str) -> Option<Expr> {
+    let e = parse(body).ok()?;
+    MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
+    let w = walk(e, Ctx::Value);
+    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    Some(Expr::Unary {
+        op: UnaryOp::ImplicitQuiet,
+        expr: Box::new(rewrite_at(w, true)),
+    })
+}
+
+impl Workbook {
+    pub(crate) fn refresh_scalar_entry(&mut self, fid: crate::workbook::FormulaId) {
+        let (root, host) = {
+            let c = self.formula(fid);
+            (c.formula.root.clone(), c.addr)
+        };
+        if !matches!(root, crate::formula::Node::Unary(UnaryOp::ImplicitQuiet, _)) {
+            return;
+        }
+        let text = crate::formula_print::print_node(self, &root, host);
+        let body = text.trim_start_matches('=');
+
+        if body.contains("#REF!") || body.contains("Book1!") || body.contains('[') {
+            return;
+        }
+        let Some(e) = legacy_eval_expr(self, body) else {
+            return;
+        };
+        if let Ok((f, _)) = self.compile_expr_normalized(&e, host) {
+            self.formula_mut(fid).formula = std::sync::Arc::new(f);
+        }
+    }
+}
+
+pub(crate) fn text_may_array(wb: &Workbook, body: &str, sheet: crate::address::SheetId) -> bool {
+    let Ok(e) = parse(body) else {
+        return false;
+    };
+    UNDEFINED.with(|u| u.set(false));
+    may_array(&e, wb, sheet, &mut Vec::new()) || UNDEFINED.with(|u| u.get())
 }

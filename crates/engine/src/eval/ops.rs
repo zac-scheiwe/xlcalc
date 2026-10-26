@@ -21,7 +21,14 @@ pub fn map2(a: Value, b: Value, mut f: impl FnMut(&Value, &Value) -> Value) -> V
         (Value::Array(x), Value::Array(y)) => {
             let rows = x.rows.max(y.rows);
             let cols = x.cols.max(y.cols);
+
+            let inside = |a: &Array, r: u32, c: u32| {
+                (a.rows == 1 || r < a.rows) && (a.cols == 1 || c < a.cols)
+            };
             Array::from_fn(rows, cols, |r, c| {
+                if !inside(x, r, c) || !inside(y, r, c) {
+                    return Value::Error(XlError::NA);
+                }
                 f(&x.broadcast_get(r, c), &y.broadcast_get(r, c))
             })
             .into_value()
@@ -86,6 +93,10 @@ pub fn power(a: f64, b: f64) -> Value {
         if (inv - k).abs() < 1e-10 && k % 2.0 != 0.0 {
             return Value::num(-crate::xmath::pow(-a, b));
         }
+        return Value::Error(XlError::Num);
+    }
+
+    if a < 0.0 && b.abs() >= 4294967295.0 {
         return Value::Error(XlError::Num);
     }
     if b < 0.0 {
@@ -193,6 +204,7 @@ pub fn compare(a: &Value, b: &Value) -> Ordering {
         _ => Value::Number(0.0),
     };
     let (a, b) = match (a, b) {
+        (Value::Blank, Value::Blank) => return Ordering::Equal,
         (Value::Blank, _) => (blank_like(b), b.clone()),
         (_, Value::Blank) => (a.clone(), blank_like(a)),
         _ => (a.clone(), b.clone()),

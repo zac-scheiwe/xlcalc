@@ -21,6 +21,8 @@ pub struct CellFormats {
     seq: u64,
     compiled: FxHashMap<Arc<str>, Option<Arc<NumberFormat>>>,
     pub(crate) precision: bool,
+
+    late: FxHashMap<usize, std::sync::Weak<str>>,
 }
 
 impl CellFormats {
@@ -31,7 +33,7 @@ impl CellFormats {
             && self.sheets.is_empty())
     }
 
-    fn line(&self, a: CellAddr) -> Option<&Arc<str>> {
+    pub(crate) fn line(&self, a: CellAddr) -> Option<&Arc<str>> {
         let r = self.rows.get(&(a.sheet, a.row));
         let c = self.cols.get(&(a.sheet, a.col));
         let s = self.sheets.get(&a.sheet);
@@ -47,6 +49,11 @@ impl CellFormats {
             .get(&(a.sheet, a.row, a.col))
             .or_else(|| self.line(a))
     }
+    pub(crate) fn is_late(&self, f: &Arc<str>) -> bool {
+        self.late
+            .contains_key(&(Arc::as_ptr(f) as *const u8 as usize))
+    }
+
     fn compile(&mut self, f: &Arc<str>) -> Option<Arc<NumberFormat>> {
         if let Some(c) = self.compiled.get(f) {
             return c.clone();
@@ -57,7 +64,7 @@ impl CellFormats {
     }
 }
 
-const YIELDING: [&str; 14] = [
+const YIELDING: [&str; 16] = [
     "0%",
     "0.00%",
     "0.00E+00",
@@ -71,6 +78,8 @@ const YIELDING: [&str; 14] = [
     "h:mm",
     "h:mm:ss",
     "mm:ss",
+    "[h]:mm:ss",
+    "mm:ss.0",
     "##0.0E+0",
 ];
 
@@ -96,6 +105,17 @@ fn pos(x: Rc, host: u32) -> i64 {
 impl Workbook {
     pub fn number_format(&self, addr: CellAddr) -> &str {
         self.cellfmt.get(addr).map_or("General", |f| &**f)
+    }
+
+    pub fn debug_format(&self, addr: CellAddr) -> String {
+        match self.cellfmt.get(addr) {
+            None => "General".into(),
+            Some(f) => format!(
+                "{f}@{:x}{}",
+                (Arc::as_ptr(f) as *const u8 as usize) & 0xffff,
+                if self.cellfmt.is_late(f) { " LATE" } else { "" }
+            ),
+        }
     }
 
     pub(crate) fn cellfmt_has(&self, addr: CellAddr) -> bool {
@@ -185,6 +205,44 @@ impl Workbook {
         self.cellfmt.get(addr).is_some_and(|f| &**f == "@")
     }
 
+    fn yielding_format(&self, cur: &str) -> bool {
+        if YIELDING.iter().any(|y| y.eq_ignore_ascii_case(cur)) {
+            return true;
+        }
+        let loc = self.input_env().locale;
+        let (short, c) = (&loc.short_date_format, &loc.currency);
+        [
+            short.clone(),
+            format!("{short} h:mm"),
+            format!("{c}#,##0;[Red]-{c}#,##0"),
+            format!("{c}#,##0.00;[Red]-{c}#,##0.00"),
+            format!("{c}#,##0;-{c}#,##0"),
+            format!("{c}#,##0.00;-{c}#,##0.00"),
+        ]
+        .iter()
+        .any(|y| y.eq_ignore_ascii_case(cur))
+    }
+
+    pub(crate) fn fraction_first(&mut self, addr: CellAddr) -> bool {
+        let Some(f) = self.cellfmt.get(addr).cloned() else {
+            return false;
+        };
+        if f.split(';')
+            .all(|p| p.trim().eq_ignore_ascii_case("general"))
+            || &*f == "@"
+        {
+            return false;
+        }
+        self.cellfmt.compile(&f).is_some_and(|c| !c.is_date())
+    }
+
+    pub(crate) fn date_or_text_format(&mut self, addr: CellAddr, or_text: bool) -> bool {
+        let Some(f) = self.cellfmt.get(addr).cloned() else {
+            return false;
+        };
+        (or_text && &*f == "@") || self.cellfmt.compile(&f).is_some_and(|c| c.is_date())
+    }
+
     pub fn precision_as_displayed(&self) -> bool {
         self.cellfmt.precision
     }
@@ -260,15 +318,79 @@ impl Workbook {
         }
     }
 
+    pub fn clear_formats(&mut self, sheet: SheetId, rect: Rect) -> RecalcReport {
+        self.set_number_format_unrounded(sheet, rect, "General");
+        self.unmerge_cells(sheet, rect)
+    }
+
+    pub fn reset_number_format(&mut self, sheet: SheetId, rect: Rect) {
+        if let Some(runs) = self.view_visible_runs(sheet, rect) {
+            for run in runs {
+                self.reset_number_format(sheet, run);
+            }
+            return;
+        }
+        self.set_number_format_unrounded(sheet, rect, "General");
+        let mode = std::mem::replace(&mut self.settings.mode, CalcMode::Manual);
+        self.unmerge_cells(sheet, rect);
+        self.settings.mode = mode;
+    }
+
+    pub(crate) fn set_number_format_unrounded(&mut self, sheet: SheetId, rect: Rect, fmt: &str) {
+        if self.sheet(sheet).is_none() {
+            return;
+        }
+        self.apply_format(sheet, rect, fmt);
+        self.note_late_formats(sheet, rect);
+        self.note_table_col_formats(sheet, rect, fmt);
+    }
+
     pub fn set_number_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
+        let r = self.set_number_format_body(sheet, rect, fmt);
+        if self.sheet(sheet).is_some() && !(rect.r0 == 0 && rect.r1 + 1 >= crate::address::MAX_ROWS)
+        {
+            self.view_touch_row_pub(sheet, rect.r1);
+        }
+        r
+    }
+
+    fn set_number_format_body(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
         if self.sheet(sheet).is_none() {
             return RecalcReport::default();
         }
         self.apply_format(sheet, rect, fmt);
+        self.note_late_formats(sheet, rect);
+        self.note_table_col_formats(sheet, rect, fmt);
         if !self.cellfmt.precision {
             return RecalcReport::default();
         }
         self.round_range(sheet, rect)
+    }
+
+    fn note_late_formats(&mut self, sheet: SheetId, rect: Rect) {
+        let bodies: Vec<Rect> = self
+            .tables
+            .iter()
+            .filter(|t| t.sheet == sheet)
+            .filter_map(|t| {
+                let (d0, d1) = t.data_rows();
+                rect.intersection(&Rect::new(d0, t.rect.c0, d1, t.rect.c1))
+            })
+            .collect();
+        for b in bodies {
+            if b.rows() as u64 * b.cols() as u64 > 1 << 16 {
+                continue;
+            }
+            for r in b.r0..=b.r1 {
+                for c in b.c0..=b.c1 {
+                    if let Some(f) = self.cellfmt.map.get(&(sheet, r, c)) {
+                        let key = Arc::as_ptr(f) as *const u8 as usize;
+                        let w = Arc::downgrade(f);
+                        self.cellfmt.late.insert(key, w);
+                    }
+                }
+            }
+        }
     }
 
     fn round_range(&mut self, sheet: SheetId, rect: Rect) -> RecalcReport {
@@ -309,7 +431,11 @@ impl Workbook {
         self.cellfmt.precision = on;
 
         if !on && !was {
-            return RecalcReport::default();
+            return if self.settings.mode == CalcMode::Automatic {
+                calc::recalc(self)
+            } else {
+                RecalcReport::default()
+            };
         }
 
         let ids: Vec<SheetId> = self.sheets().map(|s| s.id).collect();
@@ -356,7 +482,7 @@ impl Workbook {
         }
     }
 
-    fn precision_value(&mut self, addr: CellAddr, n: f64) -> f64 {
+    pub(crate) fn precision_value(&mut self, addr: CellAddr, n: f64) -> f64 {
         match self.compiled_format(addr) {
             Some(f) => f.displayed_value(n),
             None => n,
@@ -403,7 +529,7 @@ impl Workbook {
         };
         if self.cellfmt_has(addr) {
             let cur = self.number_format(addr).to_string();
-            let yields = YIELDING.iter().any(|y| y.eq_ignore_ascii_case(&cur));
+            let yields = self.yielding_format(&cur);
             let (a, b) = (self.format_class(&cur), self.format_class(&typed));
             if !yields || a == b || b == FormatClass::Other {
                 return;

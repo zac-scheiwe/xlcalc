@@ -5,10 +5,12 @@ pub fn atan(x: f64) -> f64 {
 }
 
 pub fn atan2(y: f64, x: f64) -> f64 {
+    use crate::x87;
+
     if x > 0.0 {
-        atan(y / x)
+        x87::add(x87::atan(x87::div(y, x)), 0.0)
     } else if x < 0.0 {
-        atan(y / x) + if y >= 0.0 { PI } else { -PI }
+        x87::add(x87::atan(x87::div(y, x)), if y >= 0.0 { PI } else { -PI })
     } else if y > 0.0 {
         FRAC_PI_2
     } else {
@@ -65,8 +67,9 @@ pub fn tanh(x: f64) -> f64 {
 }
 
 pub fn asinh(x: f64) -> f64 {
+    use crate::x87;
     let a = x.abs();
-    let r = (a + (a * a + 1.0).sqrt()).ln();
+    let r = x87::ln(x87::add(x87::sqrt(x87::add(x87::mul(a, a), 1.0)), a));
     if x < 0.0 {
         -r
     } else {
@@ -75,14 +78,20 @@ pub fn asinh(x: f64) -> f64 {
 }
 
 pub fn acosh(x: f64) -> f64 {
-    (x + (x * x - 1.0).sqrt()).ln()
+    use crate::x87;
+    x87::ln(x87::add(x87::sqrt(x87::sub(x87::mul(x, x), 1.0)), x))
 }
 
 pub fn atanh(x: f64) -> f64 {
-    if x.abs() < 1e-4 {
-        return x + x * x * x / 3.0;
+    use crate::x87;
+    if x.abs().to_bits() < 0x3F1A_F82B_729C_1D83 {
+        let t = x87::mul(x, 1.0 / 3.0);
+        let t = x87::mul(x, t);
+        let t = x87::mul(x, t);
+        return x87::add(x, t);
     }
-    0.5 * ((1.0 + x) / (1.0 - x)).ln()
+    let p = x87::sub(1.0, x);
+    x87::mul(x87::ln(x87::div(x87::add(x, 1.0), p)), 0.5)
 }
 
 fn powi_squaring(x: f64, n: f64) -> f64 {

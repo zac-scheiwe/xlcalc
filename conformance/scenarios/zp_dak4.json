@@ -1,0 +1,216 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "40"
+  },
+  {
+   "op": "name",
+   "name": "Nm_0",
+   "refers_to": "=Sheet1!$A$1+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=Nm_0"
+  },
+  {
+   "op": "name",
+   "name": "Nm_1",
+   "refers_to": "=\"abc\""
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "=Nm_1"
+  },
+  {
+   "op": "name",
+   "name": "Nm_2",
+   "refers_to": "=Sheet1!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=Nm_2"
+  },
+  {
+   "op": "name",
+   "name": "Nm_3",
+   "refers_to": "=SUM(Sheet1!$A$1:$A$2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F2",
+   "input": "=Nm_3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_4",
+   "refers_to": "=#N/A"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G2",
+   "input": "=Nm_4"
+  },
+  {
+   "op": "name",
+   "name": "Nm_5",
+   "refers_to": "=TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H2",
+   "input": "=Nm_5"
+  },
+  {
+   "op": "name",
+   "name": "Nm_6",
+   "refers_to": "={5}"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I2",
+   "input": "=Nm_6"
+  },
+  {
+   "op": "name",
+   "name": "Nm_7",
+   "refers_to": "=Sheet2!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J2",
+   "input": "=Nm_7"
+  },
+  {
+   "op": "name",
+   "name": "Nm_8",
+   "refers_to": "=Sheet1!$A$1:$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!K2",
+   "input": "=Nm_8"
+  },
+  {
+   "op": "name",
+   "name": "Nm_9",
+   "refers_to": "=-Sheet1!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!L2",
+   "input": "=Nm_9"
+  },
+  {
+   "op": "name",
+   "name": "Nm_10",
+   "refers_to": "=(Sheet1!$A$1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!M2",
+   "input": "=Nm_10"
+  },
+  {
+   "op": "name",
+   "name": "Nm_11",
+   "refers_to": "=Sheet1!A1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!N2",
+   "input": "=Nm_11"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:P6"
+  },
+  {
+   "op": "name",
+   "name": "Nm_0",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_1",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_2",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_3",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_4",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_5",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_6",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_7",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_8",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_9",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_10",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "Nm_11",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:P6"
+  }
+ ]
+}

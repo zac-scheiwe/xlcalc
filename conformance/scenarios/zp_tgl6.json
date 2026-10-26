@@ -1,0 +1,136 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet2!B1",
+   "input": "Item"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C1",
+   "input": "Qty"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!D1",
+   "input": "Price"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!E1",
+   "input": "Tot"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!D2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!E2",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!D3",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!E3",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!D4",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!E4",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C5",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!D5",
+   "input": "15"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!E5",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B12",
+   "input": "m"
+  },
+  {
+   "op": "table",
+   "name": "Tb",
+   "range": "Sheet2!B1:E5"
+  },
+  {
+   "op": "dataseries",
+   "range": "Sheet2!C2:C9",
+   "rowcol": "cols",
+   "type": "linear"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:H20"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

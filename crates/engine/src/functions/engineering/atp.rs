@@ -26,6 +26,7 @@ pub fn call(
         let v = match op {
             Operand::Missing => None,
             Operand::Val(v) => Some(v.clone()),
+            Operand::Ref(crate::eval::Reference::Grid(g)) => Some(ctx.grid_cells(g)),
             Operand::Ref(r) => {
                 let Some(area) = r.single() else {
                     vals.push(Some(Value::Error(XlError::Value)));

@@ -233,6 +233,39 @@ impl Workbook {
     }
 
     pub fn clear_range(&mut self, sheet: SheetId, rect: Rect) -> Result<RecalcReport, EditError> {
+        let pending = self.totals_pending(sheet, rect);
+
+        let r = match self.view_visible_runs(sheet, rect) {
+            Some(runs) => {
+                let mut report = RecalcReport::default();
+                let mut res = Ok(());
+                for run in runs {
+                    match self.clear_range_raw(sheet, run) {
+                        Ok(x) => {
+                            report.changed.extend(x.changed);
+                            report.evaluations += x.evaluations;
+                        }
+                        Err(e) => {
+                            res = Err(e);
+                            break;
+                        }
+                    }
+                }
+                res.map(|()| report)
+            }
+            None => self.clear_range_raw(sheet, rect),
+        };
+        if pending {
+            self.restore_totals(sheet, rect, Some(rect));
+        }
+
+        if r.is_ok() && self.tables.iter().any(|t| t.sheet == sheet) {
+            self.extra_recalc();
+        }
+        r
+    }
+
+    fn clear_range_raw(&mut self, sheet: SheetId, rect: Rect) -> Result<RecalcReport, EditError> {
         let rect = Rect::new(
             rect.r0,
             rect.c0,
@@ -266,11 +299,14 @@ impl Workbook {
             }
             return Ok(report);
         }
-        for (r, c) in visit {
+        let n = visit.len();
+        for (i, (r, c)) in visit.into_iter().enumerate() {
+            self.calc.hold_iter = i + 1 < n;
             let r = self.clear(CellAddr::new(sheet, r, c));
             report.changed.extend(r.changed);
             report.evaluations += r.evaluations;
         }
+        self.calc.hold_iter = false;
         Ok(report)
     }
 
@@ -421,7 +457,6 @@ impl Workbook {
         spec: &crate::pastespecial::PasteSpecial,
     ) -> Result<ArrayPaste, EditError> {
         use crate::pastespecial::{PasteOp, PasteWhat};
-        self.guard_merges_touch(ds, target)?;
         if !self.has_arrays() {
             return Ok(vec![]);
         }

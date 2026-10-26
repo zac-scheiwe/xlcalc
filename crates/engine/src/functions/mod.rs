@@ -1,6 +1,7 @@
 pub mod args;
 pub mod arrays;
 pub mod calendar;
+mod casemap;
 pub mod criteria;
 pub mod datetime;
 pub mod dynamic;

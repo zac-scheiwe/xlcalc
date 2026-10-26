@@ -1,0 +1,140 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "Item"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "Qty"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "Price"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "Tot"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "15"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E5",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G1",
+   "input": "=B7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H1",
+   "input": "=SUM(C2:C5)"
+  },
+  {
+   "op": "table",
+   "name": "Tb",
+   "range": "Sheet1!B1:E5"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!D5",
+   "fmt": "0.00"
+  },
+  {
+   "op": "dataseries",
+   "range": "Sheet1!C2:C9",
+   "rowcol": "cols",
+   "type": "linear"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H20"
+  },
+  {
+   "op": "tables"
+  }
+ ]
+}

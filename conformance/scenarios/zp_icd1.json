@@ -1,0 +1,87 @@
+{
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "h2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "h3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "3"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!A2:A3",
+   "fmt": "h:mm"
+  },
+  {
+   "op": "format",
+   "range": "Sheet1!B2",
+   "fmt": "0.00"
+  },
+  {
+   "op": "table",
+   "name": "T1",
+   "range": "Sheet1!A1:C3"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 4,
+   "count": 1
+  },
+  {
+   "op": "table_resize",
+   "name": "T1",
+   "range": "Sheet1!A1:E6",
+   "sheet": "Sheet1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E7"
+  }
+ ]
+}

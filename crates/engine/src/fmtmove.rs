@@ -24,6 +24,23 @@ impl Workbook {
         }
     }
 
+    pub(crate) fn fmt_move_pairs(&mut self, pairs: &[(CellAddr, CellAddr)]) {
+        if !self.cellfmt.any() {
+            return;
+        }
+        let snap: Vec<Option<Arc<str>>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
+        for ((_, to), f) in pairs.iter().zip(snap) {
+            let key = (to.sheet, to.row, to.col);
+            let line = self.cellfmt.line(*to).cloned();
+            match f {
+                Some(f) if line.as_deref() != Some(&*f) && !f.eq_ignore_ascii_case("general") => {
+                    self.cellfmt.map.insert(key, f);
+                }
+                f => self.store_format(*to, f.as_deref().unwrap_or("General")),
+            }
+        }
+    }
+
     pub(crate) fn fmt_move_block(&mut self, ss: SheetId, src: Rect, ds: SheetId, dst: (u32, u32)) {
         if !self.cellfmt.any() {
             return;

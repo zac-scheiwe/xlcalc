@@ -1,6 +1,7 @@
 mod calendars;
 mod calendars_cn;
 mod calendars_he;
+mod codelen;
 pub(crate) mod decimal;
 mod displayed;
 mod general;
@@ -88,6 +89,8 @@ pub struct NumberFormat {
     pub(crate) text_section: Option<usize>,
 
     pub(crate) numeric: usize,
+
+    pub(crate) code_lens: Vec<Option<u32>>,
 }
 
 impl NumberFormat {

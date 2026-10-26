@@ -1,0 +1,32 @@
+{
+  "sheets": ["Sheet1", "S2", "S3", "S4", "S5"],
+  "steps": [
+    {"cell": "Sheet1!H1", "input": "1", "op": "set"},
+    {"cell": "Sheet1!H2", "input": "2", "op": "set"},
+    {"cell": "Sheet1!H3", "input": "3", "op": "set"},
+    {"name": "Kc", "op": "name", "refers_to": "=1/3"},
+    {"name": "Ka", "op": "name", "refers_to": "={1,2}"},
+    {"name": "Kf", "op": "name", "refers_to": "=Sheet1!H1:H3*2"},
+    {"name": "Kn", "op": "name", "refers_to": "=Ka"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kc+Kf", "scope": "S2"},
+    {"name": "Kf", "op": "name", "refers_to": "=5", "scope": "S4"},
+    {"name": "Kq", "op": "name", "refers_to": "=Kc+Kf", "scope": "S3"},
+    {"name": "Kr", "op": "name", "refers_to": "=Kc+Kf", "scope": "S5"},
+    {"cell": "S2!C1", "input": "=SUM(Kn)", "op": "set"},
+    {"cell": "S3!C1", "input": "=SUM(Kq)", "op": "set"},
+    {"cell": "S5!C1", "input": "=SUM(Kr)", "op": "set"},
+    {"name": "R5", "op": "rename_sheet", "sheet": "S5"},
+    {"op": "names"},
+    {"after": "R5", "op": "copy_sheet", "sheet": "S2"},
+    {"op": "names"},
+    {"after": "R5", "op": "copy_sheet", "sheet": "S3"},
+    {"op": "names"},
+    {"after": "R5", "op": "copy_sheet", "sheet": "R5"},
+    {"op": "names"},
+    {"after": "R5", "op": "move_sheet", "sheet": "S4"},
+    {"op": "names"},
+    {"op": "read", "range": "'S2 (2)'!C1"},
+    {"op": "read", "range": "'S3 (2)'!C1"},
+    {"op": "read", "range": "'R5 (2)'!C1"}
+  ]
+}

@@ -1,0 +1,97 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "40"
+  },
+  {
+   "op": "name",
+   "name": "Gl",
+   "refers_to": "=Sheet1!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=SUM(Gl*1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=SUM(Gl)+0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "=ROWS(Gl)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "=INDEX(Gl,3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "=SUMPRODUCT(Gl*1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C7",
+   "input": "=MAX(Gl+0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C8",
+   "input": "=Gl&\"\""
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C9",
+   "input": "=VLOOKUP(Gl,A1:A4,1,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C10",
+   "input": "=SUM(IF(Gl>15,1,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C11",
+   "input": "=TRANSPOSE(Gl)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C12",
+   "input": "=AVERAGE(Gl,1)"
+  },
+  {
+   "op": "name",
+   "name": "Gl",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H14"
+  }
+ ]
+}

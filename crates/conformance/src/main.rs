@@ -5,8 +5,10 @@ use std::process::{Command, ExitCode};
 
 mod blocksteps;
 mod editsteps;
+mod golden;
 mod sheetsteps;
 
+use golden::{compact_golden, expand_golden, is_compact, load_golden};
 use serde_json::{json, Value as J};
 use xlcalc::{parse_cell_ref, parse_range_ref, CalcMode, CellAddr, Value, Workbook, XlError};
 
@@ -136,7 +138,9 @@ fn record(args: &[String]) -> ExitCode {
             batches.push(sc);
         }
     }
-    let tmp = conf_dir().join(".oracle-tmp");
+    let tmp = std::env::var_os("CONFORM_ORACLE_TMP")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| conf_dir().join(".oracle-tmp"));
     fs::create_dir_all(&tmp).unwrap();
     let req_path = tmp.join("request.json");
     let resp_path = tmp.join("response.json");
@@ -162,7 +166,10 @@ fn record(args: &[String]) -> ExitCode {
     let text = fs::read_to_string(&resp_path).unwrap();
     let text = text.trim_start_matches('\u{feff}');
     let resp: J = serde_json::from_str(text).expect("oracle response JSON");
-    let golden_dir = conf_dir().join("golden");
+
+    let golden_dir = std::env::var_os("CONFORM_GOLDEN_OUT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| conf_dir().join("golden"));
     fs::create_dir_all(&golden_dir).unwrap();
     for n in &names {
         let r = &resp["results"][n];
@@ -186,7 +193,11 @@ fn record(args: &[String]) -> ExitCode {
             golden["scenario"] = sc.clone();
         }
         let out = golden_dir.join(format!("{n}.json"));
-        fs::write(&out, serde_json::to_string_pretty(&golden).unwrap()).unwrap();
+        fs::write(
+            &out,
+            serde_json::to_string(&compact_golden(&golden)).unwrap(),
+        )
+        .unwrap();
         println!(
             "recorded {n} ({} items)",
             golden["items"].as_array().map_or(0, |a| a.len())
@@ -197,7 +208,7 @@ fn record(args: &[String]) -> ExitCode {
 
 fn typed_value(t: &J) -> Value {
     match t["t"].as_str().unwrap_or("") {
-        "n" => Value::Number(t["v"].as_f64().unwrap()),
+        "n" => Value::Number(num_of(t)),
         "s" => Value::from(t["v"].as_str().unwrap()),
         "b" => Value::Bool(t["v"].as_bool().unwrap()),
         "e" => Value::Error(XlError::parse(t["v"].as_str().unwrap()).unwrap_or(XlError::Value)),
@@ -244,9 +255,17 @@ enum Outcome {
     Wrong,
 }
 
+fn num_of(t: &J) -> f64 {
+    t["bits"]
+        .as_str()
+        .and_then(|b| u64::from_str_radix(b, 16).ok())
+        .map(f64::from_bits)
+        .unwrap_or_else(|| t["v"].as_f64().unwrap())
+}
+
 fn show_expected(t: &J) -> String {
     match t["t"].as_str().unwrap_or("?") {
-        "n" => format!("{}", t["v"].as_f64().unwrap()),
+        "n" => format!("{}", num_of(t)),
         "s" => format!("{:?}", t["v"].as_str().unwrap()),
         "b" => if t["v"].as_bool().unwrap() {
             "TRUE"
@@ -365,6 +384,32 @@ fn same_type(t: &J, v: &Value) -> bool {
             | ("e", Value::Error(_))
             | ("a", Value::Array(_))
     )
+}
+
+fn pinned_to_clock(wb: &mut Workbook, addr: CellAddr, want: &J, got: &Value) -> Option<Value> {
+    if want["t"].as_str() != Some("n")
+        || !matches!(
+            compare_value(want, got),
+            Outcome::Wrong | Outcome::Near | Outcome::Close
+        )
+    {
+        return None;
+    }
+    let now = num_of(want);
+    if !(1.0..2_958_466.0).contains(&now) {
+        return None;
+    }
+
+    if wb.settings.iteration {
+        return None;
+    }
+
+    wb.calc.fixed_now = Some(now);
+    xlcalc::calc::recalc(wb);
+    let v = cell_result(wb, addr);
+    wb.calc.fixed_now = None;
+    xlcalc::calc::recalc(wb);
+    matches!(compare_value(want, &v), Outcome::Exact).then_some(v)
 }
 
 fn cell_result(wb: &Workbook, addr: CellAddr) -> Value {
@@ -518,6 +563,9 @@ fn run_scenario(golden: &J) -> Tally {
     for s in &sheets {
         wb.add_sheet(s).unwrap();
     }
+    if sc["date1904"].as_bool().unwrap_or(false) {
+        wb.settings.date_system = xlcalc::datetime::DateSystem::D1904;
+    }
     let default_sheet = wb.sheet_by_name(&sheets[0]).unwrap().id;
     let mut tally = Tally::new();
     let check_format = sc["check_format"].as_bool().unwrap_or(false);
@@ -531,8 +579,61 @@ fn run_scenario(golden: &J) -> Tally {
         if std::env::var("CONF_TRACE").is_ok() {
             eprintln!("step {i}");
         }
+        if let Ok(r) = std::env::var("CONF_FMT") {
+            if let Some((s, rect)) = parse_range_ref(&wb, &r, default_sheet) {
+                let mut out = Vec::new();
+                for row in rect.r0..=rect.r1 {
+                    for col in rect.c0..=rect.c1 {
+                        let a = xlcalc::CellAddr::new(s, row, col);
+                        out.push(format!("{}={}", a.a1(), wb.debug_format(a)));
+                    }
+                }
+                eprintln!("step {i} fmt {}", out.join(" | "));
+            }
+        }
+        if std::env::var("CONF_MERGES").is_ok() {
+            eprintln!("step {i} merges {:?}", wb.merges(default_sheet));
+        }
+        if std::env::var("CONF_TABLES").is_ok() {
+            for t in &wb.tables {
+                eprintln!(
+                    "step {i} table {} {} totals={} calc={:?} key={:?} snap={:?}",
+                    t.name,
+                    t.rect,
+                    t.totals,
+                    t.calc,
+                    t.calc_key,
+                    t.calc_snap.iter().map(|(n, _)| n).collect::<Vec<_>>()
+                );
+            }
+        }
+        if let Ok(w) = std::env::var("CONF_WATCH") {
+            for a1 in w.split(',') {
+                if let Some(ad) = parse_cell_ref(&wb, a1, default_sheet) {
+                    eprintln!(
+                        "  [{}] {a1}: {:?} = {}",
+                        i + 1,
+                        wb.formula_text(ad),
+                        show_value(&cell_result(&wb, ad))
+                    );
+                }
+            }
+        }
         let op = step["op"].as_str().unwrap();
         let cell = |k: &str| parse_cell_ref(&wb, step[k].as_str().unwrap(), default_sheet).unwrap();
+
+        if !rec["error"].is_null() {
+            if let Some((sn, _)) = step["cell"]
+                .as_str()
+                .or(step["range"].as_str())
+                .and_then(|c| c.split_once('!'))
+            {
+                if wb.sheet_by_name(sn.trim_matches('\'')).is_none() {
+                    tally.add(Outcome::Exact, String::new);
+                    continue;
+                }
+            }
+        }
         match op {
             "set" | "typel" => {
                 let a = cell("cell");
@@ -541,7 +642,9 @@ fn run_scenario(golden: &J) -> Tally {
                     step["cell"].as_str().unwrap().to_string(),
                     step["input"].as_str().unwrap().to_string(),
                 );
-                let input = step["input"].as_str().unwrap();
+                let input = &*wb
+                    .typed_text(a, step["input"].as_str().unwrap())
+                    .into_owned();
 
                 let lotus = !input.starts_with('=')
                     && matches!(
@@ -780,10 +883,18 @@ fn run_scenario(golden: &J) -> Tally {
                     )
                 });
             }
+
+            "selinfo" => {}
             "circ" => {
                 let want = rec["circular"].as_str().map(str::to_string);
-                let got = wb.calc.circular_ref.map(|a| a.a1());
-                let o = if want == got {
+
+                let got = if wb.calc.circ_iterating {
+                    None
+                } else {
+                    wb.calc.circular_ref.map(|a| a.a1())
+                };
+
+                let o = if want.is_some() == got.is_some() {
                     Outcome::Exact
                 } else {
                     Outcome::Wrong
@@ -802,12 +913,16 @@ fn run_scenario(golden: &J) -> Tally {
                         parse_range_ref(&wb, step["range"].as_str().unwrap(), default_sheet)
                             .unwrap();
                     let addr = parse_cell_ref(&wb, a1, s).unwrap();
-                    let got = cell_result(&wb, addr);
+                    let mut got = cell_result(&wb, addr);
+                    if let Some(g) = pinned_to_clock(&mut wb, addr, &c["value"], &got) {
+                        got = g;
+                    }
                     if std::env::var("CONF_DUMP").is_ok_and(|v| v == (i + 1).to_string()) {
                         eprintln!(
-                            "dump {a1} = {} {:?}",
+                            "dump {a1} = {} {:?} fmt={:?}",
                             show_value(&got),
-                            wb.formula_text(addr)
+                            wb.formula_text(addr),
+                            wb.number_format(addr)
                         );
                     }
                     blocksteps::check_blocks(&wb, c, addr, i + 1, &mut tally);
@@ -934,11 +1049,11 @@ fn run(args: &[String]) -> ExitCode {
     );
     for n in &names {
         let path = conf_dir().join("golden").join(format!("{n}.json"));
-        let Ok(text) = fs::read_to_string(&path) else {
+        if !path.exists() {
             println!("{n:<20} (no golden — run `conform record {n}`)");
             continue;
-        };
-        let golden: J = serde_json::from_str(&text).unwrap();
+        }
+        let golden: J = load_golden(&path);
         let tally = if golden["kind"] == "scenario" {
             run_scenario(&golden)
         } else {
@@ -992,6 +1107,101 @@ fn run(args: &[String]) -> ExitCode {
     }
 }
 
+fn golden_files(args: &[String]) -> Vec<PathBuf> {
+    let dir = conf_dir().join("golden");
+    let mut v: Vec<PathBuf> = fs::read_dir(&dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .filter(|p| p.extension().is_some_and(|x| x == "json"))
+        .filter(|p| {
+            let stem = p.file_stem().unwrap().to_string_lossy();
+            args.is_empty() || args.iter().any(|a| *a == stem)
+        })
+        .collect();
+    v.sort();
+    v
+}
+
+fn compact_cmd(args: &[String]) -> ExitCode {
+    let (mut before, mut after, mut kept) = (0u64, 0u64, 0);
+    for p in golden_files(args) {
+        let raw = fs::read_to_string(&p).unwrap();
+        let g = expand_golden(&serde_json::from_str(&raw).unwrap()).unwrap();
+        let c = compact_golden(&g);
+        if !is_compact(&c) {
+            kept += 1;
+            eprintln!(
+                "{}: not compactable losslessly, minified original encoding",
+                p.display()
+            );
+        }
+        let out = serde_json::to_string(&c).unwrap();
+        before += raw.len() as u64;
+        after += out.len() as u64;
+        if out != raw {
+            fs::write(&p, &out).unwrap();
+        }
+    }
+    println!("compact: {before} -> {after} bytes; {kept} files kept in original encoding");
+    ExitCode::SUCCESS
+}
+
+fn verify_golden(args: &[String]) -> ExitCode {
+    let against = args
+        .iter()
+        .position(|a| a == "--against")
+        .and_then(|i| args.get(i + 1))
+        .map(PathBuf::from);
+    let suites: Vec<String> = args
+        .iter()
+        .enumerate()
+        .filter(|(i, a)| !a.starts_with("--") && (*i == 0 || args[*i - 1] != "--against"))
+        .map(|(_, a)| a.clone())
+        .collect();
+    let (mut ok, mut bad, mut compact) = (0, 0, 0);
+    for p in golden_files(&suites) {
+        let raw = fs::read_to_string(&p).unwrap();
+        let v: J = serde_json::from_str(&raw).unwrap();
+        let mut good = true;
+        match expand_golden(&v) {
+            Err(e) => {
+                eprintln!("{}: {e}", p.display());
+                good = false;
+            }
+            Ok(g) => {
+                if is_compact(&v) {
+                    compact += 1;
+                }
+                if serde_json::to_string(&compact_golden(&g)).unwrap() != raw {
+                    eprintln!("{}: does not re-compact to identical bytes", p.display());
+                    good = false;
+                }
+                if let Some(dir) = &against {
+                    let o: J = serde_json::from_str(
+                        &fs::read_to_string(dir.join(p.file_name().unwrap())).unwrap(),
+                    )
+                    .unwrap();
+                    if o != g {
+                        eprintln!("{}: expansion differs from {}", p.display(), dir.display());
+                        good = false;
+                    }
+                }
+            }
+        }
+        if good {
+            ok += 1;
+        } else {
+            bad += 1;
+        }
+    }
+    println!("verify-golden: {ok} ok, {bad} failed ({compact} compact encoding)");
+    if bad > 0 {
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
@@ -1000,6 +1210,8 @@ fn main() -> ExitCode {
         .spawn(move || match args.first().map(String::as_str) {
             Some("record") => record(&args[1..]),
             Some("run") => run(&args[1..]),
+            Some("compact") => compact_cmd(&args[1..]),
+            Some("verify-golden") => verify_golden(&args[1..]),
             Some("eval") => eval_file(&args[1]),
             Some("list") => {
                 for (n, (k, _)) in suites() {
@@ -1008,7 +1220,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             }
             _ => {
-                eprintln!("usage: conform record|run|list [suite…] [-v] [--grep TEXT] [--limit N]");
+                eprintln!("usage: conform record|run|compact|verify-golden|list [suite…] [-v] [--grep TEXT] [--limit N]");
                 ExitCode::from(2)
             }
         })

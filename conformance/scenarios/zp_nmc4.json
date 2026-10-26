@@ -1,0 +1,21 @@
+{
+  "sheets": ["Sheet1", "A", "B", "C", "D"],
+  "steps": [
+    {"cell": "Sheet1!H1", "input": "1", "op": "set"},
+    {"name": "Kf", "op": "name", "refers_to": "=Sheet1!H1:H3*2"},
+    {"name": "Kg", "op": "name", "refers_to": "=7"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kc+Kf", "scope": "A"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kf+Kc+Kg", "scope": "B"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kg+1", "scope": "C"},
+    {"name": "Kn", "op": "name", "refers_to": "=Kc+Kf", "scope": "D"},
+    {"cell": "D!C1", "input": "=Kn", "op": "set"},
+    {"after": "D", "op": "copy_sheet", "sheet": "B"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "A"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "C"},
+    {"op": "names"},
+    {"after": "D", "op": "copy_sheet", "sheet": "D"},
+    {"op": "names"}
+  ]
+}

@@ -160,46 +160,6 @@ pub fn tan(x: f64) -> f64 {
     }
 }
 
-pub fn atan2(y: f64, x: f64) -> f64 {
-    use std::f64::consts::{FRAC_PI_2, PI};
-    if x > 0.0 {
-        atan(y / x)
-    } else if x < 0.0 {
-        if y < 0.0 {
-            atan(y / x) - PI
-        } else {
-            atan(y / x) + PI
-        }
-    } else if y < 0.0 {
-        -FRAC_PI_2
-    } else {
-        FRAC_PI_2
-    }
-}
-
-pub fn pow(x: f64, y: f64) -> f64 {
-    if y.fract() == 0.0 && y.abs() < 2_147_483_648.0 {
-        let mut n = y.abs() as u64;
-        let (mut base, mut acc) = (x, 1.0f64);
-        while n > 0 {
-            if n & 1 == 1 {
-                acc *= base;
-            }
-            n >>= 1;
-            if n > 0 {
-                base *= base;
-            }
-        }
-        if y < 0.0 {
-            1.0 / acc
-        } else {
-            acc
-        }
-    } else {
-        x.powf(y)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

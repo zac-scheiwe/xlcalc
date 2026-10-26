@@ -1,5 +1,19 @@
 use std::cmp::Ordering;
 
+pub fn cut255(s: &str) -> &str {
+    if s.len() <= 255 {
+        return s;
+    }
+    let mut units = 0;
+    for (i, ch) in s.char_indices() {
+        units += ch.len_utf16();
+        if units > 255 {
+            return &s[..i];
+        }
+    }
+    s
+}
+
 pub fn utf16_len(s: &str) -> usize {
     if s.is_ascii() {
         s.len()

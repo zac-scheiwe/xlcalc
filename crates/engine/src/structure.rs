@@ -305,6 +305,7 @@ fn edit_refs_at_inner(
         },
         Node::Lambda(def) => Node::Lambda(Arc::new(LambdaDef {
             params: def.params.clone(),
+            required: def.required,
             base: def.base,
             body: m(&def.body),
         })),
@@ -404,6 +405,8 @@ impl Workbook {
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
+        self.fill_selected.remove(&sheet);
+
         let inside: Vec<(String, Vec<(u32, FormulaId, Arc<Formula>)>)> = self
             .tables
             .iter()
@@ -423,7 +426,8 @@ impl Workbook {
         for (name, sources) in inside {
             if let Some(ti) = self.tables.iter().position(|t| t.name == name) {
                 let sources = self.calc_sources_shifted(ti, sources, &sh);
-                self.table_fill_new_rows(ti, (at, at + count - 1), &sources);
+                self.insert_row_formats(ti, (at, at + count - 1));
+                self.table_fill_new_rows(ti, (at, at + count - 1), &sources, false);
             }
         }
         Ok(report)
@@ -471,6 +475,7 @@ impl Workbook {
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
+        self.fill_selected.remove(&sheet);
         self.shift(Shift {
             sheet,
             axis: Axis::Rows,
@@ -488,6 +493,7 @@ impl Workbook {
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
+        self.fill_selected.remove(&sheet);
         self.shift(Shift {
             sheet,
             axis: Axis::Cols,
@@ -505,6 +511,12 @@ impl Workbook {
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
+        if self.filter_mode(sheet) && (at..at + count).all(|c| self.col_hidden(sheet, c)) {
+            return Err(EditError::Compile(
+                "Delete method of Range class failed".into(),
+            ));
+        }
+        self.fill_selected.remove(&sheet);
         self.shift(Shift {
             sheet,
             axis: Axis::Cols,
@@ -522,6 +534,12 @@ impl Workbook {
         rect: Rect,
         down: bool,
     ) -> Result<RecalcReport, EditError> {
+        if self.filter_mode(sheet) {
+            return Err(EditError::Compile(
+                "Insert method of Range class failed".into(),
+            ));
+        }
+        self.fill_selected.remove(&sheet);
         self.shift_cells(sheet, rect, down, true)
     }
 
@@ -531,6 +549,28 @@ impl Workbook {
         rect: Rect,
         up: bool,
     ) -> Result<RecalcReport, EditError> {
+        if self.filter_mode(sheet) && (rect.c0..=rect.c1).all(|c| self.col_hidden(sheet, c)) {
+            return Err(EditError::Compile("No cells were found.".into()));
+        }
+
+        if up && self.filter_mode(sheet) {
+            let mut vis: Vec<u32> = (rect.r0..=rect.r1)
+                .filter(|&r| !self.row_hidden(sheet, r))
+                .collect();
+            if vis.is_empty() {
+                if !rect.is_cell() {
+                    return Err(EditError::Compile("No cells were found.".into()));
+                }
+                vis.push(rect.r0);
+            }
+            self.fill_selected.remove(&sheet);
+            let mut report = RecalcReport::default();
+            for &r in vis.iter().rev() {
+                report = self.delete_rows(sheet, r, 1)?;
+            }
+            return Ok(report);
+        }
+        self.fill_selected.remove(&sheet);
         self.shift_cells(sheet, rect, up, false)
     }
 
@@ -613,6 +653,9 @@ impl Workbook {
             let data_h = bh.0 > th.0 && bh.1 <= th.1;
             let covers_o = bo.0 <= to.0 && to.1 <= bo.1;
             let within_o = to.0 <= bo.0 && bo.1 <= to.1;
+            if rows && t.totals && at == tb && !covers_o {
+                return Err(moves_table());
+            }
             let allowed = if covers_h {
                 covers_o || exact_h && within_o
             } else {
@@ -644,7 +687,10 @@ impl Workbook {
         for (name, sources) in sources {
             if let Some(ti) = self.tables.iter().position(|t| t.name == name) {
                 let sources = self.calc_sources_shifted(ti, sources, &sh);
-                self.table_fill_new_rows(ti, (at, at + count - 1), &sources);
+                if rows {
+                    self.apply_col_dxf(ti, at, at + count - 1);
+                }
+                self.table_fill_new_rows(ti, (at, at + count - 1), &sources, false);
             }
         }
         Ok(report)
@@ -744,6 +790,14 @@ impl Workbook {
         if s.count == 0 {
             return Ok(RecalcReport::default());
         }
+        if s.insert && s.axis == Axis::Cols && s.limit.is_none() {
+            for ti in 0..self.tables.len() {
+                let t = &self.tables[ti];
+                if t.sheet == s.sheet && s.at > t.rect.c0 && s.at <= t.rect.c1 {
+                    self.resync_table_headers(ti, None);
+                }
+            }
+        }
         let along = |r: u32, c: u32| if s.axis == Axis::Rows { r } else { c };
 
         if s.insert {
@@ -760,7 +814,13 @@ impl Workbook {
             }
         }
 
-        let data_tables = self.plan_data_table_shift(&s)?;
+        let data_tables = match self.plan_data_table_shift(&s) {
+            Ok(d) => d,
+            Err(e) => {
+                self.unmerge_cut_sideways(&s);
+                return Err(e);
+            }
+        };
 
         self.shift_merges(&s);
 
@@ -776,6 +836,7 @@ impl Workbook {
             .flat_map(|sh| sh.spills.active_ids())
             .collect();
         self.calc.spilling = spilling;
+        let old_used_r1 = self.view_used_r1(s.sheet);
         {
             let sh = self.sheet_mut(s.sheet).unwrap();
             sh.cells = Default::default();
@@ -806,6 +867,12 @@ impl Workbook {
                 }
             }
         }
+
+        self.calc.shifted = moved
+            .iter()
+            .filter(|(_, o, n)| o != n)
+            .map(|(f, _, _)| *f)
+            .collect();
         for fid in deleted {
             self.free_formula(fid);
         }
@@ -817,6 +884,12 @@ impl Workbook {
             s.insert,
             s.limit,
         );
+        if s.limit.is_none() {
+            self.view_shift(s.sheet, s.axis == Axis::Rows, s.at, s.count, s.insert);
+        }
+
+        let rows_move = s.axis == Axis::Rows;
+        self.view_used_after_shift(s.sheet, old_used_r1, s.at, s.count, s.insert && rows_move);
         let new_addr: rustc_hash::FxHashMap<FormulaId, CellAddr> =
             moved.iter().map(|(f, _, n)| (*f, *n)).collect();
 
@@ -906,6 +979,7 @@ impl Workbook {
         let mut gone: Vec<(String, Vec<String>)> = Vec::new();
 
         let mut headers: Vec<(SheetId, u32, u32, String)> = Vec::new();
+        let mut new_cols: Vec<(String, u32)> = Vec::new();
 
         let mut removed: Vec<String> = Vec::new();
         for mut t in std::mem::take(&mut self.tables) {
@@ -943,12 +1017,14 @@ impl Workbook {
                                 while t.column_index(&format!("Column{n}")).is_some() {
                                     n += 1;
                                 }
+                                t.mark_auto(&format!("Column{n}"));
                                 format!("Column{n}")
                             };
                             if t.headers {
                                 headers.push((t.sheet, t.rect.r0, s.at + k as u32, name.clone()));
                             }
                             t.columns.insert(pos + k, name);
+                            new_cols.push((t.name.clone(), s.at + k as u32));
                             t.calc.resize(t.columns.len() - 1, false);
                             t.calc.insert(pos + k, false);
                         }
@@ -992,6 +1068,12 @@ impl Workbook {
                 sh.cells.set(r, c, Entry::Const(Value::from(name.as_str())));
             }
         }
+
+        for (tn, c) in new_cols {
+            if let Some(ti) = self.tables.iter().position(|t| t.name == tn) {
+                self.init_col_dxf(ti, c);
+            }
+        }
         if !gone.is_empty() || !removed.is_empty() {
             let ids: Vec<FormulaId> = self.formula_ids().collect();
             for fid in ids {
@@ -1027,6 +1109,33 @@ impl Workbook {
                         volatile: formula.volatile,
                     });
                     f.text = text;
+                }
+            }
+
+            for t in self.tables.iter_mut() {
+                for (_, snap) in t.calc_snap.iter_mut() {
+                    let mut changed = false;
+                    let root = crate::formula::map_node(&snap.root, &mut |n| match n {
+                        Node::StructRef { table, spec, .. } => {
+                            let (a, b) = spec.cols.as_ref()?;
+                            let dead = gone.iter().any(|(t, cols)| {
+                                crate::text::eq_ordinal_ci(t, table)
+                                    && cols.iter().any(|c| {
+                                        crate::text::eq_ordinal_ci(c, a)
+                                            || crate::text::eq_ordinal_ci(c, b)
+                                    })
+                            });
+                            changed |= dead;
+                            dead.then(|| Node::DeadRef(SheetRef::Current))
+                        }
+                        _ => None,
+                    });
+                    if changed {
+                        *snap = Arc::new(Formula {
+                            root,
+                            volatile: snap.volatile,
+                        });
+                    }
                 }
             }
         }
@@ -1140,6 +1249,14 @@ impl Workbook {
         self.calc.volatile.clear();
         self.calc.circular.clear();
         self.calc.dirty_list.clear();
+
+        if self.calc.spilling.is_empty() {
+            self.calc.spilling = self
+                .sheets
+                .iter()
+                .flat_map(|sh| sh.spills.active_ids())
+                .collect();
+        }
         let spilling = std::mem::take(&mut self.calc.spilling);
         for sh in &mut self.sheets {
             sh.spills = Default::default();
@@ -1148,7 +1265,14 @@ impl Workbook {
         self.reserve_array_blocks();
         let mut ids: Vec<FormulaId> = self.formula_ids().collect();
 
-        ids.sort_by_key(|&f| (!spilling.contains(&f), self.formula(f).born));
+        let shifted = std::mem::take(&mut self.calc.shifted);
+        ids.sort_by_key(|&f| {
+            (
+                !spilling.contains(&f),
+                !shifted.contains(&f),
+                self.formula(f).born,
+            )
+        });
         for (rank, &fid) in ids.iter().enumerate() {
             self.formula_mut(fid).seq = rank as i64 + 1;
         }
@@ -1172,7 +1296,12 @@ impl Workbook {
             calc::mark_dirty(self, fid);
         }
         self.calc.dt_block = false;
+
+        let circ = (self.calc.circular_ref, self.calc.circ_iterating);
         let report = calc::recalc(self);
+        if manual {
+            (self.calc.circular_ref, self.calc.circ_iterating) = circ;
+        }
         if !manual {
             let stuck: Vec<FormulaId> = self
                 .calc
@@ -1205,9 +1334,32 @@ impl Workbook {
         }
         for (fid, old, was_blocked) in before {
             let addr = self.formula(fid).addr;
-            let blocked = self
-                .sheet(addr.sheet)
-                .is_some_and(|s| s.spills.is_blocked(fid));
+
+            let old_fits = match &old {
+                Value::Array(a) if a.rows > 1 || a.cols > 1 => {
+                    let r = Rect::new(
+                        addr.row,
+                        addr.col,
+                        addr.row + a.rows as u32 - 1,
+                        addr.col + a.cols as u32 - 1,
+                    );
+                    self.sheet(addr.sheet).is_some_and(|s| {
+                        !s.cells
+                            .iter_rect(r)
+                            .any(|(rr, cc, _)| (rr, cc) != (addr.row, addr.col))
+                            && !s.spills.active_overlapping(r)
+                    })
+                }
+                _ => false,
+            };
+
+            let had_spill = was_blocked.is_some()
+                || matches!(&old, Value::Array(a) if a.rows > 1 || a.cols > 1);
+            let blocked = !old_fits
+                && had_spill
+                && self
+                    .sheet(addr.sheet)
+                    .is_some_and(|s| s.spills.is_blocked(fid));
 
             let unblocked = match (was_blocked, self.formula(fid).spill) {
                 (Some(w), Some(n)) => w.rows() == n.rows() && w.cols() == n.cols(),
@@ -1230,6 +1382,24 @@ impl Workbook {
                     )),
                     _ => None,
                 };
+
+                let hit = rect.filter(|r| {
+                    self.sheet(addr.sheet).is_some_and(|s| {
+                        s.cells
+                            .iter_rect(*r)
+                            .any(|(rr, cc, _)| (rr, cc) != (addr.row, addr.col))
+                    })
+                });
+                if let Some(r) = hit {
+                    if let Some(sh) = self.sheet_mut(addr.sheet) {
+                        sh.spills.set_blocked(fid, r);
+                    }
+                    self.formula_mut(fid).spill = None;
+                    self.formula_mut(fid).value = Value::Error(crate::value::XlError::Spill);
+                    self.set_dirty(fid, true);
+                    self.calc.dirty_list.push(fid);
+                    continue;
+                }
                 if rect.is_some() || was_spilling {
                     if let Some(sh) = self.sheet_mut(addr.sheet) {
                         sh.spills.remove(fid);
@@ -1273,6 +1443,7 @@ impl Workbook {
             return Err(EditError::Compile("The paste area is too large.".into()));
         }
         self.names_follow(src_sheet, src, dst.sheet, true);
+        let orig_tables: Vec<Rect> = self.tables.iter().map(|t| t.rect).collect();
         let blocks = self.paste_blocks_plan(src_sheet, src, dst)?;
 
         self.data_tables_overwritten(
@@ -1344,6 +1515,7 @@ impl Workbook {
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
         self.settings.mode = crate::workbook::CalcMode::Manual;
+        let fmt_src = (src_sheet, src);
         for (to, what) in plan {
             match what {
                 Ok(v) => {
@@ -1361,8 +1533,33 @@ impl Workbook {
             report.changed.push(to);
         }
         self.paste_blocks(blocks);
+
+        if self
+            .tables
+            .iter()
+            .map(|t| t.rect)
+            .ne(orig_tables.iter().copied())
+        {
+            self.fmt_copy_block(fmt_src.0, fmt_src.1, dst);
+
+            if self.tables.len() == orig_tables.len() {
+                for ti in 0..self.tables.len() {
+                    let (t, o) = (self.tables[ti].rect, orig_tables[ti]);
+                    if self.tables[ti].sheet != dst.sheet
+                        || self.tables[ti].totals
+                        || t.r1 <= o.r1
+                        || (t.r0, t.c0, t.c1) != (o.r0, o.c0, o.c1)
+                    {
+                        continue;
+                    }
+                    for r in o.r1 + 1..=t.r1 {
+                        self.extend_row_formats(dst.sheet, Rect::new(t.r0, t.c0, r, t.c1));
+                    }
+                }
+            }
+        }
         self.settings.mode = mode;
-        if mode == crate::workbook::CalcMode::Automatic {
+        if mode == crate::workbook::CalcMode::Automatic && !self.defer_paste_recalc {
             let r = calc::recalc(self);
             report.evaluations = r.evaluations;
             report.circular = r.circular;
@@ -1397,8 +1594,27 @@ impl Workbook {
             dst.row + src.rows() - 1,
             dst.col + src.cols() - 1,
         );
-        if let Some((ti, rect, rows)) = self.paste_growth(dst.sheet, dest, None) {
-            self.grow_table_by_paste(ti, rect, rows);
+        if !self.no_auto_expand {
+            self.note_pasted_col_formats(dst.sheet, dest);
+        }
+
+        if let Some((ti, rect, rows, edge)) = Some(self.paste_growth(
+            dst.sheet,
+            dest,
+            None,
+            Some(&orig_tables),
+            Some((src_sheet, src)),
+            self.sheet_count() == 1,
+        ))
+        .flatten()
+        .filter(|g| !(self.no_auto_expand && g.2))
+        {
+            let info = crate::moves::PasteInfo {
+                block: dest,
+                carries_fmt: true,
+                protect_blanks: !edge,
+            };
+            self.grow_table_by_paste(ti, rect, rows, Some(info));
         }
         Ok(calc::finish_report(report))
     }

@@ -34,7 +34,9 @@ fn rank(v: &Value) -> u8 {
         Value::Text(_) => 1,
         Value::Bool(_) => 2,
         Value::Error(_) => 3,
-        _ => 4,
+
+        Value::Array(_) => 4,
+        _ => 5,
     }
 }
 
@@ -54,7 +56,7 @@ fn cmp_asc(a: &Value, b: &Value, match_case: bool) -> Ordering {
 }
 
 fn cmp_key(a: &Value, b: &Value, desc: bool, match_case: bool) -> Ordering {
-    let (ab, bb) = (rank(a) == 4, rank(b) == 4);
+    let (ab, bb) = (rank(a) == 5, rank(b) == 5);
     if ab || bb {
         return ab.cmp(&bb);
     }
@@ -176,7 +178,17 @@ impl Workbook {
             } else {
                 (rect.r0 + line, rect.c0 + key)
             };
-            self.value(CellAddr::new(sheet, r, c))
+            let a = CellAddr::new(sheet, r, c);
+            if let (Some(f), Some(sh)) = (self.formula_at(a), self.sheet(sheet)) {
+                if sh.spills.is_blocked(f) {
+                    return Value::Array(std::sync::Arc::new(crate::value::Array::new(
+                        1,
+                        1,
+                        vec![Value::Blank],
+                    )));
+                }
+            }
+            self.value(a)
         };
         let keyvals: Vec<Vec<Value>> = (0..n)
             .map(|i| {
@@ -214,14 +226,76 @@ impl Workbook {
         (lines, u32::from(spec.header && !spec.by_columns))
     }
 
+    pub fn sort_table(&mut self, name: &str, spec: &SortSpec) -> Result<RecalcReport, EditError> {
+        let ti = self.table_position(name)?;
+        let t = &self.tables[ti];
+        let (sheet, mut rect) = (t.sheet, t.rect);
+        if t.headers {
+            rect.r0 += 1;
+        }
+        if t.totals_row().is_some() {
+            rect.r1 -= 1;
+        }
+        let r = self.sort_range(sheet, rect, spec);
+        if r.is_ok() {
+            if let Ok(ti) = self.table_position(name) {
+                let t = &mut self.tables[ti];
+                t.sort_state = t.headers && t.show_filter;
+            }
+        }
+        r
+    }
+
     pub fn sort_range(
         &mut self,
         sheet: SheetId,
         rect: Rect,
         spec: &SortSpec,
     ) -> Result<RecalcReport, EditError> {
-        let r = self.sort_range_impl(sheet, rect, spec)?;
+        let touch = self.sort_touch_row(sheet, rect);
+        let r = self.sort_range_body(sheet, rect, spec);
+        if r.is_ok() {
+            if let Some(t) = touch {
+                self.view_touch_row_pub(sheet, t);
+            }
+        }
+        r
+    }
 
+    fn sort_touch_row(&self, sheet: SheetId, rect: Rect) -> Option<u32> {
+        let sh = self.sheet(sheet)?;
+        let top = rect.r1.min(self.view_used_r1(sheet)?);
+        let last = (rect.r0..=top)
+            .rev()
+            .find(|&r| (rect.c0..=rect.c1).any(|c| sh.cells.get(r, c).is_some()))?;
+        let vis = (rect.r0..=last)
+            .rev()
+            .find(|&r| !self.row_hidden(sheet, r))?;
+        Some(vis + 1)
+    }
+
+    fn sort_range_body(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &SortSpec,
+    ) -> Result<RecalcReport, EditError> {
+        if self
+            .data_tables
+            .iter()
+            .any(|t| t.sheet == sheet && t.interior().intersects(&rect))
+        {
+            return Err(EditError::Compile(crate::datatable::PART_ERROR.into()));
+        }
+        if self.tables.iter().any(|t| t.sheet == sheet && t.totals) {
+            self.snap_totals_before_sort(sheet, rect);
+        }
+        let r = self.sort_range_impl(sheet, rect, spec);
+
+        let merge_refused = matches!(&r, Err(EditError::Compile(m)) if m.contains("merged cells"));
+        if sheet == self.active || (r.is_err() && !merge_refused) {
+            return r;
+        }
         let (dr, dc) = if spec.header {
             if spec.by_columns {
                 (0, 1)
@@ -232,7 +306,9 @@ impl Workbook {
             (0, 0)
         };
         self.select(sheet, rect.r0 + dr, rect.c0 + dc);
-        Ok(r)
+        self.fill_selected
+            .insert(sheet, (rect.r0 + dr, rect.c0 + dc));
+        r
     }
 
     fn sort_range_impl(
@@ -249,6 +325,14 @@ impl Workbook {
             ));
         }
         crate::structure::range_too_large(&rect)?;
+
+        if self
+            .merges(sheet)
+            .iter()
+            .any(|m| crate::cse::inside(&rect, m))
+        {
+            return Ok(RecalcReport::default());
+        }
         self.guard_merges_sort(sheet, rect)?;
         let width = if spec.by_columns {
             rect.rows()
@@ -259,7 +343,32 @@ impl Workbook {
             return Err(EditError::Compile("sort key is outside the range".into()));
         }
         let (_, skip) = Self::sort_lines(rect, spec);
-        let order = self.sort_order(sheet, rect, spec);
+        let mut order = self.sort_order(sheet, rect, spec);
+
+        let hidden_line = |line: u32| {
+            if spec.by_columns {
+                self.col_hidden(sheet, rect.c0 + line)
+            } else {
+                self.row_hidden(sheet, rect.r0 + line)
+            }
+        };
+        if (0..order.len() as u32).any(|j| hidden_line(skip + j)) {
+            let mut vis = order
+                .iter()
+                .copied()
+                .filter(|&s| !hidden_line(skip + s))
+                .collect::<Vec<_>>()
+                .into_iter();
+            order = (0..order.len() as u32)
+                .map(|j| {
+                    if hidden_line(skip + j) {
+                        j
+                    } else {
+                        vis.next().unwrap()
+                    }
+                })
+                .collect();
+        }
         let entries: Vec<(u32, u32, Entry)> = self
             .sheet(sheet)
             .unwrap()
@@ -272,7 +381,11 @@ impl Workbook {
             .enumerate()
             .map(|(i, e)| ((e.0, e.1), i))
             .collect();
-        let mut plan: Vec<(CellAddr, Result<Value, (Arc<Formula>, String, Value)>)> = Vec::new();
+        #[allow(clippy::type_complexity)]
+        let mut plan: Vec<(
+            CellAddr,
+            Result<Value, (Arc<Formula>, String, Value, Option<(u32, u32)>)>,
+        )> = Vec::new();
         let mut fmt_pairs: Vec<(CellAddr, CellAddr)> = Vec::new();
         for (j, &src_line) in order.iter().enumerate() {
             let (dst_line, src_line) = (skip + j as u32, skip + src_line);
@@ -317,26 +430,42 @@ impl Workbook {
                                 }),
                                 text,
                                 f.value_at(f.addr.row, f.addr.col),
+                                f.array,
                             )),
                         ));
                     }
                 }
             }
         }
-        self.fmt_copy_pairs(&fmt_pairs);
+        self.fmt_move_pairs(&fmt_pairs);
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
-        let any_cells = !entries.is_empty();
+
+        let used = self
+            .sheet(sheet)
+            .unwrap()
+            .cells
+            .sticky_bounds()
+            .and_then(|u| u.intersection(&rect))
+            .map_or(0, |i| i.rows() as u64 * i.cols() as u64);
+        let any_cells = if rect.is_cell() {
+            !entries.is_empty()
+        } else {
+            used >= 2
+        };
         self.settings.mode = CalcMode::Manual;
         for (to, what) in plan {
             match what {
                 Ok(v) => {
                     self.set_value_raw(to, v);
                 }
-                Err((formula, text, shown)) => {
+                Err((formula, text, shown, array)) => {
                     self.set_compiled_formula(to, formula, text);
                     if let Some(fid) = self.formula_at(to) {
                         self.formula_mut(fid).value = shown;
+                        if array == Some((1, 1)) {
+                            self.formula_mut(fid).array = array;
+                        }
                     }
                 }
             }

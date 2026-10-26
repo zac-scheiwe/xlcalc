@@ -146,7 +146,14 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
             sheet,
         } => {
             if let Some(sh) = sheet {
+                let book_level = matches!(sh, SheetRef::Sheet(id)
+                    if wb.sheet(*id).is_some()
+                        && wb.names.get(key, Some(*id)).is_none()
+                        && !wb.names.was_deleted(key, *id)
+                        && wb.names.get(key, None).is_some());
                 match sheet_prefix(wb, sh).as_str() {
+                    _ if book_level => s.push_str("Book1!"),
+
                     "#REF!" => s.push_str("Book1!"),
                     p => s.push_str(p),
                 }
@@ -277,8 +284,14 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         }
         Node::Lambda(def) => {
             s.push_str("LAMBDA(");
-            for p in &def.params {
-                s.push_str(p);
+            for (i, p) in def.params.iter().enumerate() {
+                if i >= def.required {
+                    s.push('[');
+                    s.push_str(p);
+                    s.push(']');
+                } else {
+                    s.push_str(p);
+                }
                 s.push(',');
             }
             write(wb, &def.body, host, s);

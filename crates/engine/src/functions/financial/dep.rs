@@ -2,7 +2,7 @@ use super::atp::{self, Arg};
 use super::days;
 use super::xmath;
 use crate::eval::EvalCtx;
-use crate::functions::args::{boolean, num, opt_num, val, R};
+use crate::functions::args::{boolean, num, opt_num, sfix, val, R};
 use crate::functions::math::{round_decimal, RoundMode};
 use crate::value::{Value, XlError};
 
@@ -94,7 +94,8 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             num(ctx, &a[2])?,
             num(ctx, &a[3])?,
         );
-        let month = opt_num(ctx, a, 4, 12.0)?.trunc();
+
+        let month = sfix(opt_num(ctx, a, 4, 12.0)?) as f64;
         if cost < 0.0
             || salvage < 0.0
             || life <= 0.0
@@ -104,10 +105,16 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             return Err(XlError::Num);
         }
 
-        let pf = period.floor().max(1.0);
-        if period.floor() > life + if month == 12.0 { 0.0 } else { 1.0 } || period > life + 1.0 {
+        let fixp = |x: f64| -> i32 {
+            let t = x.abs().trunc();
+            (if t < 4294967296.0 { t as u32 } else { u32::MAX }) as i32
+        };
+        let (life_i, period_i) = (fixp(life), fixp(period));
+        let partial = period_i > life_i;
+        if partial && (month == 12.0 || period_i > life_i.wrapping_add(1)) {
             return Err(XlError::Num);
         }
+        let pf = (period_i as f64).max(1.0);
         if cost == 0.0 {
             return Ok(Value::Number(0.0));
         }
@@ -121,26 +128,32 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         }
         let mut book = sub(cost, first);
         let mut d = 0.0;
-        let imax = life.min(pf).floor() as i64;
+        let imax = (life_i as f64).min(pf) as i64;
         for _ in 2..=imax {
             d = mul(book, rate);
             book = sub(book, d);
         }
-        if pf > life {
+        if partial {
             d = mul(mul(rate, div(book, 12.0)), 12.0 - month);
         }
         finite(d).map(Value::num)
     })())
 }
 
-fn vdb_switch(cost: f64, salvage: f64, life: f64, start: f64, end: f64, factor: f64) -> f64 {
-    use crate::x87::{add, div, mul, sub};
+fn vdb_switch(cost: f64, salvage: f64, life: f64, start: f64, end: f64, factor: f64) -> R<f64> {
+    let f = std::cell::RefCell::new(crate::x87::MpFlag::default());
+    let add = |a: f64, b: f64| f.borrow_mut().add(a, b);
+    let sub = |a: f64, b: f64| f.borrow_mut().add(a, -b);
+    let mul = |a: f64, b: f64| f.borrow_mut().mul(a, b);
+    let div = |a: f64, b: f64| f.borrow_mut().div(a, b);
+    let done = |v: f64| f.borrow().result(v);
     let rate = div(factor, life);
     let whole = start.floor();
     let raw1 = ddb_core(cost, salvage, life, 1.0, factor);
     let sln1 = div(sub(cost, salvage), life);
     if sub(sln1, raw1) > 0.0 {
-        return mul(sln1, sub(end, start));
+        let v = mul(sln1, sub(end, start));
+        return done(v);
     }
     let phase = sub(start, whole);
     let mut book = sub(cost, mul(phase, raw1));
@@ -149,14 +162,19 @@ fn vdb_switch(cost: f64, salvage: f64, life: f64, start: f64, end: f64, factor: 
     let period = |book: f64, life_rem: f64| {
         let raw = mul(book, rate);
         let left = sub(book, salvage);
-        let d = if sub(left, raw) < 0.0 { left } else { raw };
-        (d, raw, div(left, life_rem))
+        if sub(left, raw) < 0.0 {
+            (left, raw, None)
+        } else {
+            (raw, raw, Some(div(left, life_rem)))
+        }
     };
+    let switch = |s: Option<f64>, raw: f64| s.is_some_and(|s| sub(s, raw) > 0.0);
     let mut k = 0.0;
     while k < whole {
         let (d, raw, s) = period(book, life_rem);
-        if sub(s, raw) > 0.0 {
-            return mul(s, sub(end, start));
+        if switch(s, raw) {
+            let v = mul(s.unwrap(), sub(end, start));
+            return done(v);
         }
         book = sub(book, d);
         life_rem = sub(life_rem, 1.0);
@@ -166,8 +184,9 @@ fn vdb_switch(cost: f64, salvage: f64, life: f64, start: f64, end: f64, factor: 
     let mut cur = start;
     loop {
         let (d, raw, s) = period(book, life_rem);
-        if sub(s, raw) > 0.0 {
-            return add(total, mul(s, sub(end, cur)));
+        if switch(s, raw) {
+            let v = add(total, mul(s.unwrap(), sub(end, cur)));
+            return done(v);
         }
         let rem = sub(end, cur);
         if sub(rem, 1.0) > 0.0 {
@@ -176,7 +195,8 @@ fn vdb_switch(cost: f64, salvage: f64, life: f64, start: f64, end: f64, factor: 
             cur = add(cur, 1.0);
             life_rem = sub(life_rem, 1.0);
         } else {
-            return add(total, mul(d, rem));
+            let v = add(total, mul(d, rem));
+            return done(v);
         }
     }
 }
@@ -224,7 +244,7 @@ pub fn vdb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
                 i += 1.0;
             }
         } else {
-            result = vdb_switch(cost, salvage, life, start, end, factor);
+            result = vdb_switch(cost, salvage, life, start, end, factor)?;
         }
         finite(result).map(Value::num)
     })())
@@ -324,7 +344,7 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let halves = n - 2.0 >= 1.0;
         let d0 = yf * rate * m.cost;
 
-        let d0 = round0(d0).min(m.cost - m.salvage);
+        let d0 = round0(round0(d0).min(m.cost - m.salvage));
         if m.period == 0.0 {
             return Ok(d0);
         }

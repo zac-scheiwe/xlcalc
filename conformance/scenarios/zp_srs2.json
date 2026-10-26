@@ -1,0 +1,278 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=NA()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=1/0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=SQRT(-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "=#REF!"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "=xyzq()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "=\"a\"+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "=A1 B1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B8",
+   "input": "=SEQUENCE(2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B9",
+   "input": "=LAMBDA(x,x)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B10",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "11"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B11",
+   "input": "=1/0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B12",
+   "input": "=NA()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=NA()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=1/0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "=SQRT(-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=#REF!"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E5",
+   "input": "=xyzq()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E6",
+   "input": "=\"a\"+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E7",
+   "input": "=A1 B1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D8",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E8",
+   "input": "=SEQUENCE(2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D9",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E9",
+   "input": "=LAMBDA(x,x)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D10",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E10",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D11",
+   "input": "11"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E11",
+   "input": "=1/0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D12",
+   "input": "12"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E12",
+   "input": "=NA()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B9",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E9",
+   "input": "x"
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!A1:B12",
+   "keys": [
+    {
+     "key": 2,
+     "order": "asc"
+    }
+   ]
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!D1:E12",
+   "keys": [
+    {
+     "key": 2,
+     "order": "desc"
+    }
+   ]
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E12"
+  }
+ ]
+}

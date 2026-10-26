@@ -21,7 +21,15 @@ impl Dec {
         if x == 0.0 || !x.is_finite() {
             return Dec::zero();
         }
-        let s = format!("{:.14e}", x);
+
+        let long = format!("{:.40e}", x);
+        let (lm, le) = long.split_once('e').unwrap();
+
+        let s = if lm.as_bytes()[16] == b'5' && lm[17..].bytes().all(|b| b == b'0') {
+            format!("{}e{le}", &lm[..16])
+        } else {
+            format!("{:.14e}", x)
+        };
         let (m, e) = s.split_once('e').unwrap();
         let exp: i32 = e.parse().unwrap();
         let mut digits: Vec<u8> = m

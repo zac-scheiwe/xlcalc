@@ -32,7 +32,7 @@ fn n_arg(ctx: &EvalCtx, ops: &[Operand], i: usize, d: f64) -> R<f64> {
     }
 }
 
-fn check_size(rows: f64, cols: f64) -> R<(u32, u32)> {
+fn check_size(ctx: &mut EvalCtx, rows: f64, cols: f64) -> R<(u32, u32)> {
     if rows < 0.0 || cols < 0.0 {
         return Err(XlError::Value);
     }
@@ -43,7 +43,7 @@ fn check_size(rows: f64, cols: f64) -> R<(u32, u32)> {
     if rows < 1.0 || cols < 1.0 {
         return Err(XlError::Calc);
     }
-    if rows * cols > MAX_ARRAY_CELLS as f64 {
+    if ctx.too_big(rows * cols) || rows * cols > MAX_ARRAY_CELLS as f64 {
         return Err(XlError::Num);
     }
     Ok((rows as u32, cols as u32))
@@ -51,11 +51,11 @@ fn check_size(rows: f64, cols: f64) -> R<(u32, u32)> {
 
 fn sequence(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     opval((|| {
-        let rows = n_arg(ctx, ops, 0, 1.0)?.trunc();
-        let cols = n_arg(ctx, ops, 1, 1.0)?.trunc();
+        let rows = sfix(n_arg(ctx, ops, 0, 1.0)?) as f64;
+        let cols = sfix(n_arg(ctx, ops, 1, 1.0)?) as f64;
         let start = n_arg(ctx, ops, 2, 1.0)?;
         let step = n_arg(ctx, ops, 3, 1.0)?;
-        let (rows, cols) = check_size(rows, cols)?;
+        let (rows, cols) = check_size(ctx, rows, cols)?;
 
         let mut next = start;
         Ok(array_always(rows, cols, |_, _| {
@@ -68,8 +68,8 @@ fn sequence(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 fn randarray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     opval((|| {
-        let rows = n_arg(ctx, ops, 0, 1.0)?.trunc();
-        let cols = n_arg(ctx, ops, 1, 1.0)?.trunc();
+        let rows = sfix(n_arg(ctx, ops, 0, 1.0)?) as f64;
+        let cols = sfix(n_arg(ctx, ops, 1, 1.0)?) as f64;
         let lo = n_arg(ctx, ops, 2, 0.0)?;
         let hi = n_arg(ctx, ops, 3, 1.0)?;
         let whole = match ops.get(4) {
@@ -77,7 +77,7 @@ fn randarray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Some(Operand::Val(v)) => boolean(v)?,
             Some(_) => return Err(XlError::Value),
         };
-        let (rows, cols) = check_size(rows, cols)?;
+        let (rows, cols) = check_size(ctx, rows, cols)?;
         if lo > hi || (whole && (lo.fract() != 0.0 || hi.fract() != 0.0)) {
             return Err(XlError::Value);
         }
@@ -132,14 +132,36 @@ fn lambda_arg(op: &Operand, arity: usize) -> R<Arc<LambdaValue>> {
     }
 }
 
-fn call_scalar(ctx: &mut EvalCtx, f: &LambdaValue, args: Vec<Operand>) -> R<Value> {
+fn blank_in_used(ctx: &EvalCtx, out: &Operand) -> bool {
+    match out {
+        Operand::Ref(r) => r.single().is_some_and(|a| {
+            a.rect.is_cell()
+                && ctx
+                    .wb
+                    .used_range(a.sheet)
+                    .is_some_and(|u| u.contains(a.rect.r0, a.rect.c0))
+        }),
+        _ => false,
+    }
+}
+
+fn call_scalar(
+    ctx: &mut EvalCtx,
+    f: &LambdaValue,
+    args: Vec<Operand>,
+    hard: &mut bool,
+) -> R<Value> {
     let out = invoke(ctx, f, args);
+    let in_used = blank_in_used(ctx, &out);
     let v = match ctx.deref(out) {
         Value::Array(a) if a.rows == 1 && a.cols == 1 => a.data[0].clone(),
         Value::Array(_) => return Err(XlError::Calc),
         v => v,
     };
 
+    if matches!(v, Value::Blank) && !in_used {
+        *hard = true;
+    }
     if matches!(v, Value::Blank) {
         let value_making = match &f.def.body {
             crate::formula::Node::Unary(..) => true,
@@ -169,6 +191,20 @@ fn map(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     opval((|| {
         let (arrs, f) = ops.split_at(ops.len() - 1);
         let n_arrays = arrs.len();
+        let op_list: Vec<Operand> = arrs.to_vec();
+
+        if let Operand::Val(Value::Error(e)) = &arrs[0] {
+            return Err(*e);
+        }
+        if let Operand::Val(Value::Error(e)) = &f[0] {
+            return Err(*e);
+        }
+        if arrs[1..]
+            .iter()
+            .any(|o| matches!(o, Operand::Val(Value::Error(_))))
+        {
+            return Err(XlError::Value);
+        }
 
         for (i, op) in arrs.iter().enumerate() {
             match op {
@@ -179,17 +215,27 @@ fn map(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 _ => {}
             }
         }
-        let op_list: Vec<Operand> = arrs.to_vec();
+
+        if let Operand::Val(Value::Lambda(l)) = &f[0] {
+            if l.arity() != n_arrays {
+                let shape = |o: &Operand| match o {
+                    Operand::Ref(r) => r
+                        .areas()
+                        .first()
+                        .map_or((1, 1), |a| (a.rect.rows(), a.rect.cols())),
+                    Operand::Val(Value::Array(a)) => (a.rows, a.cols),
+                    _ => (1, 1),
+                };
+                let rows = op_list.iter().map(|o| shape(o).0).max().unwrap();
+                let cols = op_list.iter().map(|o| shape(o).1).max().unwrap();
+                return Ok(Array::filled(rows, cols, Value::Error(XlError::NA)).into_value());
+            }
+        }
         let arrs = arrays(ctx, arrs)?;
         let rows = arrs.iter().map(|a| a.rows).max().unwrap();
         let cols = arrs.iter().map(|a| a.cols).max().unwrap();
-
-        let f = match &f[0] {
-            Operand::Val(Value::Lambda(l)) if l.arity() != n_arrays => {
-                return Ok(Array::filled(rows, cols, Value::Error(XlError::NA)).into_value());
-            }
-            other => lambda_arg(other, n_arrays)?,
-        };
+        let f = lambda_arg(&f[0], n_arrays)?;
+        let mut hard = false;
         let mut data = Vec::with_capacity(rows as usize * cols as usize);
         for r in 0..rows {
             for c in 0..cols {
@@ -204,13 +250,13 @@ fn map(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     .zip(op_list.iter())
                     .map(|(a, o)| elem_arg(o, a, lin.min(a.data.len() - 1)))
                     .collect();
-                data.push(call_scalar(ctx, &f, args)?);
+                data.push(call_scalar(ctx, &f, args, &mut hard)?);
                 if ctx.interrupted() {
                     return Err(XlError::Calc);
                 }
             }
         }
-        Ok(Array::new(rows, cols, data).from_lambda().into_value())
+        Ok(Array::new(rows, cols, data).with_lam(hard).into_value())
     })())
 }
 
@@ -243,6 +289,7 @@ fn reduce_scan(ctx: &mut EvalCtx, ops: &[Operand], scan: bool) -> Operand {
             (init, 0)
         };
         let mut out = Vec::with_capacity(if scan { arr.len() } else { 0 });
+        let mut hard = false;
         if scan && omitted {
             out.push(acc.clone());
         }
@@ -252,7 +299,9 @@ fn reduce_scan(ctx: &mut EvalCtx, ops: &[Operand], scan: bool) -> Operand {
                 &f,
                 vec![Operand::Val(acc.clone()), elem_arg(&ops[1], &arr, i)],
             );
+            let in_used = blank_in_used(ctx, &res);
             acc = ctx.deref(res);
+            hard |= matches!(acc, Value::Blank) && !in_used;
             if ctx.interrupted() {
                 return Err(XlError::Calc);
             }
@@ -266,7 +315,7 @@ fn reduce_scan(ctx: &mut EvalCtx, ops: &[Operand], scan: bool) -> Operand {
         }
         Ok(if scan {
             Array::new(arr.rows, arr.cols, out)
-                .from_lambda()
+                .with_lam(hard || omitted)
                 .into_value()
         } else {
             acc
@@ -289,6 +338,9 @@ fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         {
             return Err(XlError::Value);
         }
+        if ctx.too_big(rows * cols) {
+            return Err(XlError::Num);
+        }
         if rows > 1048576.0
             || cols > 16384.0
             || rows * cols > crate::workbook::MAX_ARRAY_CELLS as f64
@@ -300,6 +352,7 @@ fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             return Ok(Array::filled(rows, cols, Value::Error(XlError::NA)).into_value());
         }
         let f = lambda_arg(&ops[2], 2)?;
+        let mut hard = false;
         let mut data = Vec::with_capacity(rows as usize * cols as usize);
         for r in 0..rows {
             for c in 0..cols {
@@ -307,13 +360,13 @@ fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     Operand::Val(Value::Number(r as f64 + 1.0)),
                     Operand::Val(Value::Number(c as f64 + 1.0)),
                 ];
-                data.push(call_scalar(ctx, &f, args)?);
+                data.push(call_scalar(ctx, &f, args, &mut hard)?);
                 if ctx.interrupted() {
                     return Err(XlError::Calc);
                 }
             }
         }
-        Ok(Array::new(rows, cols, data).from_lambda().into_value())
+        Ok(Array::new(rows, cols, data).with_lam(hard).into_value())
     })())
 }
 
@@ -342,6 +395,7 @@ fn by_line(ctx: &mut EvalCtx, ops: &[Operand], by_row: bool) -> Operand {
             Operand::Ref(r) => r.single().copied(),
             _ => None,
         };
+        let mut hard = false;
         let mut data = Vec::with_capacity(n as usize);
         for i in 0..n {
             let line = if by_row {
@@ -373,7 +427,7 @@ fn by_line(ctx: &mut EvalCtx, ops: &[Operand], by_row: bool) -> Operand {
                 }
                 _ => Operand::Val(line.into_value()),
             };
-            data.push(call_scalar(ctx, &f, vec![arg])?);
+            data.push(call_scalar(ctx, &f, vec![arg], &mut hard)?);
             if ctx.interrupted() {
                 return Err(XlError::Calc);
             }
@@ -383,7 +437,7 @@ fn by_line(ctx: &mut EvalCtx, ops: &[Operand], by_row: bool) -> Operand {
         } else {
             Array::row(data)
         }
-        .from_lambda()
+        .with_lam(hard)
         .into_value())
     })())
 }
@@ -464,7 +518,7 @@ pub fn stack(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operand {
                 arrs.iter().map(|a| a.cols).sum::<u32>(),
             )
         };
-        check_size(rows as f64, cols as f64)?;
+        check_size(ctx, rows as f64, cols as f64)?;
         let mut data = vec![Value::Error(XlError::NA); rows as usize * cols as usize];
         let mut offset = 0;
         for a in &arrs {

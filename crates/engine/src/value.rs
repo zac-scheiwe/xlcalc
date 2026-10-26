@@ -269,8 +269,8 @@ impl Array {
         }
     }
 
-    pub fn from_lambda(mut self) -> Array {
-        self.lam_blank = self.data.iter().any(|v| matches!(v, Value::Blank));
+    pub fn with_lam(mut self, hard: bool) -> Array {
+        self.lam_blank = hard && self.data.iter().any(|v| matches!(v, Value::Blank));
         self
     }
 

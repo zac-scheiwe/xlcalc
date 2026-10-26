@@ -12,13 +12,22 @@ use crate::eval::{EvalCtx, Operand};
 macro_rules! atp_fn {
     ($name:literal, $min:expr, $max:expr, $f:path) => {{
         fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-            atp::call(ctx, ops, &[], $f)
+            atp::call(ctx, ops, &[], true, $f)
         }
         args($name, $min, $max, "R", wrapper)
     }};
     ($name:literal, $min:expr, $max:expr, $f:path, [$($arr:expr),*]) => {{
         fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-            atp::call(ctx, ops, &[$($arr),*], $f)
+            atp::call(ctx, ops, &[$($arr),*], true, $f)
+        }
+        args($name, $min, $max, "R", wrapper)
+    }};
+}
+
+macro_rules! atp_fa {
+    ($name:literal, $min:expr, $max:expr, $f:path) => {{
+        fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+            atp::call(ctx, ops, &[], false, $f)
         }
         args($name, $min, $max, "R", wrapper)
     }};
@@ -54,15 +63,17 @@ pub const DEFS: &[FnDef] = &[
     atp_fn!("AMORLINC", 6, 7, dep::amorlinc),
     atp_fn!("DOLLARDE", 2, 2, dep::dollarde),
     atp_fn!("DOLLARFR", 2, 2, dep::dollarfr),
-    atp_fn!("YEARFRAC", 2, 3, days::yearfrac),
+    args("YEARFRAC", 2, 3, "R", |c, o| {
+        atp::call_ex(c, o, &[], true, true, days::yearfrac)
+    }),
     scalar("DAYS360", 2, 3, days::days360),
     atp_fn!("COUPDAYBS", 3, 4, days::coupdaybs),
     atp_fn!("COUPDAYS", 3, 4, days::coupdays),
     atp_fn!("COUPDAYSNC", 3, 4, days::coupdaysnc),
     atp_fn!("COUPNCD", 3, 4, days::coupncd),
-    atp_fn!("COUPNUM", 3, 4, days::coupnum),
+    atp_fa!("COUPNUM", 3, 4, days::coupnum),
     atp_fn!("COUPPCD", 3, 4, days::couppcd),
-    atp_fn!("ACCRINT", 6, 8, bonds::accrint),
+    atp_fa!("ACCRINT", 6, 8, bonds::accrint),
     atp_fn!("ACCRINTM", 4, 5, bonds::accrintm),
     atp_fn!("DISC", 4, 5, bonds::disc),
     atp_fn!("INTRATE", 4, 5, bonds::intrate),
@@ -71,9 +82,9 @@ pub const DEFS: &[FnDef] = &[
     atp_fn!("YIELDDISC", 4, 5, bonds::yielddisc),
     atp_fn!("PRICEMAT", 5, 6, bonds::pricemat),
     atp_fn!("YIELDMAT", 5, 6, bonds::yieldmat),
-    atp_fn!("TBILLEQ", 3, 3, bonds::tbilleq),
-    atp_fn!("TBILLPRICE", 3, 3, bonds::tbillprice),
-    atp_fn!("TBILLYIELD", 3, 3, bonds::tbillyield),
+    atp_fa!("TBILLEQ", 3, 3, bonds::tbilleq),
+    atp_fa!("TBILLPRICE", 3, 3, bonds::tbillprice),
+    atp_fa!("TBILLYIELD", 3, 3, bonds::tbillyield),
     atp_fn!("PRICE", 6, 7, bonds::price),
     atp_fn!("YIELD", 6, 7, bonds::yield_),
     atp_fn!("DURATION", 5, 6, bonds::duration),
