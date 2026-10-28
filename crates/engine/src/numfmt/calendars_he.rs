@@ -728,10 +728,18 @@ fn table() -> &'static Table {
             t.year.push(y);
             t.month.push(m);
             t.day0.push(if second.contains(&i) { 2 } else { 1 });
-            s += exc
+            let len = exc
                 .get(&i)
                 .copied()
                 .unwrap_or(if bit(lens, i) { 30 } else { 29 });
+
+            if len >= 59 {
+                t.start.push(s + len - 30);
+                t.year.push(y);
+                t.month.push(m + 1);
+                t.day0.push(1);
+            }
+            s += len;
         }
         let mut longest = std::collections::HashMap::new();
         for (&y, &m) in t.year.iter().zip(&t.month) {

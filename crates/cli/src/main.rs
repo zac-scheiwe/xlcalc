@@ -4,11 +4,10 @@ mod refs;
 use std::io::{self, BufRead, IsTerminal, Write};
 use std::time::Instant;
 
-use xlcalc::address::col_to_letters;
-use xlcalc::autofill::FillType;
-use xlcalc::fillseries::{DateUnit, SeriesSpec, SeriesType};
-use xlcalc::number::format_general;
-use xlcalc::{CalcMode, CellAddr, RecalcReport, SheetId, Value, Workbook};
+use xlcalc::{
+    col_to_letters, format_general, CalcMode, CellAddr, DateUnit, FillType, RecalcReport,
+    SeriesSpec, SeriesType, SheetId, Value, Workbook,
+};
 
 const HELP: &str = "\
 Cells (A1 or absolute R1C1 references, optionally Sheet2!A1 or 'My Sheet'!A1)
@@ -40,6 +39,10 @@ Editing
   series A1:A10 [rows|cols] [linear|growth|date|autofill] [day|weekday|month|year] [step=N] [stop=N] [trend]
                       Fill Series (Range.DataSeries) from the first cell of each column or row
   sort A1:C10 2 desc 1 [header] [cols] [matchcase]   sort by key columns (1 = first), asc/desc each
+  replace A1:C10 \"what\" \"with\" [whole] [matchcase] [cols]   Find & Replace in the range (one cell = the
+                      whole sheet); * ? ~ wildcards; replaces in the cell text as the formula bar shows it
+  dedup A1:C10 1 2 [header]   remove duplicate rows by key columns (1 = first; none = no-op), like
+                      Range.RemoveDuplicates
   format A1:B5 0.00   set a number format
   precision [on|off]  precision as displayed (rounds stored numbers to their format)
   paste A1:B3 D1[:E4] [values|formulas] [add|sub|mul|div] [skipblanks] [transpose]
@@ -172,10 +175,8 @@ impl Console {
                 None => return println!("  bad range"),
             },
             None => {
-                let used = match (sh.cells.bounds(), sh.spills.bounds()) {
-                    (Some(a), Some(b)) => a.union_bounds(&b),
-                    (Some(a), None) | (None, Some(a)) => a,
-                    (None, None) => return println!("  (empty sheet)"),
+                let Some(used) = sh.used_bounds() else {
+                    return println!("  (empty sheet)");
                 };
                 xlcalc::Rect::new(0, 0, used.r1.min(39), used.c1.min(11))
             }
@@ -211,7 +212,7 @@ impl Console {
     fn bench(&mut self, n: u32) {
         let mut wb = Workbook::new();
         let s = wb.sheet_at(0).id;
-        wb.settings.mode = CalcMode::Manual;
+        wb.set_mode(CalcMode::Manual);
         let t0 = Instant::now();
         wb.set_input(CellAddr::new(s, 0, 0), "1").unwrap();
         for r in 1..n {
@@ -224,7 +225,7 @@ impl Console {
             .unwrap();
         }
         let build = t0.elapsed();
-        wb.settings.mode = CalcMode::Automatic;
+        wb.set_mode(CalcMode::Automatic);
         let t1 = Instant::now();
         let rep = wb.set_input(CellAddr::new(s, 0, 0), "2").unwrap();
         let recalc = t1.elapsed();
@@ -253,7 +254,7 @@ impl Console {
         let mut wb = Workbook::new();
         let s = wb.sheet_at(0).id;
         let a = |r: u32, c: u32| CellAddr::new(s, r, c);
-        wb.settings.mode = CalcMode::Manual;
+        wb.set_mode(CalcMode::Manual);
         for r in 0..n {
             wb.set_value(a(r, 0), Value::Number(r as f64 * 0.5));
             wb.set_formula(a(r, 1), &format!("=A{}*2", r + 1)).unwrap();
@@ -268,18 +269,18 @@ impl Console {
             &format!("=VLOOKUP({},A:B,2,FALSE)", (n - 1) as f64 * 0.5),
         )
         .unwrap();
-        wb.settings.mode = CalcMode::Automatic;
+        wb.set_mode(CalcMode::Automatic);
         let nf = n as f64;
         time(
             &format!("full recalc ({} formulas + 5 aggregates)", n),
             nf * 6.0,
             &mut || wb.full_recalc(),
         );
-        wb.settings.threads = 1;
+        wb.set_threads(1);
         time("  …the same on one thread", nf * 6.0, &mut || {
             wb.full_recalc()
         });
-        wb.settings.threads = 0;
+        wb.set_threads(0);
         time(
             "change A1 (fan-out to B1 and the aggregates)",
             nf * 5.0,
@@ -287,13 +288,13 @@ impl Console {
         );
         let mut wb2 = Workbook::new();
         let s2 = wb2.sheet_at(0).id;
-        wb2.settings.mode = CalcMode::Manual;
+        wb2.set_mode(CalcMode::Manual);
         wb2.set_value(CellAddr::new(s2, 0, 0), Value::Number(1.0));
         for r in 1..n {
             wb2.set_formula(CellAddr::new(s2, r, 0), &format!("=A{}+1", r))
                 .unwrap();
         }
-        wb2.settings.mode = CalcMode::Automatic;
+        wb2.set_mode(CalcMode::Automatic);
         time(
             &format!("chain of {} dependent formulas", n),
             nf,
@@ -303,7 +304,7 @@ impl Console {
         let m = (n / 10).max(1);
         let mut wb4 = Workbook::new();
         let s4 = wb4.sheet_at(0).id;
-        wb4.settings.mode = CalcMode::Manual;
+        wb4.set_mode(CalcMode::Manual);
         for r in 0..200 {
             wb4.set_value(CellAddr::new(s4, r, 0), Value::Number(r as f64));
         }
@@ -314,20 +315,20 @@ impl Console {
             )
             .unwrap();
         }
-        wb4.settings.mode = CalcMode::Automatic;
+        wb4.set_mode(CalcMode::Automatic);
         time(
             &format!("full recalc, {m} SUMPRODUCTs over 200 cells"),
             m as f64 * 200.0,
             &mut || wb4.full_recalc(),
         );
-        wb4.settings.threads = 1;
+        wb4.set_threads(1);
         time("  …the same on one thread", m as f64 * 200.0, &mut || {
             wb4.full_recalc()
         });
         let t = Instant::now();
         let mut wb3 = Workbook::new();
         let s3 = wb3.sheet_at(0).id;
-        wb3.settings.mode = CalcMode::Manual;
+        wb3.set_mode(CalcMode::Manual);
         for r in 0..n {
             wb3.set_formula(CellAddr::new(s3, r, 0), &format!("=ROW()*{}", r % 7))
                 .unwrap();
@@ -366,7 +367,7 @@ impl Console {
                     if self.wb.is_semiautomatic() {
                         "semiautomatic (automatic except data tables)".to_string()
                     } else {
-                        format!("{:?}", self.wb.settings.mode).to_lowercase()
+                        format!("{:?}", self.wb.settings().mode).to_lowercase()
                     }
                 );
                 if !rest.is_empty() {
@@ -378,7 +379,7 @@ impl Console {
                 let on = match parts.next().map(str::to_ascii_lowercase).as_deref() {
                     Some("on") => true,
                     Some("off") => false,
-                    None => self.wb.settings.iteration,
+                    None => self.wb.settings().iteration,
                     _ => return self.usage("iter [on|off] [max iterations] [max change]"),
                 };
                 let (n, x) = (parts.next(), parts.next());
@@ -390,7 +391,7 @@ impl Console {
                     return self.usage("iter [on|off] [max iterations] [max change]");
                 }
                 self.wb.set_iteration(on, n.flatten(), x.flatten());
-                let s = &self.wb.settings;
+                let s = self.wb.settings();
                 println!(
                     "  iteration {} (max {} iterations, max change {})",
                     if s.iteration { "on" } else { "off" },
@@ -484,7 +485,7 @@ impl Console {
                     Err(e) => println!("  {e}"),
                 },
                 None if rest.is_empty() => {
-                    let mut names: Vec<_> = self.wb.names.iter().collect();
+                    let mut names: Vec<_> = self.wb.names().iter().collect();
                     names.sort_by_key(|d| d.name.to_uppercase());
                     if names.is_empty() {
                         println!("  (no names; define one with: name NAME =formula)");
@@ -550,7 +551,7 @@ impl Console {
                         _ => return self.usage("insert|delete rows N [count]"),
                     }
                 } else if kind.starts_with("col") {
-                    match xlcalc::address::letters_to_col(at) {
+                    match xlcalc::letters_to_col(at) {
                         Some(c) => {
                             if insert {
                                 self.wb.insert_cols(self.sheet, c, count)
@@ -654,7 +655,7 @@ impl Console {
             "sort" => {
                 let mut p = rest.split_whitespace();
                 let range = p.next().unwrap_or("");
-                let mut spec = xlcalc::sort::SortSpec::default();
+                let mut spec = xlcalc::SortSpec::default();
                 for w in p {
                     match w.to_ascii_lowercase().as_str() {
                         "header" => spec.header = true,
@@ -666,7 +667,7 @@ impl Console {
                             }
                         }
                         n => match n.parse::<u32>() {
-                            Ok(i) if i >= 1 => spec.keys.push(xlcalc::sort::SortKey {
+                            Ok(i) if i >= 1 => spec.keys.push(xlcalc::SortKey {
                                 index: i - 1,
                                 descending: false,
                             }),
@@ -686,8 +687,61 @@ impl Console {
                     None => return self.usage("sort A1:C10 2 desc 1 [header] [cols] [matchcase]"),
                 }
             }
+            "replace" => {
+                const USAGE: &str = "replace A1:C10 \"what\" \"with\" [whole] [matchcase] [cols]";
+                let words = quoted_words(rest);
+                if words.len() < 3 {
+                    return self.usage(USAGE);
+                }
+                let mut spec = xlcalc::ReplaceSpec {
+                    what: words[1].clone(),
+                    with: words[2].clone(),
+                    ..Default::default()
+                };
+                for w in &words[3..] {
+                    match w.to_ascii_lowercase().as_str() {
+                        "whole" => spec.whole = true,
+                        "matchcase" => spec.match_case = true,
+                        "cols" => spec.by_columns = true,
+                        _ => return self.usage(USAGE),
+                    }
+                }
+                let t = Instant::now();
+                match refs::range(&self.wb, &words[0], self.sheet) {
+                    Some((sh, rect)) => match self.wb.replace_range(sh, rect, &spec) {
+                        Ok(r) => self.report(&r, t.elapsed()),
+                        Err(e) => println!("  {e}"),
+                    },
+                    None => return self.usage(USAGE),
+                }
+            }
+            "dedup" => {
+                const USAGE: &str = "dedup A1:C10 1 2 [header]";
+                let mut words = rest.split_whitespace();
+                let Some(range) = words.next() else {
+                    return self.usage(USAGE);
+                };
+                let mut spec = xlcalc::DedupSpec::default();
+                for w in words {
+                    if w.eq_ignore_ascii_case("header") {
+                        spec.header = true;
+                    } else if let Ok(n) = w.parse::<u32>() {
+                        spec.columns.push(n);
+                    } else {
+                        return self.usage(USAGE);
+                    }
+                }
+                let t = Instant::now();
+                match refs::range(&self.wb, range, self.sheet) {
+                    Some((sh, rect)) => match self.wb.remove_duplicates(sh, rect, &spec) {
+                        Ok(r) => self.report(&r, t.elapsed()),
+                        Err(e) => println!("  {e}"),
+                    },
+                    None => return self.usage(USAGE),
+                }
+            }
             "paste" => {
-                use xlcalc::pastespecial::{PasteOp, PasteSpecial, PasteWhat};
+                use xlcalc::{PasteOp, PasteSpecial, PasteWhat};
                 let mut p = rest.split_whitespace();
                 let (from, to) = (p.next().unwrap_or(""), p.next().unwrap_or(""));
                 let mut spec = PasteSpecial::default();
@@ -844,7 +898,7 @@ impl Console {
                 }
             }
             "tables" => {
-                for t in &self.wb.tables {
+                for t in self.wb.tables() {
                     println!(
                         "  {} {}!{} [{}]{}",
                         t.name,
@@ -886,7 +940,7 @@ impl Console {
                 Err(e) => println!("  {e}"),
             },
             "functions" => {
-                let names = xlcalc::functions::names();
+                let names = xlcalc::function_names();
                 println!("  {} functions:", names.len());
                 for chunk in names.chunks(8) {
                     println!("    {}", chunk.join("  "));
@@ -1033,6 +1087,34 @@ impl Console {
         let r = f(&mut self.wb);
         self.report(&r, t.elapsed());
     }
+}
+
+fn quoted_words(s: &str) -> Vec<String> {
+    let (mut out, mut cur, mut q, mut any) = (Vec::new(), String::new(), false, false);
+    let mut it = s.chars().peekable();
+    while let Some(c) = it.next() {
+        match c {
+            '"' if q && it.peek() == Some(&'"') => {
+                cur.push('"');
+                it.next();
+            }
+            '"' => {
+                q = !q;
+                any = true;
+            }
+            c if c.is_whitespace() && !q => {
+                if any || !cur.is_empty() {
+                    out.push(std::mem::take(&mut cur));
+                    any = false;
+                }
+            }
+            c => cur.push(c),
+        }
+    }
+    if any || !cur.is_empty() {
+        out.push(cur);
+    }
+    out
 }
 
 fn main() {

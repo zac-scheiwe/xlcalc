@@ -1,0 +1,99 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "k"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B5",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B6",
+      "input": "6"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B7",
+      "input": "7"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B8",
+      "input": "8"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B9",
+      "input": "9"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B10",
+      "input": "10"
+    },
+    {
+      "op": "hide_rows",
+      "sheet": "Sheet1",
+      "at": 5,
+      "count": 1
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "Sheet1",
+      "at": 4,
+      "count": 2
+    },
+    {
+      "op": "rowstate",
+      "sheet": "Sheet1",
+      "rows": 14
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:B14"
+    },
+    {
+      "op": "autofilter",
+      "range": "Sheet1!A1:B12",
+      "field": 1,
+      "criteria1": "<>h"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "Sheet1",
+      "at": 8,
+      "count": 3
+    },
+    {
+      "op": "rowstate",
+      "sheet": "Sheet1",
+      "rows": 16
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:B16"
+    }
+  ]
+}

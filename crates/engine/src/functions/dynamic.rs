@@ -261,12 +261,8 @@ fn map(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 }
 
 fn reduce_scan(ctx: &mut EvalCtx, ops: &[Operand], scan: bool) -> Operand {
-    opval((|| {
+    let r = (|| {
         let omitted = matches!(ops[0], Operand::Missing);
-        let init = match &ops[0] {
-            Operand::Missing => Value::Number(0.0),
-            op => ctx.deref(op.clone()),
-        };
         let arr = arrays(ctx, &ops[1..2])?.pop().unwrap();
 
         if let Operand::Val(Value::Lambda(l)) = &ops[2] {
@@ -278,49 +274,60 @@ fn reduce_scan(ctx: &mut EvalCtx, ops: &[Operand], scan: bool) -> Operand {
                 if omitted {
                     data[0] = arr.data[0].clone();
                 }
-                return Ok(Array::new(arr.rows, arr.cols, data).into_value());
+                return Ok(Operand::Val(
+                    Array::new(arr.rows, arr.cols, data).into_value(),
+                ));
             }
         }
         let f = lambda_arg(&ops[2], 2)?;
 
         let (mut acc, skip) = if omitted {
-            (arr.data[0].clone(), 1)
+            (Operand::Val(arr.data[0].clone()), 1)
+        } else if scan {
+            (Operand::Val(ctx.deref(ops[0].clone())), 0)
         } else {
-            (init, 0)
+            (ops[0].clone(), 0)
         };
         let mut out = Vec::with_capacity(if scan { arr.len() } else { 0 });
         let mut hard = false;
         if scan && omitted {
-            out.push(acc.clone());
+            out.push(arr.data[0].clone());
         }
         for i in skip..arr.data.len() {
-            let res = invoke(
-                ctx,
-                &f,
-                vec![Operand::Val(acc.clone()), elem_arg(&ops[1], &arr, i)],
-            );
+            let res = invoke(ctx, &f, vec![acc, elem_arg(&ops[1], &arr, i)]);
             let in_used = blank_in_used(ctx, &res);
-            acc = ctx.deref(res);
-            hard |= matches!(acc, Value::Blank) && !in_used;
+            acc = if scan || !matches!(res, Operand::Ref(_)) {
+                Operand::Val(ctx.deref(res))
+            } else {
+                res
+            };
+            hard |= matches!(acc, Operand::Val(Value::Blank)) && !in_used;
             if ctx.interrupted() {
                 return Err(XlError::Calc);
             }
             if scan {
                 out.push(match &acc {
-                    Value::Array(a) if a.data.len() == 1 => a.data[0].clone(),
-                    Value::Array(_) => return Err(XlError::Calc),
-                    v => v.clone(),
+                    Operand::Val(Value::Array(a)) if a.data.len() == 1 => a.data[0].clone(),
+                    Operand::Val(Value::Array(_)) => return Err(XlError::Calc),
+                    Operand::Val(v) => v.clone(),
+                    _ => Value::Blank,
                 });
             }
         }
         Ok(if scan {
-            Array::new(arr.rows, arr.cols, out)
-                .with_lam(hard || omitted)
-                .into_value()
+            Operand::Val(
+                Array::new(arr.rows, arr.cols, out)
+                    .with_lam(hard || omitted)
+                    .into_value(),
+            )
         } else {
-            acc
+            match acc {
+                Operand::Missing => Operand::Val(Value::Number(0.0)),
+                acc => acc,
+            }
         })
-    })())
+    })();
+    r.unwrap_or_else(Operand::err)
 }
 
 fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {

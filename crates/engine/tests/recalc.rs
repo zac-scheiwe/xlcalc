@@ -67,7 +67,7 @@ fn cycle_basic() {
     t.set("B1", "=A1+C1");
     assert_eq!(t.num("A1"), 1.0);
     assert_eq!(t.num("B1"), 0.0);
-    assert_eq!(t.wb.calc.circular_ref, Some(t.at("B1")));
+    assert_eq!(t.wb.circular_ref(), Some(t.at("B1")));
     t.set("C1", "7");
     assert_eq!(t.num("A1"), 1.0);
     assert_eq!(t.num("B1"), 0.0);
@@ -99,18 +99,16 @@ fn runtime_cycle_detection() {
     assert_eq!(t.num("A2"), 1.0);
     assert_eq!(t.num("A3"), 5.0);
     assert!(matches!(t.get("A5"), Value::Bool(true)));
-    assert_eq!(t.wb.calc.circular_ref, None);
+    assert_eq!(t.wb.circular_ref(), None);
     t.set("A6", "=SUM(A1:A3)+A6*0");
     assert_eq!(t.num("A6"), 0.0);
-    assert_eq!(t.wb.calc.circular_ref, Some(t.at("A6")));
+    assert_eq!(t.wb.circular_ref(), Some(t.at("A6")));
 }
 
 #[test]
 fn iterative_calculation() {
     let mut t = T::new();
-    t.wb.settings.iteration = true;
-    t.wb.settings.max_iterations = 100;
-    t.wb.settings.max_change = 0.001;
+    t.wb.set_iteration(true, Some(100), Some(0.001));
     t.set("A1", "=B1/2+1");
     t.set("B1", "=A1");
     assert_eq!(t.num("A1"), 1.9990234375);
@@ -215,8 +213,8 @@ fn dynamic_references() {
 fn parallel_matches_sequential() {
     let build = |threads: usize| {
         let mut t = T::new();
-        t.wb.settings.threads = threads;
-        t.wb.settings.mode = xlcalc::CalcMode::Manual;
+        t.wb.set_threads(threads);
+        t.wb.set_mode(xlcalc::CalcMode::Manual);
         for r in 1..=3000 {
             t.set(&format!("A{r}"), &format!("{}", r % 17));
             t.set(
@@ -233,7 +231,7 @@ fn parallel_matches_sequential() {
         t.set("F2", "=E50*2");
         t.set("G1", "=G2+1");
         t.set("G2", "=G1+A1");
-        t.wb.settings.mode = xlcalc::CalcMode::Automatic;
+        t.wb.set_mode(xlcalc::CalcMode::Automatic);
         t.wb.full_recalc();
         t.set("A1", "100");
         t.set("E1", "=SEQUENCE(60)");
@@ -260,7 +258,7 @@ fn parallel_matches_sequential() {
             seq.get(a)
         );
     }
-    assert_eq!(par.wb.calc.circular_ref, seq.wb.calc.circular_ref);
+    assert_eq!(par.wb.circular_ref(), seq.wb.circular_ref());
 }
 
 #[test]
@@ -285,7 +283,7 @@ fn sumif_resized_sum_range_dependency() {
 #[test]
 fn manual_mode() {
     let mut t = T::new();
-    t.wb.settings.mode = xlcalc::CalcMode::Manual;
+    t.wb.set_mode(xlcalc::CalcMode::Manual);
     t.set("A1", "1");
     t.set("B1", "=A1*2");
     assert_eq!(t.num("B1"), 2.0, "a newly entered formula is calculated");
@@ -293,4 +291,47 @@ fn manual_mode() {
     assert_eq!(t.num("B1"), 2.0, "dependents wait for recalc");
     t.wb.recalc();
     assert_eq!(t.num("B1"), 10.0);
+}
+
+#[test]
+fn seeded_random_is_deterministic_across_threads() {
+    let run = |threads: usize| {
+        let mut t = T::new();
+        t.wb.set_threads(threads);
+        t.wb.set_mode(xlcalc::CalcMode::Manual);
+        t.wb.seed_random(12345);
+        for r in 1..=3000 {
+            t.set(&format!("A{r}"), &format!("{}", r % 13));
+            t.set(&format!("B{r}"), &format!("=A{r}*2+1"));
+            t.set(&format!("C{r}"), &format!("=RAND()+B{r}"));
+            t.set(&format!("D{r}"), &format!("=RANDBETWEEN(1,1000000)+A{r}"));
+        }
+        t.set("F1", "=RANDARRAY(20,3)");
+        t.set("J1", "=SUM(F1#)+C3000");
+        t.wb.set_mode(xlcalc::CalcMode::Automatic);
+        t.wb.full_recalc();
+        t.wb.full_recalc();
+        t
+    };
+    let reference = run(1);
+    for threads in [0, 0, 0, 1, 0, 4] {
+        let other = run(threads);
+        for r in 1..=3000 {
+            for c in ["C", "D"] {
+                let a = format!("{c}{r}");
+                assert!(
+                    reference.get(&a).same_as(&other.get(&a)),
+                    "{a} threads={threads}: {:?} vs {:?}",
+                    reference.get(&a),
+                    other.get(&a)
+                );
+            }
+        }
+        for a in ["F1", "H20", "J1"] {
+            assert!(
+                reference.get(a).same_as(&other.get(a)),
+                "{a} threads={threads}"
+            );
+        }
+    }
 }

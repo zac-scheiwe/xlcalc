@@ -1,5 +1,5 @@
 use serde_json::Value as J;
-use xlcalc::parser::print::sheet_name_text;
+use xlcalc::testing::sheet_name_text;
 use xlcalc::{SheetId, Workbook};
 
 use super::{Outcome, Tally};
@@ -86,6 +86,10 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
                     None => err = Some("no target sheet".into()),
                 },
             }
+            if let Some(w) = err.as_deref().and_then(super::oos_what) {
+                tally.pending_oos = Some(w);
+                return true;
+            }
             verdict(tally, err.is_some() == excel_err, || {
                 format!(
                     "step {n}: {op} {} — Excel error {:?}, engine {err:?}",
@@ -110,7 +114,7 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
                 );
             }
             let mut got: Vec<String> = wb
-                .names
+                .names()
                 .iter()
                 .map(|d| {
                     let nm = match d.scope {
@@ -150,7 +154,7 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
                 .as_array()
                 .is_some_and(|a| a.iter().any(|x| x["headers"].is_boolean()));
             let mut got: Vec<String> = wb
-                .tables
+                .tables()
                 .iter()
                 .map(|t| {
                     let extra = if rich {

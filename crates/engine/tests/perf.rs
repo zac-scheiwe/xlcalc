@@ -5,7 +5,7 @@ use xlcalc::{CalcMode, CellAddr, Value, Workbook};
 fn setup(n: u32, formulas: bool) -> (Workbook, xlcalc::SheetId) {
     let mut wb = Workbook::new();
     let s = wb.sheet_at(0).id;
-    wb.settings.mode = CalcMode::Manual;
+    wb.set_mode(CalcMode::Manual);
     for r in 0..n {
         wb.set_value(CellAddr::new(s, r, 0), Value::Number(r as f64 * 0.5));
         if formulas {
@@ -13,7 +13,7 @@ fn setup(n: u32, formulas: bool) -> (Workbook, xlcalc::SheetId) {
                 .unwrap();
         }
     }
-    wb.settings.mode = CalcMode::Automatic;
+    wb.set_mode(CalcMode::Automatic);
     (wb, s)
 }
 
@@ -63,16 +63,11 @@ fn hot_paths() {
     );
     time("SUM(A*2) array", n, &mut wb, d(6), "=SUM(A1:A200000*2)");
 
-    let sh = wb.sheet_at(0);
     let rect = xlcalc::Rect::new(0, 0, n - 1, 0);
     let t = Instant::now();
     let mut acc = 0.0;
     for _ in 0..20 {
-        for (_, _, e) in sh.cells.iter_rect(rect) {
-            if let xlcalc::workbook::Entry::Const(Value::Number(x)) = e {
-                acc += x;
-            }
-        }
+        acc += xlcalc::testing::raw_sum(&wb, s, rect);
     }
     let per = t.elapsed() / 20;
     println!(
@@ -83,13 +78,7 @@ fn hot_paths() {
     let t = Instant::now();
     let mut acc = 0.0;
     for _ in 0..20 {
-        let mut ctx = xlcalc::eval::EvalCtx::new(&wb, CellAddr::new(s, 0, 5));
-        let area = xlcalc::eval::Area { sheet: s, rect };
-        ctx.visit_area(&area, |_, _, v| {
-            if let Value::Number(x) = v {
-                acc += x
-            }
-        });
+        acc += xlcalc::testing::visit_sum(&wb, CellAddr::new(s, 0, 5), s, rect);
     }
     let per = t.elapsed() / 20;
     println!(

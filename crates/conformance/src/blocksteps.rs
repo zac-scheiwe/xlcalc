@@ -14,6 +14,10 @@ pub fn run(
 ) -> bool {
     let excel_err = !rec["error"].is_null();
     let verdict = |tally: &mut Tally, err: Option<String>| {
+        if let Some(w) = err.as_deref().and_then(super::oos_what) {
+            tally.pending_oos = Some(w);
+            return;
+        }
         let ok = err.is_some() == excel_err;
         tally.add(if ok { Outcome::Exact } else { Outcome::Wrong }, || {
             format!(

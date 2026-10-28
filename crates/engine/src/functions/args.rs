@@ -64,6 +64,7 @@ pub fn boolean(v: &Value) -> R<bool> {
     coerce::to_bool(v)
 }
 
+#[allow(dead_code)]
 pub fn opt_bool(args: &[Value], i: usize, default: bool) -> R<bool> {
     match args.get(i) {
         None => Ok(default),
@@ -111,6 +112,7 @@ pub fn ffuzz(x: f64) -> f64 {
     sfix(x) as f64
 }
 
+#[allow(dead_code)]
 #[inline]
 pub fn trunc(n: f64) -> f64 {
     n.trunc()

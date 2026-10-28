@@ -34,78 +34,13 @@ pub fn utf16_slice(s: &str, start: usize, len: usize) -> String {
     String::from_utf16_lossy(&units[a..b])
 }
 
+mod collate;
+
 pub fn compare_ci(a: &str, b: &str) -> Ordering {
     if a == b {
         return Ordering::Equal;
     }
-    #[cfg(windows)]
-    {
-        if let Some(o) = win::compare(a, b) {
-            return o;
-        }
-    }
-    portable_compare(a, b)
-}
-
-pub fn portable_compare(a: &str, b: &str) -> Ordering {
-    let key = |s: &str| -> Vec<char> {
-        s.chars()
-            .filter(|c| *c != '-' && *c != '\'')
-            .flat_map(char::to_lowercase)
-            .collect()
-    };
-    key(a).cmp(&key(b)).then_with(|| {
-        let x = a.chars().flat_map(char::to_lowercase);
-        let y = b.chars().flat_map(char::to_lowercase);
-        x.cmp(y)
-    })
-}
-
-#[cfg(windows)]
-mod win {
-    use std::cmp::Ordering;
-
-    const NORM_IGNORECASE: u32 = 0x0000_0001;
-
-    #[link(name = "kernel32")]
-    extern "system" {
-        fn CompareStringEx(
-            locale: *const u16,
-            flags: u32,
-            s1: *const u16,
-            n1: i32,
-            s2: *const u16,
-            n2: i32,
-            version: *mut core::ffi::c_void,
-            reserved: *mut core::ffi::c_void,
-            lparam: isize,
-        ) -> i32;
-    }
-
-    pub fn compare(a: &str, b: &str) -> Option<Ordering> {
-        let x: Vec<u16> = a.encode_utf16().collect();
-        let y: Vec<u16> = b.encode_utf16().collect();
-
-        let r = unsafe {
-            CompareStringEx(
-                std::ptr::null(),
-                NORM_IGNORECASE,
-                x.as_ptr(),
-                x.len() as i32,
-                y.as_ptr(),
-                y.len() as i32,
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                0,
-            )
-        };
-        match r {
-            1 => Some(Ordering::Less),
-            2 => Some(Ordering::Equal),
-            3 => Some(Ordering::Greater),
-            _ => None,
-        }
-    }
+    collate::compare(a, b)
 }
 
 pub fn eq_ci(a: &str, b: &str) -> bool {

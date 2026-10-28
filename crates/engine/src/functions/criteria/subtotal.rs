@@ -222,6 +222,18 @@ fn apply(f: Func, vals: &[Value], k: f64) -> R<Value> {
 }
 
 pub fn subtotal(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    if let Some(Operand::Val(Value::Error(e))) = ops
+        .iter()
+        .skip(1)
+        .find(|o| matches!(o, Operand::Val(Value::Error(_))))
+    {
+        if let Operand::Val(v) = &ops[0] {
+            return Operand::Val(Value::Error(match ctx.to_number(v) {
+                Ok(_) => *e,
+                Err(x) => x,
+            }));
+        }
+    }
     let r = (|| {
         let n = scalar_num(ctx, &ops[0])?;
         let f = match n as i64 {
@@ -301,6 +313,9 @@ pub fn aggregate(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 }
 
 fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    if let Some(Operand::Val(Value::Error(e))) = ops.first() {
+        return Operand::err(*e);
+    }
     let r = (|| {
         let n = scalar_num(ctx, &ops[0])?;
         let f = if (1.0..20.0).contains(&n) {

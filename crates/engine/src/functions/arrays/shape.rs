@@ -736,6 +736,14 @@ pub fn expand(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             }
         };
 
+        if let Operand::Ref(r) = &ops[0] {
+            if let Some(a) = r.single().filter(|a| a.rect.is_cell()) {
+                if let Value::Error(e) = ctx.area_array(a) {
+                    return Err(e);
+                }
+            }
+        }
+
         let (nr, nc) = (opt_number(ctx, ops.get(1)), opt_number(ctx, ops.get(2)));
         if let (Err(e), _) | (_, Err(e)) = (&nr, &nc) {
             return Err(*e);
@@ -864,16 +872,19 @@ pub fn to_line(ctx: &mut EvalCtx, ops: &[Operand], col: bool) -> Operand {
 
 pub fn wrap(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
     finish((|| {
+        if let Operand::Ref(r) = &ops[0] {
+            if let Some(a) = r.single().filter(|a| a.rect.is_cell()) {
+                match ctx.area_array(a) {
+                    Value::Blank => return Err(XlError::Value),
+                    Value::Error(e) => return Err(e),
+                    _ => {}
+                }
+            }
+        }
         arg_error_typed(ctx, &ops[1..2], "n")?;
         let src = Src::from_operand_3d(&ops[0])?;
         if src.rows() > 1 && src.cols() > 1 {
             return Err(XlError::Value);
-        }
-
-        if let Src::Area(a) = &src {
-            if a.rect.is_cell() && matches!(ctx.area_array(a), Value::Blank) {
-                return Err(XlError::Value);
-            }
         }
         let k = match ops.get(1) {
             Some(Operand::Val(v)) => ctx.to_number(v)?.trunc(),

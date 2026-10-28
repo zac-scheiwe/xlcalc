@@ -1,6 +1,0 @@
-{"sheets":["Sheet1"],"steps":[
-{"op":"set","cell":"Sheet1!I1","input":"7"},{"op":"set","cell":"Sheet1!J3","input":"t"},
-{"op":"merge","range":"Sheet1!J3:K3"},
-{"op":"dataseries","range":"Sheet1!J4:I1","rowcol":"cols","type":"linear"},
-{"op":"read","range":"Sheet1!G1:L7"}
-]}

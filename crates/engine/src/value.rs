@@ -17,42 +17,70 @@ pub fn is_cell_empty(t: &Text) -> bool {
     Arc::ptr_eq(t, &CELL_EMPTY)
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct XlError(Code);
+
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, PartialOrd, Ord)]
-pub enum XlError {
+enum Code {
     Null,
-
     Div0,
-
     Value,
-
     Ref,
-
     Name,
-
     Num,
-
     NA,
-
     GettingData,
-
     Spill,
-
     Connect,
-
     Blocked,
-
     Unknown,
-
     Field,
-
     Calc,
-
     Busy,
 
     Circ,
 }
 
+impl fmt::Debug for XlError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.0, f)
+    }
+}
+
+#[allow(non_upper_case_globals)]
 impl XlError {
+    pub const Null: XlError = XlError(Code::Null);
+
+    pub const Div0: XlError = XlError(Code::Div0);
+
+    pub const Value: XlError = XlError(Code::Value);
+
+    pub const Ref: XlError = XlError(Code::Ref);
+
+    pub const Name: XlError = XlError(Code::Name);
+
+    pub const Num: XlError = XlError(Code::Num);
+
+    pub const NA: XlError = XlError(Code::NA);
+
+    pub const GettingData: XlError = XlError(Code::GettingData);
+
+    pub const Spill: XlError = XlError(Code::Spill);
+
+    pub const Connect: XlError = XlError(Code::Connect);
+
+    pub const Blocked: XlError = XlError(Code::Blocked);
+
+    pub const Unknown: XlError = XlError(Code::Unknown);
+
+    pub const Field: XlError = XlError(Code::Field);
+
+    pub const Calc: XlError = XlError(Code::Calc);
+
+    pub const Busy: XlError = XlError(Code::Busy);
+
+    pub(crate) const Circ: XlError = XlError(Code::Circ);
+
     pub const ALL: [XlError; 15] = [
         XlError::Null,
         XlError::Div0,
@@ -72,23 +100,23 @@ impl XlError {
     ];
 
     pub fn as_str(self) -> &'static str {
-        match self {
-            XlError::Null => "#NULL!",
-            XlError::Div0 => "#DIV/0!",
-            XlError::Value => "#VALUE!",
-            XlError::Ref => "#REF!",
-            XlError::Name => "#NAME?",
-            XlError::Num => "#NUM!",
-            XlError::NA => "#N/A",
-            XlError::GettingData => "#GETTING_DATA",
-            XlError::Spill => "#SPILL!",
-            XlError::Connect => "#CONNECT!",
-            XlError::Blocked => "#BLOCKED!",
-            XlError::Unknown => "#UNKNOWN!",
-            XlError::Field => "#FIELD!",
-            XlError::Calc => "#CALC!",
-            XlError::Busy => "#BUSY!",
-            XlError::Circ => "#CIRC!",
+        match self.0 {
+            Code::Null => "#NULL!",
+            Code::Div0 => "#DIV/0!",
+            Code::Value => "#VALUE!",
+            Code::Ref => "#REF!",
+            Code::Name => "#NAME?",
+            Code::Num => "#NUM!",
+            Code::NA => "#N/A",
+            Code::GettingData => "#GETTING_DATA",
+            Code::Spill => "#SPILL!",
+            Code::Connect => "#CONNECT!",
+            Code::Blocked => "#BLOCKED!",
+            Code::Unknown => "#UNKNOWN!",
+            Code::Field => "#FIELD!",
+            Code::Calc => "#CALC!",
+            Code::Busy => "#BUSY!",
+            Code::Circ => "#CIRC!",
         }
     }
 
@@ -100,7 +128,7 @@ impl XlError {
     }
 
     pub fn type_number(self) -> u32 {
-        self as u32 + 1
+        self.0 as u32 + 1
     }
 }
 

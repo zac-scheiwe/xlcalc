@@ -273,7 +273,7 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let rect = area.rect;
     if rect.is_cell() {
         return Operand::Val(match text_at(rect.r0, rect.c0) {
-            e @ Value::Error(_) => {
+            e @ Value::Error(_) if ctx.arr_ctx != 0 => {
                 crate::value::Array::from_fn(1, 1, |_, _| e.clone()).into_value()
             }
             t => t,

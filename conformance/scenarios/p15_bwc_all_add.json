@@ -1,6 +1,0 @@
-{"sheets":["Sheet1"],"steps":[
-{"op":"set","cell":"Sheet1!A1","input":"5"},{"op":"set","cell":"Sheet1!A2","input":"6"},{"op":"set","cell":"Sheet1!B1","input":"7"},{"op":"set","cell":"Sheet1!B2","input":"8"},{"op":"set","cell":"Sheet1!J5","input":"3"},{"op":"set","cell":"Sheet1!K5","input":"4"},{"op":"set","cell":"Sheet1!L5","input":"11"},{"op":"set","cell":"Sheet1!J6","input":"1"},{"op":"set","cell":"Sheet1!K6","input":"2"},{"op":"set","cell":"Sheet1!L6","input":"12"},{"op":"set","cell":"Sheet1!J7","input":"13"},{"op":"set","cell":"Sheet1!K7","input":"14"},{"op":"set","cell":"Sheet1!L7","input":"15"},{"op":"format","range":"Sheet1!A1","fmt":"0.00"},{"op":"format","range":"Sheet1!B2","fmt":"0%"},
-{"op":"merge","range":"Sheet1!J5:K5"},
-{"op":"paste_special","from":"Sheet1!A1","to":"Sheet1!J5","paste":"all","operation":"add"},
-{"op":"read","range":"Sheet1!H4:M9"}
-]}

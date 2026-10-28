@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A1", "input": "1,2"}, {"op": "set", "cell": "Sheet1!A2", "input": "3,4"}, {"op": "text_to_columns", "range": "Sheet1!A1:A2", "comma": true, "dest": "Sheet1!A2"}, {"op": "read", "range": "Sheet1!A1:C4"}]}

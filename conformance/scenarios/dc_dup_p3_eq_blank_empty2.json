@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A2", "input": "=\"\""}, {"op": "set", "cell": "Sheet1!A4", "input": "x"}, {"op": "remove_dups", "range": "Sheet1!A1:A6", "columns": [1]}, {"op": "read", "range": "Sheet1!A1:B8"}]}

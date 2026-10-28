@@ -1,0 +1,61 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "cell": "Sheet1!A8",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "name": "Tb",
+      "op": "table",
+      "range": "Sheet1!A1:D12"
+    },
+    {
+      "at": 11,
+      "count": 1,
+      "op": "hide_rows",
+      "sheet": "Sheet1"
+    },
+    {
+      "from": "Sheet1!A5:B10",
+      "op": "copy",
+      "to": "Sheet1!H3:I14"
+    },
+    {
+      "name": "Tb",
+      "op": "table_resize",
+      "range": "Sheet1!A1:D8",
+      "sheet": "Sheet1"
+    },
+    {
+      "criteria1": "b",
+      "field": 3,
+      "op": "autofilter",
+      "table": "Tb"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:I14"
+    },
+    {
+      "op": "rowstate",
+      "rows": 13,
+      "sheet": "Sheet1"
+    },
+    {
+      "from": "Sheet1!A4:B12",
+      "op": "copy",
+      "to": "Sheet1!H2:I12"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:I14"
+    }
+  ]
+}

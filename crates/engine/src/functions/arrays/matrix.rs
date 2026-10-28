@@ -222,7 +222,7 @@ pub fn munit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
 
         if n * n + n > crate::workbook::ABANDON_CELLS as f64 {
-            ctx.abandoned = true;
+            ctx.observed.abandoned = true;
             return Err(XlError::Num);
         }
         if n * n > crate::workbook::MAX_ARRAY_CELLS as f64 {

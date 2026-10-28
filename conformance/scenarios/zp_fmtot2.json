@@ -1,0 +1,169 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "k"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "n"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C1",
+      "input": "t"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A4",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A5",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B5",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A6",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B6",
+      "input": "6"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C6",
+      "input": "=SUBTOTAL(9,B$2:B6)"
+    },
+    {
+      "criteria1": "a",
+      "field": 1,
+      "op": "autofilter",
+      "range": "Sheet1!A1:C6"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "at": 6,
+      "count": 1,
+      "op": "hide_rows",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "autofilter_clear",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "criteria1": "b",
+      "field": 1,
+      "op": "autofilter",
+      "range": "Sheet1!A1:C6"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "autofilter_reapply",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "at": 6,
+      "count": 1,
+      "op": "hide_rows",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "autofilter_clear",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "criteria1": "a",
+      "field": 1,
+      "op": "autofilter",
+      "range": "Sheet1!A1:C6"
+    },
+    {
+      "at": 6,
+      "count": 1,
+      "op": "hide_rows",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "autofilter_off",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 8,
+      "sheet": "Sheet1"
+    }
+  ]
+}

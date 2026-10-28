@@ -7,7 +7,7 @@ use crate::formula::{CRef, Formula, LambdaDef, Node, Rc, SheetRef};
 use crate::formula_print::{cref_text, print_node};
 use crate::graph::DepGraph;
 use crate::value::Value;
-use crate::workbook::{EditError, Entry, FormulaId, Workbook};
+use crate::workbook::{EditError, Entry, FormulaId, Op, Workbook};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Axis {
@@ -344,6 +344,32 @@ fn within_limit(cref: &CRef, host: CellAddr, s: &Shift) -> bool {
 }
 
 impl Shift {
+    fn map_sticky(&self, b: Rect) -> Rect {
+        let (lo, hi) = if self.axis == Axis::Rows {
+            (b.r0, b.r1)
+        } else {
+            (b.c0, b.c1)
+        };
+        let push = |i: u32| (i as u64 + self.count as u64).min(self.max() as u64 - 1) as u32;
+        let (lo, hi) = if self.insert {
+            let lo = if self.limit.is_none() && lo >= self.at {
+                push(lo)
+            } else {
+                lo
+            };
+            (lo, if hi >= self.at { push(hi) } else { hi })
+        } else if self.limit.is_none() && lo >= self.at {
+            (lo.saturating_sub(self.count).max(self.at).min(hi), hi)
+        } else {
+            (lo, hi)
+        };
+        if self.axis == Axis::Rows {
+            Rect::new(lo, b.c0, hi, b.c1)
+        } else {
+            Rect::new(b.r0, lo, b.r1, hi)
+        }
+    }
+
     fn in_band(&self, r: u32, c: u32) -> bool {
         let p = if self.axis == Axis::Rows { c } else { r };
         self.limit.is_none_or(|(l0, l1)| (l0..=l1).contains(&p))
@@ -397,7 +423,6 @@ fn targets_sheet(sheet: &SheetRef, host_sheet: SheetId, s: SheetId) -> bool {
         _ => false,
     }
 }
-
 impl Workbook {
     pub fn insert_rows(
         &mut self,
@@ -405,8 +430,75 @@ impl Workbook {
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
-        self.fill_selected.remove(&sheet);
+        self.guard_filtered(
+            sheet,
+            Rect::new(
+                at,
+                0,
+                at.saturating_add(count.max(1) - 1).min(MAX_ROWS - 1),
+                0,
+            ),
+            true,
+            false,
+        )?;
+        self.insert_rows_raw(sheet, at, count)
+    }
 
+    pub fn delete_rows(
+        &mut self,
+        sheet: SheetId,
+        at: u32,
+        count: u32,
+    ) -> Result<RecalcReport, EditError> {
+        self.guard_filtered(
+            sheet,
+            Rect::new(
+                at,
+                0,
+                at.saturating_add(count.max(1) - 1).min(MAX_ROWS - 1),
+                0,
+            ),
+            true,
+            false,
+        )?;
+        self.delete_rows_raw(sheet, at, count)
+    }
+
+    pub fn insert_cols(
+        &mut self,
+        sheet: SheetId,
+        at: u32,
+        count: u32,
+    ) -> Result<RecalcReport, EditError> {
+        self.insert_cols_raw(sheet, at, count)
+    }
+
+    pub fn delete_cols(
+        &mut self,
+        sheet: SheetId,
+        at: u32,
+        count: u32,
+    ) -> Result<RecalcReport, EditError> {
+        self.guard_filtered(
+            sheet,
+            Rect::new(
+                0,
+                at,
+                0,
+                at.saturating_add(count.max(1) - 1).min(MAX_COLS - 1),
+            ),
+            false,
+            true,
+        )?;
+        self.delete_cols_raw(sheet, at, count)
+    }
+
+    fn insert_rows_raw(
+        &mut self,
+        sheet: SheetId,
+        at: u32,
+        count: u32,
+    ) -> Result<RecalcReport, EditError> {
         let inside: Vec<(String, Vec<(u32, FormulaId, Arc<Formula>)>)> = self
             .tables
             .iter()
@@ -469,13 +561,12 @@ impl Workbook {
             .collect()
     }
 
-    pub fn delete_rows(
+    fn delete_rows_raw(
         &mut self,
         sheet: SheetId,
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
-        self.fill_selected.remove(&sheet);
         self.shift(Shift {
             sheet,
             axis: Axis::Rows,
@@ -487,13 +578,12 @@ impl Workbook {
         })
     }
 
-    pub fn insert_cols(
+    fn insert_cols_raw(
         &mut self,
         sheet: SheetId,
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
-        self.fill_selected.remove(&sheet);
         self.shift(Shift {
             sheet,
             axis: Axis::Cols,
@@ -505,18 +595,12 @@ impl Workbook {
         })
     }
 
-    pub fn delete_cols(
+    fn delete_cols_raw(
         &mut self,
         sheet: SheetId,
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
-        if self.filter_mode(sheet) && (at..at + count).all(|c| self.col_hidden(sheet, c)) {
-            return Err(EditError::Compile(
-                "Delete method of Range class failed".into(),
-            ));
-        }
-        self.fill_selected.remove(&sheet);
         self.shift(Shift {
             sheet,
             axis: Axis::Cols,
@@ -535,11 +619,8 @@ impl Workbook {
         down: bool,
     ) -> Result<RecalcReport, EditError> {
         if self.filter_mode(sheet) {
-            return Err(EditError::Compile(
-                "Insert method of Range class failed".into(),
-            ));
+            return Err(EditError::OutOfScope("inserting cells in filter mode"));
         }
-        self.fill_selected.remove(&sheet);
         self.shift_cells(sheet, rect, down, true)
     }
 
@@ -549,28 +630,10 @@ impl Workbook {
         rect: Rect,
         up: bool,
     ) -> Result<RecalcReport, EditError> {
-        if self.filter_mode(sheet) && (rect.c0..=rect.c1).all(|c| self.col_hidden(sheet, c)) {
-            return Err(EditError::Compile("No cells were found.".into()));
-        }
-
         if up && self.filter_mode(sheet) {
-            let mut vis: Vec<u32> = (rect.r0..=rect.r1)
-                .filter(|&r| !self.row_hidden(sheet, r))
-                .collect();
-            if vis.is_empty() {
-                if !rect.is_cell() {
-                    return Err(EditError::Compile("No cells were found.".into()));
-                }
-                vis.push(rect.r0);
-            }
-            self.fill_selected.remove(&sheet);
-            let mut report = RecalcReport::default();
-            for &r in vis.iter().rev() {
-                report = self.delete_rows(sheet, r, 1)?;
-            }
-            return Ok(report);
+            return Err(EditError::OutOfScope("deleting cells up in filter mode"));
         }
-        self.fill_selected.remove(&sheet);
+        self.guard_filtered(sheet, rect, true, true)?;
         self.shift_cells(sheet, rect, up, false)
     }
 
@@ -710,6 +773,10 @@ impl Workbook {
         if !s.insert {
             s.count = s.count.min(s.max() - s.at);
         }
+
+        if (s.limit.is_none() || s.cells) && self.merges_in_shift(&s) {
+            return Err(EditError::OutOfScope("insert/delete over merged cells"));
+        }
         self.guard_arrays_shift(&s)?;
 
         if s.limit.is_none() {
@@ -814,15 +881,7 @@ impl Workbook {
             }
         }
 
-        let data_tables = match self.plan_data_table_shift(&s) {
-            Ok(d) => d,
-            Err(e) => {
-                self.unmerge_cut_sideways(&s);
-                return Err(e);
-            }
-        };
-
-        self.shift_merges(&s);
+        let data_tables = self.plan_data_table_shift(&s)?;
 
         let old_cells: Vec<(u32, u32, Entry)> = {
             let sh = self.sheet(s.sheet).unwrap();
@@ -836,7 +895,7 @@ impl Workbook {
             .flat_map(|sh| sh.spills.active_ids())
             .collect();
         self.calc.spilling = spilling;
-        let old_used_r1 = self.view_used_r1(s.sheet);
+        let old_sticky = self.sheet(s.sheet).unwrap().cells.sticky_bounds();
         {
             let sh = self.sheet_mut(s.sheet).unwrap();
             sh.cells = Default::default();
@@ -867,6 +926,9 @@ impl Workbook {
                 }
             }
         }
+        if let Some(b) = old_sticky.map(|b| s.map_sticky(b)) {
+            self.sheet_mut(s.sheet).unwrap().cells.extend_sticky(b);
+        }
 
         self.calc.shifted = moved
             .iter()
@@ -887,9 +949,6 @@ impl Workbook {
         if s.limit.is_none() {
             self.view_shift(s.sheet, s.axis == Axis::Rows, s.at, s.count, s.insert);
         }
-
-        let rows_move = s.axis == Axis::Rows;
-        self.view_used_after_shift(s.sheet, old_used_r1, s.at, s.count, s.insert && rows_move);
         let new_addr: rustc_hash::FxHashMap<FormulaId, CellAddr> =
             moved.iter().map(|(f, _, n)| (*f, *n)).collect();
 
@@ -1291,11 +1350,11 @@ impl Workbook {
             }
         }
 
-        self.calc.dt_block = true;
-        for fid in ids {
-            calc::mark_dirty(self, fid);
-        }
-        self.calc.dt_block = false;
+        self.with_op(Op::DtBlock, true, |this| {
+            for fid in ids {
+                calc::mark_dirty(this, fid);
+            }
+        });
 
         let circ = (self.calc.circular_ref, self.calc.circ_iterating);
         let report = calc::recalc(self);
@@ -1442,6 +1501,33 @@ impl Workbook {
         if src.rows() as u64 * src.cols() as u64 > MAX_PASTE_CELLS {
             return Err(EditError::Compile("The paste area is too large.".into()));
         }
+        if self.merge_intersects(src_sheet, &src)
+            || self.merge_intersects(dst.sheet, &crate::cse::paste_dest(src, dst))
+        {
+            return Err(EditError::OutOfScope("copy over merged cells"));
+        }
+
+        let below_busy = self.tables.iter().any(|t| {
+            let r = t.rect;
+            t.sheet == dst.sheet
+                && t.sheet == src_sheet
+                && !t.totals
+                && src.intersects(&r)
+                && dst.row == r.r1 + 1
+                && r.c0 <= dst.col
+                && dst.col + src.cols() - 1 <= r.c1
+                && self
+                    .first_busy_row(
+                        dst.sheet,
+                        Rect::new(dst.row, r.c0, dst.row + src.rows() - 1, r.c1),
+                    )
+                    .is_some()
+        });
+        if below_busy {
+            return Err(EditError::OutOfScope(
+                "paste of a table's rows onto busy cells below it",
+            ));
+        }
         self.names_follow(src_sheet, src, dst.sheet, true);
         let orig_tables: Vec<Rect> = self.tables.iter().map(|t| t.rect).collect();
         let blocks = self.paste_blocks_plan(src_sheet, src, dst)?;
@@ -1479,6 +1565,7 @@ impl Workbook {
                                 t.sheet == to.sheet
                                     && t.header_row() == Some(to.row)
                                     && (t.rect.c0..=t.rect.c1).contains(&to.col)
+                                    && !(src.cols() > 1 && dst.col <= t.rect.c0)
                             });
                         if !in_header {
                             plan.push((to, Ok(Value::Blank)));
@@ -1516,8 +1603,34 @@ impl Workbook {
         let mode = self.settings.mode;
         self.settings.mode = crate::workbook::CalcMode::Manual;
         let fmt_src = (src_sheet, src);
+
+        if src.cols() > 1 {
+            let headers: Vec<CellAddr> = plan
+                .iter()
+                .filter(|(to, what)| {
+                    matches!(what, Ok(Value::Blank))
+                        && self.tables.iter().any(|t| {
+                            t.sheet == to.sheet
+                                && t.header_row() == Some(to.row)
+                                && (t.rect.c0..=t.rect.c1).contains(&to.col)
+                                && dst.col <= t.rect.c0
+                        })
+                })
+                .map(|(to, _)| *to)
+                .collect();
+            if headers.len() > 1 {
+                for (i, &to) in headers.iter().enumerate() {
+                    self.set_value_exact(to, Value::from(format!("\u{1}{i}").as_str()));
+                }
+            }
+        }
         for (to, what) in plan {
             match what {
+                Ok(Value::Blank) => {
+                    self.with_op(Op::PasteHeader, true, |wb| {
+                        wb.set_value_exact(to, Value::Blank)
+                    });
+                }
                 Ok(v) => {
                     self.set_value_exact(to, v);
                 }
@@ -1559,7 +1672,7 @@ impl Workbook {
             }
         }
         self.settings.mode = mode;
-        if mode == crate::workbook::CalcMode::Automatic && !self.defer_paste_recalc {
+        if mode == crate::workbook::CalcMode::Automatic && !self.op_on(Op::DeferPasteRecalc) {
             let r = calc::recalc(self);
             report.evaluations = r.evaluations;
             report.circular = r.circular;
@@ -1594,7 +1707,7 @@ impl Workbook {
             dst.row + src.rows() - 1,
             dst.col + src.cols() - 1,
         );
-        if !self.no_auto_expand {
+        if !self.op_on(Op::NoAutoExpand) {
             self.note_pasted_col_formats(dst.sheet, dest);
         }
 
@@ -1607,7 +1720,7 @@ impl Workbook {
             self.sheet_count() == 1,
         ))
         .flatten()
-        .filter(|g| !(self.no_auto_expand && g.2))
+        .filter(|g| !(self.op_on(Op::NoAutoExpand) && g.2))
         {
             let info = crate::moves::PasteInfo {
                 block: dest,

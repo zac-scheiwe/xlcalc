@@ -128,10 +128,10 @@
 > datatable C1:D3 col B1
   3 evaluations in <t>: B2=30
 > sort D2:D3 1 desc
-  0 evaluations in <t>
+  formula error: Can't change part of a data table.
 > D2
   D2: =TABLE(,B1) = 0 (number)
-  precedents: Calc!B1, Calc!D1, Calc!C2
+  precedents: Calc!D1, Calc!C2
 > fill C2 C2:C4
   6 evaluations in <t>: C2=1, B2=30, C3=1, C4=1
 > sheet Sheet1

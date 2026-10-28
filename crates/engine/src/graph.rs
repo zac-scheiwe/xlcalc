@@ -150,6 +150,36 @@ fn sheets_of(wb: &Workbook, sheet: &SheetRef, host: CellAddr) -> SmallVec<[Sheet
     }
 }
 
+pub(crate) fn plain_ref_rects(
+    wb: &Workbook,
+    formula: &Formula,
+    host: CellAddr,
+) -> Vec<(SheetId, Rect)> {
+    let mut out = Vec::new();
+    walk(&formula.root, &mut |n| match n {
+        Node::Ref(sheet, cref) => {
+            if let Some(rect) = resolve_rect(cref, host, false) {
+                for s in sheets_of(wb, sheet, host) {
+                    out.push((s, rect));
+                }
+            }
+        }
+        Node::Binary(crate::parser::ast::BinOp::Range, a, b) => {
+            if let (Node::Ref(sa, ca), Node::Ref(_, cb)) = (a.unwrap_ws(), b.unwrap_ws()) {
+                if let (Some(ra), Some(rb)) =
+                    (resolve_rect(ca, host, false), resolve_rect(cb, host, false))
+                {
+                    for s in sheets_of(wb, sa, host) {
+                        out.push((s, ra.union_bounds(&rb)));
+                    }
+                }
+            }
+        }
+        _ => {}
+    });
+    out
+}
+
 fn collect_node(
     wb: &Workbook,
     node: &Node,

@@ -6,11 +6,70 @@ use crate::value::{Array, Value, XlError};
 pub fn call_builtin(ctx: &mut EvalCtx, id: FuncId, args: &[Node]) -> Operand {
     let def = functions::def(id);
     let live = ctx.circ_live;
+    let saved = ctx.arr_ctx;
+    match def.name {
+        "ROWS" | "COLUMNS" => {
+            ctx.arr_ctx = if saved == 2 { 2 } else { 1 };
+            ctx.arr_direct = true;
+        }
+        n if ARR_BREAK.contains(&n) => ctx.arr_ctx = 0,
+        _ => {}
+    }
     let out = call_builtin_inner(ctx, def, args);
+    ctx.arr_ctx = saved;
     if ctx.has_placeholders() {
         track_circ(ctx, def, live, &out);
     }
     out
+}
+
+const ARR_BREAK: &[&str] = &[
+    "IF",
+    "IFS",
+    "IFERROR",
+    "IFNA",
+    "CHOOSE",
+    "SWITCH",
+    "VLOOKUP",
+    "HLOOKUP",
+    "OFFSET",
+    "TRANSPOSE",
+];
+
+fn arr_class(ctx: &EvalCtx, name: &str, i: usize) -> u8 {
+    match (name, i) {
+        ("INDEX", 1..) | ("XLOOKUP", 0) => 0,
+        _ => ctx.arr_ctx,
+    }
+}
+
+fn array_slot(name: &str, i: usize) -> bool {
+    match name {
+        "VSTACK" | "HSTACK" => true,
+        "MAP" => true,
+        "TAKE" | "DROP" | "EXPAND" | "CHOOSEROWS" | "CHOOSECOLS" | "TOCOL" | "TOROW"
+        | "WRAPROWS" | "WRAPCOLS" | "SORT" | "SORTBY" | "UNIQUE" | "FILTER" => i == 0,
+        _ => false,
+    }
+}
+
+fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
+    if ctx.arr_ctx == 0 {
+        if !array_slot(name, i) {
+            return ctx.eval(a);
+        }
+        ctx.arr_ctx = 3;
+        let v = ctx.eval(a);
+        ctx.arr_ctx = 0;
+        return v;
+    }
+    let direct = ctx.arr_direct;
+    let class = arr_class(ctx, name, i);
+    let saved = std::mem::replace(&mut ctx.arr_ctx, class);
+    ctx.arr_direct = direct;
+    let v = ctx.eval(a);
+    ctx.arr_ctx = saved;
+    v
 }
 
 const SELECTING: &[&str] = &[
@@ -73,8 +132,8 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
         }
         Imp::Scalar(f) => {
             let mut ops = Vec::with_capacity(args.len());
-            for a in args {
-                let v = ctx.eval(a);
+            for (i, a) in args.iter().enumerate() {
+                let v = eval_arg(ctx, def.name, i, a);
                 ops.push(v);
             }
             if ctx.interrupted() {
@@ -100,8 +159,8 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
                 return r;
             }
             let mut ops = Vec::with_capacity(args.len());
-            for a in args {
-                let v = ctx.eval(a);
+            for (i, a) in args.iter().enumerate() {
+                let v = eval_arg(ctx, def.name, i, a);
                 ops.push(v);
             }
             if ctx.interrupted() {

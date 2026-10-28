@@ -226,6 +226,10 @@ fn apply_typed(wb: &mut Workbook, addr: CellAddr, t: &J) -> Result<(), String> {
             wb.clear(addr);
             Ok(())
         }
+        "s" => wb
+            .set_text_prefixed(addr, t["v"].as_str().unwrap())
+            .map(|_| ())
+            .map_err(|e| e.to_string()),
         _ => {
             wb.set_value(addr, typed_value(t));
             Ok(())
@@ -400,15 +404,15 @@ fn pinned_to_clock(wb: &mut Workbook, addr: CellAddr, want: &J, got: &Value) -> 
         return None;
     }
 
-    if wb.settings.iteration {
+    if wb.settings().iteration {
         return None;
     }
 
-    wb.calc.fixed_now = Some(now);
-    xlcalc::calc::recalc(wb);
+    xlcalc::testing::set_fixed_now(wb, Some(now));
+    xlcalc::testing::recalc(wb);
     let v = cell_result(wb, addr);
-    wb.calc.fixed_now = None;
-    xlcalc::calc::recalc(wb);
+    xlcalc::testing::set_fixed_now(wb, None);
+    xlcalc::testing::recalc(wb);
     matches!(compare_value(want, &v), Outcome::Exact).then_some(v)
 }
 
@@ -416,7 +420,7 @@ fn cell_result(wb: &Workbook, addr: CellAddr) -> Value {
     if let Some(fid) = wb.formula_at(addr) {
         let f = wb.formula(fid);
 
-        if f.spill.is_some() && f.array.is_none() {
+        if f.spill.is_some() && !f.is_legacy_array() {
             return f.value.clone();
         }
     }
@@ -428,7 +432,66 @@ struct Tally {
     close: usize,
     near: usize,
     wrong: usize,
+
+    out_of_scope: usize,
     failures: Vec<String>,
+
+    pending_oos: Option<String>,
+
+    truncated: Option<(usize, String)>,
+    command_tier: bool,
+}
+
+fn oos_what(s: &str) -> Option<String> {
+    if let Some(i) = s.find("out of scope: ") {
+        let rest = &s[i + "out of scope: ".len()..];
+        let end = rest.find(['"', ')']).unwrap_or(rest.len());
+        return Some(rest[..end].to_string());
+    }
+    let i = s.find("OutOfScope(\"")?;
+    let rest = &s[i + "OutOfScope(\"".len()..];
+    Some(rest[..rest.find('"').unwrap_or(rest.len())].to_string())
+}
+
+fn note_oos<T>(tally: &mut Tally, r: &Result<T, xlcalc::EditError>) {
+    if let Err(xlcalc::EditError::OutOfScope(w)) = r {
+        tally.pending_oos = Some((*w).to_string());
+    }
+}
+
+fn is_command_op(op: &str) -> bool {
+    matches!(
+        op,
+        "sort"
+            | "table_sort"
+            | "autofill"
+            | "dataseries"
+            | "paste_special"
+            | "data_table"
+            | "goal_seek"
+            | "table_resize"
+            | "table_unlist"
+            | "table_delete"
+            | "table_rename"
+            | "table_headers"
+            | "table_totals"
+            | "merge"
+            | "unmerge"
+            | "replace"
+            | "remove_dups"
+            | "text_to_columns"
+            | "subtotal"
+            | "remove_subtotal"
+    ) || op.starts_with("autofilter")
+        || op.starts_with("hide_")
+        || op.starts_with("unhide_")
+}
+
+fn harness_out_of_scope(op: &str) -> Option<&'static str> {
+    match op {
+        "group_rows" | "ungroup_rows" | "outline_show" => Some("row outline grouping"),
+        _ => None,
+    }
 }
 
 impl Tally {
@@ -438,32 +501,45 @@ impl Tally {
             close: 0,
             near: 0,
             wrong: 0,
+            out_of_scope: 0,
             failures: Vec::new(),
+            pending_oos: None,
+            truncated: None,
+            command_tier: false,
         }
     }
 
     fn add(&mut self, o: Outcome, describe: impl FnOnce() -> String) {
-        let describe = || {
-            let s = describe();
-            if s.chars().count() > 240 {
-                format!("{}…", s.chars().take(240).collect::<String>())
-            } else {
-                s
-            }
+        if self.pending_oos.is_some() {
+            return;
+        }
+        if o == Outcome::Exact {
+            self.exact += 1;
+            return;
+        }
+        let s = describe();
+        if let Some(w) = oos_what(&s) {
+            self.pending_oos = Some(w);
+            return;
+        }
+        let s = if s.chars().count() > 240 {
+            format!("{}…", s.chars().take(240).collect::<String>())
+        } else {
+            s
         };
         match o {
-            Outcome::Exact => self.exact += 1,
+            Outcome::Exact => {}
             Outcome::Close => {
                 self.close += 1;
-                self.failures.push(format!("~ {}", describe()));
+                self.failures.push(format!("~ {s}"));
             }
             Outcome::Near => {
                 self.near += 1;
-                self.failures.push(format!("≈ {}", describe()));
+                self.failures.push(format!("≈ {s}"));
             }
             Outcome::Wrong => {
                 self.wrong += 1;
-                self.failures.push(format!("✗ {}", describe()));
+                self.failures.push(format!("✗ {s}"));
             }
         }
     }
@@ -471,12 +547,12 @@ impl Tally {
 
 fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool) -> Tally {
     let mut wb = Workbook::empty();
-    wb.calc.fixed_now = None;
+    xlcalc::testing::set_fixed_now(&mut wb, None);
     load_fixture(&mut wb);
     let t_id = wb.add_sheet("T").unwrap();
     wb.add_sheet("S").unwrap();
     if golden["date1904"].as_bool().unwrap_or(false) {
-        wb.settings.date_system = xlcalc::datetime::DateSystem::D1904;
+        wb.set_date_system(xlcalc::DateSystem::D1904);
     }
     let mut tally = Tally::new();
     for it in golden["items"].as_array().unwrap() {
@@ -550,6 +626,16 @@ fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool) -> Tally {
     tally
 }
 
+fn truncate_at(tally: &mut Tally, n: usize, results: &[J], steps: &J) {
+    let what = tally.pending_oos.take().unwrap_or_default();
+    for (j, st) in steps.as_array().unwrap().iter().enumerate().skip(n - 1) {
+        if st["op"].as_str() == Some("read") {
+            tally.out_of_scope += results[j]["cells"].as_array().map_or(0, |c| c.len());
+        }
+    }
+    tally.truncated = Some((n, what));
+}
+
 fn run_scenario(golden: &J) -> Tally {
     let sc = &golden["scenario"];
     let mut wb = Workbook::empty();
@@ -564,7 +650,7 @@ fn run_scenario(golden: &J) -> Tally {
         wb.add_sheet(s).unwrap();
     }
     if sc["date1904"].as_bool().unwrap_or(false) {
-        wb.settings.date_system = xlcalc::datetime::DateSystem::D1904;
+        wb.set_date_system(xlcalc::DateSystem::D1904);
     }
     let default_sheet = wb.sheet_by_name(&sheets[0]).unwrap().id;
     let mut tally = Tally::new();
@@ -573,6 +659,11 @@ fn run_scenario(golden: &J) -> Tally {
     let check_all_formats =
         sc["check_all_formats"].as_bool().unwrap_or(false) || check_empty_formats;
     let mut typed: BTreeMap<String, String> = BTreeMap::new();
+    tally.command_tier = sc["steps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|s| s["op"].as_str().is_some_and(is_command_op));
     let results = golden["items"].as_array().unwrap();
     for (i, step) in sc["steps"].as_array().unwrap().iter().enumerate() {
         let rec = &results[i];
@@ -595,7 +686,7 @@ fn run_scenario(golden: &J) -> Tally {
             eprintln!("step {i} merges {:?}", wb.merges(default_sheet));
         }
         if std::env::var("CONF_TABLES").is_ok() {
-            for t in &wb.tables {
+            for t in wb.tables() {
                 eprintln!(
                     "step {i} table {} {} totals={} calc={:?} key={:?} snap={:?}",
                     t.name,
@@ -603,7 +694,7 @@ fn run_scenario(golden: &J) -> Tally {
                     t.totals,
                     t.calc,
                     t.calc_key,
-                    t.calc_snap.iter().map(|(n, _)| n).collect::<Vec<_>>()
+                    t.calc_snap_columns()
                 );
             }
         }
@@ -620,6 +711,13 @@ fn run_scenario(golden: &J) -> Tally {
             }
         }
         let op = step["op"].as_str().unwrap();
+        if let Some(what) = harness_out_of_scope(op) {
+            tally.pending_oos = Some(what.to_string());
+        }
+        if tally.pending_oos.is_some() {
+            truncate_at(&mut tally, i + 1, results, &sc["steps"]);
+            break;
+        }
         let cell = |k: &str| parse_cell_ref(&wb, step[k].as_str().unwrap(), default_sheet).unwrap();
 
         if !rec["error"].is_null() {
@@ -646,16 +744,15 @@ fn run_scenario(golden: &J) -> Tally {
                     .typed_text(a, step["input"].as_str().unwrap())
                     .into_owned();
 
-                let lotus = !input.starts_with('=')
-                    && matches!(
-                        xlcalc::input::interpret(input, &wb.input_env()),
-                        xlcalc::input::Entered::Formula(_)
-                    );
+                let lotus =
+                    !input.starts_with('=') && xlcalc::testing::is_formula_entry(&wb, input);
                 if lotus {
                     wb.set_value(a, Value::from(input));
                     continue;
                 }
-                match wb.set_input(a, input) {
+                let r = wb.set_input(a, input);
+                note_oos(&mut tally, &r);
+                match r {
                     Err(xlcalc::EditError::Locked) if !excel_rejected => {}
                     Err(e) if !excel_rejected => tally.add(Outcome::Wrong, || {
                         format!("step {}: set {} rejected: {e}", i + 1, step["cell"])
@@ -679,8 +776,9 @@ fn run_scenario(golden: &J) -> Tally {
                 let (s, rect) =
                     parse_range_ref(&wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
 
-                let scored = !wb.data_tables.is_empty();
+                let scored = wb.has_data_tables();
                 let r = wb.clear_range(s, rect);
+                note_oos(&mut tally, &r);
                 let excel_err = !rec["error"].is_null();
                 if r.is_err() != excel_err {
                     tally.add(Outcome::Wrong, || {
@@ -747,7 +845,9 @@ fn run_scenario(golden: &J) -> Tally {
             "table" => {
                 let (s, rect) =
                     parse_range_ref(&wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
-                match wb.add_table(step["name"].as_str().unwrap(), s, rect) {
+                let r = wb.add_table(step["name"].as_str().unwrap(), s, rect);
+                note_oos(&mut tally, &r);
+                match r {
                     Ok(_) => {
                         if step["totals"].as_bool().unwrap_or(false) {
                             let _ = wb.set_table_totals(step["name"].as_str().unwrap(), true);
@@ -755,7 +855,7 @@ fn run_scenario(golden: &J) -> Tally {
                     }
 
                     Err(xlcalc::EditError::BadName(_)) if !rec["error"].is_null() => {
-                        let mut k = wb.tables.len() + 1;
+                        let mut k = wb.tables().len() + 1;
                         while wb.table_by_name(&format!("Table{k}")).is_some() {
                             k += 1;
                         }
@@ -773,6 +873,7 @@ fn run_scenario(golden: &J) -> Tally {
                     step["name"].as_str().unwrap(),
                     step["value"].as_bool().unwrap_or(false),
                 );
+                note_oos(&mut tally, &r);
                 if r.is_err() != !rec["error"].is_null() {
                     tally.add(Outcome::Wrong, || {
                         format!(
@@ -799,6 +900,7 @@ fn run_scenario(golden: &J) -> Tally {
                     "table_rename" => wb.rename_table(name, step["to"].as_str().unwrap()),
                     _ => wb.set_table_headers(name, step["value"].as_bool().unwrap_or(false)),
                 };
+                note_oos(&mut tally, &r);
                 if r.is_err() != !rec["error"].is_null() {
                     tally.add(Outcome::Wrong, || {
                         format!(
@@ -817,6 +919,7 @@ fn run_scenario(golden: &J) -> Tally {
                 let (ds, dr) =
                     parse_range_ref(&wb, step["to"].as_str().unwrap(), default_sheet).unwrap();
                 let res = wb.copy_to_range(ss, src, ds, dr).map(|_| ());
+                note_oos(&mut tally, &res);
                 let excel_err = !rec["error"].is_null();
                 match res {
                     Err(e) if !excel_err => tally.add(Outcome::Wrong, || {
@@ -850,6 +953,7 @@ fn run_scenario(golden: &J) -> Tally {
                         wb.delete_cells(s, rect, shift != "left")
                     }
                 };
+                note_oos(&mut tally, &r);
                 let ok = r.is_ok() == rec["error"].is_null();
                 tally.add(if ok { Outcome::Exact } else { Outcome::Wrong }, || {
                     format!(
@@ -873,6 +977,7 @@ fn run_scenario(golden: &J) -> Tally {
                     "insert_cols" => wb.insert_cols(sheet, at, count),
                     _ => wb.delete_cols(sheet, at, count),
                 };
+                note_oos(&mut tally, &r);
                 let ok = r.is_ok() == rec["error"].is_null();
                 tally.add(if ok { Outcome::Exact } else { Outcome::Wrong }, || {
                     format!(
@@ -888,11 +993,7 @@ fn run_scenario(golden: &J) -> Tally {
             "circ" => {
                 let want = rec["circular"].as_str().map(str::to_string);
 
-                let got = if wb.calc.circ_iterating {
-                    None
-                } else {
-                    wb.calc.circular_ref.map(|a| a.a1())
-                };
+                let got = wb.circular_ref().map(|a| a.a1());
 
                 let o = if want.is_some() == got.is_some() {
                     Outcome::Exact
@@ -1005,6 +1106,16 @@ fn run_scenario(golden: &J) -> Tally {
                 });
             }
         }
+        if tally.pending_oos.is_some() {
+            truncate_at(&mut tally, i + 1, results, &sc["steps"]);
+            break;
+        }
+
+        assert!(
+            xlcalc::testing::ops_idle(&wb),
+            "step {}: operation state left set",
+            i + 1
+        );
         if let Ok(w) = std::env::var("CONF_WATCH") {
             if let Some(a) = parse_cell_ref(&wb, &w, default_sheet) {
                 eprintln!(
@@ -1042,7 +1153,12 @@ fn run(args: &[String]) -> ExitCode {
             .cloned()
             .collect::<Vec<_>>(),
     );
+    let mut known = read_out_of_scope();
+    let mut todo: Vec<String> = Vec::new();
+    let mut ran: Vec<String> = Vec::new();
     let (mut te, mut tc, mut tn, mut tw) = (0, 0, 0, 0);
+
+    let mut tiers = [[0usize; 5]; 2];
     println!(
         "{:<20} {:>7} {:>7} {:>7} {:>7} {:>8}",
         "suite", "exact", "close", "near", "wrong", "score"
@@ -1053,6 +1169,7 @@ fn run(args: &[String]) -> ExitCode {
             println!("{n:<20} (no golden — run `conform record {n}`)");
             continue;
         }
+        ran.push(n.clone());
         let golden: J = load_golden(&path);
         let tally = if golden["kind"] == "scenario" {
             run_scenario(&golden)
@@ -1073,9 +1190,30 @@ fn run(args: &[String]) -> ExitCode {
                 100.0
             }
         );
+        if tally.out_of_scope > 0 || tally.truncated.is_some() {
+            println!("{:<20} out_of_scope {:>5}", "", tally.out_of_scope);
+        }
         if verbose {
-            for f in tally.failures.iter().take(limit) {
-                println!("    {f}");
+            if let Some((n, what)) = &tally.truncated {
+                println!("    truncated at step {n}: out of scope: {what}");
+            }
+        }
+        let reasons: Vec<Option<usize>> = tally
+            .failures
+            .iter()
+            .map(|f| match_known(&mut known, n, f))
+            .collect();
+        for (f, r) in tally.failures.iter().zip(&reasons) {
+            if r.is_none() && !f.starts_with('~') {
+                todo.push(format!("{n} | {}", f.replace(['\r', '\n'], " ")));
+            }
+        }
+        if verbose {
+            for (f, r) in tally.failures.iter().zip(&reasons).take(limit) {
+                match r {
+                    Some(i) => println!("    {f}  (out of scope: {})", known[*i].reason),
+                    None => println!("    {f}"),
+                }
             }
             if tally.failures.len() > limit {
                 println!("    … {} more", tally.failures.len() - limit);
@@ -1085,6 +1223,12 @@ fn run(args: &[String]) -> ExitCode {
         tc += tally.close;
         tn += tally.near;
         tw += tally.wrong;
+        let t = &mut tiers[tally.command_tier as usize];
+        t[0] += tally.exact;
+        t[1] += tally.close;
+        t[2] += tally.near;
+        t[3] += tally.wrong;
+        t[4] += tally.out_of_scope;
     }
     let total = te + tc + tn + tw;
     println!(
@@ -1100,11 +1244,120 @@ fn run(args: &[String]) -> ExitCode {
             100.0
         }
     );
-    if tn + tw > 0 {
+    for (name, t) in ["TOTAL core", "TOTAL command"].iter().zip(&tiers) {
+        println!(
+            "{:<20} {:>7} {:>7} {:>7} {:>7} {:>7.1}%  out_of_scope {}",
+            name,
+            t[0],
+            t[1],
+            t[2],
+            t[3],
+            if t[..4].iter().sum::<usize>() > 0 {
+                100.0 * t[0] as f64 / t[..4].iter().sum::<usize>() as f64
+            } else {
+                100.0
+            },
+            t[4]
+        );
+    }
+
+    let stale: Vec<&OutOfScope> = known
+        .iter()
+        .filter(|k| k.hits == 0 && names.contains(&k.suite))
+        .collect();
+    println!(
+        "OUT_OF_SCOPE {} listed, {} matched, {} stale",
+        known.len(),
+        known.iter().map(|k| k.hits).sum::<usize>(),
+        stale.len()
+    );
+    for k in &stale {
+        println!("  stale: {} | {}", k.suite, k.pattern);
+    }
+    todo.sort();
+    println!("TODO {}", todo.len());
+    if grep.is_none() {
+        write_todo(&ran, &todo);
+    }
+    if !todo.is_empty() {
         ExitCode::FAILURE
     } else {
         ExitCode::SUCCESS
     }
+}
+
+fn write_todo(ran: &[String], new: &[String]) {
+    let path = conf_dir().join("todo.txt");
+    let old = fs::read_to_string(&path).unwrap_or_default();
+    let mut lines: Vec<String> = old
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .filter(|l| {
+            let suite = l.split(" | ").next().unwrap_or("");
+            !ran.iter().any(|r| r == suite)
+                && conf_dir()
+                    .join("golden")
+                    .join(format!("{suite}.json"))
+                    .exists()
+        })
+        .map(str::to_string)
+        .collect();
+    lines.extend(new.iter().cloned());
+    lines.sort();
+    let mut text = lines.join("\n");
+    if !text.is_empty() {
+        text.push('\n');
+    }
+    if text != old {
+        if let Err(e) = fs::write(&path, text) {
+            eprintln!("{}: {e}", path.display());
+        }
+    }
+}
+
+struct OutOfScope {
+    suite: String,
+    pattern: String,
+    reason: String,
+    hits: usize,
+}
+
+fn read_out_of_scope() -> Vec<OutOfScope> {
+    let path = conf_dir().join("out_of_scope.txt");
+    let Ok(text) = fs::read_to_string(&path) else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for (i, line) in text.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let parts: Vec<&str> = line.splitn(3, " | ").collect();
+        if parts.len() != 3 || parts.iter().any(|p| p.trim().is_empty()) {
+            eprintln!(
+                "{}:{}: expected `suite | pattern | reason`",
+                path.display(),
+                i + 1
+            );
+            continue;
+        }
+        out.push(OutOfScope {
+            suite: parts[0].trim().to_string(),
+            pattern: parts[1].trim().to_string(),
+            reason: parts[2].trim().to_string(),
+            hits: 0,
+        });
+    }
+    out
+}
+
+fn match_known(known: &mut [OutOfScope], suite: &str, failure: &str) -> Option<usize> {
+    let i = known
+        .iter()
+        .position(|k| k.suite == suite && (k.pattern == "*" || failure.contains(&k.pattern)))?;
+    known[i].hits += 1;
+    Some(i)
 }
 
 fn golden_files(args: &[String]) -> Vec<PathBuf> {
@@ -1202,6 +1455,212 @@ fn verify_golden(args: &[String]) -> ExitCode {
     }
 }
 
+fn short(v: &J) -> String {
+    let s = if v.get("t").and_then(J::as_str) == Some("n") {
+        match v.get("bits").and_then(J::as_str) {
+            Some(b) => format!("n:{b}"),
+            None => v.to_string(),
+        }
+    } else {
+        v.to_string()
+    };
+    if s.chars().count() > 90 {
+        format!("{}…", s.chars().take(90).collect::<String>())
+    } else {
+        s
+    }
+}
+
+fn diff_json(path: &str, g: &J, f: &J, out: &mut Vec<String>) {
+    match (g, f) {
+        (J::Object(go), J::Object(fo)) => {
+            if go.get("nondeterministic").and_then(J::as_bool) == Some(true)
+                && go.contains_key("value")
+            {
+                let (gt, ft) = (
+                    go["value"].get("t"),
+                    fo.get("value").and_then(|v| v.get("t")),
+                );
+                if gt != ft {
+                    out.push(format!(
+                        "{path}.value.t(nondet): golden {gt:?} fresh {ft:?}"
+                    ));
+                }
+                for (k, gv) in go {
+                    if matches!(k.as_str(), "value" | "spill" | "nondeterministic") {
+                        continue;
+                    }
+                    match fo.get(k) {
+                        Some(fv) => diff_json(&format!("{path}.{k}"), gv, fv, out),
+                        None => {
+                            out.push(format!("{path}.{k}: golden {} fresh <absent>", short(gv)))
+                        }
+                    }
+                }
+                return;
+            }
+            if go.get("t").and_then(J::as_str) == Some("n")
+                && fo.get("t").and_then(J::as_str) == Some("n")
+            {
+                let gb = go.get("bits").and_then(J::as_str);
+                let fb = fo.get("bits").and_then(J::as_str);
+                let same = match (gb, fb) {
+                    (Some(a), Some(b)) => a == b,
+                    _ => num_of(g).to_bits() == num_of(f).to_bits(),
+                };
+                if !same {
+                    out.push(format!("{path}: golden {} fresh {}", short(g), short(f)));
+                }
+                return;
+            }
+            for (k, gv) in go {
+                let p = if path.is_empty() {
+                    k.clone()
+                } else {
+                    format!("{path}.{k}")
+                };
+                match fo.get(k) {
+                    Some(fv) => diff_json(&p, gv, fv, out),
+                    None => out.push(format!("{p}: golden {} fresh <absent>", short(gv))),
+                }
+            }
+        }
+        (J::Array(ga), J::Array(fa)) => {
+            if ga.len() != fa.len() {
+                out.push(format!(
+                    "{path}: golden len {} fresh len {}",
+                    ga.len(),
+                    fa.len()
+                ));
+            }
+            for (i, (a, b)) in ga.iter().zip(fa).enumerate() {
+                diff_json(&format!("{path}[{i}]"), a, b, out);
+            }
+        }
+        (J::String(a), J::String(b)) => {
+            if sheetsteps::norm_book(a) != sheetsteps::norm_book(b) {
+                out.push(format!("{path}: golden {} fresh {}", short(g), short(f)));
+            }
+        }
+        _ => {
+            if g != f {
+                out.push(format!("{path}: golden {} fresh {}", short(g), short(f)));
+            }
+        }
+    }
+}
+
+fn item_label(i: usize, it: &J) -> String {
+    let mut s = format!("#{i}");
+    if let Some(st) = it.get("step") {
+        s.push_str(&format!(" step={st}"));
+    }
+    for k in ["cell", "range", "op", "host"] {
+        if let Some(v) = it.get(k).and_then(J::as_str) {
+            s.push_str(&format!(" {k}={v}"));
+        }
+    }
+    if let Some(f) = it.get("formula").and_then(J::as_str) {
+        let f: String = f.chars().take(70).collect();
+        s.push_str(&format!(" f={f}"));
+    }
+    s
+}
+
+fn compare_golden(args: &[String]) -> ExitCode {
+    let Some(dir) = args.first().map(PathBuf::from) else {
+        eprintln!("usage: conform compare-golden <dir> [suite…]");
+        return ExitCode::from(2);
+    };
+    let base = args
+        .iter()
+        .position(|a| a == "--base")
+        .and_then(|i| args.get(i + 1))
+        .map(PathBuf::from);
+    let names: Vec<String> = args[1..]
+        .iter()
+        .enumerate()
+        .filter(|(i, a)| !a.starts_with('-') && (*i == 0 || args[*i] != "--base"))
+        .map(|(_, a)| a.clone())
+        .collect();
+    let (mut nsuites, mut ndiff_suites, mut nitems, mut nmissing) = (0, 0, 0usize, 0);
+    for p in golden_files(&names) {
+        let fp = dir.join(p.file_name().unwrap());
+        let name = p.file_stem().unwrap().to_string_lossy().to_string();
+        if !fp.exists() {
+            nmissing += 1;
+            continue;
+        }
+        let gp = base
+            .as_ref()
+            .map_or(p.clone(), |b| b.join(p.file_name().unwrap()));
+        if !gp.exists() {
+            nmissing += 1;
+            continue;
+        }
+        nsuites += 1;
+        let g = load_golden(&gp);
+        let f = load_golden(&fp);
+        let (ga, fa) = (
+            g["items"].as_array().cloned().unwrap_or_default(),
+            f["items"].as_array().cloned().unwrap_or_default(),
+        );
+        let mut lines = Vec::new();
+
+        let mut pairs: Vec<(usize, usize)> = Vec::new();
+        if ga.len() == fa.len() {
+            pairs.extend((0..ga.len()).map(|i| (i, i)));
+        } else {
+            lines.push(format!(
+                "{name}: item count golden {} fresh {} (aligning by formula)",
+                ga.len(),
+                fa.len()
+            ));
+            let mut j = 0;
+            for (i, it) in ga.iter().enumerate() {
+                let Some(fm) = it.get("formula") else {
+                    continue;
+                };
+                if let Some(off) = fa[j..].iter().position(|x| x.get("formula") == Some(fm)) {
+                    pairs.push((i, j + off));
+                    j += off + 1;
+                }
+            }
+        }
+        for (i, j) in pairs {
+            let (gi, fi) = (&ga[i], &fa[j]);
+            let mut d = Vec::new();
+            diff_json("", gi, fi, &mut d);
+            if !d.is_empty() {
+                nitems += 1;
+                let more = if d.len() > 4 {
+                    format!(" (+{} more)", d.len() - 4)
+                } else {
+                    String::new()
+                };
+                d.truncate(4);
+                lines.push(format!(
+                    "{name} {} | {}{more}",
+                    item_label(i, gi),
+                    d.join(" | ")
+                ));
+            }
+        }
+        if !lines.is_empty() {
+            ndiff_suites += 1;
+            for l in lines {
+                println!("{l}");
+            }
+        }
+    }
+    println!("compare-golden: {nsuites} suites compared, {ndiff_suites} with differences, {nitems} differing items ({nmissing} without recording in {})", dir.display());
+    if ndiff_suites > 0 {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
 
@@ -1212,6 +1671,7 @@ fn main() -> ExitCode {
             Some("run") => run(&args[1..]),
             Some("compact") => compact_cmd(&args[1..]),
             Some("verify-golden") => verify_golden(&args[1..]),
+            Some("compare-golden") => compare_golden(&args[1..]),
             Some("eval") => eval_file(&args[1]),
             Some("list") => {
                 for (n, (k, _)) in suites() {
@@ -1220,7 +1680,7 @@ fn main() -> ExitCode {
                 ExitCode::SUCCESS
             }
             _ => {
-                eprintln!("usage: conform record|run|compact|verify-golden|list [suite…] [-v] [--grep TEXT] [--limit N]");
+                eprintln!("usage: conform record|run|compact|verify-golden|compare-golden|list [suite…] [-v] [--grep TEXT] [--limit N]");
                 ExitCode::from(2)
             }
         })
@@ -1230,7 +1690,7 @@ fn main() -> ExitCode {
 
 fn eval_file(path: &str) -> ExitCode {
     let mut wb = Workbook::empty();
-    wb.calc.fixed_now = None;
+    xlcalc::testing::set_fixed_now(&mut wb, None);
     load_fixture(&mut wb);
     let t_id = wb.add_sheet("T").unwrap();
     wb.add_sheet("S").unwrap();

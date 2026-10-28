@@ -49,7 +49,8 @@ fn row_col(ctx: &mut EvalCtx, ops: &[Operand], row: bool) -> Operand {
     } else {
         (rect.c0, rect.cols())
     };
-    if n == 1 {
+
+    if n == 1 && (matches!(ctx.arr_ctx, 0 | 3) || crate::legacy::host_may_array(ctx.wb, ctx.host)) {
         return Operand::Val(Value::Number(start as f64 + 1.0));
     }
     let data: Vec<Value> = (0..n)
@@ -598,6 +599,8 @@ fn vhlookup_scalar(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operan
 
     let idx = match &ops[2] {
         Operand::Val(Value::Array(a)) => Err(a.clone()),
+
+        Operand::Val(Value::Lambda(_)) => Ok(f64::INFINITY),
         Operand::Val(v) => match ctx.to_number(v) {
             Ok(n) => Ok(sfix(n) as f64),
             Err(e) => return Operand::err(e),

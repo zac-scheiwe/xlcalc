@@ -1,0 +1,98 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "cell": "Sheet1!A1",
+      "input": "k",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B1",
+      "input": "n",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A2",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A3",
+      "input": "b",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A4",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B2",
+      "input": "1",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B3",
+      "input": "2",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B4",
+      "input": "3",
+      "op": "set"
+    },
+    {
+      "criteria1": "a",
+      "field": 1,
+      "op": "autofilter",
+      "range": "Sheet1!A1:B4"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C5",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A7",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B6",
+      "input": "=1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D8",
+      "input": "y"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A12",
+      "input": "z"
+    },
+    {
+      "op": "autofilter",
+      "range": "Sheet1!A1:B4",
+      "field": 2,
+      "criteria1": ">0"
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "autofilter_clear",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    }
+  ]
+}

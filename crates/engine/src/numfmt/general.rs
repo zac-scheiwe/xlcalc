@@ -2,6 +2,8 @@ use super::decimal::{digits_to_string, Dec};
 
 pub const TEXT_GENERAL_WIDTH: usize = 11;
 
+#[allow(dead_code)]
+
 pub fn format_general_cell(x: f64, width: f64) -> String {
     let w = if width.is_finite() && width > 0.0 {
         width.floor() as i32

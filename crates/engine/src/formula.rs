@@ -814,7 +814,10 @@ fn r1_style(n: &str) -> bool {
     rest.is_some_and(|d| !d.is_empty() && d.chars().all(|c| c.is_ascii_digit()))
 }
 
+#[allow(dead_code)]
+
 pub const LAST_ROW: u32 = MAX_ROWS - 1;
+#[allow(dead_code)]
 pub const LAST_COL: u32 = MAX_COLS - 1;
 
 pub fn map_node(node: &Node, f: &mut dyn FnMut(&Node) -> Option<Node>) -> Node {

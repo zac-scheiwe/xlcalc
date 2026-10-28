@@ -230,12 +230,9 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         )),
         "filename" => Value::from(""),
 
-        "width" => array_or_scalar(1, 2, |_, c| {
-            if c == 0 {
-                Value::Number(8.0)
-            } else {
-                Value::Bool(true)
-            }
+        "width" => array_or_scalar(1, 2, |_, c| match c {
+            0 => Value::Number(8.0),
+            _ => Value::Bool(true),
         }),
         "sheet" => match ctx.wb.sheet_position(sheet) {
             Some(p) => Value::Number(p as f64 + 1.0),

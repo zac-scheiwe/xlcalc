@@ -1,0 +1,20 @@
+{
+  "sheets": ["Sheet1", "Sheet2", "Sheet3"],
+  "steps": [
+    {"cell": "Sheet2!A1", "input": "5", "op": "set"},
+    {"cell": "Sheet1!A1", "input": "=COUNTA(Sheet2!A1:A4)", "op": "set"},
+    {"cell": "Sheet1!A2", "input": "=FORMULATEXT(Sheet1!A1)", "op": "set"},
+    {"cell": "Sheet1!B1", "input": "=COUNTA(Sheet2:Sheet3!A1:A4)", "op": "set"},
+    {"cell": "Sheet1!B2", "input": "=FORMULATEXT(Sheet1!B1)", "op": "set"},
+    {"cell": "Sheet1!C2", "input": "=FORMULATEXT(Sheet2!A1)", "op": "set"},
+    {"cell": "Sheet2!A1", "input": "=Sheet3!A1", "op": "set"},
+    {"op": "read", "range": "Sheet1!A1:C2"},
+    {"name": "Alpha", "op": "rename_sheet", "sheet": "Sheet2"},
+    {"op": "read", "range": "Sheet1!A1:C2"},
+    {"name": "Beta", "op": "rename_sheet", "sheet": "Sheet3"},
+    {"op": "read", "range": "Sheet1!A1:C2"},
+    {"op": "mode", "value": "semi"},
+    {"name": "Gam", "op": "rename_sheet", "sheet": "Alpha"},
+    {"op": "read", "range": "Sheet1!A1:C2"}
+  ]
+}

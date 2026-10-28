@@ -233,3 +233,84 @@ fn calc_modes_and_iteration_edges() {
     assert!(!wb.is_semiautomatic());
     wb.rebuild();
 }
+
+#[test]
+fn circular_placeholder_is_never_observable() {
+    use xlcalc::XlError;
+    assert_eq!(XlError::ALL.len(), 15);
+    assert!(XlError::parse("#CIRC!").is_none());
+    let check = |wb: &Workbook, s: SheetId, when: &str| {
+        for r in 0..8 {
+            for c in 0..8 {
+                let a = CellAddr::new(s, r, c);
+                let v = wb.value(a);
+                let shown = format!("{v:?} {}", wb.display_text(a));
+                assert!(
+                    !shown.contains("Circ") && !shown.contains("#CIRC!"),
+                    "{when} r{r}c{c}: {shown}"
+                );
+                if let Some(fid) = wb.formula_at(a) {
+                    let stored = format!("{:?}", wb.formula(fid).value);
+                    assert!(!stored.contains("Circ"), "{when} r{r}c{c}: {stored}");
+                }
+            }
+        }
+    };
+    for iterate in [false, true] {
+        let (mut wb, s) = wb();
+        wb.set_iteration(iterate, Some(5), None);
+        let cells = [
+            (0, 0, "5"),
+            (1, 1, "=INDEX(A1:C3*2,1,1)"),
+            (2, 1, "=ROWS(A1:C3+0)"),
+            (1, 0, "=1/0"),
+            (2, 2, "=SUM(A1:C3+0)"),
+            (0, 2, "=IFERROR(A1:C3*1,0)"),
+            (3, 0, "=SUM(A1:C3)"),
+            (4, 4, "=E5:F6*1"),
+            (6, 0, "=UNIQUE(A1:C3)"),
+            (6, 4, "=COUNTIFS(A1:C3,\">0\",A1:C3,\"<5\")"),
+        ];
+        for (r, c, t) in cells {
+            wb.set_input(CellAddr::new(s, r, c), t).unwrap();
+            check(&wb, s, "auto");
+        }
+        wb.set_mode(CalcMode::Manual);
+        wb.set_input(CellAddr::new(s, 7, 7), "=INDEX(A1:H8+0,1,1)")
+            .unwrap();
+        check(&wb, s, "manual");
+        wb.full_recalc();
+        check(&wb, s, "full");
+    }
+}
+
+#[test]
+fn session_getters_and_setters() {
+    let mut wb = Workbook::new();
+    let s1 = wb.sheet_at(0).id;
+    let s2 = wb.add_sheet("Two").unwrap();
+    assert_eq!(wb.active_sheet(), s2, "adding a sheet activates it");
+    assert_eq!(wb.active_cell(), (0, 0));
+    wb.set_active_cell(4, 2).unwrap();
+    assert_eq!(wb.active_cell(), (4, 2));
+    assert!(wb.set_active_cell(MAXR + 1, 0).is_err());
+    wb.set_active_sheet(s1).unwrap();
+    assert_eq!(wb.active_sheet(), s1);
+    assert_eq!(wb.active_cell(), (0, 0));
+    assert_eq!(
+        wb.active_cell_of(s2),
+        (4, 2),
+        "each sheet keeps its active cell"
+    );
+    assert!(wb.set_active_sheet(SheetId(999)).is_err());
+
+    wb.define_name("n", "=1", Some(s1)).unwrap();
+    wb.define_name_active("n", "=2", None).unwrap();
+    assert!(wb.names().get("N", None).is_none());
+    wb.set_active_sheet(s2).unwrap();
+    wb.define_name_active("n", "=3", None).unwrap();
+    assert!(
+        wb.names().get("N", None).is_some(),
+        "on another sheet it is a workbook name"
+    );
+}

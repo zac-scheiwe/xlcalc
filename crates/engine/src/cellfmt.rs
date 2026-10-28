@@ -22,7 +22,7 @@ pub struct CellFormats {
     compiled: FxHashMap<Arc<str>, Option<Arc<NumberFormat>>>,
     pub(crate) precision: bool,
 
-    late: FxHashMap<usize, std::sync::Weak<str>>,
+    late: FxHashMap<usize, (std::sync::Weak<str>, Option<Arc<str>>)>,
 }
 
 impl CellFormats {
@@ -52,6 +52,14 @@ impl CellFormats {
     pub(crate) fn is_late(&self, f: &Arc<str>) -> bool {
         self.late
             .contains_key(&(Arc::as_ptr(f) as *const u8 as usize))
+    }
+
+    pub(crate) fn counted(&self, a: CellAddr) -> Option<Arc<str>> {
+        let f = self.get(a)?;
+        match self.late.get(&(Arc::as_ptr(f) as *const u8 as usize)) {
+            Some((_, prior)) => prior.clone(),
+            None => Some(f.clone()),
+        }
     }
 
     fn compile(&mut self, f: &Arc<str>) -> Option<Arc<NumberFormat>> {
@@ -205,7 +213,7 @@ impl Workbook {
         self.cellfmt.get(addr).is_some_and(|f| &**f == "@")
     }
 
-    fn yielding_format(&self, cur: &str) -> bool {
+    pub(crate) fn yielding_format(&self, cur: &str) -> bool {
         if YIELDING.iter().any(|y| y.eq_ignore_ascii_case(cur)) {
             return true;
         }
@@ -245,10 +253,6 @@ impl Workbook {
 
     pub fn precision_as_displayed(&self) -> bool {
         self.cellfmt.precision
-    }
-
-    pub(crate) fn is_yielding_format(f: &str) -> bool {
-        YIELDING.contains(&f)
     }
 
     pub(crate) fn own_format(&self, a: CellAddr) -> Option<Arc<str>> {
@@ -324,12 +328,6 @@ impl Workbook {
     }
 
     pub fn reset_number_format(&mut self, sheet: SheetId, rect: Rect) {
-        if let Some(runs) = self.view_visible_runs(sheet, rect) {
-            for run in runs {
-                self.reset_number_format(sheet, run);
-            }
-            return;
-        }
         self.set_number_format_unrounded(sheet, rect, "General");
         let mode = std::mem::replace(&mut self.settings.mode, CalcMode::Manual);
         self.unmerge_cells(sheet, rect);
@@ -340,26 +338,23 @@ impl Workbook {
         if self.sheet(sheet).is_none() {
             return;
         }
+        let before = self.late_candidates(sheet, rect);
         self.apply_format(sheet, rect, fmt);
-        self.note_late_formats(sheet, rect);
+        self.note_late_formats(sheet, before);
         self.note_table_col_formats(sheet, rect, fmt);
     }
 
     pub fn set_number_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
-        let r = self.set_number_format_body(sheet, rect, fmt);
-        if self.sheet(sheet).is_some() && !(rect.r0 == 0 && rect.r1 + 1 >= crate::address::MAX_ROWS)
-        {
-            self.view_touch_row_pub(sheet, rect.r1);
-        }
-        r
+        self.set_number_format_body(sheet, rect, fmt)
     }
 
     fn set_number_format_body(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
         if self.sheet(sheet).is_none() {
             return RecalcReport::default();
         }
+        let before = self.late_candidates(sheet, rect);
         self.apply_format(sheet, rect, fmt);
-        self.note_late_formats(sheet, rect);
+        self.note_late_formats(sheet, before);
         self.note_table_col_formats(sheet, rect, fmt);
         if !self.cellfmt.precision {
             return RecalcReport::default();
@@ -367,29 +362,38 @@ impl Workbook {
         self.round_range(sheet, rect)
     }
 
-    fn note_late_formats(&mut self, sheet: SheetId, rect: Rect) {
-        let bodies: Vec<Rect> = self
-            .tables
-            .iter()
-            .filter(|t| t.sheet == sheet)
-            .filter_map(|t| {
-                let (d0, d1) = t.data_rows();
-                rect.intersection(&Rect::new(d0, t.rect.c0, d1, t.rect.c1))
-            })
-            .collect();
-        for b in bodies {
+    fn late_candidates(&self, sheet: SheetId, rect: Rect) -> Vec<(u32, u32, Option<Arc<str>>)> {
+        let mut out = Vec::new();
+        for t in self.tables.iter().filter(|t| t.sheet == sheet) {
+            let (d0, d1) = t.data_rows();
+            let Some(b) = rect.intersection(&Rect::new(d0, t.rect.c0, d1, t.rect.c1)) else {
+                continue;
+            };
             if b.rows() as u64 * b.cols() as u64 > 1 << 16 {
                 continue;
             }
             for r in b.r0..=b.r1 {
                 for c in b.c0..=b.c1 {
-                    if let Some(f) = self.cellfmt.map.get(&(sheet, r, c)) {
-                        let key = Arc::as_ptr(f) as *const u8 as usize;
-                        let w = Arc::downgrade(f);
-                        self.cellfmt.late.insert(key, w);
-                    }
+                    let prior = self
+                        .cellfmt
+                        .counted(CellAddr::new(sheet, r, c))
+                        .filter(|f| !f.eq_ignore_ascii_case("general"));
+                    out.push((r, c, prior));
                 }
             }
+        }
+        out
+    }
+
+    fn note_late_formats(&mut self, sheet: SheetId, cells: Vec<(u32, u32, Option<Arc<str>>)>) {
+        for (r, c, prior) in cells {
+            let Some(f) = self.cellfmt.map.get(&(sheet, r, c)) else {
+                continue;
+            };
+            let own: Arc<str> = Arc::from(&**f);
+            let key = Arc::as_ptr(&own) as *const u8 as usize;
+            self.cellfmt.late.insert(key, (Arc::downgrade(&own), prior));
+            self.cellfmt.map.insert((sheet, r, c), own);
         }
     }
 
@@ -431,11 +435,7 @@ impl Workbook {
         self.cellfmt.precision = on;
 
         if !on && !was {
-            return if self.settings.mode == CalcMode::Automatic {
-                calc::recalc(self)
-            } else {
-                RecalcReport::default()
-            };
+            return RecalcReport::default();
         }
 
         let ids: Vec<SheetId> = self.sheets().map(|s| s.id).collect();
@@ -527,7 +527,10 @@ impl Workbook {
         let Some(typed) = self.typed_format(input) else {
             return;
         };
-        if self.cellfmt_has(addr) {
+
+        let text_ttc = self.op_on(crate::workbook::Op::TextToColumns)
+            && self.number_format(addr).eq_ignore_ascii_case("@");
+        if self.cellfmt_has(addr) && !text_ttc {
             let cur = self.number_format(addr).to_string();
             let yields = self.yielding_format(&cur);
             let (a, b) = (self.format_class(&cur), self.format_class(&typed));

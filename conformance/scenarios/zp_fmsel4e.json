@@ -1,0 +1,109 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "k"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "n"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!E2",
+      "input": "e"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!E3",
+      "input": "e"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A4",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!E4",
+      "input": "e"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A5",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B5",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!E5",
+      "input": "e"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A8",
+      "input": "x"
+    },
+    {
+      "name": "Tb",
+      "op": "table",
+      "range": "Sheet1!A1:B5"
+    },
+    {
+      "criteria1": "a",
+      "field": 1,
+      "op": "autofilter",
+      "table": "Tb"
+    },
+    {
+      "op": "rowstate",
+      "rows": 10,
+      "sheet": "Sheet1"
+    },
+    {
+      "at": 7,
+      "count": 1,
+      "op": "hide_rows",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 10,
+      "sheet": "Sheet1"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "cell": "Sheet1!A1",
+      "input": "k",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B1",
+      "input": "n",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A2",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A3",
+      "input": "b",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A4",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B2",
+      "input": "1",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B3",
+      "input": "2",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B4",
+      "input": "3",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A7",
+      "input": "below",
+      "op": "set"
+    },
+    {
+      "name": "Tb",
+      "op": "table",
+      "range": "Sheet1!A1:B4"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": true
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F2",
+      "input": "=SUM(B2:B5)"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": false
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F9"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F2",
+      "input": "=SUM(B2:B4)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F3",
+      "input": "=SUM(B:B)"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": false
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F9"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F3",
+      "input": "=SUM(A6:B7)"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": false
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F9"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": true
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "=COUNT(B5)"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": false
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F9"
+    }
+  ]
+}

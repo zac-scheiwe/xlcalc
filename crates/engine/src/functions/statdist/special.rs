@@ -570,6 +570,8 @@ fn erf_kernel(x: f64) -> f64 {
     x87::div(x87::mul(p, x), q)
 }
 
+#[allow(dead_code)]
+
 fn erf_dd(x: f64) -> DD {
     let xd = DD::new(x);
     let y = xd.mul(xd);
@@ -630,6 +632,8 @@ pub fn erfc(x: f64) -> f64 {
     }
 }
 
+#[allow(dead_code)]
+
 pub fn erf_root_round(t0: f64, y: f64, upper: bool, bias: f64) -> f64 {
     if !(t0 > 0.0 && t0 < 2.5) {
         return t0;
@@ -648,6 +652,8 @@ pub fn norm_cdf(z: f64) -> f64 {
     erfc(-z * SQRT1_2) / 2.0
 }
 
+#[allow(dead_code)]
+
 pub fn norm_sf(z: f64) -> f64 {
     erfc(z * SQRT1_2) / 2.0
 }
@@ -655,6 +661,8 @@ pub fn norm_sf(z: f64) -> f64 {
 pub fn norm_pdf(z: f64) -> f64 {
     INV_SQRT_2PI * (-0.5 * z * z).exp()
 }
+
+#[allow(dead_code)]
 
 pub fn norm_inv(p: f64) -> f64 {
     let q = p - 0.5;
@@ -749,6 +757,8 @@ pub fn norm_inv(p: f64) -> f64 {
 }
 
 const MAXGAM: f64 = 171.624376956302725;
+
+#[allow(dead_code)]
 
 pub fn incbet(aa: f64, bb: f64, xx: f64) -> f64 {
     incbet2(aa, bb, xx, 1.0 - xx)
@@ -975,6 +985,8 @@ fn pseries(a: f64, b: f64, x: f64) -> f64 {
 fn lgamma_ratio(a: f64, b: f64) -> f64 {
     lgamma_dd(a + b).sub(lgamma_dd(a)).sub(lgamma_dd(b)).hi()
 }
+
+#[allow(dead_code)]
 
 pub fn lbeta(a: f64, b: f64) -> f64 {
     lgamma_dd(a).add(lgamma_dd(b)).sub(lgamma_dd(a + b)).hi()

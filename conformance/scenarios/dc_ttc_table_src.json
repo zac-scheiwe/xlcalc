@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A1", "input": "h"}, {"op": "set", "cell": "Sheet1!A2", "input": "1,2"}, {"op": "set", "cell": "Sheet1!A3", "input": "3,4"}, {"op": "table", "name": "T1", "range": "Sheet1!A1:A3"}]}

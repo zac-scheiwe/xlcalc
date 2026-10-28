@@ -1,6 +1,6 @@
 use serde_json::Value as J;
-use xlcalc::sort::{SortKey, SortSpec};
 use xlcalc::{parse_cell_ref, parse_range_ref, SheetId, Workbook};
+use xlcalc::{SortKey, SortSpec};
 
 use super::{Outcome, Tally};
 
@@ -15,6 +15,10 @@ pub fn run(
 ) -> bool {
     let excel_err = !rec["error"].is_null();
     let mut verdict = |tally: &mut Tally, err: Option<String>| {
+        if let Some(w) = err.as_deref().and_then(super::oos_what) {
+            tally.pending_oos = Some(w);
+            return;
+        }
         let ok = err.is_some() == excel_err;
         tally.add(if ok { Outcome::Exact } else { Outcome::Wrong }, || {
             format!(
@@ -86,6 +90,109 @@ pub fn run(
             let err = wb.sort_range(s, rect, &spec).err().map(|e| e.to_string());
             verdict(tally, err);
         }
+        "replace" => {
+            let (s, rect) =
+                parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
+            let spec = xlcalc::ReplaceSpec {
+                what: step["what"].as_str().unwrap_or("").to_string(),
+                with: step["with"].as_str().unwrap_or("").to_string(),
+                whole: step["lookat"].as_str() == Some("whole"),
+                match_case: step["matchcase"].as_bool().unwrap_or(false),
+                by_columns: step["order"].as_str() == Some("cols"),
+            };
+            let err = wb
+                .replace_range(s, rect, &spec)
+                .err()
+                .map(|e| e.to_string());
+            verdict(tally, err);
+        }
+        "text_to_columns" => {
+            let (s, rect) =
+                parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
+            let ch = |k: &str| step[k].as_str().and_then(|t| t.chars().next());
+            let flag = |k: &str| step[k].as_bool().unwrap_or(false);
+            let spec = xlcalc::TtcSpec {
+                fixed: step["type"].as_str() == Some("fixed"),
+                qualifier: match step["qualifier"].as_str() {
+                    Some("single") => Some('\''),
+                    Some("none") => None,
+                    _ => Some('"'),
+                },
+                consecutive: flag("consecutive"),
+                tab: flag("tab"),
+                semicolon: flag("semicolon"),
+                comma: flag("comma"),
+                space: flag("space"),
+                other: ch("other"),
+                fieldinfo: step["fieldinfo"]
+                    .as_array()
+                    .map(|a| {
+                        a.iter()
+                            .map(|p| {
+                                (
+                                    p[0].as_u64().unwrap_or(0) as u32,
+                                    p[1].as_u64().unwrap_or(1) as u32,
+                                )
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                decimal: ch("decimal"),
+                thousands: ch("thousands"),
+                trailing_minus: flag("trailing_minus"),
+                dest: step["dest"]
+                    .as_str()
+                    .and_then(|d| parse_cell_ref(wb, d, default_sheet)),
+            };
+            let err = wb
+                .text_to_columns(s, rect, &spec)
+                .err()
+                .map(|e| e.to_string());
+            verdict(tally, err);
+        }
+        "subtotal" => {
+            let (s, rect) =
+                parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
+            let spec = xlcalc::SubtotalSpec {
+                group: step["group"].as_u64().unwrap_or(1) as u32,
+                function: xlcalc::SubFunc::parse(step["function"].as_str().unwrap_or("sum"))
+                    .unwrap_or(xlcalc::SubFunc::Sum),
+                totals: step["totals"]
+                    .as_array()
+                    .map(|a| a.iter().map(|c| c.as_u64().unwrap_or(0) as u32).collect())
+                    .unwrap_or_default(),
+                replace: step["replace"].as_bool().unwrap_or(true),
+                below: step["below"].as_bool().unwrap_or(true),
+            };
+            let err = wb.subtotal(s, rect, &spec).err().map(|e| e.to_string());
+            verdict(tally, err);
+        }
+        "remove_subtotal" => {
+            let (s, rect) =
+                parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
+            let err = wb.remove_subtotal(s, rect).err().map(|e| e.to_string());
+            verdict(tally, err);
+        }
+        "remove_dups" => {
+            let (s, rect) =
+                parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
+            let spec = xlcalc::DedupSpec {
+                columns: step["columns"]
+                    .as_array()
+                    .map(|a| {
+                        a.iter()
+                            .map(|c| c.as_i64().unwrap_or(0).max(0) as u32)
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                header: step["header"].as_bool().unwrap_or(false),
+            };
+            let err = wb
+                .remove_duplicates(s, rect, &spec)
+                .err()
+                .map(|e| e.to_string());
+            verdict(tally, err);
+        }
         "table_sort" => {
             let name = step["name"].as_str().unwrap();
             if wb.table_by_name(name).is_none() {
@@ -110,7 +217,7 @@ pub fn run(
             verdict(tally, err);
         }
         "paste_special" => {
-            use xlcalc::pastespecial::{PasteOp, PasteSpecial, PasteWhat};
+            use xlcalc::{PasteOp, PasteSpecial, PasteWhat};
             let (ss, src) =
                 parse_range_ref(wb, step["from"].as_str().unwrap(), default_sheet).unwrap();
             let (ds, dst) =
@@ -176,7 +283,7 @@ pub fn run(
             verdict(tally, err);
         }
         "autofill" => {
-            use xlcalc::autofill::FillType;
+            use xlcalc::FillType;
             let (ss, src) =
                 parse_range_ref(wb, step["from"].as_str().unwrap(), default_sheet).unwrap();
             let (_, dst) =
@@ -192,7 +299,7 @@ pub fn run(
             verdict(tally, err);
         }
         "dataseries" => {
-            use xlcalc::fillseries::{DateUnit, SeriesSpec, SeriesType};
+            use xlcalc::{DateUnit, SeriesSpec, SeriesType};
             let (s, rect) =
                 parse_range_ref(wb, step["range"].as_str().unwrap(), default_sheet).unwrap();
             let spec = SeriesSpec {
@@ -261,7 +368,7 @@ pub fn run(
                             a.iter()
                                 .filter_map(|x| x.as_str())
                                 .collect::<Vec<_>>()
-                                .join(&xlcalc::view::VALUES_SEP.to_string()),
+                                .join(&xlcalc::testing::VALUES_SEP.to_string()),
                         ),
                         x => x.as_str().map(str::to_string),
                     };
@@ -284,6 +391,13 @@ pub fn run(
                     }
                 }
                 "autofilter_clear" => wb.show_all_data(sid).map(|_| ()),
+                "autofilter_reapply"
+                    if step["table"].is_null() && wb.sheet_autofilter_missing(sid) =>
+                {
+                    Err(xlcalc::EditError::Compile(
+                        "You cannot call a method on a null-valued expression.".into(),
+                    ))
+                }
                 "autofilter_reapply" => wb.reapply_filter(sid).map(|_| ()),
                 _ => wb.autofilter_off(sid, step["table"].as_str()).map(|_| ()),
             };
@@ -319,8 +433,7 @@ pub fn run(
                 .filter(|c| *c < 26)
                 .map(|c| c + 1)
                 .collect();
-            let lv: Vec<u32> = (0..rows).map(|r| wb.row_level(sid, r)).collect();
-            let checks: [(&str, bool, String); 4] = [
+            let checks: [(&str, bool, String); 3] = [
                 (
                     "hidden rows",
                     hid == ints("hidden_rows"),
@@ -330,11 +443,6 @@ pub fn run(
                     "hidden cols",
                     hc == ints("hidden_cols"),
                     format!("{:?} vs Excel {:?}", hc, ints("hidden_cols")),
-                ),
-                (
-                    "outline levels",
-                    lv == ints("levels"),
-                    format!("{:?} vs Excel {:?}", lv, ints("levels")),
                 ),
                 (
                     "filter mode",

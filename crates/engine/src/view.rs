@@ -31,13 +31,11 @@ pub struct Filter {
 pub struct SheetView {
     pub hidden_rows: BTreeSet<u32>,
     pub hidden_cols: BTreeSet<u32>,
-
-    pub levels: BTreeMap<u32, u8>,
     pub filters: Vec<Filter>,
 
-    pub used_r1: Option<u32>,
+    pub levels: BTreeMap<u32, u8>,
 
-    pub ghost_fm: bool,
+    pub fm_last: bool,
 }
 
 impl Workbook {
@@ -67,25 +65,36 @@ impl Workbook {
             .unwrap_or_default()
     }
 
-    pub fn row_level(&self, sheet: SheetId, row: u32) -> u32 {
-        1 + self
-            .views
-            .get(&sheet)
-            .and_then(|v| v.levels.get(&row))
-            .copied()
-            .unwrap_or(0) as u32
-    }
-
     pub fn filter_mode(&self, sheet: SheetId) -> bool {
         self.views.get(&sheet).is_some_and(|v| {
-            v.ghost_fm
-                || v.filters.iter().any(|f| {
-                    !f.crit.is_empty()
-                        && f.table
-                            .as_ref()
-                            .is_none_or(|t| self.table_by_name(t).is_some())
-                })
+            v.filters.iter().any(|f| {
+                !f.crit.is_empty()
+                    && f.table
+                        .as_ref()
+                        .is_none_or(|t| self.table_by_name(t).is_some())
+            })
         })
+    }
+
+    pub(crate) fn guard_filtered(
+        &self,
+        sheet: SheetId,
+        rect: Rect,
+        rows: bool,
+        cols: bool,
+    ) -> Result<(), EditError> {
+        if !self.filter_mode(sheet) {
+            return Ok(());
+        }
+        let v = &self.views[&sheet];
+        if rows && v.hidden_rows.range(rect.r0..=rect.r1).next().is_some()
+            || cols && v.hidden_cols.range(rect.c0..=rect.c1).next().is_some()
+        {
+            return Err(EditError::OutOfScope(
+                "command over hidden cells in filter mode",
+            ));
+        }
+        Ok(())
     }
 
     pub fn autofilter_mode(&self, sheet: SheetId) -> bool {
@@ -98,37 +107,80 @@ impl Workbook {
         self.views.entry(sheet).or_default()
     }
 
-    fn view_touch_row(&mut self, sheet: SheetId, row: u32) {
+    pub(crate) fn set_subtotal_levels(
+        &mut self,
+        sheet: SheetId,
+        r0: u32,
+        r1: u32,
+        level: Option<u8>,
+    ) {
+        if level.is_none() && !self.views.contains_key(&sheet) {
+            return;
+        }
         let v = self.view_mut(sheet);
-        v.used_r1 = Some(v.used_r1.map_or(row, |r| r.max(row)));
-    }
-
-    pub(crate) fn view_touch_row_pub(&mut self, sheet: SheetId, row: u32) {
-        if self.sheet(sheet).is_some() {
-            self.view_touch_row(sheet, row.min(MAX_ROWS - 1));
+        for r in r0..=r1 {
+            match level {
+                Some(l) if l > 0 => {
+                    v.levels.insert(r, l);
+                }
+                _ => {
+                    v.levels.remove(&r);
+                }
+            }
         }
     }
 
-    pub(crate) fn view_touch_paste(&mut self, sheet: SheetId, src: Rect, dst: Rect) {
-        let h = src.rows().max(1);
-        let end = if dst.rows() >= h && dst.rows() % h == 0 {
-            dst.r1
-        } else {
-            dst.r0 + h - 1
+    pub(crate) fn outline_sort_guard(
+        &self,
+        sheet: SheetId,
+        r0: u32,
+        r1: u32,
+    ) -> Result<(), EditError> {
+        let Some(v) = self.views.get(&sheet).filter(|v| !v.levels.is_empty()) else {
+            return Ok(());
         };
-        self.view_touch_row_pub(sheet, end);
+        let lv = |r: u32| v.levels.get(&r).copied().unwrap_or(0);
+        let (low, mut at_low) = (lv(r0), 1u32);
+        for r in r0.saturating_add(1)..=r1 {
+            if low == 0 && at_low > 1 {
+                break;
+            }
+            let l = lv(r);
+            if l == low {
+                at_low += 1;
+                continue;
+            }
+            return Err(EditError::OutOfScope("sort across a Subtotal outline"));
+        }
+        Ok(())
+    }
+
+    pub(crate) fn sheet_sel(&self, sheet: SheetId) -> (u32, u32) {
+        self.session
+            .selection
+            .get(&sheet)
+            .copied()
+            .unwrap_or((0, 0))
+    }
+
+    pub(crate) fn view_typed(&mut self, addr: CellAddr) {
+        let n = self.views.get(&addr.sheet).map_or(0, |v| v.filters.len());
+        for i in 0..n {
+            let f = &self.views[&addr.sheet].filters[i];
+            if f.table.is_some() || addr.row <= f.rect.r1 {
+                continue;
+            }
+            let reg = self.current_region(addr.sheet, f.rect);
+            if reg.contains(addr.row, addr.col) && reg.r1 > f.rect.r1 {
+                self.view_mut(addr.sheet).filters[i].rect.r1 = reg.r1;
+            }
+        }
     }
 
     pub(crate) fn view_used_r1(&self, sheet: SheetId) -> Option<u32> {
-        let cells = self
-            .sheet(sheet)
+        self.sheet(sheet)
             .and_then(|sh| sh.cells.sticky_bounds())
-            .map(|b| b.r1);
-        let rows = self.views.get(&sheet).and_then(|v| v.used_r1);
-        match (cells, rows) {
-            (Some(a), Some(b)) => Some(a.max(b)),
-            (a, b) => a.or(b),
-        }
+            .map(|b| b.r1)
     }
 
     fn rows_visibility_changed(&mut self, sheet: SheetId, rows: &[u32]) {
@@ -159,6 +211,16 @@ impl Workbook {
     }
 
     fn view_settle(&mut self) -> RecalcReport {
+        let sheets: Vec<SheetId> = self.views.keys().copied().collect();
+        for s in sheets {
+            let fm = self.filter_mode(s);
+            let v = self.view_mut(s);
+            if v.fm_last != fm {
+                v.fm_last = fm;
+                let hidden: Vec<u32> = v.hidden_rows.iter().copied().collect();
+                self.rows_visibility_changed(s, &hidden);
+            }
+        }
         self.after_edit(Vec::new())
     }
 
@@ -174,13 +236,7 @@ impl Workbook {
         }
         let last = (at + count).min(MAX_ROWS) - 1;
         if !hide && self.filter_mode(sheet) {
-            let v = self.view_mut(sheet);
-            if (at..=last).any(|r| !v.hidden_rows.contains(&r)) {
-                return Ok(self.view_settle());
-            }
-        }
-        if hide {
-            self.view_touch_row(sheet, last);
+            return Err(EditError::OutOfScope("unhiding rows in filter mode"));
         }
         let mut changed = Vec::new();
         {
@@ -215,57 +271,16 @@ impl Workbook {
 
     pub fn group_rows(
         &mut self,
-        sheet: SheetId,
-        at: u32,
-        count: u32,
-        group: bool,
+        _sheet: SheetId,
+        _at: u32,
+        _count: u32,
+        _group: bool,
     ) -> Result<RecalcReport, EditError> {
-        let last = (at + count).min(MAX_ROWS) - 1;
-        if group {
-            self.view_touch_row(sheet, (last + 1).min(MAX_ROWS - 1));
-        }
-        let v = self.view_mut(sheet);
-
-        if !group && !(at..=last).any(|r| v.levels.contains_key(&r)) {
-            return Err(EditError::Compile("Ungroup method failed".into()));
-        }
-        for r in at..=last {
-            let l = v.levels.get(&r).copied().unwrap_or(0);
-            if group {
-                if l >= 7 {
-                    return Err(EditError::Compile("cannot group more levels".into()));
-                }
-                v.levels.insert(r, l + 1);
-            } else if l > 0 {
-                if l == 1 {
-                    v.levels.remove(&r);
-                } else {
-                    v.levels.insert(r, l - 1);
-                }
-            }
-        }
-        Ok(RecalcReport::default())
+        Err(EditError::OutOfScope("outline grouping"))
     }
 
-    pub fn outline_show(&mut self, sheet: SheetId, level: u32) -> RecalcReport {
-        let mut changed = Vec::new();
-        {
-            let v = self.view_mut(sheet);
-            let rows: Vec<(u32, u8)> = v.levels.iter().map(|(r, l)| (*r, *l)).collect();
-            for (r, l) in rows {
-                let hide = 1 + l as u32 > level;
-                if v.hidden_rows.contains(&r) != hide {
-                    changed.push(r);
-                    if hide {
-                        v.hidden_rows.insert(r);
-                    } else {
-                        v.hidden_rows.remove(&r);
-                    }
-                }
-            }
-        }
-        self.rows_visibility_changed(sheet, &changed);
-        self.view_settle()
+    pub fn outline_show(&mut self, _sheet: SheetId, _level: u32) -> RecalcReport {
+        RecalcReport::default()
     }
 
     fn nonblank(&self, sheet: SheetId, r: u32, c: u32) -> bool {
@@ -350,7 +365,8 @@ impl Workbook {
                 if check_r1.is_some_and(|c| row <= c) {
                     return None;
                 }
-                return Some(vec![true; vals.len()]);
+
+                return Some(rows.map(|r| !self.row_hidden(sheet, r)).collect());
             }
             let mut nums: Vec<f64> = vals
                 .iter()
@@ -431,19 +447,27 @@ impl Workbook {
         &mut self,
         sheet: SheetId,
         check_r1: Option<u32>,
-        only_hide: bool,
+        only_hide: Option<(usize, u32)>,
     ) -> Result<(), ()> {
         let Some(v) = self.views.get(&sheet) else {
             return Ok(());
         };
         let filters = v.filters.clone();
         let mut set: Vec<(u32, bool)> = Vec::new();
-        for f in filters.iter().filter(|f| !f.crit.is_empty()) {
+
+        for (fi, f) in filters
+            .iter()
+            .enumerate()
+            .filter(|(_, f)| !f.crit.is_empty() || check_r1.is_none())
+        {
             let Some(rect) = self.filter_rect(f) else {
                 continue;
             };
             let mut ok = vec![true; (rect.r1 - rect.r0) as usize];
             for (&field, cc) in &f.crit {
+                if only_hide.is_some_and(|(i, fl)| i == fi && fl != field) {
+                    continue;
+                }
                 let p = self
                     .field_pass(sheet, rect, field, cc, check_r1)
                     .ok_or(())?;
@@ -451,10 +475,9 @@ impl Workbook {
                     *o &= x;
                 }
             }
+
             if f.total_row && rect.r1 > rect.r0 {
-                if let Some(l) = ok.last_mut() {
-                    *l = true;
-                }
+                ok.pop();
             }
             set.extend(
                 ok.iter()
@@ -464,7 +487,7 @@ impl Workbook {
         }
         let mut changed = Vec::new();
         for (r, hide) in set {
-            if only_hide && !hide {
+            if only_hide.is_some() && !hide {
                 continue;
             }
             let v = self.view_mut(sheet);
@@ -581,7 +604,21 @@ impl Workbook {
         let rect = match (existing, table) {
             (Some(i), _) => {
                 let f = self.views[&sheet].filters[i].clone();
-                self.filter_rect(&f).ok_or_else(bad)?
+                let mut r = self.filter_rect(&f).ok_or_else(bad)?;
+
+                if f.table.is_none() && range.r0 == r.r0 && range.c0 == r.c0 {
+                    let g = self.current_region(sheet, Rect::new(r.r0, r.c0, r.r0, r.c1));
+                    if g.c1 == r.c1 && g.r1 > r.r1 {
+                        r.r1 = g.r1;
+                        self.view_mut(sheet).filters[i].rect = r;
+                    }
+                }
+
+                if f.table.is_none() {
+                    let total_row = self.ends_in_subtotal_row(sheet, r);
+                    self.view_mut(sheet).filters[i].total_row = total_row;
+                }
+                r
             }
             (None, Some(t)) => {
                 let t = self.table_by_name(t).ok_or_else(bad)?;
@@ -616,11 +653,12 @@ impl Workbook {
         }
         let i = existing.unwrap_or(self.views[&sheet].filters.len() - 1);
 
-        let only_hide = existing.is_some()
+        let only_hide = (existing.is_some()
             && c1.is_some()
             && !self.views[&sheet].filters[i]
                 .crit
-                .contains_key(&(field - 1));
+                .contains_key(&(field - 1)))
+        .then_some((i, field - 1));
         let v = self.view_mut(sheet);
         match c1 {
             Some(c1) => {
@@ -660,21 +698,32 @@ impl Workbook {
         for &i in &sorted {
             self.tables[i].sort_state = false;
         }
-        if !self.filter_mode(sheet) {
+
+        let target = self.show_all_target(sheet);
+        let filters = self
+            .views
+            .get(&sheet)
+            .map(|v| v.filters.clone())
+            .unwrap_or_default();
+        let is_target = |f: &Filter| match (&f.table, &target) {
+            (Some(a), Some(b)) => crate::text::eq_ordinal_ci(a, b),
+            (a, b) => a.is_none() && b.is_none(),
+        };
+        if !filters.iter().any(|f| is_target(f) && !f.crit.is_empty()) {
             if !sorted.is_empty() {
                 return Ok(RecalcReport::default());
             }
             return Err(EditError::Compile("ShowAllData method failed".into()));
         }
-        let filters = self.views[&sheet].filters.clone();
         let mut changed = Vec::new();
         for (i, f) in filters.iter().enumerate() {
-            if f.crit.is_empty() {
+            if f.crit.is_empty() || !is_target(f) {
                 continue;
             }
             if let Some(rect) = self.filter_rect(f) {
+                let last = if f.total_row { rect.r1 - 1 } else { rect.r1 };
                 let v = self.view_mut(sheet);
-                for r in rect.r0 + 1..=rect.r1 {
+                for r in rect.r0 + 1..=last {
                     if v.hidden_rows.remove(&r) {
                         changed.push(r);
                     }
@@ -688,6 +737,24 @@ impl Workbook {
         Ok(self.view_settle())
     }
 
+    fn show_all_target(&self, sheet: SheetId) -> Option<String> {
+        let (r, c) = self.active_cell();
+        self.table_at(CellAddr::new(sheet, r, c))
+            .filter(|t| t.headers && t.show_filter)
+            .map(|t| t.name.clone())
+    }
+
+    pub fn sheet_autofilter_missing(&self, sheet: SheetId) -> bool {
+        let Some(v) = self.views.get(&sheet) else {
+            return true;
+        };
+        let (r, c) = self.sheet_sel(sheet);
+        !v.filters.iter().any(|f| f.table.is_none())
+            && self
+                .table_at(CellAddr::new(sheet, r, c))
+                .is_none_or(|t| !(t.headers && t.show_filter))
+    }
+
     pub fn reapply_filter(&mut self, sheet: SheetId) -> Result<RecalcReport, EditError> {
         let table_af = self
             .tables
@@ -697,7 +764,7 @@ impl Workbook {
             return Err(EditError::Compile("ApplyFilter method failed".into()));
         }
 
-        let n = self.views[&sheet].filters.len();
+        let n = self.views.get(&sheet).map_or(0, |v| v.filters.len());
         for i in 0..n {
             let f = self.views[&sheet].filters[i].clone();
             if f.table.is_some() {
@@ -710,8 +777,12 @@ impl Workbook {
                 r1 += 1;
             }
             self.view_mut(sheet).filters[i].rect.r1 = r1;
+
+            let rect = self.views[&sheet].filters[i].rect;
+            let total_row = self.ends_in_subtotal_row(sheet, rect);
+            self.view_mut(sheet).filters[i].total_row = total_row;
         }
-        let _ = self.refilter(sheet, None, false);
+        let _ = self.refilter(sheet, None, None);
         Ok(self.view_settle())
     }
 
@@ -736,8 +807,9 @@ impl Workbook {
         let mut changed = Vec::new();
         if !f.crit.is_empty() {
             if let Some(rect) = self.filter_rect(&f) {
+                let last = if f.total_row { rect.r1 - 1 } else { rect.r1 };
                 let v = self.view_mut(sheet);
-                for r in rect.r0 + 1..=rect.r1 {
+                for r in rect.r0 + 1..=last {
                     if v.hidden_rows.remove(&r) {
                         changed.push(r);
                     }
@@ -747,23 +819,6 @@ impl Workbook {
         self.view_mut(sheet).filters.remove(i);
         self.rows_visibility_changed(sheet, &changed);
         Ok(self.view_settle())
-    }
-
-    pub(crate) fn view_used_after_shift(
-        &mut self,
-        sheet: SheetId,
-        old: Option<u32>,
-        at: u32,
-        count: u32,
-        insert: bool,
-    ) {
-        let Some(old) = old else { return };
-        let r = if insert && old >= at {
-            (old + count).min(MAX_ROWS - 1)
-        } else {
-            old
-        };
-        self.view_mut(sheet).used_r1 = Some(r);
     }
 
     pub(crate) fn view_shift(
@@ -795,6 +850,14 @@ impl Workbook {
                 .iter()
                 .filter_map(|(&r, &l)| map(r).map(|r| (r, l)))
                 .collect();
+
+            if insert && at > 0 {
+                if let Some(&l) = v.levels.get(&(at - 1)) {
+                    for r in at..(at + count).min(MAX_ROWS) {
+                        v.levels.insert(r, l);
+                    }
+                }
+            }
         } else {
             v.hidden_cols = v.hidden_cols.iter().filter_map(|&c| map(c)).collect();
         }
@@ -876,16 +939,6 @@ impl Workbook {
         }
     }
 
-    pub(crate) fn view_show_rows(&mut self, sheet: SheetId, r0: u32, r1: u32) {
-        let Some(v) = self.views.get_mut(&sheet) else {
-            return;
-        };
-        let changed: Vec<u32> = (r0..=r1).filter(|r| v.hidden_rows.remove(r)).collect();
-        if !changed.is_empty() {
-            self.rows_visibility_changed(sheet, &changed);
-        }
-    }
-
     pub(crate) fn view_rename_table(&mut self, sheet: SheetId, old: &str, new: &str) {
         if let Some(v) = self.views.get_mut(&sheet) {
             for f in &mut v.filters {
@@ -920,148 +973,8 @@ impl Workbook {
                     }
                 }
             }
-            self.view_mut(sheet).ghost_fm = true;
         }
         self.view_mut(sheet).filters.remove(i);
         self.rows_visibility_changed(sheet, &changed);
-    }
-
-    pub(crate) fn table_filtered(&self, sheet: SheetId, name: &str) -> bool {
-        self.views.get(&sheet).is_some_and(|v| {
-            v.filters.iter().any(|f| {
-                f.table
-                    .as_deref()
-                    .is_some_and(|t| t.eq_ignore_ascii_case(name))
-                    && !f.crit.is_empty()
-            })
-        })
-    }
-
-    pub(crate) fn view_visible_runs(&self, sheet: SheetId, rect: Rect) -> Option<Vec<Rect>> {
-        if !self.filter_mode(sheet) || rect.rows() > 1 << 16 {
-            return None;
-        }
-        let mut runs: Vec<Rect> = Vec::new();
-        for r in rect.r0..=rect.r1 {
-            if self.row_hidden(sheet, r) {
-                continue;
-            }
-            match runs.last_mut() {
-                Some(l) if l.r1 + 1 == r => l.r1 = r,
-                _ => runs.push(Rect::new(r, rect.c0, r, rect.c1)),
-            }
-        }
-        (!runs.is_empty() && !(runs.len() == 1 && runs[0] == rect)).then_some(runs)
-    }
-
-    #[allow(clippy::type_complexity)]
-    pub(crate) fn view_copy_plan(
-        &self,
-        ss: SheetId,
-        src: Rect,
-        ds: SheetId,
-        dr: Rect,
-    ) -> Option<Result<(Vec<(Rect, CellAddr)>, Rect, bool), EditError>> {
-        let fm_src = self.filter_mode(ss);
-        let fm_dst = self.filter_mode(ds);
-        if !fm_src && !fm_dst {
-            return None;
-        }
-        let mut runs: Vec<(u32, u32)> = Vec::new();
-        for r in src.r0..=src.r1 {
-            if fm_src && self.row_hidden(ss, r) {
-                continue;
-            }
-            match runs.last_mut() {
-                Some(l) if l.1 + 1 == r => l.1 = r,
-                _ => runs.push((r, r)),
-            }
-        }
-        let h: u32 = runs.iter().map(|x| x.1 - x.0 + 1).sum();
-        let hidden_in_src = h != src.rows();
-        if !hidden_in_src && !fm_dst {
-            return None;
-        }
-        let multi = Err(EditError::Compile(
-            "This action won't work on multiple selections.".into(),
-        ));
-
-        let all_hidden = runs.is_empty();
-        if all_hidden {
-            runs.push((src.r0, src.r1));
-        }
-        let h: u32 = runs.iter().map(|x| x.1 - x.0 + 1).sum();
-        let w = src.cols();
-        let tile = |row: u32, col: u32| -> Vec<(Rect, CellAddr)> {
-            let mut off = 0;
-            runs.iter()
-                .map(|&(a, b)| {
-                    let to = CellAddr::new(ds, row + off, col);
-                    off += b - a + 1;
-                    (Rect::new(a, src.c0, b, src.c1), to)
-                })
-                .collect()
-        };
-
-        let mut areas: Vec<Rect> = Vec::new();
-        if fm_dst && !dr.is_cell() {
-            for r in dr.r0..=dr.r1 {
-                if self.row_hidden(ds, r) {
-                    continue;
-                }
-                match areas.last_mut() {
-                    Some(l) if l.r1 + 1 == r => l.r1 = r,
-                    _ => areas.push(Rect::new(r, dr.c0, r, dr.c1)),
-                }
-            }
-        }
-        if areas.is_empty() {
-            areas.push(dr);
-        }
-        if areas.len() > 1 && all_hidden {
-            return Some(Err(EditError::Compile("No cells were found.".into())));
-        }
-        if areas.len() > 1 && runs.len() > 1 {
-            return Some(multi);
-        }
-        let mut steps = Vec::new();
-        let mut whole: Option<Rect> = None;
-        for a in areas {
-            let (nr, nc) = if fm_dst {
-                (
-                    if a.rows() % h == 0 { a.rows() / h } else { 1 },
-                    if a.cols() % w == 0 { a.cols() / w } else { 1 },
-                )
-            } else if a.rows() % h == 0 && a.cols() % w == 0 {
-                (a.rows() / h, a.cols() / w)
-            } else {
-                (1, 1)
-            };
-            for ti in 0..nr {
-                for tj in 0..nc {
-                    steps.extend(tile(a.r0 + ti * h, a.c0 + tj * w));
-                }
-            }
-            let cover = Rect::new(a.r0, a.c0, a.r0 + nr * h - 1, a.c0 + nc * w - 1);
-            whole = Some(match whole {
-                None => cover,
-                Some(x) => Rect::new(
-                    x.r0.min(cover.r0),
-                    x.c0.min(cover.c0),
-                    x.r1.max(cover.r1),
-                    x.c1.max(cover.c1),
-                ),
-            });
-        }
-        let whole = whole.unwrap_or(dr);
-
-        if runs.len() > 1 && ss == ds && src.intersects(&whole) {
-            return Some(Err(EditError::Compile(
-                "This selection isn't valid. Make sure the copy and paste areas don't overlap \
-                 unless they are the same size and shape."
-                    .into(),
-            )));
-        }
-        Some(Ok((steps, whole, runs.len() > 1)))
     }
 }

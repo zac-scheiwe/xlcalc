@@ -1,6 +1,5 @@
 use serde_json::{json, Value as J};
-use xlcalc::workbook::Entry;
-use xlcalc::{CalcMode, CellAddr, Value, Workbook, XlError};
+use xlcalc::{CalcMode, CellAddr, Entry, Value, Workbook, XlError};
 
 fn typed(v: &Value) -> J {
     match v {
@@ -17,8 +16,7 @@ pub fn save(wb: &Workbook) -> J {
         .sheets()
         .map(|s| {
             let cells: Vec<J> = s
-                .cells
-                .iter()
+                .entries()
                 .map(|(r, c, e)| {
                     let a = CellAddr::new(s.id, r, c);
                     let v = match e {
@@ -35,16 +33,16 @@ pub fn save(wb: &Workbook) -> J {
         .collect();
     let name_of = |id| wb.sheet(id).map(|s| s.name.clone());
     let names: Vec<J> = wb
-        .names
+        .names()
         .iter()
         .map(|n| json!({"name": n.name, "refers_to": format!("={}", n.refers_to), "scope": n.scope.and_then(name_of)}))
         .collect();
     let tables: Vec<J> = wb
-        .tables
+        .tables()
         .iter()
         .map(|t| json!({"name": t.name, "sheet": name_of(t.sheet), "range": t.rect.a1(), "totals": t.totals, "headers": t.headers, "columns": t.columns}))
         .collect();
-    let s = &wb.settings;
+    let s = wb.settings();
     json!({
         "sheets": sheets,
         "names": names,
@@ -55,7 +53,7 @@ pub fn save(wb: &Workbook) -> J {
 
 pub fn load(doc: &J) -> Result<Workbook, String> {
     let mut wb = Workbook::empty();
-    wb.settings.mode = CalcMode::Manual;
+    wb.set_mode(CalcMode::Manual);
     let sheets = doc["sheets"].as_array().ok_or("missing sheets")?;
     for s in sheets {
         wb.add_sheet(s["name"].as_str().ok_or("sheet without a name")?)
@@ -90,8 +88,9 @@ pub fn load(doc: &J) -> Result<Workbook, String> {
             .sheet_by_name(t["sheet"].as_str().unwrap_or(""))
             .ok_or("table on unknown sheet")?
             .id;
-        let rect = xlcalc::address::parse_a1_rect(t["range"].as_str().unwrap_or(""))
-            .ok_or("bad table range")?;
+        let rect = xlcalc::parse_range_ref(&wb, t["range"].as_str().unwrap_or(""), sheet)
+            .ok_or("bad table range")?
+            .1;
         let name = t["name"].as_str().unwrap_or("");
         let totals = t["totals"].as_bool().unwrap_or(false);
         let mut data = if totals {
@@ -122,12 +121,7 @@ pub fn load(doc: &J) -> Result<Workbook, String> {
             }
         }
         if totals {
-            wb.tables.iter_mut().find(|x| x.name == name).unwrap().rect = rect;
-            wb.tables
-                .iter_mut()
-                .find(|x| x.name == name)
-                .unwrap()
-                .totals = true;
+            wb.restore_table_totals(name, rect);
         }
     }
     for n in doc["names"].as_array().into_iter().flatten() {
@@ -147,18 +141,19 @@ pub fn load(doc: &J) -> Result<Workbook, String> {
             .map_err(|e| format!("{}: {e}", a.a1()))?;
     }
     let st = &doc["settings"];
-    wb.settings.iteration = st["iteration"].as_bool().unwrap_or(false);
+    let mut settings = wb.settings().clone();
+    settings.iteration = st["iteration"].as_bool().unwrap_or(false);
     if let Some(n) = st["max_iterations"].as_u64() {
-        wb.settings.max_iterations = n as u32;
+        settings.max_iterations = n as u32;
     }
     if let Some(x) = st["max_change"].as_f64() {
-        wb.settings.max_change = x;
+        settings.max_change = x;
     }
-    wb.settings.mode = if st["manual"].as_bool().unwrap_or(false) {
+    settings.mode = if st["manual"].as_bool().unwrap_or(false) {
         CalcMode::Manual
     } else {
         CalcMode::Automatic
     };
-    wb.full_recalc();
+    wb.restore_settings(settings);
     Ok(wb)
 }

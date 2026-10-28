@@ -160,7 +160,7 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
         for (x, y) in gx.data.iter().zip(gy.data.iter()) {
             for v in [x, y] {
                 if let Value::Error(e) = v {
-                    return Err(if *e == XlError::Spill {
+                    return Err(if matches!(*e, XlError::Spill | XlError::Calc) {
                         XlError::Value
                     } else {
                         *e

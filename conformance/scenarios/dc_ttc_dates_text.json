@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A1", "input": "2020-03-04,4 Mar 2020,March 4,03/04/2020"}, {"op": "text_to_columns", "range": "Sheet1!A1:A1", "comma": true}, {"op": "read", "range": "Sheet1!A1:E1"}]}

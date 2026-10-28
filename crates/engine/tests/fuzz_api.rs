@@ -3,11 +3,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
-use xlcalc::autofill::FillType;
-use xlcalc::fillseries::{DateUnit, SeriesSpec, SeriesType};
-use xlcalc::pastespecial::{PasteOp, PasteSpecial, PasteWhat};
-use xlcalc::sort::{SortKey, SortSpec};
-use xlcalc::{CalcMode, CellAddr, Rect, SheetId, Value, Workbook, XlError};
+use xlcalc::{
+    CalcMode, CellAddr, DateUnit, FillType, PasteOp, PasteSpecial, PasteWhat, Rect, SeriesSpec,
+    SeriesType, SheetId, SortKey, SortSpec, Value, Workbook, XlError,
+};
 
 const MAX_ROW: u32 = 1_048_575;
 const MAX_COL: u32 = 16_383;
@@ -960,7 +959,7 @@ fn fresh(g: &mut Gen) -> Workbook {
 }
 
 fn run_seed(seed: u64, wild: bool, ops: usize, failures: &mut Vec<(u64, usize, String, String)>) {
-    let funcs = xlcalc::functions::names();
+    let funcs = xlcalc::function_names();
     let mut g = Gen {
         wild,
         rng: Rng(seed.wrapping_mul(0x2545_F491_4F6C_DD1D) ^ 0xDEAD_BEEF),
@@ -986,9 +985,9 @@ fn run_seed(seed: u64, wild: bool, ops: usize, failures: &mut Vec<(u64, usize, S
                     fc.spill
                 );
             }
-            eprintln!("   SETTINGS {:?}", wb.settings);
+            eprintln!("   SETTINGS {:?}", wb.settings());
             for sh in wb.sheets() {
-                for (r, c, _) in sh.cells.iter() {
+                for (r, c, _) in sh.entries() {
                     eprintln!(
                         "   CELL {:?} {r} {c} {:?} {:?}",
                         sh.id,
@@ -1001,8 +1000,8 @@ fn run_seed(seed: u64, wild: bool, ops: usize, failures: &mut Vec<(u64, usize, S
                     sh.id,
                     sh.name,
                     wb.used_range(sh.id),
-                    sh.cells.len(),
-                    sh.spills.bounds()
+                    sh.cell_count(),
+                    sh.used_bounds()
                 );
             }
         }
@@ -1021,6 +1020,10 @@ fn run_seed(seed: u64, wild: bool, ops: usize, failures: &mut Vec<(u64, usize, S
             let loc = LAST_PANIC.lock().unwrap().clone();
             failures.push((seed, i, desc.clone(), format!("{msg} @ {loc}")));
 
+            wb = fresh(&mut g);
+        }
+        if !xlcalc::testing::ops_idle(&wb) {
+            failures.push((seed, i, desc.clone(), "operation state left set".into()));
             wb = fresh(&mut g);
         }
         let took = t.elapsed();

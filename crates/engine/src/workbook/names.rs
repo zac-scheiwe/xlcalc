@@ -14,7 +14,7 @@ pub struct NameDef {
 
     pub refers_to: String,
 
-    pub formula: Arc<Formula>,
+    pub(crate) formula: Arc<Formula>,
 }
 
 impl NameDef {
@@ -30,6 +30,8 @@ pub struct Names {
     placeholders: FxHashMap<Text, Text>,
 
     deleted_scoped: rustc_hash::FxHashSet<(SheetId, Text)>,
+
+    global_bound: FxHashMap<(SheetId, Text), Vec<Text>>,
 }
 
 impl Names {
@@ -55,11 +57,50 @@ impl Names {
         let key = (def.scope, Text::from(def.name.to_uppercase()));
         if let Some(s) = def.scope {
             self.deleted_scoped.remove(&(s, key.1.clone()));
+            let bound = self.unbound_locals(&def, s);
+            self.global_bound.insert((s, key.1.clone()), bound);
         }
         self.map.insert(key, def)
     }
 
+    fn unbound_locals(&self, def: &NameDef, scope: SheetId) -> Vec<Text> {
+        let mut out = Vec::new();
+        crate::formula::walk(&def.formula.root, &mut |n| {
+            if let crate::formula::Node::Name {
+                key, sheet: None, ..
+            } = n
+            {
+                if self.get(key, Some(scope)).is_none() && !out.contains(key) {
+                    out.push(key.clone());
+                }
+            }
+        });
+        out
+    }
+
+    pub(crate) fn rebind(&mut self, scope: SheetId) {
+        let keys: Vec<Text> = self
+            .map
+            .keys()
+            .filter(|(s, _)| *s == Some(scope))
+            .map(|(_, k)| k.clone())
+            .collect();
+        for k in keys {
+            let bound = self.unbound_locals(&self.map[&(Some(scope), k.clone())], scope);
+            self.global_bound.insert((scope, k), bound);
+        }
+    }
+
+    pub(crate) fn bound_global(&self, scope: SheetId, name: &str, key: &str) -> bool {
+        self.global_bound
+            .get(&(scope, Text::from(name)))
+            .is_some_and(|v| v.iter().any(|k| &**k == key))
+    }
+
     pub fn remove(&mut self, key: &str, scope: Option<SheetId>) -> Option<NameDef> {
+        if let Some(s) = scope {
+            self.global_bound.remove(&(s, Text::from(key)));
+        }
         self.map.remove(&(scope, Text::from(key)))
     }
 

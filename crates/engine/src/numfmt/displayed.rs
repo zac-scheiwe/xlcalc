@@ -14,6 +14,28 @@ fn to_f64(d: &Dec) -> f64 {
     format!("{head}.{tail}e{}", d.exp).parse().unwrap_or(0.0)
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum EditClass {
+    Plain,
+
+    Percent,
+
+    Date { calendar: bool },
+}
+
+impl NumberFormat {
+    pub(crate) fn edit_class(&self) -> EditClass {
+        match self.sections.first().map(|s| &s.body) {
+            Some(Body::Date(_)) => EditClass::Date {
+                calendar: self.has_calendar_date(),
+            },
+            Some(Body::Number(l)) if l.scale >= 2 => EditClass::Percent,
+            Some(Body::Frac(l)) if l.scale >= 2 => EditClass::Percent,
+            _ => EditClass::Plain,
+        }
+    }
+}
+
 impl NumberFormat {
     pub fn has_calendar_date(&self) -> bool {
         match self.sections.first().map(|s| &s.body) {

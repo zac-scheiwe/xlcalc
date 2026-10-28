@@ -77,6 +77,49 @@ fn legacy_params(name: &str) -> Option<&'static str> {
 thread_local! {
 
     static MULTI_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+
+    static KNOWN_NAMES: std::cell::RefCell<Option<Vec<String>>> = const { std::cell::RefCell::new(None) };
+}
+
+fn undefined_name(name: &str) -> bool {
+    let up = name.to_uppercase();
+    KNOWN_NAMES.with(|k| k.borrow().as_ref().is_some_and(|v| !v.contains(&up)))
+}
+
+fn bound_names(e: &Expr, out: &mut Vec<String>) {
+    let mut add = |x: &Expr| {
+        if let Expr::Name { name, .. } = x.unwrap_ws() {
+            out.push(name.to_uppercase());
+        }
+    };
+    if let Expr::Func { name, args } = e {
+        let up = name.to_uppercase();
+        let bare = up.strip_prefix("_XLFN.").unwrap_or(&up);
+        if bare == "LET" {
+            for a in args.iter().step_by(2).take(args.len() / 2) {
+                add(a);
+            }
+        } else if bare == "LAMBDA" {
+            for a in args.iter().take(args.len().saturating_sub(1)) {
+                add(a);
+            }
+        }
+    }
+    match e {
+        Expr::Func { args, .. } => args.iter().for_each(|a| bound_names(a, out)),
+        Expr::Call { callee, args } => {
+            bound_names(callee, out);
+            args.iter().for_each(|a| bound_names(a, out));
+        }
+        Expr::Unary { expr, .. } | Expr::Ws { expr, .. } => bound_names(expr, out),
+        Expr::Percent(x) | Expr::Spill(x) | Expr::Paren(x) => bound_names(x, out),
+        Expr::Field { expr, .. } => bound_names(expr, out),
+        Expr::Binary { left, right, .. } => {
+            bound_names(left, out);
+            bound_names(right, out);
+        }
+        _ => {}
+    }
 }
 
 fn is_multi_ref(e: &Expr) -> bool {
@@ -125,6 +168,10 @@ fn array_capable(e: &Expr) -> bool {
 }
 
 fn returns_array(name: &str, args: &[Expr]) -> bool {
+    if functions::lookup(name).is_none() && undefined_name(name) {
+        return true;
+    }
+
     let zero_or_missing = |e: &Expr| {
         matches!(
             e.unwrap_ws(),
@@ -193,6 +240,16 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
         },
         Expr::Paren(x) => Expr::Paren(Box::new(walk(*x, ctx))),
         e if is_multi_ref(&e) => {
+            if ctx == Ctx::Value {
+                at(e)
+            } else {
+                e
+            }
+        }
+        Expr::Name {
+            ref sheet,
+            ref name,
+        } if sheet.is_none() && undefined_name(name) => {
             if ctx == Ctx::Value {
                 at(e)
             } else {
@@ -353,11 +410,17 @@ fn rewrite_at_inner(e: Expr, quiet: bool) -> Expr {
     }
 }
 
-pub fn legacy_to_dynamic(text: &str) -> String {
-    match parse(text) {
-        Ok(e) => format!("={}", print(&walk(e, Ctx::Value))),
-        Err(_) => format!("={text}"),
-    }
+pub(crate) fn legacy_to_dynamic_in(wb: &Workbook, text: &str) -> String {
+    let text = input::auto_close_call(text);
+    let Ok(e) = parse(&text) else {
+        return format!("={text}");
+    };
+    let mut known: Vec<String> = wb.names.iter().map(|n| n.name.to_uppercase()).collect();
+    bound_names(&e, &mut known);
+    KNOWN_NAMES.with(|k| *k.borrow_mut() = Some(known));
+    let out = format!("={}", print(&walk(e, Ctx::Value)));
+    KNOWN_NAMES.with(|k| *k.borrow_mut() = None);
+    out
 }
 
 impl Workbook {
@@ -377,7 +440,7 @@ impl Workbook {
                     .map(|n| n.name.to_uppercase())
                     .collect();
                 MULTI_NAMES.with(|m| *m.borrow_mut() = multi);
-                let da = legacy_to_dynamic(&text);
+                let da = legacy_to_dynamic_in(self, &text);
                 MULTI_NAMES.with(|m| m.borrow_mut().clear());
                 self.set_input(addr, &da)
             }
@@ -776,6 +839,77 @@ impl Workbook {
         if let Ok((f, _)) = self.compile_expr_normalized(&e, host) {
             self.formula_mut(fid).formula = std::sync::Arc::new(f);
         }
+    }
+}
+
+pub(crate) fn host_may_array(wb: &Workbook, host: CellAddr) -> bool {
+    let Some(fid) = wb.formula_at(host) else {
+        return false;
+    };
+    let root = wb.formula(fid).formula.root.clone();
+    let text = crate::formula_print::print_node(wb, &root, host);
+    let Ok(e) = parse(text.trim_start_matches('=')) else {
+        return false;
+    };
+    value_array(&e, true)
+}
+
+fn value_array(e: &Expr, value: bool) -> bool {
+    match e {
+        Expr::Ws { expr, .. } | Expr::Paren(expr) | Expr::Percent(expr) => value_array(expr, value),
+        Expr::Unary { op, expr } => {
+            !matches!(op, UnaryOp::Implicit | UnaryOp::ImplicitQuiet) && value_array(expr, true)
+        }
+        Expr::Array(_) | Expr::Spill(_) => value,
+        Expr::Ref { kind, .. } => value && !matches!(kind, RefKind::Cell { .. }),
+        Expr::Binary { op, left, right } => {
+            if matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) {
+                return value;
+            }
+            value_array(left, true) || value_array(right, true)
+        }
+        Expr::Func { name, args } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+            if value && bare != "XLOOKUP" && returns_array(bare, args) {
+                return true;
+            }
+
+            let params = (bare == "XLOOKUP")
+                .then_some("VRV")
+                .or_else(|| legacy_params(bare))
+                .or_else(|| {
+                    let def = functions::def(functions::lookup(bare)?);
+                    Some(if matches!(def.imp, functions::Imp::Lazy(_)) {
+                        "V"
+                    } else {
+                        def.params
+                    })
+                });
+            let b = params.unwrap_or("V").as_bytes();
+            args.iter().enumerate().any(|(i, a)| {
+                let letter = if b.is_empty() {
+                    b'V'
+                } else {
+                    b[i.min(b.len() - 1)]
+                };
+
+                let written_ref = matches!(a.unwrap_ws(), Expr::Ref { .. } | Expr::Name { .. })
+                    || matches!(
+                        a.unwrap_ws(),
+                        Expr::Binary {
+                            op: BinOp::Range | BinOp::Intersect | BinOp::Union,
+                            ..
+                        }
+                    );
+                let v = letter == b'V' || (value && bare == "INDEX" && i == 0 && !written_ref);
+                value_array(a, v)
+            })
+        }
+        Expr::Call { callee, args } => {
+            value_array(callee, false) || args.iter().any(|a| value_array(a, true))
+        }
+        _ => false,
     }
 }
 

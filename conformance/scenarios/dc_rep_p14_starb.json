@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A1", "input": "abbb"}, {"op": "set", "cell": "Sheet1!A2", "input": "xbx"}, {"op": "set", "cell": "Sheet1!A3", "input": "b"}, {"op": "replace", "range": "Sheet1!A1:A3", "what": "*b*", "with": "M", "lookat": "part", "matchcase": false, "order": "rows"}, {"op": "read", "range": "Sheet1!A1:A3"}]}

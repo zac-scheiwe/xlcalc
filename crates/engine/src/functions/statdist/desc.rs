@@ -21,20 +21,29 @@ pub(super) fn pairs(ctx: &mut EvalCtx, a: &Operand, b: &Operand) -> R<(Vec<f64>,
     }
     let mut xs = Vec::with_capacity(va.len());
     let mut ys = Vec::with_capacity(va.len());
+
+    let mut calc = false;
     for (x, y) in va.iter().zip(vb.iter()) {
         for v in [x, y] {
-            if let Value::Error(e) = v {
-                return Err(if *e == XlError::Spill {
-                    XlError::Value
-                } else {
-                    *e
-                });
+            match v {
+                Value::Error(XlError::Calc) => calc = true,
+                Value::Error(e) => {
+                    return Err(if *e == XlError::Spill {
+                        XlError::Value
+                    } else {
+                        *e
+                    })
+                }
+                _ => {}
             }
         }
         if let (Value::Number(x), Value::Number(y)) = (x, y) {
             xs.push(*x);
             ys.push(*y);
         }
+    }
+    if calc {
+        return Err(XlError::Value);
     }
     Ok((xs, ys))
 }
@@ -326,6 +335,11 @@ fn ref_numbers(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
 pub fn rank(ctx: &mut EvalCtx, o: &[Operand], avg: bool) -> Operand {
     opfin((|| {
         let x = opnum(ctx, &o[0])?;
+        match &o[1] {
+            Operand::Ref(_) => {}
+            Operand::Val(Value::Error(e)) => return Err(*e),
+            _ => return Err(XlError::Value),
+        }
         let ascending = match o.get(2) {
             None | Some(Operand::Missing) => false,
 
@@ -337,11 +351,7 @@ pub fn rank(ctx: &mut EvalCtx, o: &[Operand], avg: bool) -> Operand {
             Some(op) => opnum(ctx, op)? != 0.0,
         };
 
-        let v = match &o[1] {
-            Operand::Ref(_) => ref_numbers(ctx, &o[1])?,
-            Operand::Val(Value::Error(e)) => return Err(*e),
-            _ => return Err(XlError::Value),
-        };
+        let v = ref_numbers(ctx, &o[1])?;
         let mut before = 0usize;
         let mut equal = 0usize;
         for &a in &v {

@@ -48,6 +48,17 @@ fn periods_left(per: f64, n: f64) -> f64 {
     x87::sub(per, x87::add(n, 1.0))
 }
 
+fn growth_check(r: f64, n: f64) -> R<()> {
+    let r1 = x87::add(1.0, r);
+    if r1 == 0.0 && n == 0.0 {
+        return Err(XlError::Num);
+    }
+    if n < 0.0 && crate::xmath::pow(r1, -n) == 0.0 {
+        return Err(XlError::Div0);
+    }
+    Ok(())
+}
+
 fn annuity(r: f64, n: f64, t: bool) -> (f64, f64) {
     let r1 = x87::add(1.0, r);
     let g = crate::xmath::pow(r1, n);
@@ -86,6 +97,7 @@ pub fn fv_core(r: f64, n: f64, pmt: f64, pv: f64, t: bool) -> R<f64> {
     if r == 0.0 {
         return Ok(-(pv + pmt * n));
     }
+    growth_check(r, n)?;
     let (g, ann) = annuity(r, n, t);
     if g.is_nan() {
         return Err(XlError::Num);
@@ -105,10 +117,7 @@ pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
     if r == 0.0 {
         return Ok(-(fv + pmt * n));
     }
-
-    if r == -1.0 && n == 0.0 {
-        return Err(XlError::Num);
-    }
+    growth_check(r, n)?;
     let (g, ann) = annuity(r, n, t);
     if g.is_nan() || g.is_infinite() {
         return Err(XlError::Num);

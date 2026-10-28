@@ -87,6 +87,14 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
         Some(_) => wb.names.get(key, scope).or_else(|| wb.names.get(key, None)),
 
         None => match ctx.name_scope {
+            Some(Some(sid))
+                if ctx
+                    .name_key
+                    .as_ref()
+                    .is_some_and(|n| wb.names.bound_global(sid, n, key)) =>
+            {
+                wb.names.get(key, None)
+            }
             Some(Some(sid)) => wb.names.lookup(key, sid),
             Some(None) => wb.names.get(key, None),
             None => wb.names.lookup(key, ctx.host.sheet),
@@ -107,7 +115,11 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
     let wrap = std::mem::replace(&mut ctx.wrap, true);
     ctx.depth += 1;
     let outer = ctx.name_scope.replace(def.scope);
+    let outer_key = ctx
+        .name_key
+        .replace(crate::value::Text::from(def.name.to_uppercase()));
     let out = ctx.eval(&formula.root);
+    ctx.name_key = outer_key;
     ctx.name_scope = outer;
     ctx.depth -= 1;
     ctx.wrap = wrap;

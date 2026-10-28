@@ -4,7 +4,7 @@ use crate::calc::{self, RecalcReport};
 use crate::datetime::ymd_from_serial;
 use crate::functions::statdist::regress::fit_line;
 use crate::value::Value;
-use crate::workbook::{CalcMode, EditError, Entry, Workbook};
+use crate::workbook::{CalcMode, EditError, Entry, Op, Workbook};
 use crate::x87;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -47,6 +47,11 @@ impl DateUnit {
     }
 }
 
+enum GrowthCount {
+    Run,
+    Skip,
+}
+
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SeriesSpec {
     pub rows: Option<bool>,
@@ -83,11 +88,7 @@ impl Workbook {
         range: Rect,
         spec: &SeriesSpec,
     ) -> Result<RecalcReport, EditError> {
-        let r = self.data_series_body(sheet, range, spec);
-        if r.is_ok() {
-            self.view_touch_row_pub(sheet, range.r1);
-        }
-        r
+        self.data_series_body(sheet, range, spec)
     }
 
     fn data_series_body(
@@ -99,9 +100,10 @@ impl Workbook {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
 
         if self.filter_mode(sheet) {
-            return Err(EditError::Compile(
-                "DataSeries method of Range class failed".into(),
-            ));
+            return Err(EditError::OutOfScope("DataSeries in filter mode"));
+        }
+        if self.merge_intersects(sheet, &range) {
+            return Err(EditError::OutOfScope("DataSeries over merged cells"));
         }
         let rows = spec.rows.unwrap_or(range.cols() >= range.rows());
         let ty = spec.ty.unwrap_or(SeriesType::Linear);
@@ -126,86 +128,11 @@ impl Workbook {
             return Err(EditError::Compile("cannot fill that range".into()));
         }
 
-        if ty != SeriesType::AutoFill
-            && len > 1
-            && (0..nlines).any(|l| self.series_seed(at(l, 0)).is_some())
-        {
-            let band = |m: &Rect| {
-                if rows {
-                    m.c0 == range.c0 && m.c1 == range.c1 && m.r0 >= range.r0 && m.r1 <= range.r1
-                } else {
-                    m.r0 == range.r0 && m.r1 == range.r1 && m.c0 >= range.c0 && m.c1 <= range.c1
-                }
-            };
-            let hit: Vec<Rect> = self
-                .merges(sheet)
-                .into_iter()
-                .filter(|m| m.intersects(&range))
-                .collect();
-            let first = at(0, 0);
-            if let Some(m0) = hit
-                .iter()
-                .find(|m| (m.r0, m.c0) == (first.row, first.col))
-                .copied()
-            {
-                if band(&m0)
-                    && hit
-                        .iter()
-                        .all(|m| m.rows() == m0.rows() && m.cols() == m0.cols())
-                {
-                    let last_active = (0..nlines)
-                        .rev()
-                        .find(|&l| self.series_seed(at(l, 0)).is_some())
-                        .unwrap_or(0);
-                    let mode = self.settings.mode;
-                    self.settings.mode = CalcMode::Manual;
-                    let mut report = RecalcReport::default();
-                    for l in 0..=last_active {
-                        for k in 1..len {
-                            report.changed.extend(self.clear(at(l, k)).changed);
-                        }
-                    }
-                    self.settings.mode = mode;
-                    if mode == CalcMode::Automatic {
-                        let r = calc::recalc(self);
-                        report.evaluations = r.evaluations;
-                        report.circular = r.circular;
-                        report.changed.extend(r.changed);
-                    }
-                    return Ok(calc::finish_report(report));
-                }
-            }
+        if spec.stop.is_some() && step == 0.0 && ty == SeriesType::Growth && !spec.trend {
+            return Err(EditError::Compile(
+                "Unable to get the DataSeries property of the Range class".into(),
+            ));
         }
-
-        if ty != SeriesType::AutoFill
-            && len > 1
-            && (0..nlines).any(|l| self.series_seed(at(l, 0)).is_some())
-        {
-            let seeds = if rows {
-                Rect::new(range.r0, range.c0, range.r1, range.c0)
-            } else {
-                Rect::new(range.r0, range.c0, range.r0, range.c1)
-            };
-            self.guard_merges_touch(sheet, seeds)?;
-
-            let crossing = self.merges(sheet).into_iter().any(|m| {
-                m.intersects(&range)
-                    && if rows {
-                        m.r0 < range.r0
-                    } else {
-                        m.c0 < range.c0
-                    }
-            });
-            if crossing {
-                return Err(EditError::Compile(
-                    "To do this, all the merged cells need to be the same size.".into(),
-                ));
-            }
-        }
-        let last_active = (0..nlines)
-            .rev()
-            .find(|&l| self.series_seed(at(l, 0)).is_some())
-            .unwrap_or(0);
         let mut blocks: Vec<Rect> = Vec::new();
         let mut grows: Vec<Rect> = Vec::new();
         for l in 0..nlines {
@@ -217,18 +144,10 @@ impl Workbook {
             } else if self.series_seed(at(l, 0)).is_some() && len > 1 {
                 1
             } else {
-                if ty != SeriesType::AutoFill && len > 1 && l < last_active {
-                    let (a, z) = (at(l, 1), at(l, len - 1));
-                    self.guard_merges_touch(sheet, Rect::new(a.row, a.col, z.row, z.col))?;
-                }
                 continue;
             };
             let (a, z) = (at(l, from), at(l, len - 1));
             let written = Rect::new(a.row, a.col, z.row, z.col);
-
-            if !no_fill {
-                self.guard_merges_touch(sheet, written)?;
-            }
             self.guard_arrays_rect(sheet, written)?;
             self.data_tables_overwritten(sheet, written)?;
             if ty != SeriesType::AutoFill {
@@ -286,9 +205,7 @@ impl Workbook {
                             let (z, _) = (at(nlines - 1, len - 1), 0);
                             let src = Rect::new(a.row, a.col, b.row, b.col);
                             let dst = Rect::new(a.row, a.col, z.row, z.col);
-                            self.series_autofill = true;
                             let r = self.autofill(sheet, src, dst, FillType::Default);
-                            self.series_autofill = false;
                             match r {
                                 Ok(r) => report.changed.extend(r.changed),
                                 Err(e) => failed = Some(e),
@@ -302,13 +219,20 @@ impl Workbook {
                     continue;
                 }
                 _ if no_fill => Vec::new(),
+                SeriesType::Growth if spec.stop.is_some() && !spec.trend => {
+                    match self.growth_stop_count(first, spec.stop.unwrap_or(0.0), step) {
+                        GrowthCount::Skip => Vec::new(),
+                        GrowthCount::Run => {
+                            self.series_line(&at, l, len, ty, spec, step, step_given)
+                        }
+                    }
+                }
                 _ => self.series_line(&at, l, len, ty, spec, step, step_given),
             };
             let fmt = self.number_format(first).to_string();
             for (addr, v) in cells {
-                self.no_auto_expand = true;
-                report.changed.extend(self.set_value_exact(addr, v).changed);
-                self.no_auto_expand = false;
+                let r = self.with_op(Op::NoAutoExpand, true, |this| this.set_value_exact(addr, v));
+                report.changed.extend(r.changed);
 
                 if self.number_format(addr) != fmt {
                     self.set_number_format_unrounded(sheet, Rect::cell(addr.row, addr.col), &fmt);
@@ -326,6 +250,24 @@ impl Workbook {
             Some(e) => Err(e),
             None => Ok(calc::finish_report(report)),
         }
+    }
+
+    fn growth_stop_count(&self, first: CellAddr, stop: f64, step: f64) -> GrowthCount {
+        let Some(seed) = self.series_seed(first) else {
+            return GrowthCount::Run;
+        };
+        let mp_zero = |x: f64| x.to_bits() & 0xFFFF_0000_0000_0000 == 0;
+        if mp_zero(seed) {
+            return GrowthCount::Skip;
+        }
+        let ratio = stop / seed;
+        if !mp_zero(ratio) && ratio < 0.0 {
+            return GrowthCount::Skip;
+        }
+        if step < 0.0 {
+            return GrowthCount::Skip;
+        }
+        GrowthCount::Run
     }
 
     #[allow(clippy::too_many_arguments)]

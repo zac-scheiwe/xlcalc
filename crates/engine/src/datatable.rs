@@ -6,7 +6,7 @@ use crate::formula::{CRef, Formula, Node, Rc, SheetRef};
 use crate::formula_print::print_node;
 use crate::functions::{self, FuncId};
 use crate::value::Value;
-use crate::workbook::{CalcMode, EditError, Entry, FormulaId, Workbook};
+use crate::workbook::{CalcMode, EditError, Entry, FormulaId, Op, Workbook};
 
 pub const TABLE_FN: &str = "\u{1}TABLE";
 
@@ -92,6 +92,48 @@ fn inputs(wb: &Workbook, t: &DataTable) -> Option<Inputs> {
 }
 
 impl Workbook {
+    pub(crate) fn drop_sheet_data_tables(&mut self, sheet: SheetId) {
+        self.data_tables.retain(|t| t.sheet != sheet);
+    }
+
+    pub(crate) fn copy_sheet_data_tables(&mut self, src: SheetId, new: SheetId) {
+        let copies: Vec<DataTable> = self
+            .data_tables
+            .iter()
+            .filter(|t| t.sheet == src)
+            .map(|t| DataTable {
+                sheet: new,
+                ..t.clone()
+            })
+            .collect();
+        self.data_tables.extend(copies);
+    }
+
+    pub(crate) fn move_data_tables(
+        &mut self,
+        moving: &[usize],
+        doomed: &[usize],
+        sheet: SheetId,
+        dr: i64,
+        dc: i64,
+    ) {
+        for &i in moving {
+            let t = &mut self.data_tables[i];
+            t.rect = Rect::new(
+                (t.rect.r0 as i64 + dr) as u32,
+                (t.rect.c0 as i64 + dc) as u32,
+                (t.rect.r1 as i64 + dr) as u32,
+                (t.rect.c1 as i64 + dc) as u32,
+            );
+            t.sheet = sheet;
+        }
+        let mut i = 0;
+        self.data_tables.retain(|_| {
+            i += 1;
+            !doomed.contains(&(i - 1))
+        });
+    }
+
     pub fn add_data_table(
         &mut self,
         sheet: SheetId,
@@ -131,10 +173,7 @@ impl Workbook {
             return Err(crate::cse::part_of_array());
         }
         if self.merge_intersects(sheet, &int) {
-            return Err(EditError::Compile(
-                "This selection isn't valid. Make sure the copy and paste areas don't overlap                  unless they are the same size and shape."
-                    .into(),
-            ));
+            return Err(EditError::OutOfScope("data table over merged cells"));
         }
 
         let mut doomed = Vec::new();
@@ -247,7 +286,7 @@ impl Workbook {
 }
 
 pub(crate) fn table_cell_dirtied(wb: &mut Workbook, addr: CellAddr) {
-    if wb.calc.dt_block {
+    if wb.op_on(Op::DtBlock) {
         return;
     }
     for t in &mut wb.data_tables {
@@ -309,8 +348,7 @@ pub(crate) fn table_pass(wb: &mut Workbook, report: &mut RecalcReport) {
     if !wb.data_tables.iter().any(|t| t.dirty) {
         return;
     }
-    wb.calc.dt_block = true;
-    loop {
+    wb.with_op(Op::DtBlock, true, |wb| loop {
         let dirty: Vec<usize> = (0..wb.data_tables.len())
             .filter(|&i| wb.data_tables[i].dirty)
             .collect();
@@ -329,8 +367,7 @@ pub(crate) fn table_pass(wb: &mut Workbook, report: &mut RecalcReport) {
         wb.data_tables[pick].dirty = false;
         let t = wb.data_tables[pick].clone();
         compute(wb, &t, report);
-    }
-    wb.calc.dt_block = false;
+    });
 }
 
 fn put(wb: &mut Workbook, a: CellAddr, e: Option<Entry>) {
@@ -374,6 +411,7 @@ fn compute(wb: &mut Workbook, t: &DataTable, report: &mut RecalcReport) {
                         if !wb.formula(fid).value.same_as(&v) {
                             report.changed.push(dst);
                         }
+                        debug_assert!(!crate::eval::contains_circ(&v));
                         wb.formula_mut(fid).value = v.clone();
                     }
                 }
@@ -456,6 +494,7 @@ fn compute(wb: &mut Workbook, t: &DataTable, report: &mut RecalcReport) {
             if !wb.formula(fid).value.same_as(&v) {
                 report.changed.push(dst);
             }
+            debug_assert!(!crate::eval::contains_circ(&v));
             wb.formula_mut(fid).value = v;
         }
     }

@@ -32,7 +32,7 @@ pub fn interpret(s: &str, env: &ParseEnv) -> Entered {
 
     if let Some(e) = XlError::parse(s).filter(|e| {
         matches!(
-            e,
+            *e,
             XlError::Null
                 | XlError::Div0
                 | XlError::Value
@@ -80,4 +80,28 @@ pub fn auto_format(kind: &NumberKind, env: &ParseEnv) -> Option<String> {
         ),
         NumberKind::DateTime => Some(format!("{} h:mm", env.locale.short_date_format)),
     }
+}
+
+pub(crate) fn auto_close_call(body: &str) -> std::borrow::Cow<'_, str> {
+    let t = body.trim_start_matches(['+', '-', '@', ' ']);
+    let name_len = t
+        .find(|c: char| !(c.is_alphanumeric() || c == '.' || c == '_'))
+        .unwrap_or(t.len());
+    if name_len == 0 || !t[name_len..].starts_with('(') {
+        return body.into();
+    }
+    let mut quote: Option<char> = None;
+    for c in t[name_len + 1..].chars() {
+        match (quote, c) {
+            (Some(q), c) if c == q => quote = None,
+            (Some(_), _) => {}
+            (None, '"' | '\'') => quote = Some(c),
+            (None, '(' | ')') => return body.into(),
+            _ => {}
+        }
+    }
+    if quote.is_some() {
+        return body.into();
+    }
+    format!("{body})").into()
 }

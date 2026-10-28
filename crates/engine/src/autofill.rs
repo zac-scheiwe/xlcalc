@@ -5,7 +5,7 @@ use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::datetime::{days_in_month, serial_from_ymd, weekday_from_serial, ymd_from_serial};
 use crate::value::Value;
-use crate::workbook::{CalcMode, EditError, Entry, Workbook};
+use crate::workbook::{CalcMode, EditError, Entry, Op, Workbook};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum FillType {
@@ -1105,11 +1105,13 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
     let v = match mode {
         DMode::Cycle => return None,
         DMode::Days { slope } => {
-            if m == 1 {
-                dv[0] + slope * pf
-            } else {
-                dv[0] + slope * x_new
+            let x = if m == 1 { pf } else { x_new };
+
+            let v = dv[0] + slope * x;
+            if v >= sys.max_serial() + 1.0 {
+                return None;
             }
+            v
         }
         DMode::Months { slope, eom, dom } => {
             let target = mi[0] + slope * (if m == 1 { p } else { x_new as i64 });
@@ -1327,11 +1329,7 @@ impl Workbook {
         dst: Rect,
         ty: FillType,
     ) -> Result<RecalcReport, EditError> {
-        let r = self.autofill_body(sheet, src, dst, ty);
-        if r.is_ok() {
-            self.view_touch_row_pub(sheet, dst.r1);
-        }
-        r
+        self.autofill_body(sheet, src, dst, ty)
     }
 
     fn autofill_body(
@@ -1341,20 +1339,16 @@ impl Workbook {
         dst: Rect,
         ty: FillType,
     ) -> Result<RecalcReport, EditError> {
+        if self.merge_intersects(sheet, &src) || self.merge_intersects(sheet, &dst) {
+            return Err(EditError::OutOfScope("AutoFill over merged cells"));
+        }
         let r = self.autofill_inner(sheet, src, dst, ty);
 
         let both_ways = crate::cse::inside(&src, &dst)
             && ((dst.c0 == src.c0 && dst.c1 == src.c1 && dst.r0 < src.r0 && dst.r1 > src.r1)
                 || (dst.r0 == src.r0 && dst.r1 == src.r1 && dst.c0 < src.c0 && dst.c1 > src.c1));
         if both_ways && ty == FillType::Formats && r.is_err() {
-            self.extra_recalc();
             return Ok(RecalcReport::default());
-        }
-
-        let unrelated =
-            (dst.c0 != src.c0 || dst.c1 != src.c1) && (dst.r0 != src.r0 || dst.r1 != src.r1);
-        if r.is_err() && !unrelated && self.sheet(sheet).is_some() {
-            self.extra_recalc();
         }
         r
     }
@@ -1368,35 +1362,13 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         let bad = || EditError::Compile("cannot fill that range".into());
-
-        let both_ways = |wb: &mut Self| {
-            if crate::cse::inside(&src, &dst) && !matches!(ty, FillType::Values | FillType::Formats)
-            {
-                let next = if dst.c0 == src.c0 && dst.c1 == src.c1 {
-                    Rect::new(src.r1 + 1, src.c0, src.r1 + 1, src.c1)
-                } else {
-                    Rect::new(src.r0, src.c1 + 1, src.r1, src.c1 + 1)
-                };
-                let out: Vec<Rect> = wb
-                    .merges(sheet)
-                    .into_iter()
-                    .filter(|m| m.intersects(&next))
-                    .collect();
-                let mode = std::mem::replace(&mut wb.settings.mode, CalcMode::Manual);
-                for m in out {
-                    wb.unmerge_cells(sheet, m);
-                }
-                wb.settings.mode = mode;
-            }
-            bad()
-        };
         let dir = if dst.c0 == src.c0 && dst.c1 == src.c1 {
             if dst.r0 == src.r0 && dst.r1 > src.r1 {
                 Dir::Down
             } else if dst.r1 == src.r1 && dst.r0 < src.r0 {
                 Dir::Up
             } else {
-                return Err(both_ways(self));
+                return Err(bad());
             }
         } else if dst.r0 == src.r0 && dst.r1 == src.r1 {
             if dst.c0 == src.c0 && dst.c1 > src.c1 {
@@ -1404,7 +1376,7 @@ impl Workbook {
             } else if dst.c1 == src.c1 && dst.c0 < src.c0 {
                 Dir::Left
             } else {
-                return Err(both_ways(self));
+                return Err(bad());
             }
         } else {
             return Err(bad());
@@ -1421,53 +1393,6 @@ impl Workbook {
             Dir::Right => Rect::new(dst.r0, src.c1 + 1, dst.r1, dst.c1),
             Dir::Left => Rect::new(dst.r0, dst.c0, dst.r1, src.c0 - 1),
         };
-
-        if self.merge_intersects(sheet, &dest_part) {
-            return Err(EditError::Compile(
-                "To do this, all the merged cells need to be the same size.".into(),
-            ));
-        }
-        let sideways = self
-            .merges(sheet)
-            .iter()
-            .any(|m| m.intersects(&src) && !crate::cse::inside(m, &src));
-        let sideways = sideways || self.series_autofill;
-        if sideways && count % len != 0 && !self.series_autofill {
-            return Err(EditError::Compile(
-                "To do this, all the merged cells need to be the same size.".into(),
-            ));
-        }
-        if !sideways {
-            self.guard_merges_rect(sheet, dst)?;
-        }
-
-        let src_merges: Vec<Rect> = if sideways {
-            Vec::new()
-        } else {
-            let ms: Vec<Rect> = self
-                .merges(sheet)
-                .into_iter()
-                .filter(|m| m.intersects(&src))
-                .collect();
-            if let Some(first) = ms.first() {
-                let (h, w) = (first.rows(), first.cols());
-                let area: u64 = ms.iter().map(|m| m.rows() as u64 * m.cols() as u64).sum();
-                if ms.iter().any(|m| m.rows() != h || m.cols() != w)
-                    || area != src.rows() as u64 * src.cols() as u64
-                {
-                    return Err(EditError::Compile(
-                        "To do this, all the merged cells need to be the same size.".into(),
-                    ));
-                }
-            }
-            ms
-        };
-
-        if !src_merges.is_empty() && count % len != 0 {
-            return Err(EditError::Compile(
-                "To do this, all the merged cells need to be the same size.".into(),
-            ));
-        }
         self.guard_arrays_rect(sheet, dest_part)?;
         self.data_tables_overwritten(sheet, dest_part)?;
         let numeric_at = |l: u32, s: u32| -> bool {
@@ -1520,54 +1445,39 @@ impl Workbook {
         let mut report = RecalcReport::default();
         let mut failed = None;
 
-        self.no_auto_expand = true;
-        'outer: for (l, plan) in plans.iter().enumerate() {
-            for (j, act) in plan.iter().enumerate() {
-                let (slot, _) = match act {
-                    Act::Copy(s) | Act::FormatOnly(s) | Act::Set(s, _) => (*s as u32, ()),
-                };
-                let (sr, sc) = at(l as u32, slot);
-                let (dr, dc) = at(l as u32, len + j as u32);
-                let to = CellAddr::new(sheet, dr, dc);
-                let from = Rect::cell(sr, sc);
-                match act {
-                    Act::FormatOnly(_) => self.fmt_copy_block(sheet, from, to),
-                    Act::Copy(_) | Act::Set(..) => {
-                        let old_fmt =
-                            (ty == FillType::Values).then(|| self.number_format(to).to_string());
-                        match self.copy_range(sheet, from, to) {
-                            Ok(r) => report.changed.extend(r.changed),
-                            Err(e) => {
-                                failed = Some(e);
-                                break 'outer;
+        self.with_op(Op::NoAutoExpand, true, |this| {
+            'outer: for (l, plan) in plans.iter().enumerate() {
+                for (j, act) in plan.iter().enumerate() {
+                    let (slot, _) = match act {
+                        Act::Copy(s) | Act::FormatOnly(s) | Act::Set(s, _) => (*s as u32, ()),
+                    };
+                    let (sr, sc) = at(l as u32, slot);
+                    let (dr, dc) = at(l as u32, len + j as u32);
+                    let to = CellAddr::new(sheet, dr, dc);
+                    let from = Rect::cell(sr, sc);
+                    match act {
+                        Act::FormatOnly(_) => this.fmt_copy_block(sheet, from, to),
+                        Act::Copy(_) | Act::Set(..) => {
+                            let old_fmt = (ty == FillType::Values)
+                                .then(|| this.number_format(to).to_string());
+                            match this.copy_range(sheet, from, to) {
+                                Ok(r) => report.changed.extend(r.changed),
+                                Err(e) => {
+                                    failed = Some(e);
+                                    break 'outer;
+                                }
                             }
-                        }
-                        if let Act::Set(_, v) = act {
-                            self.set_value_exact(to, v.clone());
-                        }
-                        if let Some(f) = old_fmt {
-                            self.set_number_format(sheet, Rect::cell(dr, dc), &f);
+                            if let Act::Set(_, v) = act {
+                                this.set_value_exact(to, v.clone());
+                            }
+                            if let Some(f) = old_fmt {
+                                this.set_number_format(sheet, Rect::cell(dr, dc), &f);
+                            }
                         }
                     }
                 }
             }
-        }
-        self.no_auto_expand = false;
-
-        if failed.is_none() && ty != FillType::Values {
-            for k in 1..=count / len {
-                let d = k * len;
-                for m in &src_merges {
-                    let t = match dir {
-                        Dir::Down => Rect::new(m.r0 + d, m.c0, m.r1 + d, m.c1),
-                        Dir::Up => Rect::new(m.r0 - d, m.c0, m.r1 - d, m.c1),
-                        Dir::Right => Rect::new(m.r0, m.c0 + d, m.r1, m.c1 + d),
-                        Dir::Left => Rect::new(m.r0, m.c0 - d, m.r1, m.c1 - d),
-                    };
-                    self.put_merge(sheet, t);
-                }
-            }
-        }
+        });
         self.settings.mode = mode;
         if mode == CalcMode::Automatic {
             let r = calc::recalc(self);

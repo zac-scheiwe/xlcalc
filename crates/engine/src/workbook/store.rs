@@ -111,12 +111,17 @@ impl CellStore {
         self.len
     }
 
+    #[allow(dead_code)]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
     pub fn sticky_bounds(&self) -> Option<Rect> {
         self.sticky
+    }
+
+    pub fn extend_sticky(&mut self, r: Rect) {
+        self.sticky = Some(self.sticky.map_or(r, |b| b.union_bounds(&r)));
     }
 
     pub fn bounds(&self) -> Option<Rect> {

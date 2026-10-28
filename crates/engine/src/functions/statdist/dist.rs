@@ -377,12 +377,8 @@ pub fn t_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let cum = flag(a, 2)?;
 
         if !cum && raw_df < 1.0 {
-            let lim = if t == 0.0 { 0.0 } else { -1.0 };
-            return Err(if raw_df < lim {
-                XlError::Num
-            } else {
-                XlError::Div0
-            });
+            let div0 = raw_df > -1.0 || x87::add(raw_df, x87::mul(t, t)) == 0.0;
+            return Err(if div0 { XlError::Div0 } else { XlError::Num });
         }
         let df = if cum { t_df(ctx, a, 1)? } else { raw_df };
         Ok(if cum {

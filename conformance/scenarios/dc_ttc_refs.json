@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A1", "input": "1,2"}, {"op": "set", "cell": "Sheet1!A2", "input": "3,4"}, {"op": "set", "cell": "Sheet1!D1", "input": "=B1+C1"}, {"op": "set", "cell": "Sheet1!D2", "input": "=SUM(A1:C2)"}, {"op": "text_to_columns", "range": "Sheet1!A1:A2", "comma": true}, {"op": "read", "range": "Sheet1!A1:D2"}]}

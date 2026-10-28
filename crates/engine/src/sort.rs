@@ -97,7 +97,7 @@ fn move_axis(a: Rc, b: Rc, host: u32, max: u32) -> Option<(Rc, Rc)> {
     Some((enc(lo.max(0), a), enc(hi.min(max as i64 - 1), b)))
 }
 
-fn move_ref(cref: &CRef, to: CellAddr) -> Option<CRef> {
+pub(crate) fn move_ref(cref: &CRef, to: CellAddr) -> Option<CRef> {
     Some(match *cref {
         CRef::Cell { row, col } => {
             let (r, _) = move_axis(row, row, to.row, MAX_ROWS)?;
@@ -135,7 +135,7 @@ fn move_ref(cref: &CRef, to: CellAddr) -> Option<CRef> {
     })
 }
 
-fn retarget(cref: &CRef, dr: i64, dc: i64) -> CRef {
+pub(crate) fn retarget(cref: &CRef, dr: i64, dc: i64) -> CRef {
     let mv = |x: Rc, d: i64| {
         if x.abs {
             x
@@ -252,34 +252,8 @@ impl Workbook {
         rect: Rect,
         spec: &SortSpec,
     ) -> Result<RecalcReport, EditError> {
-        let touch = self.sort_touch_row(sheet, rect);
-        let r = self.sort_range_body(sheet, rect, spec);
-        if r.is_ok() {
-            if let Some(t) = touch {
-                self.view_touch_row_pub(sheet, t);
-            }
-        }
-        r
-    }
+        self.guard_filtered(sheet, rect, !spec.by_columns, spec.by_columns)?;
 
-    fn sort_touch_row(&self, sheet: SheetId, rect: Rect) -> Option<u32> {
-        let sh = self.sheet(sheet)?;
-        let top = rect.r1.min(self.view_used_r1(sheet)?);
-        let last = (rect.r0..=top)
-            .rev()
-            .find(|&r| (rect.c0..=rect.c1).any(|c| sh.cells.get(r, c).is_some()))?;
-        let vis = (rect.r0..=last)
-            .rev()
-            .find(|&r| !self.row_hidden(sheet, r))?;
-        Some(vis + 1)
-    }
-
-    fn sort_range_body(
-        &mut self,
-        sheet: SheetId,
-        rect: Rect,
-        spec: &SortSpec,
-    ) -> Result<RecalcReport, EditError> {
         if self
             .data_tables
             .iter()
@@ -290,25 +264,7 @@ impl Workbook {
         if self.tables.iter().any(|t| t.sheet == sheet && t.totals) {
             self.snap_totals_before_sort(sheet, rect);
         }
-        let r = self.sort_range_impl(sheet, rect, spec);
-
-        let merge_refused = matches!(&r, Err(EditError::Compile(m)) if m.contains("merged cells"));
-        if sheet == self.active || (r.is_err() && !merge_refused) {
-            return r;
-        }
-        let (dr, dc) = if spec.header {
-            if spec.by_columns {
-                (0, 1)
-            } else {
-                (1, 0)
-            }
-        } else {
-            (0, 0)
-        };
-        self.select(sheet, rect.r0 + dr, rect.c0 + dc);
-        self.fill_selected
-            .insert(sheet, (rect.r0 + dr, rect.c0 + dc));
-        r
+        self.sort_range_impl(sheet, rect, spec)
     }
 
     fn sort_range_impl(
@@ -325,15 +281,9 @@ impl Workbook {
             ));
         }
         crate::structure::range_too_large(&rect)?;
-
-        if self
-            .merges(sheet)
-            .iter()
-            .any(|m| crate::cse::inside(&rect, m))
-        {
-            return Ok(RecalcReport::default());
+        if self.merge_intersects(sheet, &rect) {
+            return Err(EditError::OutOfScope("sort over merged cells"));
         }
-        self.guard_merges_sort(sheet, rect)?;
         let width = if spec.by_columns {
             rect.rows()
         } else {
@@ -344,6 +294,10 @@ impl Workbook {
         }
         let (_, skip) = Self::sort_lines(rect, spec);
         let mut order = self.sort_order(sheet, rect, spec);
+        if !spec.by_columns && !order.is_empty() {
+            let r0 = rect.r0 + skip;
+            self.outline_sort_guard(sheet, r0, r0 + order.len() as u32 - 1)?;
+        }
 
         let hidden_line = |line: u32| {
             if spec.by_columns {
@@ -440,19 +394,6 @@ impl Workbook {
         self.fmt_move_pairs(&fmt_pairs);
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
-
-        let used = self
-            .sheet(sheet)
-            .unwrap()
-            .cells
-            .sticky_bounds()
-            .and_then(|u| u.intersection(&rect))
-            .map_or(0, |i| i.rows() as u64 * i.cols() as u64);
-        let any_cells = if rect.is_cell() {
-            !entries.is_empty()
-        } else {
-            used >= 2
-        };
         self.settings.mode = CalcMode::Manual;
         for (to, what) in plan {
             match what {
@@ -472,7 +413,7 @@ impl Workbook {
             report.changed.push(to);
         }
         self.settings.mode = mode;
-        if mode == CalcMode::Automatic && any_cells {
+        if mode == CalcMode::Automatic {
             let r = calc::recalc(self);
             report.evaluations = r.evaluations;
             report.circular = r.circular;

@@ -143,6 +143,7 @@ impl Operand {
         matches!(self, Operand::Missing)
     }
 
+    #[allow(dead_code)]
     pub fn as_ref(&self) -> Option<&Reference> {
         match self {
             Operand::Ref(r) => Some(r),
@@ -166,25 +167,37 @@ pub enum Interrupt {
 
 pub const MAX_CALL_DEPTH: u32 = 1024;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ReadMode {
+    Calc,
+
+    Stale,
+
+    Iterative,
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Observed {
+    pub read_dirty: bool,
+
+    pub read_own: bool,
+
+    pub abandoned: bool,
+}
+
 pub struct EvalCtx<'a> {
     pub wb: &'a Workbook,
     pub host: CellAddr,
 
+    mode: ReadMode,
+
     pub env: Vec<Operand>,
     pub interrupt: Option<Interrupt>,
 
-    pub iterative: bool,
-
-    pub stale_read: bool,
-
-    pub read_stale: bool,
-
-    pub read_dirty: bool,
+    pub observed: Observed,
 
     pub wrap: bool,
     pub depth: u32,
-
-    pub cycle_members: SmallVec<[FormulaId; 4]>,
 
     defer_cycles: bool,
 
@@ -199,27 +212,31 @@ pub struct EvalCtx<'a> {
     pub(crate) circ_lifted: bool,
 
     pub(crate) own: Option<FormulaId>,
-    pub(crate) read_own: bool,
-
-    pub(crate) abandoned: bool,
 
     pub(crate) name_scope: Option<Option<crate::address::SheetId>>,
+
+    pub(crate) arr_ctx: u8,
+
+    pub(crate) name_key: Option<crate::value::Text>,
+
+    pub(crate) arr_direct: bool,
 }
 
 impl<'a> EvalCtx<'a> {
     pub fn new(wb: &'a Workbook, host: CellAddr) -> EvalCtx<'a> {
+        EvalCtx::with_mode(wb, host, ReadMode::Calc)
+    }
+
+    pub fn with_mode(wb: &'a Workbook, host: CellAddr, mode: ReadMode) -> EvalCtx<'a> {
         EvalCtx {
             wb,
             host,
+            mode,
             env: Vec::new(),
             interrupt: None,
-            iterative: false,
-            stale_read: false,
-            read_stale: false,
-            read_dirty: false,
+            observed: Observed::default(),
             wrap: false,
             depth: 0,
-            cycle_members: SmallVec::new(),
             defer_cycles: false,
             circ_fid: None,
             pend_fid: None,
@@ -227,17 +244,18 @@ impl<'a> EvalCtx<'a> {
             circ_args: false,
             circ_lifted: false,
             own: None,
-            read_own: false,
-            abandoned: false,
             name_scope: None,
+            arr_ctx: 0,
+            name_key: None,
+            arr_direct: false,
         }
     }
 
     pub(crate) fn too_big(&mut self, cells: f64) -> bool {
         if cells > crate::workbook::ABANDON_CELLS as f64 {
-            self.abandoned = true;
+            self.observed.abandoned = true;
         }
-        self.abandoned
+        self.observed.abandoned
     }
 
     #[inline]
@@ -296,31 +314,34 @@ impl<'a> EvalCtx<'a> {
     pub fn formula_value(&mut self, fid: FormulaId, row: u32, col: u32) -> Value {
         let f = self.wb.formula(fid);
         if self.own == Some(fid) {
-            self.read_own = true;
+            self.observed.read_own = true;
             return f.value_at(row, col);
         }
-        if f.dirty && self.read_stale {
-            self.read_dirty = true;
-        } else if f.dirty && self.iterative {
-            self.stale_read = true;
-        } else if f.dirty {
-            if f.active {
-                if self.defer_cycles {
-                    return self.placeholder(fid, false);
-                } else if self.interrupt.is_none() {
-                    self.interrupt = Some(Interrupt::Cycle(fid));
+        if f.dirty {
+            match self.mode {
+                ReadMode::Stale => self.observed.read_dirty = true,
+
+                ReadMode::Iterative => {}
+                ReadMode::Calc => {
+                    if f.active {
+                        if self.defer_cycles {
+                            return self.placeholder(fid, false);
+                        } else if self.interrupt.is_none() {
+                            self.interrupt = Some(Interrupt::Cycle(fid));
+                        }
+                    } else if f.circular_pass == self.wb.calc.pass {
+                        if self.defer_cycles {
+                            return self.placeholder(fid, false);
+                        }
+                        if self.interrupt.is_none() {
+                            self.interrupt = Some(Interrupt::Cycle(fid));
+                        }
+                    } else if self.defer_cycles {
+                        return self.placeholder(fid, true);
+                    } else if self.interrupt.is_none() {
+                        self.interrupt = Some(Interrupt::Pending(fid));
+                    }
                 }
-            } else if f.circular_pass == self.wb.calc.pass {
-                if self.defer_cycles {
-                    return self.placeholder(fid, false);
-                }
-                if self.interrupt.is_none() {
-                    self.interrupt = Some(Interrupt::Cycle(fid));
-                }
-            } else if self.defer_cycles {
-                return self.placeholder(fid, true);
-            } else if self.interrupt.is_none() {
-                self.interrupt = Some(Interrupt::Pending(fid));
             }
         }
         f.value_at(row, col)
@@ -368,7 +389,7 @@ impl<'a> EvalCtx<'a> {
         keep: impl Fn(u32, u32) -> bool,
         f: impl FnMut(u32, u32, &Value) -> bool,
     ) {
-        let defer = std::mem::replace(&mut self.defer_cycles, !self.iterative);
+        let defer = std::mem::replace(&mut self.defer_cycles, self.mode != ReadMode::Iterative);
         self.visit_area_where(area, keep, f);
         self.defer_cycles = defer;
     }
@@ -452,7 +473,7 @@ impl<'a> EvalCtx<'a> {
         }
         let mut data = vec![Value::Blank; n as usize];
 
-        let defer = std::mem::replace(&mut self.defer_cycles, !self.iterative);
+        let defer = std::mem::replace(&mut self.defer_cycles, self.mode != ReadMode::Iterative);
 
         let wb = self.wb;
         let sh = wb.sheet(area.sheet);
@@ -535,10 +556,21 @@ impl<'a> EvalCtx<'a> {
     }
 
     fn eval_inner(&mut self, node: &Node) -> Operand {
+        let direct = std::mem::replace(&mut self.arr_direct, false);
         match node {
             Node::Lit(v) => Operand::Val(v.clone()),
             Node::Ref(sheet, cref) => refs::resolve(self, sheet, cref),
-            Node::Name { key, sheet, .. } => refs::eval_name(self, key, sheet.as_ref()),
+            Node::Name { key, sheet, .. } => {
+                let inner = if self.arr_ctx == 2 || (self.arr_ctx == 1 && direct) {
+                    2
+                } else {
+                    0
+                };
+                let saved = std::mem::replace(&mut self.arr_ctx, inner);
+                let out = refs::eval_name(self, key, sheet.as_ref());
+                self.arr_ctx = saved;
+                out
+            }
             Node::Local { slot, .. } => self
                 .env
                 .get(*slot as usize)
@@ -594,7 +626,10 @@ impl<'a> EvalCtx<'a> {
                     Operand::Val(ops::binary(self, *op, l, r))
                 }
             },
-            Node::Paren(x) => self.eval(x),
+            Node::Paren(x) => {
+                self.arr_direct = direct;
+                self.eval(x)
+            }
             Node::Func { id, args } => call::call_builtin(self, *id, args),
             Node::NamedCall { key, args, .. } => lambda::call_named(self, key, args),
             Node::Call { callee, args } => {
@@ -608,6 +643,7 @@ impl<'a> EvalCtx<'a> {
             Node::Let {
                 values, body, base, ..
             } => {
+                let saved = std::mem::replace(&mut self.arr_ctx, 0);
                 let base = *base as usize;
                 self.env.truncate(base);
                 for v in values {
@@ -616,6 +652,7 @@ impl<'a> EvalCtx<'a> {
                 }
                 let out = self.eval(body);
                 self.env.truncate(base);
+                self.arr_ctx = saved;
                 out
             }
             Node::Lambda(def) => {
@@ -629,7 +666,10 @@ impl<'a> EvalCtx<'a> {
             Node::Unsupported { error, .. } => Operand::err(*error),
             Node::DeadRef(_) => Operand::err(XlError::Ref),
             Node::StructRef { table, spec, .. } => refs::struct_ref(self, table, spec),
-            Node::Ws { node, .. } => self.eval(node),
+            Node::Ws { node, .. } => {
+                self.arr_direct = direct;
+                self.eval(node)
+            }
         }
     }
 }
@@ -661,7 +701,7 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
             ctx.circ_used();
         }
     }
-    if ctx.abandoned {
+    if ctx.observed.abandoned {
         return Value::Number(0.0);
     }
     finalize(v)

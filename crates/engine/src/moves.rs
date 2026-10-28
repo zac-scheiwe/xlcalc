@@ -428,12 +428,7 @@ impl Workbook {
         src: Rect,
         dst: CellAddr,
     ) -> Result<RecalcReport, EditError> {
-        let r = self.move_range_body(src_sheet, src, dst);
-        if r.is_ok() {
-            self.view_touch_row_pub(src_sheet, src.r1);
-            self.view_touch_row_pub(dst.sheet, dst.row.saturating_add(src.rows() - 1));
-        }
-        r
+        self.move_range_body(src_sheet, src, dst)
     }
 
     fn move_range_body(
@@ -450,20 +445,9 @@ impl Workbook {
         );
         let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst.sheet, d);
         let r = self.move_range_raw(src_sheet, src, dst);
-        self.select_paste(dst.sheet, dst.row, dst.col);
         if pending {
             self.restore_totals(src_sheet, src, Some(d));
             self.restore_totals(dst.sheet, d, Some(d));
-        }
-
-        if r.is_ok()
-            && self
-                .tables
-                .iter()
-                .any(|t| t.sheet == src_sheet || t.sheet == dst.sheet)
-        {
-            self.extra_recalc();
-            self.extra_recalc();
         }
         r
     }
@@ -494,8 +478,11 @@ impl Workbook {
         if mv.ss == mv.ds && mv.dr == 0 && mv.dc == 0 {
             return Ok(RecalcReport::default());
         }
-        self.names_follow(src_sheet, src, dst.sheet, false);
         let dest = mv.dest();
+        if self.merge_intersects(src_sheet, &src) || self.merge_intersects(dst.sheet, &dest) {
+            return Err(EditError::OutOfScope("cut over merged cells"));
+        }
+        self.names_follow(src_sheet, src, dst.sheet, false);
 
         let mut dt_moving: Vec<usize> = Vec::new();
         for (i, t) in self.data_tables.iter().enumerate() {
@@ -505,14 +492,6 @@ impl Workbook {
                     continue;
                 }
                 if !inside(&t.rect, &src) {
-                    let doomed: Vec<Rect> = self
-                        .merges(dst.sheet)
-                        .into_iter()
-                        .filter(|m| m.intersects(&dest))
-                        .collect();
-                    for m in doomed {
-                        self.remove_merge(dst.sheet, m);
-                    }
                     return Err(EditError::Compile(crate::datatable::PART_ERROR.into()));
                 }
                 dt_moving.push(i);
@@ -530,24 +509,12 @@ impl Workbook {
             dt_doomed.push(i);
         }
         self.guard_arrays_move(src_sheet, src, dst.sheet, dest)?;
-        self.move_merges(src_sheet, src, dst.sheet, dest)?;
         self.calc.spilling = self
             .sheets
             .iter()
             .flat_map(|sh| sh.spills.active_ids())
             .collect();
-        for i in 0..self.data_tables.len() {
-            if dt_moving.contains(&i) {
-                let t = &mut self.data_tables[i];
-                t.rect = offset(&t.rect, mv.dr, mv.dc);
-                t.sheet = dst.sheet;
-            }
-        }
-        let mut i = 0;
-        self.data_tables.retain(|_| {
-            i += 1;
-            !dt_doomed.contains(&(i - 1))
-        });
+        self.move_data_tables(&dt_moving, &dt_doomed, dst.sheet, mv.dr, mv.dc);
         self.fmt_move_block(src_sheet, src, dst.sheet, (dst.row, dst.col));
 
         let moved_blocked: Vec<FormulaId> = match self.sheet(src_sheet) {
@@ -733,6 +700,7 @@ impl Workbook {
         }
         if !headers.is_empty() {
             headers.sort_by_key(|a| (a.sheet.0, a.row, a.col));
+            let cut_headers = headers.clone();
             for a in headers {
                 let pasted = (a.sheet == dst.sheet && dest.contains(a.row, a.col))
                     || self.tables.iter().any(|t| {
@@ -774,6 +742,20 @@ impl Workbook {
                 }
                 self.header_edited_in_cut(a);
             }
+
+            let mut done = Vec::new();
+            for a in cut_headers {
+                if let Some(ti) = self.tables.iter().position(|t| {
+                    t.sheet == a.sheet
+                        && t.header_row() == Some(a.row)
+                        && (t.rect.c0..=t.rect.c1).contains(&a.col)
+                }) {
+                    if !done.contains(&ti) {
+                        done.push(ti);
+                        self.resync_table_headers(ti, None);
+                    }
+                }
+            }
             report = self.relink_and_recalc();
         }
         if let Some((ti, rect, added_rows, _)) = grow {
@@ -805,8 +787,9 @@ impl Workbook {
                 && d.r0 > r.r0
                 && d.r0 <= r.r1 + 1
                 && d.r1 > r.r1;
+
             let cols =
-                r.r0 <= d.r0 && d.r1 <= r.r1 && d.c0 > r.c0 && d.c0 <= r.c1 + 1 && d.c1 > r.c1;
+                r.r0 <= d.r0 && d.r1 <= r.r1 && d.c0 >= r.c0 && d.c0 <= r.c1 + 1 && d.c1 > r.c1;
             if rows {
                 rect.r1 = d.r1;
             } else if cols {
@@ -854,15 +837,16 @@ impl Workbook {
 
     pub(crate) fn table_selected(&self, ti: usize) -> bool {
         let t = &self.tables[ti];
-        let cell = if t.sheet == self.active {
-            Some(self.selection.get(&t.sheet).copied().unwrap_or((0, 0)))
-        } else {
-            self.fill_selected.get(&t.sheet).copied()
-        };
-        cell.is_some_and(|(r, c)| t.rect.contains(r, c))
+        let (r, c) = self
+            .session
+            .selection
+            .get(&t.sheet)
+            .copied()
+            .unwrap_or((0, 0));
+        t.sheet == self.session.active && t.rect.contains(r, c)
     }
 
-    fn first_busy_row(&self, sheet: SheetId, area: Rect) -> Option<u32> {
+    pub(crate) fn first_busy_row(&self, sheet: SheetId, area: Rect) -> Option<u32> {
         let mut first = self
             .sheet(sheet)
             .and_then(|sh| sh.cells.iter_rect(area).map(|(y, _, _)| y).min());
@@ -966,6 +950,14 @@ impl Workbook {
         add: u32,
         header_too: bool,
     ) -> bool {
+        self.resize_exact_refs(ti, old, add as i64, header_too)
+    }
+
+    pub(crate) fn shrink_exact_refs(&mut self, ti: usize, old: Rect, sub: u32) -> bool {
+        self.resize_exact_refs(ti, old, -(sub as i64), true)
+    }
+
+    fn resize_exact_refs(&mut self, ti: usize, old: Rect, add: i64, header_too: bool) -> bool {
         let mut any = false;
 
         let sheet = self.tables[ti].sheet;
@@ -996,7 +988,11 @@ impl Workbook {
                         changed = true;
                         RefEdit::Set(
                             s.clone(),
-                            encode_rect(cref, Rect::new(r.r0, r.c0, r.r1 + add, r.c1), host),
+                            encode_rect(
+                                cref,
+                                Rect::new(r.r0, r.c0, (r.r1 as i64 + add) as u32, r.c1),
+                                host,
+                            ),
                         )
                     }
                     _ => RefEdit::Keep,

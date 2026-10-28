@@ -92,7 +92,7 @@ pub const fn checked(
 
 const REFERENCE_FUNCTIONS: &[&str] = &[
     "INDEX", "OFFSET", "INDIRECT", "IF", "IFS", "CHOOSE", "SWITCH", "XLOOKUP", "LET", "TAKE",
-    "DROP",
+    "DROP", "REDUCE",
 ];
 
 pub fn can_be_called(e: &crate::parser::ast::Expr) -> bool {

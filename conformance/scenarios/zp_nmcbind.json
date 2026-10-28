@@ -1,0 +1,275 @@
+{
+ "sheets": [
+  "Sheet1",
+  "A"
+ ],
+ "steps": [
+  {
+   "name": "Ga",
+   "op": "name",
+   "refers_to": "=Ku+1"
+  },
+  {
+   "cell": "A!C1",
+   "input": "=Ga",
+   "op": "set"
+  },
+  {
+   "after": "A",
+   "op": "copy_sheet",
+   "sheet": "A"
+  },
+  {
+   "name": "Ku",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "op": "read",
+   "range": "'A (2)'!C1"
+  },
+  {
+   "name": "Ku",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A (2)"
+  },
+  {
+   "op": "read",
+   "range": "'A (2)'!C1"
+  },
+  {
+   "cell": "'A (2)'!D1",
+   "input": "=Ga",
+   "op": "set"
+  },
+  {
+   "cell": "'A (2)'!E1",
+   "input": "=Ku",
+   "op": "set"
+  },
+  {
+   "op": "read",
+   "range": "'A (2)'!C1:E1"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "'A (2)'!C1:E1"
+  },
+  {
+   "op": "rebuild"
+  },
+  {
+   "op": "read",
+   "range": "'A (2)'!C1:E1"
+  },
+  {
+   "name": "Hb",
+   "op": "name",
+   "refers_to": "=Kz+1"
+  },
+  {
+   "cell": "A!F1",
+   "input": "=Hb",
+   "op": "set"
+  },
+  {
+   "name": "Kz",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A"
+  },
+  {
+   "op": "read",
+   "range": "A!F1"
+  },
+  {
+   "name": "Kz",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "op": "read",
+   "range": "A!F1"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "A!F1"
+  },
+  {
+   "name": "Hc",
+   "op": "name",
+   "refers_to": "=Ky+1"
+  },
+  {
+   "name": "Ky",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "cell": "A!G1",
+   "input": "=Hc",
+   "op": "set"
+  },
+  {
+   "name": "Ky",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A"
+  },
+  {
+   "op": "read",
+   "range": "A!G1"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "A!G1"
+  },
+  {
+   "cell": "A!H1",
+   "input": "=Hc",
+   "op": "set"
+  },
+  {
+   "op": "read",
+   "range": "A!H1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "name": "La",
+   "op": "name",
+   "refers_to": "=Kq+1",
+   "scope": "A"
+  },
+  {
+   "cell": "A!J1",
+   "input": "=La",
+   "op": "set"
+  },
+  {
+   "name": "Kq",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "op": "read",
+   "range": "A!J1"
+  },
+  {
+   "name": "Kq",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A"
+  },
+  {
+   "op": "read",
+   "range": "A!J1"
+  },
+  {
+   "cell": "A!K1",
+   "input": "=La",
+   "op": "set"
+  },
+  {
+   "op": "read",
+   "range": "A!K1"
+  },
+  {
+   "name": "Kr",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "name": "Lc",
+   "op": "name",
+   "refers_to": "=Kr+1",
+   "scope": "A"
+  },
+  {
+   "cell": "A!L1",
+   "input": "=Lc",
+   "op": "set"
+  },
+  {
+   "name": "Kr",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A"
+  },
+  {
+   "op": "read",
+   "range": "A!L1"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "A!J1:L1"
+  },
+  {
+   "name": "Ld",
+   "op": "name",
+   "refers_to": "=Ks+1",
+   "scope": "A"
+  },
+  {
+   "name": "Ks",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A"
+  },
+  {
+   "cell": "A!M1",
+   "input": "=Ld",
+   "op": "set"
+  },
+  {
+   "name": "Ks",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "op": "read",
+   "range": "A!M1"
+  },
+  {
+   "cell": "A!N1",
+   "input": "=Kt+1",
+   "op": "set"
+  },
+  {
+   "name": "Kt",
+   "op": "name",
+   "refers_to": "=10"
+  },
+  {
+   "op": "read",
+   "range": "A!N1"
+  },
+  {
+   "name": "Kt",
+   "op": "name",
+   "refers_to": "=20",
+   "scope": "A"
+  },
+  {
+   "op": "read",
+   "range": "A!N1"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

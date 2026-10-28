@@ -6,8 +6,8 @@ use crate::value::{Value, XlError};
 
 #[derive(Debug)]
 pub struct LambdaValue {
-    pub def: Arc<LambdaDef>,
-    pub captured: Vec<Operand>,
+    pub(crate) def: Arc<LambdaDef>,
+    pub(crate) captured: Vec<Operand>,
 }
 
 impl LambdaValue {

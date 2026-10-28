@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "set", "cell": "Sheet1!A1", "input": "=SUM(F1:F3)"}, {"op": "set", "cell": "Sheet1!A2", "input": "p"}, {"op": "set", "cell": "Sheet1!A3", "input": "p"}, {"op": "remove_dups", "range": "Sheet1!A1:A3", "columns": [1]}, {"op": "read", "range": "Sheet1!A1:B4"}]}

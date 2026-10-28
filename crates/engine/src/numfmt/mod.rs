@@ -4,12 +4,13 @@ mod calendars_he;
 mod codelen;
 pub(crate) mod decimal;
 mod displayed;
+pub(crate) use displayed::EditClass;
 mod general;
 mod locales;
 mod parse;
 mod render;
 
-pub use general::{format_general_cell, format_general_width, TEXT_GENERAL_WIDTH};
+pub use general::{format_general_width, TEXT_GENERAL_WIDTH};
 
 use crate::datetime::DateSystem;
 use crate::locale::Locale;
@@ -97,6 +98,8 @@ impl NumberFormat {
     pub fn parse(code: &str) -> Result<NumberFormat, XlError> {
         parse::parse_format(code).ok_or(XlError::Value)
     }
+
+    #[allow(dead_code)]
 
     pub fn general() -> NumberFormat {
         NumberFormat::parse("General").expect("General parses")

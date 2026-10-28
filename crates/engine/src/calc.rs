@@ -1,10 +1,10 @@
 use rustc_hash::FxHashSet;
 
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
-use crate::eval::{eval_formula, EvalCtx, Interrupt};
+use crate::eval::{eval_formula, EvalCtx, Interrupt, ReadMode};
 use crate::graph::Prec;
 use crate::value::{Value, XlError};
-use crate::workbook::{current_serial, Entry, FormulaId, Workbook};
+use crate::workbook::{current_serial, Entry, FormulaId, Op, Workbook};
 
 #[derive(Clone, Debug, Default)]
 pub struct RecalcReport {
@@ -181,7 +181,7 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
             break;
         }
     }
-    if iterative && !wb.calc.hold_iter {
+    if iterative && !wb.op_on(Op::HoldIter) {
         let pass = wb.calc.pass;
         let members: Vec<FormulaId> = wb
             .calc
@@ -254,7 +254,20 @@ fn parallel_phase(wb: &mut Workbook, report: &mut RecalcReport) {
     let mut indeg = vec![0u32; n];
     let mut downstream: Vec<Vec<u32>> = vec![Vec::new(); n];
     let mut pre = Vec::new();
+
+    let mut volatile_users: FxHashSet<FormulaId> = FxHashSet::default();
+    let mut users = Vec::new();
+    for d in wb.names.iter().filter(|d| d.formula.volatile) {
+        users.clear();
+        wb.graph
+            .dependents_of_name(&d.name.to_uppercase(), &mut users);
+        volatile_users.extend(users.iter().copied());
+    }
     for (i, &f) in dirty.iter().enumerate() {
+        if wb.formula(f).formula.volatile || volatile_users.contains(&f) {
+            indeg[i] = u32::MAX;
+            continue;
+        }
         pre.clear();
         dirty_precedents_limited(wb, f, &mut pre, MAX_PARALLEL_FANIN);
         pre.sort_unstable();
@@ -286,7 +299,7 @@ fn parallel_phase(wb: &mut Workbook, report: &mut RecalcReport) {
                 ctx.own = f.array.map(|_| dirty[i as usize]);
                 let v = eval_formula(&mut ctx, &formula.root);
 
-                (i, v, ctx.interrupt.is_none() && !ctx.read_own)
+                (i, v, ctx.interrupt.is_none() && !ctx.observed.read_own)
             };
             if level.len() >= PARALLEL_MIN_LEVEL {
                 use rayon::prelude::*;
@@ -335,10 +348,9 @@ fn calc_root(wb: &mut Workbook, root: FormulaId, report: &mut RecalcReport) {
     let (value, read_dirty) = {
         let f = wb.formula(root);
         let formula = f.formula.clone();
-        let mut ctx = EvalCtx::new(wb, f.addr);
-        ctx.read_stale = true;
+        let mut ctx = EvalCtx::with_mode(wb, f.addr, ReadMode::Stale);
         let v = eval_formula(&mut ctx, &formula.root);
-        (v, ctx.read_dirty)
+        (v, ctx.observed.read_dirty)
     };
     report.evaluations += 1;
     store_result(wb, root, value, report);
@@ -425,7 +437,7 @@ fn calc_root_collect(wb: &mut Workbook, root: FormulaId, report: &mut RecalcRepo
             let mut ctx = EvalCtx::new(wb, f.addr);
             ctx.own = f.array.map(|_| top);
             let v = eval_formula(&mut ctx, &formula.root);
-            (v, ctx.interrupt, ctx.read_own)
+            (v, ctx.interrupt, ctx.observed.read_own)
         };
         report.evaluations += 1;
 
@@ -530,8 +542,7 @@ fn iterate(wb: &mut Workbook, mut members: Vec<FormulaId>, report: &mut RecalcRe
             let value = {
                 let f = wb.formula(fid);
                 let formula = f.formula.clone();
-                let mut ctx = EvalCtx::new(wb, f.addr);
-                ctx.iterative = true;
+                let mut ctx = EvalCtx::with_mode(wb, f.addr, ReadMode::Iterative);
                 eval_formula(&mut ctx, &formula.root)
             };
             report.evaluations += 1;
@@ -604,6 +615,10 @@ fn store_result(wb: &mut Workbook, fid: FormulaId, value: Value, report: &mut Re
     {
         let seq = wb.calc.next_done_seq;
         wb.calc.next_done_seq += 1;
+        debug_assert!(
+            !crate::eval::contains_circ(&stored),
+            "an internal circular placeholder reached a cell"
+        );
         let f = wb.formula_mut(fid);
         f.value = stored;
         f.spill = new_spill;

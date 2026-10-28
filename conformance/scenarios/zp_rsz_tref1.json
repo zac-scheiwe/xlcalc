@@ -1,0 +1,109 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "cell": "Sheet1!A1",
+      "input": "k",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B1",
+      "input": "n",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A2",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A3",
+      "input": "b",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A4",
+      "input": "a",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B2",
+      "input": "1",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B3",
+      "input": "2",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!B4",
+      "input": "3",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A7",
+      "input": "below",
+      "op": "set"
+    },
+    {
+      "name": "Tb",
+      "op": "table",
+      "range": "Sheet1!A1:B4"
+    },
+    {
+      "name": "Tb",
+      "op": "table_totals",
+      "sheet": "Sheet1",
+      "value": true
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F1",
+      "input": "=SUM(B2:B5)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F2",
+      "input": "=B5"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F3",
+      "input": "=SUM(A5:B5)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!F4",
+      "input": "=SUM(B3:B5)"
+    },
+    {
+      "op": "table_resize",
+      "name": "Tb",
+      "sheet": "Sheet1",
+      "range": "Sheet1!A1:B3"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F9"
+    },
+    {
+      "op": "table_resize",
+      "name": "Tb",
+      "sheet": "Sheet1",
+      "range": "Sheet1!A1:B6"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:F9"
+    }
+  ]
+}

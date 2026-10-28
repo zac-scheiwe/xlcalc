@@ -1,0 +1,1 @@
+{"sheets": ["Sheet1", "Sheet2"], "steps": [{"op": "setv", "cell": "Sheet1!B1", "value": {"t": "s", "v": "x"}}, {"op": "setv", "cell": "Sheet1!B2", "value": {"t": "s", "v": "\"lo\")"}}, {"op": "text_to_columns", "range": "Sheet1!B1:B2", "consecutive": false, "qualifier": "double", "tab": true, "space": true, "fieldinfo": [[1, 9]]}, {"op": "read", "range": "Sheet1!A1:E6"}]}

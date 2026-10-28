@@ -3,44 +3,71 @@ pub(crate) fn deep<R>(f: impl FnOnce() -> R) -> R {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, f)
 }
 
-pub mod address;
-pub mod autofill;
-pub mod calc;
-pub mod cellfmt;
-pub mod coerce;
-pub mod cse;
-pub mod datatable;
-pub mod datetime;
-pub mod eval;
-pub mod fillseries;
+pub(crate) mod address;
+pub(crate) mod autofill;
+pub(crate) mod calc;
+pub(crate) mod cellfmt;
+pub(crate) mod coerce;
+pub(crate) mod cse;
+pub(crate) mod datatable;
+pub(crate) mod datetime;
+pub(crate) mod dedup;
+pub(crate) mod editcell;
+pub(crate) mod eval;
+pub(crate) mod fillseries;
 mod fmtmove;
-pub mod formula;
-pub mod formula_print;
-pub mod functions;
-pub mod goalseek;
-pub mod graph;
-pub mod input;
-pub mod legacy;
-pub mod locale;
-pub mod merge;
-pub mod moves;
-pub mod number;
-pub mod numfmt;
-pub mod parser;
-pub mod pastespecial;
-pub mod sort;
-pub mod structure;
-pub mod text;
-pub mod value;
-pub mod view;
-pub mod workbook;
-pub mod x87;
-pub mod xmath;
+pub(crate) mod formula;
+pub(crate) mod formula_print;
+pub(crate) mod functions;
+pub(crate) mod goalseek;
+pub(crate) mod graph;
+pub(crate) mod input;
+pub(crate) mod legacy;
+pub(crate) mod locale;
+pub(crate) mod merge;
+pub(crate) mod moves;
+pub(crate) mod number;
+pub(crate) mod numfmt;
+pub(crate) mod parser;
+pub(crate) mod pastespecial;
+pub(crate) mod replace;
+pub(crate) mod sort;
+pub(crate) mod structure;
+pub(crate) mod subtotal;
+pub(crate) mod text;
+pub(crate) mod ttc;
+pub(crate) mod value;
+pub(crate) mod view;
+pub(crate) mod workbook;
+pub(crate) mod x87;
+pub(crate) mod xmath;
 
-pub use address::{CellAddr, Rect, SheetId};
+#[doc(hidden)]
+pub mod testing;
+
+pub use address::{col_to_letters, letters_to_col, CellAddr, Rect, SheetId};
+pub use autofill::FillType;
 pub use calc::RecalcReport;
+pub use datatable::DataTable;
+pub use datetime::DateSystem;
+pub use dedup::DedupSpec;
+pub use eval::lambda::LambdaValue;
+pub use fillseries::{DateUnit, SeriesSpec, SeriesType};
+pub use functions::names as function_names;
+pub use locale::{DateOrder, Locale};
+pub use number::format_general;
+pub use numfmt::{Color, NumberFormat, Rendered};
+pub use parser::ParseError;
+pub use pastespecial::{PasteOp, PasteSpecial, PasteWhat};
+pub use replace::ReplaceSpec;
+pub use sort::{SortKey, SortSpec};
+pub use subtotal::{SubFunc, SubtotalSpec};
+pub use ttc::TtcSpec;
 pub use value::{Array, Value, XlError};
-pub use workbook::{CalcMode, EditError, Settings, Workbook};
+pub use workbook::tables::Table;
+pub use workbook::{
+    CalcMode, EditError, Entry, FormulaCell, FormulaId, NameDef, Names, Settings, Sheet, Workbook,
+};
 
 pub fn parse_cell_ref(wb: &Workbook, text: &str, default_sheet: SheetId) -> Option<CellAddr> {
     let (sheet, cell) = match text.rfind('!') {
