@@ -1,0 +1,128 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "6"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B4",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "c"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=SUM(A$2:A$4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=SUM(A$2:A$4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=SUM(A2:A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=SUM($A$2:$B$4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=SUM(A2:B4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=SUM(A$2:A$4)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=A2/SUM(A$2:A$4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=SUM(A$2:A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=SUM(A$1:A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "20"
+},
+{
+"op": "read_text",
+"range": "Sheet1!C2:C5"
+},
+{
+"op": "read_text",
+"range": "Sheet1!H1:H8"
+},
+{
+"op": "read",
+"range": "Sheet1!C2:C5"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H8"
+},
+{
+"op": "tables"
+}
+]
+}

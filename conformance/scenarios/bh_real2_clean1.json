@@ -1,0 +1,658 @@
+{
+"sheets": [
+"Raw",
+"Clean"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Raw!A1",
+"value": {
+"t": "s",
+"v": "  Smith, John | 12/03/2026 | $1,234.50 "
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A2",
+"value": {
+"t": "s",
+"v": "DOE,jane|3-Feb-2026|(450.00)"
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A3",
+"value": {
+"t": "s",
+"v": "O'Brien ,Pat|2026-04-05| 99 "
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A4",
+"value": {
+"t": "s",
+"v": "  lee,  KIM  |7 May 2026|1.2K"
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A5",
+"value": {
+"t": "s",
+"v": "Nguyen,An|15/13/2026|N/A"
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A6",
+"value": {
+"t": "s",
+"v": "mc  donald,Ron|01/01/2026|\u20ac2 000,75"
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A7",
+"value": {
+"t": "s",
+"v": "Zhao,Li|31/12/2025|-12.5%"
+}
+},
+{
+"op": "setv",
+"cell": "Raw!A8",
+"value": {
+"t": "s",
+"v": "Ng,Bo|1/2/26|0x1F"
+}
+},
+{
+"op": "set",
+"cell": "Clean!A1",
+"input": "=TEXTSPLIT(Raw!A1,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A2",
+"input": "=TEXTSPLIT(Raw!A2,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A3",
+"input": "=TEXTSPLIT(Raw!A3,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A4",
+"input": "=TEXTSPLIT(Raw!A4,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A5",
+"input": "=TEXTSPLIT(Raw!A5,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A6",
+"input": "=TEXTSPLIT(Raw!A6,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A7",
+"input": "=TEXTSPLIT(Raw!A7,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!A8",
+"input": "=TEXTSPLIT(Raw!A8,\"|\")"
+},
+{
+"op": "set",
+"cell": "Clean!E1",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A1,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E2",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A2,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E3",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A3,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E4",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A4,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E5",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A5,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E6",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A6,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E7",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A7,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!E8",
+"input": "=TRIM(CLEAN(TEXTBEFORE(Raw!A8,\"|\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F1",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A1,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A1,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F2",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A2,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A2,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F3",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A3,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A3,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F4",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A4,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A4,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F5",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A5,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A5,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F6",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A6,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A6,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F7",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A7,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A7,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!F8",
+"input": "=PROPER(TRIM(TEXTAFTER(TEXTBEFORE(Raw!A8,\"|\"),\",\")))&\" \"&PROPER(TRIM(TEXTBEFORE(Raw!A8,\",\")))"
+},
+{
+"op": "set",
+"cell": "Clean!G1",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A1,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G2",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A2,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G3",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A3,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G4",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A4,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G5",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A5,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G6",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A6,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G7",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A7,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!G8",
+"input": "=IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A8,\"|\"),2))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H1",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A1,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H2",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A2,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H3",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A3,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H4",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A4,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H5",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A5,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H6",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A6,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H7",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A7,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!H8",
+"input": "=IFERROR(VALUE(TRIM(INDEX(TEXTSPLIT(Raw!A8,\"|\"),3))),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I1",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A1,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I2",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A2,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I3",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A3,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I4",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A4,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I5",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A5,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I6",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A6,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I7",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A7,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!I8",
+"input": "=IFERROR(VALUE(SUBSTITUTE(SUBSTITUTE(TRIM(TEXTAFTER(Raw!A8,\"|\",2)),\"$\",\"\"),\",\",\"\")),\"bad\")"
+},
+{
+"op": "set",
+"cell": "Clean!J1",
+"input": "=LEN(TRIM(Raw!A1))-LEN(SUBSTITUTE(Raw!A1,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J2",
+"input": "=LEN(TRIM(Raw!A2))-LEN(SUBSTITUTE(Raw!A2,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J3",
+"input": "=LEN(TRIM(Raw!A3))-LEN(SUBSTITUTE(Raw!A3,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J4",
+"input": "=LEN(TRIM(Raw!A4))-LEN(SUBSTITUTE(Raw!A4,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J5",
+"input": "=LEN(TRIM(Raw!A5))-LEN(SUBSTITUTE(Raw!A5,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J6",
+"input": "=LEN(TRIM(Raw!A6))-LEN(SUBSTITUTE(Raw!A6,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J7",
+"input": "=LEN(TRIM(Raw!A7))-LEN(SUBSTITUTE(Raw!A7,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!J8",
+"input": "=LEN(TRIM(Raw!A8))-LEN(SUBSTITUTE(Raw!A8,\"|\",\"\"))"
+},
+{
+"op": "set",
+"cell": "Clean!K1",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A1),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K2",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A2),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K3",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A3),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K4",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A4),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K5",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A5),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K6",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A6),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K7",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A7),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!K8",
+"input": "=TEXTJOIN(\"-\",TRUE,TEXTSPLIT(TRIM(Raw!A8),{\"|\",\",\"},,TRUE))"
+},
+{
+"op": "set",
+"cell": "Clean!L1",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A1,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L2",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A2,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L3",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A3,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L4",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A4,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L5",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A5,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L6",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A6,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L7",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A7,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!L8",
+"input": "=--TEXT(IFERROR(DATEVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A8,\"|\"),2))),0),\"yyyymmdd\")"
+},
+{
+"op": "set",
+"cell": "Clean!M1",
+"input": "=SUBSTITUTE(TRIM(Raw!A1),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M2",
+"input": "=SUBSTITUTE(TRIM(Raw!A2),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M3",
+"input": "=SUBSTITUTE(TRIM(Raw!A3),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M4",
+"input": "=SUBSTITUTE(TRIM(Raw!A4),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M5",
+"input": "=SUBSTITUTE(TRIM(Raw!A5),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M6",
+"input": "=SUBSTITUTE(TRIM(Raw!A6),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M7",
+"input": "=SUBSTITUTE(TRIM(Raw!A7),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!M8",
+"input": "=SUBSTITUTE(TRIM(Raw!A8),\"  \",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!N1",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A1,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N2",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A2,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N3",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A3,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N4",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A4,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N5",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A5,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N6",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A6,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N7",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A7,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!N8",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A8,\"|\"),3)),\",\",\".\")"
+},
+{
+"op": "set",
+"cell": "Clean!O1",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A1,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O2",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A2,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O3",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A3,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O4",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A4,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O5",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A5,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O6",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A6,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O7",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A7,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!O8",
+"input": "=NUMBERVALUE(TRIM(INDEX(TEXTSPLIT(Raw!A8,\"|\"),3)),\".\",\",\")"
+},
+{
+"op": "set",
+"cell": "Clean!Q1",
+"input": "=TEXTSPLIT(TEXTJOIN(\";\",TRUE,Raw!A1:A8),\"|\",\";\")"
+},
+{
+"op": "set",
+"cell": "Clean!Q12",
+"input": "=CHOOSECOLS(Q1#,1,3)"
+},
+{
+"op": "set",
+"cell": "Clean!R12",
+"input": "=SORTBY(Q1#,LEN(INDEX(Q1#,,1)),-1)"
+},
+{
+"op": "set",
+"cell": "Clean!A12",
+"input": "=VALUETOTEXT(Raw!A1:A3)"
+},
+{
+"op": "set",
+"cell": "Clean!A13",
+"input": "=ARRAYTOTEXT(Raw!A1:A2,1)"
+},
+{
+"op": "set",
+"cell": "Clean!A14",
+"input": "=TEXTAFTER(\"a-b-c-d\",\"-\",-1)"
+},
+{
+"op": "set",
+"cell": "Clean!A15",
+"input": "=TEXTBEFORE(\"a-b-c-d\",\"-\",{1,2,3})"
+},
+{
+"op": "set",
+"cell": "Clean!A16",
+"input": "=TEXTSPLIT(\"a1b22c333\",{\"1\",\"22\"},,,1)"
+},
+{
+"op": "set",
+"cell": "Clean!A17",
+"input": "=REGEXTEST(\"abc123\",\"\\d+\")"
+},
+{
+"op": "set",
+"cell": "Clean!A18",
+"input": "=REGEXEXTRACT(\"abc123def\",\"\\d+\")"
+},
+{
+"op": "set",
+"cell": "Clean!A19",
+"input": "=REGEXREPLACE(\"a  b   c\",\"\\s+\",\" \")"
+},
+{
+"op": "set",
+"cell": "Clean!A20",
+"input": "=TEXT(1234.567,\"#,##0.0\")&\"|\"&TEXT(-5,\"0.00;(0.00)\")&\"|\"&TEXT(0.256,\"0.0%\")&\"|\"&TEXT(45000,\"[$-409]mmmm d, yyyy\")"
+},
+{
+"op": "set",
+"cell": "Clean!A21",
+"input": "=VALUE(\"1,234.5\")+VALUE(\"12%\")+VALUE(\"$5\")+VALUE(\"1:30\")+VALUE(\"(5)\")"
+},
+{
+"op": "set",
+"cell": "Clean!A22",
+"input": "=DATEVALUE(\"5 May 2026\")+DATEVALUE(\"2026-05-06\")+TIMEVALUE(\"6:15 PM\")"
+},
+{
+"op": "set",
+"cell": "Clean!A23",
+"input": "=--\"1e3\"+--\" 5 \"+--\"-.5\""
+},
+{
+"op": "read",
+"range": "Clean!A1:S25"
+},
+{
+"op": "set",
+"cell": "Raw!A9",
+"input": "Tan,Eve|4/4/2026|10"
+},
+{
+"op": "set",
+"cell": "Clean!A9",
+"input": "=TEXTSPLIT(Raw!A9,\"|\")"
+},
+{
+"op": "read",
+"range": "Clean!A1:S25"
+},
+{
+"op": "replace",
+"range": "Raw!A1:A9",
+"what": "|",
+"with": ";",
+"lookat": "part",
+"matchcase": false,
+"order": "rows"
+},
+{
+"op": "read",
+"range": "Clean!A1:S25"
+}
+]
+}

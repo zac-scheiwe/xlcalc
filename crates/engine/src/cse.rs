@@ -356,6 +356,11 @@ impl Workbook {
                 return Err(part_of_array());
             }
         }
+        self.array_copies(ss, src, dst)
+    }
+
+    fn array_copies(&self, ss: SheetId, src: Rect, dst: CellAddr) -> Result<ArrayPaste, EditError> {
+        let ds = dst.sheet;
         let (dr, dc) = (
             dst.row as i64 - src.r0 as i64,
             dst.col as i64 - src.c0 as i64,
@@ -442,16 +447,31 @@ impl Workbook {
                 return Err(part_of_array());
             }
         }
-        let plain = spec.op == PasteOp::None
-            && spec.what != PasteWhat::Values
-            && !spec.transpose
-            && target.rows() == src.rows()
-            && target.cols() == src.cols();
-        let plan = if plain {
-            self.paste_array_plan(ss, src, CellAddr::new(ds, target.r0, target.c0))?
-        } else {
-            vec![]
-        };
+        let plain = spec.op == PasteOp::None && spec.what != PasteWhat::Values && !spec.transpose;
+
+        let mut plan = vec![];
+        if plain
+            && ss == ds
+            && target.intersects(&src)
+            && self
+                .array_blocks(ss)
+                .iter()
+                .any(|(_, b)| b.intersects(&target) && b.intersects(&src) && !inside(b, &src))
+        {
+            return Err(part_of_array());
+        }
+        if plain
+            && target.rows().is_multiple_of(src.rows())
+            && target.cols().is_multiple_of(src.cols())
+        {
+            for tr in 0..target.rows() / src.rows() {
+                for tc in 0..target.cols() / src.cols() {
+                    let at =
+                        CellAddr::new(ds, target.r0 + tr * src.rows(), target.c0 + tc * src.cols());
+                    plan.extend(self.array_copies(ss, src, at)?);
+                }
+            }
+        }
         self.remove_arrays_in(ds, target);
         Ok(plan)
     }

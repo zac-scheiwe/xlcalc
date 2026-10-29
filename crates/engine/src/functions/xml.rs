@@ -11,23 +11,23 @@ fn filterxml(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         (Err(e), _) | (_, Err(e)) => return Value::Error(e),
     };
     let Some(doc) = Doc::parse(&doc) else {
-        return Value::Error(XlError::Value);
+        return Value::Error(XlError::VALUE);
     };
     let Some(expr) = XPath::parse(&path) else {
-        return Value::Error(XlError::Value);
+        return Value::Error(XlError::VALUE);
     };
     let Some(nodes) = doc.select(&expr) else {
-        return Value::Error(XlError::Value);
+        return Value::Error(XlError::VALUE);
     };
     if nodes.is_empty() {
-        return Value::Error(XlError::Value);
+        return Value::Error(XlError::VALUE);
     }
     let env = ctx.parse_env();
     let mut out: Vec<Value> = nodes
         .into_iter()
         .map(|n| match doc.result_text(n) {
-            None => Value::Error(XlError::Value),
-            Some(s) if s.trim().is_empty() => Value::Error(XlError::Value),
+            None => Value::Error(XlError::VALUE),
+            Some(s) if s.trim().is_empty() => Value::Error(XlError::VALUE),
             Some(s) => convert(&s, env),
         })
         .collect();
@@ -485,7 +485,7 @@ enum Axis {
     Following,
     Preceding,
     Attribute,
-    SelfAxis,
+    Itself,
 }
 
 #[derive(Clone, Debug)]
@@ -898,7 +898,7 @@ impl XpParser {
         if self.at(".") {
             self.i += 1;
             return Some(Step {
-                axis: Axis::SelfAxis,
+                axis: Axis::Itself,
                 test: Test::Node,
                 preds: vec![],
             });
@@ -927,7 +927,7 @@ impl XpParser {
                     "following" => Axis::Following,
                     "preceding" => Axis::Preceding,
                     "attribute" => Axis::Attribute,
-                    "self" => Axis::SelfAxis,
+                    "self" => Axis::Itself,
                     _ => return None,
                 };
                 self.i += 2;
@@ -1073,7 +1073,7 @@ impl Doc {
         match axis {
             Axis::Child => out.extend(node.children.iter().copied()),
             Axis::Attribute => out.extend(node.attrs.iter().copied()),
-            Axis::SelfAxis => out.push(n),
+            Axis::Itself => out.push(n),
             Axis::Parent => {
                 if n != 0 {
                     out.push(node.parent)

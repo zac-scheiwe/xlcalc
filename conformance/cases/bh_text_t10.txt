@@ -1,0 +1,45 @@
+="a"&CHAR(9)&"b"="ab"
+="a"&CHAR(9)&"b"<"ab"
+="a"&CHAR(9)&"b">"ab"
+="a"&CHAR(10)&"b"="ab"
+="a"&CHAR(10)&"b">"ab"
+="a"&CHAR(9)&"b"<"a b"
+="a"&CHAR(9)&"b">"a b"
+="a"&CHAR(10)&"b">"a b"
+="a"&CHAR(9)&"b"<"a"&CHAR(10)&"b"
+="a"&CHAR(160)&"b"<"a"&CHAR(9)&"b"
+="a"&CHAR(160)&"b">"a b"
+="a"&CHAR(160)&"b"="a b"
+="a"&CHAR(1)&"b"="ab"
+="a"&CHAR(1)&"b">"ab"
+="a"&CHAR(1)&"b"<"a"&CHAR(2)&"b"
+="a"&CHAR(1)&"b"="a"&CHAR(2)&"b"
+="a"&CHAR(127)&"b"="ab"
+="a"&UNICHAR(128)&"b"="ab"
+="a"&UNICHAR(173)&"b"="ab"
+="a"&UNICHAR(8203)&"b"="ab"
+="a"&UNICHAR(65279)&"b"="ab"
+="a"&UNICHAR(8232)&"b"="ab"
+="a"&UNICHAR(8232)&"b">"a b"
+="a"&UNICHAR(8205)&"b"="ab"
+="a"&UNICHAR(0)&"b"="ab"
+=SORT({"a b";"a";"ab"})
+=SORT({"a b";"a"&CHAR(9)&"b";"a";"ab";"a"&CHAR(10)&"b";"a"&CHAR(160)&"b";"a  b"})
+=SORT({"a"&CHAR(10)&"b";"a"&CHAR(9)&"b";"a"&CHAR(160)&"b";"a b";"ab";"a"})
+=SORT({"a"&CHAR(13)&"b";"a"&CHAR(10)&"b";"a"&CHAR(9)&"b";"a"&CHAR(1)&"b";"a b"})
+=SORT({"a"&UNICHAR(8203)&"b";"a"&UNICHAR(173)&"b";"ab";"a"&UNICHAR(8232)&"b";"a b"})
+=SORT({"a"&CHAR(9);"a ";"a"})
+=SORT({"a"&CHAR(10);"a ";"a"})
+=SORT({CHAR(9)&"a";" a";"a"})
+=SORT({CHAR(10)&"a";" a";"a";"-a"})
+=UNIQUE({"a b";"a"&CHAR(9)&"b";"ab"})
+=UNIQUE({"ab";"a"&CHAR(9)&"b";"a"&CHAR(10)&"b"})
+=COUNTIF({"ab","a"&CHAR(9)&"b"},"ab")
+=COUNTIF({"ab","a"&CHAR(9)&"b"},"a"&CHAR(9)&"b")
+=COUNTIF({"ab","a"&CHAR(9)&"b"},">ab")
+=COUNTIF({"ab","a"&CHAR(9)&"b"},"<ab")
+=MATCH("ab",{"a"&CHAR(9)&"b"},0)
+=MATCH("ab",{"a"&CHAR(9)&"b"},1)
+=MATCH("a b",{"a"&CHAR(9)&"b";"a"&CHAR(10)&"b"},1)
+=XMATCH("a b",{"a b";"a"&CHAR(9)&"b";"a"&CHAR(10)&"b"},1)
+=XMATCH("a"&CHAR(10)&"b",{"a b";"a"&CHAR(9)&"b";"a"&CHAR(10)&"b"},-1)

@@ -1,0 +1,186 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "p"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "q"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "r"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "6"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:C3",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=SUM(Tb[p])+SUM(Tb[[q]:[r]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=Tb[[#Headers],[q]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=FORMULATEXT(E1)"
+},
+{
+"op": "name",
+"name": "Nm",
+"refers_to": "=Tb[[#All],[q]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=SUM(Nm)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "qq"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "names"
+},
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "p2"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=\"r\"&\"z\""
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "names"
+},
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:C1"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "a b"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "x]y"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "it's"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "#c"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "[z]"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E4"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E4"
+}
+]
+}

@@ -1,0 +1,268 @@
+{
+"sheets": [
+"D",
+"R"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "D!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "D!B1",
+"value": {
+"t": "s",
+"v": "Q1"
+}
+},
+{
+"op": "setv",
+"cell": "D!C1",
+"value": {
+"t": "s",
+"v": "Q2"
+}
+},
+{
+"op": "setv",
+"cell": "D!D1",
+"value": {
+"t": "s",
+"v": "Q3"
+}
+},
+{
+"op": "setv",
+"cell": "D!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "D!C2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "D!D2",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "D!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "D!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "D!D3",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "D!A4",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "D!B4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "D!C4",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "D!D4",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "table",
+"name": "tD",
+"range": "D!A1:D4"
+},
+{
+"op": "set",
+"cell": "R!A2",
+"input": "=SUM(tD[Q1])"
+},
+{
+"op": "set",
+"cell": "R!A3",
+"input": "=SUM(tD[[Q1]:[Q2]])"
+},
+{
+"op": "set",
+"cell": "R!A4",
+"input": "=SUM(tD[Q1:Q2])"
+},
+{
+"op": "set",
+"cell": "R!A5",
+"input": "=SUM(tD[[#Headers],[Q1]])&\"\""
+},
+{
+"op": "set",
+"cell": "R!A6",
+"input": "=tD[@Q1]"
+},
+{
+"op": "set",
+"cell": "R!A7",
+"input": "=tD[[#This Row],[Q1]]"
+},
+{
+"op": "set",
+"cell": "R!A8",
+"input": "=SUM(tD[[#Data],[Q1]])"
+},
+{
+"op": "set",
+"cell": "R!A9",
+"input": "=SUM(tD[[Q1]:[Q1]])"
+},
+{
+"op": "set",
+"cell": "R!A10",
+"input": "=COUNTA(tD[[#All],[Q1]])"
+},
+{
+"op": "set",
+"cell": "R!A11",
+"input": "=SUM(tD)"
+},
+{
+"op": "set",
+"cell": "R!A12",
+"input": "=SUM(tD[#Data])"
+},
+{
+"op": "set",
+"cell": "R!A13",
+"input": "=INDEX(tD[Q1],2)"
+},
+{
+"op": "autofill",
+"from": "R!A2:A13",
+"to": "R!A2:C13",
+"type": "default"
+},
+{
+"op": "read",
+"range": "R!A1:E15"
+},
+{
+"op": "copy",
+"from": "R!A2:A13",
+"to": "R!F2"
+},
+{
+"op": "read",
+"range": "R!A1:G15"
+},
+{
+"op": "copy",
+"from": "R!C2:C13",
+"to": "R!H2"
+},
+{
+"op": "copy",
+"from": "R!C2:C13",
+"to": "R!I2"
+},
+{
+"op": "copy",
+"from": "R!C2:C13",
+"to": "R!J2"
+},
+{
+"op": "read",
+"range": "R!A1:K15"
+},
+{
+"op": "autofill",
+"from": "R!C2:C13",
+"to": "R!A2:C13",
+"type": "default"
+},
+{
+"op": "read",
+"range": "R!A1:K15"
+},
+{
+"op": "autofill",
+"from": "R!A2:A3",
+"to": "R!A2:A9",
+"type": "default"
+},
+{
+"op": "read",
+"range": "R!A1:K21"
+},
+{
+"op": "cut",
+"from": "R!B2:B4",
+"to": "R!M2"
+},
+{
+"op": "read",
+"range": "R!A1:N15"
+}
+]
+}

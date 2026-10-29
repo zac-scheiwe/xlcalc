@@ -96,10 +96,8 @@ pub struct NumberFormat {
 
 impl NumberFormat {
     pub fn parse(code: &str) -> Result<NumberFormat, XlError> {
-        parse::parse_format(code).ok_or(XlError::Value)
+        parse::parse_format(code).ok_or(XlError::VALUE)
     }
-
-    #[allow(dead_code)]
 
     pub fn general() -> NumberFormat {
         NumberFormat::parse("General").expect("General parses")
@@ -112,8 +110,8 @@ impl NumberFormat {
             Value::Text(s) => self.format_text(s, loc),
             Value::Bool(b) => self.format_text(if *b { "TRUE" } else { "FALSE" }, loc),
             Value::Error(e) => Err(*e),
-            Value::Array(_) => Err(XlError::Value),
-            Value::Lambda(_) => Err(XlError::Calc),
+            Value::Array(_) => Err(XlError::VALUE),
+            Value::Lambda(_) => Err(XlError::CALC),
         }
     }
 

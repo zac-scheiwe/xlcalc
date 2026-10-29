@@ -92,6 +92,7 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
     let mut s = t;
     let mut negative = false;
     let mut kind = NumberKind::Plain;
+    let mut euro = false;
     let mut paren = false;
     if let Some(inner) = s.strip_prefix('(').and_then(|x| x.strip_suffix(')')) {
         paren = true;
@@ -151,6 +152,7 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
     if kind == NumberKind::Plain {
         if let Some(r) = s.strip_prefix('€') {
             kind = NumberKind::Currency;
+            euro = true;
             s = r.trim_start_matches(' ');
             if let Some(inner) = s.strip_prefix('(').and_then(|x| x.strip_suffix(')')) {
                 if had_sign || paren {
@@ -164,6 +166,7 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
             }
         } else if let Some(r) = s.strip_suffix('€') {
             kind = NumberKind::Currency;
+            euro = true;
             s = r.trim_end_matches(' ');
         }
     }
@@ -180,6 +183,7 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
     let mut grouped = false;
     let mut int_digits = 0usize;
     let mut group_len: Option<usize> = None;
+    let mut first_group_zero = false;
     while i < b.len() {
         let c = b[i] as char;
         if c.is_ascii_digit() {
@@ -192,6 +196,9 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
             if int_digits == 0 || group_len.is_some_and(|g| g < 3) {
                 return None;
             }
+            if !grouped {
+                first_group_zero = clean.bytes().all(|c| c == b'0');
+            }
             grouped = true;
             group_len = Some(0);
         } else {
@@ -203,7 +210,7 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
         return None;
     }
 
-    if grouped && !clean.bytes().any(|c| (b'1'..=b'9').contains(&c)) {
+    if grouped && (first_group_zero || !clean.bytes().any(|c| (b'1'..=b'9').contains(&c))) {
         return None;
     }
 
@@ -287,6 +294,8 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
         }
         NumberKind::Percent => Some(if dec { "0.00%" } else { "0%" }.to_string()),
         NumberKind::Thousands => Some(if dec { "#,##0.00" } else { "#,##0" }.to_string()),
+
+        NumberKind::Currency if euro => None,
         NumberKind::Currency => {
             let (c, d) = (loc.currency.as_str(), if dec { ".00" } else { "" });
             Some(format!("{c}#,##0{d};[Red]-{c}#,##0{d}"))
@@ -876,10 +885,10 @@ pub fn to_number(v: &Value, env: ParseEnv) -> Result<f64, XlError> {
         Value::Bool(b) => Ok(if *b { 1.0 } else { 0.0 }),
         Value::Text(s) => parse_number_text_arith(s, env)
             .map(|p| p.value)
-            .ok_or(XlError::Value),
+            .ok_or(XlError::VALUE),
         Value::Error(e) => Err(*e),
-        Value::Array(_) => Err(XlError::Value),
-        Value::Lambda(_) => Err(XlError::Value),
+        Value::Array(_) => Err(XlError::VALUE),
+        Value::Lambda(_) => Err(XlError::VALUE),
     }
 }
 
@@ -890,8 +899,8 @@ pub fn to_text(v: &Value) -> Result<Text, XlError> {
         Value::Bool(b) => Ok(if *b { "TRUE" } else { "FALSE" }.into()),
         Value::Blank => Ok("".into()),
         Value::Error(e) => Err(*e),
-        Value::Array(_) => Err(XlError::Value),
-        Value::Lambda(_) => Err(XlError::Value),
+        Value::Array(_) => Err(XlError::VALUE),
+        Value::Lambda(_) => Err(XlError::VALUE),
     }
 }
 
@@ -906,12 +915,12 @@ pub fn to_bool(v: &Value) -> Result<bool, XlError> {
             } else if s.eq_ignore_ascii_case("FALSE") {
                 Ok(false)
             } else {
-                Err(XlError::Value)
+                Err(XlError::VALUE)
             }
         }
         Value::Error(e) => Err(*e),
-        Value::Array(_) => Err(XlError::Value),
-        Value::Lambda(_) => Err(XlError::Value),
+        Value::Array(_) => Err(XlError::VALUE),
+        Value::Lambda(_) => Err(XlError::VALUE),
     }
 }
 

@@ -223,6 +223,10 @@ pub trait SheetResolver {
     fn sheet_id(&self, name: &str) -> Option<SheetId>;
 
     fn table(&self, name: Option<&str>) -> Option<(String, Vec<String>)>;
+
+    fn name_exists(&self, _name: &str) -> bool {
+        false
+    }
 }
 
 pub struct CompileCtx<'a> {
@@ -391,6 +395,20 @@ impl<'a> Compiler<'a> {
         }
     }
 
+    fn local_range_ends(&self, kind: &RefKind) -> Option<(u32, u32)> {
+        let (n0, n1) = match kind {
+            RefKind::Cols { c0, c1 } if !c0.abs && !c1.abs => (
+                crate::address::col_to_letters(c0.index),
+                crate::address::col_to_letters(c1.index),
+            ),
+            RefKind::Area { r0, c0, r1, c1 } if !r0.abs && !c0.abs && !r1.abs && !c1.abs => {
+                (cell_name(r0.index, c0.index), cell_name(r1.index, c1.index))
+            }
+            _ => return None,
+        };
+        Some((self.local(&n0)?, self.local(&n1)?))
+    }
+
     fn local(&self, name: &str) -> Option<u32> {
         let key = strip_prefixes(name).to_uppercase();
         self.scope
@@ -404,6 +422,26 @@ impl<'a> Compiler<'a> {
             id: functions::lookup(functions::info::FIELD_FN).expect("field function"),
             args: vec![x, Node::Lit(Value::text(field))],
         }
+    }
+
+    fn dotted_name(&self, e: &Expr) -> Option<String> {
+        let mut segs = Vec::new();
+        let mut cur = e;
+        while let Expr::Field { expr, field } = cur {
+            segs.push(field.as_str());
+            cur = expr;
+        }
+        let Expr::Ref { sheet: None, kind } = cur else {
+            return None;
+        };
+        let mut name = crate::parser::print::print(&Expr::Ref {
+            sheet: None,
+            kind: *kind,
+        });
+        for f in segs.iter().rev() {
+            name.push_str(f);
+        }
+        self.cx.sheets.name_exists(&name).then_some(name)
     }
 
     fn nodes(&mut self, args: &[Expr]) -> Result<Vec<Node>, CompileError> {
@@ -452,6 +490,15 @@ impl<'a> Compiler<'a> {
 
                 Node::Lit(Array::new(r, c, data).into_value())
             }
+
+            Expr::Ref { sheet: None, kind } if self.local_range_ends(kind).is_some() => {
+                let (l, r) = self.local_range_ends(kind).unwrap();
+                let mk = |slot: u32, s: &Self| Node::Local {
+                    slot,
+                    name: s.scope[slot as usize].clone(),
+                };
+                Node::Binary(BinOp::Range, Box::new(mk(l, self)), Box::new(mk(r, self)))
+            }
             Expr::Ref {
                 sheet: None,
                 kind: RefKind::Cell { row, col },
@@ -461,6 +508,25 @@ impl<'a> Compiler<'a> {
                     slot,
                     name: self.scope[slot as usize].clone(),
                 }
+            }
+
+            Expr::Ref {
+                sheet: Some(SheetSpec::Range(a, b)),
+                kind,
+            } if self.cx.sheets.sheet_id(a).is_none()
+                && self.cx.sheets.sheet_id(b).is_some()
+                && self.local(a).is_some() =>
+            {
+                let slot = self.local(a).unwrap();
+                let left = Node::Local {
+                    slot,
+                    name: self.scope[slot as usize].clone(),
+                };
+                let right = Node::Ref(
+                    self.sheet(&Some(SheetSpec::Single(b.clone()))),
+                    self.cref(kind),
+                );
+                Node::Binary(BinOp::Range, Box::new(left), Box::new(right))
             }
             Expr::Ref { sheet, kind } => Node::Ref(self.sheet(sheet), self.cref(kind)),
             Expr::Name { sheet, name } => {
@@ -490,6 +556,9 @@ impl<'a> Compiler<'a> {
                             return Ok(node);
                         }
                     }
+                }
+                if sheet.is_none() && crate::parser::starts_like_r1c1(name) {
+                    return Err(CompileError("not a valid name".into()));
                 }
                 if sheet.is_none() {
                     if let Some((tname, _)) = self.cx.sheets.table(Some(name)) {
@@ -534,6 +603,9 @@ impl<'a> Compiler<'a> {
                 Node::Spill(Box::new(self.node(x)?))
             }
             Expr::Field { expr, field } => {
+                if let Some(name) = self.dotted_name(e) {
+                    return self.node(&Expr::Name { sheet: None, name });
+                }
                 let x = self.node(expr)?;
                 self.field_node(x, field)
             }
@@ -570,6 +642,16 @@ impl<'a> Compiler<'a> {
                 None => "structured reference outside a table".into(),
             })
         })?;
+
+        if parsed.pad != Default::default() {
+            if let Some((a, _)) = &parsed.cols {
+                let full = format!("{}{}{}", parsed.pad.0, a, parsed.pad.1);
+                if columns.iter().any(|x| crate::text::eq_ordinal_ci(x, &full)) {
+                    parsed.cols = Some((full.clone(), full));
+                    parsed.pad = Default::default();
+                }
+            }
+        }
         if let Some((a, b)) = &parsed.cols {
             let canon = |c: &str| {
                 columns
@@ -616,9 +698,20 @@ impl<'a> Compiler<'a> {
     }
 
     fn func(&mut self, name: &str, args: &[Expr]) -> Result<Node, CompileError> {
-        let bare = strip_prefixes(name);
+        let mut bare = strip_prefixes(name);
 
-        if let Some(slot) = self.local(bare) {
+        if bare.len() != name.len() {
+            let u = bare.to_uppercase();
+            if !(matches!(u.as_str(), "LET" | "LAMBDA" | "SINGLE")
+                || functions::lookup(&u).is_some())
+            {
+                bare = name;
+            }
+        }
+
+        let up0 = bare.to_uppercase();
+        let builtin = matches!(up0.as_str(), "LET" | "LAMBDA") || functions::lookup(&up0).is_some();
+        if let Some(slot) = self.local(bare).filter(|_| !builtin) {
             let callee = Box::new(Node::Local {
                 slot,
                 name: self.scope[slot as usize].clone(),
@@ -631,7 +724,7 @@ impl<'a> Compiler<'a> {
         let up = bare.to_uppercase();
         match up.as_str() {
             "LET" => {
-                if args.len() < 3 || args.len() % 2 == 0 {
+                if args.len() < 3 || args.len().is_multiple_of(2) {
                     return Err(CompileError(
                         "LET needs name/value pairs and a calculation".into(),
                     ));
@@ -644,7 +737,17 @@ impl<'a> Compiler<'a> {
                     if names.iter().any(|q: &Text| q.eq_ignore_ascii_case(&n)) {
                         return Err(CompileError("duplicate LET name".into()));
                     }
-                    let v = self.node(&pair[1])?;
+                    let mut v = self.node(&pair[1])?;
+
+                    if let Expr::Ws { before, .. } = &pair[0] {
+                        if !before.is_empty() {
+                            v = Node::Ws {
+                                before: format!("\u{3}{before}\u{3}").as_str().into(),
+                                after: "".into(),
+                                node: Box::new(v),
+                            };
+                        }
+                    }
                     self.scope.push(n.clone());
                     names.push(n);
                     values.push(v);
@@ -710,7 +813,10 @@ impl<'a> Compiler<'a> {
         if up == "TABLE" {
             return Err(CompileError("That function isn't valid".into()));
         }
-        if functions::lookup(&up).is_none() && functions::xlm::XLM_ONLY.contains(&&*up) {
+        let stripped_up = strip_prefixes(name).to_uppercase();
+        if functions::lookup(&stripped_up).is_none()
+            && functions::xlm::XLM_ONLY.contains(&&*stripped_up)
+        {
             return Err(CompileError("That function isn't valid".into()));
         }
         match functions::lookup(&up) {
@@ -779,13 +885,13 @@ impl<'a> Compiler<'a> {
 }
 
 fn mark_name_field(n: &mut Node) {
-    match n {
+    crate::deep(|| match n {
         Node::Ws { node, .. } => mark_name_field(node),
         Node::Func { id, args } if functions::def(*id).name == functions::info::FIELD_FN => {
             args.push(Node::Lit(Value::Bool(true)));
         }
         _ => {}
-    }
+    })
 }
 
 fn cell_name(row: u32, col: u32) -> String {
@@ -813,12 +919,6 @@ fn r1_style(n: &str) -> bool {
         .or_else(|| up.strip_prefix('C'));
     rest.is_some_and(|d| !d.is_empty() && d.chars().all(|c| c.is_ascii_digit()))
 }
-
-#[allow(dead_code)]
-
-pub const LAST_ROW: u32 = MAX_ROWS - 1;
-#[allow(dead_code)]
-pub const LAST_COL: u32 = MAX_COLS - 1;
 
 pub fn map_node(node: &Node, f: &mut dyn FnMut(&Node) -> Option<Node>) -> Node {
     crate::deep(|| map_node_inner(node, f))

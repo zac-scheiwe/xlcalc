@@ -29,7 +29,7 @@ pub fn call(
             Operand::Ref(crate::eval::Reference::Grid(g)) => Some(ctx.grid_cells(g)),
             Operand::Ref(r) => {
                 let Some(area) = r.single() else {
-                    vals.push(Some(Value::Error(XlError::Value)));
+                    vals.push(Some(Value::Error(XlError::VALUE)));
                     continue;
                 };
                 if (class == b'a' || class == b'b') && !area.rect.is_cell() {
@@ -38,7 +38,7 @@ pub fn call(
                         let last = ctx.cell_value(area.sheet, area.rect.r1, area.rect.c1);
                         multi.push((i, first, last));
                     }
-                    vals.push(Some(Value::Error(XlError::Value)));
+                    vals.push(Some(Value::Error(XlError::VALUE)));
                     continue;
                 }
                 let area = *area;
@@ -53,7 +53,7 @@ pub fn call(
         vals.push(v);
     }
     if ctx.interrupted() {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let Some((rows, cols)) = shape else {
         return Operand::Val(f(ctx, &vals, ops));
@@ -69,7 +69,7 @@ pub fn call(
             }
             for (i, first, last) in &multi {
                 elem[*i] = Some(match r * cols + c {
-                    0 => Value::Error(XlError::Value),
+                    0 => Value::Error(XlError::VALUE),
                     1 => first.clone(),
                     _ => last.clone(),
                 });
@@ -82,7 +82,7 @@ pub fn call(
 
 pub fn num(ctx: &EvalCtx, v: &Value) -> R<f64> {
     match v {
-        Value::Bool(_) => Err(XlError::Value),
+        Value::Bool(_) => Err(XlError::VALUE),
         other => ctx.to_number_atp(other),
     }
 }
@@ -103,7 +103,7 @@ pub fn opt_num(ctx: &EvalCtx, a: &[Option<Value>], i: usize) -> R<Option<f64>> {
 
 pub fn text(v: &Value) -> R<Text> {
     match v {
-        Value::Bool(_) => Err(XlError::Value),
+        Value::Bool(_) => Err(XlError::VALUE),
         Value::Number(n) => Ok(number::format_general(*n).into()),
         other => crate::coerce::to_text(other),
     }
@@ -141,7 +141,7 @@ pub fn visit_list(
             for area in r.areas().to_vec() {
                 let v = ctx.area_array(&area);
                 if ctx.interrupted() {
-                    return Err(XlError::Calc);
+                    return Err(XlError::CALC);
                 }
                 match v {
                     Value::Array(a) => {

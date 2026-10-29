@@ -81,8 +81,8 @@ impl DD {
 }
 
 const LN2: DD = DD {
-    hi: 6.931471805599452862e-01,
-    lo: 2.319046813846299558e-17,
+    hi: std::f64::consts::LN_2,
+    lo: 2.3190468138462996e-17,
 };
 
 fn ln_dd(x: f64) -> DD {
@@ -201,112 +201,6 @@ pub fn exp(x: f64) -> f64 {
     }
 }
 
-#[allow(dead_code)]
-pub fn ln_1p(x: f64) -> f64 {
-    if x.is_nan() || x < -1.0 {
-        return f64::NAN;
-    }
-    if x == -1.0 {
-        return f64::NEG_INFINITY;
-    }
-    if x == 0.0 || x.is_infinite() {
-        return x;
-    }
-    if x.abs() < 1e-5 {
-        let xd = DD::from(x);
-        let mut sum = xd;
-        let mut pw = xd;
-        let mut k = 2.0;
-        loop {
-            pw = pw.mul_f(-x);
-            let t = pw.div(DD::from(k));
-            sum = sum.add(t);
-            if t.hi.abs() <= 1e-36 * sum.hi.abs() || k > 200.0 {
-                break;
-            }
-            k += 1.0;
-        }
-        return sum.hi + sum.lo;
-    }
-    let u = two_sum(1.0, x);
-
-    let l = ln_dd(u.hi);
-    let c = u.lo / u.hi;
-    let r = l.add(DD::from(c - 0.5 * c * c));
-    r.hi + r.lo
-}
-
-#[allow(dead_code)]
-pub fn exp_m1(x: f64) -> f64 {
-    if x.is_nan() {
-        return x;
-    }
-    if x > 709.8 {
-        return f64::INFINITY;
-    }
-    if x < -40.0 {
-        return -1.0 + exp(x);
-    }
-    if x == 0.0 {
-        return x;
-    }
-    if x.abs() < 0.25 {
-        let xd = DD::from(x);
-        let mut sum = xd;
-        let mut term = xd;
-        let mut i = 2.0;
-        loop {
-            term = term.mul_f(x).div(DD::from(i));
-            sum = sum.add(term);
-            if term.hi.abs() <= 1e-36 * sum.hi.abs() || i > 200.0 {
-                break;
-            }
-            i += 1.0;
-        }
-        return sum.hi + sum.lo;
-    }
-    let (d, k) = exp_dd(x);
-    let scaled = DD {
-        hi: ldexp(d.hi, k),
-        lo: ldexp(d.lo, k),
-    };
-    let r = scaled.sub(DD::from(1.0));
-    r.hi + r.lo
-}
-
-#[allow(dead_code)]
-pub fn atanh(y: f64) -> f64 {
-    if y.is_nan() || y.abs() > 1.0 {
-        return f64::NAN;
-    }
-    if y.abs() == 1.0 {
-        return y * f64::INFINITY;
-    }
-    if y == 0.0 || y.abs() < 1e-300 {
-        return y;
-    }
-    if y.abs() <= 0.5 {
-        let y2 = two_prod(y, y);
-        let mut term = DD::from(y);
-        let mut sum = term;
-        let mut k = 3.0;
-        loop {
-            term = term.mul(y2);
-            let t = term.div(DD::from(k));
-            sum = sum.add(t);
-            if t.hi.abs() <= 1e-34 * sum.hi.abs() || k > 400.0 {
-                break;
-            }
-            k += 2.0;
-        }
-        return sum.hi + sum.lo;
-    }
-
-    let q = two_sum(1.0, y).div(two_sum(1.0, -y));
-    let l = ln_dd(q.hi).add(DD::from(q.lo / q.hi)).scale(0.5);
-    l.hi + l.lo
-}
-
 pub fn powi(mut a: f64, mut n: u64) -> f64 {
     let mut r = 1.0;
     while n != 0 {
@@ -354,16 +248,6 @@ mod tests {
     }
 
     #[test]
-    fn atanh_correctly_rounded() {
-        assert_eq!(atanh(0.0049751243781094535), 0.0049751654265840425);
-        assert_eq!(atanh(-0.3), -0.3095196042031117);
-        assert_eq!(atanh(0.7), 0.8673005276940531);
-        assert_eq!(atanh(-0.99), -2.6466524123622457);
-        assert_eq!(atanh(0.15789), 0.1592220076084481);
-        assert_eq!(atanh(1e-10), 1e-10);
-    }
-
-    #[test]
     fn correctly_rounded() {
         assert_eq!(ln(1.05), 0.04879016416943205);
         assert_eq!(ln(1.112), 0.10616019582839072);
@@ -371,9 +255,6 @@ mod tests {
         assert_eq!(ln(2.0), std::f64::consts::LN_2);
         assert_eq!(exp(1.0), std::f64::consts::E);
         assert_eq!(exp(0.0), 1.0);
-        assert_eq!(ln_1p(0.0), 0.0);
-        assert!((exp_m1(1e-10) - 1.00000000005e-10).abs() < 1e-25);
-        assert!((ln_1p(1e-10) - 9.9999999995e-11).abs() < 1e-25);
-        assert_eq!(exp(-745.0) > 0.0, true);
+        assert!(exp(-745.0) > 0.0);
     }
 }

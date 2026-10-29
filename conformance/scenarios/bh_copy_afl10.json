@@ -1,0 +1,49 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=D5+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=D6*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=$E5+E$5"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=SUM(E5:E6)"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E5:F6",
+"to": "Sheet1!E1:F6",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:G8"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E1:F6",
+"to": "Sheet1!A1:F6",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:G8"
+}
+]
+}

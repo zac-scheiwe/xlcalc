@@ -40,22 +40,22 @@ pub fn resolve_sheets(ctx: &EvalCtx, sheet: &SheetRef) -> Vec<SheetId> {
 
 pub fn resolve(ctx: &mut EvalCtx, sheet: &SheetRef, cref: &CRef) -> Operand {
     let Some(rect) = resolve_rect(cref, ctx.host, ctx.wrap) else {
-        return Operand::err(XlError::Ref);
+        return Operand::err(XlError::REF);
     };
     let sheets = resolve_sheets(ctx, sheet);
     match sheets.len() {
-        0 if matches!(sheet, SheetRef::Sheet(_) | SheetRef::Span(..)) => Operand::err(XlError::Ref),
+        0 if matches!(sheet, SheetRef::Sheet(_) | SheetRef::Span(..)) => Operand::err(XlError::REF),
 
         0 => {
             let n = rect.cell_count() as usize;
             if n > 1 && n <= 65536 {
                 let (rows, cols) = (rect.rows(), rect.cols());
                 Operand::Val(
-                    crate::value::Array::new(rows, cols, vec![Value::Error(XlError::Ref); n])
+                    crate::value::Array::new(rows, cols, vec![Value::Error(XlError::REF); n])
                         .into_value(),
                 )
             } else {
-                Operand::err(XlError::Ref)
+                Operand::err(XlError::REF)
             }
         }
         1 => Operand::Ref(Reference::Area(Area {
@@ -78,7 +78,7 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
         Some(SheetRef::Sheet(id)) if ctx.wb.sheet(*id).is_none() => None,
         Some(s) => match resolve_sheets(ctx, s).as_slice() {
             [id] => Some(*id),
-            _ => return Operand::err(XlError::Ref),
+            _ => return Operand::err(XlError::REF),
         },
     };
     let wb = ctx.wb;
@@ -102,13 +102,13 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
     };
     let Some(def) = def else {
         return Operand::err(if sheet.is_some() && scope.is_none() {
-            XlError::Ref
+            XlError::REF
         } else {
-            XlError::Name
+            XlError::NAME
         });
     };
     if ctx.depth > 64 {
-        return Operand::err(XlError::Name);
+        return Operand::err(XlError::NAME);
     }
     let formula = def.formula.clone();
     let env = std::mem::take(&mut ctx.env);
@@ -133,17 +133,17 @@ pub fn struct_rect(
     spec: &crate::workbook::tables::Spec,
     host: CellAddr,
 ) -> Result<Area, XlError> {
-    let t = wb.table_by_name(table).ok_or(XlError::Ref)?;
+    let t = wb.table_by_name(table).ok_or(XlError::REF)?;
     let cols = match &spec.cols {
         Some((a, b)) => Some((
-            t.column_index(a).ok_or(XlError::Ref)?,
-            t.column_index(b).ok_or(XlError::Ref)?,
+            t.column_index(a).ok_or(XlError::REF)?,
+            t.column_index(b).ok_or(XlError::REF)?,
         )),
         None => None,
     };
     match t.resolve(spec.items, cols, host.row) {
-        None => Err(XlError::Ref),
-        Some(Err(())) => Err(XlError::Value),
+        None => Err(XlError::REF),
+        Some(Err(())) => Err(XlError::VALUE),
         Some(Ok(rect)) => Ok(Area {
             sheet: t.sheet,
             rect,
@@ -163,9 +163,9 @@ pub fn implicit_intersection(ctx: &mut EvalCtx, v: Operand) -> Operand {
         Operand::Ref(r) => {
             let Some(a) = r.single() else {
                 if r.is_span() {
-                    return Operand::err(XlError::Ref);
+                    return Operand::err(XlError::REF);
                 }
-                return Operand::err(XlError::Value);
+                return Operand::err(XlError::VALUE);
             };
             let rect = a.rect;
             if rect.is_cell() {
@@ -176,14 +176,14 @@ pub fn implicit_intersection(ctx: &mut EvalCtx, v: Operand) -> Operand {
             } else if (rect.r0..=rect.r1).contains(&ctx.host.row) {
                 ctx.host.row
             } else {
-                return Operand::err(XlError::Value);
+                return Operand::err(XlError::VALUE);
             };
             let col = if rect.cols() == 1 {
                 rect.c0
             } else if (rect.c0..=rect.c1).contains(&ctx.host.col) {
                 ctx.host.col
             } else {
-                return Operand::err(XlError::Value);
+                return Operand::err(XlError::VALUE);
             };
             Operand::Ref(Reference::Area(Area::cell(a.sheet, row, col)))
         }
@@ -201,33 +201,33 @@ pub fn spill_ref(ctx: &mut EvalCtx, v: Operand) -> Operand {
                 crate::value::Array::new(
                     a.rows,
                     a.cols,
-                    vec![Value::Error(XlError::Value); a.data.len()],
+                    vec![Value::Error(XlError::VALUE); a.data.len()],
                 )
                 .into_value(),
             ),
-            _ => Operand::err(XlError::Value),
+            _ => Operand::err(XlError::VALUE),
         };
     };
     let Some(a) = r.single() else {
-        return Operand::err(XlError::Ref);
+        return Operand::err(XlError::REF);
     };
 
     if a.rect.r0 != a.rect.r1 || a.rect.c0 != a.rect.c1 {
-        return Operand::err(XlError::Ref);
+        return Operand::err(XlError::REF);
     }
     let (sheet, row, col) = (a.sheet, a.rect.r0, a.rect.c0);
     let wb = ctx.wb;
     let Some(sh) = wb.sheet(sheet) else {
-        return Operand::err(XlError::Ref);
+        return Operand::err(XlError::REF);
     };
     let Some(Entry::Formula(fid)) = sh.cells.get(row, col) else {
-        return Operand::err(XlError::Ref);
+        return Operand::err(XlError::REF);
     };
     let fid = *fid;
 
     let _ = ctx.formula_value(fid, row, col);
     if ctx.interrupted() {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let f = wb.formula(fid);
     match f.spill {
@@ -243,11 +243,11 @@ pub fn ref_op(_ctx: &mut EvalCtx, op: BinOp, l: Operand, r: Operand) -> Operand 
         (Operand::Val(Value::Error(e)), _) | (_, Operand::Val(Value::Error(e))) => {
             return Operand::err(e)
         }
-        _ => return Operand::err(XlError::Value),
+        _ => return Operand::err(XlError::VALUE),
     };
     let sheet = a.areas()[0].sheet;
     if a.areas().iter().chain(b.areas()).any(|x| x.sheet != sheet) {
-        return Operand::err(XlError::Value);
+        return Operand::err(XlError::VALUE);
     }
     match op {
         BinOp::Range => {
@@ -267,7 +267,7 @@ pub fn ref_op(_ctx: &mut EvalCtx, op: BinOp, l: Operand, r: Operand) -> Operand 
                 }
             }
             if out.is_empty() {
-                Operand::err(XlError::Null)
+                Operand::err(XlError::NULL)
             } else {
                 Operand::Ref(Reference::from_areas(out))
             }
@@ -276,6 +276,6 @@ pub fn ref_op(_ctx: &mut EvalCtx, op: BinOp, l: Operand, r: Operand) -> Operand 
             let out: Vec<Area> = a.areas().iter().chain(b.areas()).copied().collect();
             Operand::Ref(Reference::from_areas(out))
         }
-        _ => Operand::err(XlError::Value),
+        _ => Operand::err(XlError::VALUE),
     }
 }

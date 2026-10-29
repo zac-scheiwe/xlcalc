@@ -1,0 +1,49 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!K1",
+"input": "=J1+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=J2+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!K3",
+"input": "=J3+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!K4",
+"input": "=J4+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!K5",
+"input": "=J5+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!K6",
+"input": "=J6+1"
+},
+{
+"op": "autofill",
+"from": "Sheet1!K1:K6",
+"to": "Sheet1!F1:K6",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!F1:K6"
+}
+]
+}

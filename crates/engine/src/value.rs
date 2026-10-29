@@ -47,56 +47,55 @@ impl fmt::Debug for XlError {
     }
 }
 
-#[allow(non_upper_case_globals)]
 impl XlError {
-    pub const Null: XlError = XlError(Code::Null);
+    pub const NULL: XlError = XlError(Code::Null);
 
-    pub const Div0: XlError = XlError(Code::Div0);
+    pub const DIV0: XlError = XlError(Code::Div0);
 
-    pub const Value: XlError = XlError(Code::Value);
+    pub const VALUE: XlError = XlError(Code::Value);
 
-    pub const Ref: XlError = XlError(Code::Ref);
+    pub const REF: XlError = XlError(Code::Ref);
 
-    pub const Name: XlError = XlError(Code::Name);
+    pub const NAME: XlError = XlError(Code::Name);
 
-    pub const Num: XlError = XlError(Code::Num);
+    pub const NUM: XlError = XlError(Code::Num);
 
     pub const NA: XlError = XlError(Code::NA);
 
-    pub const GettingData: XlError = XlError(Code::GettingData);
+    pub const GETTING_DATA: XlError = XlError(Code::GettingData);
 
-    pub const Spill: XlError = XlError(Code::Spill);
+    pub const SPILL: XlError = XlError(Code::Spill);
 
-    pub const Connect: XlError = XlError(Code::Connect);
+    pub const CONNECT: XlError = XlError(Code::Connect);
 
-    pub const Blocked: XlError = XlError(Code::Blocked);
+    pub const BLOCKED: XlError = XlError(Code::Blocked);
 
-    pub const Unknown: XlError = XlError(Code::Unknown);
+    pub const UNKNOWN: XlError = XlError(Code::Unknown);
 
-    pub const Field: XlError = XlError(Code::Field);
+    pub const FIELD: XlError = XlError(Code::Field);
 
-    pub const Calc: XlError = XlError(Code::Calc);
+    pub const CALC: XlError = XlError(Code::Calc);
 
-    pub const Busy: XlError = XlError(Code::Busy);
+    pub const BUSY: XlError = XlError(Code::Busy);
 
-    pub(crate) const Circ: XlError = XlError(Code::Circ);
+    pub(crate) const CIRC: XlError = XlError(Code::Circ);
 
     pub const ALL: [XlError; 15] = [
-        XlError::Null,
-        XlError::Div0,
-        XlError::Value,
-        XlError::Ref,
-        XlError::Name,
-        XlError::Num,
+        XlError::NULL,
+        XlError::DIV0,
+        XlError::VALUE,
+        XlError::REF,
+        XlError::NAME,
+        XlError::NUM,
         XlError::NA,
-        XlError::GettingData,
-        XlError::Spill,
-        XlError::Connect,
-        XlError::Blocked,
-        XlError::Unknown,
-        XlError::Field,
-        XlError::Calc,
-        XlError::Busy,
+        XlError::GETTING_DATA,
+        XlError::SPILL,
+        XlError::CONNECT,
+        XlError::BLOCKED,
+        XlError::UNKNOWN,
+        XlError::FIELD,
+        XlError::CALC,
+        XlError::BUSY,
     ];
 
     pub fn as_str(self) -> &'static str {
@@ -170,7 +169,7 @@ impl Value {
         if n.is_finite() {
             Value::Number(crate::number::normalize(n))
         } else {
-            Value::Error(XlError::Num)
+            Value::Error(XlError::NUM)
         }
     }
 

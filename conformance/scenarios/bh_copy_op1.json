@@ -1,0 +1,187 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "=A1+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "text"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "=\"s\""
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "=SEQUENCE(2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=A$1*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "$A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=B2"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:A2",
+"to": "Sheet1!E1",
+"paste": "all"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C2",
+"to": "Sheet1!E1",
+"paste": "all",
+"operation": "add"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C1:C2",
+"to": "Sheet1!E1:E2",
+"paste": "all",
+"operation": "add"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:A2",
+"to": "Sheet1!G1",
+"paste": "all"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C2",
+"to": "Sheet1!G1",
+"paste": "all",
+"operation": "sub"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C1:C2",
+"to": "Sheet1!G1:G2",
+"paste": "all",
+"operation": "sub"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:A2",
+"to": "Sheet1!I1",
+"paste": "all"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C2",
+"to": "Sheet1!I1",
+"paste": "all",
+"operation": "mul"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C1:C2",
+"to": "Sheet1!I1:I2",
+"paste": "all",
+"operation": "mul"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:A2",
+"to": "Sheet1!K1",
+"paste": "all"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C2",
+"to": "Sheet1!K1",
+"paste": "all",
+"operation": "div"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C1:C2",
+"to": "Sheet1!K1:K2",
+"paste": "all",
+"operation": "div"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:M3"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:B3",
+"to": "Sheet1!A1:A3",
+"paste": "all",
+"operation": "add"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C5"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:B3",
+"to": "Sheet1!A1:A3",
+"paste": "formulas",
+"operation": "add"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C5"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B2",
+"to": "Sheet1!A1:A3",
+"paste": "all",
+"operation": "mul"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C5"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B2",
+"to": "Sheet1!B2",
+"paste": "all",
+"operation": "mul"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C5"
+}
+]
+}

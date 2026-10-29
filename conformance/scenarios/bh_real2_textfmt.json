@@ -1,0 +1,5011 @@
+{
+"sheets": [
+"V",
+"T"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "V!A1",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "V!A2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "V!A3",
+"value": {
+"t": "n",
+"v": -1
+}
+},
+{
+"op": "setv",
+"cell": "V!A4",
+"value": {
+"t": "n",
+"v": 0.5
+}
+},
+{
+"op": "setv",
+"cell": "V!A5",
+"value": {
+"t": "n",
+"v": -0.5
+}
+},
+{
+"op": "setv",
+"cell": "V!A6",
+"value": {
+"t": "n",
+"v": 1234.5678
+}
+},
+{
+"op": "setv",
+"cell": "V!A7",
+"value": {
+"t": "n",
+"v": -1234.5678
+}
+},
+{
+"op": "setv",
+"cell": "V!A8",
+"value": {
+"t": "n",
+"v": 0.000123
+}
+},
+{
+"op": "setv",
+"cell": "V!A9",
+"value": {
+"t": "n",
+"v": 1e-07
+}
+},
+{
+"op": "setv",
+"cell": "V!A10",
+"value": {
+"t": "n",
+"v": 123456789.123
+}
+},
+{
+"op": "setv",
+"cell": "V!A11",
+"value": {
+"t": "n",
+"v": 1000000000000000.0
+}
+},
+{
+"op": "setv",
+"cell": "V!A12",
+"value": {
+"t": "n",
+"v": 1e+16
+}
+},
+{
+"op": "setv",
+"cell": "V!A13",
+"value": {
+"t": "n",
+"v": 1.5e+20
+}
+},
+{
+"op": "setv",
+"cell": "V!A14",
+"value": {
+"t": "n",
+"v": 0.30000000000000004
+}
+},
+{
+"op": "setv",
+"cell": "V!A15",
+"value": {
+"t": "n",
+"v": 0.3333333333333333
+}
+},
+{
+"op": "setv",
+"cell": "V!A16",
+"value": {
+"t": "n",
+"v": 0.6666666666666666
+}
+},
+{
+"op": "setv",
+"cell": "V!A17",
+"value": {
+"t": "n",
+"v": 99.995
+}
+},
+{
+"op": "setv",
+"cell": "V!A18",
+"value": {
+"t": "n",
+"v": 0.005
+}
+},
+{
+"op": "setv",
+"cell": "V!A19",
+"value": {
+"t": "n",
+"v": -0.005
+}
+},
+{
+"op": "setv",
+"cell": "V!A20",
+"value": {
+"t": "n",
+"v": 1.005
+}
+},
+{
+"op": "setv",
+"cell": "V!A21",
+"value": {
+"t": "n",
+"v": 2.675
+}
+},
+{
+"op": "setv",
+"cell": "V!A22",
+"value": {
+"t": "n",
+"v": 45000.75
+}
+},
+{
+"op": "setv",
+"cell": "V!A23",
+"value": {
+"t": "n",
+"v": 0.99999
+}
+},
+{
+"op": "setv",
+"cell": "V!A24",
+"value": {
+"t": "n",
+"v": 9.9995
+}
+},
+{
+"op": "setv",
+"cell": "V!A25",
+"value": {
+"t": "n",
+"v": 100000.0
+}
+},
+{
+"op": "setv",
+"cell": "V!A26",
+"value": {
+"t": "n",
+"v": 12345678901234
+}
+},
+{
+"op": "setv",
+"cell": "V!A27",
+"value": {
+"t": "n",
+"v": 0.045
+}
+},
+{
+"op": "setv",
+"cell": "V!A28",
+"value": {
+"t": "n",
+"v": 1e-05
+}
+},
+{
+"op": "set",
+"cell": "T!B1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!B1",
+"input": "=TEXT(V!A1,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B2",
+"input": "=TEXT(V!A2,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B3",
+"input": "=TEXT(V!A3,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B4",
+"input": "=TEXT(V!A4,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B5",
+"input": "=TEXT(V!A5,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B6",
+"input": "=TEXT(V!A6,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B7",
+"input": "=TEXT(V!A7,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B8",
+"input": "=TEXT(V!A8,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B9",
+"input": "=TEXT(V!A9,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B10",
+"input": "=TEXT(V!A10,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B11",
+"input": "=TEXT(V!A11,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B12",
+"input": "=TEXT(V!A12,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B13",
+"input": "=TEXT(V!A13,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B14",
+"input": "=TEXT(V!A14,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B15",
+"input": "=TEXT(V!A15,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B16",
+"input": "=TEXT(V!A16,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B17",
+"input": "=TEXT(V!A17,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B18",
+"input": "=TEXT(V!A18,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B19",
+"input": "=TEXT(V!A19,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B20",
+"input": "=TEXT(V!A20,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B21",
+"input": "=TEXT(V!A21,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B22",
+"input": "=TEXT(V!A22,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B23",
+"input": "=TEXT(V!A23,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B24",
+"input": "=TEXT(V!A24,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B25",
+"input": "=TEXT(V!A25,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B26",
+"input": "=TEXT(V!A26,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B27",
+"input": "=TEXT(V!A27,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!B28",
+"input": "=TEXT(V!A28,\"0\")"
+},
+{
+"op": "set",
+"cell": "T!C1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!C1",
+"input": "=TEXT(V!A1,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C2",
+"input": "=TEXT(V!A2,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C3",
+"input": "=TEXT(V!A3,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C4",
+"input": "=TEXT(V!A4,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C5",
+"input": "=TEXT(V!A5,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C6",
+"input": "=TEXT(V!A6,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C7",
+"input": "=TEXT(V!A7,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C8",
+"input": "=TEXT(V!A8,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C9",
+"input": "=TEXT(V!A9,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C10",
+"input": "=TEXT(V!A10,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C11",
+"input": "=TEXT(V!A11,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C12",
+"input": "=TEXT(V!A12,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C13",
+"input": "=TEXT(V!A13,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C14",
+"input": "=TEXT(V!A14,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C15",
+"input": "=TEXT(V!A15,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C16",
+"input": "=TEXT(V!A16,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C17",
+"input": "=TEXT(V!A17,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C18",
+"input": "=TEXT(V!A18,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C19",
+"input": "=TEXT(V!A19,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C20",
+"input": "=TEXT(V!A20,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C21",
+"input": "=TEXT(V!A21,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C22",
+"input": "=TEXT(V!A22,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C23",
+"input": "=TEXT(V!A23,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C24",
+"input": "=TEXT(V!A24,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C25",
+"input": "=TEXT(V!A25,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C26",
+"input": "=TEXT(V!A26,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C27",
+"input": "=TEXT(V!A27,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!C28",
+"input": "=TEXT(V!A28,\"0.00\")"
+},
+{
+"op": "set",
+"cell": "T!D1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!D1",
+"input": "=TEXT(V!A1,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D2",
+"input": "=TEXT(V!A2,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D3",
+"input": "=TEXT(V!A3,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D4",
+"input": "=TEXT(V!A4,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D5",
+"input": "=TEXT(V!A5,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D6",
+"input": "=TEXT(V!A6,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D7",
+"input": "=TEXT(V!A7,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D8",
+"input": "=TEXT(V!A8,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D9",
+"input": "=TEXT(V!A9,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D10",
+"input": "=TEXT(V!A10,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D11",
+"input": "=TEXT(V!A11,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D12",
+"input": "=TEXT(V!A12,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D13",
+"input": "=TEXT(V!A13,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D14",
+"input": "=TEXT(V!A14,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D15",
+"input": "=TEXT(V!A15,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D16",
+"input": "=TEXT(V!A16,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D17",
+"input": "=TEXT(V!A17,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D18",
+"input": "=TEXT(V!A18,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D19",
+"input": "=TEXT(V!A19,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D20",
+"input": "=TEXT(V!A20,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D21",
+"input": "=TEXT(V!A21,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D22",
+"input": "=TEXT(V!A22,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D23",
+"input": "=TEXT(V!A23,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D24",
+"input": "=TEXT(V!A24,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D25",
+"input": "=TEXT(V!A25,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D26",
+"input": "=TEXT(V!A26,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D27",
+"input": "=TEXT(V!A27,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!D28",
+"input": "=TEXT(V!A28,\"#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!E1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!E1",
+"input": "=TEXT(V!A1,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E2",
+"input": "=TEXT(V!A2,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E3",
+"input": "=TEXT(V!A3,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E4",
+"input": "=TEXT(V!A4,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E5",
+"input": "=TEXT(V!A5,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E6",
+"input": "=TEXT(V!A6,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E7",
+"input": "=TEXT(V!A7,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E8",
+"input": "=TEXT(V!A8,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E9",
+"input": "=TEXT(V!A9,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E10",
+"input": "=TEXT(V!A10,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E11",
+"input": "=TEXT(V!A11,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E12",
+"input": "=TEXT(V!A12,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E13",
+"input": "=TEXT(V!A13,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E14",
+"input": "=TEXT(V!A14,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E15",
+"input": "=TEXT(V!A15,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E16",
+"input": "=TEXT(V!A16,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E17",
+"input": "=TEXT(V!A17,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E18",
+"input": "=TEXT(V!A18,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E19",
+"input": "=TEXT(V!A19,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E20",
+"input": "=TEXT(V!A20,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E21",
+"input": "=TEXT(V!A21,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E22",
+"input": "=TEXT(V!A22,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E23",
+"input": "=TEXT(V!A23,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E24",
+"input": "=TEXT(V!A24,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E25",
+"input": "=TEXT(V!A25,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E26",
+"input": "=TEXT(V!A26,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E27",
+"input": "=TEXT(V!A27,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!E28",
+"input": "=TEXT(V!A28,\"#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!F1",
+"input": "=TEXT(V!A1,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F2",
+"input": "=TEXT(V!A2,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F3",
+"input": "=TEXT(V!A3,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F4",
+"input": "=TEXT(V!A4,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F5",
+"input": "=TEXT(V!A5,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F6",
+"input": "=TEXT(V!A6,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F7",
+"input": "=TEXT(V!A7,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F8",
+"input": "=TEXT(V!A8,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F9",
+"input": "=TEXT(V!A9,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F10",
+"input": "=TEXT(V!A10,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F11",
+"input": "=TEXT(V!A11,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F12",
+"input": "=TEXT(V!A12,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F13",
+"input": "=TEXT(V!A13,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F14",
+"input": "=TEXT(V!A14,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F15",
+"input": "=TEXT(V!A15,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F16",
+"input": "=TEXT(V!A16,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F17",
+"input": "=TEXT(V!A17,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F18",
+"input": "=TEXT(V!A18,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F19",
+"input": "=TEXT(V!A19,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F20",
+"input": "=TEXT(V!A20,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F21",
+"input": "=TEXT(V!A21,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F22",
+"input": "=TEXT(V!A22,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F23",
+"input": "=TEXT(V!A23,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F24",
+"input": "=TEXT(V!A24,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F25",
+"input": "=TEXT(V!A25,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F26",
+"input": "=TEXT(V!A26,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F27",
+"input": "=TEXT(V!A27,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!F28",
+"input": "=TEXT(V!A28,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!G1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!G1",
+"input": "=TEXT(V!A1,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G2",
+"input": "=TEXT(V!A2,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G3",
+"input": "=TEXT(V!A3,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G4",
+"input": "=TEXT(V!A4,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G5",
+"input": "=TEXT(V!A5,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G6",
+"input": "=TEXT(V!A6,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G7",
+"input": "=TEXT(V!A7,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G8",
+"input": "=TEXT(V!A8,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G9",
+"input": "=TEXT(V!A9,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G10",
+"input": "=TEXT(V!A10,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G11",
+"input": "=TEXT(V!A11,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G12",
+"input": "=TEXT(V!A12,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G13",
+"input": "=TEXT(V!A13,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G14",
+"input": "=TEXT(V!A14,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G15",
+"input": "=TEXT(V!A15,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G16",
+"input": "=TEXT(V!A16,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G17",
+"input": "=TEXT(V!A17,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G18",
+"input": "=TEXT(V!A18,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G19",
+"input": "=TEXT(V!A19,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G20",
+"input": "=TEXT(V!A20,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G21",
+"input": "=TEXT(V!A21,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G22",
+"input": "=TEXT(V!A22,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G23",
+"input": "=TEXT(V!A23,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G24",
+"input": "=TEXT(V!A24,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G25",
+"input": "=TEXT(V!A25,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G26",
+"input": "=TEXT(V!A26,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G27",
+"input": "=TEXT(V!A27,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!G28",
+"input": "=TEXT(V!A28,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "T!H1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!H1",
+"input": "=TEXT(V!A1,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H2",
+"input": "=TEXT(V!A2,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H3",
+"input": "=TEXT(V!A3,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H4",
+"input": "=TEXT(V!A4,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H5",
+"input": "=TEXT(V!A5,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H6",
+"input": "=TEXT(V!A6,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H7",
+"input": "=TEXT(V!A7,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H8",
+"input": "=TEXT(V!A8,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H9",
+"input": "=TEXT(V!A9,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H10",
+"input": "=TEXT(V!A10,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H11",
+"input": "=TEXT(V!A11,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H12",
+"input": "=TEXT(V!A12,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H13",
+"input": "=TEXT(V!A13,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H14",
+"input": "=TEXT(V!A14,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H15",
+"input": "=TEXT(V!A15,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H16",
+"input": "=TEXT(V!A16,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H17",
+"input": "=TEXT(V!A17,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H18",
+"input": "=TEXT(V!A18,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H19",
+"input": "=TEXT(V!A19,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H20",
+"input": "=TEXT(V!A20,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H21",
+"input": "=TEXT(V!A21,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H22",
+"input": "=TEXT(V!A22,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H23",
+"input": "=TEXT(V!A23,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H24",
+"input": "=TEXT(V!A24,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H25",
+"input": "=TEXT(V!A25,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H26",
+"input": "=TEXT(V!A26,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H27",
+"input": "=TEXT(V!A27,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!H28",
+"input": "=TEXT(V!A28,\"0.00E+00\")"
+},
+{
+"op": "set",
+"cell": "T!I1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!I1",
+"input": "=TEXT(V!A1,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I2",
+"input": "=TEXT(V!A2,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I3",
+"input": "=TEXT(V!A3,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I4",
+"input": "=TEXT(V!A4,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I5",
+"input": "=TEXT(V!A5,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I6",
+"input": "=TEXT(V!A6,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I7",
+"input": "=TEXT(V!A7,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I8",
+"input": "=TEXT(V!A8,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I9",
+"input": "=TEXT(V!A9,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I10",
+"input": "=TEXT(V!A10,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I11",
+"input": "=TEXT(V!A11,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I12",
+"input": "=TEXT(V!A12,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I13",
+"input": "=TEXT(V!A13,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I14",
+"input": "=TEXT(V!A14,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I15",
+"input": "=TEXT(V!A15,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I16",
+"input": "=TEXT(V!A16,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I17",
+"input": "=TEXT(V!A17,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I18",
+"input": "=TEXT(V!A18,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I19",
+"input": "=TEXT(V!A19,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I20",
+"input": "=TEXT(V!A20,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I21",
+"input": "=TEXT(V!A21,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I22",
+"input": "=TEXT(V!A22,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I23",
+"input": "=TEXT(V!A23,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I24",
+"input": "=TEXT(V!A24,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I25",
+"input": "=TEXT(V!A25,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I26",
+"input": "=TEXT(V!A26,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I27",
+"input": "=TEXT(V!A27,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!I28",
+"input": "=TEXT(V!A28,\"General\")"
+},
+{
+"op": "set",
+"cell": "T!J1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!J1",
+"input": "=TEXT(V!A1,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J2",
+"input": "=TEXT(V!A2,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J3",
+"input": "=TEXT(V!A3,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J4",
+"input": "=TEXT(V!A4,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J5",
+"input": "=TEXT(V!A5,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J6",
+"input": "=TEXT(V!A6,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J7",
+"input": "=TEXT(V!A7,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J8",
+"input": "=TEXT(V!A8,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J9",
+"input": "=TEXT(V!A9,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J10",
+"input": "=TEXT(V!A10,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J11",
+"input": "=TEXT(V!A11,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J12",
+"input": "=TEXT(V!A12,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J13",
+"input": "=TEXT(V!A13,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J14",
+"input": "=TEXT(V!A14,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J15",
+"input": "=TEXT(V!A15,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J16",
+"input": "=TEXT(V!A16,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J17",
+"input": "=TEXT(V!A17,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J18",
+"input": "=TEXT(V!A18,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J19",
+"input": "=TEXT(V!A19,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J20",
+"input": "=TEXT(V!A20,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J21",
+"input": "=TEXT(V!A21,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J22",
+"input": "=TEXT(V!A22,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J23",
+"input": "=TEXT(V!A23,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J24",
+"input": "=TEXT(V!A24,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J25",
+"input": "=TEXT(V!A25,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J26",
+"input": "=TEXT(V!A26,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J27",
+"input": "=TEXT(V!A27,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!J28",
+"input": "=TEXT(V!A28,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "T!K1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!K1",
+"input": "=TEXT(V!A1,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K2",
+"input": "=TEXT(V!A2,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K3",
+"input": "=TEXT(V!A3,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K4",
+"input": "=TEXT(V!A4,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K5",
+"input": "=TEXT(V!A5,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K6",
+"input": "=TEXT(V!A6,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K7",
+"input": "=TEXT(V!A7,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K8",
+"input": "=TEXT(V!A8,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K9",
+"input": "=TEXT(V!A9,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K10",
+"input": "=TEXT(V!A10,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K11",
+"input": "=TEXT(V!A11,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K12",
+"input": "=TEXT(V!A12,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K13",
+"input": "=TEXT(V!A13,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K14",
+"input": "=TEXT(V!A14,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K15",
+"input": "=TEXT(V!A15,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K16",
+"input": "=TEXT(V!A16,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K17",
+"input": "=TEXT(V!A17,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K18",
+"input": "=TEXT(V!A18,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K19",
+"input": "=TEXT(V!A19,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K20",
+"input": "=TEXT(V!A20,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K21",
+"input": "=TEXT(V!A21,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K22",
+"input": "=TEXT(V!A22,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K23",
+"input": "=TEXT(V!A23,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K24",
+"input": "=TEXT(V!A24,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K25",
+"input": "=TEXT(V!A25,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K26",
+"input": "=TEXT(V!A26,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K27",
+"input": "=TEXT(V!A27,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!K28",
+"input": "=TEXT(V!A28,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "T!L1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!L1",
+"input": "=TEXT(V!A1,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L2",
+"input": "=TEXT(V!A2,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L3",
+"input": "=TEXT(V!A3,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L4",
+"input": "=TEXT(V!A4,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L5",
+"input": "=TEXT(V!A5,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L6",
+"input": "=TEXT(V!A6,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L7",
+"input": "=TEXT(V!A7,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L8",
+"input": "=TEXT(V!A8,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L9",
+"input": "=TEXT(V!A9,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L10",
+"input": "=TEXT(V!A10,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L11",
+"input": "=TEXT(V!A11,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L12",
+"input": "=TEXT(V!A12,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L13",
+"input": "=TEXT(V!A13,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L14",
+"input": "=TEXT(V!A14,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L15",
+"input": "=TEXT(V!A15,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L16",
+"input": "=TEXT(V!A16,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L17",
+"input": "=TEXT(V!A17,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L18",
+"input": "=TEXT(V!A18,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L19",
+"input": "=TEXT(V!A19,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L20",
+"input": "=TEXT(V!A20,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L21",
+"input": "=TEXT(V!A21,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L22",
+"input": "=TEXT(V!A22,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L23",
+"input": "=TEXT(V!A23,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L24",
+"input": "=TEXT(V!A24,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L25",
+"input": "=TEXT(V!A25,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L26",
+"input": "=TEXT(V!A26,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L27",
+"input": "=TEXT(V!A27,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!L28",
+"input": "=TEXT(V!A28,\"0.00;(0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!M1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!M1",
+"input": "=TEXT(V!A1,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M2",
+"input": "=TEXT(V!A2,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M3",
+"input": "=TEXT(V!A3,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M4",
+"input": "=TEXT(V!A4,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M5",
+"input": "=TEXT(V!A5,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M6",
+"input": "=TEXT(V!A6,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M7",
+"input": "=TEXT(V!A7,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M8",
+"input": "=TEXT(V!A8,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M9",
+"input": "=TEXT(V!A9,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M10",
+"input": "=TEXT(V!A10,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M11",
+"input": "=TEXT(V!A11,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M12",
+"input": "=TEXT(V!A12,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M13",
+"input": "=TEXT(V!A13,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M14",
+"input": "=TEXT(V!A14,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M15",
+"input": "=TEXT(V!A15,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M16",
+"input": "=TEXT(V!A16,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M17",
+"input": "=TEXT(V!A17,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M18",
+"input": "=TEXT(V!A18,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M19",
+"input": "=TEXT(V!A19,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M20",
+"input": "=TEXT(V!A20,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M21",
+"input": "=TEXT(V!A21,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M22",
+"input": "=TEXT(V!A22,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M23",
+"input": "=TEXT(V!A23,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M24",
+"input": "=TEXT(V!A24,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M25",
+"input": "=TEXT(V!A25,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M26",
+"input": "=TEXT(V!A26,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M27",
+"input": "=TEXT(V!A27,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!M28",
+"input": "=TEXT(V!A28,\"#,##0;[Red]-#,##0\")"
+},
+{
+"op": "set",
+"cell": "T!N1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!N1",
+"input": "=TEXT(V!A1,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N2",
+"input": "=TEXT(V!A2,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N3",
+"input": "=TEXT(V!A3,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N4",
+"input": "=TEXT(V!A4,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N5",
+"input": "=TEXT(V!A5,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N6",
+"input": "=TEXT(V!A6,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N7",
+"input": "=TEXT(V!A7,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N8",
+"input": "=TEXT(V!A8,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N9",
+"input": "=TEXT(V!A9,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N10",
+"input": "=TEXT(V!A10,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N11",
+"input": "=TEXT(V!A11,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N12",
+"input": "=TEXT(V!A12,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N13",
+"input": "=TEXT(V!A13,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N14",
+"input": "=TEXT(V!A14,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N15",
+"input": "=TEXT(V!A15,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N16",
+"input": "=TEXT(V!A16,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N17",
+"input": "=TEXT(V!A17,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N18",
+"input": "=TEXT(V!A18,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N19",
+"input": "=TEXT(V!A19,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N20",
+"input": "=TEXT(V!A20,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N21",
+"input": "=TEXT(V!A21,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N22",
+"input": "=TEXT(V!A22,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N23",
+"input": "=TEXT(V!A23,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N24",
+"input": "=TEXT(V!A24,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N25",
+"input": "=TEXT(V!A25,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N26",
+"input": "=TEXT(V!A26,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N27",
+"input": "=TEXT(V!A27,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!N28",
+"input": "=TEXT(V!A28,\"\"\"$\"\"#,##0.00_);(\"\"$\"\"#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "T!O1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!O1",
+"input": "=TEXT(V!A1,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O2",
+"input": "=TEXT(V!A2,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O3",
+"input": "=TEXT(V!A3,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O4",
+"input": "=TEXT(V!A4,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O5",
+"input": "=TEXT(V!A5,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O6",
+"input": "=TEXT(V!A6,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O7",
+"input": "=TEXT(V!A7,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O8",
+"input": "=TEXT(V!A8,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O9",
+"input": "=TEXT(V!A9,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O10",
+"input": "=TEXT(V!A10,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O11",
+"input": "=TEXT(V!A11,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O12",
+"input": "=TEXT(V!A12,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O13",
+"input": "=TEXT(V!A13,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O14",
+"input": "=TEXT(V!A14,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O15",
+"input": "=TEXT(V!A15,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O16",
+"input": "=TEXT(V!A16,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O17",
+"input": "=TEXT(V!A17,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O18",
+"input": "=TEXT(V!A18,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O19",
+"input": "=TEXT(V!A19,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O20",
+"input": "=TEXT(V!A20,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O21",
+"input": "=TEXT(V!A21,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O22",
+"input": "=TEXT(V!A22,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O23",
+"input": "=TEXT(V!A23,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O24",
+"input": "=TEXT(V!A24,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O25",
+"input": "=TEXT(V!A25,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O26",
+"input": "=TEXT(V!A26,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O27",
+"input": "=TEXT(V!A27,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!O28",
+"input": "=TEXT(V!A28,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "T!P1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!P1",
+"input": "=TEXT(V!A1,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P2",
+"input": "=TEXT(V!A2,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P3",
+"input": "=TEXT(V!A3,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P4",
+"input": "=TEXT(V!A4,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P5",
+"input": "=TEXT(V!A5,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P6",
+"input": "=TEXT(V!A6,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P7",
+"input": "=TEXT(V!A7,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P8",
+"input": "=TEXT(V!A8,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P9",
+"input": "=TEXT(V!A9,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P10",
+"input": "=TEXT(V!A10,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P11",
+"input": "=TEXT(V!A11,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P12",
+"input": "=TEXT(V!A12,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P13",
+"input": "=TEXT(V!A13,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P14",
+"input": "=TEXT(V!A14,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P15",
+"input": "=TEXT(V!A15,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P16",
+"input": "=TEXT(V!A16,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P17",
+"input": "=TEXT(V!A17,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P18",
+"input": "=TEXT(V!A18,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P19",
+"input": "=TEXT(V!A19,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P20",
+"input": "=TEXT(V!A20,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P21",
+"input": "=TEXT(V!A21,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P22",
+"input": "=TEXT(V!A22,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P23",
+"input": "=TEXT(V!A23,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P24",
+"input": "=TEXT(V!A24,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P25",
+"input": "=TEXT(V!A25,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P26",
+"input": "=TEXT(V!A26,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P27",
+"input": "=TEXT(V!A27,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!P28",
+"input": "=TEXT(V!A28,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "T!Q1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!Q1",
+"input": "=TEXT(V!A1,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q2",
+"input": "=TEXT(V!A2,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q3",
+"input": "=TEXT(V!A3,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q4",
+"input": "=TEXT(V!A4,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q5",
+"input": "=TEXT(V!A5,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q6",
+"input": "=TEXT(V!A6,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q7",
+"input": "=TEXT(V!A7,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q8",
+"input": "=TEXT(V!A8,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q9",
+"input": "=TEXT(V!A9,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q10",
+"input": "=TEXT(V!A10,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q11",
+"input": "=TEXT(V!A11,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q12",
+"input": "=TEXT(V!A12,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q13",
+"input": "=TEXT(V!A13,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q14",
+"input": "=TEXT(V!A14,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q15",
+"input": "=TEXT(V!A15,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q16",
+"input": "=TEXT(V!A16,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q17",
+"input": "=TEXT(V!A17,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q18",
+"input": "=TEXT(V!A18,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q19",
+"input": "=TEXT(V!A19,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q20",
+"input": "=TEXT(V!A20,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q21",
+"input": "=TEXT(V!A21,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q22",
+"input": "=TEXT(V!A22,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q23",
+"input": "=TEXT(V!A23,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q24",
+"input": "=TEXT(V!A24,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q25",
+"input": "=TEXT(V!A25,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q26",
+"input": "=TEXT(V!A26,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q27",
+"input": "=TEXT(V!A27,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!Q28",
+"input": "=TEXT(V!A28,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "T!R1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!R1",
+"input": "=TEXT(V!A1,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R2",
+"input": "=TEXT(V!A2,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R3",
+"input": "=TEXT(V!A3,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R4",
+"input": "=TEXT(V!A4,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R5",
+"input": "=TEXT(V!A5,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R6",
+"input": "=TEXT(V!A6,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R7",
+"input": "=TEXT(V!A7,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R8",
+"input": "=TEXT(V!A8,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R9",
+"input": "=TEXT(V!A9,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R10",
+"input": "=TEXT(V!A10,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R11",
+"input": "=TEXT(V!A11,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R12",
+"input": "=TEXT(V!A12,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R13",
+"input": "=TEXT(V!A13,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R14",
+"input": "=TEXT(V!A14,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R15",
+"input": "=TEXT(V!A15,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R16",
+"input": "=TEXT(V!A16,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R17",
+"input": "=TEXT(V!A17,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R18",
+"input": "=TEXT(V!A18,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R19",
+"input": "=TEXT(V!A19,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R20",
+"input": "=TEXT(V!A20,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R21",
+"input": "=TEXT(V!A21,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R22",
+"input": "=TEXT(V!A22,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R23",
+"input": "=TEXT(V!A23,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R24",
+"input": "=TEXT(V!A24,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R25",
+"input": "=TEXT(V!A25,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R26",
+"input": "=TEXT(V!A26,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R27",
+"input": "=TEXT(V!A27,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!R28",
+"input": "=TEXT(V!A28,\"hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "T!S1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!S1",
+"input": "=TEXT(V!A1,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S2",
+"input": "=TEXT(V!A2,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S3",
+"input": "=TEXT(V!A3,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S4",
+"input": "=TEXT(V!A4,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S5",
+"input": "=TEXT(V!A5,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S6",
+"input": "=TEXT(V!A6,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S7",
+"input": "=TEXT(V!A7,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S8",
+"input": "=TEXT(V!A8,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S9",
+"input": "=TEXT(V!A9,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S10",
+"input": "=TEXT(V!A10,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S11",
+"input": "=TEXT(V!A11,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S12",
+"input": "=TEXT(V!A12,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S13",
+"input": "=TEXT(V!A13,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S14",
+"input": "=TEXT(V!A14,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S15",
+"input": "=TEXT(V!A15,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S16",
+"input": "=TEXT(V!A16,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S17",
+"input": "=TEXT(V!A17,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S18",
+"input": "=TEXT(V!A18,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S19",
+"input": "=TEXT(V!A19,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S20",
+"input": "=TEXT(V!A20,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S21",
+"input": "=TEXT(V!A21,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S22",
+"input": "=TEXT(V!A22,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S23",
+"input": "=TEXT(V!A23,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S24",
+"input": "=TEXT(V!A24,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S25",
+"input": "=TEXT(V!A25,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S26",
+"input": "=TEXT(V!A26,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S27",
+"input": "=TEXT(V!A27,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!S28",
+"input": "=TEXT(V!A28,\"0.000\")"
+},
+{
+"op": "set",
+"cell": "T!T1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!T1",
+"input": "=TEXT(V!A1,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T2",
+"input": "=TEXT(V!A2,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T3",
+"input": "=TEXT(V!A3,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T4",
+"input": "=TEXT(V!A4,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T5",
+"input": "=TEXT(V!A5,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T6",
+"input": "=TEXT(V!A6,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T7",
+"input": "=TEXT(V!A7,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T8",
+"input": "=TEXT(V!A8,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T9",
+"input": "=TEXT(V!A9,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T10",
+"input": "=TEXT(V!A10,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T11",
+"input": "=TEXT(V!A11,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T12",
+"input": "=TEXT(V!A12,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T13",
+"input": "=TEXT(V!A13,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T14",
+"input": "=TEXT(V!A14,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T15",
+"input": "=TEXT(V!A15,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T16",
+"input": "=TEXT(V!A16,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T17",
+"input": "=TEXT(V!A17,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T18",
+"input": "=TEXT(V!A18,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T19",
+"input": "=TEXT(V!A19,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T20",
+"input": "=TEXT(V!A20,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T21",
+"input": "=TEXT(V!A21,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T22",
+"input": "=TEXT(V!A22,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T23",
+"input": "=TEXT(V!A23,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T24",
+"input": "=TEXT(V!A24,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T25",
+"input": "=TEXT(V!A25,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T26",
+"input": "=TEXT(V!A26,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T27",
+"input": "=TEXT(V!A27,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!T28",
+"input": "=TEXT(V!A28,\"#\")"
+},
+{
+"op": "set",
+"cell": "T!U1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!U1",
+"input": "=TEXT(V!A1,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U2",
+"input": "=TEXT(V!A2,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U3",
+"input": "=TEXT(V!A3,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U4",
+"input": "=TEXT(V!A4,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U5",
+"input": "=TEXT(V!A5,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U6",
+"input": "=TEXT(V!A6,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U7",
+"input": "=TEXT(V!A7,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U8",
+"input": "=TEXT(V!A8,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U9",
+"input": "=TEXT(V!A9,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U10",
+"input": "=TEXT(V!A10,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U11",
+"input": "=TEXT(V!A11,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U12",
+"input": "=TEXT(V!A12,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U13",
+"input": "=TEXT(V!A13,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U14",
+"input": "=TEXT(V!A14,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U15",
+"input": "=TEXT(V!A15,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U16",
+"input": "=TEXT(V!A16,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U17",
+"input": "=TEXT(V!A17,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U18",
+"input": "=TEXT(V!A18,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U19",
+"input": "=TEXT(V!A19,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U20",
+"input": "=TEXT(V!A20,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U21",
+"input": "=TEXT(V!A21,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U22",
+"input": "=TEXT(V!A22,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U23",
+"input": "=TEXT(V!A23,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U24",
+"input": "=TEXT(V!A24,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U25",
+"input": "=TEXT(V!A25,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U26",
+"input": "=TEXT(V!A26,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U27",
+"input": "=TEXT(V!A27,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!U28",
+"input": "=TEXT(V!A28,\"0,\")"
+},
+{
+"op": "set",
+"cell": "T!V1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!V1",
+"input": "=TEXT(V!A1,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V2",
+"input": "=TEXT(V!A2,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V3",
+"input": "=TEXT(V!A3,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V4",
+"input": "=TEXT(V!A4,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V5",
+"input": "=TEXT(V!A5,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V6",
+"input": "=TEXT(V!A6,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V7",
+"input": "=TEXT(V!A7,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V8",
+"input": "=TEXT(V!A8,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V9",
+"input": "=TEXT(V!A9,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V10",
+"input": "=TEXT(V!A10,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V11",
+"input": "=TEXT(V!A11,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V12",
+"input": "=TEXT(V!A12,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V13",
+"input": "=TEXT(V!A13,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V14",
+"input": "=TEXT(V!A14,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V15",
+"input": "=TEXT(V!A15,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V16",
+"input": "=TEXT(V!A16,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V17",
+"input": "=TEXT(V!A17,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V18",
+"input": "=TEXT(V!A18,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V19",
+"input": "=TEXT(V!A19,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V20",
+"input": "=TEXT(V!A20,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V21",
+"input": "=TEXT(V!A21,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V22",
+"input": "=TEXT(V!A22,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V23",
+"input": "=TEXT(V!A23,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V24",
+"input": "=TEXT(V!A24,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V25",
+"input": "=TEXT(V!A25,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V26",
+"input": "=TEXT(V!A26,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V27",
+"input": "=TEXT(V!A27,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!V28",
+"input": "=TEXT(V!A28,\"0.0,,\"\"M\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!W1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!W1",
+"input": "=TEXT(V!A1,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W2",
+"input": "=TEXT(V!A2,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W3",
+"input": "=TEXT(V!A3,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W4",
+"input": "=TEXT(V!A4,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W5",
+"input": "=TEXT(V!A5,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W6",
+"input": "=TEXT(V!A6,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W7",
+"input": "=TEXT(V!A7,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W8",
+"input": "=TEXT(V!A8,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W9",
+"input": "=TEXT(V!A9,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W10",
+"input": "=TEXT(V!A10,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W11",
+"input": "=TEXT(V!A11,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W12",
+"input": "=TEXT(V!A12,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W13",
+"input": "=TEXT(V!A13,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W14",
+"input": "=TEXT(V!A14,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W15",
+"input": "=TEXT(V!A15,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W16",
+"input": "=TEXT(V!A16,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W17",
+"input": "=TEXT(V!A17,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W18",
+"input": "=TEXT(V!A18,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W19",
+"input": "=TEXT(V!A19,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W20",
+"input": "=TEXT(V!A20,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W21",
+"input": "=TEXT(V!A21,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W22",
+"input": "=TEXT(V!A22,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W23",
+"input": "=TEXT(V!A23,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W24",
+"input": "=TEXT(V!A24,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W25",
+"input": "=TEXT(V!A25,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W26",
+"input": "=TEXT(V!A26,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W27",
+"input": "=TEXT(V!A27,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!W28",
+"input": "=TEXT(V!A28,\"@\")"
+},
+{
+"op": "set",
+"cell": "T!X1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!X1",
+"input": "=TEXT(V!A1,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X2",
+"input": "=TEXT(V!A2,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X3",
+"input": "=TEXT(V!A3,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X4",
+"input": "=TEXT(V!A4,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X5",
+"input": "=TEXT(V!A5,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X6",
+"input": "=TEXT(V!A6,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X7",
+"input": "=TEXT(V!A7,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X8",
+"input": "=TEXT(V!A8,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X9",
+"input": "=TEXT(V!A9,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X10",
+"input": "=TEXT(V!A10,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X11",
+"input": "=TEXT(V!A11,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X12",
+"input": "=TEXT(V!A12,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X13",
+"input": "=TEXT(V!A13,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X14",
+"input": "=TEXT(V!A14,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X15",
+"input": "=TEXT(V!A15,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X16",
+"input": "=TEXT(V!A16,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X17",
+"input": "=TEXT(V!A17,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X18",
+"input": "=TEXT(V!A18,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X19",
+"input": "=TEXT(V!A19,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X20",
+"input": "=TEXT(V!A20,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X21",
+"input": "=TEXT(V!A21,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X22",
+"input": "=TEXT(V!A22,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X23",
+"input": "=TEXT(V!A23,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X24",
+"input": "=TEXT(V!A24,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X25",
+"input": "=TEXT(V!A25,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X26",
+"input": "=TEXT(V!A26,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X27",
+"input": "=TEXT(V!A27,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!X28",
+"input": "=TEXT(V!A28,\"00000\")"
+},
+{
+"op": "set",
+"cell": "T!Y1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!Y1",
+"input": "=TEXT(V!A1,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y2",
+"input": "=TEXT(V!A2,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y3",
+"input": "=TEXT(V!A3,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y4",
+"input": "=TEXT(V!A4,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y5",
+"input": "=TEXT(V!A5,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y6",
+"input": "=TEXT(V!A6,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y7",
+"input": "=TEXT(V!A7,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y8",
+"input": "=TEXT(V!A8,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y9",
+"input": "=TEXT(V!A9,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y10",
+"input": "=TEXT(V!A10,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y11",
+"input": "=TEXT(V!A11,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y12",
+"input": "=TEXT(V!A12,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y13",
+"input": "=TEXT(V!A13,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y14",
+"input": "=TEXT(V!A14,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y15",
+"input": "=TEXT(V!A15,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y16",
+"input": "=TEXT(V!A16,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y17",
+"input": "=TEXT(V!A17,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y18",
+"input": "=TEXT(V!A18,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y19",
+"input": "=TEXT(V!A19,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y20",
+"input": "=TEXT(V!A20,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y21",
+"input": "=TEXT(V!A21,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y22",
+"input": "=TEXT(V!A22,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y23",
+"input": "=TEXT(V!A23,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y24",
+"input": "=TEXT(V!A24,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y25",
+"input": "=TEXT(V!A25,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y26",
+"input": "=TEXT(V!A26,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y27",
+"input": "=TEXT(V!A27,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Y28",
+"input": "=TEXT(V!A28,\"[$\u20ac-x-euro2] #,##0.00\")"
+},
+{
+"op": "set",
+"cell": "T!Z1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!Z1",
+"input": "=TEXT(V!A1,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z2",
+"input": "=TEXT(V!A2,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z3",
+"input": "=TEXT(V!A3,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z4",
+"input": "=TEXT(V!A4,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z5",
+"input": "=TEXT(V!A5,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z6",
+"input": "=TEXT(V!A6,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z7",
+"input": "=TEXT(V!A7,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z8",
+"input": "=TEXT(V!A8,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z9",
+"input": "=TEXT(V!A9,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z10",
+"input": "=TEXT(V!A10,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z11",
+"input": "=TEXT(V!A11,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z12",
+"input": "=TEXT(V!A12,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z13",
+"input": "=TEXT(V!A13,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z14",
+"input": "=TEXT(V!A14,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z15",
+"input": "=TEXT(V!A15,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z16",
+"input": "=TEXT(V!A16,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z17",
+"input": "=TEXT(V!A17,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z18",
+"input": "=TEXT(V!A18,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z19",
+"input": "=TEXT(V!A19,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z20",
+"input": "=TEXT(V!A20,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z21",
+"input": "=TEXT(V!A21,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z22",
+"input": "=TEXT(V!A22,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z23",
+"input": "=TEXT(V!A23,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z24",
+"input": "=TEXT(V!A24,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z25",
+"input": "=TEXT(V!A25,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z26",
+"input": "=TEXT(V!A26,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z27",
+"input": "=TEXT(V!A27,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!Z28",
+"input": "=TEXT(V!A28,\"#,##0.00 \"\"units\"\"\")"
+},
+{
+"op": "set",
+"cell": "T!AA1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!AA1",
+"input": "=TEXT(V!A1,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA2",
+"input": "=TEXT(V!A2,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA3",
+"input": "=TEXT(V!A3,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA4",
+"input": "=TEXT(V!A4,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA5",
+"input": "=TEXT(V!A5,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA6",
+"input": "=TEXT(V!A6,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA7",
+"input": "=TEXT(V!A7,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA8",
+"input": "=TEXT(V!A8,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA9",
+"input": "=TEXT(V!A9,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA10",
+"input": "=TEXT(V!A10,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA11",
+"input": "=TEXT(V!A11,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA12",
+"input": "=TEXT(V!A12,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA13",
+"input": "=TEXT(V!A13,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA14",
+"input": "=TEXT(V!A14,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA15",
+"input": "=TEXT(V!A15,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA16",
+"input": "=TEXT(V!A16,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA17",
+"input": "=TEXT(V!A17,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA18",
+"input": "=TEXT(V!A18,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA19",
+"input": "=TEXT(V!A19,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA20",
+"input": "=TEXT(V!A20,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA21",
+"input": "=TEXT(V!A21,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA22",
+"input": "=TEXT(V!A22,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA23",
+"input": "=TEXT(V!A23,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA24",
+"input": "=TEXT(V!A24,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA25",
+"input": "=TEXT(V!A25,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA26",
+"input": "=TEXT(V!A26,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA27",
+"input": "=TEXT(V!A27,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AA28",
+"input": "=TEXT(V!A28,\"dd/mm/yy hh:mm\")"
+},
+{
+"op": "set",
+"cell": "T!AB1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!AB1",
+"input": "=TEXT(V!A1,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB2",
+"input": "=TEXT(V!A2,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB3",
+"input": "=TEXT(V!A3,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB4",
+"input": "=TEXT(V!A4,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB5",
+"input": "=TEXT(V!A5,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB6",
+"input": "=TEXT(V!A6,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB7",
+"input": "=TEXT(V!A7,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB8",
+"input": "=TEXT(V!A8,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB9",
+"input": "=TEXT(V!A9,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB10",
+"input": "=TEXT(V!A10,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB11",
+"input": "=TEXT(V!A11,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB12",
+"input": "=TEXT(V!A12,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB13",
+"input": "=TEXT(V!A13,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB14",
+"input": "=TEXT(V!A14,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB15",
+"input": "=TEXT(V!A15,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB16",
+"input": "=TEXT(V!A16,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB17",
+"input": "=TEXT(V!A17,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB18",
+"input": "=TEXT(V!A18,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB19",
+"input": "=TEXT(V!A19,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB20",
+"input": "=TEXT(V!A20,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB21",
+"input": "=TEXT(V!A21,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB22",
+"input": "=TEXT(V!A22,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB23",
+"input": "=TEXT(V!A23,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB24",
+"input": "=TEXT(V!A24,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB25",
+"input": "=TEXT(V!A25,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB26",
+"input": "=TEXT(V!A26,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB27",
+"input": "=TEXT(V!A27,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AB28",
+"input": "=TEXT(V!A28,\"mmm-yy\")"
+},
+{
+"op": "set",
+"cell": "T!AC1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!AC1",
+"input": "=TEXT(V!A1,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC2",
+"input": "=TEXT(V!A2,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC3",
+"input": "=TEXT(V!A3,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC4",
+"input": "=TEXT(V!A4,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC5",
+"input": "=TEXT(V!A5,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC6",
+"input": "=TEXT(V!A6,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC7",
+"input": "=TEXT(V!A7,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC8",
+"input": "=TEXT(V!A8,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC9",
+"input": "=TEXT(V!A9,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC10",
+"input": "=TEXT(V!A10,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC11",
+"input": "=TEXT(V!A11,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC12",
+"input": "=TEXT(V!A12,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC13",
+"input": "=TEXT(V!A13,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC14",
+"input": "=TEXT(V!A14,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC15",
+"input": "=TEXT(V!A15,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC16",
+"input": "=TEXT(V!A16,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC17",
+"input": "=TEXT(V!A17,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC18",
+"input": "=TEXT(V!A18,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC19",
+"input": "=TEXT(V!A19,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC20",
+"input": "=TEXT(V!A20,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC21",
+"input": "=TEXT(V!A21,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC22",
+"input": "=TEXT(V!A22,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC23",
+"input": "=TEXT(V!A23,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC24",
+"input": "=TEXT(V!A24,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC25",
+"input": "=TEXT(V!A25,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC26",
+"input": "=TEXT(V!A26,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC27",
+"input": "=TEXT(V!A27,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AC28",
+"input": "=TEXT(V!A28,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "T!AD1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!AD1",
+"input": "=TEXT(V!A1,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD2",
+"input": "=TEXT(V!A2,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD3",
+"input": "=TEXT(V!A3,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD4",
+"input": "=TEXT(V!A4,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD5",
+"input": "=TEXT(V!A5,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD6",
+"input": "=TEXT(V!A6,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD7",
+"input": "=TEXT(V!A7,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD8",
+"input": "=TEXT(V!A8,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD9",
+"input": "=TEXT(V!A9,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD10",
+"input": "=TEXT(V!A10,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD11",
+"input": "=TEXT(V!A11,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD12",
+"input": "=TEXT(V!A12,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD13",
+"input": "=TEXT(V!A13,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD14",
+"input": "=TEXT(V!A14,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD15",
+"input": "=TEXT(V!A15,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD16",
+"input": "=TEXT(V!A16,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD17",
+"input": "=TEXT(V!A17,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD18",
+"input": "=TEXT(V!A18,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD19",
+"input": "=TEXT(V!A19,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD20",
+"input": "=TEXT(V!A20,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD21",
+"input": "=TEXT(V!A21,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD22",
+"input": "=TEXT(V!A22,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD23",
+"input": "=TEXT(V!A23,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD24",
+"input": "=TEXT(V!A24,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD25",
+"input": "=TEXT(V!A25,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD26",
+"input": "=TEXT(V!A26,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD27",
+"input": "=TEXT(V!A27,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AD28",
+"input": "=TEXT(V!A28,\"[>=100]0.0;[<100]0.00\")"
+},
+{
+"op": "set",
+"cell": "T!AE1",
+"input": "=\" \""
+},
+{
+"op": "set",
+"cell": "T!AE1",
+"input": "=TEXT(V!A1,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE2",
+"input": "=TEXT(V!A2,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE3",
+"input": "=TEXT(V!A3,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE4",
+"input": "=TEXT(V!A4,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE5",
+"input": "=TEXT(V!A5,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE6",
+"input": "=TEXT(V!A6,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE7",
+"input": "=TEXT(V!A7,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE8",
+"input": "=TEXT(V!A8,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE9",
+"input": "=TEXT(V!A9,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE10",
+"input": "=TEXT(V!A10,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE11",
+"input": "=TEXT(V!A11,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE12",
+"input": "=TEXT(V!A12,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE13",
+"input": "=TEXT(V!A13,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE14",
+"input": "=TEXT(V!A14,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE15",
+"input": "=TEXT(V!A15,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE16",
+"input": "=TEXT(V!A16,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE17",
+"input": "=TEXT(V!A17,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE18",
+"input": "=TEXT(V!A18,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE19",
+"input": "=TEXT(V!A19,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE20",
+"input": "=TEXT(V!A20,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE21",
+"input": "=TEXT(V!A21,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE22",
+"input": "=TEXT(V!A22,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE23",
+"input": "=TEXT(V!A23,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE24",
+"input": "=TEXT(V!A24,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE25",
+"input": "=TEXT(V!A25,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE26",
+"input": "=TEXT(V!A26,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE27",
+"input": "=TEXT(V!A27,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!AE28",
+"input": "=TEXT(V!A28,\"0.0?\")"
+},
+{
+"op": "set",
+"cell": "T!A1",
+"input": "x"
+},
+{
+"op": "set",
+"cell": "T!AF1",
+"input": "=V!A1&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG1",
+"input": "=DOLLAR(V!A1,2)&\"|\"&FIXED(V!A1,1)&\"|\"&FIXED(V!A1,-2,TRUE)&\"|\"&ROUND(V!A1,2)"
+},
+{
+"op": "set",
+"cell": "T!AH1",
+"input": "=TEXT(V!A1/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A1,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF2",
+"input": "=V!A2&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG2",
+"input": "=DOLLAR(V!A2,2)&\"|\"&FIXED(V!A2,1)&\"|\"&FIXED(V!A2,-2,TRUE)&\"|\"&ROUND(V!A2,2)"
+},
+{
+"op": "set",
+"cell": "T!AH2",
+"input": "=TEXT(V!A2/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A2,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF3",
+"input": "=V!A3&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG3",
+"input": "=DOLLAR(V!A3,2)&\"|\"&FIXED(V!A3,1)&\"|\"&FIXED(V!A3,-2,TRUE)&\"|\"&ROUND(V!A3,2)"
+},
+{
+"op": "set",
+"cell": "T!AH3",
+"input": "=TEXT(V!A3/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A3,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF4",
+"input": "=V!A4&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG4",
+"input": "=DOLLAR(V!A4,2)&\"|\"&FIXED(V!A4,1)&\"|\"&FIXED(V!A4,-2,TRUE)&\"|\"&ROUND(V!A4,2)"
+},
+{
+"op": "set",
+"cell": "T!AH4",
+"input": "=TEXT(V!A4/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A4,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF5",
+"input": "=V!A5&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG5",
+"input": "=DOLLAR(V!A5,2)&\"|\"&FIXED(V!A5,1)&\"|\"&FIXED(V!A5,-2,TRUE)&\"|\"&ROUND(V!A5,2)"
+},
+{
+"op": "set",
+"cell": "T!AH5",
+"input": "=TEXT(V!A5/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A5,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF6",
+"input": "=V!A6&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG6",
+"input": "=DOLLAR(V!A6,2)&\"|\"&FIXED(V!A6,1)&\"|\"&FIXED(V!A6,-2,TRUE)&\"|\"&ROUND(V!A6,2)"
+},
+{
+"op": "set",
+"cell": "T!AH6",
+"input": "=TEXT(V!A6/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A6,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF7",
+"input": "=V!A7&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG7",
+"input": "=DOLLAR(V!A7,2)&\"|\"&FIXED(V!A7,1)&\"|\"&FIXED(V!A7,-2,TRUE)&\"|\"&ROUND(V!A7,2)"
+},
+{
+"op": "set",
+"cell": "T!AH7",
+"input": "=TEXT(V!A7/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A7,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF8",
+"input": "=V!A8&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG8",
+"input": "=DOLLAR(V!A8,2)&\"|\"&FIXED(V!A8,1)&\"|\"&FIXED(V!A8,-2,TRUE)&\"|\"&ROUND(V!A8,2)"
+},
+{
+"op": "set",
+"cell": "T!AH8",
+"input": "=TEXT(V!A8/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A8,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF9",
+"input": "=V!A9&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG9",
+"input": "=DOLLAR(V!A9,2)&\"|\"&FIXED(V!A9,1)&\"|\"&FIXED(V!A9,-2,TRUE)&\"|\"&ROUND(V!A9,2)"
+},
+{
+"op": "set",
+"cell": "T!AH9",
+"input": "=TEXT(V!A9/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A9,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF10",
+"input": "=V!A10&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG10",
+"input": "=DOLLAR(V!A10,2)&\"|\"&FIXED(V!A10,1)&\"|\"&FIXED(V!A10,-2,TRUE)&\"|\"&ROUND(V!A10,2)"
+},
+{
+"op": "set",
+"cell": "T!AH10",
+"input": "=TEXT(V!A10/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A10,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF11",
+"input": "=V!A11&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG11",
+"input": "=DOLLAR(V!A11,2)&\"|\"&FIXED(V!A11,1)&\"|\"&FIXED(V!A11,-2,TRUE)&\"|\"&ROUND(V!A11,2)"
+},
+{
+"op": "set",
+"cell": "T!AH11",
+"input": "=TEXT(V!A11/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A11,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF12",
+"input": "=V!A12&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG12",
+"input": "=DOLLAR(V!A12,2)&\"|\"&FIXED(V!A12,1)&\"|\"&FIXED(V!A12,-2,TRUE)&\"|\"&ROUND(V!A12,2)"
+},
+{
+"op": "set",
+"cell": "T!AH12",
+"input": "=TEXT(V!A12/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A12,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF13",
+"input": "=V!A13&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG13",
+"input": "=DOLLAR(V!A13,2)&\"|\"&FIXED(V!A13,1)&\"|\"&FIXED(V!A13,-2,TRUE)&\"|\"&ROUND(V!A13,2)"
+},
+{
+"op": "set",
+"cell": "T!AH13",
+"input": "=TEXT(V!A13/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A13,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF14",
+"input": "=V!A14&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG14",
+"input": "=DOLLAR(V!A14,2)&\"|\"&FIXED(V!A14,1)&\"|\"&FIXED(V!A14,-2,TRUE)&\"|\"&ROUND(V!A14,2)"
+},
+{
+"op": "set",
+"cell": "T!AH14",
+"input": "=TEXT(V!A14/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A14,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF15",
+"input": "=V!A15&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG15",
+"input": "=DOLLAR(V!A15,2)&\"|\"&FIXED(V!A15,1)&\"|\"&FIXED(V!A15,-2,TRUE)&\"|\"&ROUND(V!A15,2)"
+},
+{
+"op": "set",
+"cell": "T!AH15",
+"input": "=TEXT(V!A15/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A15,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF16",
+"input": "=V!A16&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG16",
+"input": "=DOLLAR(V!A16,2)&\"|\"&FIXED(V!A16,1)&\"|\"&FIXED(V!A16,-2,TRUE)&\"|\"&ROUND(V!A16,2)"
+},
+{
+"op": "set",
+"cell": "T!AH16",
+"input": "=TEXT(V!A16/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A16,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF17",
+"input": "=V!A17&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG17",
+"input": "=DOLLAR(V!A17,2)&\"|\"&FIXED(V!A17,1)&\"|\"&FIXED(V!A17,-2,TRUE)&\"|\"&ROUND(V!A17,2)"
+},
+{
+"op": "set",
+"cell": "T!AH17",
+"input": "=TEXT(V!A17/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A17,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF18",
+"input": "=V!A18&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG18",
+"input": "=DOLLAR(V!A18,2)&\"|\"&FIXED(V!A18,1)&\"|\"&FIXED(V!A18,-2,TRUE)&\"|\"&ROUND(V!A18,2)"
+},
+{
+"op": "set",
+"cell": "T!AH18",
+"input": "=TEXT(V!A18/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A18,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF19",
+"input": "=V!A19&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG19",
+"input": "=DOLLAR(V!A19,2)&\"|\"&FIXED(V!A19,1)&\"|\"&FIXED(V!A19,-2,TRUE)&\"|\"&ROUND(V!A19,2)"
+},
+{
+"op": "set",
+"cell": "T!AH19",
+"input": "=TEXT(V!A19/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A19,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF20",
+"input": "=V!A20&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG20",
+"input": "=DOLLAR(V!A20,2)&\"|\"&FIXED(V!A20,1)&\"|\"&FIXED(V!A20,-2,TRUE)&\"|\"&ROUND(V!A20,2)"
+},
+{
+"op": "set",
+"cell": "T!AH20",
+"input": "=TEXT(V!A20/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A20,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF21",
+"input": "=V!A21&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG21",
+"input": "=DOLLAR(V!A21,2)&\"|\"&FIXED(V!A21,1)&\"|\"&FIXED(V!A21,-2,TRUE)&\"|\"&ROUND(V!A21,2)"
+},
+{
+"op": "set",
+"cell": "T!AH21",
+"input": "=TEXT(V!A21/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A21,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF22",
+"input": "=V!A22&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG22",
+"input": "=DOLLAR(V!A22,2)&\"|\"&FIXED(V!A22,1)&\"|\"&FIXED(V!A22,-2,TRUE)&\"|\"&ROUND(V!A22,2)"
+},
+{
+"op": "set",
+"cell": "T!AH22",
+"input": "=TEXT(V!A22/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A22,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF23",
+"input": "=V!A23&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG23",
+"input": "=DOLLAR(V!A23,2)&\"|\"&FIXED(V!A23,1)&\"|\"&FIXED(V!A23,-2,TRUE)&\"|\"&ROUND(V!A23,2)"
+},
+{
+"op": "set",
+"cell": "T!AH23",
+"input": "=TEXT(V!A23/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A23,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF24",
+"input": "=V!A24&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG24",
+"input": "=DOLLAR(V!A24,2)&\"|\"&FIXED(V!A24,1)&\"|\"&FIXED(V!A24,-2,TRUE)&\"|\"&ROUND(V!A24,2)"
+},
+{
+"op": "set",
+"cell": "T!AH24",
+"input": "=TEXT(V!A24/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A24,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF25",
+"input": "=V!A25&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG25",
+"input": "=DOLLAR(V!A25,2)&\"|\"&FIXED(V!A25,1)&\"|\"&FIXED(V!A25,-2,TRUE)&\"|\"&ROUND(V!A25,2)"
+},
+{
+"op": "set",
+"cell": "T!AH25",
+"input": "=TEXT(V!A25/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A25,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF26",
+"input": "=V!A26&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG26",
+"input": "=DOLLAR(V!A26,2)&\"|\"&FIXED(V!A26,1)&\"|\"&FIXED(V!A26,-2,TRUE)&\"|\"&ROUND(V!A26,2)"
+},
+{
+"op": "set",
+"cell": "T!AH26",
+"input": "=TEXT(V!A26/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A26,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF27",
+"input": "=V!A27&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG27",
+"input": "=DOLLAR(V!A27,2)&\"|\"&FIXED(V!A27,1)&\"|\"&FIXED(V!A27,-2,TRUE)&\"|\"&ROUND(V!A27,2)"
+},
+{
+"op": "set",
+"cell": "T!AH27",
+"input": "=TEXT(V!A27/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A27,\"0.000000000000000000\")"
+},
+{
+"op": "set",
+"cell": "T!AF28",
+"input": "=V!A28&\"\""
+},
+{
+"op": "set",
+"cell": "T!AG28",
+"input": "=DOLLAR(V!A28,2)&\"|\"&FIXED(V!A28,1)&\"|\"&FIXED(V!A28,-2,TRUE)&\"|\"&ROUND(V!A28,2)"
+},
+{
+"op": "set",
+"cell": "T!AH28",
+"input": "=TEXT(V!A28/7,\"0.0000000000000000\")&\"|\"&TEXT(V!A28,\"0.000000000000000000\")"
+},
+{
+"op": "read",
+"range": "T!A1:AH28"
+}
+]
+}

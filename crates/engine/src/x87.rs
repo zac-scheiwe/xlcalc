@@ -468,8 +468,8 @@ impl MpFlag {
         use crate::value::XlError;
         match self.0 {
             0 => Ok(v),
-            4 => Err(XlError::Div0),
-            _ => Err(XlError::Num),
+            4 => Err(XlError::DIV0),
+            _ => Err(XlError::NUM),
         }
     }
 }
@@ -478,7 +478,7 @@ pub fn chk(v: f64) -> Result<f64, crate::value::XlError> {
     if v.is_finite() {
         Ok(v)
     } else {
-        Err(crate::value::XlError::Num)
+        Err(crate::value::XlError::NUM)
     }
 }
 

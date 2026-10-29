@@ -183,7 +183,7 @@ impl Workbook {
                             *v = -*v;
                         }
                     } else {
-                        if !secant || fails % 4 == 0 {
+                        if !secant || fails.is_multiple_of(4) {
                             use_saved = !use_saved;
                         }
                         if use_saved {
@@ -209,7 +209,7 @@ struct Records {
 impl Records {
     fn accept(&mut self, f: f64, goal: f64) -> bool {
         let e = x87::sub(f, goal);
-        let up = !(e < 0.0) || (e.to_bits() >> 48) == 0;
+        let up = e >= 0.0 || e.is_nan() || (e.to_bits() >> 48) == 0;
         let rec = if up { &mut self.above } else { &mut self.below };
         let take = match *rec {
             None => true,
@@ -227,7 +227,7 @@ impl Records {
 
 fn converged(f: f64, goal: f64, tol: f64) -> bool {
     let v = x87::sub(x87::sub(f, goal).abs(), tol);
-    !(v > 0.0) || (v.to_bits() >> 48) == 0
+    v <= 0.0 || v.is_nan() || (v.to_bits() >> 48) == 0
 }
 
 fn trial_count(wb: &Workbook) -> u32 {

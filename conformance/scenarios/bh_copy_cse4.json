@@ -1,0 +1,44 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "array",
+"range": "Sheet1!B1:B2",
+"input": "=A1:A2*2"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:B2",
+"to": "Sheet1!C1:E2",
+"paste": "all"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E3"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:B2",
+"to": "Sheet1!C5:C10",
+"paste": "all"
+},
+{
+"op": "read",
+"range": "Sheet1!A5:E11"
+}
+]
+}

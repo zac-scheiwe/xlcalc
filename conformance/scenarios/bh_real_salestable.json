@@ -1,0 +1,577 @@
+{
+"sheets": [
+"Sales",
+"Summary"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sales!A1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B1",
+"value": {
+"t": "s",
+"v": "Rep"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D1",
+"value": {
+"t": "s",
+"v": "Price"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E1",
+"value": {
+"t": "s",
+"v": "Total"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!A2",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B2",
+"value": {
+"t": "s",
+"v": "Zed"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D2",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!E2",
+"input": "=C2*D2"
+},
+{
+"op": "setv",
+"cell": "Sales!A3",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B3",
+"value": {
+"t": "s",
+"v": "Amy"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C3",
+"value": {
+"t": "n",
+"v": 25
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D3",
+"value": {
+"t": "n",
+"v": 4.5
+}
+},
+{
+"op": "set",
+"cell": "Sales!E3",
+"input": "=C3*D3"
+},
+{
+"op": "setv",
+"cell": "Sales!A4",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B4",
+"value": {
+"t": "s",
+"v": "Bea"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D4",
+"value": {
+"t": "n",
+"v": 19.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!E4",
+"input": "=C4*D4"
+},
+{
+"op": "setv",
+"cell": "Sales!A5",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B5",
+"value": {
+"t": "s",
+"v": "Cal"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C5",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D5",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "set",
+"cell": "Sales!E5",
+"input": "=C5*D5"
+},
+{
+"op": "setv",
+"cell": "Sales!A6",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B6",
+"value": {
+"t": "s",
+"v": "Dee"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C6",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D6",
+"value": {
+"t": "n",
+"v": 4.5
+}
+},
+{
+"op": "set",
+"cell": "Sales!E6",
+"input": "=C6*D6"
+},
+{
+"op": "setv",
+"cell": "Sales!A7",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B7",
+"value": {
+"t": "s",
+"v": "Eve"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C7",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D7",
+"value": {
+"t": "n",
+"v": 2.75
+}
+},
+{
+"op": "set",
+"cell": "Sales!E7",
+"input": "=C7*D7"
+},
+{
+"op": "setv",
+"cell": "Summary!A1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!B1",
+"value": {
+"t": "s",
+"v": "Total"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!C1",
+"value": {
+"t": "s",
+"v": "Share"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!A2",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B2",
+"input": "=SUMIFS(Sales!$E:$E,Sales!$A:$A,A2)"
+},
+{
+"op": "set",
+"cell": "Summary!C2",
+"input": "=B2/SUM($B$2:$B$5)"
+},
+{
+"op": "setv",
+"cell": "Summary!A3",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B3",
+"input": "=SUMIFS(Sales!$E:$E,Sales!$A:$A,A3)"
+},
+{
+"op": "set",
+"cell": "Summary!C3",
+"input": "=B3/SUM($B$2:$B$5)"
+},
+{
+"op": "setv",
+"cell": "Summary!A4",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B4",
+"input": "=SUMIFS(Sales!$E:$E,Sales!$A:$A,A4)"
+},
+{
+"op": "set",
+"cell": "Summary!C4",
+"input": "=B4/SUM($B$2:$B$5)"
+},
+{
+"op": "setv",
+"cell": "Summary!A5",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B5",
+"input": "=SUMIFS(Sales!$E:$E,Sales!$A:$A,A5)"
+},
+{
+"op": "set",
+"cell": "Summary!C5",
+"input": "=B5/SUM($B$2:$B$5)"
+},
+{
+"op": "set",
+"cell": "Summary!B6",
+"input": "=SUM(B2:B5)"
+},
+{
+"op": "set",
+"cell": "Summary!D1",
+"input": "=SUM(Sales!E2:E7)"
+},
+{
+"op": "set",
+"cell": "Summary!D2",
+"input": "=Sales!E2+Sales!E3"
+},
+{
+"op": "set",
+"cell": "Summary!D3",
+"input": "=SUM(Sales!C2:E2)"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "table",
+"name": "tSales",
+"range": "Sales!A1:E7"
+},
+{
+"op": "set",
+"cell": "Sales!E2",
+"input": "=C2*D2"
+},
+{
+"op": "set",
+"cell": "Summary!D4",
+"input": "=SUM(tSales[Total])"
+},
+{
+"op": "set",
+"cell": "Summary!D5",
+"input": "=SUMIFS(tSales[Total],tSales[Region],\"North\")"
+},
+{
+"op": "set",
+"cell": "Summary!D6",
+"input": "=ROWS(tSales)&\"x\"&COLUMNS(tSales)"
+},
+{
+"op": "set",
+"cell": "Sales!G1",
+"input": "=SUM(tSales[[Units]:[Price]])"
+},
+{
+"op": "set",
+"cell": "Sales!G2",
+"input": "=tSales[@Units]*2"
+},
+{
+"op": "set",
+"cell": "Sales!G3",
+"input": "=INDEX(tSales[Rep],MATCH(MAX(tSales[Total]),tSales[Total],0))"
+},
+{
+"op": "read",
+"range": "Summary!D1:D6"
+},
+{
+"op": "read",
+"range": "Sales!G1:G3"
+},
+{
+"op": "sort",
+"range": "Sales!A2:E7",
+"keys": [
+{
+"key": 3,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Sales!A1:E7"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "set",
+"cell": "Sales!A8",
+"input": "East"
+},
+{
+"op": "set",
+"cell": "Sales!B8",
+"input": "Fay"
+},
+{
+"op": "set",
+"cell": "Sales!C8",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sales!D8",
+"input": "8"
+},
+{
+"op": "set",
+"cell": "Sales!E8",
+"input": "=C8*D8"
+},
+{
+"op": "read",
+"range": "Sales!A1:E9"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "read",
+"range": "Sales!G1:G3"
+},
+{
+"op": "insert_rows",
+"sheet": "Sales",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sales!A1:G10"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "delete_rows",
+"sheet": "Sales",
+"at": 2,
+"count": 2
+},
+{
+"op": "read",
+"range": "Sales!A1:G9"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "table_sort",
+"name": "tSales",
+"sheet": "Sales",
+"keys": [
+{
+"key": 1,
+"order": "asc"
+},
+{
+"key": 3,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Sales!A1:E9"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "table_totals",
+"name": "tSales",
+"sheet": "Sales",
+"value": true
+},
+{
+"op": "read",
+"range": "Sales!A1:E10"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "rename_sheet",
+"sheet": "Sales",
+"name": "Q1 Sales"
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+},
+{
+"op": "insert_cols",
+"sheet": "Q1 Sales",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Summary!A1:D6"
+}
+]
+}

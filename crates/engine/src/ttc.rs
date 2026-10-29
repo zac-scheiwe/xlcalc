@@ -324,8 +324,8 @@ impl Workbook {
             .max()
             .unwrap_or(0)
             .max(1);
-        if dest.col + width - 1 >= crate::address::MAX_COLS
-            || dest.row + rows.len() as u32 - 1 >= crate::address::MAX_ROWS
+        if dest.col + width > crate::address::MAX_COLS
+            || dest.row + rows.len() as u32 > crate::address::MAX_ROWS
         {
             return Err(EditError::Compile(
                 "Application-defined or object-defined error".into(),
@@ -414,12 +414,7 @@ impl Workbook {
                         } else if t.starts_with('\'') {
                             Ok(wb.set_value(addr, Value::from(t.as_str())))
                         } else {
-                            match if !t.starts_with('=') && crate::testing::is_formula_entry(wb, &t)
-                            {
-                                Ok(wb.set_value(addr, Value::from(t.as_str())))
-                            } else {
-                                wb.set_input(addr, &t)
-                            } {
+                            match wb.set_input(addr, &t) {
                                 Err(EditError::Parse(_)) | Err(EditError::Compile(_)) => {
                                     Ok(wb.set_value(addr, Value::from(t.as_str())))
                                 }

@@ -1,0 +1,1322 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "w"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "i"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "'apple"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "'Apple"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "'apple2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "'ápple"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "'a-pple"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "6"
+},
+{
+"op": "set",
+"cell": "Sheet1!A7",
+"input": "'co-op"
+},
+{
+"op": "set",
+"cell": "Sheet1!B7",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "'coop"
+},
+{
+"op": "set",
+"cell": "Sheet1!B8",
+"input": "8"
+},
+{
+"op": "set",
+"cell": "Sheet1!A9",
+"input": "'Coop"
+},
+{
+"op": "set",
+"cell": "Sheet1!B9",
+"input": "9"
+},
+{
+"op": "set",
+"cell": "Sheet1!A10",
+"input": "'co op"
+},
+{
+"op": "set",
+"cell": "Sheet1!B10",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!A11",
+"input": "'it's"
+},
+{
+"op": "set",
+"cell": "Sheet1!B11",
+"input": "11"
+},
+{
+"op": "set",
+"cell": "Sheet1!A12",
+"input": "'its"
+},
+{
+"op": "set",
+"cell": "Sheet1!B12",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "Sheet1!A13",
+"input": "'its'"
+},
+{
+"op": "set",
+"cell": "Sheet1!B13",
+"input": "13"
+},
+{
+"op": "set",
+"cell": "Sheet1!A14",
+"input": "''tis"
+},
+{
+"op": "set",
+"cell": "Sheet1!B14",
+"input": "14"
+},
+{
+"op": "set",
+"cell": "Sheet1!A15",
+"input": "'tis"
+},
+{
+"op": "set",
+"cell": "Sheet1!B15",
+"input": "15"
+},
+{
+"op": "set",
+"cell": "Sheet1!A16",
+"input": "'-tis"
+},
+{
+"op": "set",
+"cell": "Sheet1!B16",
+"input": "16"
+},
+{
+"op": "set",
+"cell": "Sheet1!A17",
+"input": "'Zebra"
+},
+{
+"op": "set",
+"cell": "Sheet1!B17",
+"input": "17"
+},
+{
+"op": "set",
+"cell": "Sheet1!A18",
+"input": "'zebra"
+},
+{
+"op": "set",
+"cell": "Sheet1!B18",
+"input": "18"
+},
+{
+"op": "set",
+"cell": "Sheet1!A19",
+"input": "'Ångström"
+},
+{
+"op": "set",
+"cell": "Sheet1!B19",
+"input": "19"
+},
+{
+"op": "set",
+"cell": "Sheet1!A20",
+"input": "'angstrom"
+},
+{
+"op": "set",
+"cell": "Sheet1!B20",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Sheet1!A21",
+"input": "'Angstrom"
+},
+{
+"op": "set",
+"cell": "Sheet1!B21",
+"input": "21"
+},
+{
+"op": "set",
+"cell": "Sheet1!A22",
+"input": "'äb"
+},
+{
+"op": "set",
+"cell": "Sheet1!B22",
+"input": "22"
+},
+{
+"op": "set",
+"cell": "Sheet1!A23",
+"input": "'ab"
+},
+{
+"op": "set",
+"cell": "Sheet1!B23",
+"input": "23"
+},
+{
+"op": "set",
+"cell": "Sheet1!A24",
+"input": "'ac"
+},
+{
+"op": "set",
+"cell": "Sheet1!B24",
+"input": "24"
+},
+{
+"op": "set",
+"cell": "Sheet1!A25",
+"input": "'b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B25",
+"input": "25"
+},
+{
+"op": "set",
+"cell": "Sheet1!A26",
+"input": "'B"
+},
+{
+"op": "set",
+"cell": "Sheet1!B26",
+"input": "26"
+},
+{
+"op": "set",
+"cell": "Sheet1!A27",
+"input": "'_a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B27",
+"input": "27"
+},
+{
+"op": "set",
+"cell": "Sheet1!A28",
+"input": "'a_"
+},
+{
+"op": "set",
+"cell": "Sheet1!B28",
+"input": "28"
+},
+{
+"op": "set",
+"cell": "Sheet1!A29",
+"input": "'1a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B29",
+"input": "29"
+},
+{
+"op": "set",
+"cell": "Sheet1!A30",
+"input": "'a1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B30",
+"input": "30"
+},
+{
+"op": "set",
+"cell": "Sheet1!A31",
+"input": "'10"
+},
+{
+"op": "set",
+"cell": "Sheet1!B31",
+"input": "31"
+},
+{
+"op": "set",
+"cell": "Sheet1!A32",
+"input": "'9"
+},
+{
+"op": "set",
+"cell": "Sheet1!B32",
+"input": "32"
+},
+{
+"op": "set",
+"cell": "Sheet1!A33",
+"input": "'2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B33",
+"input": "33"
+},
+{
+"op": "set",
+"cell": "Sheet1!A34",
+"input": "'$5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B34",
+"input": "34"
+},
+{
+"op": "set",
+"cell": "Sheet1!A35",
+"input": "'£5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B35",
+"input": "35"
+},
+{
+"op": "set",
+"cell": "Sheet1!A36",
+"input": "'#x"
+},
+{
+"op": "set",
+"cell": "Sheet1!B36",
+"input": "36"
+},
+{
+"op": "set",
+"cell": "Sheet1!A37",
+"input": "'@y"
+},
+{
+"op": "set",
+"cell": "Sheet1!B37",
+"input": "37"
+},
+{
+"op": "set",
+"cell": "Sheet1!A38",
+"input": "'ĀÉ"
+},
+{
+"op": "set",
+"cell": "Sheet1!B38",
+"input": "38"
+},
+{
+"op": "set",
+"cell": "Sheet1!A39",
+"input": "'āe"
+},
+{
+"op": "set",
+"cell": "Sheet1!B39",
+"input": "39"
+},
+{
+"op": "set",
+"cell": "Sheet1!A40",
+"input": "'ae"
+},
+{
+"op": "set",
+"cell": "Sheet1!B40",
+"input": "40"
+},
+{
+"op": "set",
+"cell": "Sheet1!A41",
+"input": "'Æsir"
+},
+{
+"op": "set",
+"cell": "Sheet1!B41",
+"input": "41"
+},
+{
+"op": "set",
+"cell": "Sheet1!A42",
+"input": "'aesir"
+},
+{
+"op": "set",
+"cell": "Sheet1!B42",
+"input": "42"
+},
+{
+"op": "set",
+"cell": "Sheet1!A43",
+"input": "'ß"
+},
+{
+"op": "set",
+"cell": "Sheet1!B43",
+"input": "43"
+},
+{
+"op": "set",
+"cell": "Sheet1!A44",
+"input": "'ss"
+},
+{
+"op": "set",
+"cell": "Sheet1!B44",
+"input": "44"
+},
+{
+"op": "set",
+"cell": "Sheet1!A45",
+"input": "'st"
+},
+{
+"op": "set",
+"cell": "Sheet1!B45",
+"input": "45"
+},
+{
+"op": "set",
+"cell": "Sheet1!A46",
+"input": "'ñ"
+},
+{
+"op": "set",
+"cell": "Sheet1!B46",
+"input": "46"
+},
+{
+"op": "set",
+"cell": "Sheet1!A47",
+"input": "'n"
+},
+{
+"op": "set",
+"cell": "Sheet1!B47",
+"input": "47"
+},
+{
+"op": "set",
+"cell": "Sheet1!A48",
+"input": "'o"
+},
+{
+"op": "set",
+"cell": "Sheet1!B48",
+"input": "48"
+},
+{
+"op": "set",
+"cell": "Sheet1!A49",
+"input": "'ō"
+},
+{
+"op": "set",
+"cell": "Sheet1!B49",
+"input": "49"
+},
+{
+"op": "set",
+"cell": "Sheet1!A50",
+"input": "'ö"
+},
+{
+"op": "set",
+"cell": "Sheet1!B50",
+"input": "50"
+},
+{
+"op": "set",
+"cell": "Sheet1!A51",
+"input": "'oo"
+},
+{
+"op": "set",
+"cell": "Sheet1!B51",
+"input": "51"
+},
+{
+"op": "set",
+"cell": "Sheet1!A52",
+"input": "'Ōtāhuhu"
+},
+{
+"op": "set",
+"cell": "Sheet1!B52",
+"input": "52"
+},
+{
+"op": "set",
+"cell": "Sheet1!A53",
+"input": "'Otahuhu"
+},
+{
+"op": "set",
+"cell": "Sheet1!B53",
+"input": "53"
+},
+{
+"op": "set",
+"cell": "Sheet1!A54",
+"input": "'otahuhu"
+},
+{
+"op": "set",
+"cell": "Sheet1!B54",
+"input": "54"
+},
+{
+"op": "set",
+"cell": "Sheet1!A55",
+"input": "'Ａ"
+},
+{
+"op": "set",
+"cell": "Sheet1!B55",
+"input": "55"
+},
+{
+"op": "set",
+"cell": "Sheet1!A56",
+"input": "'a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B56",
+"input": "56"
+},
+{
+"op": "set",
+"cell": "Sheet1!A57",
+"input": "'  a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B57",
+"input": "57"
+},
+{
+"op": "set",
+"cell": "Sheet1!A58",
+"input": "' a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B58",
+"input": "58"
+},
+{
+"op": "set",
+"cell": "Sheet1!A59",
+"input": "'a "
+},
+{
+"op": "set",
+"cell": "Sheet1!B59",
+"input": "59"
+},
+{
+"op": "set",
+"cell": "Sheet1!A60",
+"input": "'a  b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B60",
+"input": "60"
+},
+{
+"op": "set",
+"cell": "Sheet1!A61",
+"input": "'a b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B61",
+"input": "61"
+},
+{
+"op": "set",
+"cell": "Sheet1!A62",
+"input": "'ab"
+},
+{
+"op": "set",
+"cell": "Sheet1!B62",
+"input": "62"
+},
+{
+"op": "set",
+"cell": "Sheet1!A63",
+"input": "'a.b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B63",
+"input": "63"
+},
+{
+"op": "set",
+"cell": "Sheet1!A64",
+"input": "'a,b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B64",
+"input": "64"
+},
+{
+"op": "set",
+"cell": "Sheet1!A65",
+"input": "'a/b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B65",
+"input": "65"
+},
+{
+"op": "set",
+"cell": "Sheet1!A66",
+"input": "'a\b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B66",
+"input": "66"
+},
+{
+"op": "set",
+"cell": "Sheet1!A67",
+"input": "'a:b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B67",
+"input": "67"
+},
+{
+"op": "set",
+"cell": "Sheet1!A68",
+"input": "'a;b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B68",
+"input": "68"
+},
+{
+"op": "set",
+"cell": "Sheet1!A69",
+"input": "'a!"
+},
+{
+"op": "set",
+"cell": "Sheet1!B69",
+"input": "69"
+},
+{
+"op": "set",
+"cell": "Sheet1!A70",
+"input": "'a?"
+},
+{
+"op": "set",
+"cell": "Sheet1!B70",
+"input": "70"
+},
+{
+"op": "set",
+"cell": "Sheet1!A71",
+"input": "'a~"
+},
+{
+"op": "set",
+"cell": "Sheet1!B71",
+"input": "71"
+},
+{
+"op": "set",
+"cell": "Sheet1!A72",
+"input": "'a*"
+},
+{
+"op": "set",
+"cell": "Sheet1!B72",
+"input": "72"
+},
+{
+"op": "set",
+"cell": "Sheet1!A73",
+"input": "'(a)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B73",
+"input": "73"
+},
+{
+"op": "set",
+"cell": "Sheet1!A74",
+"input": "'[a]"
+},
+{
+"op": "set",
+"cell": "Sheet1!B74",
+"input": "74"
+},
+{
+"op": "set",
+"cell": "Sheet1!A75",
+"input": "'tāne"
+},
+{
+"op": "set",
+"cell": "Sheet1!B75",
+"input": "75"
+},
+{
+"op": "set",
+"cell": "Sheet1!A76",
+"input": "'Tāne"
+},
+{
+"op": "set",
+"cell": "Sheet1!B76",
+"input": "76"
+},
+{
+"op": "set",
+"cell": "Sheet1!A77",
+"input": "'TANE"
+},
+{
+"op": "set",
+"cell": "Sheet1!B77",
+"input": "77"
+},
+{
+"op": "set",
+"cell": "Sheet1!A78",
+"input": "'tane"
+},
+{
+"op": "set",
+"cell": "Sheet1!B78",
+"input": "78"
+},
+{
+"op": "set",
+"cell": "Sheet1!A79",
+"input": "'Māori"
+},
+{
+"op": "set",
+"cell": "Sheet1!B79",
+"input": "79"
+},
+{
+"op": "set",
+"cell": "Sheet1!A80",
+"input": "'maori"
+},
+{
+"op": "set",
+"cell": "Sheet1!B80",
+"input": "80"
+},
+{
+"op": "set",
+"cell": "Sheet1!A81",
+"input": "'MĀORI"
+},
+{
+"op": "set",
+"cell": "Sheet1!B81",
+"input": "81"
+},
+{
+"op": "set",
+"cell": "Sheet1!A82",
+"input": "'Mā ori"
+},
+{
+"op": "set",
+"cell": "Sheet1!B82",
+"input": "82"
+},
+{
+"op": "set",
+"cell": "Sheet1!A83",
+"input": "'Whānau"
+},
+{
+"op": "set",
+"cell": "Sheet1!B83",
+"input": "83"
+},
+{
+"op": "set",
+"cell": "Sheet1!A84",
+"input": "'whanau"
+},
+{
+"op": "set",
+"cell": "Sheet1!B84",
+"input": "84"
+},
+{
+"op": "set",
+"cell": "Sheet1!A85",
+"input": "'whānau"
+},
+{
+"op": "set",
+"cell": "Sheet1!B85",
+"input": "85"
+},
+{
+"op": "set",
+"cell": "Sheet1!A86",
+"input": "'Ūpoko"
+},
+{
+"op": "set",
+"cell": "Sheet1!B86",
+"input": "86"
+},
+{
+"op": "set",
+"cell": "Sheet1!A87",
+"input": "'upoko"
+},
+{
+"op": "set",
+"cell": "Sheet1!B87",
+"input": "87"
+},
+{
+"op": "set",
+"cell": "Sheet1!A88",
+"input": "'ōtaki"
+},
+{
+"op": "set",
+"cell": "Sheet1!B88",
+"input": "88"
+},
+{
+"op": "set",
+"cell": "Sheet1!A89",
+"input": "'Otaki"
+},
+{
+"op": "set",
+"cell": "Sheet1!B89",
+"input": "89"
+},
+{
+"op": "set",
+"cell": "Sheet1!A90",
+"input": "'’tis"
+},
+{
+"op": "set",
+"cell": "Sheet1!B90",
+"input": "90"
+},
+{
+"op": "set",
+"cell": "Sheet1!A91",
+"input": "'‘tis"
+},
+{
+"op": "set",
+"cell": "Sheet1!B91",
+"input": "91"
+},
+{
+"op": "set",
+"cell": "Sheet1!A92",
+"input": "'“quote"
+},
+{
+"op": "set",
+"cell": "Sheet1!B92",
+"input": "92"
+},
+{
+"op": "set",
+"cell": "Sheet1!A93",
+"input": "'quote"
+},
+{
+"op": "set",
+"cell": "Sheet1!B93",
+"input": "93"
+},
+{
+"op": "set",
+"cell": "Sheet1!A94",
+"input": "'naïve"
+},
+{
+"op": "set",
+"cell": "Sheet1!B94",
+"input": "94"
+},
+{
+"op": "set",
+"cell": "Sheet1!A95",
+"input": "'naive"
+},
+{
+"op": "set",
+"cell": "Sheet1!B95",
+"input": "95"
+},
+{
+"op": "set",
+"cell": "Sheet1!A96",
+"input": "'café"
+},
+{
+"op": "set",
+"cell": "Sheet1!B96",
+"input": "96"
+},
+{
+"op": "set",
+"cell": "Sheet1!A97",
+"input": "'cafe"
+},
+{
+"op": "set",
+"cell": "Sheet1!B97",
+"input": "97"
+},
+{
+"op": "set",
+"cell": "Sheet1!A98",
+"input": "'Café"
+},
+{
+"op": "set",
+"cell": "Sheet1!B98",
+"input": "98"
+},
+{
+"op": "set",
+"cell": "Sheet1!A99",
+"input": "'resume"
+},
+{
+"op": "set",
+"cell": "Sheet1!B99",
+"input": "99"
+},
+{
+"op": "set",
+"cell": "Sheet1!A100",
+"input": "'résumé"
+},
+{
+"op": "set",
+"cell": "Sheet1!B100",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "Sheet1!A101",
+"input": "'resumé"
+},
+{
+"op": "set",
+"cell": "Sheet1!B101",
+"input": "101"
+},
+{
+"op": "set",
+"cell": "Sheet1!A102",
+"input": "'nb sp"
+},
+{
+"op": "set",
+"cell": "Sheet1!B102",
+"input": "102"
+},
+{
+"op": "set",
+"cell": "Sheet1!A103",
+"input": "'nb sp"
+},
+{
+"op": "set",
+"cell": "Sheet1!B103",
+"input": "103"
+},
+{
+"op": "set",
+"cell": "Sheet1!A104",
+"input": "'a b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B104",
+"input": "104"
+},
+{
+"op": "set",
+"cell": "Sheet1!A105",
+"input": "'a b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B105",
+"input": "105"
+},
+{
+"op": "set",
+"cell": "Sheet1!A106",
+"input": "'a\tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!B106",
+"input": "106"
+},
+{
+"op": "set",
+"cell": "Sheet1!A107",
+"input": "'a\nb"
+},
+{
+"op": "set",
+"cell": "Sheet1!B107",
+"input": "107"
+},
+{
+"op": "set",
+"cell": "Sheet1!A108",
+"input": "'ab"
+},
+{
+"op": "set",
+"cell": "Sheet1!B108",
+"input": "108"
+},
+{
+"op": "set",
+"cell": "Sheet1!A109",
+"input": "'1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B109",
+"input": "109"
+},
+{
+"op": "set",
+"cell": "Sheet1!A110",
+"input": "'01"
+},
+{
+"op": "set",
+"cell": "Sheet1!B110",
+"input": "110"
+},
+{
+"op": "set",
+"cell": "Sheet1!A111",
+"input": "'001"
+},
+{
+"op": "set",
+"cell": "Sheet1!B111",
+"input": "111"
+},
+{
+"op": "set",
+"cell": "Sheet1!A112",
+"input": "'1.5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B112",
+"input": "112"
+},
+{
+"op": "set",
+"cell": "Sheet1!A113",
+"input": "'1,5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B113",
+"input": "113"
+},
+{
+"op": "set",
+"cell": "Sheet1!A114",
+"input": "'-1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B114",
+"input": "114"
+},
+{
+"op": "set",
+"cell": "Sheet1!A115",
+"input": "''1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B115",
+"input": "115"
+},
+{
+"op": "set",
+"cell": "Sheet1!A116",
+"input": "''a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B116",
+"input": "116"
+},
+{
+"op": "set",
+"cell": "Sheet1!A117",
+"input": "'+a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B117",
+"input": "117"
+},
+{
+"op": "set",
+"cell": "Sheet1!A118",
+"input": "'=a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B118",
+"input": "118"
+},
+{
+"op": "set",
+"cell": "Sheet1!A119",
+"input": "'#1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B119",
+"input": "119"
+},
+{
+"op": "set",
+"cell": "Sheet1!A120",
+"input": "'~a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B120",
+"input": "120"
+},
+{
+"op": "set",
+"cell": "Sheet1!A121",
+"input": "'*a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B121",
+"input": "121"
+},
+{
+"op": "set",
+"cell": "Sheet1!A122",
+"input": "'?a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B122",
+"input": "122"
+},
+{
+"op": "set",
+"cell": "Sheet1!A123",
+"input": "'Z"
+},
+{
+"op": "set",
+"cell": "Sheet1!B123",
+"input": "123"
+},
+{
+"op": "set",
+"cell": "Sheet1!A124",
+"input": "'z"
+},
+{
+"op": "set",
+"cell": "Sheet1!B124",
+"input": "124"
+},
+{
+"op": "set",
+"cell": "Sheet1!A125",
+"input": "'[b]"
+},
+{
+"op": "set",
+"cell": "Sheet1!B125",
+"input": "125"
+},
+{
+"op": "set",
+"cell": "Sheet1!A126",
+"input": "'a(b)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B126",
+"input": "126"
+},
+{
+"op": "set",
+"cell": "Sheet1!A127",
+"input": "'ab(c)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B127",
+"input": "127"
+},
+{
+"op": "sort",
+"range": "Sheet1!A1:B127",
+"keys": [
+{
+"key": 1,
+"order": "asc"
+}
+],
+"header": true,
+"matchcase": false
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B127"
+},
+{
+"op": "sort",
+"range": "Sheet1!A1:B127",
+"keys": [
+{
+"key": 1,
+"order": "desc"
+}
+],
+"header": true,
+"matchcase": true
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B127"
+},
+{
+"op": "sort",
+"range": "Sheet1!A1:B127",
+"keys": [
+{
+"key": 1,
+"order": "asc"
+}
+],
+"header": true,
+"matchcase": true
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B127"
+}
+]
+}

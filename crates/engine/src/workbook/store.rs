@@ -111,11 +111,6 @@ impl CellStore {
         self.len
     }
 
-    #[allow(dead_code)]
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
-    }
-
     pub fn sticky_bounds(&self) -> Option<Rect> {
         self.sticky
     }

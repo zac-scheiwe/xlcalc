@@ -1,0 +1,344 @@
+{
+"sheets": [
+"Jan",
+"Feb",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C1",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C2",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A4",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C4",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B1",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B3",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A4",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B4",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "S!Z1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "S!A1",
+"input": "=AREAS(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A2",
+"input": "=COUNTBLANK(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A3",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\")"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A4",
+"input": "=SUMIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\",Jan!B1:B4)"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A5",
+"input": "=TEXTJOIN(\",\",TRUE,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A6",
+"input": "=ROW(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A7",
+"input": "=SMALL(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),1)"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A8",
+"input": "=RANK(2,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A9",
+"input": "=SUBTOTAL(9,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A10",
+"input": "=UNIQUE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A11",
+"input": "=CONCAT(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A12",
+"input": "=TRANSPOSE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A13",
+"input": "=SUM(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!A14",
+"input": "=COUNTA(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+},
+{
+"op": "set",
+"cell": "S!Z1",
+"input": "2"
+},
+{
+"op": "read",
+"range": "S!A1:C15"
+}
+]
+}

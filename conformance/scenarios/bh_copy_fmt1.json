@@ -1,0 +1,241 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "= A1 + B1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=sum( a1 : b2 )"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=1E3+A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=0.50*A1+.5"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=+A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=--A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=A1%"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=A1 B1:B2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=(A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=((A1))+ ( B1 )"
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=IF(A1>0,\"A1\",'Sheet2'!A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H12",
+"input": "=Sheet2!A1:B2 A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H13",
+"input": "=SUM(A1,,B1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H14",
+"input": "=SUM( A1 , B1 )"
+},
+{
+"op": "set",
+"cell": "Sheet1!H15",
+"input": "=A1&\"\"\"A1\""
+},
+{
+"op": "set",
+"cell": "Sheet1!H16",
+"input": "=TRUE+A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H17",
+"input": "=#REF!+A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H18",
+"input": "=A1+#N/A"
+},
+{
+"op": "set",
+"cell": "Sheet1!H19",
+"input": "=SUM(A1:B2)^2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H20",
+"input": "=-(A1:B2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H21",
+"input": "=A1:A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H22",
+"input": "=lambda(x,x+A1)(1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H23",
+"input": "=LET(a,A1,b,a+B1,b)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H24",
+"input": "=A1<>B1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H25",
+"input": "=A1=B1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H26",
+"input": "=IFERROR(A1/0,B1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H27",
+"input": "=ROW()*COLUMN()"
+},
+{
+"op": "set",
+"cell": "Sheet1!H28",
+"input": "=ROW(A1:A3)+COLUMN(A1:C1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H29",
+"input": "=CELL(\"address\",A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H30",
+"input": "=AREAS((A1,B2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!H31",
+"input": "=A1#"
+},
+{
+"op": "set",
+"cell": "Sheet1!H32",
+"input": "=@A1:B2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H33",
+"input": "=SUM(A1:B2 B1:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H34",
+"input": "=NA()+A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H35",
+"input": "={1,2,3}+A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H36",
+"input": "=SUM({1,2;3,4})*A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!H37",
+"input": "=\"a\"&A1&{\"x\"}"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H37"
+},
+{
+"op": "copy",
+"from": "Sheet1!H1:H37",
+"to": "Sheet1!K3"
+},
+{
+"op": "read",
+"range": "Sheet1!K3:K40"
+},
+{
+"op": "copy",
+"from": "Sheet1!H1:H37",
+"to": "Sheet2!E5"
+},
+{
+"op": "read",
+"range": "Sheet2!E5:E42"
+},
+{
+"op": "autofill",
+"from": "Sheet1!H1:H37",
+"to": "Sheet1!H1:J37",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:J37"
+}
+]
+}

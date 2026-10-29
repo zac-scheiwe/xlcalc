@@ -40,7 +40,27 @@ pub fn compare_ci(a: &str, b: &str) -> Ordering {
     if a == b {
         return Ordering::Equal;
     }
-    collate::compare(a, b)
+    match collate::compare(a, b) {
+        Ordering::Equal => collate::trailing_ignorable(a).cmp(&collate::trailing_ignorable(b)),
+        o => o,
+    }
+}
+
+pub fn collate_compare(a: &str, b: &str) -> Ordering {
+    match collate::compare(a, b) {
+        Ordering::Equal => collate::trailing_ignorable(a).cmp(&collate::trailing_ignorable(b)),
+        o => o,
+    }
+}
+
+pub fn collate_compare_match_case(a: &str, b: &str) -> Ordering {
+    collate::compare_match_case(a, b)
+}
+
+pub fn collate_key(s: &str) -> Vec<u8> {
+    let mut k = collate::key_bytes(s);
+    k.push(collate::trailing_ignorable(s).min(255) as u8);
+    k
 }
 
 pub fn eq_ci(a: &str, b: &str) -> bool {
@@ -51,8 +71,9 @@ pub fn eq_ordinal_ci(a: &str, b: &str) -> bool {
     if a.len() == b.len() && a.eq_ignore_ascii_case(b) {
         return true;
     }
-    let mut x = a.chars().map(fold_upper);
-    let mut y = b.chars().map(fold_upper);
+    let lower = crate::functions::text::lower_char;
+    let mut x = a.chars().map(lower);
+    let mut y = b.chars().map(lower);
     loop {
         match (x.next(), y.next()) {
             (None, None) => return true,
@@ -98,18 +119,22 @@ pub struct Wildcard {
 
 #[derive(Clone, Debug, PartialEq)]
 enum WTok {
-    Lit(char),
+    Lit(u16),
     One,
     Any,
 }
 
-fn fold(c: char) -> char {
-    let mut l = c.to_lowercase();
-    let first = l.next().unwrap_or(c);
-    if l.next().is_some() {
-        c
-    } else {
-        first
+fn fold_unit(u: u16) -> u16 {
+    match char::from_u32(u as u32) {
+        Some(c) => {
+            let f = crate::functions::text::lower_char(c) as u32;
+            if f <= 0xFFFF {
+                f as u16
+            } else {
+                u
+            }
+        }
+        None => u,
     }
 }
 
@@ -117,11 +142,17 @@ impl Wildcard {
     pub fn new(pattern: &str) -> Wildcard {
         let mut toks = Vec::new();
         let mut it = pattern.chars().peekable();
+        let lit = |toks: &mut Vec<WTok>, c: char| {
+            let mut buf = [0u16; 2];
+            for &u in c.encode_utf16(&mut buf).iter() {
+                toks.push(WTok::Lit(fold_unit(u)));
+            }
+        };
         while let Some(c) = it.next() {
             match c {
                 '~' => {
                     if let Some(n) = it.next() {
-                        toks.push(WTok::Lit(fold(n)));
+                        lit(&mut toks, n);
                     }
                 }
                 '*' => {
@@ -130,7 +161,7 @@ impl Wildcard {
                     }
                 }
                 '?' => toks.push(WTok::One),
-                c => toks.push(WTok::Lit(fold(c))),
+                c => lit(&mut toks, c),
             }
         }
         Wildcard { toks }
@@ -140,7 +171,7 @@ impl Wildcard {
         pattern.contains(['*', '?', '~'])
     }
 
-    fn match_at(&self, text: &[char], ti: usize, pi: usize, whole: bool) -> bool {
+    fn match_at(&self, text: &[u16], ti: usize, pi: usize, whole: bool) -> bool {
         let (mut t, mut p) = (ti, pi);
         let mut star: Option<(usize, usize)> = None;
         loop {
@@ -160,7 +191,7 @@ impl Wildcard {
                         p += 1;
                         continue;
                     }
-                    WTok::Lit(c) if t < text.len() && fold(text[t]) == *c => {
+                    WTok::Lit(c) if t < text.len() && fold_unit(text[t]) == *c => {
                         t += 1;
                         p += 1;
                         continue;
@@ -180,12 +211,12 @@ impl Wildcard {
     }
 
     pub fn matches(&self, text: &str) -> bool {
-        let chars: Vec<char> = text.chars().collect();
-        self.match_at(&chars, 0, 0, true)
+        let units: Vec<u16> = text.encode_utf16().collect();
+        self.match_at(&units, 0, 0, true)
     }
 
     pub fn find(&self, text: &str, start: usize) -> Option<usize> {
-        let chars: Vec<char> = text.chars().collect();
-        (start..=chars.len()).find(|&i| self.match_at(&chars, i, 0, false))
+        let units: Vec<u16> = text.encode_utf16().collect();
+        (start..=units.len()).find(|&i| self.match_at(&units, i, 0, false))
     }
 }

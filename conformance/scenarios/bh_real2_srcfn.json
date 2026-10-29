@@ -1,0 +1,2438 @@
+{
+"sheets": [
+"Jan",
+"Feb",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C1",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C2",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A4",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C4",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B1",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B3",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A4",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B4",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "S!Z1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "S!A6",
+"input": "=SUM(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!D6",
+"input": "=COUNTA(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!G6",
+"input": "=COUNT(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!J6",
+"input": "=MAX(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!M6",
+"input": "=ROWS(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!P6",
+"input": "=COLUMNS(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!S6",
+"input": "=AREAS(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!V6",
+"input": "=SUMPRODUCT(INDIRECT(\"Jan!A1:A4\")=0)"
+},
+{
+"op": "set",
+"cell": "S!Y6",
+"input": "=SUMPRODUCT(N(+INDIRECT(\"Jan!A1:A4\")))"
+},
+{
+"op": "set",
+"cell": "S!AB6",
+"input": "=COUNTBLANK(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE6",
+"input": "=COUNTIF(INDIRECT(\"Jan!A1:A4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AH6",
+"input": "=COUNTIF(INDIRECT(\"Jan!A1:A4\"),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!AK6",
+"input": "=SUMIF(INDIRECT(\"Jan!A1:A4\"),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!AN6",
+"input": "=SUMIF(Jan!A1:A4,\"G\",INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ6",
+"input": "=MATCH(\"H\",INDIRECT(\"Jan!A1:A4\"),0)"
+},
+{
+"op": "set",
+"cell": "S!AT6",
+"input": "=XMATCH(4,INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AW6",
+"input": "=TEXTJOIN(\",\",TRUE,INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AZ6",
+"input": "=ROW(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC6",
+"input": "=COLUMN(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!BF6",
+"input": "=SMALL(INDIRECT(\"Jan!A1:A4\"),1)"
+},
+{
+"op": "set",
+"cell": "S!A12",
+"input": "=LARGE(INDIRECT(\"Jan!A1:A4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!D12",
+"input": "=RANK(2,INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!G12",
+"input": "=AVERAGE(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!J12",
+"input": "=SUBTOTAL(9,INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!M12",
+"input": "=AGGREGATE(9,6,INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!P12",
+"input": "=LOOKUP(4,INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!S12",
+"input": "=VLOOKUP(4,INDIRECT(\"Jan!A1:A4\"),1,0)"
+},
+{
+"op": "set",
+"cell": "S!V12",
+"input": "=INDEX(INDIRECT(\"Jan!A1:A4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!Y12",
+"input": "=ISBLANK(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AB12",
+"input": "=N(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE12",
+"input": "=T(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AH12",
+"input": "=FREQUENCY(INDIRECT(\"Jan!A1:A4\"),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!AK12",
+"input": "=UNIQUE(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AN12",
+"input": "=SORT(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ12",
+"input": "=FILTER(INDIRECT(\"Jan!A1:A4\"),INDIRECT(\"Jan!A1:A4\")<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!AT12",
+"input": "=CONCAT(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AW12",
+"input": "=COUNTIFS(INDIRECT(\"Jan!A1:A4\"),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!AZ12",
+"input": "=SUMIFS(Jan!B1:B4,INDIRECT(\"Jan!A1:A4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!BC12",
+"input": "=PRODUCT(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!BF12",
+"input": "=MEDIAN(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!A18",
+"input": "=ROWS(TRANSPOSE(INDIRECT(\"Jan!A1:A4\")))"
+},
+{
+"op": "set",
+"cell": "S!D18",
+"input": "=SUMSQ(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!G18",
+"input": "=AVERAGEIF(INDIRECT(\"Jan!A1:A4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!J18",
+"input": "=TRANSPOSE(INDIRECT(\"Jan!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!M18",
+"input": "=SUM(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!P18",
+"input": "=COUNTA(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!S18",
+"input": "=COUNT(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!V18",
+"input": "=MAX(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!Y18",
+"input": "=ROWS(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AB18",
+"input": "=COLUMNS(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE18",
+"input": "=AREAS(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AH18",
+"input": "=SUMPRODUCT(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\")=0)"
+},
+{
+"op": "set",
+"cell": "S!AK18",
+"input": "=SUMPRODUCT(N(+INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\")))"
+},
+{
+"op": "set",
+"cell": "S!AN18",
+"input": "=COUNTBLANK(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ18",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AT18",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!AW18",
+"input": "=SUMIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!AZ18",
+"input": "=SUMIF(Jan!A1:A4,\"G\",INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC18",
+"input": "=MATCH(\"H\",INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),0)"
+},
+{
+"op": "set",
+"cell": "S!BF18",
+"input": "=XMATCH(4,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!A24",
+"input": "=TEXTJOIN(\",\",TRUE,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!D24",
+"input": "=ROW(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!G24",
+"input": "=COLUMN(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!J24",
+"input": "=SMALL(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),1)"
+},
+{
+"op": "set",
+"cell": "S!M24",
+"input": "=LARGE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!P24",
+"input": "=RANK(2,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!S24",
+"input": "=AVERAGE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!V24",
+"input": "=SUBTOTAL(9,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!Y24",
+"input": "=AGGREGATE(9,6,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AB24",
+"input": "=LOOKUP(4,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE24",
+"input": "=VLOOKUP(4,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),1,0)"
+},
+{
+"op": "set",
+"cell": "S!AH24",
+"input": "=INDEX(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!AK24",
+"input": "=ISBLANK(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AN24",
+"input": "=N(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ24",
+"input": "=T(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AT24",
+"input": "=FREQUENCY(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!AW24",
+"input": "=UNIQUE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!AZ24",
+"input": "=SORT(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC24",
+"input": "=FILTER(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\")<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!BF24",
+"input": "=CONCAT(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!A30",
+"input": "=COUNTIFS(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!D30",
+"input": "=SUMIFS(Jan!B1:B4,INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!G30",
+"input": "=PRODUCT(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!J30",
+"input": "=MEDIAN(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!M30",
+"input": "=ROWS(TRANSPOSE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\")))"
+},
+{
+"op": "set",
+"cell": "S!P30",
+"input": "=SUMSQ(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!S30",
+"input": "=AVERAGEIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!V30",
+"input": "=TRANSPOSE(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A4\"))"
+},
+{
+"op": "set",
+"cell": "S!Y30",
+"input": "=SUM(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AB30",
+"input": "=COUNTA(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE30",
+"input": "=COUNT(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AH30",
+"input": "=MAX(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AK30",
+"input": "=ROWS(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AN30",
+"input": "=COLUMNS(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ30",
+"input": "=AREAS(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AT30",
+"input": "=SUMPRODUCT(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\")=0)"
+},
+{
+"op": "set",
+"cell": "S!AW30",
+"input": "=SUMPRODUCT(N(+INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\")))"
+},
+{
+"op": "set",
+"cell": "S!AZ30",
+"input": "=COUNTBLANK(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC30",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!BF30",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!A36",
+"input": "=SUMIF(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!D36",
+"input": "=SUMIF(Jan!A1:A4,\"G\",INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!G36",
+"input": "=MATCH(\"H\",INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),0)"
+},
+{
+"op": "set",
+"cell": "S!J36",
+"input": "=XMATCH(4,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!M36",
+"input": "=TEXTJOIN(\",\",TRUE,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!P36",
+"input": "=ROW(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!S36",
+"input": "=COLUMN(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!V36",
+"input": "=SMALL(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),1)"
+},
+{
+"op": "set",
+"cell": "S!Y36",
+"input": "=LARGE(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!AB36",
+"input": "=RANK(2,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE36",
+"input": "=AVERAGE(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AH36",
+"input": "=SUBTOTAL(9,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AK36",
+"input": "=AGGREGATE(9,6,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AN36",
+"input": "=LOOKUP(4,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ36",
+"input": "=VLOOKUP(4,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),1,0)"
+},
+{
+"op": "set",
+"cell": "S!AT36",
+"input": "=INDEX(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!AW36",
+"input": "=ISBLANK(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AZ36",
+"input": "=N(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC36",
+"input": "=T(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BF36",
+"input": "=FREQUENCY(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!A42",
+"input": "=UNIQUE(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!D42",
+"input": "=SORT(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!G42",
+"input": "=FILTER(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\")<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!J42",
+"input": "=CONCAT(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!M42",
+"input": "=COUNTIFS(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!P42",
+"input": "=SUMIFS(Jan!B1:B4,INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!S42",
+"input": "=PRODUCT(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!V42",
+"input": "=MEDIAN(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!Y42",
+"input": "=ROWS(TRANSPOSE(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\")))"
+},
+{
+"op": "set",
+"cell": "S!AB42",
+"input": "=SUMSQ(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE42",
+"input": "=AVERAGEIF(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AH42",
+"input": "=TRANSPOSE(INDIRECT({\"Jan\",\"Feb\"}&\"!B1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AK42",
+"input": "=SUM(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AN42",
+"input": "=COUNTA(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ42",
+"input": "=COUNT(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AT42",
+"input": "=MAX(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AW42",
+"input": "=ROWS(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AZ42",
+"input": "=COLUMNS(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!BC42",
+"input": "=AREAS(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!BF42",
+"input": "=SUMPRODUCT(OFFSET(Jan!A1,0,0,4,1)=0)"
+},
+{
+"op": "set",
+"cell": "S!A48",
+"input": "=SUMPRODUCT(N(+OFFSET(Jan!A1,0,0,4,1)))"
+},
+{
+"op": "set",
+"cell": "S!D48",
+"input": "=COUNTBLANK(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!G48",
+"input": "=COUNTIF(OFFSET(Jan!A1,0,0,4,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!J48",
+"input": "=COUNTIF(OFFSET(Jan!A1,0,0,4,1),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!M48",
+"input": "=SUMIF(OFFSET(Jan!A1,0,0,4,1),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!P48",
+"input": "=SUMIF(Jan!A1:A4,\"G\",OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!S48",
+"input": "=MATCH(\"H\",OFFSET(Jan!A1,0,0,4,1),0)"
+},
+{
+"op": "set",
+"cell": "S!V48",
+"input": "=XMATCH(4,OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!Y48",
+"input": "=TEXTJOIN(\",\",TRUE,OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AB48",
+"input": "=ROW(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AE48",
+"input": "=COLUMN(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AH48",
+"input": "=SMALL(OFFSET(Jan!A1,0,0,4,1),1)"
+},
+{
+"op": "set",
+"cell": "S!AK48",
+"input": "=LARGE(OFFSET(Jan!A1,0,0,4,1),2)"
+},
+{
+"op": "set",
+"cell": "S!AN48",
+"input": "=RANK(2,OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ48",
+"input": "=AVERAGE(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AT48",
+"input": "=SUBTOTAL(9,OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AW48",
+"input": "=AGGREGATE(9,6,OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AZ48",
+"input": "=LOOKUP(4,OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!BC48",
+"input": "=VLOOKUP(4,OFFSET(Jan!A1,0,0,4,1),1,0)"
+},
+{
+"op": "set",
+"cell": "S!BF48",
+"input": "=INDEX(OFFSET(Jan!A1,0,0,4,1),2)"
+},
+{
+"op": "set",
+"cell": "S!A54",
+"input": "=ISBLANK(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!D54",
+"input": "=N(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!G54",
+"input": "=T(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!J54",
+"input": "=FREQUENCY(OFFSET(Jan!A1,0,0,4,1),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!M54",
+"input": "=UNIQUE(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!P54",
+"input": "=SORT(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!S54",
+"input": "=FILTER(OFFSET(Jan!A1,0,0,4,1),OFFSET(Jan!A1,0,0,4,1)<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!V54",
+"input": "=CONCAT(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!Y54",
+"input": "=COUNTIFS(OFFSET(Jan!A1,0,0,4,1),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!AB54",
+"input": "=SUMIFS(Jan!B1:B4,OFFSET(Jan!A1,0,0,4,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AE54",
+"input": "=PRODUCT(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AH54",
+"input": "=MEDIAN(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AK54",
+"input": "=ROWS(TRANSPOSE(OFFSET(Jan!A1,0,0,4,1)))"
+},
+{
+"op": "set",
+"cell": "S!AN54",
+"input": "=SUMSQ(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ54",
+"input": "=AVERAGEIF(OFFSET(Jan!A1,0,0,4,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AT54",
+"input": "=TRANSPOSE(OFFSET(Jan!A1,0,0,4,1))"
+},
+{
+"op": "set",
+"cell": "S!AW54",
+"input": "=SUM(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AZ54",
+"input": "=COUNTA(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!BC54",
+"input": "=COUNT(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!BF54",
+"input": "=MAX(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!A60",
+"input": "=ROWS(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!D60",
+"input": "=COLUMNS(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!G60",
+"input": "=AREAS(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!J60",
+"input": "=SUMPRODUCT(OFFSET(Jan!A1,0,{0,1},4,1)=0)"
+},
+{
+"op": "set",
+"cell": "S!M60",
+"input": "=SUMPRODUCT(N(+OFFSET(Jan!A1,0,{0,1},4,1)))"
+},
+{
+"op": "set",
+"cell": "S!P60",
+"input": "=COUNTBLANK(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!S60",
+"input": "=COUNTIF(OFFSET(Jan!A1,0,{0,1},4,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!V60",
+"input": "=COUNTIF(OFFSET(Jan!A1,0,{0,1},4,1),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!Y60",
+"input": "=SUMIF(OFFSET(Jan!A1,0,{0,1},4,1),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!AB60",
+"input": "=SUMIF(Jan!A1:A4,\"G\",OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AE60",
+"input": "=MATCH(\"H\",OFFSET(Jan!A1,0,{0,1},4,1),0)"
+},
+{
+"op": "set",
+"cell": "S!AH60",
+"input": "=XMATCH(4,OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AK60",
+"input": "=TEXTJOIN(\",\",TRUE,OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AN60",
+"input": "=ROW(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ60",
+"input": "=COLUMN(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AT60",
+"input": "=SMALL(OFFSET(Jan!A1,0,{0,1},4,1),1)"
+},
+{
+"op": "set",
+"cell": "S!AW60",
+"input": "=LARGE(OFFSET(Jan!A1,0,{0,1},4,1),2)"
+},
+{
+"op": "set",
+"cell": "S!AZ60",
+"input": "=RANK(2,OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!BC60",
+"input": "=AVERAGE(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!BF60",
+"input": "=SUBTOTAL(9,OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!A66",
+"input": "=AGGREGATE(9,6,OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!D66",
+"input": "=LOOKUP(4,OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!G66",
+"input": "=VLOOKUP(4,OFFSET(Jan!A1,0,{0,1},4,1),1,0)"
+},
+{
+"op": "set",
+"cell": "S!J66",
+"input": "=INDEX(OFFSET(Jan!A1,0,{0,1},4,1),2)"
+},
+{
+"op": "set",
+"cell": "S!M66",
+"input": "=ISBLANK(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!P66",
+"input": "=N(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!S66",
+"input": "=T(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!V66",
+"input": "=FREQUENCY(OFFSET(Jan!A1,0,{0,1},4,1),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!Y66",
+"input": "=UNIQUE(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AB66",
+"input": "=SORT(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AE66",
+"input": "=FILTER(OFFSET(Jan!A1,0,{0,1},4,1),OFFSET(Jan!A1,0,{0,1},4,1)<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!AH66",
+"input": "=CONCAT(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AK66",
+"input": "=COUNTIFS(OFFSET(Jan!A1,0,{0,1},4,1),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!AN66",
+"input": "=SUMIFS(Jan!B1:B4,OFFSET(Jan!A1,0,{0,1},4,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AQ66",
+"input": "=PRODUCT(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AT66",
+"input": "=MEDIAN(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!AW66",
+"input": "=ROWS(TRANSPOSE(OFFSET(Jan!A1,0,{0,1},4,1)))"
+},
+{
+"op": "set",
+"cell": "S!AZ66",
+"input": "=SUMSQ(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!BC66",
+"input": "=AVERAGEIF(OFFSET(Jan!A1,0,{0,1},4,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!BF66",
+"input": "=TRANSPOSE(OFFSET(Jan!A1,0,{0,1},4,1))"
+},
+{
+"op": "set",
+"cell": "S!A72",
+"input": "=SUM(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!D72",
+"input": "=COUNTA(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!G72",
+"input": "=COUNT(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!J72",
+"input": "=MAX(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!M72",
+"input": "=ROWS(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!P72",
+"input": "=COLUMNS(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!S72",
+"input": "=AREAS(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!V72",
+"input": "=SUMPRODUCT(OFFSET(Jan!A1,{0;1},0,2,1)=0)"
+},
+{
+"op": "set",
+"cell": "S!Y72",
+"input": "=SUMPRODUCT(N(+OFFSET(Jan!A1,{0;1},0,2,1)))"
+},
+{
+"op": "set",
+"cell": "S!AB72",
+"input": "=COUNTBLANK(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AE72",
+"input": "=COUNTIF(OFFSET(Jan!A1,{0;1},0,2,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AH72",
+"input": "=COUNTIF(OFFSET(Jan!A1,{0;1},0,2,1),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!AK72",
+"input": "=SUMIF(OFFSET(Jan!A1,{0;1},0,2,1),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!AN72",
+"input": "=SUMIF(Jan!A1:A4,\"G\",OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ72",
+"input": "=MATCH(\"H\",OFFSET(Jan!A1,{0;1},0,2,1),0)"
+},
+{
+"op": "set",
+"cell": "S!AT72",
+"input": "=XMATCH(4,OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AW72",
+"input": "=TEXTJOIN(\",\",TRUE,OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AZ72",
+"input": "=ROW(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!BC72",
+"input": "=COLUMN(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!BF72",
+"input": "=SMALL(OFFSET(Jan!A1,{0;1},0,2,1),1)"
+},
+{
+"op": "set",
+"cell": "S!A78",
+"input": "=LARGE(OFFSET(Jan!A1,{0;1},0,2,1),2)"
+},
+{
+"op": "set",
+"cell": "S!D78",
+"input": "=RANK(2,OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!G78",
+"input": "=AVERAGE(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!J78",
+"input": "=SUBTOTAL(9,OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!M78",
+"input": "=AGGREGATE(9,6,OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!P78",
+"input": "=LOOKUP(4,OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!S78",
+"input": "=VLOOKUP(4,OFFSET(Jan!A1,{0;1},0,2,1),1,0)"
+},
+{
+"op": "set",
+"cell": "S!V78",
+"input": "=INDEX(OFFSET(Jan!A1,{0;1},0,2,1),2)"
+},
+{
+"op": "set",
+"cell": "S!Y78",
+"input": "=ISBLANK(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AB78",
+"input": "=N(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AE78",
+"input": "=T(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AH78",
+"input": "=FREQUENCY(OFFSET(Jan!A1,{0;1},0,2,1),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!AK78",
+"input": "=UNIQUE(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AN78",
+"input": "=SORT(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ78",
+"input": "=FILTER(OFFSET(Jan!A1,{0;1},0,2,1),OFFSET(Jan!A1,{0;1},0,2,1)<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!AT78",
+"input": "=CONCAT(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!AW78",
+"input": "=COUNTIFS(OFFSET(Jan!A1,{0;1},0,2,1),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!AZ78",
+"input": "=SUMIFS(Jan!B1:B4,OFFSET(Jan!A1,{0;1},0,2,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!BC78",
+"input": "=PRODUCT(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!BF78",
+"input": "=MEDIAN(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!A84",
+"input": "=ROWS(TRANSPOSE(OFFSET(Jan!A1,{0;1},0,2,1)))"
+},
+{
+"op": "set",
+"cell": "S!D84",
+"input": "=SUMSQ(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!G84",
+"input": "=AVERAGEIF(OFFSET(Jan!A1,{0;1},0,2,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!J84",
+"input": "=TRANSPOSE(OFFSET(Jan!A1,{0;1},0,2,1))"
+},
+{
+"op": "set",
+"cell": "S!M84",
+"input": "=SUM(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!P84",
+"input": "=COUNTA(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!S84",
+"input": "=COUNT(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!V84",
+"input": "=MAX(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!Y84",
+"input": "=ROWS(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AB84",
+"input": "=COLUMNS(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AE84",
+"input": "=AREAS(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AH84",
+"input": "=SUMPRODUCT(INDEX(Jan!A1:B4,0,1)=0)"
+},
+{
+"op": "set",
+"cell": "S!AK84",
+"input": "=SUMPRODUCT(N(+INDEX(Jan!A1:B4,0,1)))"
+},
+{
+"op": "set",
+"cell": "S!AN84",
+"input": "=COUNTBLANK(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ84",
+"input": "=COUNTIF(INDEX(Jan!A1:B4,0,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AT84",
+"input": "=COUNTIF(INDEX(Jan!A1:B4,0,1),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!AW84",
+"input": "=SUMIF(INDEX(Jan!A1:B4,0,1),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!AZ84",
+"input": "=SUMIF(Jan!A1:A4,\"G\",INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!BC84",
+"input": "=MATCH(\"H\",INDEX(Jan!A1:B4,0,1),0)"
+},
+{
+"op": "set",
+"cell": "S!BF84",
+"input": "=XMATCH(4,INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!A90",
+"input": "=TEXTJOIN(\",\",TRUE,INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!D90",
+"input": "=ROW(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!G90",
+"input": "=COLUMN(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!J90",
+"input": "=SMALL(INDEX(Jan!A1:B4,0,1),1)"
+},
+{
+"op": "set",
+"cell": "S!M90",
+"input": "=LARGE(INDEX(Jan!A1:B4,0,1),2)"
+},
+{
+"op": "set",
+"cell": "S!P90",
+"input": "=RANK(2,INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!S90",
+"input": "=AVERAGE(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!V90",
+"input": "=SUBTOTAL(9,INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!Y90",
+"input": "=AGGREGATE(9,6,INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AB90",
+"input": "=LOOKUP(4,INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AE90",
+"input": "=VLOOKUP(4,INDEX(Jan!A1:B4,0,1),1,0)"
+},
+{
+"op": "set",
+"cell": "S!AH90",
+"input": "=INDEX(INDEX(Jan!A1:B4,0,1),2)"
+},
+{
+"op": "set",
+"cell": "S!AK90",
+"input": "=ISBLANK(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AN90",
+"input": "=N(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AQ90",
+"input": "=T(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AT90",
+"input": "=FREQUENCY(INDEX(Jan!A1:B4,0,1),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!AW90",
+"input": "=UNIQUE(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!AZ90",
+"input": "=SORT(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!BC90",
+"input": "=FILTER(INDEX(Jan!A1:B4,0,1),INDEX(Jan!A1:B4,0,1)<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!BF90",
+"input": "=CONCAT(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!A96",
+"input": "=COUNTIFS(INDEX(Jan!A1:B4,0,1),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!D96",
+"input": "=SUMIFS(Jan!B1:B4,INDEX(Jan!A1:B4,0,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!G96",
+"input": "=PRODUCT(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!J96",
+"input": "=MEDIAN(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!M96",
+"input": "=ROWS(TRANSPOSE(INDEX(Jan!A1:B4,0,1)))"
+},
+{
+"op": "set",
+"cell": "S!P96",
+"input": "=SUMSQ(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!S96",
+"input": "=AVERAGEIF(INDEX(Jan!A1:B4,0,1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!V96",
+"input": "=TRANSPOSE(INDEX(Jan!A1:B4,0,1))"
+},
+{
+"op": "set",
+"cell": "S!Y96",
+"input": "=SUM(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AB96",
+"input": "=COUNTA(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AE96",
+"input": "=COUNT(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AH96",
+"input": "=MAX(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AK96",
+"input": "=ROWS(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AN96",
+"input": "=COLUMNS(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AQ96",
+"input": "=AREAS(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AT96",
+"input": "=SUMPRODUCT(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4)=0)"
+},
+{
+"op": "set",
+"cell": "S!AW96",
+"input": "=SUMPRODUCT(N(+CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4)))"
+},
+{
+"op": "set",
+"cell": "S!AZ96",
+"input": "=COUNTBLANK(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!BC96",
+"input": "=COUNTIF(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!BF96",
+"input": "=COUNTIF(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!A102",
+"input": "=SUMIF(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!D102",
+"input": "=SUMIF(Jan!A1:A4,\"G\",CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!G102",
+"input": "=MATCH(\"H\",CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),0)"
+},
+{
+"op": "set",
+"cell": "S!J102",
+"input": "=XMATCH(4,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!M102",
+"input": "=TEXTJOIN(\",\",TRUE,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!P102",
+"input": "=ROW(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!S102",
+"input": "=COLUMN(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!V102",
+"input": "=SMALL(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),1)"
+},
+{
+"op": "set",
+"cell": "S!Y102",
+"input": "=LARGE(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),2)"
+},
+{
+"op": "set",
+"cell": "S!AB102",
+"input": "=RANK(2,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AE102",
+"input": "=AVERAGE(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AH102",
+"input": "=SUBTOTAL(9,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AK102",
+"input": "=AGGREGATE(9,6,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AN102",
+"input": "=LOOKUP(4,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AQ102",
+"input": "=VLOOKUP(4,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),1,0)"
+},
+{
+"op": "set",
+"cell": "S!AT102",
+"input": "=INDEX(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),2)"
+},
+{
+"op": "set",
+"cell": "S!AW102",
+"input": "=ISBLANK(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AZ102",
+"input": "=N(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!BC102",
+"input": "=T(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!BF102",
+"input": "=FREQUENCY(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!A108",
+"input": "=UNIQUE(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!D108",
+"input": "=SORT(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!G108",
+"input": "=FILTER(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4)<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!J108",
+"input": "=CONCAT(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!M108",
+"input": "=COUNTIFS(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!P108",
+"input": "=SUMIFS(Jan!B1:B4,CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!S108",
+"input": "=PRODUCT(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!V108",
+"input": "=MEDIAN(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!Y108",
+"input": "=ROWS(TRANSPOSE(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4)))"
+},
+{
+"op": "set",
+"cell": "S!AB108",
+"input": "=SUMSQ(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AE108",
+"input": "=AVERAGEIF(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AH108",
+"input": "=TRANSPOSE(CHOOSE({1,2},Jan!A1:A4,Feb!A1:A4))"
+},
+{
+"op": "set",
+"cell": "S!AK108",
+"input": "=SUM(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AN108",
+"input": "=COUNTA(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AQ108",
+"input": "=COUNT(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AT108",
+"input": "=MAX(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AW108",
+"input": "=ROWS(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AZ108",
+"input": "=COLUMNS(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!BC108",
+"input": "=AREAS(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!BF108",
+"input": "=SUMPRODUCT(INDEX(Jan!A1:B4,{1,2},1)=0)"
+},
+{
+"op": "set",
+"cell": "S!A114",
+"input": "=SUMPRODUCT(N(+INDEX(Jan!A1:B4,{1,2},1)))"
+},
+{
+"op": "set",
+"cell": "S!D114",
+"input": "=COUNTBLANK(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!G114",
+"input": "=COUNTIF(INDEX(Jan!A1:B4,{1,2},1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!J114",
+"input": "=COUNTIF(INDEX(Jan!A1:B4,{1,2},1),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!M114",
+"input": "=SUMIF(INDEX(Jan!A1:B4,{1,2},1),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!P114",
+"input": "=SUMIF(Jan!A1:A4,\"G\",INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!S114",
+"input": "=MATCH(\"H\",INDEX(Jan!A1:B4,{1,2},1),0)"
+},
+{
+"op": "set",
+"cell": "S!V114",
+"input": "=XMATCH(4,INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!Y114",
+"input": "=TEXTJOIN(\",\",TRUE,INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AB114",
+"input": "=ROW(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AE114",
+"input": "=COLUMN(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AH114",
+"input": "=SMALL(INDEX(Jan!A1:B4,{1,2},1),1)"
+},
+{
+"op": "set",
+"cell": "S!AK114",
+"input": "=LARGE(INDEX(Jan!A1:B4,{1,2},1),2)"
+},
+{
+"op": "set",
+"cell": "S!AN114",
+"input": "=RANK(2,INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AQ114",
+"input": "=AVERAGE(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AT114",
+"input": "=SUBTOTAL(9,INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AW114",
+"input": "=AGGREGATE(9,6,INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AZ114",
+"input": "=LOOKUP(4,INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!BC114",
+"input": "=VLOOKUP(4,INDEX(Jan!A1:B4,{1,2},1),1,0)"
+},
+{
+"op": "set",
+"cell": "S!BF114",
+"input": "=INDEX(INDEX(Jan!A1:B4,{1,2},1),2)"
+},
+{
+"op": "set",
+"cell": "S!A120",
+"input": "=ISBLANK(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!D120",
+"input": "=N(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!G120",
+"input": "=T(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!J120",
+"input": "=FREQUENCY(INDEX(Jan!A1:B4,{1,2},1),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!M120",
+"input": "=UNIQUE(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!P120",
+"input": "=SORT(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!S120",
+"input": "=FILTER(INDEX(Jan!A1:B4,{1,2},1),INDEX(Jan!A1:B4,{1,2},1)<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!V120",
+"input": "=CONCAT(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!Y120",
+"input": "=COUNTIFS(INDEX(Jan!A1:B4,{1,2},1),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!AB120",
+"input": "=SUMIFS(Jan!B1:B4,INDEX(Jan!A1:B4,{1,2},1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AE120",
+"input": "=PRODUCT(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AH120",
+"input": "=MEDIAN(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AK120",
+"input": "=ROWS(TRANSPOSE(INDEX(Jan!A1:B4,{1,2},1)))"
+},
+{
+"op": "set",
+"cell": "S!AN120",
+"input": "=SUMSQ(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AQ120",
+"input": "=AVERAGEIF(INDEX(Jan!A1:B4,{1,2},1),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AT120",
+"input": "=TRANSPOSE(INDEX(Jan!A1:B4,{1,2},1))"
+},
+{
+"op": "set",
+"cell": "S!AW120",
+"input": "=SUM(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AZ120",
+"input": "=COUNTA(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC120",
+"input": "=COUNT(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BF120",
+"input": "=MAX(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!A126",
+"input": "=ROWS(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!D126",
+"input": "=COLUMNS(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!G126",
+"input": "=AREAS(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!J126",
+"input": "=SUMPRODUCT(INDIRECT(\"Jan!A1:B4\")=0)"
+},
+{
+"op": "set",
+"cell": "S!M126",
+"input": "=SUMPRODUCT(N(+INDIRECT(\"Jan!A1:B4\")))"
+},
+{
+"op": "set",
+"cell": "S!P126",
+"input": "=COUNTBLANK(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!S126",
+"input": "=COUNTIF(INDIRECT(\"Jan!A1:B4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!V126",
+"input": "=COUNTIF(INDIRECT(\"Jan!A1:B4\"),\">2\")"
+},
+{
+"op": "set",
+"cell": "S!Y126",
+"input": "=SUMIF(INDIRECT(\"Jan!A1:B4\"),\"G\",Jan!B1:B4)"
+},
+{
+"op": "set",
+"cell": "S!AB126",
+"input": "=SUMIF(Jan!A1:A4,\"G\",INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE126",
+"input": "=MATCH(\"H\",INDIRECT(\"Jan!A1:B4\"),0)"
+},
+{
+"op": "set",
+"cell": "S!AH126",
+"input": "=XMATCH(4,INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AK126",
+"input": "=TEXTJOIN(\",\",TRUE,INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AN126",
+"input": "=ROW(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AQ126",
+"input": "=COLUMN(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AT126",
+"input": "=SMALL(INDIRECT(\"Jan!A1:B4\"),1)"
+},
+{
+"op": "set",
+"cell": "S!AW126",
+"input": "=LARGE(INDIRECT(\"Jan!A1:B4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!AZ126",
+"input": "=RANK(2,INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC126",
+"input": "=AVERAGE(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BF126",
+"input": "=SUBTOTAL(9,INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!A132",
+"input": "=AGGREGATE(9,6,INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!D132",
+"input": "=LOOKUP(4,INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!G132",
+"input": "=VLOOKUP(4,INDIRECT(\"Jan!A1:B4\"),1,0)"
+},
+{
+"op": "set",
+"cell": "S!J132",
+"input": "=INDEX(INDIRECT(\"Jan!A1:B4\"),2)"
+},
+{
+"op": "set",
+"cell": "S!M132",
+"input": "=ISBLANK(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!P132",
+"input": "=N(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!S132",
+"input": "=T(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!V132",
+"input": "=FREQUENCY(INDIRECT(\"Jan!A1:B4\"),{2,5})"
+},
+{
+"op": "set",
+"cell": "S!Y132",
+"input": "=UNIQUE(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AB132",
+"input": "=SORT(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AE132",
+"input": "=FILTER(INDIRECT(\"Jan!A1:B4\"),INDIRECT(\"Jan!A1:B4\")<>\"\")"
+},
+{
+"op": "set",
+"cell": "S!AH132",
+"input": "=CONCAT(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AK132",
+"input": "=COUNTIFS(INDIRECT(\"Jan!A1:B4\"),\"G\",Jan!B1:B4,\">1\")"
+},
+{
+"op": "set",
+"cell": "S!AN132",
+"input": "=SUMIFS(Jan!B1:B4,INDIRECT(\"Jan!A1:B4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!AQ132",
+"input": "=PRODUCT(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AT132",
+"input": "=MEDIAN(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!AW132",
+"input": "=ROWS(TRANSPOSE(INDIRECT(\"Jan!A1:B4\")))"
+},
+{
+"op": "set",
+"cell": "S!AZ132",
+"input": "=SUMSQ(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "set",
+"cell": "S!BC132",
+"input": "=AVERAGEIF(INDIRECT(\"Jan!A1:B4\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!BF132",
+"input": "=TRANSPOSE(INDIRECT(\"Jan!A1:B4\"))"
+},
+{
+"op": "read",
+"range": "S!A1:BH136"
+},
+{
+"op": "set",
+"cell": "S!Z1",
+"input": "2"
+},
+{
+"op": "read",
+"range": "S!A1:BH136"
+},
+{
+"op": "set",
+"cell": "Jan!B2",
+"input": "20"
+},
+{
+"op": "read",
+"range": "S!A1:BH136"
+},
+{
+"op": "calc"
+},
+{
+"op": "read",
+"range": "S!A1:BH136"
+}
+]
+}

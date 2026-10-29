@@ -20,7 +20,7 @@ fn two_prod(a: f64, b: f64) -> DD {
     DD(p, a.mul_add(b, -p))
 }
 
-pub const LN2: DD = DD(0.6931471805599453, 2.3190468138462996e-17);
+pub const LN2: DD = DD(std::f64::consts::LN_2, 2.3190468138462996e-17);
 
 pub const LN_SQRT_2PI: DD = DD(0.9189385332046728, -3.8782941580672414e-17);
 

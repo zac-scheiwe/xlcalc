@@ -1,0 +1,73 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!C30",
+"input": "=SUM(2:3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C31",
+"input": "=SUM(B:C)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C32",
+"input": "=SUM(2:2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C33",
+"input": "=SUM(B:B)"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C30:C33",
+"to": "Sheet1!H8",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!H8:K8"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C30:C33",
+"to": "Sheet1!Z8",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!Z8:AC8"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C30:C33",
+"to": "Sheet1!Z40",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!Z40:AC40"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C30:C33",
+"to": "Sheet1!H3",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!H3:K3"
+}
+]
+}

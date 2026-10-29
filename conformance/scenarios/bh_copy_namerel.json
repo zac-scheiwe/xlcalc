@@ -1,0 +1,191 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "30"
+},
+{
+"op": "name",
+"name": "Left",
+"refers_to": "=Sheet1!A1"
+},
+{
+"op": "name",
+"name": "Up",
+"refers_to": "=Sheet1!B$1"
+},
+{
+"op": "name",
+"name": "Mixed",
+"refers_to": "=Sheet1!$A2"
+},
+{
+"op": "name",
+"name": "Rng",
+"refers_to": "=Sheet1!A1:B1"
+},
+{
+"op": "name",
+"name": "RowName",
+"refers_to": "=Sheet1!1:1"
+},
+{
+"op": "name",
+"name": "ColName",
+"refers_to": "=Sheet1!B:B"
+},
+{
+"op": "name",
+"name": "Sum2",
+"refers_to": "=SUM(Sheet1!A1:A2)"
+},
+{
+"op": "name",
+"name": "OtherSh",
+"refers_to": "=Sheet2!A1"
+},
+{
+"op": "name",
+"name": "Ofs",
+"refers_to": "=OFFSET(Sheet1!A1,1,0)"
+},
+{
+"op": "name",
+"name": "Ind",
+"refers_to": "=INDIRECT(\"A1\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=Left"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=Up"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=Mixed"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=SUM(Rng)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=SUM(RowName)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=SUM(ColName)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=Sum2"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=OtherSh"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=Ofs"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=Ind"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "77"
+},
+{
+"op": "set",
+"cell": "Sheet2!B1",
+"input": "88"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D10"
+},
+{
+"op": "copy",
+"from": "Sheet1!D1:D10",
+"to": "Sheet1!E3"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E13"
+},
+{
+"op": "autofill",
+"from": "Sheet1!D1:D10",
+"to": "Sheet1!D1:H10",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:H10"
+},
+{
+"op": "copy",
+"from": "Sheet1!D1:D10",
+"to": "Sheet2!D1"
+},
+{
+"op": "read",
+"range": "Sheet2!D1:D10"
+},
+{
+"op": "autofill",
+"from": "Sheet1!D1:D10",
+"to": "Sheet1!D1:D30",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D30"
+}
+]
+}

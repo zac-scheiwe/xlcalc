@@ -1,0 +1,305 @@
+{
+"sheets": [
+"Jan",
+"Tot"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C1",
+"value": {
+"t": "s",
+"v": "Price"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C2",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A4",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C4",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "table",
+"name": "tJan",
+"range": "Jan!A1:C4"
+},
+{
+"op": "set",
+"cell": "Jan!D1",
+"input": "Amt"
+},
+{
+"op": "set",
+"cell": "Jan!D2",
+"input": "=[@Qty]*[@Price]"
+},
+{
+"op": "set",
+"cell": "Jan!F1",
+"input": "=SUM(tJan[Amt])"
+},
+{
+"op": "set",
+"cell": "Jan!F2",
+"input": "=SUM(Jan!D2:D4)"
+},
+{
+"op": "set",
+"cell": "Jan!F3",
+"input": "=ROWS(tJan)"
+},
+{
+"op": "set",
+"cell": "Jan!F4",
+"input": "=tJan[[#This Row],[Qty]]"
+},
+{
+"op": "name",
+"name": "JanTot",
+"refers_to": "=Jan!$F$1"
+},
+{
+"op": "name",
+"name": "LocalN",
+"refers_to": "=Jan!$F$2",
+"scope": "Jan"
+},
+{
+"op": "set",
+"cell": "Jan!F5",
+"input": "=JanTot+1"
+},
+{
+"op": "set",
+"cell": "Jan!F6",
+"input": "=LocalN"
+},
+{
+"op": "set",
+"cell": "Tot!A1",
+"input": "=SUM(Jan!F1)"
+},
+{
+"op": "set",
+"cell": "Tot!A2",
+"input": "=JanTot"
+},
+{
+"op": "read",
+"range": "Jan!A1:F7"
+},
+{
+"op": "read",
+"range": "Tot!A1:A3"
+},
+{
+"op": "copy_sheet",
+"sheet": "Jan",
+"after": "Jan"
+},
+{
+"op": "tables"
+},
+{
+"op": "names"
+},
+{
+"op": "read",
+"range": "Jan (2)!A1:F7"
+},
+{
+"op": "read",
+"range": "Tot!A1:A3"
+},
+{
+"op": "set",
+"cell": "Jan (2)!B2",
+"input": "50"
+},
+{
+"op": "read",
+"range": "Jan (2)!A1:F7"
+},
+{
+"op": "read",
+"range": "Jan!A1:F7"
+},
+{
+"op": "read",
+"range": "Tot!A1:A3"
+},
+{
+"op": "set",
+"cell": "Jan (2)!A5",
+"input": "z"
+},
+{
+"op": "set",
+"cell": "Jan (2)!B5",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Jan (2)!C5",
+"input": "1"
+},
+{
+"op": "read",
+"range": "Jan (2)!A1:F7"
+},
+{
+"op": "read",
+"range": "Jan!A1:F7"
+},
+{
+"op": "rename_sheet",
+"sheet": "Jan (2)",
+"name": "Feb"
+},
+{
+"op": "read",
+"range": "Feb!A1:F7"
+},
+{
+"op": "set",
+"cell": "Tot!B1",
+"input": "=SUM(Feb!D2:D5)+SUM(Jan!D2:D4)"
+},
+{
+"op": "set",
+"cell": "Tot!B2",
+"input": "=SUM(Jan:Feb!D2)"
+},
+{
+"op": "set",
+"cell": "Tot!B3",
+"input": "=INDIRECT(\"Feb!F1\")"
+},
+{
+"op": "read",
+"range": "Tot!A1:B4"
+},
+{
+"op": "copy",
+"from": "Jan!A1:D5",
+"to": "Tot!D1"
+},
+{
+"op": "tables"
+},
+{
+"op": "read",
+"range": "Tot!A1:H8"
+},
+{
+"op": "cut",
+"from": "Jan!A1:D5",
+"to": "Tot!J1"
+},
+{
+"op": "tables"
+},
+{
+"op": "read",
+"range": "Tot!A1:O8"
+},
+{
+"op": "read",
+"range": "Jan!A1:F7"
+},
+{
+"op": "read",
+"range": "Feb!A1:F7"
+},
+{
+"op": "delete_sheet",
+"sheet": "Feb"
+},
+{
+"op": "read",
+"range": "Tot!A1:O8"
+}
+]
+}

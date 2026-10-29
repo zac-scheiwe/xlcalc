@@ -1,0 +1,746 @@
+{
+"sheets": [
+"N",
+"O"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "N!A1",
+"value": {
+"t": "s",
+"v": "O'Brien"
+}
+},
+{
+"op": "setv",
+"cell": "N!A2",
+"value": {
+"t": "s",
+"v": "OBrien"
+}
+},
+{
+"op": "setv",
+"cell": "N!A3",
+"value": {
+"t": "s",
+"v": "Obrien"
+}
+},
+{
+"op": "setv",
+"cell": "N!A4",
+"value": {
+"t": "s",
+"v": "McDonald"
+}
+},
+{
+"op": "setv",
+"cell": "N!A5",
+"value": {
+"t": "s",
+"v": "Mc Donald"
+}
+},
+{
+"op": "setv",
+"cell": "N!A6",
+"value": {
+"t": "s",
+"v": "de la Cruz"
+}
+},
+{
+"op": "setv",
+"cell": "N!A7",
+"value": {
+"t": "s",
+"v": "Delacruz"
+}
+},
+{
+"op": "setv",
+"cell": "N!A8",
+"value": {
+"t": "s",
+"v": "M\u00fcller"
+}
+},
+{
+"op": "setv",
+"cell": "N!A9",
+"value": {
+"t": "s",
+"v": "Muller"
+}
+},
+{
+"op": "setv",
+"cell": "N!A10",
+"value": {
+"t": "s",
+"v": "Mueller"
+}
+},
+{
+"op": "setv",
+"cell": "N!A11",
+"value": {
+"t": "s",
+"v": "Zo\u00eb"
+}
+},
+{
+"op": "setv",
+"cell": "N!A12",
+"value": {
+"t": "s",
+"v": "Zoe"
+}
+},
+{
+"op": "setv",
+"cell": "N!A13",
+"value": {
+"t": "s",
+"v": "\u00e9tienne"
+}
+},
+{
+"op": "setv",
+"cell": "N!A14",
+"value": {
+"t": "s",
+"v": "Etienne"
+}
+},
+{
+"op": "setv",
+"cell": "N!A15",
+"value": {
+"t": "s",
+"v": "\u00c9ric"
+}
+},
+{
+"op": "setv",
+"cell": "N!A16",
+"value": {
+"t": "s",
+"v": "Eric"
+}
+},
+{
+"op": "setv",
+"cell": "N!A17",
+"value": {
+"t": "s",
+"v": "3M"
+}
+},
+{
+"op": "setv",
+"cell": "N!A18",
+"value": {
+"t": "s",
+"v": "A-1"
+}
+},
+{
+"op": "setv",
+"cell": "N!A19",
+"value": {
+"t": "s",
+"v": "a1"
+}
+},
+{
+"op": "setv",
+"cell": "N!A20",
+"value": {
+"t": "s",
+"v": "A 1"
+}
+},
+{
+"op": "setv",
+"cell": "N!A21",
+"value": {
+"t": "s",
+"v": "- x"
+}
+},
+{
+"op": "setv",
+"cell": "N!A22",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "setv",
+"cell": "N!A23",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "N!A24",
+"value": {
+"t": "s",
+"v": "_x"
+}
+},
+{
+"op": "setv",
+"cell": "N!A25",
+"value": {
+"t": "s",
+"v": "*star"
+}
+},
+{
+"op": "setv",
+"cell": "N!A26",
+"value": {
+"t": "s",
+"v": "~tilde"
+}
+},
+{
+"op": "setv",
+"cell": "N!A27",
+"value": {
+"t": "s",
+"v": "10"
+}
+},
+{
+"op": "setv",
+"cell": "N!A28",
+"value": {
+"t": "s",
+"v": "9"
+}
+},
+{
+"op": "setv",
+"cell": "N!A29",
+"value": {
+"t": "s",
+"v": "2e3"
+}
+},
+{
+"op": "setv",
+"cell": "N!A30",
+"value": {
+"t": "s",
+"v": "1,5"
+}
+},
+{
+"op": "setv",
+"cell": "N!A31",
+"value": {
+"t": "s",
+"v": "Stra\u00dfe"
+}
+},
+{
+"op": "setv",
+"cell": "N!A32",
+"value": {
+"t": "s",
+"v": "Strasse"
+}
+},
+{
+"op": "setv",
+"cell": "N!A33",
+"value": {
+"t": "s",
+"v": "STRASSE"
+}
+},
+{
+"op": "setv",
+"cell": "N!A34",
+"value": {
+"t": "s",
+"v": "\u00c6sop"
+}
+},
+{
+"op": "setv",
+"cell": "N!A35",
+"value": {
+"t": "s",
+"v": "Aesop"
+}
+},
+{
+"op": "setv",
+"cell": "N!A36",
+"value": {
+"t": "s",
+"v": "\u00d8rsted"
+}
+},
+{
+"op": "setv",
+"cell": "N!A37",
+"value": {
+"t": "s",
+"v": "Orsted"
+}
+},
+{
+"op": "setv",
+"cell": "N!A38",
+"value": {
+"t": "s",
+"v": "\u0141\u00f3d\u017a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A39",
+"value": {
+"t": "s",
+"v": "Lodz"
+}
+},
+{
+"op": "setv",
+"cell": "N!A40",
+"value": {
+"t": "s",
+"v": "\u00d1and\u00fa"
+}
+},
+{
+"op": "setv",
+"cell": "N!A41",
+"value": {
+"t": "s",
+"v": "Nandu"
+}
+},
+{
+"op": "setv",
+"cell": "N!A42",
+"value": {
+"t": "s",
+"v": "\u00df"
+}
+},
+{
+"op": "setv",
+"cell": "N!A43",
+"value": {
+"t": "s",
+"v": "ss"
+}
+},
+{
+"op": "setv",
+"cell": "N!A44",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A45",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "N!A46",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A47",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "N!A48",
+"value": {
+"t": "s",
+"v": "\u00e4"
+}
+},
+{
+"op": "setv",
+"cell": "N!A49",
+"value": {
+"t": "s",
+"v": "aa"
+}
+},
+{
+"op": "setv",
+"cell": "N!A50",
+"value": {
+"t": "s",
+"v": "a\u00e4"
+}
+},
+{
+"op": "setv",
+"cell": "N!A51",
+"value": {
+"t": "s",
+"v": "ab"
+}
+},
+{
+"op": "setv",
+"cell": "N!A52",
+"value": {
+"t": "s",
+"v": "a b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A53",
+"value": {
+"t": "s",
+"v": "a_b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A54",
+"value": {
+"t": "s",
+"v": "a-b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A55",
+"value": {
+"t": "s",
+"v": "a.b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A56",
+"value": {
+"t": "s",
+"v": "a,b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A57",
+"value": {
+"t": "s",
+"v": "a'b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A58",
+"value": {
+"t": "s",
+"v": "a\u2019b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A59",
+"value": {
+"t": "s",
+"v": "a/b"
+}
+},
+{
+"op": "setv",
+"cell": "N!A60",
+"value": {
+"t": "s",
+"v": "(a)"
+}
+},
+{
+"op": "setv",
+"cell": "N!A61",
+"value": {
+"t": "s",
+"v": "[a]"
+}
+},
+{
+"op": "setv",
+"cell": "N!A62",
+"value": {
+"t": "s",
+"v": "{a}"
+}
+},
+{
+"op": "setv",
+"cell": "N!A63",
+"value": {
+"t": "s",
+"v": "<a>"
+}
+},
+{
+"op": "setv",
+"cell": "N!A64",
+"value": {
+"t": "s",
+"v": "@a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A65",
+"value": {
+"t": "s",
+"v": "#a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A66",
+"value": {
+"t": "s",
+"v": "$a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A67",
+"value": {
+"t": "s",
+"v": "%a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A68",
+"value": {
+"t": "s",
+"v": "&a"
+}
+},
+{
+"op": "set",
+"cell": "N!A69",
+"input": "=a"
+},
+{
+"op": "setv",
+"cell": "N!A70",
+"value": {
+"t": "s",
+"v": "+a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A71",
+"value": {
+"t": "s",
+"v": "?a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A72",
+"value": {
+"t": "s",
+"v": "!a"
+}
+},
+{
+"op": "setv",
+"cell": "N!A73",
+"value": {
+"t": "s",
+"v": "TRUE"
+}
+},
+{
+"op": "setv",
+"cell": "N!A74",
+"value": {
+"t": "s",
+"v": "FALSE"
+}
+},
+{
+"op": "setv",
+"cell": "N!A75",
+"value": {
+"t": "s",
+"v": "true"
+}
+},
+{
+"op": "setv",
+"cell": "N!A76",
+"value": {
+"t": "s",
+"v": "#N/A"
+}
+},
+{
+"op": "set",
+"cell": "O!A1",
+"input": "=SORT(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!B1",
+"input": "=SORT(N!A1:A76,1,-1)"
+},
+{
+"op": "set",
+"cell": "O!C1",
+"input": "=SORTBY(N!A1:A76,N!A1:A76,1)"
+},
+{
+"op": "set",
+"cell": "O!D1",
+"input": "=UNIQUE(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!E1",
+"input": "=MATCH(N!A1:A76,N!A1:A76,0)"
+},
+{
+"op": "set",
+"cell": "O!F1",
+"input": "=COUNTIF(N!A1:A76,N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!G1",
+"input": "=XMATCH(N!A1:A76,SORT(N!A1:A76),1)"
+},
+{
+"op": "set",
+"cell": "O!H1",
+"input": "=RANK.EQ(1,{1})"
+},
+{
+"op": "set",
+"cell": "O!I1",
+"input": "=N!A1:A76>=N!A2:A77"
+},
+{
+"op": "set",
+"cell": "O!J1",
+"input": "=LEN(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!K1",
+"input": "=UPPER(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!L1",
+"input": "=PROPER(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!M1",
+"input": "=LOWER(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!N1",
+"input": "=EXACT(N!A1:A76,UPPER(N!A1:A76))"
+},
+{
+"op": "set",
+"cell": "O!O1",
+"input": "=CODE(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!P1",
+"input": "=UNICODE(N!A1:A76)"
+},
+{
+"op": "set",
+"cell": "O!Q1",
+"input": "=LEFT(N!A1:A76,2)&\"|\"&RIGHT(N!A1:A76,1)&\"|\"&MID(N!A1:A76,2,2)"
+},
+{
+"op": "set",
+"cell": "O!R1",
+"input": "=SUBSTITUTE(N!A1:A76,\"a\",\"X\")"
+},
+{
+"op": "set",
+"cell": "O!S1",
+"input": "=FIND(\"a\",N!A1:A76&\"a\")"
+},
+{
+"op": "set",
+"cell": "O!T1",
+"input": "=SEARCH(\"?a\",N!A1:A76&\"xa\")"
+},
+{
+"op": "set",
+"cell": "O!U1",
+"input": "=TEXTBEFORE(N!A1:A76,\"a\")"
+},
+{
+"op": "set",
+"cell": "O!V1",
+"input": "=REPT(N!A1:A76,2)"
+},
+{
+"op": "set",
+"cell": "O!W1",
+"input": "=T(N!A1:A76)&CLEAN(N!A1:A76)&TRIM(N!A1:A76)"
+},
+{
+"op": "sort",
+"range": "N!A1:A76",
+"keys": [
+{
+"key": 1,
+"order": "asc"
+}
+]
+},
+{
+"op": "read",
+"range": "N!A1:A76"
+},
+{
+"op": "read",
+"range": "O!A1:W78"
+}
+]
+}

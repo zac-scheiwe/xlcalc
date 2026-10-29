@@ -23,6 +23,7 @@ pub(crate) mod goalseek;
 pub(crate) mod graph;
 pub(crate) mod input;
 pub(crate) mod legacy;
+mod legacy_classes;
 pub(crate) mod locale;
 pub(crate) mod merge;
 pub(crate) mod moves;
@@ -64,6 +65,7 @@ pub use sort::{SortKey, SortSpec};
 pub use subtotal::{SubFunc, SubtotalSpec};
 pub use ttc::TtcSpec;
 pub use value::{Array, Value, XlError};
+pub use view::FilterSpec;
 pub use workbook::tables::Table;
 pub use workbook::{
     CalcMode, EditError, Entry, FormulaCell, FormulaId, NameDef, Names, Settings, Sheet, Workbook,

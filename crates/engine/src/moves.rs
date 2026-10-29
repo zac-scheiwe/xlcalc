@@ -30,7 +30,6 @@ fn offset(r: &Rect, dr: i64, dc: i64) -> Rect {
     )
 }
 
-#[allow(clippy::too_many_arguments)]
 fn band(
     (a, b): (i64, i64),
     (s0, s1): (i64, i64),
@@ -692,7 +691,7 @@ impl Workbook {
                     }
                     let f = self.formula_mut(fid);
                     f.spill = None;
-                    f.value = crate::value::Value::Error(crate::value::XlError::Spill);
+                    f.value = crate::value::Value::Error(crate::value::XlError::SPILL);
                     self.set_dirty(fid, true);
                     self.calc.dirty_list.push(fid);
                 }
@@ -950,14 +949,32 @@ impl Workbook {
         add: u32,
         header_too: bool,
     ) -> bool {
-        self.resize_exact_refs(ti, old, add as i64, header_too)
+        self.resize_exact_refs(ti, old, add as i64, header_too, None)
+    }
+
+    pub(crate) fn grow_exact_refs_typed(
+        &mut self,
+        ti: usize,
+        old: Rect,
+        add: u32,
+    ) -> (bool, Vec<(u32, FormulaId, Arc<Formula>)>) {
+        let mut firsts = Vec::new();
+        let any = self.resize_exact_refs(ti, old, add as i64, true, Some(&mut firsts));
+        (any, firsts)
     }
 
     pub(crate) fn shrink_exact_refs(&mut self, ti: usize, old: Rect, sub: u32) -> bool {
-        self.resize_exact_refs(ti, old, -(sub as i64), true)
+        self.resize_exact_refs(ti, old, -(sub as i64), true, None)
     }
 
-    fn resize_exact_refs(&mut self, ti: usize, old: Rect, add: i64, header_too: bool) -> bool {
+    fn resize_exact_refs(
+        &mut self,
+        ti: usize,
+        old: Rect,
+        add: i64,
+        header_too: bool,
+        mut calc_firsts: Option<&mut Vec<(u32, FormulaId, Arc<Formula>)>>,
+    ) -> bool {
         let mut any = false;
 
         let sheet = self.tables[ti].sheet;
@@ -999,13 +1016,31 @@ impl Workbook {
                 }
             });
             if changed {
-                any = true;
-                let text = print_node(self, &root, host);
-                let f = self.formula_mut(fid);
-                f.formula = Arc::new(Formula {
+                let new = Arc::new(Formula {
                     root,
                     volatile: formula.volatile,
                 });
+                if let Some(firsts) = calc_firsts.as_deref_mut() {
+                    let t = &self.tables[ti];
+                    let (td0, td1) = t.data_rows();
+                    let in_calc = host.sheet == sheet
+                        && (td0..=td1).contains(&host.row)
+                        && (t.rect.c0..=t.rect.c1).contains(&host.col)
+                        && t.calc
+                            .get((host.col - t.rect.c0) as usize)
+                            .copied()
+                            .unwrap_or(false);
+                    if in_calc {
+                        if host.row == td0 {
+                            firsts.push((host.col, fid, new));
+                        }
+                        continue;
+                    }
+                }
+                any = true;
+                let text = print_node(self, &new.root, host);
+                let f = self.formula_mut(fid);
+                f.formula = new;
                 f.text = text;
             }
         }

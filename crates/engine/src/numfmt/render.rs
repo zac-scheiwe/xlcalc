@@ -63,7 +63,7 @@ pub(super) fn choose(f: &NumberFormat, x: f64) -> Result<(Option<usize>, bool), 
     }
     if n == 1 {
         if plain_general || s.len() > 1 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         return Ok((None, !else_drops_sign(c1)));
     }
@@ -74,7 +74,7 @@ pub(super) fn choose(f: &NumberFormat, x: f64) -> Result<(Option<usize>, bool), 
             } else if n >= 3 {
                 Ok((Some(2), true))
             } else {
-                Err(XlError::Value)
+                Err(XlError::VALUE)
             }
         }
 
@@ -294,7 +294,7 @@ fn render_body(
         Body::Frac(l) => render_frac(l, a, loc)?,
         Body::Date(l) => {
             if negative && !l.signed && ds == DateSystem::D1900 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             render_date(l, a, ds, loc)?
         }
@@ -676,7 +676,7 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
     } else {
         a
     };
-    let (num, den) = calc_fraction(v, frac_spec(&l.den), l.has_int).ok_or(XlError::Value)?;
+    let (num, den) = calc_fraction(v, frac_spec(&l.den), l.has_int).ok_or(XlError::VALUE)?;
     let (int_digits_raw, num) = if l.has_int {
         let dec = Dec::from_f64(v);
         if num == den || num == 0 {
@@ -724,7 +724,7 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
     let int_empty = int_digits.is_empty() && last_int != Some(Ph::Zero);
 
     if l.has_int && l.n_num == 0 && int_empty {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
 
     let num_digits = if blank == Blank::Show {
@@ -952,20 +952,20 @@ fn render_date(
                     !matches!(it, Item::Date(d) if !matches!(d, DateTok::ElapsedH(_) | DateTok::ElapsedM(_) | DateTok::ElapsedS(_)))
                 });
             if !heads_only {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
         }
         let t = t.min(9.0e18);
 
         if l.subsec > 0 && (t / per_day as f64).floor() > ds.max_serial() {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let t = t as i64;
         (t / per_day, t % per_day, t)
     } else {
         let d0 = x.floor();
         if d0 > 1.0e9 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let mut d = d0 as i64;
 
@@ -988,7 +988,7 @@ fn render_date(
 
     let traced = (l.elapsed && x >= 0.0).then(|| set_num_cascade(x, l.subsec));
     if l.needs_date && day as f64 > ds.max_serial() {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
 
     let cal = if l.hijri {
@@ -1023,7 +1023,7 @@ fn render_date(
         } else {
             day
         };
-        datetime::hijri_from_serial(serial).ok_or(XlError::Value)?
+        datetime::hijri_from_serial(serial).ok_or(XlError::VALUE)?
     } else if l.needs_date {
         let (y, m, d) = datetime::ymd_from_serial(ds, day);
         (y + calendars::year_offset(cal), m, d)

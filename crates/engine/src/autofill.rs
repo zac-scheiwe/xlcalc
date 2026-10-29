@@ -700,6 +700,9 @@ fn group_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> 
             numeric_value(ctx, slots, &ys, k, p, false)
         }
         Kind::Time(_) => {
+            if matches!(ty, FillType::Linear | FillType::Growth) {
+                return None;
+            }
             let ys: Vec<f64> = slots
                 .iter()
                 .map(|&s| match items[s] {
@@ -964,7 +967,7 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
         })
         .collect();
     let ints: Vec<i64> = raw.iter().map(|v| v.floor() as i64).collect();
-    let dv: Vec<f64> = if time {
+    let dv: Vec<f64> = if time && ty != FillType::Days {
         raw.clone()
     } else {
         ints.iter().map(|&i| i as f64).collect()
@@ -1118,6 +1121,11 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
             let d = date_in_month(sys, target, dom, eom);
             if ty == FillType::Weekdays {
                 roll_back_weekend(sys, d) as f64
+            } else if time
+                && m > 1
+                && matches!(ty, FillType::Default | FillType::Series | FillType::Values)
+            {
+                d as f64 + (raw[k] - ints[k] as f64)
             } else {
                 d as f64
             }
@@ -1353,6 +1361,84 @@ impl Workbook {
         r
     }
 
+    fn autofill_arrays(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        dest_part: Rect,
+        dir: Dir,
+        count: u32,
+    ) -> Result<RecalcReport, EditError> {
+        let len = if dir.vertical() {
+            src.rows()
+        } else {
+            src.cols()
+        };
+        let (full, rem) = (count / len, count % len);
+        let mut jobs: Vec<(Rect, CellAddr)> = Vec::new();
+        for k in 0..full {
+            let (r, c) = match dir {
+                Dir::Down => (src.r0 + len * (k + 1), src.c0),
+                Dir::Up => (src.r0 - len * (k + 1), src.c0),
+                Dir::Right => (src.r0, src.c0 + len * (k + 1)),
+                Dir::Left => (src.r0, src.c0 - len * (k + 1)),
+            };
+            jobs.push((src, CellAddr::new(sheet, r, c)));
+        }
+        if rem > 0 {
+            let (part, r, c) = match dir {
+                Dir::Down => (
+                    Rect::new(src.r0, src.c0, src.r0 + rem - 1, src.c1),
+                    src.r0 + len * (full + 1),
+                    src.c0,
+                ),
+                Dir::Up => (
+                    Rect::new(src.r1 - rem + 1, src.c0, src.r1, src.c1),
+                    src.r0 - len * full - rem,
+                    src.c0,
+                ),
+                Dir::Right => (
+                    Rect::new(src.r0, src.c0, src.r1, src.c0 + rem - 1),
+                    src.r0,
+                    src.c0 + len * (full + 1),
+                ),
+                Dir::Left => (
+                    Rect::new(src.r0, src.c1 - rem + 1, src.r1, src.c1),
+                    src.r0,
+                    src.c0 - len * full - rem,
+                ),
+            };
+            jobs.push((part, CellAddr::new(sheet, r, c)));
+        }
+        self.remove_arrays_in(sheet, dest_part);
+        let mode = self.settings.mode;
+        self.settings.mode = CalcMode::Manual;
+        let mut report = RecalcReport::default();
+        let mut failed = None;
+        self.with_op(Op::NoAutoExpand, true, |this| {
+            for (from, to) in jobs {
+                match this.copy_range(sheet, from, to) {
+                    Ok(r) => report.changed.extend(r.changed),
+                    Err(e) => {
+                        failed = Some(e);
+                        break;
+                    }
+                }
+            }
+        });
+        self.settings.mode = mode;
+        if mode == CalcMode::Automatic {
+            let r = calc::recalc(self);
+            report.evaluations = r.evaluations;
+            report.circular = r.circular;
+            report.changed.extend(r.changed);
+        }
+        match failed {
+            Some(e) => Err(e),
+            None => Ok(calc::finish_report(report)),
+        }
+    }
+
     fn autofill_inner(
         &mut self,
         sheet: SheetId,
@@ -1395,6 +1481,18 @@ impl Workbook {
         };
         self.guard_arrays_rect(sheet, dest_part)?;
         self.data_tables_overwritten(sheet, dest_part)?;
+        if matches!(ty, FillType::Default | FillType::Copy | FillType::Series)
+            && self
+                .array_blocks(sheet)
+                .iter()
+                .any(|(_, b)| !b.is_cell() && b.intersects(&src))
+            && self
+                .array_blocks(sheet)
+                .iter()
+                .all(|(_, b)| !b.intersects(&src) || crate::cse::inside(b, &src))
+        {
+            return self.autofill_arrays(sheet, src, dest_part, dir, count);
+        }
         let numeric_at = |l: u32, s: u32| -> bool {
             let (r, c) = match dir {
                 Dir::Down => (src.r0 + s, src.c0 + l),
@@ -1460,7 +1558,7 @@ impl Workbook {
                         Act::Copy(_) | Act::Set(..) => {
                             let old_fmt = (ty == FillType::Values)
                                 .then(|| this.number_format(to).to_string());
-                            match this.copy_range(sheet, from, to) {
+                            match this.copy_range_with(sheet, from, to, true) {
                                 Ok(r) => report.changed.extend(r.changed),
                                 Err(e) => {
                                     failed = Some(e);

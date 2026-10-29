@@ -1,0 +1,166 @@
+{
+"sheets": [
+"Jan",
+"Feb",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B1",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B3",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "S!C1",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "set",
+"cell": "S!A1",
+"input": "=SUM(COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"),\"G\"))"
+},
+{
+"op": "set",
+"cell": "S!A2",
+"input": "=COUNTIF(INDIRECT(\"Jan!A1:A3\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!A3",
+"input": "=SUM(INDIRECT({\"Jan\",\"Feb\"}&\"!B1\"))"
+},
+{
+"op": "set",
+"cell": "S!A4",
+"input": "=SUMPRODUCT(COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"),\"G\"))"
+},
+{
+"op": "set",
+"cell": "S!A5",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!A6",
+"input": "=SUMIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"),\"G\",Jan!B1:B3)"
+},
+{
+"op": "set",
+"cell": "S!A7",
+"input": "=SUMPRODUCT(N(OFFSET(Jan!A1,{0,1},1)))"
+},
+{
+"op": "set",
+"cell": "S!A8",
+"input": "=SUM(COUNTIF(OFFSET(Jan!A1,0,{0,0}),\"G\"))"
+},
+{
+"op": "read",
+"range": "S!A1:A8"
+},
+{
+"op": "set",
+"cell": "S!C1",
+"input": "6"
+},
+{
+"op": "read",
+"range": "S!A1:A8"
+}
+]
+}

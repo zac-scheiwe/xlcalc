@@ -717,7 +717,7 @@ impl Workbook {
                     let dead = gone.iter().any(|g| {
                         crate::text::eq_ordinal_ci(g, a) || crate::text::eq_ordinal_ci(g, b)
                     });
-                    dead.then(|| Node::DeadRef(SheetRef::Current))
+                    dead.then_some(Node::DeadRef(SheetRef::Current))
                 }
                 _ => None,
             });

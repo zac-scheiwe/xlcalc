@@ -30,7 +30,7 @@ pub fn var(v: &[f64], sample: bool) -> R<f64> {
     use crate::x87;
     let n = v.len();
     if n == 0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     let hz = |x: f64| x.to_bits() & 0xFFFF_0000_0000_0000 == 0;
     let pos = |x: f64| (x.to_bits() & 0xFFFF_0000_0000_0000) as i64 > 0;
@@ -42,9 +42,9 @@ pub fn var(v: &[f64], sample: bool) -> R<f64> {
     }
     if sample && n < 2 {
         return Err(if q.is_finite() {
-            XlError::Div0
+            XlError::DIV0
         } else {
-            XlError::Num
+            XlError::NUM
         });
     }
     let t = x87::mul(s, s);
@@ -60,7 +60,7 @@ pub fn var(v: &[f64], sample: bool) -> R<f64> {
     };
     let mean = x87::div(s, nf);
     if !d.is_finite() || !mean.is_finite() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if hz(mean) {
         return Ok(if hz(d) || pos(d) {
@@ -75,7 +75,7 @@ pub fn var(v: &[f64], sample: bool) -> R<f64> {
         if r.to_bits() >> 32 != 0 && !tight {
             let m = x87::sub(x87::div(mean, r).abs(), 1000.0);
             if !m.is_finite() {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             if !hz(m) && !pos(m) {
                 return Ok(r);
@@ -102,14 +102,17 @@ fn sorted(v: &[f64]) -> Vec<f64> {
 
 pub fn median(v: &[f64]) -> R<f64> {
     if v.is_empty() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let s = sorted(v);
     let n = s.len();
     Ok(if n % 2 == 1 {
         s[n / 2]
     } else {
-        s[n / 2 - 1] + 0.5 * (s[n / 2] - s[n / 2 - 1])
+        crate::x87::add(
+            s[n / 2 - 1],
+            crate::x87::mul(crate::x87::sub(s[n / 2], s[n / 2 - 1]), 0.5),
+        )
     })
 }
 
@@ -129,7 +132,7 @@ pub fn mode(v: &[f64]) -> R<f64> {
 
 pub fn kth(v: &[f64], k: f64, largest: bool) -> R<f64> {
     if k < 1.0 || k > v.len() as f64 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let k = if largest { k.ceil() } else { k.floor() };
     let s = sorted(v);
@@ -144,23 +147,27 @@ fn interpolate(s: &[f64], rank0: f64) -> f64 {
         return s[s.len() - 1];
     }
     let frac = rank0 - f;
-    s[i] + frac * (s[i + 1] - s[i])
+
+    crate::x87::add(s[i], crate::x87::mul(crate::x87::sub(s[i + 1], s[i]), frac))
 }
 
 pub fn percentile_inc(v: &[f64], k: f64) -> R<f64> {
     if v.is_empty() || !(0.0..=1.0).contains(&k) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let s = sorted(v);
 
-    Ok(interpolate(&s, (k * (s.len() - 1) as f64 + 1.0) - 1.0))
+    Ok(interpolate(
+        &s,
+        crate::x87::add(crate::x87::mul(k, (s.len() - 1) as f64), 1.0) - 1.0,
+    ))
 }
 
 pub fn percentile_exc(v: &[f64], k: f64) -> R<f64> {
     let n = v.len() as f64;
-    let rank = k * (n + 1.0);
+    let rank = crate::x87::mul(k, n + 1.0);
     if v.is_empty() || k <= 0.0 || k >= 1.0 || rank < 1.0 || rank > n {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let s = sorted(v);
     Ok(interpolate(&s, rank - 1.0))
@@ -169,7 +176,7 @@ pub fn percentile_exc(v: &[f64], k: f64) -> R<f64> {
 pub fn quartile_inc(v: &[f64], q: f64) -> R<f64> {
     let q = q.trunc();
     if !(0.0..=4.0).contains(&q) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     percentile_inc(v, q / 4.0)
 }
@@ -177,7 +184,7 @@ pub fn quartile_inc(v: &[f64], q: f64) -> R<f64> {
 pub fn quartile_exc(v: &[f64], q: f64) -> R<f64> {
     let q = q.trunc();
     if q <= 0.0 || q >= 4.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     percentile_exc(v, q / 4.0)
 }

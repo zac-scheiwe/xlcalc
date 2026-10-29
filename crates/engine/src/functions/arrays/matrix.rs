@@ -22,7 +22,7 @@ fn matrix_nums(a: std::sync::Arc<crate::value::Array>) -> R<(usize, usize, Vec<f
         match v {
             Value::Number(n) => out.push(*n),
             Value::Error(e) => return Err(*e),
-            _ => return Err(XlError::Value),
+            _ => return Err(XlError::VALUE),
         }
     }
     Ok((a.rows as usize, a.cols as usize, out))
@@ -122,7 +122,7 @@ pub fn mdeterm(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
         let (rows, cols, mut m) = matrix_of(ctx, &ops[0])?;
         if rows != cols {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let n = rows;
         let Some((_, swaps)) = lu(n, &mut m) else {
@@ -143,10 +143,10 @@ pub fn minverse(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
         let (rows, cols, mut m) = matrix_of(ctx, &ops[0])?;
         if rows != cols {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let n = rows;
-        let (perm, _) = lu(n, &mut m).ok_or(XlError::Num)?;
+        let (perm, _) = lu(n, &mut m).ok_or(XlError::NUM)?;
         let mut out = vec![0.0; n * n];
         let mut y = vec![0.0; n];
         for col in 0..n {
@@ -169,7 +169,7 @@ pub fn minverse(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             }
         }
         if out.iter().any(|x| !x.is_finite()) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let data = out.into_iter().map(Value::num).collect();
         Ok(array_value(n as u32, n as u32, data))
@@ -194,7 +194,7 @@ pub fn mmult(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let (ar, ac, a) = matrix_nums(xa)?;
         let (br, bc, b) = matrix_nums(xb)?;
         if ac != br {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         check_result_size(ctx, ar as u64, bc as u64)?;
         let mut data = Vec::with_capacity(ar * bc);
@@ -218,15 +218,15 @@ pub fn munit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             _ => 0.0,
         };
         if n < 1.0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
 
         if n * n + n > crate::workbook::ABANDON_CELLS as f64 {
             ctx.observed.abandoned = true;
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if n * n > crate::workbook::MAX_ARRAY_CELLS as f64 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let n = n as u32;
         Ok(super::super::args::array_or_scalar(n, n, |r, c| {
@@ -243,7 +243,7 @@ mod tests {
     fn double_rounded_division() {
         let b = 1.0f64 / 3.0;
         let u = 2.0 - 4.0 * b;
-        assert_eq!(div_x87(b, u), 0.49999999999999989);
+        assert_eq!(div_x87(b, u), 0.4999999999999999);
         assert_eq!(b / u, 0.49999999999999994);
         assert_eq!(div_x87(1.0, 4.0), 0.25);
         assert_eq!(div_x87(-6.0, 3.0), -2.0);

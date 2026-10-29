@@ -342,7 +342,7 @@ fn line(g: &mut Rng) -> String {
 }
 
 fn session(seed: u64, lines: usize, wild: bool, dir: &std::path::Path) -> Option<String> {
-    let mut g = Rng(seed.wrapping_mul(0x2545_F491_4F6C_DD1D) ^ 0xC0FF_EE);
+    let mut g = Rng(seed.wrapping_mul(0x2545_F491_4F6C_DD1D) ^ 0x00C0_FFEE);
     let mut script = String::from("A1 1\nB1 =A1+1\ntable T1 A1:B3\n");
     for _ in 0..lines {
         let mut l = line(&mut g);
@@ -376,8 +376,7 @@ fn session(seed: u64, lines: usize, wild: bool, dir: &std::path::Path) -> Option
                 let text = String::from_utf8_lossy(&text).into_owned();
                 let last = text
                     .lines()
-                    .filter(|l| l.starts_with("> "))
-                    .last()
+                    .rfind(|l| l.starts_with("> "))
                     .unwrap_or("")
                     .to_string();
                 let keep = std::env::temp_dir().join(format!("xlcalc_fuzz_hang_{seed}.txt"));

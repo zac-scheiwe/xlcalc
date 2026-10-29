@@ -32,7 +32,7 @@ fn sys(ctx: &EvalCtx) -> DateSystem {
 pub fn serial_arg(ctx: &EvalCtx, v: &Value) -> R<f64> {
     let n = ctx.to_number(v)?;
     if n < 0.0 || n + 0.5 / 86_400.0 >= sys(ctx).max_serial() + 1.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(n)
 }
@@ -44,7 +44,7 @@ fn date(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let d = num(ctx, &a[2])?;
         dt::date_serial(sys(ctx), y, m, d)
             .map(Value::Number)
-            .ok_or(XlError::Num)
+            .ok_or(XlError::NUM)
     })())
 }
 
@@ -54,11 +54,11 @@ fn time(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
         if h > 32767.0 || m > 32767.0 || s > 32767.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         dt::time_fraction(h, m, s)
             .map(Value::Number)
-            .ok_or(XlError::Num)
+            .ok_or(XlError::NUM)
     })())
 }
 
@@ -100,7 +100,7 @@ fn weekday(ctx: &mut EvalCtx, a: &[Value]) -> Value {
                 let first = ty - 10;
                 (wd - first).rem_euclid(7) + 1
             }
-            _ => return Err(XlError::Num),
+            _ => return Err(XlError::NUM),
         };
         Ok(Value::Number(r as f64))
     })())
@@ -109,12 +109,12 @@ fn weekday(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn datevalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let p = crate::coerce::parse_number_text(&s, ctx.parse_env()).ok_or(XlError::Value)?;
+        let p = crate::coerce::parse_number_text(&s, ctx.parse_env()).ok_or(XlError::VALUE)?;
         match p.kind {
             crate::coerce::NumberKind::Date
             | crate::coerce::NumberKind::DateTime
             | crate::coerce::NumberKind::Time { .. } => Ok(Value::Number(p.value.floor())),
-            _ => Err(XlError::Value),
+            _ => Err(XlError::VALUE),
         }
     })())
 }
@@ -122,12 +122,12 @@ fn datevalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn timevalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let p = crate::coerce::parse_number_text(&s, ctx.parse_env()).ok_or(XlError::Value)?;
+        let p = crate::coerce::parse_number_text(&s, ctx.parse_env()).ok_or(XlError::VALUE)?;
         match p.kind {
             crate::coerce::NumberKind::Time { .. }
             | crate::coerce::NumberKind::DateTime
             | crate::coerce::NumberKind::Date => Ok(Value::Number(p.value - p.value.floor())),
-            _ => Err(XlError::Value),
+            _ => Err(XlError::VALUE),
         }
     })())
 }
@@ -139,7 +139,7 @@ fn edate_call(ctx: &mut EvalCtx, ops: &[Operand], end_of_month: bool) -> Operand
             let shift = a[0].as_ref().map_or(0.0, |v| ctx.atp_text_shift(v));
 
             if s + shift < 0.0 || s + shift >= sys(ctx).max_serial() + 1.0 {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             let m = super::engineering::atp::req_num(ctx, a, 1)?;
             edate(ctx, s, shift, m, end_of_month)
@@ -150,7 +150,7 @@ fn edate_call(ctx: &mut EvalCtx, ops: &[Operand], end_of_month: bool) -> Operand
 fn edate(ctx: &mut EvalCtx, s: f64, shift: f64, months: f64, end_of_month: bool) -> R<Value> {
     {
         if s + shift < 0.0 || s + shift >= sys(ctx).max_serial() + 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let csys = if shift != 0.0 {
@@ -164,14 +164,14 @@ fn edate(ctx: &mut EvalCtx, s: f64, shift: f64, months: f64, end_of_month: bool)
         let total = y * 12 + (m as i64 - 1) + months;
         let (ny, nm) = (total.div_euclid(12), (total.rem_euclid(12) + 1) as u32);
         if !(1900..=9999).contains(&ny) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let dim = dt::days_in_month(ny, nm);
         let nd = if end_of_month { dim } else { d.min(dim) };
         let r = dt::serial_from_ymd(csys, ny, nm as i64, nd as i64);
 
         if r < 0 && sys(ctx) == DateSystem::D1900 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(Value::Number(r as f64 - shift))
     }
@@ -189,7 +189,7 @@ fn days(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let get = |v: &Value| -> R<f64> {
             let n = ctx.to_number(v)?;
             if n < 0.0 || n >= lim {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             Ok(n.floor())
         };

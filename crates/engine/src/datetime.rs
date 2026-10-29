@@ -94,7 +94,14 @@ pub fn days_in_month(y: i64, m: u32) -> u32 {
 }
 
 pub fn date_serial(sys: DateSystem, year: f64, month: f64, day: f64) -> Option<f64> {
-    let fl = |x: f64| crate::functions::args::ffuzz(x).max(-1e9).min(1e9) as i64;
+    let fl = |x: f64| {
+        let x = crate::functions::args::ffuzz(x);
+        if x.is_nan() {
+            -1_000_000_000
+        } else {
+            x.clamp(-1e9, 1e9) as i64
+        }
+    };
     let mut y = fl(year);
     let m = fl(month);
     let mut d = fl(day);
@@ -118,7 +125,7 @@ pub fn date_serial(sys: DateSystem, year: f64, month: f64, day: f64) -> Option<f
     }
     let total_months = y * 12 + (m - 1);
     let (yy, mm) = (total_months.div_euclid(12), total_months.rem_euclid(12) + 1);
-    if yy < 1900 || yy >= 10_000 || (sys == DateSystem::D1904 && yy < 1904) {
+    if !(1900..10_000).contains(&yy) || (sys == DateSystem::D1904 && yy < 1904) {
         return None;
     }
 

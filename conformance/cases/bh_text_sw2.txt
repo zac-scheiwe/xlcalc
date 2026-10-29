@@ -1,0 +1,8 @@
+=LET(c,UNICHAR(SEQUENCE(255,,1)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(3072,,8192)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(256,,12288)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(7,,64256)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(64,,65072)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(240,,65280)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(336,,256)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))
+=LET(c,UNICHAR(SEQUENCE(512,,7680)),SORT(VSTACK({"a";"z";"A";"0";"9";" ";"-";"_";"!";"~";"é";"ñ";"ß";"Ω";"я";"あ";"日";"€";"½"},FILTER(c,ISTEXT(c)))))

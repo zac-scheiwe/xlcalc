@@ -5,7 +5,7 @@ use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::formula::{Formula, SheetRef};
 use crate::formula_print::print_node;
-use crate::sort::{move_ref, retarget};
+use crate::sort::{move_ref, retarget, MovedCell};
 use crate::structure::map_refs;
 use crate::value::Value;
 use crate::workbook::{CalcMode, EditError, Entry, Workbook};
@@ -238,11 +238,7 @@ impl Workbook {
             .enumerate()
             .map(|(i, e)| ((e.0, e.1), i))
             .collect();
-        #[allow(clippy::type_complexity)]
-        let mut plan: Vec<(
-            CellAddr,
-            Result<Value, (Arc<Formula>, String, Value, Option<(u32, u32)>)>,
-        )> = Vec::new();
+        let mut plan: Vec<(CellAddr, MovedCell)> = Vec::new();
         let mut fmt_pairs: Vec<(CellAddr, CellAddr)> = Vec::new();
         for (j, &src_row) in kept.iter().enumerate() {
             let dst_row = rows[j];

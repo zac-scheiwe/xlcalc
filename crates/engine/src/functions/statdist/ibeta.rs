@@ -19,10 +19,10 @@ const LN_0_7: f64 = f64::from_bits(0xBFD6_D3C3_24E1_3F4F);
 const LN_0_9: f64 = f64::from_bits(0xBFBA_F8E8_210A_415D);
 
 pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
-    if !(x > 0.0) {
+    if x <= 0.0 || x.is_nan() {
         return Some((0.0, 1.0));
     }
-    if !(x < 1.0) {
+    if x >= 1.0 || x.is_nan() {
         return Some((1.0, 0.0));
     }
     let pair = |w: f64| (w, flip(w));
@@ -130,7 +130,7 @@ fn bpser(a: f64, b: f64, x: f64) -> Option<f64> {
         sum = x87::add(x87::div(c, x87::add(a, n)), sum);
         let tol = x87::mul(sum, EPS10);
         n = x87::add(n, 1.0);
-        if !(c.abs() > tol) {
+        if c.abs().partial_cmp(&tol) != Some(std::cmp::Ordering::Greater) {
             let mut s = XlLogSum::new(-lbeta_xl(a, b));
             s.add(x87::mul(x87::ln(x), a));
             return Some(x87::mul(x87::exp(s.err), x87::mul(x87::exp(s.s), sum)));
@@ -314,22 +314,23 @@ fn bgrat_terms(b: f64, x: f64, y: f64) -> [f64; 16] {
     let mut c = [0.0; 16];
     c[0] = x87::mul(horner(&w), pw1);
     let mut lo = 0;
-    for n in 1..16 {
-        for j in lo..9 {
+    for (n, cn) in c.iter_mut().enumerate().skip(1) {
+        let start = lo;
+        for (j, wj) in w.iter_mut().enumerate().skip(start) {
             let m = 2 * j + 2 - n;
             if m == 0 {
                 lo += 1;
             } else {
-                w[j] = x87::mul(w[j], bl[m]);
+                *wj = x87::mul(*wj, bl[m]);
             }
         }
-        c[n] = x87::mul(horner(&w[lo..]), if n % 2 == 1 { pw0 } else { pw1 });
+        *cn = x87::mul(horner(&w[lo..]), if n % 2 == 1 { pw0 } else { pw1 });
     }
     c
 }
 
 fn basym(a: f64, b: f64, lambda: f64) -> f64 {
-    const E0: f64 = 1.1283791670955126;
+    const E0: f64 = std::f64::consts::FRAC_2_SQRT_PI;
     const E1: f64 = 0.3535533905932738;
     let bma = x87::sub(b, a);
     let (h, r1, w0) = if a < b {
@@ -409,7 +410,7 @@ fn basym(a: f64, b: f64, lambda: f64) -> f64 {
         let t1 = x87::mul(x87::mul(w, j1), d[n + 1]);
         sum = x87::add(x87::add(t0, t1), sum);
         let tol = x87::mul(sum, f64::EPSILON);
-        if !(x87::add(t0.abs(), t1.abs()) > tol) {
+        if x87::add(t0.abs(), t1.abs()).partial_cmp(&tol) != Some(std::cmp::Ordering::Greater) {
             break;
         }
         n += 2;

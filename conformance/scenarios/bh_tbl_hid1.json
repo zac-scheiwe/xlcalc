@@ -1,0 +1,127 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "k"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "v"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "c"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "d"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "4"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B5",
+"name": "Tb"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": true
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "=SUBTOTAL(109,[v])"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=SUBTOTAL(109,Tb[v])"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=SUBTOTAL(9,Tb[v])"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=AGGREGATE(9,5,Tb[v])"
+},
+{
+"op": "hide_rows",
+"sheet": "Sheet1",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!B6"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D3"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": false
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D3"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": true
+},
+{
+"op": "read",
+"range": "Sheet1!A6:B6"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A6:B6"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D3"
+}
+]
+}

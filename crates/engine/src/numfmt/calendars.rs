@@ -90,7 +90,7 @@ fn greg_leap(y: i64) -> bool {
 
 pub fn convert(cal: u8, serial: i64) -> Result<(i64, u32, u32, bool), XlError> {
     if serial == 60 || serial < 0 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     let s = serial.max(1);
 
@@ -98,7 +98,7 @@ pub fn convert(cal: u8, serial: i64) -> Result<(i64, u32, u32, bool), XlError> {
     let tabular = || {
         crate::datetime::hijri_from_serial(s)
             .map(|(y, m, d)| (y, m, d, false))
-            .ok_or(XlError::Value)
+            .ok_or(XlError::VALUE)
     };
     match cal {
         0x06 => tabular(),

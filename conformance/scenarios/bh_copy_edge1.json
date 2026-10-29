@@ -1,0 +1,119 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=$A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=$A$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=A1:B2"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=SUM(1:1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=SUM($A:A)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=SUM(1:$2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=SUM(A:B)"
+},
+{
+"op": "copy",
+"from": "Sheet1!B2:K2",
+"to": "Sheet1!B1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:K3"
+},
+{
+"op": "copy",
+"from": "Sheet1!B2:K2",
+"to": "Sheet1!B1048576"
+},
+{
+"op": "read",
+"range": "Sheet1!A1048575:K1048576"
+},
+{
+"op": "copy",
+"from": "Sheet1!B2:K2",
+"to": "Sheet1!B1048575"
+},
+{
+"op": "read",
+"range": "Sheet1!A1048575:K1048576"
+},
+{
+"op": "copy",
+"from": "Sheet1!B2:K2",
+"to": "Sheet1!A3"
+},
+{
+"op": "read",
+"range": "Sheet1!A3:K3"
+}
+]
+}

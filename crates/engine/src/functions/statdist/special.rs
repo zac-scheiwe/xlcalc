@@ -1,11 +1,11 @@
 use super::dd::{self, DD};
 use crate::x87;
 
-pub const MACHEP: f64 = 1.11022302462515654042e-16;
+pub const MACHEP: f64 = 1.110_223_024_625_156_5e-16;
 const BIG: f64 = 4.503599627370496e15;
-const BIGINV: f64 = 2.22044604925031308085e-16;
-pub const MAXLOG: f64 = 7.09782712893383996843e2;
-pub const MINLOG: f64 = -7.08396418532264106224e2;
+const BIGINV: f64 = 2.220_446_049_250_313e-16;
+pub const MAXLOG: f64 = 7.097_827_128_933_84e2;
+pub const MINLOG: f64 = -7.083_964_185_322_641e2;
 pub const SQRT1_2: f64 = std::f64::consts::FRAC_1_SQRT_2;
 
 pub const INV_SQRT_2PI: f64 = 0.3989422804014327;
@@ -58,10 +58,10 @@ pub fn lgamma_dd(x: f64) -> DD {
     stirling_dd(z).sub(prod.ln())
 }
 
-const CODY_SQRTPI: f64 = 0.9189385332046727417803297;
+const CODY_SQRTPI: f64 = 0.918_938_533_204_672_8;
 
 pub fn lgamma(x: f64) -> f64 {
-    if !(x > 0.0) {
+    if x <= 0.0 || x.is_nan() {
         return f64::NAN;
     }
     if x.is_infinite() {
@@ -160,7 +160,7 @@ pub(super) fn horner_x87(c: &[f64], x: f64) -> f64 {
 
 pub fn lgamma_xl(x: f64) -> f64 {
     use crate::x87;
-    if !(x > 0.0) {
+    if x <= 0.0 || x.is_nan() {
         return f64::NAN;
     }
     if x.is_infinite() {
@@ -429,7 +429,7 @@ pub fn igam(a: f64, x: f64) -> f64 {
         r += 1.0;
         c *= x / r;
         ans += c;
-        if !(c / ans > MACHEP) {
+        if (c / ans).partial_cmp(&MACHEP) != Some(std::cmp::Ordering::Greater) {
             break;
         }
     }
@@ -483,14 +483,14 @@ pub fn igamc(a: f64, x: f64) -> f64 {
             qkm2 *= BIGINV;
             qkm1 *= BIGINV;
         }
-        if !(t > MACHEP) || c > 10000.0 {
+        if t <= MACHEP || t.is_nan() || c > 10000.0 {
             break;
         }
     }
     ans * ax
 }
 
-const TWO_OVER_SQRTPI: f64 = 1.1283791670955126;
+const TWO_OVER_SQRTPI: f64 = std::f64::consts::FRAC_2_SQRT_PI;
 
 const ERF_SWITCH: f64 = 0.5;
 
@@ -570,24 +570,6 @@ fn erf_kernel(x: f64) -> f64 {
     x87::div(x87::mul(p, x), q)
 }
 
-#[allow(dead_code)]
-
-fn erf_dd(x: f64) -> DD {
-    let xd = DD::new(x);
-    let y = xd.mul(xd);
-    let mut term = xd;
-    let mut sum = xd;
-    for n in 1..400 {
-        term = term.mul(y).div(DD::new(n as f64)).neg();
-        let t = term.div(DD::new((2 * n + 1) as f64));
-        sum = sum.add(t);
-        if t.0.abs() <= 1e-34 * sum.0.abs() {
-            break;
-        }
-    }
-    sum.mul(DD(TWO_OVER_SQRTPI, 1.533_545_961_316_588e-17))
-}
-
 fn erfc_kernel(x: f64) -> f64 {
     let e = x87::exp(-x87::mul(x, x));
     if e == 0.0 {
@@ -632,137 +614,15 @@ pub fn erfc(x: f64) -> f64 {
     }
 }
 
-#[allow(dead_code)]
-
-pub fn erf_root_round(t0: f64, y: f64, upper: bool, bias: f64) -> f64 {
-    if !(t0 > 0.0 && t0 < 2.5) {
-        return t0;
-    }
-    let e = erf_dd(t0);
-    let r = if upper {
-        DD::new(y).sub(DD::new(1.0).sub(e))
-    } else {
-        e.sub(DD::new(y))
-    };
-    let ulp = f64::from_bits(t0.to_bits() + 1) - t0;
-    t0 + (bias * ulp - r.hi() / (TWO_OVER_SQRTPI * (-(t0 * t0)).exp()))
-}
-
 pub fn norm_cdf(z: f64) -> f64 {
     erfc(-z * SQRT1_2) / 2.0
-}
-
-#[allow(dead_code)]
-
-pub fn norm_sf(z: f64) -> f64 {
-    erfc(z * SQRT1_2) / 2.0
 }
 
 pub fn norm_pdf(z: f64) -> f64 {
     INV_SQRT_2PI * (-0.5 * z * z).exp()
 }
 
-#[allow(dead_code)]
-
-pub fn norm_inv(p: f64) -> f64 {
-    let q = p - 0.5;
-    if q.abs() <= 0.425 {
-        let r = 0.180625 - q * q;
-        return q
-            * (((((((r * 2509.0809287301226727 + 33430.575583588128105) * r
-                + 67265.770927008700853)
-                * r
-                + 45921.953931549871457)
-                * r
-                + 13731.693765509461125)
-                * r
-                + 1971.5909503065514427)
-                * r
-                + 133.14166789178437745)
-                * r
-                + 3.387132872796366608)
-            / (((((((r * 5226.495278852545925 + 28729.085735721942674) * r
-                + 39307.89580009271061)
-                * r
-                + 21213.794301586595867)
-                * r
-                + 5394.1960214247511077)
-                * r
-                + 687.1870074920579083)
-                * r
-                + 42.313330701600911252)
-                * r
-                + 1.0);
-    }
-    let mut r = if q < 0.0 { p } else { 1.0 - p };
-    r = (-r.ln()).sqrt();
-    let val = if r <= 5.0 {
-        r -= 1.6;
-        (((((((r * 7.7454501427834140764e-4 + 0.0227238449892691845833) * r
-            + 0.24178072517745061177)
-            * r
-            + 1.27045825245236838258)
-            * r
-            + 3.64784832476320460504)
-            * r
-            + 5.7694972214606914055)
-            * r
-            + 4.6303378461565452959)
-            * r
-            + 1.42343711074968357734)
-            / (((((((r * 1.05075007164441684324e-9 + 5.475938084995344946e-4) * r
-                + 0.0151986665636164571966)
-                * r
-                + 0.14810397642748007459)
-                * r
-                + 0.68976733498510000455)
-                * r
-                + 1.6763848301838038494)
-                * r
-                + 2.05319162663775882187)
-                * r
-                + 1.0)
-    } else {
-        r -= 5.0;
-        (((((((r * 2.01033439929228813265e-7 + 2.71155556874348757815e-5) * r
-            + 0.0012426609473880784386)
-            * r
-            + 0.026532189526576123093)
-            * r
-            + 0.29656057182850489123)
-            * r
-            + 1.7848265399172913358)
-            * r
-            + 5.4637849111641143699)
-            * r
-            + 6.6579046435011037772)
-            / (((((((r * 2.04426310338993978564e-15 + 1.4215117583164458887e-7) * r
-                + 1.8463183175100546818e-5)
-                * r
-                + 7.868691311456132591e-4)
-                * r
-                + 0.0148753612908506148525)
-                * r
-                + 0.13692988092273580531)
-                * r
-                + 0.59983220655588793769)
-                * r
-                + 1.0)
-    };
-    if q < 0.0 {
-        -val
-    } else {
-        val
-    }
-}
-
-const MAXGAM: f64 = 171.624376956302725;
-
-#[allow(dead_code)]
-
-pub fn incbet(aa: f64, bb: f64, xx: f64) -> f64 {
-    incbet2(aa, bb, xx, 1.0 - xx)
-}
+const MAXGAM: f64 = 171.624_376_956_302_7;
 
 pub fn incbet2(aa: f64, bb: f64, xx: f64, xxc: f64) -> f64 {
     if aa <= 0.0 || bb <= 0.0 || !(0.0..=1.0).contains(&xx) {
@@ -984,32 +844,4 @@ fn pseries(a: f64, b: f64, x: f64) -> f64 {
 
 fn lgamma_ratio(a: f64, b: f64) -> f64 {
     lgamma_dd(a + b).sub(lgamma_dd(a)).sub(lgamma_dd(b)).hi()
-}
-
-#[allow(dead_code)]
-
-pub fn lbeta(a: f64, b: f64) -> f64 {
-    lgamma_dd(a).add(lgamma_dd(b)).sub(lgamma_dd(a + b)).hi()
-}
-
-pub fn solve_increasing(mut lo: f64, mut hi: f64, target: f64, f: impl Fn(f64) -> f64) -> f64 {
-    debug_assert!(lo >= 0.0 && hi > lo);
-    loop {
-        let (bl, bh) = (lo.to_bits(), hi.to_bits());
-        if bh - bl <= 1 {
-            break;
-        }
-        let mid = f64::from_bits(bl + (bh - bl) / 2);
-        if f(mid) < target {
-            lo = mid;
-        } else {
-            hi = mid;
-        }
-    }
-    let (fl, fh) = (f(lo), f(hi));
-    if (target - fl).abs() <= (fh - target).abs() {
-        lo
-    } else {
-        hi
-    }
 }

@@ -1,0 +1,332 @@
+{
+"sheets": [
+"D",
+"R"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "D!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "D!B1",
+"value": {
+"t": "s",
+"v": "Q1"
+}
+},
+{
+"op": "setv",
+"cell": "D!C1",
+"value": {
+"t": "s",
+"v": "Q2"
+}
+},
+{
+"op": "setv",
+"cell": "D!D1",
+"value": {
+"t": "s",
+"v": "Q3"
+}
+},
+{
+"op": "setv",
+"cell": "D!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "D!C2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "D!D2",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "D!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "D!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "D!D3",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "D!A4",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "D!B4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "D!C4",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "D!D4",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "table",
+"name": "tD",
+"range": "D!A1:D4"
+},
+{
+"op": "set",
+"cell": "R!A1",
+"input": "Q1"
+},
+{
+"op": "set",
+"cell": "R!B1",
+"input": "Q2"
+},
+{
+"op": "set",
+"cell": "R!C1",
+"input": "Q3"
+},
+{
+"op": "set",
+"cell": "R!A2",
+"input": "=SUM(INDEX(tD,0,MATCH(A$1,tD[#Headers],0)))"
+},
+{
+"op": "set",
+"cell": "R!A3",
+"input": "=SUMIFS(INDEX(tD,0,MATCH(A$1,tD[#Headers],0)),tD[[Item]:[Item]],\"<>b\")"
+},
+{
+"op": "set",
+"cell": "R!A4",
+"input": "=XLOOKUP(\"c\",tD[[Item]:[Item]],INDEX(tD,0,MATCH(A$1,tD[#Headers],0)))"
+},
+{
+"op": "set",
+"cell": "R!A5",
+"input": "=INDEX(tD[[Q1]:[Q3]],2,MATCH(A$1,tD[[#Headers],[Q1]:[Q3]],0))"
+},
+{
+"op": "set",
+"cell": "R!A6",
+"input": "=SUM(tD[@[Q1]:[Q3]])"
+},
+{
+"op": "set",
+"cell": "R!A7",
+"input": "=SUM(INDIRECT(\"tD[\"&A$1&\"]\"))"
+},
+{
+"op": "set",
+"cell": "R!A8",
+"input": "=SUM(INDIRECT(\"tD[[#Data],[\"&A$1&\"]]\"))"
+},
+{
+"op": "set",
+"cell": "R!A9",
+"input": "=ROWS(INDIRECT(\"tD\"))"
+},
+{
+"op": "set",
+"cell": "R!A10",
+"input": "=SUMPRODUCT(tD[[Q1]:[Q3]]*{1,2,3})"
+},
+{
+"op": "set",
+"cell": "R!A11",
+"input": "=MMULT(tD[[Q1]:[Q3]],{1;1;1})"
+},
+{
+"op": "autofill",
+"from": "R!A1:A9",
+"to": "R!A1:C9",
+"type": "default"
+},
+{
+"op": "read",
+"range": "R!A1:D14"
+},
+{
+"op": "copy",
+"from": "R!A2:C9",
+"to": "R!A20"
+},
+{
+"op": "read",
+"range": "R!A18:D30"
+},
+{
+"op": "paste_special",
+"from": "D!B2:B4",
+"to": "D!C2:C4",
+"paste": "values",
+"operation": "add"
+},
+{
+"op": "read",
+"range": "D!A1:D5"
+},
+{
+"op": "read",
+"range": "R!A1:D14"
+},
+{
+"op": "paste_special",
+"from": "D!B2",
+"to": "D!D2:D4",
+"paste": "all",
+"operation": "mul"
+},
+{
+"op": "read",
+"range": "D!A1:D5"
+},
+{
+"op": "set",
+"cell": "D!E1",
+"input": "Q4"
+},
+{
+"op": "set",
+"cell": "D!E2",
+"input": "=SUM(tD[@[Q1]:[Q3]])"
+},
+{
+"op": "read",
+"range": "D!A1:F6"
+},
+{
+"op": "read",
+"range": "R!A1:D14"
+},
+{
+"op": "replace",
+"range": "D!E2:E5",
+"what": "Q1",
+"with": "Q2",
+"lookat": "part",
+"matchcase": false,
+"order": "rows"
+},
+{
+"op": "read",
+"range": "D!A1:F6"
+},
+{
+"op": "set",
+"cell": "R!D1",
+"input": "Q4"
+},
+{
+"op": "autofill",
+"from": "R!C2:C5",
+"to": "R!D2:D5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "R!A1:E14"
+},
+{
+"op": "dataseries",
+"range": "D!G1:G6",
+"rowcol": "cols",
+"type": "linear",
+"step": 3
+},
+{
+"op": "set",
+"cell": "D!G1",
+"input": "5"
+},
+{
+"op": "read",
+"range": "D!G1:G6"
+},
+{
+"op": "insert_cols",
+"sheet": "D",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "R!A1:E14"
+},
+{
+"op": "set",
+"cell": "D!B1",
+"input": "Q0"
+},
+{
+"op": "read",
+"range": "R!A1:E14"
+}
+]
+}

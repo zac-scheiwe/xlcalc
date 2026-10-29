@@ -1,0 +1,214 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=A2*3"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=A2+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=SUM(A$1:A3)"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E10"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E10:F11",
+"to": "Sheet1!E10:F16",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!E10:F17"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E22"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E22:F23",
+"to": "Sheet1!E22:F28",
+"type": "copy"
+},
+{
+"op": "read",
+"range": "Sheet1!E22:F29"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E34"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E34:F35",
+"to": "Sheet1!E34:F40",
+"type": "series"
+},
+{
+"op": "read",
+"range": "Sheet1!E34:F41"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E46"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E46:F47",
+"to": "Sheet1!E46:F52",
+"type": "formats"
+},
+{
+"op": "read",
+"range": "Sheet1!E46:F53"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E58"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E58:F59",
+"to": "Sheet1!E58:F64",
+"type": "values"
+},
+{
+"op": "read",
+"range": "Sheet1!E58:F65"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E70"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E70:F71",
+"to": "Sheet1!E70:F76",
+"type": "growth"
+},
+{
+"op": "read",
+"range": "Sheet1!E70:F77"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E82"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E82:F83",
+"to": "Sheet1!E82:F88",
+"type": "linear"
+},
+{
+"op": "read",
+"range": "Sheet1!E82:F89"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E94"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E94:F95",
+"to": "Sheet1!E94:F100",
+"type": "days"
+},
+{
+"op": "read",
+"range": "Sheet1!E94:F101"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E106"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E106:F107",
+"to": "Sheet1!E106:F112",
+"type": "months"
+},
+{
+"op": "read",
+"range": "Sheet1!E106:F113"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E118"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E118:F119",
+"to": "Sheet1!E118:F124",
+"type": "weekdays"
+},
+{
+"op": "read",
+"range": "Sheet1!E118:F125"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:C3",
+"to": "Sheet1!E130"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E130:F131",
+"to": "Sheet1!E130:F136",
+"type": "years"
+},
+{
+"op": "read",
+"range": "Sheet1!E130:F137"
+}
+]
+}

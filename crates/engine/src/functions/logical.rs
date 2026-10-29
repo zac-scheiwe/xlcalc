@@ -111,7 +111,7 @@ fn if_fn(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
 }
 
 fn ifs_pairs(a: &[Expr]) -> Result<(), &'static str> {
-    if a.len() % 2 == 0 {
+    if a.len().is_multiple_of(2) {
         Ok(())
     } else {
         Err("needs condition/value pairs")
@@ -230,7 +230,7 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
 }
 
 fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Operand {
-    let catches = |e: XlError| e != XlError::Circ && catches(e);
+    let catches = |e: XlError| e != XlError::CIRC && catches(e);
     let v = branch(ctx, args, 0, Value::Number(0.0));
     let v = ctx.deref(v);
     match v {
@@ -419,8 +419,9 @@ fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
                 }
             }
             Value::Error(e) => *failure = Some(*e),
-            Value::Text(s) if direct => match coerce::to_bool(&Value::Text(s.clone())) {
-                Ok(b) => {
+
+            Value::Text(s) if direct => {
+                if let Ok(b) = coerce::to_bool(&Value::Text(s.clone())) {
                     seen = true;
                     if b {
                         trues += 1
@@ -428,9 +429,7 @@ fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
                         falses += 1
                     }
                 }
-
-                Err(_) => {}
-            },
+            }
             _ => {}
         }
     };
@@ -463,7 +462,7 @@ fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
         return Operand::err(e);
     }
     if !seen {
-        return Operand::err(XlError::Value);
+        return Operand::err(XlError::VALUE);
     }
     Operand::Val(Value::Bool(match fold {
         Fold::And => falses == 0,

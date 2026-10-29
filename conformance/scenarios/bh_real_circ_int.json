@@ -1,0 +1,133 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Open"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "n",
+"v": 100000
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "Draw"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 20000
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "Interest"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=B3*AVERAGE(B1,B5)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "Close"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "=B1+B2+B4"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B5"
+},
+{
+"op": "iteration",
+"enabled": true,
+"max_iter": 100,
+"max_change": 0.001
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "30000"
+},
+{
+"op": "read",
+"range": "Sheet1!B4:B5"
+},
+{
+"op": "iteration",
+"enabled": true,
+"max_iter": 5,
+"max_change": 0.0001
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "31000"
+},
+{
+"op": "read",
+"range": "Sheet1!B4:B5"
+},
+{
+"op": "calc"
+},
+{
+"op": "read",
+"range": "Sheet1!B4:B5"
+},
+{
+"op": "fullcalc"
+},
+{
+"op": "read",
+"range": "Sheet1!B4:B5"
+}
+]
+}

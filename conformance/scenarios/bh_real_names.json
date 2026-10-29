@@ -1,0 +1,393 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Date"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Amt"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Tax"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 100.0
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "5/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": 113.37
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "9/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "n",
+"v": 126.74
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "13/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "n",
+"v": 140.11
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "17/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "n",
+"v": 153.48
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A7",
+"input": "21/2/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "25/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B8",
+"value": {
+"t": "n",
+"v": 180.22
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A9",
+"input": "29/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B9",
+"value": {
+"t": "n",
+"v": 193.59
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F1",
+"value": {
+"t": "n",
+"v": 0.15
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E2",
+"value": {
+"t": "s",
+"v": "Rows"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=COUNT(B:B)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=IF(B2=\"\",\"\",ROUND(B2*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=IF(B3=\"\",\"\",ROUND(B3*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=IF(B4=\"\",\"\",ROUND(B4*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "=IF(B5=\"\",\"\",ROUND(B5*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "=IF(B6=\"\",\"\",ROUND(B6*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=IF(B7=\"\",\"\",ROUND(B7*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=IF(B8=\"\",\"\",ROUND(B8*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=IF(B9=\"\",\"\",ROUND(B9*TaxRate,2))"
+},
+{
+"op": "name",
+"name": "TaxRate",
+"refers_to": "=Sheet1!$F$1"
+},
+{
+"op": "name",
+"name": "Amts",
+"refers_to": "=OFFSET(Sheet1!$B$2,0,0,COUNT(Sheet1!$B:$B)+1,1)"
+},
+{
+"op": "name",
+"name": "Dates",
+"refers_to": "=Sheet1!$A$2:$A$9"
+},
+{
+"op": "name",
+"name": "DynAmt",
+"refers_to": "=INDEX(Sheet1!$B:$B,2):INDEX(Sheet1!$B:$B,COUNTA(Sheet1!$B:$B))"
+},
+{
+"op": "name",
+"name": "Net",
+"refers_to": "=Sheet1!$B$2:$B$9-Sheet1!$C$2:$C$9"
+},
+{
+"op": "name",
+"name": "Fx",
+"refers_to": "=LAMBDA(x,x*TaxRate)"
+},
+{
+"op": "name",
+"name": "TwoPct",
+"refers_to": "=0.02"
+},
+{
+"op": "name",
+"name": "Cutoff",
+"refers_to": "=DATE(2026,2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=IF(B2=\"\",\"\",ROUND(B2*TaxRate,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=SUM(Amts)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=SUM(DynAmt)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=SUMIFS(Sheet1!B:B,Dates,\">=\"&Cutoff)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=SUM(Net)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=Fx(200)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=SUMPRODUCT((Dates>=Cutoff)*(Dates<EDATE(Cutoff,1)),Sheet1!B2:B9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=B2*TwoPct"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=ROWS(Amts)&\":\"&ROWS(DynAmt)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=SUM(Dates)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=TaxRate*100&\"%\""
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=SUM(IF(Dates>=Cutoff,Sheet1!B2:B9,0))"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H11"
+},
+{
+"op": "names"
+},
+{
+"op": "set",
+"cell": "Sheet1!B7",
+"input": "55"
+},
+{
+"op": "set",
+"cell": "Sheet1!B10",
+"input": "77"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H9"
+},
+{
+"op": "insert_rows",
+"sheet": "Sheet1",
+"at": 4,
+"count": 2
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H11"
+},
+{
+"op": "names"
+},
+{
+"op": "delete_rows",
+"sheet": "Sheet1",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H11"
+},
+{
+"op": "names"
+},
+{
+"op": "insert_cols",
+"sheet": "Sheet1",
+"at": 1,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!I1:I11"
+},
+{
+"op": "names"
+},
+{
+"op": "rename_sheet",
+"sheet": "Sheet1",
+"name": "Data 2"
+},
+{
+"op": "read",
+"range": "Data 2!I1:I11"
+},
+{
+"op": "names"
+},
+{
+"op": "sort",
+"range": "'Data 2'!A3:C10",
+"keys": [
+{
+"key": 2,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "'Data 2'!A1:I12"
+},
+{
+"op": "copy_sheet",
+"sheet": "Data 2",
+"after": "Data 2"
+},
+{
+"op": "sheets"
+},
+{
+"op": "names"
+}
+]
+}

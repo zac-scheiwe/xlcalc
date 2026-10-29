@@ -10,7 +10,7 @@ fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
         Ok(x)
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 
@@ -18,7 +18,7 @@ pub fn sln(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let (cost, salvage, life) = (num(ctx, &a[0])?, num(ctx, &a[1])?, num(ctx, &a[2])?);
         if life == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         finite((cost - salvage) / life).map(Value::num)
     })())
@@ -33,7 +33,7 @@ pub fn syd(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             num(ctx, &a[3])?,
         );
         if salvage < 0.0 || life <= 0.0 || per <= 0.0 || per > life {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         finite((cost - salvage) * (life + 1.0 - per) * 2.0 / (life * (life + 1.0))).map(Value::num)
     })())
@@ -80,7 +80,7 @@ pub fn ddb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             || period > life
             || factor <= 0.0
         {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         finite(ddb_core(cost, salvage, life, period, factor)).map(Value::num)
     })())
@@ -102,7 +102,7 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             || period <= 0.0
             || !(1.0..=12.0).contains(&month)
         {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let fixp = |x: f64| -> i32 {
@@ -112,7 +112,7 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let (life_i, period_i) = (fixp(life), fixp(period));
         let partial = period_i > life_i;
         if partial && (month == 12.0 || period_i > life_i.wrapping_add(1)) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let pf = (period_i as f64).max(1.0);
         if cost == 0.0 {
@@ -223,7 +223,7 @@ pub fn vdb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             || factor < 0.0
             || life <= 0.0
         {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let int_start = start.floor();
         let int_end = end.ceil();
@@ -277,7 +277,7 @@ fn amor_args(ctx: &EvalCtx, a: &[Arg]) -> R<Amor> {
         || rate <= 0.0
         || purchased > first
     {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(Amor {
         cost,
@@ -325,7 +325,7 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let sys = atp::date_system(ctx);
         let life = 1.0 / m.rate;
         if life <= 2.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let coef = if life > 6.0 {
             2.5
@@ -410,10 +410,10 @@ fn dollar(ctx: &mut EvalCtx, a: &[Arg], to_decimal: bool) -> Value {
         let x = atp::req(ctx, a, 0)?;
         let frac = atp::req(ctx, a, 1)?.trunc();
         if frac < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if frac < 1.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let sign = if x < 0.0 { -1.0 } else { 1.0 };
         let ax = x.abs();

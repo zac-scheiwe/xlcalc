@@ -1,0 +1,167 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "q"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "p"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "5"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B3",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "t"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=[@q]*[@p]"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": true
+},
+{
+"op": "read_text",
+"range": "Sheet1!A4:C4"
+},
+{
+"op": "read",
+"range": "Sheet1!A4:C4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=SUBTOTAL(109,[t])"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=SUBTOTAL(101,[p])"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "=SUBTOTAL(103,[q])"
+},
+{
+"op": "read",
+"range": "Sheet1!A4:C4"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A4:C4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "6"
+},
+{
+"op": "read",
+"range": "Sheet1!A4:C6"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A4:C6"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "7"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C7"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:C7"
+},
+{
+"op": "tables"
+},
+{
+"op": "insert_rows",
+"sheet": "Sheet1",
+"at": 3,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C8"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:C8"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": false
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C8"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:C8"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": true
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C8"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A5:C8"
+}
+]
+}

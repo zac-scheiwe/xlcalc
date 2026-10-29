@@ -322,6 +322,13 @@ impl SheetResolver for Resolve<'_> {
         }?;
         Some((t.name.clone(), t.columns.clone()))
     }
+
+    fn name_exists(&self, name: &str) -> bool {
+        self.wb
+            .names
+            .lookup(&name.to_uppercase(), self.host.sheet)
+            .is_some()
+    }
 }
 
 impl Workbook {
@@ -755,6 +762,13 @@ impl Workbook {
         let body = input::auto_close_call(text.strip_prefix('=').unwrap_or(text));
         let body = body.as_ref();
 
+        if body.starts_with('=') {
+            return Err(EditError::Parse(parser::ParseError {
+                pos: 0,
+                message: "unexpected '='".into(),
+            }));
+        }
+
         let widened = self
             .table_expansion(addr, true)
             .map(|(ti, rect, _)| (ti, std::mem::replace(&mut self.tables[ti].rect, rect)));
@@ -782,9 +796,7 @@ impl Workbook {
         {
             let root = self.formula(fid).formula.root.clone();
             if let Some(f) = self.infer_format(&root, addr) {
-                if !self.cellfmt_has(addr)
-                    || self.auto_replaces(&self.number_format(addr).to_string(), &f)
-                {
+                if !self.cellfmt_has(addr) || self.auto_replaces(self.number_format(addr), &f) {
                     self.store_format(addr, &f);
                 }
             }
@@ -864,7 +876,7 @@ impl Workbook {
         }
 
         let v = match v {
-            Value::Number(x) if !x.is_finite() => Value::Error(crate::value::XlError::Num),
+            Value::Number(x) if !x.is_finite() => Value::Error(crate::value::XlError::NUM),
             v => v,
         };
         let v = self.precision_const(addr, v);

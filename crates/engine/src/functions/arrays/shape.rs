@@ -31,15 +31,15 @@ fn numbers_of(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
             }
             a.data.iter().map(|v| element_number(ctx, v)).collect()
         }
-        Operand::Missing => Err(XlError::Value),
+        Operand::Missing => Err(XlError::VALUE),
     }
 }
 
 fn element_number(ctx: &EvalCtx, v: &Value) -> R<f64> {
     match v {
         Value::Number(n) => Ok(*n),
-        Value::Error(_) => Err(XlError::Value),
-        other => ctx.to_number(other).map_err(|_| XlError::Value),
+        Value::Error(_) => Err(XlError::VALUE),
+        other => ctx.to_number(other).map_err(|_| XlError::VALUE),
     }
 }
 
@@ -50,7 +50,7 @@ fn order_of(n: f64) -> R<bool> {
     } else if n == -1.0 {
         Ok(true)
     } else {
-        Err(XlError::Value)
+        Err(XlError::VALUE)
     }
 }
 
@@ -117,13 +117,13 @@ fn sort_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let a = src.to_array(ctx)?;
         let width = if by_col { a.rows } else { a.cols };
         if indexes.len() > width as usize || (orders.len() != 1 && orders.len() != indexes.len()) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let mut keys = Vec::with_capacity(indexes.len());
         for (k, ix) in indexes.iter().enumerate() {
             let ix = super::super::args::sfix(*ix) as f64;
             if ix < 1.0 || ix > width as f64 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             let desc = order_of(orders[if orders.len() == 1 { 0 } else { k }])?;
             keys.push((ix as u32 - 1, desc));
@@ -140,7 +140,7 @@ fn sort_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
         if (0..n).any(|l| {
             keys.iter()
-                .any(|&(k, _)| matches!(at(l, k), Value::Error(XlError::Circ)))
+                .any(|&(k, _)| matches!(at(l, k), Value::Error(XlError::CIRC)))
         }) {
             ctx.circ_used();
         }
@@ -207,7 +207,7 @@ fn lift_flags(
             if first_ok {
                 data.push(match res {
                     Value::Error(e) => Value::Error(e),
-                    _ if done => Value::Error(XlError::Value),
+                    _ if done => Value::Error(XlError::VALUE),
                     Value::Array(a) => {
                         done = true;
                         a.data.first().cloned().unwrap_or(Value::Blank)
@@ -220,7 +220,7 @@ fn lift_flags(
                 continue;
             }
             data.push(match res {
-                Value::Error(XlError::Calc) if (r, c) != (0, 0) => Value::Number(0.0),
+                Value::Error(XlError::CALC) if (r, c) != (0, 0) => Value::Number(0.0),
                 Value::Error(e) => Value::Error(e),
                 Value::Array(a) => {
                     if (r, c) == (0, 0) {
@@ -268,12 +268,12 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             let desc = match ops.get(i + 1) {
                 None | Some(Operand::Missing) => false,
                 Some(Operand::Val(Value::Error(e))) => return Err(*e),
-                Some(Operand::Val(Value::Array(_))) => return Err(XlError::Value),
+                Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
                 Some(Operand::Val(v)) => order_of(ctx.to_number(v)?)?,
                 Some(op @ Operand::Ref(_)) => {
                     let v = Src::from_operand_3d(op)?.to_array(ctx)?;
                     if v.len() != 1 {
-                        return Err(XlError::Value);
+                        return Err(XlError::VALUE);
                     }
                     order_of(ctx.to_number(&v.data[0])?)?
                 }
@@ -283,27 +283,27 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 return Err(*e);
             }
             if *shape.get_or_insert((by.rows, by.cols)) != (by.rows, by.cols) {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
 
             let this_by_col = if by.rows == 1 && by.cols == 1 {
                 None
             } else if by.cols == 1 {
                 if by.rows != a.rows {
-                    return Err(XlError::Value);
+                    return Err(XlError::VALUE);
                 }
                 Some(false)
             } else if by.rows == 1 {
                 if by.cols != a.cols {
-                    return Err(XlError::Value);
+                    return Err(XlError::VALUE);
                 }
                 Some(true)
             } else {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             };
             if let Some(b) = this_by_col {
                 if by_col.is_some_and(|x| x != b) {
-                    return Err(XlError::Value);
+                    return Err(XlError::VALUE);
                 }
                 by_col = Some(b);
             }
@@ -312,7 +312,7 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
 
         if by_col.is_none() && a.rows > 1 && a.cols > 1 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let by_col = by_col.unwrap_or(false);
         if keys
@@ -408,8 +408,8 @@ fn unique_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     let mut same = true;
                     for k in 0..w {
                         let (x, y) = (at(line, k), at(f, k));
-                        if matches!(x, Value::Error(XlError::Circ))
-                            || matches!(y, Value::Error(XlError::Circ))
+                        if matches!(x, Value::Error(XlError::CIRC))
+                            || matches!(y, Value::Error(XlError::CIRC))
                         {
                             touched = true;
                         }
@@ -439,7 +439,7 @@ fn unique_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 .map(|s| s.0)
                 .collect();
             if keep.is_empty() {
-                return Err(XlError::Calc);
+                return Err(XlError::CALC);
             }
             let m = keep.len() as u32;
             let (rows, cols) = if by_col { (a.rows, m) } else { (m, a.cols) };
@@ -478,7 +478,7 @@ fn unique_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             first
         };
         if keep.is_empty() {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         let m = keep.len() as u32;
         let (rows, cols) = if by_col { (a.rows, m) } else { (m, a.cols) };
@@ -505,7 +505,7 @@ fn take_range(n: u32, k: Option<f64>, take: bool) -> R<(u32, u32)> {
     let nn = n as f64;
     if take {
         if k == 0.0 {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         if k > 0.0 {
             Ok((0, (k.min(nn) as u32) - 1))
@@ -514,7 +514,7 @@ fn take_range(n: u32, k: Option<f64>, take: bool) -> R<(u32, u32)> {
         }
     } else {
         if k.abs() >= nn {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         if k >= 0.0 {
             Ok((k as u32, n - 1))
@@ -526,7 +526,7 @@ fn take_range(n: u32, k: Option<f64>, take: bool) -> R<(u32, u32)> {
 
 pub fn take_drop(ctx: &mut EvalCtx, ops: &[Operand], take: bool) -> Operand {
     if matches!(ops[0], Operand::Missing) {
-        return Operand::err(XlError::Value);
+        return Operand::err(XlError::VALUE);
     }
 
     let grid = |ctx: &mut EvalCtx, op: Option<&Operand>| -> Option<Arc<Array>> {
@@ -574,7 +574,7 @@ pub fn take_drop(ctx: &mut EvalCtx, ops: &[Operand], take: bool) -> Operand {
                     items.push(match res {
                         Operand::Ref(crate::eval::Reference::Area(a)) => Ok(a),
                         Operand::Val(Value::Error(e)) => Err(e),
-                        _ => Err(XlError::Value),
+                        _ => Err(XlError::VALUE),
                     });
                     continue;
                 }
@@ -585,7 +585,7 @@ pub fn take_drop(ctx: &mut EvalCtx, ops: &[Operand], take: bool) -> Operand {
                     Operand::Val(v) => v,
 
                     other if range_src && !matches!(&other, Operand::Val(Value::Error(_))) => {
-                        Value::Error(XlError::Value)
+                        Value::Error(XlError::VALUE)
                     }
                     other => ctx.deref(other),
                 };
@@ -637,7 +637,7 @@ pub fn choose_lines(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         let mut args = Vec::with_capacity(ops.len() - 1);
         for op in &ops[1..] {
             args.push(match op {
-                Operand::Missing => return Err(XlError::Value),
+                Operand::Missing => return Err(XlError::VALUE),
                 Operand::Val(Value::Array(a)) => Idx::Many(a.clone()),
                 Operand::Val(v) => Idx::One(ctx.to_number(v)?),
                 Operand::Ref(r) if r.single().is_some_and(|a| a.rect.is_cell()) => {
@@ -650,7 +650,7 @@ pub fn choose_lines(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         let pick = |k: f64| -> R<u32> {
             let k = k.trunc();
             if k == 0.0 || k.abs() > n as f64 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             Ok(if k > 0.0 {
                 k as u32 - 1
@@ -664,13 +664,13 @@ pub fn choose_lines(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
                 Idx::One(k) => idx.push(pick(*k)?),
                 Idx::Many(a) => {
                     if a.rows > 1 && a.cols > 1 {
-                        return Err(XlError::Value);
+                        return Err(XlError::VALUE);
                     }
                     for v in &a.data {
                         match v {
                             Value::Number(k) => idx.push(pick(*k)?),
                             Value::Error(e) => return Err(*e),
-                            _ => return Err(XlError::Value),
+                            _ => return Err(XlError::VALUE),
                         }
                     }
                 }
@@ -701,15 +701,15 @@ fn pad_value(ctx: &mut EvalCtx, op: Option<&Operand>, omitted: Value) -> R<Value
     Ok(match op {
         None => Value::Error(XlError::NA),
         Some(Operand::Missing) => omitted,
-        Some(Operand::Val(Value::Array(_))) => return Err(XlError::Value),
+        Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
         Some(Operand::Val(v)) => v.clone(),
 
-        Some(Operand::Ref(r)) if r.is_span() && r.single().is_none() => Value::Error(XlError::Ref),
-        Some(Operand::Ref(r)) if r.single().is_none() => Value::Error(XlError::Value),
+        Some(Operand::Ref(r)) if r.is_span() && r.single().is_none() => Value::Error(XlError::REF),
+        Some(Operand::Ref(r)) if r.single().is_none() => Value::Error(XlError::VALUE),
         Some(op @ Operand::Ref(_)) => {
             let a = Src::from_operand_3d(op)?.to_array(ctx)?;
             if a.len() != 1 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             a.data[0].clone()
         }
@@ -725,10 +725,8 @@ pub fn expand(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 None => Ok(cur as u64),
                 Some(n) => {
                     let n = n.trunc();
-                    if n < cur as f64 {
-                        Err(XlError::Value)
-                    } else if n >= 2147483648.0 {
-                        Err(XlError::Value)
+                    if n < cur as f64 || n >= 2147483648.0 {
+                        Err(XlError::VALUE)
                     } else {
                         Ok(n as u64)
                     }
@@ -752,7 +750,7 @@ pub fn expand(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let cols = dim(ctx, 2, sc)?;
 
         if rows > MAX_ROWS as u64 || cols > MAX_ROWS as u64 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         check_result_size(ctx, rows, cols)?;
         let pad = pad_value(ctx, ops.get(3), Value::Blank)?;
@@ -810,7 +808,7 @@ pub fn to_line(ctx: &mut EvalCtx, ops: &[Operand], col: bool) -> Operand {
         let back = |v: &Value| match v {
             Value::Number(k) => g.items[*k as usize],
             Value::Error(e) => Err(*e),
-            _ => Err(XlError::Value),
+            _ => Err(XlError::VALUE),
         };
         let grid = |rows: u32, cols: u32, items| {
             Operand::Ref(crate::eval::Reference::Grid(Arc::new(
@@ -833,7 +831,7 @@ pub fn to_line(ctx: &mut EvalCtx, ops: &[Operand], col: bool) -> Operand {
             Some(n) => {
                 let n = n.trunc();
                 if !(0.0..=3.0).contains(&n) {
-                    return Err(XlError::Value);
+                    return Err(XlError::VALUE);
                 }
                 n as u32
             }
@@ -859,7 +857,7 @@ pub fn to_line(ctx: &mut EvalCtx, ops: &[Operand], col: bool) -> Operand {
             a.data.iter().for_each(&mut visit);
         }
         if data.is_empty() {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         let n = data.len() as u32;
         Ok(if col {
@@ -875,7 +873,7 @@ pub fn wrap(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         if let Operand::Ref(r) = &ops[0] {
             if let Some(a) = r.single().filter(|a| a.rect.is_cell()) {
                 match ctx.area_array(a) {
-                    Value::Blank => return Err(XlError::Value),
+                    Value::Blank => return Err(XlError::VALUE),
                     Value::Error(e) => return Err(e),
                     _ => {}
                 }
@@ -884,14 +882,14 @@ pub fn wrap(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         arg_error_typed(ctx, &ops[1..2], "n")?;
         let src = Src::from_operand_3d(&ops[0])?;
         if src.rows() > 1 && src.cols() > 1 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let k = match ops.get(1) {
             Some(Operand::Val(v)) => ctx.to_number(v)?.trunc(),
             _ => 0.0,
         };
         if k < 1.0 || k >= 2147483648.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let pad = pad_value(ctx, ops.get(2), Value::Error(XlError::NA))?;
         let a = src.to_array(ctx)?;

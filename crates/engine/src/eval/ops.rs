@@ -67,7 +67,7 @@ fn arith(op: BinOp, a: f64, b: f64) -> Value {
         BinOp::Mul => number::flush_subnormal(a * b),
         BinOp::Div => {
             if b == 0.0 {
-                return Value::Error(XlError::Div0);
+                return Value::Error(XlError::DIV0);
             }
             number::flush_subnormal(a / b)
         }
@@ -80,36 +80,35 @@ fn arith(op: BinOp, a: f64, b: f64) -> Value {
 pub fn power(a: f64, b: f64) -> Value {
     if a == 0.0 {
         if b == 0.0 {
-            return Value::Error(XlError::Num);
+            return Value::Error(XlError::NUM);
         }
         if b < 0.0 {
-            return Value::Error(XlError::Div0);
+            return Value::Error(XlError::DIV0);
         }
         return Value::Number(0.0);
     }
     if a < 0.0 && b.fract() != 0.0 {
-        let inv = 1.0 / b;
-        let k = inv.round();
-        if (inv - k).abs() < 1e-10 && k % 2.0 != 0.0 {
+        let k = number::round15(crate::x87::div(1.0, b.abs()));
+        if k.fract() == 0.0 && k < 2147483647.0 && k % 2.0 != 0.0 {
             return Value::num(-crate::xmath::pow(-a, b));
         }
-        return Value::Error(XlError::Num);
+        return Value::Error(XlError::NUM);
     }
 
     if a < 0.0 && b.abs() >= 4294967295.0 {
-        return Value::Error(XlError::Num);
+        return Value::Error(XlError::NUM);
     }
     if b < 0.0 {
         let den = crate::xmath::pow(a, -b);
         if den.is_finite() && number::flush_subnormal(den) == 0.0 {
-            return Value::Error(XlError::Div0);
+            return Value::Error(XlError::DIV0);
         }
     }
     let r = crate::xmath::pow(a, b);
     if r.is_finite() {
         Value::Number(number::normalize(number::flush_subnormal(r)))
     } else {
-        Value::Error(XlError::Num)
+        Value::Error(XlError::NUM)
     }
 }
 
@@ -162,7 +161,7 @@ fn scalar_binary(ctx: &EvalCtx, op: BinOp, a: &Value, b: &Value, snap: bool) -> 
                 return Value::Error(*e);
             }
             if matches!(a, Value::Lambda(_)) || matches!(b, Value::Lambda(_)) {
-                return Value::Error(XlError::Value);
+                return Value::Error(XlError::VALUE);
             }
             let ord = compare(a, b);
             Value::Bool(match op {
@@ -175,7 +174,7 @@ fn scalar_binary(ctx: &EvalCtx, op: BinOp, a: &Value, b: &Value, snap: bool) -> 
                 _ => unreachable!(),
             })
         }
-        BinOp::Range | BinOp::Intersect | BinOp::Union => Value::Error(XlError::Value),
+        BinOp::Range | BinOp::Intersect | BinOp::Union => Value::Error(XlError::VALUE),
     }
 }
 

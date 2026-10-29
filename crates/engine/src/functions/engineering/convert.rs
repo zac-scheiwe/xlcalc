@@ -64,9 +64,7 @@ const ONE: u64 = 0x3FF0000000000000;
 
 use Cat::*;
 
-#[rustfmt::skip]
 static UNITS: &[Unit] = &[
-
     up("g", Mass, ONE, 1),
     u("sg", Mass, 0x40CC80F3937245D6),
     u("lbm", Mass, 0x407C597A58F7121B),
@@ -83,7 +81,6 @@ static UNITS: &[Unit] = &[
     u("uk_ton", Mass, 0x412F01DDD14E3BCD),
     u("LTON", Mass, 0x412F01DDD14E3BCD),
     u("brton", Mass, 0x412F01DDD14E3BCD),
-
     up("m", Length, 0x4202A05F20000000, 1),
     u("mi", Length, 0x42AD46178C800000),
     u("Nmi", Length, 0x42B0D80605700000),
@@ -99,7 +96,6 @@ static UNITS: &[Unit] = &[
     u("Pica", Length, 0x414AEA30E38E38E4),
     u("pica", Length, 0x41842FA4AAAAAAAB),
     u("survey_mi", Length, 0x42AD461B62C480BF),
-
     u("yr", Time, 0x417E187E00000000),
     u("day", Time, 0x40F5180000000000),
     u("d", Time, 0x40F5180000000000),
@@ -108,7 +104,6 @@ static UNITS: &[Unit] = &[
     u("min", Time, 0x404E000000000000),
     up("sec", Time, ONE, 1),
     up("s", Time, ONE, 1),
-
     up("Pa", Pressure, ONE, 1),
     up("p", Pressure, ONE, 1),
     up("atm", Pressure, 0x40F8BCD000000000, 1),
@@ -116,13 +111,11 @@ static UNITS: &[Unit] = &[
     up("mmHg", Pressure, 0x4060AA4DD2F1A9FC, 1),
     u("psi", Pressure, 0x40BAEEC1DDF70F99),
     u("Torr", Pressure, 0x4060AA50D79435E5),
-
     up("N", Force, 0x40F86A0000000000, 1),
     up("dyn", Force, ONE, 1),
     up("dy", Force, ONE, 1),
     u("lbf", Force, 0x411B2658A56715B9),
     up("pond", Force, 0x408EA551EB851EB8, 1),
-
     up("J", Energy, 0x416312D000000000, 1),
     up("e", Energy, ONE, 1),
     up("c", Energy, 0x4183F36C00000000, 1),
@@ -136,16 +129,13 @@ static UNITS: &[Unit] = &[
     u("flb", Energy, 0x4169DC346F774EEE),
     u("BTU", Energy, 0x4203A6E5F9F1999A),
     u("btu", Energy, 0x4203A6E5F9F1999A),
-
     u("HP", Power, 0x40874D995645AA01),
     u("h", Power, 0x40874D995645AA01),
     u("PS", Power, 0x4086FBFD70A3D70A),
     up("W", Power, ONE, 1),
     up("w", Power, ONE, 1),
-
     up("T", Magnetism, 0x40C3880000000000, 1),
     up("ga", Magnetism, ONE, 1),
-
     u("C", Temperature, ONE),
     u("cel", Temperature, ONE),
     u("F", Temperature, ONE),
@@ -154,7 +144,6 @@ static UNITS: &[Unit] = &[
     up("kel", Temperature, ONE, 1),
     u("Rank", Temperature, ONE),
     u("Reau", Temperature, ONE),
-
     u("tsp", Volume, 0x3F74305950CB96E4),
     u("tspm", Volume, 0x3F747AE147AE147B),
     u("tbs", Volume, 0x3F8E4885F9316256),
@@ -195,7 +184,6 @@ static UNITS: &[Unit] = &[
     u("GRT", Volume, 0x40A61F5E8BA691D0),
     u("regton", Volume, 0x40A61F5E8BA691D0),
     u("MTON", Volume, 0x4091B2B209520E40),
-
     u("uk_acre", Area, 0x44D56C835E3336B4),
     u("us_acre", Area, 0x44D56C88FBEFC3EF),
     up("ang2", Area, ONE, 2),
@@ -221,10 +209,20 @@ static UNITS: &[Unit] = &[
     u("Picapt^2", Area, 0x42A6A3415D11CD6E),
     u("yd2", Area, 0x4412217071922A10),
     u("yd^2", Area, 0x4412217071922A10),
-
-    Unit { name: "bit", cat: Information, factor: ONE, prefix: 1, binary: true },
-    Unit { name: "byte", cat: Information, factor: 0x4020000000000000, prefix: 1, binary: true },
-
+    Unit {
+        name: "bit",
+        cat: Information,
+        factor: ONE,
+        prefix: 1,
+        binary: true,
+    },
+    Unit {
+        name: "byte",
+        cat: Information,
+        factor: 0x4020000000000000,
+        prefix: 1,
+        binary: true,
+    },
     u("admkn", Speed, 0x3FE07905ECF0A058),
     u("kn", Speed, 0x3FE07654320FEDCC),
     up("m/h", Speed, 0x3F323456789ABCDF, 1),
@@ -408,7 +406,7 @@ fn convert_value(x: f64, from: &Parsed, to: &Parsed) -> R<f64> {
     if r.is_finite() {
         Ok(if r.abs() < f64::MIN_POSITIVE { 0.0 } else { r })
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 

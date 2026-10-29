@@ -402,7 +402,7 @@ fn compute(wb: &mut Workbook, t: &DataTable, report: &mut RecalcReport) {
         || spills(row_in)
         || spills(col_in)
     {
-        let v = Value::Error(crate::XlError::Ref);
+        let v = Value::Error(crate::XlError::REF);
         for r in int.r0..=int.r1 {
             for c in int.c0..=int.c1 {
                 let dst = CellAddr::new(t.sheet, r, c);

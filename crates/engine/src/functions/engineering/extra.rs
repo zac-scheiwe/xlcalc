@@ -31,22 +31,22 @@ pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     Value::Number(n) => *n,
                     Value::Text(_) => ctx.to_number(v)?,
                     Value::Error(e) => return Err(*e),
-                    _ => return Err(XlError::Value),
+                    _ => return Err(XlError::VALUE),
                 };
                 terms.push(n.trunc());
                 Ok(())
             })?;
         }
         if terms.is_empty() && skipped {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         if terms.iter().any(|&t| t < 0.0) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let total: f64 = terms.iter().sum();
         let num = ln_gamma(total + 1.0).exp();
         if !num.is_finite() || total > 170.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         use crate::x87;
@@ -111,8 +111,8 @@ pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             for v in &vals {
                 match v {
                     Value::Blank => cs.push(0.0),
-                    Value::Bool(_) => return Err(XlError::Value),
-                    Value::Text(_) if multi => return Err(XlError::Value),
+                    Value::Bool(_) => return Err(XlError::VALUE),
+                    Value::Text(_) if multi => return Err(XlError::VALUE),
                     other => cs.push(ctx.to_number(other)?),
                 }
             }
@@ -124,7 +124,7 @@ pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     p = crate::x87::add(p, m);
                 }
                 if x == 0.0 && p <= 0.0 {
-                    return Err(XlError::Num);
+                    return Err(XlError::NUM);
                 }
                 let t = if x < 0.0 && p.fract() != 0.0 {
                     f64::NAN
@@ -160,8 +160,8 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
         for (x, y) in gx.data.iter().zip(gy.data.iter()) {
             for v in [x, y] {
                 if let Value::Error(e) = v {
-                    return Err(if matches!(*e, XlError::Spill | XlError::Calc) {
-                        XlError::Value
+                    return Err(if matches!(*e, XlError::SPILL | XlError::CALC) {
+                        XlError::VALUE
                     } else {
                         *e
                     });
@@ -186,7 +186,7 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
             );
         }
         if !any {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         Ok(sum)
     })();
@@ -198,18 +198,20 @@ const INT_LIMIT: f64 = 2_147_483_647.0;
 pub fn combina(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let n = num(ctx, &a[0])?.trunc();
-        let k = num(ctx, &a[1])?.trunc();
-        if n < 0.0 || k < 0.0 {
-            return Err(XlError::Num);
+        let k_raw = num(ctx, &a[1])?;
+        let k = k_raw.trunc();
+
+        if n < 0.0 || k_raw < 0.0 {
+            return Err(XlError::NUM);
         }
         if k == 0.0 {
             return Ok(Value::Number(1.0));
         }
         if n == 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if n >= INT_LIMIT || k >= INT_LIMIT {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let nn = n + k - 1.0;
 
@@ -222,10 +224,10 @@ pub fn permutationa(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let n = num(ctx, &a[0])?.trunc();
         let k = num(ctx, &a[1])?.trunc();
         if n < 0.0 || k < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if n >= INT_LIMIT || k >= INT_LIMIT {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(Value::num(crate::xmath::pow(n, k)))
     })())
@@ -234,14 +236,14 @@ pub fn permutationa(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn trig_arg(ctx: &EvalCtx, a: &[Value]) -> R<f64> {
     let x = num(ctx, &a[0])?;
     if x.abs() >= xlmath::TRIG_LIMIT {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(x)
 }
 
 fn recip(d: f64) -> R<f64> {
     if d == 0.0 {
-        Err(XlError::Div0)
+        Err(XlError::DIV0)
     } else {
         Ok(crate::x87::div(1.0, d))
     }
@@ -250,7 +252,7 @@ fn recip(d: f64) -> R<f64> {
 pub fn cot(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     atp::out(trig_arg(ctx, a).and_then(|x| {
         if x == 0.0 {
-            Err(XlError::Div0)
+            Err(XlError::DIV0)
         } else {
             recip(crate::x87::tan(x))
         }
@@ -267,7 +269,7 @@ pub fn sec(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn coth(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     atp::out(num(ctx, &a[0]).and_then(|x| match crate::xmath::tanh(x) {
-        0.0 => Err(XlError::Div0),
+        0.0 => Err(XlError::DIV0),
         t => Ok(crate::x87::div(1.0, t)),
     }))
 }
@@ -314,7 +316,7 @@ fn acoth_abs(x: f64) -> f64 {
 pub fn acoth(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     atp::out(num(ctx, &a[0]).and_then(|x| {
         if x.abs() <= 1.0 {
-            Err(XlError::Num)
+            Err(XlError::NUM)
         } else {
             let r = acoth_abs(x.abs());
             Ok(if x < 0.0 { -r } else { r })

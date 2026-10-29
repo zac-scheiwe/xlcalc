@@ -1,0 +1,164 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Month"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Rev"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Growth"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Cum"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Label"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "31/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 1000
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "=EOMONTH(A2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "=B2*1.035"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=B3/B2-1"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=B2"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=D2+B3"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=TEXT(A2,\"mmm-yy\")&\": \"&TEXT(B2,\"#,##0\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!L1",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "autofill",
+"from": "Sheet1!A3:E3",
+"to": "Sheet1!A3:E14",
+"type": "default"
+},
+{
+"op": "autofill",
+"from": "Sheet1!D2:E2",
+"to": "Sheet1!D2:E14",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E14"
+},
+{
+"op": "copy",
+"from": "Sheet1!B3:C5",
+"to": "Sheet1!G3"
+},
+{
+"op": "read",
+"range": "Sheet1!G3:H5"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B2:B6",
+"to": "Sheet1!J2",
+"paste": "values"
+},
+{
+"op": "read",
+"range": "Sheet1!J2:J6"
+},
+{
+"op": "delete_rows",
+"sheet": "Sheet1",
+"at": 4,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E14"
+},
+{
+"op": "insert_rows",
+"sheet": "Sheet1",
+"at": 2,
+"count": 2
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E8"
+},
+{
+"op": "dataseries",
+"range": "Sheet1!L1:L10",
+"rowcol": "cols",
+"type": "linear",
+"step": 2
+},
+{
+"op": "read",
+"range": "Sheet1!L1:L10"
+}
+]
+}

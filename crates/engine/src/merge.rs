@@ -86,16 +86,18 @@ impl Workbook {
         let mut areas = Vec::new();
         let mut wiped = Vec::new();
         for mut a in rows {
-            while !across {
-                let grown = self
-                    .merges(sheet)
-                    .into_iter()
-                    .filter(|m| m.intersects(&a))
-                    .fold(a, |x, m| x.union_bounds(&m));
-                if grown == a {
-                    break;
+            if !across {
+                loop {
+                    let grown = self
+                        .merges(sheet)
+                        .into_iter()
+                        .filter(|m| m.intersects(&a))
+                        .fold(a, |x, m| x.union_bounds(&m));
+                    if grown == a {
+                        break;
+                    }
+                    a = grown;
                 }
-                a = grown;
             }
             if !across {
                 let ms: Vec<Rect> = self
@@ -347,11 +349,12 @@ impl Workbook {
         ds: SheetId,
         dr: Rect,
     ) -> Result<RecalcReport, EditError> {
-        let (nr, nc) = if dr.rows() % src.rows() == 0 && dr.cols() % src.cols() == 0 {
-            (dr.rows() / src.rows(), dr.cols() / src.cols())
-        } else {
-            (1, 1)
-        };
+        let (nr, nc) =
+            if dr.rows().is_multiple_of(src.rows()) && dr.cols().is_multiple_of(src.cols()) {
+                (dr.rows() / src.rows(), dr.cols() / src.cols())
+            } else {
+                (1, 1)
+            };
         if nr * nc > 1 {
             let whole = Rect::new(
                 dr.r0,

@@ -185,7 +185,7 @@ fn opnum(ctx: &EvalCtx, o: &Operand) -> R<f64> {
     match o {
         Operand::Val(v) => ctx.to_number(v),
         Operand::Missing => Ok(0.0),
-        Operand::Ref(_) => Err(XlError::Value),
+        Operand::Ref(_) => Err(XlError::VALUE),
     }
 }
 

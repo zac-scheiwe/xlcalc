@@ -18,7 +18,7 @@ pub const DEFS: &[FnDef] = &[
     args("AREAS", 1, 1, "Q", |_, o| match &o[0] {
         Operand::Ref(r) => Operand::Val(Value::Number(r.areas().len() as f64)),
         Operand::Val(Value::Error(e)) => Operand::err(*e),
-        _ => Operand::err(XlError::Value),
+        _ => Operand::err(XlError::VALUE),
     }),
     args("INDEX", 2, 4, "RVVV", index),
     args("MATCH", 2, 3, "RRR", match_outer),
@@ -26,7 +26,7 @@ pub const DEFS: &[FnDef] = &[
     args("HLOOKUP", 3, 4, "RRRR", |c, o| vhlookup_outer(c, o, false)),
     lazy("CHOOSE", 2, MANY, choose),
     volatile(args("OFFSET", 3, 5, "QRRRR", offset)),
-    volatile(args("INDIRECT", 1, 2, "VR", indirect)),
+    volatile(args("INDIRECT", 1, 2, "RR", indirect)),
     args("ADDRESS", 2, 5, "VVVVV", address),
     args("TRANSPOSE", 1, 1, "R", transpose),
 ];
@@ -39,10 +39,10 @@ fn row_col(ctx: &mut EvalCtx, ops: &[Operand], row: bool) -> Operand {
             .unwrap_or(Rect::cell(ctx.host.row, ctx.host.col)),
         Some(Operand::Ref(r)) => match r.single() {
             Some(a) => a.rect,
-            None => return Operand::err(XlError::Ref),
+            None => return Operand::err(XlError::REF),
         },
         Some(Operand::Val(Value::Error(e))) => return Operand::err(*e),
-        Some(_) => return Operand::err(XlError::Value),
+        Some(_) => return Operand::err(XlError::VALUE),
     };
     let (start, n) = if row {
         (rect.r0, rect.rows())
@@ -71,7 +71,7 @@ fn rows_cols(_ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
         Operand::Ref(Reference::Grid(g)) => (g.rows, g.cols),
         Operand::Ref(r) => match r.single() {
             Some(a) => (a.rect.rows(), a.rect.cols()),
-            None => return Operand::err(XlError::Ref),
+            None => return Operand::err(XlError::REF),
         },
         Operand::Val(Value::Array(a)) => (a.rows, a.cols),
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
@@ -90,7 +90,7 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Some(Operand::Val(v)) => ctx
                 .to_number(v)
                 .map(|n| Some(if n < 0.0 { ffuzz(n) } else { ifuzz(n) })),
-            Some(Operand::Ref(_)) => Err(XlError::Value),
+            Some(Operand::Ref(_)) => Err(XlError::VALUE),
         }
     };
     let (row, col, area_n) = match (|| {
@@ -110,25 +110,25 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         || row.is_some_and(|x| x < 0.0)
         || col.is_some_and(|x| x < 0.0)
     {
-        return Operand::err(XlError::Value);
+        return Operand::err(XlError::VALUE);
     }
     match &ops[0] {
-        Operand::Ref(r) if r.is_span() => Operand::err(XlError::Value),
+        Operand::Ref(r) if r.is_span() => Operand::err(XlError::VALUE),
 
         Operand::Ref(Reference::Grid(g)) => match pick(g.rows, g.cols, row, col, explicit_col) {
             Ok((r0, r1, c0, c1)) if r0 == r1 && c0 == c1 => g.broadcast_get(r0, c0),
-            Ok(_) => Operand::err(XlError::Value),
+            Ok(_) => Operand::err(XlError::VALUE),
             Err(e) => Operand::err(e),
         },
         Operand::Ref(r) => {
             let k = area_n.unwrap_or(1.0);
             if k as usize > r.areas().len() {
-                return Operand::err(XlError::Ref);
+                return Operand::err(XlError::REF);
             }
             let a = r.areas()[k as usize - 1];
 
             if !explicit_col && a.rect.rows() > 1 && a.rect.cols() > 1 {
-                return Operand::err(XlError::Ref);
+                return Operand::err(XlError::REF);
             }
             match pick(a.rect.rows(), a.rect.cols(), row, col, explicit_col) {
                 Ok((r0, r1, c0, c1)) => Operand::Ref(Reference::Area(Area {
@@ -150,14 +150,14 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 other => std::sync::Arc::new(Array::new(1, 1, vec![other.clone()])),
             };
             if area_n.is_some_and(|k| k > 1.0) {
-                return Operand::err(XlError::Ref);
+                return Operand::err(XlError::REF);
             }
             match pick(arr.rows, arr.cols, row, col, explicit_col) {
                 Ok((r0, r1, c0, c1)) => {
                     let slice = if explicit_col {
-                        row.map_or(true, |x| x == 0.0) || col.map_or(true, |x| x == 0.0)
+                        row.is_none_or(|x| x == 0.0) || col.is_none_or(|x| x == 0.0)
                     } else {
-                        arr.rows > 1 || row.map_or(true, |x| x == 0.0)
+                        arr.rows > 1 || row.is_none_or(|x| x == 0.0)
                     };
                     let n = (r1 - r0 + 1, c1 - c0 + 1);
                     let get = |r: u32, c: u32| arr.get(r0 + r, c0 + c).clone();
@@ -170,7 +170,7 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 Err(e) => Operand::err(e),
             }
         }
-        Operand::Missing => Operand::err(XlError::Value),
+        Operand::Missing => Operand::err(XlError::VALUE),
     }
 }
 
@@ -184,7 +184,7 @@ fn pick(
     let mut row = row.unwrap_or(0.0);
     let mut col = col.unwrap_or(0.0);
     if row < 0.0 || col < 0.0 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
 
     if rows == 1 && !explicit_col && cols > 1 {
@@ -192,7 +192,7 @@ fn pick(
         row = 0.0;
     }
     if row > rows as f64 || col > cols as f64 {
-        return Err(XlError::Ref);
+        return Err(XlError::REF);
     }
     let (r0, r1) = if row == 0.0 {
         (0, rows - 1)
@@ -324,7 +324,7 @@ fn exact_find(ctx: &mut EvalCtx, line: &Line, target: &Value, wildcards: bool) -
     }
     for i in 0..line.len {
         let v = line.get(ctx, i);
-        if matches!(v, Value::Error(XlError::Circ)) {
+        if matches!(v, Value::Error(XlError::CIRC)) {
             ctx.circ_used();
             return None;
         }
@@ -442,8 +442,16 @@ fn match_outer(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 } else {
                     match super::super::eval::refs::implicit_intersection(ctx, mt) {
                         Operand::Ref(r) => ops[2] = Operand::Val(ctx.deref(Operand::Ref(r))),
-                        _ => return Operand::err(XlError::Ref),
+                        _ => return Operand::err(XlError::REF),
                     }
+                }
+            } else {
+                match ctx.deref(mt.clone()) {
+                    Value::Error(_) => return Operand::err(XlError::REF),
+                    v @ Value::Text(_) if ctx.to_number(&v).is_err() => {
+                        return Operand::err(XlError::REF)
+                    }
+                    _ => {}
                 }
             }
         }
@@ -465,9 +473,9 @@ fn index_elem(ctx: &EvalCtx, v: &Value) -> Value {
 
 fn index_array_error(a: &Array, width: u32) -> Option<XlError> {
     a.data.iter().find_map(|v| match v {
-        Value::Number(n) if sfix(*n) == i32::MIN as i64 => Some(XlError::Ref),
-        Value::Number(n) if sfix(*n) < 1 => Some(XlError::Value),
-        Value::Number(n) if sfix(*n) > width as i64 => Some(XlError::Ref),
+        Value::Number(n) if sfix(*n) == i32::MIN as i64 => Some(XlError::REF),
+        Value::Number(n) if sfix(*n) < 1 => Some(XlError::VALUE),
+        Value::Number(n) if sfix(*n) > width as i64 => Some(XlError::REF),
         _ => None,
     })
 }
@@ -475,7 +483,7 @@ fn index_array_error(a: &Array, width: u32) -> Option<XlError> {
 fn is_array_arg(op: &Operand) -> bool {
     match op {
         Operand::Val(Value::Array(_)) => true,
-        Operand::Ref(r) => r.single().map_or(true, |a| !a.rect.is_cell()),
+        Operand::Ref(r) => r.single().is_none_or(|a| !a.rect.is_cell()),
         _ => false,
     }
 }
@@ -515,7 +523,7 @@ fn match_scalar(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
 
         Operand::Val(Value::Text(t)) if crate::text::utf16_len(t) > 255 => {
-            return Operand::err(XlError::Value)
+            return Operand::err(XlError::VALUE)
         }
         Operand::Val(Value::Blank) | Operand::Missing => Value::Number(0.0),
         Operand::Val(v) => v.clone(),
@@ -540,7 +548,7 @@ fn match_scalar(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             }
             Err(e) => return Operand::err(e),
         },
-        Some(_) => return Operand::err(XlError::Value),
+        Some(_) => return Operand::err(XlError::VALUE),
     };
     if let Some(e) = scalar_table_error(ctx, &ops[1]) {
         return Operand::err(e);
@@ -584,7 +592,7 @@ fn vhlookup_scalar(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operan
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
 
         Operand::Val(Value::Text(t)) if crate::text::utf16_len(t) > 255 => {
-            return Operand::err(XlError::Value)
+            return Operand::err(XlError::VALUE)
         }
         Operand::Val(Value::Blank) | Operand::Missing => Value::Number(0.0),
         Operand::Val(v) => v.clone(),
@@ -594,7 +602,7 @@ fn vhlookup_scalar(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operan
         return Operand::err(*e);
     }
     if text_table(ctx, &ops[1]) {
-        return Operand::err(XlError::Value);
+        return Operand::err(XlError::VALUE);
     }
 
     let idx = match &ops[2] {
@@ -615,7 +623,7 @@ fn vhlookup_scalar(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operan
             Ok(b) => b,
             Err(e) => return Operand::err(e),
         },
-        Some(_) => return Operand::err(XlError::Value),
+        Some(_) => return Operand::err(XlError::VALUE),
     };
     if let Some(e) = scalar_table_error(ctx, &ops[1]) {
         return Operand::err(e);
@@ -646,13 +654,13 @@ fn vhlookup_scalar(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operan
     };
     let pick = |ctx: &mut EvalCtx, idx: f64| {
         if idx == i32::MIN as f64 {
-            return Value::Error(XlError::Ref);
+            return Value::Error(XlError::REF);
         }
         if idx.is_nan() || idx < 1.0 {
-            return Value::Error(XlError::Value);
+            return Value::Error(XlError::VALUE);
         }
         if idx > width as f64 {
-            return Value::Error(XlError::Ref);
+            return Value::Error(XlError::REF);
         }
         let k = idx as u32 - 1;
         if vertical {
@@ -688,7 +696,7 @@ fn choose(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
     let pick = |ctx: &EvalCtx, v: &Value| -> R<usize> {
         let k = ctx.to_number(v)?.trunc();
         if k < 1.0 || k > n as f64 {
-            Err(XlError::Value)
+            Err(XlError::VALUE)
         } else {
             Ok(k as usize)
         }
@@ -756,7 +764,7 @@ fn offset(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
     }
     if ctx.interrupted() {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let Some((rows, cols)) = shape else {
         return offset_one(ctx, &args);
@@ -773,7 +781,7 @@ fn offset(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             items.push(match offset_one(ctx, &elem) {
                 Operand::Ref(Reference::Area(a)) => Ok(a),
                 Operand::Val(Value::Error(e)) => Err(e),
-                _ => Err(XlError::Value),
+                _ => Err(XlError::VALUE),
             });
         }
     }
@@ -787,7 +795,7 @@ fn offset_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         match o {
             None | Some(Operand::Missing) => Ok((d, false, d > 0.0)),
             Some(Operand::Val(v)) => ctx.to_number(v).map(|x| (x.trunc(), x == 0.0, x > 0.0)),
-            Some(_) => Err(XlError::Value),
+            Some(_) => Err(XlError::VALUE),
         }
     };
     let base = match &ops[0] {
@@ -799,11 +807,11 @@ fn offset_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                         return Operand::err(e);
                     }
                 }
-                return Operand::err(XlError::Value);
+                return Operand::err(XlError::VALUE);
             }
         },
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
-        _ => return Operand::err(XlError::Value),
+        _ => return Operand::err(XlError::VALUE),
     };
 
     let r = (|| {
@@ -813,7 +821,7 @@ fn offset_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let (w, wz, wp) = n(ctx, ops.get(4), base.rect.cols() as f64)?;
 
         if hz || wz {
-            return Err(XlError::Ref);
+            return Err(XlError::REF);
         }
         let r0 = base.rect.r0 as f64 + dr;
         let c0 = base.rect.c0 as f64 + dc;
@@ -830,7 +838,7 @@ fn offset_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let (r0, r1) = if r0 > r1 { (r1, r0) } else { (r0, r1) };
         let (c0, c1) = if c0 > c1 { (c1, c0) } else { (c0, c1) };
         if r0 < 0.0 || c0 < 0.0 || r1 >= MAX_ROWS as f64 || c1 >= MAX_COLS as f64 {
-            return Err(XlError::Ref);
+            return Err(XlError::REF);
         }
         Ok(Area {
             sheet: base.sheet,
@@ -913,12 +921,37 @@ fn parse_r1c1(s: &str, host_row: u32, host_col: u32) -> Option<Rect> {
 const INDIRECT_BLANKS: [char; 2] = [' ', '\n'];
 
 fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    let first = match &ops[0] {
+        Operand::Ref(_) => Operand::Val(ctx.deref(ops[0].clone())),
+        o => o.clone(),
+    };
+    if let Operand::Val(Value::Array(a)) = &first {
+        let mut elem = ops.to_vec();
+        let mut items = Vec::with_capacity(a.data.len());
+        for e in a.data.iter() {
+            elem[0] = Operand::Val(e.clone());
+            items.push(match indirect_one(ctx, &elem) {
+                Operand::Ref(Reference::Area(x)) => Ok(x),
+                Operand::Val(Value::Error(x)) => Err(x),
+                _ => Err(XlError::VALUE),
+            });
+        }
+        return Operand::Ref(Reference::Grid(std::sync::Arc::new(
+            crate::eval::RefGrid::new(a.rows, a.cols, items),
+        )));
+    }
+    let mut ops = ops.to_vec();
+    ops[0] = first;
+    indirect_one(ctx, &ops)
+}
+
+fn indirect_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let s = match &ops[0] {
         Operand::Val(v) => match text(v) {
             Ok(s) => s,
             Err(e) => return Operand::err(e),
         },
-        _ => return Operand::err(XlError::Ref),
+        _ => return Operand::err(XlError::REF),
     };
     let a1 = match ops.get(1) {
         None => true,
@@ -932,9 +965,9 @@ fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     .iter()
                     .map(|e| match e {
                         Value::Error(e) => Value::Error(*e),
-                        e => match indirect(ctx, &[ops[0].clone(), Operand::Val(e.clone())]) {
+                        e => match indirect_one(ctx, &[ops[0].clone(), Operand::Val(e.clone())]) {
                             Operand::Val(Value::Error(x)) => Value::Error(x),
-                            _ => Value::Error(XlError::Value),
+                            _ => Value::Error(XlError::VALUE),
                         },
                     })
                     .collect();
@@ -949,10 +982,20 @@ fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let s = s.trim_end_matches(INDIRECT_BLANKS);
     let (sheet, body) = match s.rfind('!') {
         Some(i) => {
-            let name = s[..i].trim_matches('\'').replace("''", "'");
+            let raw = &s[..i];
+            let name = match raw.strip_prefix('\'').and_then(|r| r.strip_suffix('\'')) {
+                Some(inner) if !inner.replace("''", "").contains('\'') => {
+                    Some(inner.replace("''", "'"))
+                }
+                Some(_) => None,
+                None => crate::parser::print::bare_sheet_name_ok(raw).then(|| raw.to_string()),
+            };
+            let Some(name) = name else {
+                return Operand::err(XlError::REF);
+            };
             match ctx.wb.sheet_by_name(&name) {
                 Some(sh) => (sh.id, s[i + 1..].trim_start_matches(INDIRECT_BLANKS)),
-                None => return Operand::err(XlError::Ref),
+                None => return Operand::err(XlError::REF),
             }
         }
         None => (ctx.host.sheet, s),
@@ -987,12 +1030,12 @@ fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     _ => false,
                 };
                 if plain {
-                    Operand::err(XlError::Ref)
+                    Operand::err(XlError::REF)
                 } else {
                     out
                 }
             }
-            _ => Operand::err(XlError::Ref),
+            _ => Operand::err(XlError::REF),
         };
     }
     let rect = if a1 {
@@ -1027,7 +1070,7 @@ fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                         | crate::formula::Node::StructRef { .. }
                         | crate::formula::Node::DeadRef(..)
                 ) {
-                    return Operand::err(XlError::Ref);
+                    return Operand::err(XlError::REF);
                 }
 
                 let host = ctx.host;
@@ -1037,7 +1080,7 @@ fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
                 if let Operand::Ref(r) = &v {
                     if r.is_span() {
-                        return Operand::err(XlError::Ref);
+                        return Operand::err(XlError::REF);
                     }
                     return v;
                 }
@@ -1077,7 +1120,7 @@ fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     };
                 }
             }
-            Operand::err(XlError::Ref)
+            Operand::err(XlError::REF)
         }
     }
 }
@@ -1088,7 +1131,7 @@ fn address(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             None | Some(Operand::Missing) => Ok(d),
 
             Some(Operand::Val(v)) => ctx.to_number(v).map(|x| sfix(x) as f64),
-            Some(_) => Err(XlError::Value),
+            Some(_) => Err(XlError::VALUE),
         }
     };
     opval((|| {
@@ -1098,10 +1141,10 @@ fn address(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let a1 = match ops.get(3) {
             None | Some(Operand::Missing) => true,
             Some(Operand::Val(v)) => boolean(v)?,
-            Some(_) => return Err(XlError::Value),
+            Some(_) => return Err(XlError::VALUE),
         };
         if !(1.0..=4.0).contains(&abs) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let (ra, ca) = match abs as u32 {
             1 => (true, true),
@@ -1122,7 +1165,7 @@ fn address(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             col > -mc && col < mc
         };
         if !row_ok || !col_ok {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let body = if a1 {
             format!(
@@ -1152,7 +1195,7 @@ fn address(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let sheet = match ops.get(4) {
             None | Some(Operand::Missing) => None,
             Some(Operand::Val(v)) => Some(text(v)?),
-            Some(_) => return Err(XlError::Value),
+            Some(_) => return Err(XlError::VALUE),
         };
         Ok(Value::from(match sheet {
             Some(s)
@@ -1209,7 +1252,7 @@ fn scalar_table_error(ctx: &EvalCtx, op: &Operand) -> Option<XlError> {
         Operand::Val(v @ Value::Text(_)) => Some(if ctx.to_number(v).is_ok() {
             XlError::NA
         } else {
-            XlError::Value
+            XlError::VALUE
         }),
         Operand::Val(Value::Number(_) | Value::Bool(_)) => Some(XlError::NA),
         _ => None,
@@ -1217,51 +1260,53 @@ fn scalar_table_error(ctx: &EvalCtx, op: &Operand) -> Option<XlError> {
 }
 
 fn yields_array(n: &crate::formula::Node) -> bool {
-    use crate::formula::Node;
-    match n {
-        Node::Lit(Value::Array(_))
-        | Node::Spill(_)
-        | Node::Ref(_, crate::formula::CRef::Area { .. }) => true,
-        Node::Let { body, .. } => yields_array(body),
-        Node::Ws { node, .. } => yields_array(node),
-        Node::Paren(x) | Node::Unary(_, x) | Node::Percent(x) => yields_array(x),
-        Node::Binary(crate::parser::ast::BinOp::Range, ..) => true,
-        Node::Binary(_, a, b) => yields_array(a) || yields_array(b),
-        Node::Func { id, args } => {
-            const ARR: &[&str] = &[
-                "TRANSPOSE",
-                "UNIQUE",
-                "SORT",
-                "SORTBY",
-                "SEQUENCE",
-                "FILTER",
-                "TAKE",
-                "DROP",
-                "VSTACK",
-                "HSTACK",
-                "MAP",
-                "SCAN",
-                "BYROW",
-                "BYCOL",
-                "TOCOL",
-                "TOROW",
-                "CHOOSECOLS",
-                "CHOOSEROWS",
-                "WRAPROWS",
-                "WRAPCOLS",
-                "EXPAND",
-                "RANDARRAY",
-                "MAKEARRAY",
-                "INDIRECT",
-                "TEXTSPLIT",
-                "MMULT",
-                "MUNIT",
-                "MINVERSE",
-            ];
-            let name = crate::functions::def(*id).name;
-            ARR.contains(&name)
-                || (matches!(name, "IF" | "CHOOSE") && args.iter().skip(1).any(yields_array))
+    crate::deep(|| {
+        use crate::formula::Node;
+        match n {
+            Node::Lit(Value::Array(_))
+            | Node::Spill(_)
+            | Node::Ref(_, crate::formula::CRef::Area { .. }) => true,
+            Node::Let { body, .. } => yields_array(body),
+            Node::Ws { node, .. } => yields_array(node),
+            Node::Paren(x) | Node::Unary(_, x) | Node::Percent(x) => yields_array(x),
+            Node::Binary(crate::parser::ast::BinOp::Range, ..) => true,
+            Node::Binary(_, a, b) => yields_array(a) || yields_array(b),
+            Node::Func { id, args } => {
+                const ARR: &[&str] = &[
+                    "TRANSPOSE",
+                    "UNIQUE",
+                    "SORT",
+                    "SORTBY",
+                    "SEQUENCE",
+                    "FILTER",
+                    "TAKE",
+                    "DROP",
+                    "VSTACK",
+                    "HSTACK",
+                    "MAP",
+                    "SCAN",
+                    "BYROW",
+                    "BYCOL",
+                    "TOCOL",
+                    "TOROW",
+                    "CHOOSECOLS",
+                    "CHOOSEROWS",
+                    "WRAPROWS",
+                    "WRAPCOLS",
+                    "EXPAND",
+                    "RANDARRAY",
+                    "MAKEARRAY",
+                    "INDIRECT",
+                    "TEXTSPLIT",
+                    "MMULT",
+                    "MUNIT",
+                    "MINVERSE",
+                ];
+                let name = crate::functions::def(*id).name;
+                ARR.contains(&name)
+                    || (matches!(name, "IF" | "CHOOSE") && args.iter().skip(1).any(yields_array))
+            }
+            _ => false,
         }
-        _ => false,
-    }
+    })
 }

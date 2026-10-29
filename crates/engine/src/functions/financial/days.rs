@@ -257,7 +257,7 @@ pub fn yearfrac(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         if atp::opt(ctx, a, 2, 0.0)? < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let basis = atp::basis(ctx, a, 2)?;
         let s = atp::date(ctx, a, 0)?;
@@ -265,7 +265,7 @@ pub fn yearfrac(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 
         let sys = atp::date_system(ctx);
         if sys == DateSystem::D1904 && (s > 2_955_541 || e > 2_955_541) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let civil = |i: usize, x: i64| {
@@ -437,7 +437,7 @@ fn coup_args(ctx: &EvalCtx, a: &[Arg]) -> R<(Basis, i64, i64, i32, Coupons)> {
     let freq = atp::frequency(atp::req(ctx, a, 2)?)?;
     let basis = atp::basis(ctx, a, 3)?;
     if settle >= mat {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let sys = atp::date_system(ctx);
     Ok((
@@ -479,7 +479,7 @@ pub fn couppcd(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 pub fn coupnum(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out(coup_args(ctx, a).and_then(|(_, _, _, _, c)| {
         if c.pcd < 1 {
-            Err(XlError::Num)
+            Err(XlError::NUM)
         } else {
             Ok(c.num as f64)
         }

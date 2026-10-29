@@ -41,7 +41,7 @@ pub const DEFS: &[FnDef] = &[
     args("ISFORMULA", 1, 1, "Q", isformula),
     args(FIELD_FN, 2, 3, "RRR", |_, o| {
         if o.len() == 3 {
-            return Operand::err(XlError::Name);
+            return Operand::err(XlError::NAME);
         }
 
         let (rows, cols) = match &o[0] {
@@ -51,7 +51,7 @@ pub const DEFS: &[FnDef] = &[
                 .map_or((1, 1), |a| (a.rect.rows(), a.rect.cols())),
             _ => (1, 1),
         };
-        let e = Value::Error(XlError::Field);
+        let e = Value::Error(XlError::FIELD);
         if rows * cols <= 1 {
             Operand::Val(e)
         } else {
@@ -68,7 +68,7 @@ pub const DEFS: &[FnDef] = &[
             Value::Number(n) => Value::Number(*n),
             Value::Bool(b) => Value::Number(if *b { 1.0 } else { 0.0 }),
             Value::Error(e) => Value::Error(*e),
-            Value::Lambda(_) => Value::Error(XlError::Value),
+            Value::Lambda(_) => Value::Error(XlError::VALUE),
             _ => Value::Number(0.0),
         })
     }),
@@ -78,19 +78,19 @@ pub const DEFS: &[FnDef] = &[
     volatile(args("CELL", 1, 2, "VQ", cell_fn)),
     volatile(scalar("INFO", 1, 1, info_fn)),
     scalar("SINGLE", 1, 1, |_, a| a[0].clone()),
-    scalar("WEBSERVICE", 1, 1, |_, a| fixed_err(a, XlError::Value)),
+    scalar("WEBSERVICE", 1, 1, |_, a| fixed_err(a, XlError::VALUE)),
     scalar("CUBEVALUE", 1, super::MANY, |_, a| {
         fixed_err(a, XlError::NA)
     }),
     scalar("CUBEMEMBER", 2, 3, |_, a| fixed_err(a, XlError::NA)),
-    scalar("CUBEKPIMEMBER", 3, 4, |_, a| fixed_err(a, XlError::Value)),
+    scalar("CUBEKPIMEMBER", 3, 4, |_, a| fixed_err(a, XlError::VALUE)),
     scalar("CUBEMEMBERPROPERTY", 3, 3, |_, a| fixed_err(a, XlError::NA)),
     scalar("CUBERANKEDMEMBER", 3, 4, |c, a| cube_numeric(c, a, 2)),
     scalar("CUBESET", 2, 5, |c, a| cube_numeric(c, a, 3)),
     scalar("CUBESETCOUNT", 1, 1, |_, a| fixed_err(a, XlError::NA)),
     scalar("RTD", 3, super::MANY, |_, a| fixed_err(a, XlError::NA)),
-    scalar("FIELDVALUE", 2, 2, |_, a| fixed_err(a, XlError::Field)),
-    scalar("STOCKHISTORY", 2, 8, |_, a| fixed_err(a, XlError::Blocked)),
+    scalar("FIELDVALUE", 2, 2, |_, a| fixed_err(a, XlError::FIELD)),
+    scalar("STOCKHISTORY", 2, 8, |_, a| fixed_err(a, XlError::BLOCKED)),
     scalar("IMAGE", 1, 5, |_, a| {
         a.iter()
             .find_map(|v| {
@@ -100,15 +100,15 @@ pub const DEFS: &[FnDef] = &[
                     None
                 }
             })
-            .unwrap_or_else(|| err(XlError::Value))
+            .unwrap_or_else(|| err(XlError::VALUE))
     }),
     args("GETPIVOTDATA", 2, super::MANY, "R", |_, _| {
-        Operand::err(XlError::Ref)
+        Operand::err(XlError::REF)
     }),
     args("PHONETIC", 1, 1, "Q", |_, o| {
         Operand::err(match &o[0] {
-            Operand::Val(Value::Error(XlError::Name)) => XlError::Name,
-            Operand::Val(Value::Error(XlError::Ref)) => XlError::Ref,
+            Operand::Val(Value::Error(XlError::NAME)) => XlError::NAME,
+            Operand::Val(Value::Error(XlError::REF)) => XlError::REF,
             _ => XlError::NA,
         })
     }),
@@ -129,7 +129,7 @@ fn info_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
             "numfile" => Value::num(ctx.wb.sheets().count() as f64),
             "memavail" | "memused" | "totmem" => err(XlError::NA),
-            _ => err(XlError::Value),
+            _ => err(XlError::VALUE),
         })
     })())
 }
@@ -138,7 +138,7 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let kind = match &ops[0] {
         Operand::Val(Value::Text(s)) => s.to_ascii_lowercase(),
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
-        _ => return Operand::err(XlError::Value),
+        _ => return Operand::err(XlError::VALUE),
     };
     let (sheet, row, col) = match ops.get(1) {
         None | Some(Operand::Missing) => (ctx.host.sheet, ctx.host.row, ctx.host.col),
@@ -147,7 +147,7 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             (a.sheet, a.rect.r0, a.rect.c0)
         }
         Some(Operand::Val(Value::Error(e))) => return Operand::err(*e),
-        Some(_) => return Operand::err(XlError::Value),
+        Some(_) => return Operand::err(XlError::VALUE),
     };
 
     let extra: Vec<String> = match ops.get(1) {
@@ -223,7 +223,17 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             _ => "",
         }),
         "protect" => Value::Number(1.0),
-        "color" | "parentheses" => Value::Number(0.0),
+        "color" | "parentheses" => {
+            let i = cell_format_info(
+                ctx.wb
+                    .number_format(crate::address::CellAddr::new(sheet, row, col)),
+            );
+            Value::Number(f64::from(u8::from(if kind.as_str() == "color" {
+                i.color
+            } else {
+                i.parens
+            })))
+        }
         "format" => Value::from(cell_format_code(
             ctx.wb
                 .number_format(crate::address::CellAddr::new(sheet, row, col)),
@@ -236,14 +246,14 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }),
         "sheet" => match ctx.wb.sheet_position(sheet) {
             Some(p) => Value::Number(p as f64 + 1.0),
-            None => return Operand::err(XlError::Ref),
+            None => return Operand::err(XlError::REF),
         },
         "coord" => Value::from(format!(
             "$A:${}${}",
             crate::address::col_to_letters(col),
             row + 1
         )),
-        _ => return Operand::err(XlError::Value),
+        _ => return Operand::err(XlError::VALUE),
     };
     Operand::Val(v)
 }
@@ -254,7 +264,7 @@ fn parity_op(ctx: &mut EvalCtx, op: &Operand, even: bool) -> Operand {
             [a] if a.rect.r0 == a.rect.r1 && a.rect.c0 == a.rect.c1 => {
                 ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0)
             }
-            _ => return Operand::err(XlError::Value),
+            _ => return Operand::err(XlError::VALUE),
         },
         Operand::Val(v) => v.clone(),
         Operand::Missing => return Operand::err(XlError::NA),
@@ -272,7 +282,7 @@ fn parity_op(ctx: &mut EvalCtx, op: &Operand, even: bool) -> Operand {
 
 fn parity(ctx: &EvalCtx, v: &Value, even: bool) -> Value {
     if matches!(v, Value::Bool(_)) {
-        return err(XlError::Value);
+        return err(XlError::VALUE);
     }
     match ctx.to_number(v) {
         Ok(n) => {
@@ -306,7 +316,7 @@ fn isformula(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             ))
         }
         Operand::Val(Value::Error(e)) => Operand::err(*e),
-        _ => Operand::err(XlError::Value),
+        _ => Operand::err(XlError::VALUE),
     }
 }
 
@@ -347,7 +357,7 @@ fn sheet_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     };
     match ctx.wb.sheet_position(id) {
         Some(p) => Operand::Val(Value::Number(p as f64 + 1.0)),
-        None => Operand::err(XlError::Ref),
+        None => Operand::err(XlError::REF),
     }
 }
 
@@ -385,59 +395,173 @@ fn fixed_err(a: &[Value], e: XlError) -> Value {
         .unwrap_or(Value::Error(e))
 }
 
-fn cell_format_code(fmt: &str) -> String {
-    let mut sections = fmt.split(';');
-    let pos = sections.next().unwrap_or("");
-    let neg = sections.next().unwrap_or("");
+struct CellFmtInfo {
+    code: String,
+    color: bool,
+    parens: bool,
+}
 
+fn strip_section(sec: &str) -> (String, bool, bool) {
     let mut clean = String::new();
-    let mut chars = pos.chars();
+    let (mut elapsed, mut locale) = (false, false);
+    let mut chars = sec.chars();
     while let Some(c) = chars.next() {
         match c {
             '"' => {
+                let mut q = String::new();
                 for d in chars.by_ref() {
                     if d == '"' {
                         break;
                     }
+                    q.push(d);
+                }
+
+                if q == "$" {
+                    clean.push('$');
                 }
             }
-            '\x5c' | '_' | '*' => {
+            '\\' | '_' | '*' => {
                 chars.next();
             }
             '[' => {
+                let mut b = String::new();
                 for d in chars.by_ref() {
                     if d == ']' {
                         break;
                     }
+                    b.push(d);
+                }
+                let l = b.to_ascii_lowercase();
+                if !l.is_empty() && l.chars().all(|c| matches!(c, 'h' | 'm' | 's')) {
+                    elapsed = true;
+                }
+
+                if l.starts_with("$-") {
+                    locale = true;
                 }
             }
             c => clean.push(c),
         }
     }
-    let lower = clean.to_ascii_lowercase();
-    let is_date = lower
-        .chars()
-        .any(|c| matches!(c, 'd' | 'm' | 'y' | 'h' | 's'))
-        && !lower.contains("general")
-        && !lower.contains("e+")
-        && !lower.contains("e-");
-    let mut code = if lower.trim() == "general" || lower.trim().is_empty() {
+    (clean.to_ascii_lowercase(), elapsed, locale)
+}
+
+fn date_code(l: &str) -> &'static str {
+    let l = l.replace("am/pm", "p").replace("a/p", "");
+    let mut toks: Vec<(char, usize)> = Vec::new();
+    for c in l.chars() {
+        if matches!(c, 'd' | 'm' | 'y' | 'h' | 's' | 'p') {
+            match toks.last_mut() {
+                Some((t, n)) if *t == c && c != 'p' => *n += 1,
+                _ => toks.push((c, 1)),
+            }
+        }
+    }
+    let (mut day, mut mon, mut year) = (None, None, None);
+    let (mut hour, mut minute, mut sec, mut ampm) = (false, false, false, false);
+    for (i, &(t, n)) in toks.iter().enumerate() {
+        match t {
+            'd' if n <= 2 => day = day.or(Some(i)),
+            'y' => year = year.or(Some(i)),
+            'h' => hour = true,
+            's' => sec = true,
+            'p' => ampm = true,
+            'm' => {
+                let after_h = i > 0 && toks[i - 1].0 == 'h';
+                let before_s = toks.get(i + 1).is_some_and(|x| x.0 == 's');
+                if after_h || before_s {
+                    minute = true;
+                } else if n <= 4 {
+                    mon = mon.or(Some(i));
+                }
+            }
+            _ => {}
+        }
+    }
+    match (day, mon, year) {
+        (Some(d), Some(m), Some(y)) => {
+            if d < m && d < y {
+                "D1"
+            } else if m < d && m < y {
+                "D4"
+            } else {
+                "G"
+            }
+        }
+        (Some(d), Some(m), None) => {
+            if d < m {
+                "D2"
+            } else {
+                "D5"
+            }
+        }
+        (None, Some(m), Some(y)) => {
+            if m < y {
+                "D3"
+            } else {
+                "G"
+            }
+        }
+        (None, None, None) if hour && minute => match (sec, ampm) {
+            (true, true) => "D6",
+            (false, true) => "D7",
+            (true, false) => "D8",
+            (false, false) => "D9",
+        },
+        _ => "G",
+    }
+}
+
+fn cell_format_info(fmt: &str) -> CellFmtInfo {
+    let mut sections = fmt.split(';');
+    let pos = sections.next().unwrap_or("");
+    let neg = sections.next();
+    let color = neg.is_some_and(|n| n.to_ascii_lowercase().contains("[red]"));
+    let (lower, elapsed, locale) = strip_section(pos);
+
+    let parens = {
+        let mut it = pos.chars();
+        let mut found = false;
+        while let Some(c) = it.next() {
+            match c {
+                '"' => {
+                    for d in it.by_ref() {
+                        if d == '"' {
+                            break;
+                        }
+                    }
+                }
+                '[' => {
+                    for d in it.by_ref() {
+                        if d == ']' {
+                            break;
+                        }
+                    }
+                }
+                '\\' | '_' | '*' => {
+                    it.next();
+                }
+                '(' => found = true,
+                _ => {}
+            }
+        }
+        found
+    };
+    let digits = lower.contains(['0', '#', '?']);
+    let is_sci = lower.contains("e+") || lower.contains("e-");
+    let has_dt = lower.contains(['d', 'm', 'y', 'h', 's']) && !lower.contains("general");
+    let mut code = if fmt.contains(';') && pos.is_empty() {
+        "H".to_string()
+    } else if lower.trim().is_empty() || lower.contains("general") || lower.contains('@') {
         "G".to_string()
-    } else if is_date {
-        match lower.trim() {
-            "d-mmm-yy" | "dd/mm/yyyy" | "d/mm/yyyy" => "D1",
-            "d-mmm" => "D2",
-            "mmm-yy" => "D3",
-            "m/d/yy" | "mm/dd/yy" | "m/d/yyyy" | "m/d/yy h:mm" | "mmmm d, yyyy" => "D4",
-            "mm/dd" => "D5",
-            "h:mm:ss am/pm" => "D6",
-            "h:mm am/pm" => "D7",
-            "h:mm:ss" => "D8",
-            "h:mm" => "D9",
-            _ => "G",
+    } else if has_dt && !is_sci {
+        if elapsed || locale {
+            "G"
+        } else {
+            date_code(&lower)
         }
         .to_string()
-    } else if lower.contains('@') || lower.contains('?') {
+    } else if !digits || lower.contains('/') && lower.contains('?') {
         "G".to_string()
     } else {
         let dec = match lower.find('.') {
@@ -449,11 +573,13 @@ fn cell_format_code(fmt: &str) -> String {
         };
         let b = lower.as_bytes();
         let grouped = (1..b.len().saturating_sub(1)).any(|i| {
-            b[i] == b',' && matches!(b[i - 1], b'0' | b'#') && matches!(b[i + 1], b'0' | b'#')
+            b[i] == b','
+                && matches!(b[i - 1], b'0' | b'#' | b'?')
+                && matches!(b[i + 1], b'0' | b'#' | b'?')
         });
         let kind = if lower.contains('%') {
             'P'
-        } else if lower.contains("e+") || lower.contains("e-") {
+        } else if is_sci {
             'S'
         } else if lower.contains(['$', '€', '£', '¥']) {
             'C'
@@ -464,8 +590,21 @@ fn cell_format_code(fmt: &str) -> String {
         };
         format!("{kind}{dec}")
     };
-    if code != "G" && neg.to_ascii_lowercase().contains("[red]") {
-        code.push('-');
+    if code != "G" && code != "H" {
+        if color {
+            code.push('-');
+        }
+        if parens {
+            code.push_str("()");
+        }
     }
-    code
+    CellFmtInfo {
+        code,
+        color,
+        parens,
+    }
+}
+
+fn cell_format_code(fmt: &str) -> String {
+    cell_format_info(fmt).code
 }

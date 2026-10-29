@@ -7,7 +7,7 @@ use crate::x87::{add, div, exp, ln, mul, sqrt, sub};
 
 fn trig(x: f64) -> R<(f64, f64)> {
     if x.abs() >= xlmath::TRIG_LIMIT {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok((xlmath::sin(x), xlmath::cos(x)))
 }
@@ -16,8 +16,11 @@ fn horner(y: f64, c: &[f64]) -> f64 {
     c[1..].iter().fold(c[0], |p, &k| add(mul(p, y), k))
 }
 
+#[allow(clippy::approx_constant)]
+const TWO_OVER_PI_9: f64 = 0.636619772;
+
 fn amp(x: f64) -> f64 {
-    sqrt(div(0.636619772, x))
+    sqrt(div(TWO_OVER_PI_9, x))
 }
 
 fn bessj0(x: f64) -> R<f64> {
@@ -227,7 +230,7 @@ fn bessy0(x: f64) -> R<f64> {
         );
         Ok(add(
             div(ans1, ans2),
-            mul(0.636619772, mul(bessj0(x)?, ln(x))),
+            mul(TWO_OVER_PI_9, mul(bessj0(x)?, ln(x))),
         ))
     } else {
         let z = div(8.0, x);
@@ -290,7 +293,7 @@ fn bessy1(x: f64) -> R<f64> {
         let inv = div(1.0, x);
         Ok(add(
             div(ans1, ans2),
-            mul(0.636619772, sub(mul(bessj1(x)?, ln(x)), inv)),
+            mul(TWO_OVER_PI_9, sub(mul(bessj1(x)?, ln(x)), inv)),
         ))
     } else {
         let z = div(8.0, x);
@@ -455,6 +458,7 @@ fn bessi(n: i32, x: f64) -> f64 {
     }
 }
 
+#[allow(clippy::approx_constant)]
 fn bessk0(x: f64) -> f64 {
     if x <= 2.0 {
         let y = div(mul(x, x), 4.0);
@@ -556,26 +560,26 @@ pub fn bessel(ctx: &mut EvalCtx, ops: &[Operand], kind: Kind) -> Operand {
 
             let n = atp::req_num(ctx, a, 1)?.floor();
             if !(0.0..=1e7).contains(&n) {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             let n = n as i32;
             let r = match kind {
                 Kind::J => {
                     if x.abs() >= xlmath::TRIG_LIMIT {
-                        return Err(XlError::Num);
+                        return Err(XlError::NUM);
                     }
                     bessj(n, x)?
                 }
                 Kind::Y => {
                     if x <= 0.0 {
-                        return Err(XlError::Num);
+                        return Err(XlError::NUM);
                     }
                     bessy(n, x)?
                 }
                 Kind::I => bessi(n, x),
                 Kind::K => {
                     if x <= 0.0 {
-                        return Err(XlError::Num);
+                        return Err(XlError::NUM);
                     }
                     bessk(n, x)
                 }

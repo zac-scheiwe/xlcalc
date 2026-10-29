@@ -10,7 +10,7 @@ fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
         Ok(x)
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 
@@ -51,10 +51,10 @@ fn periods_left(per: f64, n: f64) -> f64 {
 fn growth_check(r: f64, n: f64) -> R<()> {
     let r1 = x87::add(1.0, r);
     if r1 == 0.0 && n == 0.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if n < 0.0 && crate::xmath::pow(r1, -n) == 0.0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     Ok(())
 }
@@ -71,7 +71,7 @@ fn annuity(r: f64, n: f64, t: bool) -> (f64, f64) {
 
 fn pmt_check(r: f64, n: f64) -> R<()> {
     if n == 0.0 || r <= -1.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(())
 }
@@ -100,7 +100,7 @@ pub fn fv_core(r: f64, n: f64, pmt: f64, pv: f64, t: bool) -> R<f64> {
     growth_check(r, n)?;
     let (g, ann) = annuity(r, n, t);
     if g.is_nan() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     finite(-x87::add(x87::mul(pmt, ann), x87::mul(pv, g)))
 }
@@ -120,10 +120,10 @@ pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
     growth_check(r, n)?;
     let (g, ann) = annuity(r, n, t);
     if g.is_nan() || g.is_infinite() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if g == 0.0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     finite(-x87::div(x87::add(x87::mul(pmt, ann), fv), g))
 }
@@ -142,22 +142,22 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let (r, pmt, pv, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t(4)?);
         if r == 0.0 {
             if pmt == 0.0 {
-                return Err(XlError::Div0);
+                return Err(XlError::DIV0);
             }
             return Ok(Value::num(-(pv + fv) / pmt));
         }
         if r <= -1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let pt = if t { pmt * (1.0 + r) } else { pmt };
         let x = (pt - fv * r) / (pt + pv * r);
-        if !(x > 0.0) || !x.is_finite() {
-            return Err(XlError::Num);
+        if x <= 0.0 || !x.is_finite() {
+            return Err(XlError::NUM);
         }
 
         let l = xmath::ln(1.0 + r);
         if l == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         finite(xmath::ln(x) / l).map(Value::num)
     })())
@@ -165,7 +165,7 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn per_check(per: f64, n: f64) -> R<()> {
     if per < 1.0 || per >= n + 1.0 || n <= 0.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(())
 }
@@ -216,7 +216,7 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             a.o(5, 0.1)?,
         );
         if n <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let f = |r: f64| {
@@ -226,9 +226,9 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             let (g, ann) = annuity(r, n, t);
             x87::sub(-x87::add(x87::mul(pmt, ann), x87::mul(pv, g)), fv)
         };
-        let r = super::cash::fn_iter(guess, f).ok_or(XlError::Num)?;
+        let r = super::cash::fn_iter(guess, f).ok_or(XlError::NUM)?;
         if r <= -1.0 + RATE_NEAR_M1 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(Value::num(r))
     })())
@@ -239,7 +239,7 @@ pub fn ispmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let (r, per, n, pv) = (a.n(0)?, a.n(1)?, a.n(2)?, a.n(3)?);
         if n == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         Ok(Value::num(pv * (per - n) * r / n))
     })())
@@ -250,12 +250,12 @@ pub fn pduration(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let (r, pv, fv) = (a.n(0)?, a.n(1)?, a.n(2)?);
         if r <= 0.0 || pv <= 0.0 || fv <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let l = x87::ln(x87::add(r, 1.0));
         if l == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         finite(x87::div(x87::sub(x87::ln(fv), x87::ln(pv)), l)).map(Value::num)
     })())
@@ -266,12 +266,12 @@ pub fn rri(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let (n, pv, fv) = (a.n(0)?, a.n(1)?, a.n(2)?);
         if n <= 0.0 || pv == 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let q = x87::div(fv, pv);
         if q < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if n == 1.0 {
             return finite(x87::sub(q, 1.0)).map(Value::num);
@@ -293,13 +293,13 @@ fn cum(ctx: &mut EvalCtx, a: &[Arg], principal: bool) -> Value {
         let end = atp::req(ctx, a, 4)?;
         let ty = atp::req(ctx, a, 5)?;
         if r <= 0.0 || n <= 0.0 || pv <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if start < 1.0 || end < start || end > n {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if ty != 0.0 && ty != 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let t = ty == 1.0;
 
@@ -350,7 +350,7 @@ pub fn effect(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let nominal = atp::req(ctx, a, 0)?;
         let p = atp::req(ctx, a, 1)?.trunc();
         if nominal <= 0.0 || p < 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let base = x87::add(x87::div(nominal, p), 1.0);
@@ -373,7 +373,7 @@ pub fn nominal(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let eff = atp::req(ctx, a, 0)?;
         let p = atp::req(ctx, a, 1)?.trunc();
         if eff <= 0.0 || p < 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         finite((xmath::pow(1.0 + eff, 1.0 / p) - 1.0) * p)
     })())
@@ -394,11 +394,15 @@ pub fn fvschedule(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
                 Value::Error(e) => return Err(*e),
                 Value::Text(_) => match a.get(1) {
                     Some(Some(Value::Text(_))) => atp::num_of(ctx, v)?,
-                    _ => return Err(XlError::Value),
+                    _ => return Err(XlError::VALUE),
                 },
-                _ => return Err(XlError::Value),
+                _ => return Err(XlError::VALUE),
             };
-            acc *= 1.0 + r;
+
+            acc = crate::x87::mul(crate::x87::add(r, 1.0), acc);
+            if acc.is_infinite() {
+                acc = 0.0;
+            }
         }
         finite(acc)
     })())

@@ -26,6 +26,8 @@ use crate::eval::{EvalCtx, Operand};
 use crate::formula::Node;
 use crate::value::Value;
 
+pub type ArgCheck = fn(&[crate::parser::ast::Expr]) -> Result<(), &'static str>;
+
 pub type FuncId = u16;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,7 +58,7 @@ pub struct FnDef {
     pub volatile: bool,
     pub imp: Imp,
 
-    pub check: Option<fn(&[crate::parser::ast::Expr]) -> Result<(), &'static str>>,
+    pub check: Option<ArgCheck>,
 }
 
 impl FnDef {
@@ -96,68 +98,72 @@ const REFERENCE_FUNCTIONS: &[&str] = &[
 ];
 
 pub fn can_be_called(e: &crate::parser::ast::Expr) -> bool {
-    use crate::parser::ast::Expr;
-    match e.unwrap_ws() {
-        Expr::Number(_)
-        | Expr::Text(_)
-        | Expr::Bool(_)
-        | Expr::Array(_)
-        | Expr::Unary {
-            op: crate::parser::ast::UnaryOp::Neg | crate::parser::ast::UnaryOp::Plus,
-            ..
+    crate::deep(|| {
+        use crate::parser::ast::Expr;
+        match e.unwrap_ws() {
+            Expr::Number(_)
+            | Expr::Text(_)
+            | Expr::Bool(_)
+            | Expr::Array(_)
+            | Expr::Unary {
+                op: crate::parser::ast::UnaryOp::Neg | crate::parser::ast::UnaryOp::Plus,
+                ..
+            }
+            | Expr::Percent(_) => false,
+            Expr::Error(err) => *err == crate::value::XlError::REF,
+            Expr::Binary { op, .. } => matches!(
+                op,
+                crate::parser::ast::BinOp::Range
+                    | crate::parser::ast::BinOp::Intersect
+                    | crate::parser::ast::BinOp::Union
+            ),
+            Expr::Paren(x) => can_be_called(x),
+            Expr::Func { name, .. } => {
+                let up = crate::formula::strip_prefixes(name).to_uppercase();
+                up == "LAMBDA"
+                    || up == "LET"
+                    || REFERENCE_FUNCTIONS.contains(&up.as_str())
+                    || lookup(&up).is_none()
+            }
+            _ => true,
         }
-        | Expr::Percent(_) => false,
-        Expr::Error(err) => *err == crate::value::XlError::Ref,
-        Expr::Binary { op, .. } => matches!(
-            op,
-            crate::parser::ast::BinOp::Range
-                | crate::parser::ast::BinOp::Intersect
-                | crate::parser::ast::BinOp::Union
-        ),
-        Expr::Paren(x) => can_be_called(x),
-        Expr::Func { name, .. } => {
-            let up = crate::formula::strip_prefixes(name).to_uppercase();
-            up == "LAMBDA"
-                || up == "LET"
-                || REFERENCE_FUNCTIONS.contains(&up.as_str())
-                || lookup(&up).is_none()
-        }
-        _ => true,
-    }
+    })
 }
 
 pub fn is_reference_expr(e: &crate::parser::ast::Expr) -> bool {
-    use crate::parser::ast::{BinOp, Expr, UnaryOp};
-    match e.unwrap_ws() {
-        Expr::Ref { .. }
-        | Expr::Name { .. }
-        | Expr::StructRef { .. }
-        | Expr::Spill(_)
-        | Expr::Call { .. } => true,
-        Expr::Unary {
-            op: UnaryOp::Implicit,
-            ..
-        } => true,
-        Expr::Error(crate::value::XlError::Ref) => true,
+    crate::deep(|| {
+        use crate::parser::ast::{BinOp, Expr, UnaryOp};
+        match e.unwrap_ws() {
+            Expr::Ref { .. }
+            | Expr::Name { .. }
+            | Expr::StructRef { .. }
+            | Expr::Spill(_)
+            | Expr::Call { .. } => true,
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                ..
+            } => true,
+            Expr::Error(crate::value::XlError::REF) => true,
 
-        Expr::Field { expr, .. } => {
-            let mut b = expr.unwrap_ws();
-            while let Expr::Field { expr, .. } | Expr::Unary { expr, .. } = b {
-                b = expr.unwrap_ws();
+            Expr::Field { expr, .. } => {
+                let mut b = expr.unwrap_ws();
+                while let Expr::Field { expr, .. } | Expr::Unary { expr, .. } = b {
+                    b = expr.unwrap_ws();
+                }
+                matches!(b, Expr::Ref { .. })
             }
-            matches!(b, Expr::Ref { .. })
+            Expr::Paren(x) => is_reference_expr(x),
+            Expr::Binary {
+                op: BinOp::Range | BinOp::Intersect | BinOp::Union,
+                ..
+            } => true,
+            Expr::Func { name, .. } => {
+                let up = crate::formula::strip_prefixes(name).to_uppercase();
+                REFERENCE_FUNCTIONS.contains(&up.as_str()) || lookup(&up).is_none()
+            }
+            _ => false,
         }
-        Expr::Paren(x) => is_reference_expr(x),
-        Expr::Binary {
-            op: BinOp::Range | BinOp::Intersect | BinOp::Union,
-            ..
-        } => true,
-        Expr::Func { name, .. } => {
-            let up = crate::formula::strip_prefixes(name).to_uppercase();
-            REFERENCE_FUNCTIONS.contains(&up.as_str()) || lookup(&up).is_none()
-        }
-        _ => false,
-    }
+    })
 }
 
 pub const MANY: u8 = 255;

@@ -42,7 +42,7 @@ impl Window {
     ) -> R<Window> {
         let wb = ctx.wb;
         let Some(sh) = wb.sheet(sheet) else {
-            return Err(XlError::Ref);
+            return Err(XlError::REF);
         };
         let r1 = (r0 as u64 + rows as u64 - 1).min(MAX_ROWS as u64 - 1) as u32;
         let c1 = (c0 as u64 + cols as u64 - 1).min(MAX_COLS as u64 - 1) as u32;
@@ -98,9 +98,9 @@ impl Window {
 
 pub fn area_of(op: &Operand) -> R<Area> {
     match op {
-        Operand::Ref(r) => r.single().copied().ok_or(XlError::Value),
+        Operand::Ref(r) => r.single().copied().ok_or(XlError::VALUE),
         Operand::Val(Value::Error(e)) => Err(*e),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -124,7 +124,7 @@ fn evaluate(
     agg: Agg,
 ) -> Value {
     if ctx.interrupted() {
-        return Value::Error(XlError::Calc);
+        return Value::Error(XlError::CALC);
     }
     let blank = Value::Blank;
     let ctx: &EvalCtx = ctx;
@@ -192,7 +192,7 @@ fn evaluate(
     }
     match agg {
         Agg::Sum => Value::num(sum),
-        Agg::Average if count == 0 => Value::Error(XlError::Div0),
+        Agg::Average if count == 0 => Value::Error(XlError::DIV0),
         Agg::Average => Value::num(sum / count as f64),
         Agg::Max | Agg::Min => Value::num(best.unwrap_or(0.0)),
         Agg::Count => Value::Number(count as f64),
@@ -208,7 +208,7 @@ fn lazy_window(
 ) -> R<Window> {
     let wb = ctx.wb;
     let Some(sh) = wb.sheet(sheet) else {
-        return Err(XlError::Ref);
+        return Err(XlError::REF);
     };
     let r1 = (r0 as u64 + rows as u64 - 1).min(MAX_ROWS as u64 - 1) as u32;
     let c1 = (c0 as u64 + cols as u64 - 1).min(MAX_COLS as u64 - 1) as u32;
@@ -283,7 +283,7 @@ pub fn ifs(ctx: &mut EvalCtx, ops: &[Operand], agg: Agg) -> Operand {
         };
 
         if pairs.is_empty() || pairs.len() % 2 != 0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let mut areas = Vec::with_capacity(pairs.len() / 2);
         for p in pairs.chunks(2) {
@@ -291,7 +291,7 @@ pub fn ifs(ctx: &mut EvalCtx, ops: &[Operand], agg: Agg) -> Operand {
         }
         let (rows, cols) = dims(values.as_ref().unwrap_or(&areas[0]));
         if areas.iter().any(|a| dims(a) != (rows, cols)) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let mut tests = Vec::with_capacity(areas.len());
         for (a, p) in areas.iter().zip(pairs.chunks(2)) {

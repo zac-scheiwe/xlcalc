@@ -84,7 +84,7 @@ fn opt_number(ctx: &EvalCtx, op: Option<&Operand>) -> R<Option<f64>> {
     match op {
         None | Some(Operand::Missing) => Ok(None),
         Some(Operand::Val(v)) => ctx.to_number(v).map(Some),
-        Some(Operand::Ref(_)) => Err(XlError::Value),
+        Some(Operand::Ref(_)) => Err(XlError::VALUE),
     }
 }
 
@@ -118,7 +118,7 @@ fn opt_flag(op: Option<&Operand>) -> R<bool> {
     match op {
         None | Some(Operand::Missing) => Ok(false),
         Some(Operand::Val(v)) => boolean(v),
-        Some(Operand::Ref(_)) => Err(XlError::Value),
+        Some(Operand::Ref(_)) => Err(XlError::VALUE),
     }
 }
 
@@ -130,7 +130,7 @@ enum Src {
 impl Src {
     fn from_operand_3d(op: &Operand) -> R<Src> {
         match op {
-            Operand::Ref(r) if r.is_span() && r.single().is_none() => Err(XlError::Ref),
+            Operand::Ref(r) if r.is_span() && r.single().is_none() => Err(XlError::REF),
             _ => Src::from_operand(op),
         }
     }
@@ -138,7 +138,7 @@ impl Src {
     fn from_operand(op: &Operand) -> R<Src> {
         Ok(match op {
             Operand::Ref(Reference::Grid(g)) => Src::Array(g.value_array()),
-            Operand::Ref(r) => Src::Area(*r.single().ok_or(XlError::Value)?),
+            Operand::Ref(r) => Src::Area(*r.single().ok_or(XlError::VALUE)?),
             Operand::Val(Value::Error(e)) => return Err(*e),
             Operand::Val(Value::Array(a)) => Src::Array(a.clone()),
             Operand::Val(v) => Src::Array(Arc::new(Array::new(1, 1, vec![v.clone()]))),
@@ -167,7 +167,7 @@ impl Src {
                 let n = area.rect.rows() as u64 * area.rect.cols() as u64;
                 if n > MAX_ARRAY_CELLS {
                     ctx.too_big(n as f64);
-                    return Err(XlError::Num);
+                    return Err(XlError::NUM);
                 }
                 Ok(match ctx.area_array(area) {
                     Value::Array(a) => a,
@@ -217,7 +217,7 @@ fn lift_values(
         ops[i] = Operand::Val(v);
     }
     if ctx.interrupted() {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let Some((rows, cols)) = shape else {
         return body(ctx, &ops);
@@ -237,7 +237,7 @@ fn lift_values(
                 other => other,
             });
             if ctx.interrupted() {
-                return Operand::err(XlError::Calc);
+                return Operand::err(XlError::CALC);
             }
         }
     }
@@ -250,7 +250,7 @@ fn array_value(rows: u32, cols: u32, data: Vec<Value>) -> Value {
 
 fn check_result_size(ctx: &mut EvalCtx, rows: u64, cols: u64) -> R<()> {
     if ctx.too_big((rows * cols) as f64) || rows * cols > MAX_ARRAY_CELLS {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     } else {
         Ok(())
     }
@@ -260,7 +260,7 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let area = match &ops[0] {
         Operand::Ref(r) => r.areas()[0],
         Operand::Val(Value::Error(e)) => return Operand::err(*e),
-        _ => return Operand::err(XlError::Value),
+        _ => return Operand::err(XlError::VALUE),
     };
     let wb = ctx.wb;
     let text_at = |row: u32, col: u32| -> Value {
@@ -282,7 +282,7 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
     let (rows, cols) = (rect.rows(), rect.cols());
     if check_result_size(ctx, rows as u64, cols as u64).is_err() {
-        return Operand::err(XlError::Num);
+        return Operand::err(XlError::NUM);
     }
     let used = wb.sheet(area.sheet).and_then(|s| s.bounded(&rect));
     Operand::Val(array_or_scalar(rows, cols, |r, c| {
@@ -343,6 +343,8 @@ fn normalize_formula(sheet_name: impl Fn(&str) -> Option<String>, text: &str) ->
     let is_ws = |c: char| matches!(c, ' ' | '\n' | '\r' | '\t' | '\u{a0}');
     let mut out = String::from("=");
     let mut prev_end = 0usize;
+
+    let mut brackets: Vec<bool> = Vec::new();
     for (i, t) in tokens.iter().enumerate() {
         let end = match tokens.get(i + 1) {
             Some(next) => {
@@ -357,7 +359,24 @@ fn normalize_formula(sheet_name: impl Fn(&str) -> Option<String>, text: &str) ->
         let gap: String = chars[prev_end.min(t.pos)..t.pos].iter().collect();
         let raw: String = chars[t.pos..end.max(t.pos)].iter().collect();
         prev_end = end.max(t.pos);
-        let drop_gap = matches!(t.tok, Tok::Op(",") | Tok::Op(";") | Tok::End);
+        match &t.tok {
+            Tok::Op("(") => {
+                let call = i > 0
+                    && !t.space_before
+                    && matches!(tokens[i - 1].tok, Tok::Ident(_) | Tok::Op(")"));
+                brackets.push(call);
+            }
+            Tok::Op("{") => brackets.push(true),
+            Tok::Op(")") | Tok::Op("}") => {
+                brackets.pop();
+            }
+            _ => {}
+        }
+        let drop_gap = match t.tok {
+            Tok::Op(",") => brackets.last().copied().unwrap_or(false),
+            Tok::Op(";") | Tok::End => true,
+            _ => false,
+        };
         if !drop_gap {
             out.push_str(&gap);
         }
@@ -376,7 +395,10 @@ fn normalize_formula(sheet_name: impl Fn(&str) -> Option<String>, text: &str) ->
                         && !bare.is_empty()
                         && bare.chars().all(|c| c.is_ascii_alphabetic())
                         && crate::address::letters_to_col(&bare).is_some());
-                if next_is_paren || is_ref || upper == "TRUE" || upper == "FALSE" {
+                let known_fn = next_is_paren
+                    && (matches!(upper.as_str(), "LET" | "LAMBDA")
+                        || crate::functions::lookup(&upper).is_some());
+                if known_fn || is_ref || upper == "TRUE" || upper == "FALSE" {
                     out.push_str(&upper);
                 } else {
                     out.push_str(s);

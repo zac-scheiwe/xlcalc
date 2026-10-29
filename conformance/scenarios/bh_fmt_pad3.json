@@ -1,0 +1,1 @@
+{"steps": [{"op": "precision", "value": true}, {"op": "format", "range": "Sheet1!A1", "fmt": "[$\u20ac-2] 0.0"}, {"op": "set", "cell": "Sheet1!A1", "input": "12345678.9"}, {"op": "set", "cell": "Sheet1!B1", "input": "=A1*1"}, {"op": "set", "cell": "Sheet1!C1", "input": "=A1/3"}, {"op": "read", "range": "Sheet1!A1:C1"}], "check_all_formats": true}

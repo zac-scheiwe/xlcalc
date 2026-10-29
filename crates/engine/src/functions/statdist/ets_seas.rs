@@ -23,8 +23,8 @@ fn neg(x: f64) -> f64 {
     }
 }
 
-const TWO_PI: f64 = 6.283185307179586;
-const PI: f64 = 3.141592653589793;
+const TWO_PI: f64 = std::f64::consts::TAU;
+const PI: f64 = std::f64::consts::PI;
 
 fn fit(xs: &[i64], ys: &[f64]) -> (f64, f64) {
     let (mut sx, mut sy, mut sxx, mut sxy) = (0.0, 0.0, 0.0, 0.0);
@@ -158,8 +158,7 @@ fn spectrum(y: &[f64]) -> Spectrum {
     let half = l / 2;
     let (mut sum, mut sumsq) = (0.0, 0.0);
     let mut pairs = Vec::with_capacity(half);
-    for k in 1..=half {
-        let (re, im) = f[k];
+    for (k, &(re, im)) in f.iter().enumerate().take(half + 1).skip(1) {
         let p = div(add(mul(im, im), mul(re, re)), norm);
         sum = add(p, sum);
         sumsq = add(mul(p, p), sumsq);

@@ -1,0 +1,66 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "2026-03-01,Coffee,-4.50,AUD"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "2026-03-02,Salary,\"2,500.00\",AUD"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "2026-03-03,Rent,-1500,AUD"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "03/04/2026;x;1.5e2;USD"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "  padded , sp ,  7 ,x"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!G1",
+"input": "=SUM(C1:C5)"
+},
+{
+"op": "text_to_columns",
+"range": "Sheet1!A1:A5",
+"comma": true,
+"dest": "Sheet1!B1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F5"
+},
+{
+"op": "read",
+"range": "Sheet1!G1"
+}
+]
+}

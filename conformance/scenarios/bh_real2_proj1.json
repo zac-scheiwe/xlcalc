@@ -1,0 +1,609 @@
+{
+"sheets": [
+"Plan",
+"Gantt"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Plan!A1",
+"value": {
+"t": "s",
+"v": "Task"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!B1",
+"value": {
+"t": "s",
+"v": "Start"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!C1",
+"value": {
+"t": "s",
+"v": "Days"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D1",
+"value": {
+"t": "s",
+"v": "Owner"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E1",
+"value": {
+"t": "s",
+"v": "Pct"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!F1",
+"value": {
+"t": "s",
+"v": "Done"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A2",
+"value": {
+"t": "s",
+"v": "Design"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B2",
+"input": "1/6/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D2",
+"value": {
+"t": "s",
+"v": "Al"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A3",
+"value": {
+"t": "s",
+"v": "Build"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B3",
+"input": "8/6/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C3",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D3",
+"value": {
+"t": "s",
+"v": "Bo"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E3",
+"value": {
+"t": "n",
+"v": 0.5
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A4",
+"value": {
+"t": "s",
+"v": "Test"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B4",
+"input": "22/6/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C4",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D4",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E4",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A5",
+"value": {
+"t": "s",
+"v": "Docs"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B5",
+"input": "15/6/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D5",
+"value": {
+"t": "s",
+"v": "Al"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E5",
+"value": {
+"t": "n",
+"v": 0.25
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A6",
+"value": {
+"t": "s",
+"v": "Launch"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B6",
+"input": "1/7/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D6",
+"value": {
+"t": "s",
+"v": "Bo"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E6",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A7",
+"value": {
+"t": "s",
+"v": "Review"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B7",
+"input": "3/7/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D7",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E7",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A8",
+"value": {
+"t": "s",
+"v": "Train"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B8",
+"input": "9/7/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C8",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D8",
+"value": {
+"t": "s",
+"v": "Al"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E8",
+"value": {
+"t": "n",
+"v": 0.75
+}
+},
+{
+"op": "setv",
+"cell": "Plan!A9",
+"value": {
+"t": "s",
+"v": "Hotfix"
+}
+},
+{
+"op": "set",
+"cell": "Plan!B9",
+"input": "13/7/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!C9",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Plan!D9",
+"value": {
+"t": "s",
+"v": "Bo"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!E9",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Plan!H1",
+"value": {
+"t": "s",
+"v": "Today"
+}
+},
+{
+"op": "set",
+"cell": "Plan!I1",
+"input": "12/6/2026"
+},
+{
+"op": "setv",
+"cell": "Plan!H2",
+"value": {
+"t": "s",
+"v": "Weekend"
+}
+},
+{
+"op": "setv",
+"cell": "Plan!I2",
+"value": {
+"t": "n",
+"v": 11
+}
+},
+{
+"op": "setv",
+"cell": "Plan!H3",
+"value": {
+"t": "s",
+"v": "Hols"
+}
+},
+{
+"op": "set",
+"cell": "Plan!I3",
+"input": "8/6/2026"
+},
+{
+"op": "set",
+"cell": "Plan!I4",
+"input": "15/6/2026"
+},
+{
+"op": "table",
+"name": "tPlan",
+"range": "Plan!A1:F9"
+},
+{
+"op": "set",
+"cell": "Plan!F2",
+"input": "=WORKDAY.INTL([@Start],[@Days]-1,$I$2,$I$3:$I$4)"
+},
+{
+"op": "set",
+"cell": "Plan!G1",
+"input": "Status"
+},
+{
+"op": "set",
+"cell": "Plan!G2",
+"input": "=IF([@Pct]=1,\"Done\",IF($I$1>[@Done],\"Late\",IF($I$1>=[@Start],\"In progress\",\"Not started\")))"
+},
+{
+"op": "set",
+"cell": "Plan!H6",
+"input": "=NETWORKDAYS.INTL(MIN(tPlan[Start]),MAX(tPlan[Done]),$I$2,$I$3:$I$4)"
+},
+{
+"op": "set",
+"cell": "Plan!H7",
+"input": "=SUMPRODUCT(tPlan[Days]*tPlan[Pct])/SUM(tPlan[Days])"
+},
+{
+"op": "set",
+"cell": "Plan!H8",
+"input": "=COUNTIF(tPlan[Status],\"Late\")&\" late of \"&ROWS(tPlan)"
+},
+{
+"op": "set",
+"cell": "Plan!H9",
+"input": "=TEXT(MAX(tPlan[Done]),\"ddd d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Plan!H10",
+"input": "=NETWORKDAYS.INTL($I$1,MAX(tPlan[Done]),\"0000011\")"
+},
+{
+"op": "set",
+"cell": "Plan!H11",
+"input": "=DAYS(MAX(tPlan[Done]),MIN(tPlan[Start]))&\" days / \"&DATEDIF(MIN(tPlan[Start]),MAX(tPlan[Done]),\"m\")&\" m\""
+},
+{
+"op": "set",
+"cell": "Plan!H12",
+"input": "=XLOOKUP(\"Late\",tPlan[Status],tPlan[Task],\"none\")"
+},
+{
+"op": "set",
+"cell": "Plan!H13",
+"input": "=TEXTJOIN(\", \",TRUE,FILTER(tPlan[Task],tPlan[Status]<>\"Done\",\"-\"))"
+},
+{
+"op": "set",
+"cell": "Plan!H14",
+"input": "=WEEKNUM(MIN(tPlan[Start]),2)&\"/\"&ISOWEEKNUM(MAX(tPlan[Done]))"
+},
+{
+"op": "set",
+"cell": "Plan!H15",
+"input": "=EOMONTH(MAX(tPlan[Done]),0)-MAX(tPlan[Done])"
+},
+{
+"op": "set",
+"cell": "Plan!H16",
+"input": "=WORKDAY(MAX(tPlan[Done]),-5)"
+},
+{
+"op": "set",
+"cell": "Gantt!A1",
+"input": "Task"
+},
+{
+"op": "set",
+"cell": "Gantt!A2",
+"input": "=tPlan[Task]"
+},
+{
+"op": "set",
+"cell": "Gantt!B1",
+"input": "=SEQUENCE(1,20,MIN(tPlan[Start]),1)"
+},
+{
+"op": "set",
+"cell": "Gantt!B2",
+"input": "=IF((B$1>=tPlan[Start])*(B$1<=tPlan[Done])*(WEEKDAY(B$1,2)<6),\"#\",\"\")"
+},
+{
+"op": "set",
+"cell": "Gantt!B12",
+"input": "=BYROW(B2#,LAMBDA(r,COUNTIF(r,\"#\")))"
+},
+{
+"op": "set",
+"cell": "Gantt!C12",
+"input": "=MAP(tPlan[Start],tPlan[Done],LAMBDA(a,b,NETWORKDAYS(a,b)))"
+},
+{
+"op": "set",
+"cell": "Gantt!D12",
+"input": "=TEXT(B1#,\"d/m\")"
+},
+{
+"op": "set",
+"cell": "Gantt!B25",
+"input": "=TOROW(IF(B2#=\"#\",B1#,NA()),3)"
+},
+{
+"op": "read",
+"range": "Plan!A1:I17"
+},
+{
+"op": "read",
+"range": "Gantt!A1:V22"
+},
+{
+"op": "read",
+"range": "Gantt!A24:W26"
+},
+{
+"op": "set",
+"cell": "Plan!A10",
+"input": "QA"
+},
+{
+"op": "set",
+"cell": "Plan!B10",
+"input": "20/7/2026"
+},
+{
+"op": "set",
+"cell": "Plan!C10",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Plan!E10",
+"input": "0"
+},
+{
+"op": "read",
+"range": "Plan!A1:I17"
+},
+{
+"op": "read",
+"range": "Gantt!A1:V22"
+},
+{
+"op": "set",
+"cell": "Plan!I1",
+"input": "1/7/2026"
+},
+{
+"op": "read",
+"range": "Plan!A1:I17"
+},
+{
+"op": "set",
+"cell": "Plan!I2",
+"input": "1"
+},
+{
+"op": "read",
+"range": "Plan!A1:I17"
+},
+{
+"op": "read",
+"range": "Gantt!A1:V22"
+},
+{
+"op": "table_sort",
+"name": "tPlan",
+"sheet": "Plan",
+"keys": [
+{
+"key": 2,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Plan!A1:I17"
+},
+{
+"op": "read",
+"range": "Gantt!A1:V22"
+},
+{
+"op": "delete_rows",
+"sheet": "Plan",
+"at": 4,
+"count": 1
+},
+{
+"op": "read",
+"range": "Plan!A1:I17"
+},
+{
+"op": "read",
+"range": "Gantt!A1:V22"
+}
+]
+}

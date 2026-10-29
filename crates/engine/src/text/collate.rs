@@ -112,7 +112,19 @@ impl Key {
         self.clear();
         for ch in s.chars() {
             let cp = ch as u32;
-            if cp < 0x10000 {
+
+            let digraph: &[u16] = match cp {
+                0x309F => &[0x3088, 0x308A],
+                0x30FF => &[0x30B3, 0x30C8],
+                _ => &[],
+            };
+            if !digraph.is_empty() {
+                for &u in digraph {
+                    if let Some(r) = rec(u) {
+                        self.add(&r, primary_only);
+                    }
+                }
+            } else if cp < 0x10000 {
                 if let Some(r) = rec(cp as u16) {
                     self.add(&r, primary_only);
                 }
@@ -190,6 +202,55 @@ pub fn sort_key(s: &str) -> Vec<u8> {
     let mut k = Key::default();
     k.build(s, false);
     k.finish()
+}
+
+fn key_parts(s: &str) -> (Vec<u8>, Vec<u8>) {
+    let mut k = Key::default();
+    k.build(s, false);
+    let full = k.finish();
+
+    let cut = full.len() - 1 - k.s.len() - 1;
+    (full[..cut].to_vec(), k.s.clone())
+}
+
+fn case_levels(s: &str) -> Vec<u8> {
+    let mut v = Vec::new();
+    for ch in s.chars() {
+        let cp = ch as u32;
+        let (n, has_p) = if cp < 0x10000 {
+            match rec(cp as u16) {
+                Some(r) => (r.n, !r.p.is_empty()),
+                None => (0, false),
+            }
+        } else {
+            (2, true)
+        };
+        if has_p {
+            v.extend(std::iter::repeat_n(u8::from(ch.is_uppercase()), n));
+        }
+    }
+    v
+}
+
+pub fn compare_match_case(a: &str, b: &str) -> Ordering {
+    let (pa, sa) = key_parts(a);
+    let (pb, sb) = key_parts(b);
+    pa.cmp(&pb)
+        .then_with(|| case_levels(a).cmp(&case_levels(b)))
+        .then_with(|| sa.cmp(&sb))
+}
+
+pub fn key_bytes(s: &str) -> Vec<u8> {
+    let mut k = Key::default();
+    k.build(s, false);
+    k.finish()
+}
+
+pub fn trailing_ignorable(s: &str) -> usize {
+    s.chars()
+        .rev()
+        .take_while(|&c| (c as u32) < 0x10000 && rec(c as u16).is_none())
+        .count()
 }
 
 pub fn compare(a: &str, b: &str) -> Ordering {

@@ -1,0 +1,2790 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=ISNUMBER(A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=IFERROR(A1+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=IFERROR(VALUE(A1),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=IFERROR(N(A1),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G1",
+"input": "=A1=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=A1>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I1",
+"input": "=IFERROR(LEN(A1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J1",
+"input": "=TYPE(A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K1",
+"input": "=IF(A1,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L1",
+"input": "=IFERROR(-A1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M1",
+"input": "=IFERROR(A1*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N1",
+"input": "=IFERROR(--A1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O1",
+"input": "=IFERROR(ROUND(A1,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P1",
+"input": "=COUNTIF($A$1:$A$16,A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q1",
+"input": "=IFERROR(MATCH(A1,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R1",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S1",
+"input": "=IFERROR(A1&A1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T1",
+"input": "=IFERROR(TEXT(A1,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U1",
+"input": "=IFERROR(MAX(A1,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V1",
+"input": "=IFERROR(SUM(A1,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W1",
+"input": "=IFERROR(AVERAGE(A1,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X1",
+"input": "=IFERROR(CHOOSE(A1,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y1",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z1",
+"input": "=IFERROR(DATE(2026,A1,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA1",
+"input": "=IFERROR(EDATE(A1,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB1",
+"input": "=IFERROR(MOD(A1,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC1",
+"input": "=IFERROR(A1^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD1",
+"input": "=IFERROR(RANK(A1,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE1",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "15"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=A2&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=ISNUMBER(A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=IFERROR(A2+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=IFERROR(VALUE(A2),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=IFERROR(N(A2),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=A2=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=A2>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=IFERROR(LEN(A2),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=TYPE(A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=IF(A2,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L2",
+"input": "=IFERROR(-A2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M2",
+"input": "=IFERROR(A2*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N2",
+"input": "=IFERROR(--A2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O2",
+"input": "=IFERROR(ROUND(A2,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P2",
+"input": "=COUNTIF($A$1:$A$16,A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q2",
+"input": "=IFERROR(MATCH(A2,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R2",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A2),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S2",
+"input": "=IFERROR(A2&A2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T2",
+"input": "=IFERROR(TEXT(A2,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U2",
+"input": "=IFERROR(MAX(A2,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V2",
+"input": "=IFERROR(SUM(A2,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W2",
+"input": "=IFERROR(AVERAGE(A2,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X2",
+"input": "=IFERROR(CHOOSE(A2,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y2",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A2),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z2",
+"input": "=IFERROR(DATE(2026,A2,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA2",
+"input": "=IFERROR(EDATE(A2,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB2",
+"input": "=IFERROR(MOD(A2,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC2",
+"input": "=IFERROR(A2^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD2",
+"input": "=IFERROR(RANK(A2,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE2",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "abc"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "=A3&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=ISNUMBER(A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=IFERROR(A3+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=IFERROR(VALUE(A3),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=IFERROR(N(A3),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G3",
+"input": "=A3=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=A3>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I3",
+"input": "=IFERROR(LEN(A3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J3",
+"input": "=TYPE(A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K3",
+"input": "=IF(A3,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L3",
+"input": "=IFERROR(-A3,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M3",
+"input": "=IFERROR(A3*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N3",
+"input": "=IFERROR(--A3,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O3",
+"input": "=IFERROR(ROUND(A3,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P3",
+"input": "=COUNTIF($A$1:$A$16,A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q3",
+"input": "=IFERROR(MATCH(A3,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R3",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S3",
+"input": "=IFERROR(A3&A3,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T3",
+"input": "=IFERROR(TEXT(A3,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U3",
+"input": "=IFERROR(MAX(A3,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V3",
+"input": "=IFERROR(SUM(A3,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W3",
+"input": "=IFERROR(AVERAGE(A3,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X3",
+"input": "=IFERROR(CHOOSE(A3,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y3",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z3",
+"input": "=IFERROR(DATE(2026,A3,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA3",
+"input": "=IFERROR(EDATE(A3,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB3",
+"input": "=IFERROR(MOD(A3,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC3",
+"input": "=IFERROR(A3^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD3",
+"input": "=IFERROR(RANK(A3,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE3",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=A4&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=ISNUMBER(A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=IFERROR(A4+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=IFERROR(VALUE(A4),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=IFERROR(N(A4),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G4",
+"input": "=A4=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=A4>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I4",
+"input": "=IFERROR(LEN(A4),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J4",
+"input": "=TYPE(A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K4",
+"input": "=IF(A4,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L4",
+"input": "=IFERROR(-A4,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M4",
+"input": "=IFERROR(A4*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N4",
+"input": "=IFERROR(--A4,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O4",
+"input": "=IFERROR(ROUND(A4,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P4",
+"input": "=COUNTIF($A$1:$A$16,A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q4",
+"input": "=IFERROR(MATCH(A4,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R4",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A4),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S4",
+"input": "=IFERROR(A4&A4,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T4",
+"input": "=IFERROR(TEXT(A4,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U4",
+"input": "=IFERROR(MAX(A4,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V4",
+"input": "=IFERROR(SUM(A4,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W4",
+"input": "=IFERROR(AVERAGE(A4,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X4",
+"input": "=IFERROR(CHOOSE(A4,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y4",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A4),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z4",
+"input": "=IFERROR(DATE(2026,A4,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA4",
+"input": "=IFERROR(EDATE(A4,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB4",
+"input": "=IFERROR(MOD(A4,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC4",
+"input": "=IFERROR(A4^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD4",
+"input": "=IFERROR(RANK(A4,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE4",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "=A5&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "=ISNUMBER(A5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=IFERROR(A5+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=IFERROR(VALUE(A5),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=IFERROR(N(A5),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G5",
+"input": "=A5=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=A5>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I5",
+"input": "=IFERROR(LEN(A5),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J5",
+"input": "=TYPE(A5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K5",
+"input": "=IF(A5,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L5",
+"input": "=IFERROR(-A5,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M5",
+"input": "=IFERROR(A5*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N5",
+"input": "=IFERROR(--A5,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O5",
+"input": "=IFERROR(ROUND(A5,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P5",
+"input": "=COUNTIF($A$1:$A$16,A5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q5",
+"input": "=IFERROR(MATCH(A5,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R5",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A5),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S5",
+"input": "=IFERROR(A5&A5,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T5",
+"input": "=IFERROR(TEXT(A5,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U5",
+"input": "=IFERROR(MAX(A5,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V5",
+"input": "=IFERROR(SUM(A5,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W5",
+"input": "=IFERROR(AVERAGE(A5,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X5",
+"input": "=IFERROR(CHOOSE(A5,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y5",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A5),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z5",
+"input": "=IFERROR(DATE(2026,A5,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA5",
+"input": "=IFERROR(EDATE(A5,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB5",
+"input": "=IFERROR(MOD(A5,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC5",
+"input": "=IFERROR(A5^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD5",
+"input": "=IFERROR(RANK(A5,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE5",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A6",
+"value": {
+"t": "b",
+"v": true
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "=A6&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "=ISNUMBER(A6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=IFERROR(A6+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=IFERROR(VALUE(A6),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=IFERROR(N(A6),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G6",
+"input": "=A6=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=A6>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I6",
+"input": "=IFERROR(LEN(A6),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J6",
+"input": "=TYPE(A6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K6",
+"input": "=IF(A6,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L6",
+"input": "=IFERROR(-A6,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M6",
+"input": "=IFERROR(A6*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N6",
+"input": "=IFERROR(--A6,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O6",
+"input": "=IFERROR(ROUND(A6,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P6",
+"input": "=COUNTIF($A$1:$A$16,A6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q6",
+"input": "=IFERROR(MATCH(A6,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R6",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A6),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S6",
+"input": "=IFERROR(A6&A6,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T6",
+"input": "=IFERROR(TEXT(A6,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U6",
+"input": "=IFERROR(MAX(A6,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V6",
+"input": "=IFERROR(SUM(A6,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W6",
+"input": "=IFERROR(AVERAGE(A6,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X6",
+"input": "=IFERROR(CHOOSE(A6,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y6",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A6),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z6",
+"input": "=IFERROR(DATE(2026,A6,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA6",
+"input": "=IFERROR(EDATE(A6,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB6",
+"input": "=IFERROR(MOD(A6,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC6",
+"input": "=IFERROR(A6^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD6",
+"input": "=IFERROR(RANK(A6,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE6",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "s",
+"v": "3.5"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B7",
+"input": "=A7&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=ISNUMBER(A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=IFERROR(A7+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E7",
+"input": "=IFERROR(VALUE(A7),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=IFERROR(N(A7),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G7",
+"input": "=A7=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=A7>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I7",
+"input": "=IFERROR(LEN(A7),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J7",
+"input": "=TYPE(A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K7",
+"input": "=IF(A7,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L7",
+"input": "=IFERROR(-A7,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M7",
+"input": "=IFERROR(A7*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N7",
+"input": "=IFERROR(--A7,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O7",
+"input": "=IFERROR(ROUND(A7,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P7",
+"input": "=COUNTIF($A$1:$A$16,A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q7",
+"input": "=IFERROR(MATCH(A7,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R7",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A7),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S7",
+"input": "=IFERROR(A7&A7,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T7",
+"input": "=IFERROR(TEXT(A7,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U7",
+"input": "=IFERROR(MAX(A7,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V7",
+"input": "=IFERROR(SUM(A7,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W7",
+"input": "=IFERROR(AVERAGE(A7,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X7",
+"input": "=IFERROR(CHOOSE(A7,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y7",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A7),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z7",
+"input": "=IFERROR(DATE(2026,A7,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA7",
+"input": "=IFERROR(EDATE(A7,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB7",
+"input": "=IFERROR(MOD(A7,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC7",
+"input": "=IFERROR(A7^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD7",
+"input": "=IFERROR(RANK(A7,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE7",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "1/2/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B8",
+"input": "=A8&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=ISNUMBER(A8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=IFERROR(A8+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=IFERROR(VALUE(A8),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=IFERROR(N(A8),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G8",
+"input": "=A8=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=A8>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I8",
+"input": "=IFERROR(LEN(A8),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J8",
+"input": "=TYPE(A8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K8",
+"input": "=IF(A8,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L8",
+"input": "=IFERROR(-A8,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M8",
+"input": "=IFERROR(A8*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N8",
+"input": "=IFERROR(--A8,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O8",
+"input": "=IFERROR(ROUND(A8,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P8",
+"input": "=COUNTIF($A$1:$A$16,A8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q8",
+"input": "=IFERROR(MATCH(A8,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R8",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A8),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S8",
+"input": "=IFERROR(A8&A8,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T8",
+"input": "=IFERROR(TEXT(A8,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U8",
+"input": "=IFERROR(MAX(A8,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V8",
+"input": "=IFERROR(SUM(A8,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W8",
+"input": "=IFERROR(AVERAGE(A8,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X8",
+"input": "=IFERROR(CHOOSE(A8,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y8",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A8),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z8",
+"input": "=IFERROR(DATE(2026,A8,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA8",
+"input": "=IFERROR(EDATE(A8,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB8",
+"input": "=IFERROR(MOD(A8,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC8",
+"input": "=IFERROR(A8^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD8",
+"input": "=IFERROR(RANK(A8,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE8",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A9",
+"value": {
+"t": "n",
+"v": 0.30000000000000004
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B9",
+"input": "=A9&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=ISNUMBER(A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=IFERROR(A9+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=IFERROR(VALUE(A9),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=IFERROR(N(A9),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G9",
+"input": "=A9=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=A9>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I9",
+"input": "=IFERROR(LEN(A9),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J9",
+"input": "=TYPE(A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K9",
+"input": "=IF(A9,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L9",
+"input": "=IFERROR(-A9,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M9",
+"input": "=IFERROR(A9*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N9",
+"input": "=IFERROR(--A9,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O9",
+"input": "=IFERROR(ROUND(A9,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P9",
+"input": "=COUNTIF($A$1:$A$16,A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q9",
+"input": "=IFERROR(MATCH(A9,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R9",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A9),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S9",
+"input": "=IFERROR(A9&A9,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T9",
+"input": "=IFERROR(TEXT(A9,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U9",
+"input": "=IFERROR(MAX(A9,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V9",
+"input": "=IFERROR(SUM(A9,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W9",
+"input": "=IFERROR(AVERAGE(A9,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X9",
+"input": "=IFERROR(CHOOSE(A9,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y9",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A9),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z9",
+"input": "=IFERROR(DATE(2026,A9,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA9",
+"input": "=IFERROR(EDATE(A9,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB9",
+"input": "=IFERROR(MOD(A9,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC9",
+"input": "=IFERROR(A9^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD9",
+"input": "=IFERROR(RANK(A9,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE9",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A10",
+"value": {
+"t": "s",
+"v": "  7"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B10",
+"input": "=A10&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=ISNUMBER(A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=IFERROR(A10+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=IFERROR(VALUE(A10),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=IFERROR(N(A10),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G10",
+"input": "=A10=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=A10>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I10",
+"input": "=IFERROR(LEN(A10),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J10",
+"input": "=TYPE(A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K10",
+"input": "=IF(A10,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L10",
+"input": "=IFERROR(-A10,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M10",
+"input": "=IFERROR(A10*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N10",
+"input": "=IFERROR(--A10,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O10",
+"input": "=IFERROR(ROUND(A10,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P10",
+"input": "=COUNTIF($A$1:$A$16,A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q10",
+"input": "=IFERROR(MATCH(A10,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R10",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A10),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S10",
+"input": "=IFERROR(A10&A10,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T10",
+"input": "=IFERROR(TEXT(A10,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U10",
+"input": "=IFERROR(MAX(A10,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V10",
+"input": "=IFERROR(SUM(A10,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W10",
+"input": "=IFERROR(AVERAGE(A10,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X10",
+"input": "=IFERROR(CHOOSE(A10,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y10",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A10),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z10",
+"input": "=IFERROR(DATE(2026,A10,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA10",
+"input": "=IFERROR(EDATE(A10,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB10",
+"input": "=IFERROR(MOD(A10,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC10",
+"input": "=IFERROR(A10^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD10",
+"input": "=IFERROR(RANK(A10,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE10",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A11",
+"value": {
+"t": "s",
+"v": "1,000"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B11",
+"input": "=A11&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=ISNUMBER(A11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=IFERROR(A11+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=IFERROR(VALUE(A11),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=IFERROR(N(A11),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G11",
+"input": "=A11=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=A11>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I11",
+"input": "=IFERROR(LEN(A11),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J11",
+"input": "=TYPE(A11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K11",
+"input": "=IF(A11,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L11",
+"input": "=IFERROR(-A11,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M11",
+"input": "=IFERROR(A11*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N11",
+"input": "=IFERROR(--A11,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O11",
+"input": "=IFERROR(ROUND(A11,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P11",
+"input": "=COUNTIF($A$1:$A$16,A11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q11",
+"input": "=IFERROR(MATCH(A11,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R11",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A11),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S11",
+"input": "=IFERROR(A11&A11,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T11",
+"input": "=IFERROR(TEXT(A11,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U11",
+"input": "=IFERROR(MAX(A11,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V11",
+"input": "=IFERROR(SUM(A11,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W11",
+"input": "=IFERROR(AVERAGE(A11,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X11",
+"input": "=IFERROR(CHOOSE(A11,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y11",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A11),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z11",
+"input": "=IFERROR(DATE(2026,A11,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA11",
+"input": "=IFERROR(EDATE(A11,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB11",
+"input": "=IFERROR(MOD(A11,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC11",
+"input": "=IFERROR(A11^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD11",
+"input": "=IFERROR(RANK(A11,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE11",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A12",
+"value": {
+"t": "s",
+"v": "$5"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B12",
+"input": "=A12&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C12",
+"input": "=ISNUMBER(A12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D12",
+"input": "=IFERROR(A12+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E12",
+"input": "=IFERROR(VALUE(A12),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F12",
+"input": "=IFERROR(N(A12),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G12",
+"input": "=A12=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H12",
+"input": "=A12>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I12",
+"input": "=IFERROR(LEN(A12),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J12",
+"input": "=TYPE(A12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K12",
+"input": "=IF(A12,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L12",
+"input": "=IFERROR(-A12,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M12",
+"input": "=IFERROR(A12*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N12",
+"input": "=IFERROR(--A12,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O12",
+"input": "=IFERROR(ROUND(A12,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P12",
+"input": "=COUNTIF($A$1:$A$16,A12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q12",
+"input": "=IFERROR(MATCH(A12,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R12",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A12),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S12",
+"input": "=IFERROR(A12&A12,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T12",
+"input": "=IFERROR(TEXT(A12,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U12",
+"input": "=IFERROR(MAX(A12,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V12",
+"input": "=IFERROR(SUM(A12,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W12",
+"input": "=IFERROR(AVERAGE(A12,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X12",
+"input": "=IFERROR(CHOOSE(A12,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y12",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A12),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z12",
+"input": "=IFERROR(DATE(2026,A12,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA12",
+"input": "=IFERROR(EDATE(A12,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB12",
+"input": "=IFERROR(MOD(A12,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC12",
+"input": "=IFERROR(A12^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD12",
+"input": "=IFERROR(RANK(A12,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE12",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A13",
+"value": {
+"t": "s",
+"v": "(4)"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B13",
+"input": "=A13&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C13",
+"input": "=ISNUMBER(A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D13",
+"input": "=IFERROR(A13+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E13",
+"input": "=IFERROR(VALUE(A13),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F13",
+"input": "=IFERROR(N(A13),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G13",
+"input": "=A13=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H13",
+"input": "=A13>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I13",
+"input": "=IFERROR(LEN(A13),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J13",
+"input": "=TYPE(A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K13",
+"input": "=IF(A13,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L13",
+"input": "=IFERROR(-A13,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M13",
+"input": "=IFERROR(A13*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N13",
+"input": "=IFERROR(--A13,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O13",
+"input": "=IFERROR(ROUND(A13,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P13",
+"input": "=COUNTIF($A$1:$A$16,A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q13",
+"input": "=IFERROR(MATCH(A13,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R13",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A13),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S13",
+"input": "=IFERROR(A13&A13,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T13",
+"input": "=IFERROR(TEXT(A13,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U13",
+"input": "=IFERROR(MAX(A13,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V13",
+"input": "=IFERROR(SUM(A13,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W13",
+"input": "=IFERROR(AVERAGE(A13,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X13",
+"input": "=IFERROR(CHOOSE(A13,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y13",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A13),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z13",
+"input": "=IFERROR(DATE(2026,A13,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA13",
+"input": "=IFERROR(EDATE(A13,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB13",
+"input": "=IFERROR(MOD(A13,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC13",
+"input": "=IFERROR(A13^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD13",
+"input": "=IFERROR(RANK(A13,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE13",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A14",
+"value": {
+"t": "s",
+"v": "12%"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B14",
+"input": "=A14&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C14",
+"input": "=ISNUMBER(A14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D14",
+"input": "=IFERROR(A14+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E14",
+"input": "=IFERROR(VALUE(A14),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F14",
+"input": "=IFERROR(N(A14),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G14",
+"input": "=A14=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H14",
+"input": "=A14>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I14",
+"input": "=IFERROR(LEN(A14),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J14",
+"input": "=TYPE(A14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K14",
+"input": "=IF(A14,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L14",
+"input": "=IFERROR(-A14,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M14",
+"input": "=IFERROR(A14*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N14",
+"input": "=IFERROR(--A14,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O14",
+"input": "=IFERROR(ROUND(A14,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P14",
+"input": "=COUNTIF($A$1:$A$16,A14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q14",
+"input": "=IFERROR(MATCH(A14,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R14",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A14),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S14",
+"input": "=IFERROR(A14&A14,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T14",
+"input": "=IFERROR(TEXT(A14,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U14",
+"input": "=IFERROR(MAX(A14,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V14",
+"input": "=IFERROR(SUM(A14,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W14",
+"input": "=IFERROR(AVERAGE(A14,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X14",
+"input": "=IFERROR(CHOOSE(A14,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y14",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A14),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z14",
+"input": "=IFERROR(DATE(2026,A14,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA14",
+"input": "=IFERROR(EDATE(A14,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB14",
+"input": "=IFERROR(MOD(A14,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC14",
+"input": "=IFERROR(A14^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD14",
+"input": "=IFERROR(RANK(A14,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE14",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A15",
+"value": {
+"t": "s",
+"v": "1e2"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B15",
+"input": "=A15&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C15",
+"input": "=ISNUMBER(A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D15",
+"input": "=IFERROR(A15+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=IFERROR(VALUE(A15),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F15",
+"input": "=IFERROR(N(A15),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G15",
+"input": "=A15=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H15",
+"input": "=A15>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I15",
+"input": "=IFERROR(LEN(A15),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J15",
+"input": "=TYPE(A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K15",
+"input": "=IF(A15,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L15",
+"input": "=IFERROR(-A15,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M15",
+"input": "=IFERROR(A15*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N15",
+"input": "=IFERROR(--A15,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O15",
+"input": "=IFERROR(ROUND(A15,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P15",
+"input": "=COUNTIF($A$1:$A$16,A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q15",
+"input": "=IFERROR(MATCH(A15,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R15",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A15),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S15",
+"input": "=IFERROR(A15&A15,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T15",
+"input": "=IFERROR(TEXT(A15,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U15",
+"input": "=IFERROR(MAX(A15,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V15",
+"input": "=IFERROR(SUM(A15,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W15",
+"input": "=IFERROR(AVERAGE(A15,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X15",
+"input": "=IFERROR(CHOOSE(A15,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y15",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A15),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z15",
+"input": "=IFERROR(DATE(2026,A15,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA15",
+"input": "=IFERROR(EDATE(A15,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB15",
+"input": "=IFERROR(MOD(A15,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC15",
+"input": "=IFERROR(A15^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD15",
+"input": "=IFERROR(RANK(A15,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE15",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A16",
+"input": "=NA()"
+},
+{
+"op": "set",
+"cell": "Sheet1!B16",
+"input": "=A16&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!C16",
+"input": "=ISNUMBER(A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D16",
+"input": "=IFERROR(A16+1,\"err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=IFERROR(VALUE(A16),\"v-err\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F16",
+"input": "=IFERROR(N(A16),\"n\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G16",
+"input": "=A16=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!H16",
+"input": "=A16>5"
+},
+{
+"op": "set",
+"cell": "Sheet1!I16",
+"input": "=IFERROR(LEN(A16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J16",
+"input": "=TYPE(A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K16",
+"input": "=IF(A16,\"t\",\"f\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L16",
+"input": "=IFERROR(-A16,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M16",
+"input": "=IFERROR(A16*1,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N16",
+"input": "=IFERROR(--A16,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O16",
+"input": "=IFERROR(ROUND(A16,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P16",
+"input": "=COUNTIF($A$1:$A$16,A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q16",
+"input": "=IFERROR(MATCH(A16,$A$1:$A$16,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R16",
+"input": "=IFERROR(SUMIF($A$1:$A$16,A16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S16",
+"input": "=IFERROR(A16&A16,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T16",
+"input": "=IFERROR(TEXT(A16,\"0.00\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U16",
+"input": "=IFERROR(MAX(A16,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V16",
+"input": "=IFERROR(SUM(A16,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W16",
+"input": "=IFERROR(AVERAGE(A16,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X16",
+"input": "=IFERROR(CHOOSE(A16,\"a\",\"b\"),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y16",
+"input": "=IFERROR(INDEX({\"a\",\"b\",\"c\"},A16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z16",
+"input": "=IFERROR(DATE(2026,A16,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA16",
+"input": "=IFERROR(EDATE(A16,1),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB16",
+"input": "=IFERROR(MOD(A16,3),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC16",
+"input": "=IFERROR(A16^2,\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD16",
+"input": "=IFERROR(RANK(A16,$A$1:$A$16),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE16",
+"input": "=IFERROR(LARGE($A$1:$A$16,ROW()),\"e\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG1",
+"input": "=SUM(A1:A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG2",
+"input": "=SUMPRODUCT(A1:A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG3",
+"input": "=SUMPRODUCT(A1:A15*1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG4",
+"input": "=COUNT(A1:A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG5",
+"input": "=COUNTA(A1:A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG6",
+"input": "=AVERAGE(A1:A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG7",
+"input": "=MAX(A1:A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG8",
+"input": "=MIN(A1:A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG9",
+"input": "=PRODUCT(A1:A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG10",
+"input": "=MEDIAN(A1:A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG11",
+"input": "=A1+A2+A7"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG12",
+"input": "=SUM(A1,A2,A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG13",
+"input": "=SUM(A1:A2,A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG14",
+"input": "=SUM(\"15\",TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG15",
+"input": "=SUM({\"15\",TRUE})"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG16",
+"input": "=COUNT(\"15\",TRUE,A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG17",
+"input": "=COUNTBLANK(A1:A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG18",
+"input": "=SUMIF(A1:A16,\">5\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG19",
+"input": "=COUNTIF(A1:A16,\">5\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG20",
+"input": "=COUNTIF(A1:A16,\"15\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG21",
+"input": "=COUNTIF(A1:A16,15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG22",
+"input": "=COUNTIF(A1:A16,\"\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG23",
+"input": "=COUNTIF(A1:A16,\"<>\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG24",
+"input": "=SUMIF(A1:A16,\"15\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG25",
+"input": "=MATCH(\"15\",A1:A16,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG26",
+"input": "=MATCH(15,A1:A16,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG27",
+"input": "=VLOOKUP(\"3.5\",A1:B16,2,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG28",
+"input": "=VLOOKUP(3.5,A1:B16,2,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG29",
+"input": "=XLOOKUP(7,A1:A16,B1:B16,\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG30",
+"input": "=XMATCH(\"*\",A1:A16,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG31",
+"input": "=0.1+0.2&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG32",
+"input": "=(0.1+0.2)*10&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG33",
+"input": "=1/3&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG34",
+"input": "=123456789012345678&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG35",
+"input": "=1E+21&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG36",
+"input": "=1E-5&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG37",
+"input": "=0.00001234&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG38",
+"input": "=100*1.1&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG39",
+"input": "=1.1*1.1&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG40",
+"input": "=4.35*100&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG41",
+"input": "=ROUND(4.35*100,0)&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG42",
+"input": "=(4.35*100)-435"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG43",
+"input": "=INT(4.35*100)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG44",
+"input": "=INT(0.29*100)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG45",
+"input": "=0.29*100&\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!AG46",
+"input": "=1-0.9-0.1"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG47",
+"input": "=(1-0.9-0.1)=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG48",
+"input": "=ROUND(1-0.9-0.1,15)=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG49",
+"input": "=1.15*100-115"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG50",
+"input": "=SUM(0.1,0.2)-0.3"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG51",
+"input": "=SUM(0.1,0.2,-0.3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG52",
+"input": "=0.1+0.2-0.3"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG53",
+"input": "=SUM(A9,-0.3)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:AG53"
+}
+]
+}

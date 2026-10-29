@@ -1,0 +1,266 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "11"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "13"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "21"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "22"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "23"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "31"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "32"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "33"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "41"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "42"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "43"
+},
+{
+"op": "set",
+"cell": "Sheet1!H20",
+"input": "=SUM(B2:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H21",
+"input": "=SUM(B2:C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H22",
+"input": "=SUM(B2:$C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H23",
+"input": "=SUM(B2:$C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H24",
+"input": "=SUM(B$2:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H25",
+"input": "=SUM(B$2:C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H26",
+"input": "=SUM(B$2:$C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H27",
+"input": "=SUM(B$2:$C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H28",
+"input": "=SUM($B2:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H29",
+"input": "=SUM($B2:C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H30",
+"input": "=SUM($B2:$C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H31",
+"input": "=SUM($B2:$C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H32",
+"input": "=SUM($B$2:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H33",
+"input": "=SUM($B$2:C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H34",
+"input": "=SUM($B$2:$C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H35",
+"input": "=SUM($B$2:$C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H36",
+"input": "=B2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H37",
+"input": "=B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H38",
+"input": "=$B2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H39",
+"input": "=$B$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!H40",
+"input": "=SUM(B:C)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H41",
+"input": "=SUM($B:C)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H42",
+"input": "=SUM(B:$C)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H43",
+"input": "=SUM($B:$C)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H44",
+"input": "=SUM(2:3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H45",
+"input": "=SUM($2:3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H46",
+"input": "=SUM(2:$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H47",
+"input": "=SUM($2:$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H48",
+"input": "=SUM(B:B)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H49",
+"input": "=SUM(2:2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H50",
+"input": "=SUM(Sheet2!B2:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H51",
+"input": "=SUM(Sheet2!$B2:C$3)"
+},
+{
+"op": "read",
+"range": "Sheet1!H20:H51"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!H20:H51",
+"to": "Sheet1!T5",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!T5:BE5"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!H20:H51",
+"to": "Sheet2!T9",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet2!T9:BE9"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!H20:H22",
+"to": "Sheet1!T30",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!T30:V30"
+}
+]
+}

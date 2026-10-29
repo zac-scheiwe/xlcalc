@@ -1,0 +1,1010 @@
+{
+"sheets": [
+"Sales",
+"Dash"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sales!A1",
+"value": {
+"t": "s",
+"v": "Date"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C1",
+"value": {
+"t": "s",
+"v": "Rep"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D1",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F1",
+"value": {
+"t": "s",
+"v": "Price"
+}
+},
+{
+"op": "set",
+"cell": "Sales!A2",
+"input": "1/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B2",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C2",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D2",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F2",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!A3",
+"input": "3/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B3",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C3",
+"value": {
+"t": "s",
+"v": "Di"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D3",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E3",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F3",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!A4",
+"input": "5/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B4",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C4",
+"value": {
+"t": "s",
+"v": "Bob"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D4",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E4",
+"value": {
+"t": "n",
+"v": 16
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F4",
+"value": {
+"t": "n",
+"v": 7.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!A5",
+"input": "7/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B5",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C5",
+"value": {
+"t": "s",
+"v": "Ed"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D5",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E5",
+"value": {
+"t": "n",
+"v": 16
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F5",
+"value": {
+"t": "n",
+"v": 7.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!A6",
+"input": "9/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B6",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C6",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D6",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E6",
+"value": {
+"t": "n",
+"v": 26
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F6",
+"value": {
+"t": "n",
+"v": 14.5
+}
+},
+{
+"op": "set",
+"cell": "Sales!A7",
+"input": "11/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B7",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C7",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D7",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E7",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F7",
+"value": {
+"t": "n",
+"v": 7.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!A8",
+"input": "13/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B8",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C8",
+"value": {
+"t": "s",
+"v": "Di"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D8",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E8",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F8",
+"value": {
+"t": "n",
+"v": 7.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!A9",
+"input": "15/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B9",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C9",
+"value": {
+"t": "s",
+"v": "Bob"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D9",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E9",
+"value": {
+"t": "n",
+"v": 14
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F9",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!A10",
+"input": "17/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B10",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C10",
+"value": {
+"t": "s",
+"v": "Ed"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D10",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E10",
+"value": {
+"t": "n",
+"v": 23
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F10",
+"value": {
+"t": "n",
+"v": 7.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!A11",
+"input": "19/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B11",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C11",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D11",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E11",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F11",
+"value": {
+"t": "n",
+"v": 14.5
+}
+},
+{
+"op": "set",
+"cell": "Sales!A12",
+"input": "21/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B12",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C12",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D12",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E12",
+"value": {
+"t": "n",
+"v": 19
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F12",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!A13",
+"input": "23/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B13",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C13",
+"value": {
+"t": "s",
+"v": "Di"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D13",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E13",
+"value": {
+"t": "n",
+"v": 29
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F13",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "set",
+"cell": "Sales!A14",
+"input": "25/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B14",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C14",
+"value": {
+"t": "s",
+"v": "Bob"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D14",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E14",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F14",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!A15",
+"input": "27/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B15",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C15",
+"value": {
+"t": "s",
+"v": "Ed"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D15",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E15",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F15",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!A16",
+"input": "29/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B16",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C16",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D16",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E16",
+"value": {
+"t": "n",
+"v": 29
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F16",
+"value": {
+"t": "n",
+"v": 7.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!A17",
+"input": "31/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sales!B17",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C17",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D17",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E17",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "Sales!F17",
+"value": {
+"t": "n",
+"v": 14.5
+}
+},
+{
+"op": "setv",
+"cell": "Sales!G1",
+"value": {
+"t": "s",
+"v": "Total"
+}
+},
+{
+"op": "setv",
+"cell": "Dash!A1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Dash!B1",
+"value": {
+"t": "s",
+"v": "All"
+}
+},
+{
+"op": "setv",
+"cell": "Dash!A2",
+"value": {
+"t": "s",
+"v": "Min units"
+}
+},
+{
+"op": "setv",
+"cell": "Dash!B2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "table",
+"name": "tSales",
+"range": "Sales!A1:G17"
+},
+{
+"op": "set",
+"cell": "Sales!G2",
+"input": "=[@Units]*[@Price]"
+},
+{
+"op": "set",
+"cell": "Dash!A4",
+"input": "=LET(t,tSales,r,B1,f,IF(r=\"All\",t,FILTER(t,tSales[Region]=r)),SUM(INDEX(f,,7)))"
+},
+{
+"op": "set",
+"cell": "Dash!A5",
+"input": "=UNIQUE(tSales[Region])"
+},
+{
+"op": "set",
+"cell": "Dash!B5",
+"input": "=SUMIFS(tSales[Total],tSales[Region],A5#)"
+},
+{
+"op": "set",
+"cell": "Dash!C5",
+"input": "=XLOOKUP(A5#,tSales[Region],tSales[Rep])"
+},
+{
+"op": "set",
+"cell": "Dash!D5",
+"input": "=COUNTIFS(tSales[Region],A5#,tSales[Units],\">=\"&B2)"
+},
+{
+"op": "set",
+"cell": "Dash!F1",
+"input": "=TAKE(SORTBY(tSales[[Rep]:[Total]],tSales[Total],-1),5)"
+},
+{
+"op": "set",
+"cell": "Dash!F8",
+"input": "=LET(u,UNIQUE(tSales[Rep]),s,SUMIFS(tSales[Total],tSales[Rep],u),TAKE(SORTBY(HSTACK(u,s),s,-1),3))"
+},
+{
+"op": "set",
+"cell": "Dash!K1",
+"input": "=GROUPBY(tSales[Region],tSales[Total],SUM)"
+},
+{
+"op": "set",
+"cell": "Dash!K8",
+"input": "=PIVOTBY(tSales[Region],tSales[Product],tSales[Units],SUM)"
+},
+{
+"op": "set",
+"cell": "Dash!A12",
+"input": "=TEXTJOIN(\", \",TRUE,UNIQUE(FILTER(tSales[Product],tSales[Total]>200)))"
+},
+{
+"op": "set",
+"cell": "Dash!A13",
+"input": "=SUM(tSales[Total])"
+},
+{
+"op": "set",
+"cell": "Dash!A14",
+"input": "=AVERAGEIFS(tSales[Price],tSales[Product],\"Widget\")"
+},
+{
+"op": "set",
+"cell": "Dash!A15",
+"input": "=MAXIFS(tSales[Total],tSales[Region],\"East\")"
+},
+{
+"op": "set",
+"cell": "Dash!A16",
+"input": "=XLOOKUP(MAX(tSales[Total]),tSales[Total],tSales[Date])"
+},
+{
+"op": "set",
+"cell": "Dash!A17",
+"input": "=TEXT(A16,\"dd mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Dash!A18",
+"input": "=ROWS(FILTER(tSales,tSales[Units]>=B2))"
+},
+{
+"op": "set",
+"cell": "Dash!A19",
+"input": "=SORT(UNIQUE(tSales[Product]))"
+},
+{
+"op": "set",
+"cell": "Dash!B19",
+"input": "=MAP(A19#,LAMBDA(p,SUM(FILTER(tSales[Total],tSales[Product]=p))))"
+},
+{
+"op": "set",
+"cell": "Dash!C19",
+"input": "=SCAN(0,B19#,LAMBDA(a,b,a+b))"
+},
+{
+"op": "set",
+"cell": "Dash!D19",
+"input": "=BYROW(tSales[[Units]:[Price]],LAMBDA(r,PRODUCT(r)))"
+},
+{
+"op": "read",
+"range": "Dash!A1:P30"
+},
+{
+"op": "read",
+"range": "Sales!A1:G20"
+},
+{
+"op": "set",
+"cell": "Sales!A18",
+"input": "1/1/2027"
+},
+{
+"op": "set",
+"cell": "Sales!B18",
+"input": "East"
+},
+{
+"op": "set",
+"cell": "Sales!C18",
+"input": "Zed"
+},
+{
+"op": "set",
+"cell": "Sales!D18",
+"input": "Widget"
+},
+{
+"op": "set",
+"cell": "Sales!E18",
+"input": "50"
+},
+{
+"op": "set",
+"cell": "Sales!F18",
+"input": "20"
+},
+{
+"op": "read",
+"range": "Dash!A1:P30"
+},
+{
+"op": "read",
+"range": "Sales!A1:G20"
+},
+{
+"op": "set",
+"cell": "Dash!B1",
+"input": "West"
+},
+{
+"op": "read",
+"range": "Dash!A1:P30"
+},
+{
+"op": "table_sort",
+"name": "tSales",
+"sheet": "Sales",
+"keys": [
+{
+"key": 6,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Dash!A1:P30"
+},
+{
+"op": "read",
+"range": "Sales!A1:G20"
+},
+{
+"op": "insert_cols",
+"sheet": "Sales",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Dash!A1:P30"
+}
+]
+}

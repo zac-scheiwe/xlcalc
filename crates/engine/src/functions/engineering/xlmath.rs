@@ -4,7 +4,7 @@ const PIO2_LO: f64 = f64::from_bits(0x3C91A80000000000);
 pub const TRIG_LIMIT: f64 = 134_217_728.0;
 
 fn reduce(x: f64) -> (i64, f64, f64) {
-    if x.abs() < 0.785_398_163_397_448_3 {
+    if x.abs() < std::f64::consts::FRAC_PI_4 {
         return (0, x, 0.0);
     }
     let k = (x / PIO2_HI).round();
@@ -65,7 +65,7 @@ impl Dd {
     }
 }
 
-const PIO2_DD: Dd = Dd(1.5707963267948966, 6.123233995736766e-17);
+const PIO2_DD: Dd = Dd(std::f64::consts::FRAC_PI_2, 6.123233995736766e-17);
 
 fn atan_small(t: Dd) -> Dd {
     let one = Dd(1.0, 0.0);

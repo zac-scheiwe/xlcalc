@@ -1,0 +1,504 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "y"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 102.5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": 108.1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "n",
+"v": 111.9
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "n",
+"v": 118.4
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "n",
+"v": 121.0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "n",
+"v": 129.7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A8",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B8",
+"value": {
+"t": "n",
+"v": 131.2
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A9",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B9",
+"value": {
+"t": "n",
+"v": 140.8
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A10",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B10",
+"value": {
+"t": "n",
+"v": 143.3
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A11",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B11",
+"value": {
+"t": "n",
+"v": 152.1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A12",
+"value": {
+"t": "n",
+"v": 11
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B12",
+"value": {
+"t": "n",
+"v": 155.5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A13",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B13",
+"value": {
+"t": "n",
+"v": 163.9
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=AVERAGE(B2:B4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=AVERAGE(B2:B4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "=AVERAGE(B3:B5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "=AVERAGE(B4:B6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=AVERAGE(B5:B7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=AVERAGE(B6:B8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=AVERAGE(B7:B9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=AVERAGE(B8:B10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=AVERAGE(B9:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C12",
+"input": "=AVERAGE(B10:B12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=TREND($B$2:$B$13,$A$2:$A$13,A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=FORECAST.LINEAR(14,$B$2:$B$13,$A$2:$A$13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G1",
+"input": "=SLOPE(B2:B13,A2:A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=INTERCEPT(B2:B13,A2:A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G3",
+"input": "=RSQ(B2:B13,A2:A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G4",
+"input": "=STEYX(B2:B13,A2:A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G5",
+"input": "=CORREL(A2:A13,B2:B13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G6",
+"input": "=COVARIANCE.S(A2:A13,B2:B13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G7",
+"input": "=LINEST(B2:B13,A2:A13,TRUE,TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G13",
+"input": "=INDEX(LINEST(B2:B13,A2:A13^{1,2}),1,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G14",
+"input": "=GROWTH(B2:B13,A2:A13,14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G15",
+"input": "=LOGEST(B2:B13,A2:A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G16",
+"input": "=FORECAST.ETS(14,B2:B13,A2:A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G17",
+"input": "=T.DIST.2T(2.1,10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G18",
+"input": "=NORM.S.INV(0.975)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G19",
+"input": "=T.INV.2T(0.05,10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G20",
+"input": "=CHISQ.TEST(B2:B7,B8:B13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G21",
+"input": "=F.TEST(B2:B7,B8:B13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G22",
+"input": "=Z.TEST(B2:B13,140,10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G23",
+"input": "=PEARSON(A2:A13,B2:B13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G24",
+"input": "=PERCENTRANK.INC(B2:B13,130)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G25",
+"input": "=PERCENTILE.INC(B2:B13,0.333)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G26",
+"input": "=QUARTILE.INC(B2:B13,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G27",
+"input": "=SKEW.P(B2:B13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G28",
+"input": "=BINOM.DIST(3,10,0.3,FALSE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G29",
+"input": "=POISSON.DIST(3,2.5,TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G30",
+"input": "=EXPON.DIST(1.5,0.5,TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G31",
+"input": "=GAMMA.DIST(5,2,2,TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G32",
+"input": "=NORM.INV(0.3,100,15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G33",
+"input": "=LOGNORM.DIST(5,1,0.5,TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G34",
+"input": "=WEIBULL.DIST(5,2,4,TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G35",
+"input": "=HYPGEOM.DIST(2,5,10,50,FALSE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G36",
+"input": "=CONVERT(100,\"F\",\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G37",
+"input": "=CONVERT(5,\"mi\",\"km\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G38",
+"input": "=CONVERT(1,\"lbm\",\"kg\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G39",
+"input": "=CONVERT(72,\"in\",\"cm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G40",
+"input": "=ROUND(CONVERT(98.6,\"F\",\"C\"),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G41",
+"input": "=DEC2HEX(255)&BIN2DEC(\"1011\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G42",
+"input": "=COMBIN(52,5)/PERMUT(52,5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G43",
+"input": "=GAMMALN(10.5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G44",
+"input": "=ERF(0.5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G45",
+"input": "=STDEV.S(B2:B13)/SQRT(12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G46",
+"input": "=SUMX2MY2(A2:A5,B2:B5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G47",
+"input": "=MDETERM({2,1;1,3})"
+},
+{
+"op": "set",
+"cell": "Sheet1!G48",
+"input": "=MINVERSE({2,1;1,3})"
+},
+{
+"op": "set",
+"cell": "Sheet1!G49",
+"input": "=SUMSQ(B2:B13)-SUM(B2:B13)^2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!G50",
+"input": "=VAR.P(B2:B13)*12/11-VAR.S(B2:B13)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:G50"
+}
+]
+}

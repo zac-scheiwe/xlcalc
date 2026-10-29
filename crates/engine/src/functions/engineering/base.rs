@@ -38,11 +38,11 @@ impl Radix {
 
 fn parse_fixed(s: &str, rx: Radix) -> R<i64> {
     if s.len() > 10 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let mut v: i64 = 0;
     for c in s.chars() {
-        let d = c.to_digit(rx.base()).ok_or(XlError::Num)?;
+        let d = c.to_digit(rx.base()).ok_or(XlError::NUM)?;
         v = v * rx.base() as i64 + d as i64;
     }
     if s.len() == 10 {
@@ -73,7 +73,7 @@ fn digits(mut v: u64, base: u32) -> String {
 fn format_fixed(v: i64, rx: Radix, places: Option<usize>) -> R<String> {
     let (lo, hi) = rx.range();
     if v < lo || v > hi {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if v < 0 {
         let u = (v + (1i64 << rx.bits())) as u64;
@@ -82,7 +82,7 @@ fn format_fixed(v: i64, rx: Radix, places: Option<usize>) -> R<String> {
     let s = digits(v as u64, rx.base());
     match places {
         None => Ok(s),
-        Some(p) if s.len() > p => Err(XlError::Num),
+        Some(p) if s.len() > p => Err(XlError::NUM),
         Some(p) => Ok(format!("{}{}", "0".repeat(p - s.len()), s)),
     }
 }
@@ -93,7 +93,7 @@ fn places_arg(ctx: &EvalCtx, a: &[Option<Value>], i: usize) -> R<Option<usize>> 
         Some(p) => {
             let p = p.trunc();
             if !(1.0..=10.0).contains(&p) {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             Ok(Some(p as usize))
         }
@@ -113,7 +113,7 @@ pub fn convert(ctx: &mut EvalCtx, ops: &[Operand], from: Radix, to: Radix) -> Op
                     let n = atp::req_num(ctx, a, 0)?.trunc();
                     let (lo, hi) = to.range();
                     if n < lo as f64 || n > hi as f64 {
-                        return Err(XlError::Num);
+                        return Err(XlError::NUM);
                     }
                     n as i64
                 }
@@ -141,14 +141,14 @@ pub fn base_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             Some(v) => Some(num(ctx, v)?.trunc()),
         };
         if n_raw < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if !(0.0..9_007_199_254_740_992.0).contains(&n) || !(2.0..=36.0).contains(&radix) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if let Some(m) = min_len {
             if !(0.0..=255.0).contains(&m) {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
         }
         let mut s = if n == 0.0 {
@@ -169,10 +169,10 @@ pub fn decimal(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = text(&a[0])?;
         let radix = num(ctx, &a[1])?.trunc();
         if s.encode_utf16().count() > 255 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         if !(2.0..=36.0).contains(&radix) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let mut v = 0.0f64;
         let mut body = s.trim_start_matches(' ');
@@ -188,7 +188,7 @@ pub fn decimal(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             let d = c
                 .to_digit(36)
                 .filter(|d| *d < radix as u32)
-                .ok_or(XlError::Num)?;
+                .ok_or(XlError::NUM)?;
             let term = crate::x87::mul(d as f64, p);
             p = crate::x87::mul(p, radix);
             v = crate::x87::add(v, term);
@@ -212,7 +212,7 @@ pub fn roman(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             Some(v) => num(ctx, v)?.trunc(),
         };
         if !(0.0..=3999.0).contains(&n) || !(0.0..=4.0).contains(&form) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         Ok(Value::from(roman_text(n as u32, form as u32)))
     })())
@@ -258,13 +258,13 @@ pub fn arabic(_: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
         if s.encode_utf16().count() > 255 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let t = s.trim_matches(|c| matches!(c, ' ' | '\t' | '\n' | '\r'));
         let (neg, body) = match t.strip_prefix('-') {
             Some(b) => {
                 if b.is_empty() {
-                    return Err(XlError::Num);
+                    return Err(XlError::NUM);
                 }
                 (true, b)
             }
@@ -281,7 +281,7 @@ pub fn arabic(_: &mut EvalCtx, a: &[Value]) -> Value {
                 'C' => 100,
                 'D' => 500,
                 'M' => 1000,
-                _ => return Err(XlError::Value),
+                _ => return Err(XlError::VALUE),
             };
             if d < max {
                 total -= d;
@@ -302,7 +302,7 @@ const BIT_LIMIT: f64 = 281_474_976_710_656.0;
 
 fn bit_range(n: f64) -> R<u64> {
     if n < 0.0 || n >= BIT_LIMIT || n.trunc() != n {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(n as u64)
 }
@@ -324,7 +324,7 @@ pub fn bitshift(ctx: &mut EvalCtx, a: &[Value], dir: f64) -> Value {
             return Ok(Value::Number(0.0));
         }
         if s.abs() > 53.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let s = s as i32;
         if s < 0 {
@@ -336,7 +336,7 @@ pub fn bitshift(ctx: &mut EvalCtx, a: &[Value], dir: f64) -> Value {
         }
         let r = (n as u128) << s;
         if r >= 1u128 << 48 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(Value::Number(r as f64))
     })())

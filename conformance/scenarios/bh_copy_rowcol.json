@@ -1,0 +1,104 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=SUM($1:1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "=A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=SUM(B$1:B1)"
+},
+{
+"op": "copy",
+"from": "Sheet1!1:2",
+"to": "Sheet1!5:5"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D8"
+},
+{
+"op": "copy",
+"from": "Sheet1!1:2",
+"to": "Sheet1!10:10"
+},
+{
+"op": "read",
+"range": "Sheet1!A9:D12"
+},
+{
+"op": "copy",
+"from": "Sheet1!A:B",
+"to": "Sheet1!F:F"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:I3"
+},
+{
+"op": "copy",
+"from": "Sheet1!A:B",
+"to": "Sheet2!C:C"
+},
+{
+"op": "read",
+"range": "Sheet2!C1:G3"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:B2",
+"to": "Sheet1!A1048575"
+},
+{
+"op": "read",
+"range": "Sheet1!A1048575:C1048576"
+},
+{
+"op": "copy",
+"from": "Sheet1!A:D",
+"to": "Sheet1!XFC:XFC"
+},
+{
+"op": "read",
+"range": "Sheet1!XFB1:XFD3"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!1:2",
+"to": "Sheet1!L3",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!L1:N10"
+}
+]
+}

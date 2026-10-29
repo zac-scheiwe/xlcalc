@@ -88,9 +88,4 @@ impl SpillIndex {
             .copied()
             .reduce(|a, b| a.union_bounds(&b))
     }
-
-    #[allow(dead_code)]
-    pub fn is_empty(&self) -> bool {
-        self.active.is_empty()
-    }
 }

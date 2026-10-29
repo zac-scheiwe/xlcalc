@@ -1,0 +1,902 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "SKU"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Desc"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Cost"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Loc"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "A-100"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "s",
+"v": "Bolt M6"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C2",
+"value": {
+"t": "n",
+"v": 500
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D2",
+"value": {
+"t": "n",
+"v": 0.12
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E2",
+"value": {
+"t": "s",
+"v": "W1"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "A-101"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "s",
+"v": "Bolt M8"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C3",
+"value": {
+"t": "n",
+"v": 250
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D3",
+"value": {
+"t": "n",
+"v": 0.18
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E3",
+"value": {
+"t": "s",
+"v": "W1"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "B-200"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "s",
+"v": "Nut M6"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C4",
+"value": {
+"t": "n",
+"v": 1200
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D4",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E4",
+"value": {
+"t": "s",
+"v": "W2"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "B-201"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "s",
+"v": "nut m8"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C5",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D5",
+"value": {
+"t": "n",
+"v": 0.07
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E5",
+"value": {
+"t": "s",
+"v": "W2"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A6",
+"value": {
+"t": "s",
+"v": "C-300"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "s",
+"v": "Washer"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C6",
+"value": {
+"t": "n",
+"v": 3000
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D6",
+"value": {
+"t": "n",
+"v": 0.01
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E6",
+"value": {
+"t": "s",
+"v": "W3"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "s",
+"v": "A-100"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "s",
+"v": "Bolt dup"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C7",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D7",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E7",
+"value": {
+"t": "s",
+"v": "W9"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A10",
+"value": {
+"t": "s",
+"v": "A-101"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B10",
+"input": "=IFERROR(VLOOKUP(A10,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A10,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A10,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A10,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=XLOOKUP(A10,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=IFERROR(VLOOKUP(A10&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G10",
+"input": "=COUNTIF($A$2:$A$7,A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=IFERROR(MATCH(A10,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I10",
+"input": "=IFERROR(XMATCH(A10,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J10",
+"input": "=IFERROR(LOOKUP(A10,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K10",
+"input": "=IFERROR(HLOOKUP(A10,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L10",
+"input": "=SUMIF($A$2:$A$7,A10,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M10",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A10,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A11",
+"value": {
+"t": "s",
+"v": "a-101"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B11",
+"input": "=IFERROR(VLOOKUP(A11,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A11,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A11,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A11,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=XLOOKUP(A11,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=IFERROR(VLOOKUP(A11&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G11",
+"input": "=COUNTIF($A$2:$A$7,A11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=IFERROR(MATCH(A11,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I11",
+"input": "=IFERROR(XMATCH(A11,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J11",
+"input": "=IFERROR(LOOKUP(A11,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K11",
+"input": "=IFERROR(HLOOKUP(A11,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L11",
+"input": "=SUMIF($A$2:$A$7,A11,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M11",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A11,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A12",
+"value": {
+"t": "s",
+"v": "B-2*"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B12",
+"input": "=IFERROR(VLOOKUP(A12,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C12",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A12,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D12",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A12,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A12,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E12",
+"input": "=XLOOKUP(A12,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F12",
+"input": "=IFERROR(VLOOKUP(A12&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G12",
+"input": "=COUNTIF($A$2:$A$7,A12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H12",
+"input": "=IFERROR(MATCH(A12,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I12",
+"input": "=IFERROR(XMATCH(A12,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J12",
+"input": "=IFERROR(LOOKUP(A12,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K12",
+"input": "=IFERROR(HLOOKUP(A12,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L12",
+"input": "=SUMIF($A$2:$A$7,A12,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M12",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A12,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A13",
+"value": {
+"t": "s",
+"v": "Z-999"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B13",
+"input": "=IFERROR(VLOOKUP(A13,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C13",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A13,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D13",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A13,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A13,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E13",
+"input": "=XLOOKUP(A13,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F13",
+"input": "=IFERROR(VLOOKUP(A13&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G13",
+"input": "=COUNTIF($A$2:$A$7,A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H13",
+"input": "=IFERROR(MATCH(A13,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I13",
+"input": "=IFERROR(XMATCH(A13,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J13",
+"input": "=IFERROR(LOOKUP(A13,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K13",
+"input": "=IFERROR(HLOOKUP(A13,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L13",
+"input": "=SUMIF($A$2:$A$7,A13,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M13",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A13,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A14",
+"value": {
+"t": "s",
+"v": "A-100"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B14",
+"input": "=IFERROR(VLOOKUP(A14,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C14",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A14,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D14",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A14,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A14,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E14",
+"input": "=XLOOKUP(A14,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F14",
+"input": "=IFERROR(VLOOKUP(A14&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G14",
+"input": "=COUNTIF($A$2:$A$7,A14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H14",
+"input": "=IFERROR(MATCH(A14,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I14",
+"input": "=IFERROR(XMATCH(A14,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J14",
+"input": "=IFERROR(LOOKUP(A14,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K14",
+"input": "=IFERROR(HLOOKUP(A14,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L14",
+"input": "=SUMIF($A$2:$A$7,A14,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M14",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A14,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!B15",
+"input": "=IFERROR(VLOOKUP(A15,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C15",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A15,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D15",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A15,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A15,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=XLOOKUP(A15,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F15",
+"input": "=IFERROR(VLOOKUP(A15&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G15",
+"input": "=COUNTIF($A$2:$A$7,A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H15",
+"input": "=IFERROR(MATCH(A15,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I15",
+"input": "=IFERROR(XMATCH(A15,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J15",
+"input": "=IFERROR(LOOKUP(A15,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K15",
+"input": "=IFERROR(HLOOKUP(A15,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L15",
+"input": "=SUMIF($A$2:$A$7,A15,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M15",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A15,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A16",
+"value": {
+"t": "s",
+"v": " A-101"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B16",
+"input": "=IFERROR(VLOOKUP(A16,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C16",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A16,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D16",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A16,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A16,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=XLOOKUP(A16,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F16",
+"input": "=IFERROR(VLOOKUP(A16&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G16",
+"input": "=COUNTIF($A$2:$A$7,A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H16",
+"input": "=IFERROR(MATCH(A16,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I16",
+"input": "=IFERROR(XMATCH(A16,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J16",
+"input": "=IFERROR(LOOKUP(A16,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K16",
+"input": "=IFERROR(HLOOKUP(A16,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L16",
+"input": "=SUMIF($A$2:$A$7,A16,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M16",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A16,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A17",
+"value": {
+"t": "s",
+"v": "C-300"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B17",
+"input": "=IFERROR(VLOOKUP(A17,$A$2:$E$7,2,FALSE),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C17",
+"input": "=IFERROR(INDEX($C$2:$C$7,MATCH(A17,$A$2:$A$7,0)),\"missing\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D17",
+"input": "=IFERROR(INDEX($D$2:$D$7,MATCH(A17,$A$2:$A$7,0))*INDEX($C$2:$C$7,MATCH(A17,$A$2:$A$7,0)),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E17",
+"input": "=XLOOKUP(A17,$A$2:$A$7,$B$2:$B$7,\"NF\",2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F17",
+"input": "=IFERROR(VLOOKUP(A17&\"*\",$A$2:$B$7,2,0),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G17",
+"input": "=COUNTIF($A$2:$A$7,A17)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H17",
+"input": "=IFERROR(MATCH(A17,$A$2:$A$7,1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I17",
+"input": "=IFERROR(XMATCH(A17,$A$2:$A$7,0,-1),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J17",
+"input": "=IFERROR(LOOKUP(A17,$A$2:$A$7,$C$2:$C$7),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K17",
+"input": "=IFERROR(HLOOKUP(A17,$A$1:$E$7,3,FALSE),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L17",
+"input": "=SUMIF($A$2:$A$7,A17,$C$2:$C$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M17",
+"input": "=IFERROR(INDEX($A$2:$E$7,MATCH(A17,$A$2:$A$7,0),MATCH(\"Loc\",$A$1:$E$1,0)),\"nf\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A20",
+"input": "=SUMPRODUCT(C2:C7,D2:D7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A21",
+"input": "=COUNTIF(C2:C7,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A22",
+"input": "=COUNTIF(C2:C7,\"\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A23",
+"input": "=TEXTJOIN(\", \",TRUE,A2:A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A24",
+"input": "=SUMPRODUCT(--(LEFT(A2:A7,1)=\"A\"),C2:C7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A25",
+"input": "=SORT(A2:C7,3,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A33",
+"input": "=UNIQUE(A2:A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C33",
+"input": "=FILTER(B2:B7,C2:C7>100,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E33",
+"input": "=COUNTA(UNIQUE(LEFT(A2:A7,1)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!F33",
+"input": "=XLOOKUP(2,1/(C2:C7>0),B2:B7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G33",
+"input": "=LET(x,C2:C7,SUM(x)/COUNT(x))"
+},
+{
+"op": "set",
+"cell": "Sheet1!H33",
+"input": "=INDEX(SORTBY(B2:B7,C2:C7,-1),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!I33",
+"input": "=SUM(INDEX(C2:C7,0))"
+},
+{
+"op": "set",
+"cell": "Sheet1!J33",
+"input": "=MATCH(TRUE,INDEX(C2:C7>1000,0),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K33",
+"input": "=VLOOKUP(1000,C2:C7,1)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:M33"
+}
+]
+}

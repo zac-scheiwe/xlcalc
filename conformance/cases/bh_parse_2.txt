@@ -1,0 +1,104 @@
+=="a"
+==1
+=+=1
+=1==1
+=1=>2
+=1=<2
+=1=!2
+=1<>=2
+=1><2
+=1 = = 2
+=1 < > 2
+=1 <> 2
+=1 > = 2
+=1 >= 2
+=1 > 2
+=*1
+=/1
+=^2
+=&"a"
+=%1
+=1+
+=1*
+=1&
+=(1
+=1)
+=()
+=(,)
+=SUM(,)
+=SUM(1,)
+=SUM(,1)
+=SUM(1,,2)
+=SUM()
+=SUM(1)(2)
+=1(2)
+=(1)(2)
+=(1) (2)
+=1 2
+="a" "b"
+="a""b"
+="a"&"""
+=""""
+=""""""
+=" "" "
+=LEN("""")
+=LEN("a""b""")
+=1,2
+=(1,2)
+=SUM((1,2))
+=SUM((Data!A1,Data!A2))
+=SUM(Data!A1,Data!A2)
+=SUM((Data!A1:A2,Data!A4))
+=SUM((Data!A1:A2,Data!A4:A5))
+=COUNT((Data!A1:A2,Data!A2:A3))
+=COUNT((Data!A1:A3,Data!A2:A4))
+=SUM(Data!A1:A3 Data!A2:A4)
+=SUM(Data!A1:B3 Data!A2:C4)
+=SUM(Data!A1:B3  Data!A2:C4)
+=SUM(Data!A1:B3 Data!C1:D3)
+=ROWS(Data!A1:B3 Data!A2:C4)
+=ROWS((Data!A1:B3,Data!A5:C7))
+=ROWS(Data!A1:B3 Data!C1:D3)
+=Data!A1:B3 Data!A2:C4
+=Data!A1:B3 Data!B2
+=Data!B2 Data!A1:B3
+=Data!A1:B3 Data!B2:B2 Data!A2:A3
+=SUM(Data!A1:A5 Data!B1:B5)
+=SUM(Data!A:A Data!3:3)
+=SUM(Data!3:3 Data!A:A)
+=SUM(Data!A1:A5 Sheet1!A1:A5)
+=Data!A1:A5 1
+=1 Data!A1:A5
+=Data!A1 Data!A1
+=Data!A1:A3 (Data!A2)
+=(Data!A1:A3) (Data!A2)
+=(Data!A1:A3)(Data!A2)
+=SUM((Data!A1:A3) (Data!A2:A5))
+=SUM(Data!A1:A3,Data!A2:A5 Data!A1:A2)
+=SUM(Data!A1:A3 Data!A2:A5,5)
+=Data!A1:A3 Data!A2:A5+1
+=Data!A1:A3,Data!A2:A5
+=(Data!A1:A3,Data!A2:A5)+1
+=SUM(Data!A1:A3:Data!A5)
+=SUM(Data!A1:A3:Data!C5)
+=SUM(Data!A1:B2:C3)
+=SUM(Data!C3:A1)
+=SUM(Data!C3:A1:B2)
+=Data!A1:Data!A3
+=SUM(Data!A1:Data!A3)
+=SUM(Data!$A$1:A3)
+=SUM(Data!A1:$A$3)
+=SUM(Data!A$1:$A3)
+=SUM(Data!a1:a3)
+=SUM(DATA!A1:A3)
+=SUM(data!A1:A3)
+=SUM('Data'!A1:A3)
+=SUM('data'!A1:A3)
+=SUM( Data !A1:A3)
+=SUM(Data! A1:A3)
+=SUM(Data !A1:A3)
+=SUM('Data' !A1:A3)
+=SUM(Data!A1 :A3)
+=SUM(Data!A1: A3)
+=SUM(Data!A1 : A3)
+=SUM(Data!A1:Data !A3)

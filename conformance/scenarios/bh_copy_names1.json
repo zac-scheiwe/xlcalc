@@ -1,0 +1,183 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "Sheet2!B1",
+"input": "200"
+},
+{
+"op": "name",
+"name": "G",
+"refers_to": "=Sheet1!$A$1"
+},
+{
+"op": "name",
+"name": "Rel",
+"refers_to": "=Sheet1!A1"
+},
+{
+"op": "name",
+"name": "RelRow",
+"refers_to": "=Sheet1!A$1:A$2"
+},
+{
+"op": "name",
+"name": "L",
+"refers_to": "=Sheet1!$B$1",
+"scope": "Sheet2"
+},
+{
+"op": "name",
+"name": "L2",
+"refers_to": "=Sheet2!$A$1",
+"scope": "Sheet1"
+},
+{
+"op": "name",
+"name": "Rel2",
+"refers_to": "=Sheet1!$A1",
+"scope": "Sheet2"
+},
+{
+"op": "name",
+"name": "Sh",
+"refers_to": "=Sheet2!A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=G+Rel+SUM(RelRow)+L2"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=Rel2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=Sh"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=Rel"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=Sheet2!L"
+},
+{
+"op": "set",
+"cell": "Sheet2!D1",
+"input": "=G+Rel+L+Sh"
+},
+{
+"op": "set",
+"cell": "Sheet2!D2",
+"input": "=Rel2"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:F2"
+},
+{
+"op": "read",
+"range": "Sheet2!D1:D2"
+},
+{
+"op": "names"
+},
+{
+"op": "copy",
+"from": "Sheet1!D1:F2",
+"to": "Sheet1!D5"
+},
+{
+"op": "read",
+"range": "Sheet1!D5:F6"
+},
+{
+"op": "copy",
+"from": "Sheet1!D1:F2",
+"to": "Sheet2!G7"
+},
+{
+"op": "read",
+"range": "Sheet2!G7:I8"
+},
+{
+"op": "copy",
+"from": "Sheet2!D1:D2",
+"to": "Sheet1!H3"
+},
+{
+"op": "read",
+"range": "Sheet1!H3:H4"
+},
+{
+"op": "copy",
+"from": "Sheet2!D1:D2",
+"to": "Sheet2!E4"
+},
+{
+"op": "read",
+"range": "Sheet2!E4:E5"
+},
+{
+"op": "autofill",
+"from": "Sheet1!D1:F1",
+"to": "Sheet1!D1:F4",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:F4"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!D1:E2",
+"to": "Sheet2!A5",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet2!A5:C7"
+},
+{
+"op": "names"
+}
+]
+}

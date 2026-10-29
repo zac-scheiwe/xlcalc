@@ -85,9 +85,27 @@ fn pass(src: &str, row: u32, col: u32, names: bool) -> Result<(String, bool), St
         if c == b'"' || c == b'\'' || c == b'[' {
             let close = if c == b'[' { b']' } else { c };
             let mut j = i + 1;
+
+            let mut depth = 1;
             while j < s.len() {
+                if c == b'[' {
+                    if s[j] == b'\'' {
+                        j += 2;
+                        continue;
+                    }
+                    if s[j] == b'[' {
+                        depth += 1;
+                    } else if s[j] == b']' {
+                        depth -= 1;
+                        if depth == 0 {
+                            break;
+                        }
+                    }
+                    j += 1;
+                    continue;
+                }
                 if s[j] == close {
-                    if close != b']' && j + 1 < s.len() && s[j + 1] == close {
+                    if j + 1 < s.len() && s[j + 1] == close {
                         j += 2;
                         continue;
                     }

@@ -137,10 +137,10 @@ fn spill_dynamics() {
     assert!(matches!(t.get("E1"), Value::Bool(false)));
 
     t.set("B3", "x");
-    assert!(matches!(t.get("B1"), Value::Error(XlError::Spill)));
+    assert!(matches!(t.get("B1"), Value::Error(XlError::SPILL)));
     assert!(matches!(t.get("C1"), Value::Text(ref s) if &**s == "x"));
-    assert!(matches!(t.get("D1"), Value::Error(XlError::Spill)));
-    assert!(matches!(t.get("C2"), Value::Error(XlError::Spill)));
+    assert!(matches!(t.get("D1"), Value::Error(XlError::SPILL)));
+    assert!(matches!(t.get("C2"), Value::Error(XlError::SPILL)));
     assert!(matches!(t.get("E1"), Value::Bool(true)));
     assert!(t.get("B2").is_blank());
 
@@ -161,7 +161,7 @@ fn blocked_by_formula() {
     let mut t = T::new();
     t.set("F1", "=SEQUENCE(2,2)");
     t.set("G1", "=SEQUENCE(2)");
-    assert!(matches!(t.get("F1"), Value::Error(XlError::Spill)));
+    assert!(matches!(t.get("F1"), Value::Error(XlError::SPILL)));
     assert_eq!(t.num("G2"), 2.0);
 }
 
@@ -186,7 +186,7 @@ fn names_and_lambdas() {
     t.set("G1", "=REDUCE(0,SEQUENCE(4),LAMBDA(a,v,a+v))");
     assert_eq!(t.num("G1"), 10.0);
     t.set("H1", "=undefined_name+1");
-    assert!(matches!(t.get("H1"), Value::Error(XlError::Name)));
+    assert!(matches!(t.get("H1"), Value::Error(XlError::NAME)));
     t.wb.define_name("undefined_name", "=41", None).unwrap();
     assert_eq!(t.num("H1"), 42.0);
 }

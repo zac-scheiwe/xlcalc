@@ -15,7 +15,9 @@ pub fn call_builtin(ctx: &mut EvalCtx, id: FuncId, args: &[Node]) -> Operand {
         n if ARR_BREAK.contains(&n) => ctx.arr_ctx = 0,
         _ => {}
     }
+    ctx.fn_depth += 1;
     let out = call_builtin_inner(ctx, def, args);
+    ctx.fn_depth -= 1;
     ctx.arr_ctx = saved;
     if ctx.has_placeholders() {
         track_circ(ctx, def, live, &out);
@@ -100,7 +102,7 @@ fn track_circ(ctx: &mut EvalCtx, def: &FnDef, live: u32, out: &Operand) {
         || matches!(def.name, "IFERROR" | "IFNA" | "MATCH" | "BYROW" | "BYCOL");
     ctx.circ_args = false;
     ctx.circ_lifted = false;
-    let early_error = matches!(out, Operand::Val(Value::Error(e)) if *e != XlError::Circ);
+    let early_error = matches!(out, Operand::Val(Value::Error(e)) if *e != XlError::CIRC);
     if consumed && !lazy && !early_error {
         ctx.circ_used();
     }
@@ -126,23 +128,24 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             let out = f(ctx, args);
 
             if matches!(def.name, "IF" | "IFS" | "CHOOSE" | "SWITCH") && span_multi(&out) {
-                return Operand::err(XlError::Value);
+                return Operand::err(XlError::VALUE);
             }
             out
         }
         Imp::Scalar(f) => {
             let mut ops = Vec::with_capacity(args.len());
             for (i, a) in args.iter().enumerate() {
+                ctx.name_first = def.param_letter(i) != b'Q' && matches!(a, Node::Name { .. });
                 let v = eval_arg(ctx, def.name, i, a);
                 ops.push(v);
             }
             if ctx.interrupted() {
-                return Operand::err(XlError::Calc);
+                return Operand::err(XlError::CALC);
             }
             note_circ_args(ctx, &ops);
             call_lifted(ctx, def, ops, &mut |ctx, ops| {
                 if long_text(ctx, def.name, ops) {
-                    return Operand::err(XlError::Value);
+                    return Operand::err(XlError::VALUE);
                 }
                 let vals: Vec<Value> = ops
                     .iter()
@@ -160,87 +163,186 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             }
             let mut ops = Vec::with_capacity(args.len());
             for (i, a) in args.iter().enumerate() {
-                let v = eval_arg(ctx, def.name, i, a);
+                let named = matches!(a, Node::Name { .. });
+
+                let reduce = ctx.legacy_form || (def.name == "INDEX" && args.len() > 2);
+                ctx.name_first = named
+                    && match (def.name, i) {
+                        ("INDEX", 0) => reduce,
+                        ("OFFSET", 0) => true,
+                        _ => ctx.legacy_form || def.param_letter(i) != b'Q',
+                    };
+                let mut v = eval_arg(ctx, def.name, i, a);
+                if named && def.name == "INDEX" && i == 0 {
+                    if let Operand::Ref(Reference::Grid(g)) = &v {
+                        v = Operand::Val(Value::Array(g.value_array()));
+                    }
+                }
+
+                if named
+                    && ctx.legacy_form
+                    && matches!(def.name, "N" | "AREAS" | "ROW" | "COLUMN")
+                    && matches!(&v, Operand::Val(Value::Array(a)) if a.data.len() > 1)
+                {
+                    v = Operand::err(XlError::VALUE);
+                }
                 ops.push(v);
             }
             if ctx.interrupted() {
-                return Operand::err(XlError::Calc);
+                return Operand::err(XlError::CALC);
             }
-            note_circ_args(ctx, &ops);
+            if let Some(r) = cse_lift(ctx, def.name, &ops, &mut |ctx, ops| {
+                args_tail(ctx, def, f, ops)
+            }) {
+                return r;
+            }
+            args_tail(ctx, def, f, ops)
+        }
+    }
+}
 
-            if def.name == "SUBTOTAL" {
-                if let Some(Operand::Val(Value::Error(e))) = ops
-                    .iter()
-                    .skip(1)
-                    .find(|o| matches!(o, Operand::Val(Value::Error(_))))
-                {
-                    let e = *e;
-                    let one = |ctx: &EvalCtx, v: &Value| match ctx.to_number(v) {
-                        Ok(_) => Value::Error(e),
-                        Err(x) => Value::Error(x),
-                    };
-                    let f0 = match &ops[0] {
-                        Operand::Ref(_) => ctx.deref(ops[0].clone()),
-                        Operand::Val(v) => v.clone(),
-                        Operand::Missing => Value::Blank,
-                    };
-                    return Operand::Val(match &f0 {
-                        Value::Array(a) => {
-                            let data = a.data.iter().map(|v| one(ctx, v)).collect();
-                            Array::new(a.rows, a.cols, data).into_value()
+fn cse_lift(
+    ctx: &mut EvalCtx,
+    name: &str,
+    ops: &[Operand],
+    run: &mut dyn FnMut(&mut EvalCtx, Vec<Operand>) -> Operand,
+) -> Option<Operand> {
+    let grids = |o: &Operand| matches!(o, Operand::Ref(Reference::Grid(_)));
+    if !ops.iter().any(grids) {
+        return None;
+    }
+    let block = ctx
+        .wb
+        .formula_at(ctx.host)
+        .and_then(|f| ctx.wb.formula(f).array);
+    let (br, bc) = block?;
+
+    let (mut rows, mut cols) = if ctx.fn_depth == 1 { (br, bc) } else { (1, 1) };
+    for o in ops {
+        if let Operand::Ref(Reference::Grid(g)) = o {
+            rows = rows.max(g.rows);
+            cols = cols.max(g.cols);
+        }
+    }
+    let mut data = Vec::with_capacity(rows as usize * cols as usize);
+    for r in 0..rows {
+        for c in 0..cols {
+            let mut padded = false;
+            let elem: Vec<Operand> = ops
+                .iter()
+                .map(|o| match o {
+                    Operand::Ref(Reference::Grid(g)) => {
+                        let rr = if g.rows == 1 { 0 } else { r };
+                        let cc = if g.cols == 1 { 0 } else { c };
+                        if rr >= g.rows || cc >= g.cols {
+                            padded = true;
+                            return Operand::err(XlError::NA);
                         }
-                        v => one(ctx, v),
-                    });
-                }
-            }
-            if let Some(r) = grid_args(ctx, def.name, &mut ops) {
-                return r;
-            }
-            if let Some(e) = union_reject(def.name, &ops) {
-                return Operand::err(e);
-            }
-            if let Some(r) = span_reject(def.name, &ops) {
-                return r;
-            }
-            if let Some(r) = lambda_array_arg(ctx, def.name, &ops) {
-                return r;
-            }
-            if lam_blank_reject(def.name, &ops) {
-                return Operand::err(XlError::NA);
-            }
-            if blank_value_reject(def.name, &ops) {
-                if def.name == "INDEX" {
-                    let (mut r, mut c) = (0, 0);
-                    for o in &ops[1..] {
-                        if let Operand::Val(Value::Array(a)) = o {
-                            r = r.max(a.rows);
-                            c = c.max(a.cols);
+                        match &g.items[(rr * g.cols + cc) as usize] {
+                            Ok(a) => Operand::Ref(Reference::Area(*a)),
+                            Err(e) => Operand::err(*e),
                         }
                     }
-                    if r > 0 {
-                        return Operand::Val(
-                            Array::filled(r, c, Value::Error(XlError::Value)).into_value(),
-                        );
-                    }
-                }
-                return Operand::err(XlError::Value);
+                    o => o.clone(),
+                })
+                .collect();
+
+            if padded && name == "COUNT" {
+                data.push(Value::Number(0.0));
+                continue;
             }
-            let plain =
-                PLAIN_EMPTY.contains(&def.name) && ops.iter().any(|o| matches!(o, Operand::Ref(_)));
-            let out = call_lifted(ctx, def, ops, &mut |ctx, ops| {
-                if let Some(e) = lead_error(ctx, def, ops) {
-                    return Operand::err(e);
-                }
-                if long_text(ctx, def.name, ops) {
-                    return Operand::err(XlError::Value);
-                }
-                f(ctx, ops)
+            let out = run(ctx, elem);
+            data.push(match ctx.deref(out) {
+                Value::Array(a) => a.data[0].clone(),
+                v => v,
             });
-            match out {
-                Operand::Val(v) if plain => Operand::Val(v.plain_empty()),
-                out => out,
+        }
+    }
+    Some(Operand::Val(if data.len() == 1 {
+        data.pop().unwrap()
+    } else {
+        Array::new(rows, cols, data).into_value()
+    }))
+}
+
+fn args_tail(
+    ctx: &mut EvalCtx,
+    def: &'static FnDef,
+    f: fn(&mut EvalCtx, &[Operand]) -> Operand,
+    mut ops: Vec<Operand>,
+) -> Operand {
+    note_circ_args(ctx, &ops);
+
+    if def.name == "SUBTOTAL" {
+        if let Some(Operand::Val(Value::Error(e))) = ops
+            .iter()
+            .skip(1)
+            .find(|o| matches!(o, Operand::Val(Value::Error(_))))
+        {
+            let e = *e;
+            let one = |ctx: &EvalCtx, v: &Value| match ctx.to_number(v) {
+                Ok(_) => Value::Error(e),
+                Err(x) => Value::Error(x),
+            };
+            let f0 = match &ops[0] {
+                Operand::Ref(_) => ctx.deref(ops[0].clone()),
+                Operand::Val(v) => v.clone(),
+                Operand::Missing => Value::Blank,
+            };
+            return Operand::Val(match &f0 {
+                Value::Array(a) => {
+                    let data = a.data.iter().map(|v| one(ctx, v)).collect();
+                    Array::new(a.rows, a.cols, data).into_value()
+                }
+                v => one(ctx, v),
+            });
+        }
+    }
+    if let Some(r) = grid_args(ctx, def.name, &mut ops) {
+        return r;
+    }
+    if let Some(e) = union_reject(def.name, &ops) {
+        return Operand::err(e);
+    }
+    if let Some(r) = span_reject(def.name, &ops) {
+        return r;
+    }
+    if let Some(r) = lambda_array_arg(ctx, def.name, &ops) {
+        return r;
+    }
+    if lam_blank_reject(def.name, &ops) {
+        return Operand::err(XlError::NA);
+    }
+    if blank_value_reject(def.name, &ops) {
+        if def.name == "INDEX" {
+            let (mut r, mut c) = (0, 0);
+            for o in &ops[1..] {
+                if let Operand::Val(Value::Array(a)) = o {
+                    r = r.max(a.rows);
+                    c = c.max(a.cols);
+                }
+            }
+            if r > 0 {
+                return Operand::Val(
+                    Array::filled(r, c, Value::Error(XlError::VALUE)).into_value(),
+                );
             }
         }
+        return Operand::err(XlError::VALUE);
+    }
+    let plain = PLAIN_EMPTY.contains(&def.name) && ops.iter().any(|o| matches!(o, Operand::Ref(_)));
+    let out = call_lifted(ctx, def, ops, &mut |ctx, ops| {
+        if let Some(e) = lead_error(ctx, def, ops) {
+            return Operand::err(e);
+        }
+        if long_text(ctx, def.name, ops) {
+            return Operand::err(XlError::VALUE);
+        }
+        f(ctx, ops)
+    });
+    match out {
+        Operand::Val(v) if plain => Operand::Val(v.plain_empty()),
+        out => out,
     }
 }
 
@@ -270,7 +372,7 @@ fn lambda_array_arg(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<Op
         _ => return None,
     };
     if matches!(ops.get(arr_at), Some(Operand::Missing)) {
-        return Some(Operand::err(XlError::Value));
+        return Some(Operand::err(XlError::VALUE));
     }
     if name == "MAP"
         && ops.len() >= 2
@@ -280,7 +382,7 @@ fn lambda_array_arg(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<Op
             _ => false,
         })
     {
-        return Some(Operand::err(XlError::Value));
+        return Some(Operand::err(XlError::VALUE));
     }
     let last = ops.last()?;
     let multi = match last {
@@ -299,7 +401,7 @@ fn lambda_array_arg(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<Op
         .iter()
         .map(|v| match v {
             Value::Error(e) => Value::Error(*e),
-            _ => Value::Error(XlError::Value),
+            _ => Value::Error(XlError::VALUE),
         })
         .collect();
     Some(Operand::Val(Array::new(a.rows, a.cols, data).into_value()))
@@ -330,7 +432,7 @@ fn ghost_ref_call(ctx: &mut EvalCtx, name: &str, args: &[Node]) -> Option<Operan
             }
         }
         "AREAS" => Value::Number(1.0),
-        "OFFSET" => Value::Error(XlError::Value),
+        "OFFSET" => Value::Error(XlError::VALUE),
         "CELL" => Value::Error(XlError::NA),
         _ => return None,
     };
@@ -348,10 +450,10 @@ fn span_reject(name: &str, ops: &[Operand]) -> Option<Operand> {
     let at = |i: usize| ops.get(i).is_some_and(span_multi);
     let e = match name {
         "ISREF" => return Some(Operand::Val(Value::Bool(false))),
-        "CELL" if at(0) => XlError::Ref,
+        "CELL" if at(0) => XlError::REF,
         "ROW" | "COLUMN" | "ROWS" | "COLUMNS" | "AREAS" | "CELL" | "ISFORMULA" | "FORMULATEXT"
         | "PHONETIC" | "N" | "T" | "IMSUM" | "IMPRODUCT" | "LINEST" | "LOGEST" | "TREND"
-        | "GROWTH" | "MAP" => XlError::Value,
+        | "GROWTH" | "MAP" => XlError::VALUE,
 
         "MATCH" | "XMATCH" | "VLOOKUP" | "HLOOKUP" | "LOOKUP" | "XLOOKUP" => {
             let arrays: &[usize] = match name {
@@ -360,20 +462,20 @@ fn span_reject(name: &str, ops: &[Operand]) -> Option<Operand> {
                 _ => &[1],
             };
             if arrays.iter().any(|&i| at(i)) {
-                XlError::Value
+                XlError::VALUE
             } else if name == "XLOOKUP" && at(3) && !(0..ops.len()).any(|i| i != 3 && at(i)) {
                 return None;
             } else {
-                XlError::Ref
+                XlError::REF
             }
         }
-        "SUMX2MY2" | "SUMX2PY2" | "SUMXMY2" | "MDETERM" | "MINVERSE" | "MMULT" => XlError::Ref,
-        "MODE" | "MODE.SNGL" | "MODE.MULT" => XlError::Ref,
+        "SUMX2MY2" | "SUMX2PY2" | "SUMXMY2" | "MDETERM" | "MINVERSE" | "MMULT" => XlError::REF,
+        "MODE" | "MODE.SNGL" | "MODE.MULT" => XlError::REF,
         "BYROW" | "BYCOL" | "REDUCE" | "SCAN" => {
             if at(ops.len() - 1) {
-                XlError::Ref
+                XlError::REF
             } else {
-                XlError::Value
+                XlError::VALUE
             }
         }
         _ => return None,
@@ -439,10 +541,10 @@ fn grid_args(ctx: &mut EvalCtx, name: &str, ops: &mut [Operand]) -> Option<Opera
             }
             XlError::NA
         }
-        "CONCAT" | "MMULT" if any => XlError::Value,
-        "TEXTJOIN" if ops.iter().skip(2).any(is_grid) => XlError::Value,
-        "ARRAYTOTEXT" if at(ops, &[0]) => XlError::Calc,
-        "CORREL" if any => XlError::Num,
+        "CONCAT" | "MMULT" if any => XlError::VALUE,
+        "TEXTJOIN" if ops.iter().skip(2).any(is_grid) => XlError::VALUE,
+        "ARRAYTOTEXT" if at(ops, &[0]) => XlError::CALC,
+        "CORREL" if any => XlError::NUM,
 
         "MATCH" | "XMATCH" | "XLOOKUP" | "LOOKUP" | "VLOOKUP" | "HLOOKUP" => {
             for o in ops.iter_mut() {
@@ -468,7 +570,7 @@ fn grid_args(ctx: &mut EvalCtx, name: &str, ops: &mut [Operand]) -> Option<Opera
                         .iter()
                         .any(|a| matches!(a, Ok(a) if !a.rect.is_cell()))
                 {
-                    return Some(Operand::err(XlError::Calc));
+                    return Some(Operand::err(XlError::CALC));
                 }
                 ops[i] = Operand::Val(grid_top_left(ctx, &g));
             }
@@ -490,30 +592,30 @@ fn union_reject(name: &str, ops: &[Operand]) -> Option<XlError> {
     }
     match name {
         "CONCAT" | "TEXTJOIN" | "GCD" | "LCM" | "MULTINOMIAL" | "SERIESSUM" | "IMSUM"
-        | "IMPRODUCT" => Some(XlError::Value),
+        | "IMPRODUCT" => Some(XlError::VALUE),
 
         "CHOOSEROWS" | "CHOOSECOLS"
             if ops[1..]
                 .iter()
                 .any(|o| is_union(o) || matches!(o, Operand::Val(Value::Text(_)))) =>
         {
-            Some(XlError::Value)
+            Some(XlError::VALUE)
         }
 
         "FILTER" if !ops[..2].iter().any(is_union) => None,
-        "CHOOSEROWS" | "CHOOSECOLS" | "FILTER" => Some(XlError::Ref),
+        "CHOOSEROWS" | "CHOOSECOLS" | "FILTER" => Some(XlError::REF),
 
         "TREND" | "GROWTH" => Some(if ops.iter().take(3).any(is_union) {
-            XlError::Ref
+            XlError::REF
         } else {
-            XlError::Value
+            XlError::VALUE
         }),
         "LINEST" | "LOGEST" => Some(if ops.iter().take(2).any(is_union) {
-            XlError::Ref
+            XlError::REF
         } else {
-            XlError::Value
+            XlError::VALUE
         }),
-        "MODE" | "MODE.SNGL" | "MODE.MULT" => Some(XlError::Value),
+        "MODE" | "MODE.SNGL" | "MODE.MULT" => Some(XlError::VALUE),
         _ => None,
     }
 }
@@ -601,16 +703,16 @@ pub fn call_lifted(
 ) -> Operand {
     let mut shape: Option<(u32, u32)> = None;
     let mut lifted: Vec<usize> = Vec::new();
-    for i in 0..ops.len() {
+    for (i, slot) in ops.iter_mut().enumerate() {
         let class = def.param_class(i);
         if class == ParamClass::Reference {
-            if let Operand::Val(Value::Array(a)) = &ops[i] {
+            if let Operand::Val(Value::Array(a)) = &*slot {
                 let (r, c) = shape.unwrap_or((1, 1));
                 shape = Some((r.max(a.rows), c.max(a.cols)));
                 lifted.push(i);
             }
 
-            if let Operand::Ref(Reference::Grid(g)) = &ops[i] {
+            if let Operand::Ref(Reference::Grid(g)) = &*slot {
                 let (r, c) = shape.unwrap_or((1, 1));
                 shape = Some((r.max(g.rows), c.max(g.cols)));
                 lifted.push(i);
@@ -620,10 +722,10 @@ pub fn call_lifted(
         if class != ParamClass::Value {
             continue;
         }
-        if ops[i].is_missing() {
+        if slot.is_missing() {
             continue;
         }
-        let op = std::mem::replace(&mut ops[i], Operand::Missing);
+        let op = std::mem::replace(slot, Operand::Missing);
         let v = ctx.deref(op);
         let v = if def.param_letter(i) == b'B' {
             blank_as_zero(v)
@@ -635,10 +737,10 @@ pub fn call_lifted(
             shape = Some((r.max(a.rows), c.max(a.cols)));
             lifted.push(i);
         }
-        ops[i] = Operand::Val(v);
+        *slot = Operand::Val(v);
     }
     if ctx.interrupted() {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let Some((rows, cols)) = shape else {
         return body(ctx, &ops);
@@ -649,6 +751,8 @@ pub fn call_lifted(
             .any(|&i| matches!(&ops[i], Operand::Val(v) if super::contains_circ(v)));
     ctx.circ_lifted |= circ;
     let mut data = Vec::with_capacity(rows as usize * cols as usize);
+    let mut picked: Vec<Result<super::Area, XlError>> = Vec::new();
+    let mut picked_all = true;
     let mut elem = ops.clone();
     for r in 0..rows {
         for c in 0..cols {
@@ -662,16 +766,16 @@ pub fn call_lifted(
             if circ
                 && lifted
                     .iter()
-                    .any(|&i| matches!(&elem[i], Operand::Val(Value::Error(XlError::Circ))))
+                    .any(|&i| matches!(&elem[i], Operand::Val(Value::Error(XlError::CIRC))))
             {
-                data.push(Value::Error(XlError::Circ));
+                data.push(Value::Error(XlError::CIRC));
                 continue;
             }
 
             if def.name == "MAKEARRAY" {
                 for &i in &lifted {
                     if let Operand::Val(Value::Number(n)) = elem[i] {
-                        if n.fract() == 0.0 && n >= 1.0 && n < 4294967295.0 {
+                        if n.fract() == 0.0 && (1.0..4294967295.0).contains(&n) {
                             elem[i] = Operand::Val(Value::Number(1.0));
                         }
                     }
@@ -679,11 +783,19 @@ pub fn call_lifted(
             }
             let out = body(ctx, &elem);
 
+            if def.name == "INDEX" && (cse_block(ctx).is_some()) {
+                match &out {
+                    Operand::Ref(Reference::Area(a)) => picked.push(Ok(*a)),
+                    Operand::Val(Value::Error(e)) => picked.push(Err(*e)),
+                    _ => picked_all = false,
+                }
+            }
+
             if def.name == "INDEX"
                 && matches!(out, Operand::Ref(_))
                 && matches!(ops.first(), Some(Operand::Ref(Reference::Grid(_))))
             {
-                data.push(Value::Error(XlError::Value));
+                data.push(Value::Error(XlError::VALUE));
                 continue;
             }
             let mut v = match ctx.deref_marked(out) {
@@ -700,11 +812,22 @@ pub fn call_lifted(
             }
             data.push(v);
             if ctx.interrupted() {
-                return Operand::err(XlError::Calc);
+                return Operand::err(XlError::CALC);
             }
         }
     }
+    if picked_all && picked.len() == data.len() && picked.len() > 1 {
+        let mut g = super::RefGrid::new(rows, cols, picked);
+        g.by_index = true;
+        return Operand::Ref(Reference::Grid(std::sync::Arc::new(g)));
+    }
     Operand::Val(Array::new(rows, cols, data).into_value())
+}
+
+fn cse_block(ctx: &EvalCtx) -> Option<(u32, u32)> {
+    ctx.wb
+        .formula_at(ctx.host)
+        .and_then(|f| ctx.wb.formula(f).array)
 }
 
 fn lead_error(ctx: &EvalCtx, def: &FnDef, ops: &[Operand]) -> Option<XlError> {
@@ -718,9 +841,9 @@ fn lead_error(ctx: &EvalCtx, def: &FnDef, ops: &[Operand]) -> Option<XlError> {
         }
         match op {
             Operand::Val(Value::Error(e)) => return Some(*e),
-            Operand::Missing if letter == b'M' => return Some(XlError::Value),
+            Operand::Missing if letter == b'M' => return Some(XlError::VALUE),
             Operand::Val(v @ Value::Text(_)) if letter == b'X' && ctx.to_number(v).is_err() => {
-                return Some(XlError::Value)
+                return Some(XlError::VALUE)
             }
             _ => {}
         }

@@ -9,6 +9,10 @@ use crate::graph::DepGraph;
 use crate::value::Value;
 use crate::workbook::{EditError, Entry, FormulaId, Op, Workbook};
 
+type SheetFormulas = (String, Vec<(u32, FormulaId, Arc<Formula>)>);
+
+type PlannedCell = Result<Value, (Arc<Formula>, String, Value)>;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Axis {
     Rows,
@@ -220,6 +224,50 @@ impl Workbook {
             Some(_) => RefEdit::Set(sh.clone(), normalize_cref(cref, to)),
             None => RefEdit::Dead(sh.clone()),
         }
+    }
+}
+
+impl Workbook {
+    pub(crate) fn copy_struct_cols(
+        &self,
+        root: &Node,
+        from: CellAddr,
+        to: CellAddr,
+        keep_implicit: bool,
+    ) -> Node {
+        let delta = to.col as i64 - from.col as i64;
+        if delta == 0 {
+            return root.clone();
+        }
+        crate::formula::map_node(root, &mut |n| match n {
+            Node::StructRef {
+                table,
+                implicit,
+                spec,
+            } => {
+                let (a, b) = spec.cols.as_ref()?;
+                if spec.range || a != b || (keep_implicit && *implicit) {
+                    return None;
+                }
+                let t = self.table_by_name(table)?;
+                let i = t.column_index(a)? as i64;
+
+                let j = i + delta;
+                if j < 0 || j >= t.columns.len() as i64 {
+                    return None;
+                }
+                let j = j as usize;
+                let name = t.columns[j].clone();
+                let mut spec = spec.clone();
+                spec.cols = Some((name.clone(), name));
+                Some(Node::StructRef {
+                    table: table.clone(),
+                    implicit: *implicit,
+                    spec,
+                })
+            }
+            _ => None,
+        })
     }
 }
 
@@ -499,7 +547,7 @@ impl Workbook {
         at: u32,
         count: u32,
     ) -> Result<RecalcReport, EditError> {
-        let inside: Vec<(String, Vec<(u32, FormulaId, Arc<Formula>)>)> = self
+        let inside: Vec<SheetFormulas> = self
             .tables
             .iter()
             .filter(|t| t.sheet == sheet && t.rect.r0 < at && at <= t.rect.r1)
@@ -542,7 +590,24 @@ impl Workbook {
                 } else {
                     host
                 };
+
+                let old_d1 = t.data_rows().1.saturating_sub(s.count);
                 let root = map_refs(&f.root, &mut |sheet, cref| {
+                    if s.axis == Axis::Rows
+                        && s.insert
+                        && s.at == d0
+                        && targets_sheet(sheet, host.sheet, s.sheet)
+                    {
+                        if let CRef::Area { r0, r1, .. } = cref {
+                            let (a, b) = (
+                                resolve(*r0, host.row, MAX_ROWS),
+                                resolve(*r1, host.row, MAX_ROWS),
+                            );
+                            if a == Some(d0) && b == Some(old_d1) {
+                                return None;
+                            }
+                        }
+                    }
                     if !targets_sheet(sheet, host.sheet, s.sheet) {
                         (host != to)
                             .then(|| shift_cref(cref, host, to, &Shift { count: 0, ..*s }).ok())
@@ -732,7 +797,7 @@ impl Workbook {
 
             lim = (lim.0.min(p0), lim.1.max(p1));
         }
-        let sources: Vec<(String, Vec<(u32, FormulaId, Arc<Formula>)>)> = grown
+        let sources: Vec<SheetFormulas> = grown
             .iter()
             .filter_map(|n| self.tables.iter().find(|t| &t.name == n))
             .map(|t| (t.name.clone(), self.calc_column_sources(t, at)))
@@ -952,14 +1017,14 @@ impl Workbook {
         let new_addr: rustc_hash::FxHashMap<FormulaId, CellAddr> =
             moved.iter().map(|(f, _, n)| (*f, *n)).collect();
 
-        let expand: Vec<(u32, u32, u32, u32)> = if s.axis == Axis::Rows && s.insert {
+        let expand: Vec<(u32, u32, u32, u32, Vec<bool>)> = if s.axis == Axis::Rows && s.insert {
             self.tables
                 .iter()
                 .filter(|t| t.sheet == s.sheet)
                 .filter_map(|t| {
                     let (d0, d1) = t.data_rows();
                     (s.at == d0 || (t.totals && s.at == d1 + 1))
-                        .then_some((d0, d1, t.rect.c0, t.rect.c1))
+                        .then(|| (d0, d1, t.rect.c0, t.rect.c1, t.calc.clone()))
                 })
                 .collect()
         } else {
@@ -995,10 +1060,13 @@ impl Workbook {
                         );
                         if let ((Some(a), Some(b)), (Some(x), Some(y))) = (rows, cols) {
                             let (x, y) = (x.min(y), x.max(y));
-                            if expand
-                                .iter()
-                                .any(|&(d0, d1, c0, c1)| a <= d0 && b == d1 && x >= c0 && y <= c1)
-                            {
+                            if expand.iter().any(|(d0, d1, c0, c1, calc)| {
+                                let in_calc = old.sheet == s.sheet
+                                    && (*d0..=*d1).contains(&old.row)
+                                    && (*c0..=*c1).contains(&old.col)
+                                    && calc.get((old.col - c0) as usize).copied().unwrap_or(false);
+                                !in_calc && a <= *d0 && b == *d1 && x >= *c0 && y <= *c1
+                            }) {
                                 *nr0 = encode(a, r0.abs, new.row);
                                 *nr1 = encode(b + s.count, r1.abs, new.row);
                                 let _ = (nc0, nc1, c0, c1);
@@ -1155,7 +1223,7 @@ impl Workbook {
                                 })
                         });
                         changed |= dead;
-                        dead.then(|| Node::DeadRef(SheetRef::Current))
+                        dead.then_some(Node::DeadRef(SheetRef::Current))
                     }
                     _ => None,
                 });
@@ -1185,7 +1253,7 @@ impl Workbook {
                                     })
                             });
                             changed |= dead;
-                            dead.then(|| Node::DeadRef(SheetRef::Current))
+                            dead.then_some(Node::DeadRef(SheetRef::Current))
                         }
                         _ => None,
                     });
@@ -1220,6 +1288,23 @@ impl Workbook {
                 } else {
                     s.straddle(cref, host, host).map(Some)
                 }
+            });
+
+            let root = crate::formula::map_node(&root, &mut |n| match n {
+                Node::StructRef { table, spec, .. } => {
+                    let dead = removed.iter().any(|r| crate::text::eq_ordinal_ci(r, table))
+                        || spec.cols.as_ref().is_some_and(|(a, b)| {
+                            gone.iter().any(|(t, cols)| {
+                                crate::text::eq_ordinal_ci(t, table)
+                                    && cols.iter().any(|c| {
+                                        crate::text::eq_ordinal_ci(c, a)
+                                            || crate::text::eq_ordinal_ci(c, b)
+                                    })
+                            })
+                        });
+                    dead.then_some(Node::DeadRef(SheetRef::Current))
+                }
+                _ => None,
             });
             def.refers_to = print_node(self, &root, host);
             def.formula = Arc::new(Formula {
@@ -1399,8 +1484,8 @@ impl Workbook {
                     let r = Rect::new(
                         addr.row,
                         addr.col,
-                        addr.row + a.rows as u32 - 1,
-                        addr.col + a.cols as u32 - 1,
+                        addr.row + a.rows - 1,
+                        addr.col + a.cols - 1,
                     );
                     self.sheet(addr.sheet).is_some_and(|s| {
                         !s.cells
@@ -1436,8 +1521,8 @@ impl Workbook {
                     Value::Array(a) if a.rows > 1 || a.cols > 1 => Some(Rect::new(
                         addr.row,
                         addr.col,
-                        addr.row + a.rows as u32 - 1,
-                        addr.col + a.cols as u32 - 1,
+                        addr.row + a.rows - 1,
+                        addr.col + a.cols - 1,
                     )),
                     _ => None,
                 };
@@ -1454,7 +1539,7 @@ impl Workbook {
                         sh.spills.set_blocked(fid, r);
                     }
                     self.formula_mut(fid).spill = None;
-                    self.formula_mut(fid).value = Value::Error(crate::value::XlError::Spill);
+                    self.formula_mut(fid).value = Value::Error(crate::value::XlError::SPILL);
                     self.set_dirty(fid, true);
                     self.calc.dirty_list.push(fid);
                     continue;
@@ -1481,6 +1566,16 @@ impl Workbook {
         src_sheet: SheetId,
         src: Rect,
         dst: CellAddr,
+    ) -> Result<RecalcReport, EditError> {
+        self.copy_range_with(src_sheet, src, dst, false)
+    }
+
+    pub(crate) fn copy_range_with(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+        fill: bool,
     ) -> Result<RecalcReport, EditError> {
         if src.r0 > src.r1 || src.c0 > src.c1 || src.r1 >= MAX_ROWS || src.c1 >= MAX_COLS {
             return Err(EditError::Compile(
@@ -1553,7 +1648,7 @@ impl Workbook {
             .enumerate()
             .map(|(i, e)| ((e.0, e.1), i))
             .collect();
-        let mut plan: Vec<(CellAddr, Result<Value, (Arc<Formula>, String, Value)>)> = Vec::new();
+        let mut plan: Vec<(CellAddr, PlannedCell)> = Vec::new();
         for r in src.r0..=src.r1 {
             for c in src.c0..=src.c1 {
                 let to = CellAddr::new(dst.sheet, (r as i64 + dr) as u32, (c as i64 + dc) as u32);
@@ -1582,6 +1677,7 @@ impl Workbook {
                         let root = edit_refs(&f.formula.root, &mut |sh, cref| {
                             self.copy_ref_edit(sh, cref, from, to)
                         });
+                        let root = self.copy_struct_cols(&root, from, to, !fill);
                         let text = print_node(self, &root, to);
                         plan.push((
                             to,
@@ -1656,8 +1752,8 @@ impl Workbook {
             self.fmt_copy_block(fmt_src.0, fmt_src.1, dst);
 
             if self.tables.len() == orig_tables.len() {
-                for ti in 0..self.tables.len() {
-                    let (t, o) = (self.tables[ti].rect, orig_tables[ti]);
+                for (ti, &o) in orig_tables.iter().enumerate() {
+                    let t = self.tables[ti].rect;
                     if self.tables[ti].sheet != dst.sheet
                         || self.tables[ti].totals
                         || t.r1 <= o.r1
@@ -1710,6 +1806,7 @@ impl Workbook {
         if !self.op_on(Op::NoAutoExpand) {
             self.note_pasted_col_formats(dst.sheet, dest);
         }
+        self.paste_ends_calc(dst.sheet, dest);
 
         if let Some((ti, rect, rows, edge)) = Some(self.paste_growth(
             dst.sheet,
@@ -1728,6 +1825,9 @@ impl Workbook {
                 protect_blanks: !edge,
             };
             self.grow_table_by_paste(ti, rect, rows, Some(info));
+        }
+        if !self.op_on(Op::NoAutoExpand) {
+            self.paste_copies_table(src_sheet, src, dst.sheet, dest);
         }
         Ok(calc::finish_report(report))
     }
@@ -1749,7 +1849,7 @@ impl Workbook {
                 let h = src.rows().min(dst.r1 - r + 1);
                 let w = src.cols().min(dst.c1 - c + 1);
                 let part = Rect::new(src.r0, src.c0, src.r0 + h - 1, src.c0 + w - 1);
-                let rep = self.copy_range(sheet, part, CellAddr::new(sheet, r, c))?;
+                let rep = self.copy_range_with(sheet, part, CellAddr::new(sheet, r, c), true)?;
                 report.evaluations += rep.evaluations;
                 report.changed.extend(rep.changed);
                 c += src.cols();

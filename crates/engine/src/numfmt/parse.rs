@@ -711,7 +711,7 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
         while num_end > 0 && !matches!(toks[num_end - 1], Tok::Ph(_)) {
             let t = &toks[num_end - 1];
             let ok = lit_between(t)
-                || (point.is_some_and(|p| num_end - 1 >= p)
+                || (point.is_some_and(|p| num_end > p)
                     && matches!(t, Tok::Point | Tok::Comma | Tok::Percent))
                 || matches!(t, Tok::Comma);
             if !ok {
@@ -1111,8 +1111,7 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
                     if r > rank && r == top && !larger_seen {
                         *d = left(r, n);
                         larger_seen = true;
-                    } else if r > rank {
-                    } else if r == rank && larger_after && !preceded {
+                    } else if r > rank || (r == rank && larger_after && !preceded) {
                     } else if r == rank {
                         *d = if preceded || sub_seen {
                             left(r, n)

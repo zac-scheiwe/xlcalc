@@ -38,7 +38,7 @@ fn atp_scalar(ctx: &EvalCtx, v: &Value) -> R<f64> {
         Value::Blank => Ok(0.0),
         Value::Text(_) => ctx.to_number(v),
         Value::Error(e) => Err(*e),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -58,7 +58,7 @@ fn atp_arg(ctx: &mut EvalCtx, op: &Operand) -> AtpArg {
                 let v = ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0);
                 AtpArg::One(atp_scalar(ctx, &v))
             }
-            _ => AtpArg::One(Err(XlError::Value)),
+            _ => AtpArg::One(Err(XlError::VALUE)),
         },
     }
 }
@@ -135,7 +135,7 @@ pub fn gamma_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let x = num(ctx, &a[0])?;
         let g = sp::gamma_xl(x);
         if !g.is_finite() {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(flush(g))
     })())
@@ -145,7 +145,7 @@ pub fn gammaln(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
         let x = num(ctx, &a[0])?;
         if x <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(sp::lgamma_xl(x))
     })())
@@ -153,7 +153,7 @@ pub fn gammaln(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn norm_pdf_checked(z: f64) -> R<f64> {
     if (z * z).is_infinite() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(flush(norm_pdf(z)))
 }
@@ -182,7 +182,7 @@ pub fn norm_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
         if s <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let z = (x - m) / s;
         if cum {
@@ -218,7 +218,7 @@ pub fn normsdist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn prob_open(p: f64) -> R<f64> {
     if p <= 0.0 || p >= 1.0 {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     } else {
         Ok(p)
     }
@@ -239,7 +239,7 @@ pub fn norm_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = num(ctx, &a[2])?;
         prob_open(p)?;
         if s <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(m + s * norm_s_inv_xl(p))
     })())
@@ -257,7 +257,7 @@ pub fn lognorm_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn lognorm(x: f64, m: f64, s: f64, cum: bool) -> R<f64> {
     if x <= 0.0 || s <= 0.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let z = (x.ln() - m) / s;
     Ok(if cum {
@@ -268,7 +268,7 @@ fn lognorm(x: f64, m: f64, s: f64, cum: bool) -> R<f64> {
 
         let den = x87::mul(2.0, x87::mul(s, s));
         if den == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let q = x87::div(x87::mul(d, d), den);
         let mut t = XlLogSum::new(x87::ln(s));
@@ -295,7 +295,7 @@ pub fn lognorm_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = num(ctx, &a[2])?;
         prob_open(p)?;
         if s <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         Ok(x87::exp(x87::add(m, x87::mul(norm_s_inv_xl(p), s))))
@@ -305,7 +305,7 @@ pub fn lognorm_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn t_df(ctx: &EvalCtx, a: &[Value], i: usize) -> R<f64> {
     let df = int(ctx, a, i)?;
     if !(1.0..=1e10).contains(&df) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(df)
 }
@@ -363,7 +363,7 @@ fn t_pdf(t: f64, df: f64) -> f64 {
 
 fn check_t(t: f64) -> R<f64> {
     if !(t * t).is_finite() {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     } else {
         Ok(t)
     }
@@ -378,7 +378,7 @@ pub fn t_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
         if !cum && raw_df < 1.0 {
             let div0 = raw_df > -1.0 || x87::add(raw_df, x87::mul(t, t)) == 0.0;
-            return Err(if div0 { XlError::Div0 } else { XlError::Num });
+            return Err(if div0 { XlError::DIV0 } else { XlError::NUM });
         }
         let df = if cum { t_df(ctx, a, 1)? } else { raw_df };
         Ok(if cum {
@@ -395,7 +395,7 @@ pub fn t_dist_2t(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let t = check_t(num(ctx, &a[0])?)?;
         let df = t_df(ctx, a, 1)?;
         if t < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(t_xl(t, df))
     })())
@@ -417,7 +417,7 @@ pub fn tdist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let df = t_df(ctx, a, 1)?;
         let tails = crate::functions::args::sfix(num(ctx, &a[2])?) as f64;
         if t < 0.0 || !(tails == 1.0 || tails == 2.0) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(if tails == 2.0 {
             t_xl(t, df)
@@ -454,11 +454,11 @@ pub fn t_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let df = t_df(ctx, a, 1)?;
         if p == 0.0 && df == 1.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let p = prob_open(p)?;
         if df == 1.0 && p.min(1.0 - p) < f64::MIN_POSITIVE {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         t_inv_xl(p, df)
     })())
@@ -471,13 +471,13 @@ pub fn t_inv_2t(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let df = t_df(ctx, a, 1)?;
 
         if !(0.0..2.0).contains(&p) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if p == 0.0 && df != 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if df == 1.0 && p.min(2.0 - p) < f64::MIN_POSITIVE {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         Ok(-t_inv_xl(x87::div(p, 2.0), df)?)
     })())
@@ -486,18 +486,14 @@ pub fn t_inv_2t(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn chi_df(ctx: &EvalCtx, a: &[Value], i: usize) -> R<f64> {
     let df = int(ctx, a, i)?;
     if !(1.0..=1e10).contains(&df) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(df)
 }
 
 fn gamma_pdf(x: f64, k: f64, theta: f64) -> R<f64> {
     if x == 0.0 {
-        return if k < 1.0 || k == 1.0 {
-            Err(XlError::Num)
-        } else {
-            Ok(0.0)
-        };
+        return if k <= 1.0 { Err(XlError::NUM) } else { Ok(0.0) };
     }
     let y = x87::div(x, theta);
     if y > 0.0 && y.is_finite() && k.is_finite() {
@@ -525,14 +521,14 @@ pub fn chisq_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let df = chi_df(ctx, a, 1)?;
         let cum = flag(a, 2)?;
         if x < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if cum {
             return Ok(igamma_pq(df / 2.0, x / 2.0).0);
         }
         if x == 0.0 {
             return if df == 1.0 {
-                Err(XlError::Num)
+                Err(XlError::NUM)
             } else if df == 2.0 {
                 Ok(0.5)
             } else {
@@ -549,25 +545,17 @@ pub fn chisq_dist_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let x = num(ctx, &a[0])?;
         let df = chi_df(ctx, a, 1)?;
         if x < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(igamma_pq(df / 2.0, x / 2.0).1)
     })())
 }
 
-fn bracket(start: f64, target: f64, f: &impl Fn(f64) -> f64) -> f64 {
-    let mut hi = start.max(1.0);
-    while f(hi) < target && hi < 1e300 {
-        hi *= 2.0;
-    }
-    hi
-}
-
 fn inv_status(x: f64) -> R<f64> {
     if x.is_nan() {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     } else if x == f64::NEG_INFINITY {
-        Err(XlError::Div0)
+        Err(XlError::DIV0)
     } else {
         Ok(x)
     }
@@ -658,7 +646,7 @@ fn gamma_inv_halley(t: f64, upper: bool, a: f64, mut x: f64) -> f64 {
         if xn == 0.0 {
             return f64::NEG_INFINITY;
         }
-        if !(xn > 0.0) {
+        if xn <= 0.0 || xn.is_nan() {
             return f64::NAN;
         }
         if x87::sub(xn, x).abs() <= x87::mul(x, f64::EPSILON) {
@@ -687,15 +675,7 @@ fn gamma_inv_upper(q: f64, k: f64) -> f64 {
         let y = x87::mul(x87::sub(1.0, q), -1.0);
         return x87::mul(xl_log1p(y), -1.0);
     }
-    if q <= 0.5 {
-        let f = |x: f64| -hp::gamma_q_cr(k, x);
-        let hi = bracket(k, -q, &f);
-        return sp::solve_increasing(0.0, hi, -q, f);
-    }
-    let p = 1.0 - q;
-    let f = |x: f64| hp::gamma_p_cr(k, x);
-    let hi = bracket(k, p, &f);
-    sp::solve_increasing(0.0, hi, p, f)
+    x87::mul(x87::ln(q), -1.0)
 }
 
 pub fn chisq_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -704,7 +684,7 @@ pub fn chisq_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let df = chi_df(ctx, a, 1)?;
         if !(0.0..1.0).contains(&p) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if p == 0.0 {
             return Ok(0.0);
@@ -719,7 +699,7 @@ pub fn chisq_inv_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let df = chi_df(ctx, a, 1)?;
         if p <= 0.0 || p > 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if p == 1.0 {
             return Ok(0.0);
@@ -732,7 +712,7 @@ fn f_dfs(ctx: &EvalCtx, a: &[Value], i: usize) -> R<(f64, f64)> {
     let d1 = int(ctx, a, i)?;
     let d2 = int(ctx, a, i + 1)?;
     if !(1.0..=1e10).contains(&d1) || !(1.0..=1e10).contains(&d2) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok((d1, d2))
 }
@@ -770,14 +750,14 @@ pub fn f_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let (d1, d2) = f_dfs(ctx, a, 1)?;
         let cum = flag(a, 3)?;
         if x < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if cum {
             return Ok(f_tails_xl(x, d1, d2).0);
         }
         if x == 0.0 {
             return if d1 == 1.0 {
-                Err(XlError::Num)
+                Err(XlError::NUM)
             } else if d1 == 2.0 {
                 Ok(1.0)
             } else {
@@ -836,7 +816,7 @@ pub fn f_dist_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let x = num(ctx, &a[0])?;
         let (d1, d2) = f_dfs(ctx, a, 1)?;
         if x < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(f_tails_xl(x, d1, d2).1)
     })())
@@ -863,7 +843,7 @@ pub fn f_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let (d1, d2) = f_dfs(ctx, a, 1)?;
         if !(0.0..1.0).contains(&p) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if p == 0.0 {
             return Ok(0.0);
@@ -878,7 +858,7 @@ pub fn f_inv_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let (d1, d2) = f_dfs(ctx, a, 1)?;
         if p <= 0.0 || p > 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if p == 1.0 {
             return Ok(0.0);
@@ -893,7 +873,7 @@ fn opt_bound(ctx: &EvalCtx, a: &[Value], i: usize, default: f64) -> R<f64> {
 
 fn beta_core(x: f64, al: f64, be: f64, cum: bool, lo: f64, hi: f64) -> R<f64> {
     if al <= 0.0 || be <= 0.0 || lo >= hi || x < lo || x > hi {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let z = x87::div(x87::sub(x, lo), x87::sub(hi, lo));
     if cum {
@@ -901,14 +881,14 @@ fn beta_core(x: f64, al: f64, be: f64, cum: bool, lo: f64, hi: f64) -> R<f64> {
     }
     if z == 0.0 {
         return if al <= 1.0 {
-            Err(XlError::Num)
+            Err(XlError::NUM)
         } else {
             Ok(0.0)
         };
     }
     if z == 1.0 {
         return if be <= 1.0 {
-            Err(XlError::Num)
+            Err(XlError::NUM)
         } else {
             Ok(0.0)
         };
@@ -959,7 +939,7 @@ pub(super) fn xl_inv_ibeta(prob: f64, upper: bool, a: f64, b: f64) -> Result<(f6
     let (al, pp, qq) = if swap { (up, b, a) } else { (lo, a, b) };
 
     let x = inv_ibeta_start(al, pp, qq);
-    let x = if !(x < 1.0) {
+    let x = if x >= 1.0 || x.is_nan() {
         0.999999
     } else if x <= 0.0 {
         1e-6
@@ -1054,7 +1034,7 @@ fn inv_ibeta_iter(al: f64, pp: f64, qq: f64, mut x: f64) -> Result<f64, XlError>
         }
 
         if pdf.is_infinite() {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if x87::div(x87::mul(r, yprev), pdf) <= 0.0 {
             prev = if sq == 0.0 { f64::MIN_POSITIVE } else { sq };
@@ -1068,7 +1048,7 @@ fn inv_ibeta_iter(al: f64, pp: f64, qq: f64, mut x: f64) -> Result<f64, XlError>
                 break;
             }
             let ly = x87::mul(x87::sub(x87::ln(r.abs()), x87::ln(pdf.abs())), 2.0);
-            if !(x87::ln(acu) < ly) {
+            if x87::ln(acu).partial_cmp(&ly) != Some(std::cmp::Ordering::Less) {
                 break;
             }
         }
@@ -1110,7 +1090,7 @@ fn inv_ibeta_iter(al: f64, pp: f64, qq: f64, mut x: f64) -> Result<f64, XlError>
         x = tx;
     }
     if (limited || evals > 500) && x87::div(best.0, al).abs() > 1e-12 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(best.1)
 }
@@ -1124,7 +1104,7 @@ pub fn beta_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let hi = opt_bound(ctx, a, 4, 1.0)?;
         prob_open(p)?;
         if al <= 0.0 || be <= 0.0 || lo >= hi {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let z = inv_ibeta_xy(p, false, al, be)?.0;
 
@@ -1139,7 +1119,7 @@ pub fn gamma_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let be = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
         if x < 0.0 || al <= 0.0 || be <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if cum {
             Ok(igamma_pq(al, x87::div(x, be)).0)
@@ -1155,7 +1135,7 @@ pub fn gamma_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let al = num(ctx, &a[1])?;
         let be = num(ctx, &a[2])?;
         if !(0.0..1.0).contains(&p) || al <= 0.0 || be <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if p == 0.0 {
             return Ok(0.0);
@@ -1170,7 +1150,7 @@ pub fn expon_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let l = num(ctx, &a[1])?;
         let cum = flag(a, 2)?;
         if x < 0.0 || l <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         Ok(if cum {
@@ -1188,7 +1168,7 @@ pub fn weibull_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let be = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
         if x < 0.0 || al <= 0.0 || be <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let u = if x == 0.0 {
@@ -1197,7 +1177,7 @@ pub fn weibull_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             xl_pow(x87::div(x, be), al)
         };
         if !u.is_finite() {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if cum {
             return Ok(x87::sub(0.0, xl_expm1(-u)));
@@ -1209,10 +1189,10 @@ pub fn weibull_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
         let (px, pb) = (xl_pow(x, x87::sub(al, 1.0)), xl_pow(be, al));
         if !px.is_finite() || !pb.is_finite() {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if pb.to_bits() & 0xFFFF_0000_0000_0000 == 0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let r = x87::mul(px, x87::div(al, pb));
         Ok(x87::mul(e, r))
@@ -1263,16 +1243,16 @@ pub fn binom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let k = num(ctx, &a[0])?;
         let n = num(ctx, &a[1])?;
         if k < 0.0 || n < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let (k, n) = (k.trunc(), n.trunc());
         let p = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
         if k < 0.0 || n < 0.0 || k > n || !(0.0..=1.0).contains(&p) || n >= MAX_TRIALS {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if !cum && k == 0.0 && p == 1.0 && n > 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(if cum {
             binom_cdf(k, n, p)
@@ -1292,7 +1272,7 @@ pub fn binom_dist_range(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             Some(v) => num(ctx, v)?.trunc(),
         };
         if n < 0.0 || !(0.0..=1.0).contains(&p) || s < 0.0 || s > n || s2 < s || s2 > n {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if s == s2 {
             return Ok(binom_pmf(s, n, p));
@@ -1369,7 +1349,7 @@ pub fn binom_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[1])?;
         let alpha = num(ctx, &a[2])?;
         if n < 0.0 || n >= MAX_TRIALS || p <= 0.0 || p >= 1.0 || alpha <= 0.0 || alpha >= 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let (mut lo, mut hi) = (0.0f64, n);
@@ -1417,7 +1397,7 @@ fn negbinom_pmf(f: f64, s: f64, p: f64) -> f64 {
 
 fn negbinom(f: f64, s: f64, p: f64, cum: bool) -> R<f64> {
     if f < 0.0 || s < 1.0 || p <= 0.0 || p >= 1.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if !cum {
         return Ok(negbinom_pmf(f, s, p));
@@ -1455,10 +1435,10 @@ fn hypgeom_cdf_sum(k: f64, n: f64, kk: f64, nn: f64) -> f64 {
 
 fn hypgeom(k: f64, n: f64, kk: f64, nn: f64, cum: bool) -> R<f64> {
     if [k, n, kk, nn].iter().any(|v| *v >= 2147483647.0) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if k < 0.0 || n < 0.0 || kk < 0.0 || nn <= 0.0 || n > nn || kk > nn {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let lo = (n + kk - nn).max(0.0);
     let hi = n.min(kk);
@@ -1538,7 +1518,7 @@ fn xl_atanh(v: f64) -> f64 {
         sum = x87::add(sum, term);
         let thr = x87::mul(sum, f64::EPSILON);
         odd = next;
-        if !(term.abs() > thr.abs()) {
+        if term.abs().partial_cmp(&thr.abs()) != Some(std::cmp::Ordering::Greater) {
             break;
         }
     }
@@ -1665,7 +1645,7 @@ fn poisson_pmf(k: f64, l: f64) -> f64 {
         return x87::mul(x87::mul(x87::exp(e1), x87::exp(s.s)), x87::exp(s.err));
     }
     let e = x87::exp(-x87::add(stirlerr(k), bd0(k, l)));
-    x87::div(e, x87::sqrt(x87::mul(6.283185307179586, k)))
+    x87::div(e, x87::sqrt(x87::mul(std::f64::consts::TAU, k)))
 }
 
 pub(super) fn xl_pow(x: f64, y: f64) -> f64 {
@@ -1698,7 +1678,7 @@ pub(super) fn xl_igamma(a: f64, y: f64) -> Option<(f64, f64)> {
     }
     if a > 20.0 {
         let mu = x87::sub(x87::div(y, a), 1.0).abs();
-        if !(mu > 0.3) {
+        if mu <= 0.3 || mu.is_nan() {
             let v = xl_temme(a, y);
             return Some(if y > a { (flip(v), v) } else { (v, flip(v)) });
         }
@@ -1732,7 +1712,7 @@ pub(super) fn xl_igamma(a: f64, y: f64) -> Option<(f64, f64)> {
         return Some((flip(q), q));
     }
 
-    if a > 1.0 && !(y > a) {
+    if a > 1.0 && y.partial_cmp(&a) != Some(std::cmp::Ordering::Greater) {
         let mut r = x87::add(a, 1.0);
         let mut term = x87::div(y, r);
         let mut sum = x87::add(term, 1.0);
@@ -1740,7 +1720,7 @@ pub(super) fn xl_igamma(a: f64, y: f64) -> Option<(f64, f64)> {
             r = x87::add(r, 1.0);
             term = x87::mul(term, x87::div(y, r));
             sum = x87::add(sum, term);
-            if !(term > x87::mul(sum, f64::EPSILON)) {
+            if term.partial_cmp(&x87::mul(sum, f64::EPSILON)) != Some(std::cmp::Ordering::Greater) {
                 break;
             }
         }
@@ -1777,7 +1757,7 @@ pub(super) fn xl_igamma(a: f64, y: f64) -> Option<(f64, f64)> {
             if delta == 1.0 {
                 break;
             }
-            let k = ((i + 1) / 2) as f64;
+            let k = i.div_ceil(2) as f64;
             (an, b) = if i % 2 == 1 {
                 (x87::sub(k, a), 1.0)
             } else {
@@ -1851,7 +1831,7 @@ pub(super) fn xl_log1pmx(x: f64) -> f64 {
         t = x87::mul(x87::div(x87::mul(y, k), k2), t);
         sum = x87::add(sum, t);
         k = k2;
-        if !(t > x87::mul(sum, f64::EPSILON)) {
+        if t.partial_cmp(&x87::mul(sum, f64::EPSILON)) != Some(std::cmp::Ordering::Greater) {
             break;
         }
     }
@@ -1911,7 +1891,7 @@ fn xl_temme(a: f64, y: f64) -> f64 {
     let s = x87::div(s, x87::exp(stirlerr(a)));
     let t = x87::div(x87::mul(x87::exp(-u), 0.3989422804014327), x87::sqrt(a));
     let mut r = x87::mul(t, s);
-    if !(y > a) {
+    if y.partial_cmp(&a) != Some(std::cmp::Ordering::Greater) {
         r = -r;
     }
     x87::add(r, x87::mul(0.5, sp::erfc(x87::sqrt(u))))
@@ -1967,7 +1947,7 @@ fn xl_igamma_smallx_q(a: f64, y: f64) -> f64 {
         s = x87::add(s, term);
         let thr = x87::mul(s, f64::EPSILON);
         n = x87::add(n, 1.0);
-        if !(term.abs() > thr.abs()) {
+        if term.abs().partial_cmp(&thr.abs()) != Some(std::cmp::Ordering::Greater) {
             break;
         }
     }
@@ -2017,7 +1997,7 @@ pub fn poisson_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             return Ok((-l).exp());
         }
         if k < 0.0 || l < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if cum {
             if l == 0.0 {

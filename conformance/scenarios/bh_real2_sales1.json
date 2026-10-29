@@ -1,0 +1,1356 @@
+{
+"sheets": [
+"Data",
+"Rep"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Data!A1",
+"value": {
+"t": "s",
+"v": "Order"
+}
+},
+{
+"op": "setv",
+"cell": "Data!B1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C1",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Data!E1",
+"value": {
+"t": "s",
+"v": "Unit"
+}
+},
+{
+"op": "setv",
+"cell": "Data!F1",
+"value": {
+"t": "s",
+"v": "Disc"
+}
+},
+{
+"op": "setv",
+"cell": "Data!A2",
+"value": {
+"t": "n",
+"v": 1000
+}
+},
+{
+"op": "setv",
+"cell": "Data!B2",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C2",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D2",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Data!E2",
+"value": {
+"t": "n",
+"v": 19.95
+}
+},
+{
+"op": "setv",
+"cell": "Data!F2",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!A3",
+"value": {
+"t": "n",
+"v": 1001
+}
+},
+{
+"op": "setv",
+"cell": "Data!B3",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C3",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D3",
+"value": {
+"t": "n",
+"v": 34
+}
+},
+{
+"op": "setv",
+"cell": "Data!E3",
+"value": {
+"t": "n",
+"v": 4.99
+}
+},
+{
+"op": "setv",
+"cell": "Data!F3",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "Data!A4",
+"value": {
+"t": "n",
+"v": 1002
+}
+},
+{
+"op": "setv",
+"cell": "Data!B4",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C4",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D4",
+"value": {
+"t": "n",
+"v": 16
+}
+},
+{
+"op": "setv",
+"cell": "Data!E4",
+"value": {
+"t": "n",
+"v": 4.99
+}
+},
+{
+"op": "setv",
+"cell": "Data!F4",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A5",
+"value": {
+"t": "n",
+"v": 1003
+}
+},
+{
+"op": "setv",
+"cell": "Data!B5",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C5",
+"value": {
+"t": "s",
+"v": "Doohickey"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D5",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "Data!E5",
+"value": {
+"t": "n",
+"v": 19.95
+}
+},
+{
+"op": "setv",
+"cell": "Data!F5",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "Data!A6",
+"value": {
+"t": "n",
+"v": 1004
+}
+},
+{
+"op": "setv",
+"cell": "Data!B6",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C6",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D6",
+"value": {
+"t": "n",
+"v": 16
+}
+},
+{
+"op": "setv",
+"cell": "Data!E6",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Data!F6",
+"value": {
+"t": "n",
+"v": 0.15
+}
+},
+{
+"op": "setv",
+"cell": "Data!A7",
+"value": {
+"t": "n",
+"v": 1005
+}
+},
+{
+"op": "setv",
+"cell": "Data!B7",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C7",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Data!E7",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "Data!F7",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A8",
+"value": {
+"t": "n",
+"v": 1006
+}
+},
+{
+"op": "setv",
+"cell": "Data!B8",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C8",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D8",
+"value": {
+"t": "n",
+"v": 14
+}
+},
+{
+"op": "setv",
+"cell": "Data!E8",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Data!F8",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!A9",
+"value": {
+"t": "n",
+"v": 1007
+}
+},
+{
+"op": "setv",
+"cell": "Data!B9",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C9",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D9",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "setv",
+"cell": "Data!E9",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Data!F9",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A10",
+"value": {
+"t": "n",
+"v": 1008
+}
+},
+{
+"op": "setv",
+"cell": "Data!B10",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C10",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D10",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Data!E10",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "Data!F10",
+"value": {
+"t": "n",
+"v": 0.15
+}
+},
+{
+"op": "setv",
+"cell": "Data!A11",
+"value": {
+"t": "n",
+"v": 1009
+}
+},
+{
+"op": "setv",
+"cell": "Data!B11",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C11",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D11",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Data!E11",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Data!F11",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A12",
+"value": {
+"t": "n",
+"v": 1010
+}
+},
+{
+"op": "setv",
+"cell": "Data!B12",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C12",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D12",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Data!E12",
+"value": {
+"t": "n",
+"v": 4.99
+}
+},
+{
+"op": "setv",
+"cell": "Data!F12",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A13",
+"value": {
+"t": "n",
+"v": 1011
+}
+},
+{
+"op": "setv",
+"cell": "Data!B13",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C13",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D13",
+"value": {
+"t": "n",
+"v": 14
+}
+},
+{
+"op": "setv",
+"cell": "Data!E13",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "Data!F13",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A14",
+"value": {
+"t": "n",
+"v": 1012
+}
+},
+{
+"op": "setv",
+"cell": "Data!B14",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C14",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D14",
+"value": {
+"t": "n",
+"v": 11
+}
+},
+{
+"op": "setv",
+"cell": "Data!E14",
+"value": {
+"t": "n",
+"v": 19.95
+}
+},
+{
+"op": "setv",
+"cell": "Data!F14",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!A15",
+"value": {
+"t": "n",
+"v": 1013
+}
+},
+{
+"op": "setv",
+"cell": "Data!B15",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C15",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D15",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "Data!E15",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "Data!F15",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Data!A16",
+"value": {
+"t": "n",
+"v": 1014
+}
+},
+{
+"op": "setv",
+"cell": "Data!B16",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C16",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D16",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "Data!E16",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Data!F16",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!A17",
+"value": {
+"t": "n",
+"v": 1015
+}
+},
+{
+"op": "setv",
+"cell": "Data!B17",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C17",
+"value": {
+"t": "s",
+"v": "Doohickey"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D17",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Data!E17",
+"value": {
+"t": "n",
+"v": 19.95
+}
+},
+{
+"op": "setv",
+"cell": "Data!F17",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "Data!A18",
+"value": {
+"t": "n",
+"v": 1016
+}
+},
+{
+"op": "setv",
+"cell": "Data!B18",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C18",
+"value": {
+"t": "s",
+"v": "Widget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D18",
+"value": {
+"t": "n",
+"v": 11
+}
+},
+{
+"op": "setv",
+"cell": "Data!E18",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "Data!F18",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!A19",
+"value": {
+"t": "n",
+"v": 1017
+}
+},
+{
+"op": "setv",
+"cell": "Data!B19",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C19",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D19",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Data!E19",
+"value": {
+"t": "n",
+"v": 19.95
+}
+},
+{
+"op": "setv",
+"cell": "Data!F19",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!A20",
+"value": {
+"t": "n",
+"v": 1018
+}
+},
+{
+"op": "setv",
+"cell": "Data!B20",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C20",
+"value": {
+"t": "s",
+"v": "Gizmo"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D20",
+"value": {
+"t": "n",
+"v": 39
+}
+},
+{
+"op": "setv",
+"cell": "Data!E20",
+"value": {
+"t": "n",
+"v": 4.99
+}
+},
+{
+"op": "setv",
+"cell": "Data!F20",
+"value": {
+"t": "n",
+"v": 0.15
+}
+},
+{
+"op": "setv",
+"cell": "Data!A21",
+"value": {
+"t": "n",
+"v": 1019
+}
+},
+{
+"op": "setv",
+"cell": "Data!B21",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "Data!C21",
+"value": {
+"t": "s",
+"v": "Gadget"
+}
+},
+{
+"op": "setv",
+"cell": "Data!D21",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "Data!E21",
+"value": {
+"t": "n",
+"v": 4.99
+}
+},
+{
+"op": "setv",
+"cell": "Data!F21",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Data!G1",
+"value": {
+"t": "s",
+"v": "Net"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!A1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!B1",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!A2",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!B2",
+"value": {
+"t": "s",
+"v": "*"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!A3",
+"value": {
+"t": "s",
+"v": "TopN"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!B3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Rep!A4",
+"value": {
+"t": "s",
+"v": "MinQty"
+}
+},
+{
+"op": "setv",
+"cell": "Rep!B4",
+"value": {
+"t": "s",
+"v": ">=10"
+}
+},
+{
+"op": "table",
+"name": "Orders",
+"range": "Data!A1:G21"
+},
+{
+"op": "set",
+"cell": "Data!G2",
+"input": "=[@Qty]*[@Unit]*(1-[@Disc])"
+},
+{
+"op": "table_totals",
+"sheet": "Data",
+"name": "Orders",
+"value": true
+},
+{
+"op": "set",
+"cell": "Data!G22",
+"input": "=SUBTOTAL(109,[Net])"
+},
+{
+"op": "set",
+"cell": "Data!D22",
+"input": "=SUBTOTAL(103,[Qty])"
+},
+{
+"op": "set",
+"cell": "Data!E22",
+"input": "=SUBTOTAL(101,[Unit])"
+},
+{
+"op": "set",
+"cell": "Rep!D1",
+"input": "=SUMIFS(Orders[Net],Orders[Region],B1,Orders[Product],B2,Orders[Qty],B4)"
+},
+{
+"op": "set",
+"cell": "Rep!D2",
+"input": "=COUNTIFS(Orders[Region],B1,Orders[Product],B2)"
+},
+{
+"op": "set",
+"cell": "Rep!D3",
+"input": "=SUM(Orders[[#Totals],[Net]])"
+},
+{
+"op": "set",
+"cell": "Rep!D4",
+"input": "=Orders[[#Headers],[Net]]"
+},
+{
+"op": "set",
+"cell": "Rep!D5",
+"input": "=ROWS(Orders[#Data])&\"x\"&COLUMNS(Orders)"
+},
+{
+"op": "set",
+"cell": "Rep!D6",
+"input": "=SUM(Orders[[Qty]:[Net]])"
+},
+{
+"op": "set",
+"cell": "Rep!D7",
+"input": "=SUMPRODUCT((Orders[Region]=B1)*Orders[Qty]*Orders[Unit])"
+},
+{
+"op": "set",
+"cell": "Rep!D8",
+"input": "=INDEX(Orders[Order],MATCH(MAX(Orders[Net]),Orders[Net],0))"
+},
+{
+"op": "set",
+"cell": "Rep!D9",
+"input": "=LARGE(Orders[Net],B3)"
+},
+{
+"op": "set",
+"cell": "Rep!D10",
+"input": "=SUMIFS(Orders[Net],Orders[Net],\">=\"&LARGE(Orders[Net],B3))"
+},
+{
+"op": "set",
+"cell": "Rep!F1",
+"input": "=LET(n,B3,d,Orders[[Order]:[Net]],s,SORTBY(d,INDEX(d,,6),-1),TAKE(s,n))"
+},
+{
+"op": "set",
+"cell": "Rep!F8",
+"input": "=LET(r,UNIQUE(Orders[Region]),t,SUMIFS(Orders[Net],Orders[Region],r),k,SORTBY(HSTACK(r,t,t/SUM(t)),t,-1),k)"
+},
+{
+"op": "set",
+"cell": "Rep!F14",
+"input": "=LET(f,FILTER(Orders,(Orders[Region]=B1)*(Orders[Qty]>=10),\"none\"),IFERROR(ROWS(f),0)&\" rows, avg \"&TEXT(AVERAGE(INDEX(f,,6)),\"0.00\"))"
+},
+{
+"op": "set",
+"cell": "Rep!F15",
+"input": "=XLOOKUP(1,(Orders[Region]=B1)*(Orders[Product]=\"Gizmo\"),Orders[Net],\"n/a\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Rep!F16",
+"input": "=XMATCH(B1,Orders[Region],0,-1)"
+},
+{
+"op": "set",
+"cell": "Rep!F17",
+"input": "=SUMPRODUCT(LARGE(Orders[Net],{1,2,3}))"
+},
+{
+"op": "set",
+"cell": "Rep!F18",
+"input": "=RANK.EQ(INDEX(Orders[Net],2),Orders[Net])&\"/\"&COUNT(Orders[Net])"
+},
+{
+"op": "set",
+"cell": "Rep!F19",
+"input": "=PERCENTILE.INC(Orders[Net],0.9)&\"|\"&MEDIAN(Orders[Net])&\"|\"&STDEV.S(Orders[Net])"
+},
+{
+"op": "set",
+"cell": "Rep!F20",
+"input": "=SUMIFS(Orders[Net],Orders[Region],\"<>\"&B1)"
+},
+{
+"op": "set",
+"cell": "Rep!F21",
+"input": "=AGGREGATE(14,6,Orders[Net]/(Orders[Region]=B1),1)"
+},
+{
+"op": "set",
+"cell": "Rep!F22",
+"input": "=TEXTJOIN(\",\",TRUE,TAKE(SORT(UNIQUE(Orders[Order]),,-1),3))"
+},
+{
+"op": "read",
+"range": "Data!A1:G23"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "set",
+"cell": "Rep!B1",
+"input": "West"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "set",
+"cell": "Rep!B2",
+"input": "Gi*"
+},
+{
+"op": "set",
+"cell": "Rep!B4",
+"input": "<10"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "set",
+"cell": "Data!A23",
+"input": "1020"
+},
+{
+"op": "read",
+"range": "Data!A1:G25"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "set",
+"cell": "Data!B22",
+"input": "x"
+},
+{
+"op": "table_sort",
+"name": "Orders",
+"sheet": "Data",
+"keys": [
+{
+"key": 4,
+"order": "desc"
+},
+{
+"key": 2,
+"order": "asc"
+}
+]
+},
+{
+"op": "read",
+"range": "Data!A1:G23"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "delete_rows",
+"sheet": "Data",
+"at": 5,
+"count": 2
+},
+{
+"op": "read",
+"range": "Data!A1:G23"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "insert_cols",
+"sheet": "Data",
+"at": 3,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Data!C1",
+"input": "Rep"
+},
+{
+"op": "read",
+"range": "Data!A1:H23"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "table_totals",
+"sheet": "Data",
+"name": "Orders",
+"value": false
+},
+{
+"op": "read",
+"range": "Data!A1:H23"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "table_rename",
+"sheet": "Data",
+"name": "Orders",
+"to": "OrdB"
+},
+{
+"op": "read",
+"range": "Rep!A1:K25"
+},
+{
+"op": "tables"
+}
+]
+}

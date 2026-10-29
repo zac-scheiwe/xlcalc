@@ -1,5 +1,6 @@
 pub mod ast;
 pub mod lexer;
+mod namech;
 pub mod print;
 pub mod r1c1;
 
@@ -40,10 +41,13 @@ pub fn parse(src: &str) -> Result<Expr, ParseError> {
         parens: 0,
         rhs: 0,
         names_mode: false,
+        empty_ws: String::new(),
     };
     let mut e = p.expr()?;
 
     while p.is_op(",") {
+        let ws = p.cur().ws.clone();
+        e = e.with_ws("", &ws);
         p.bump();
         let r = p.expr()?;
         e = Expr::Binary {
@@ -54,7 +58,11 @@ pub fn parse(src: &str) -> Result<Expr, ParseError> {
     }
     match &p.cur().tok {
         Tok::End => {
-            let trailing = p.cur().ws.clone();
+            let mut trailing = p.cur().ws.clone();
+            if let Some(i) = trailing.find('\n') {
+                trailing.truncate(i);
+                trailing.truncate(trailing.trim_end_matches(' ').len());
+            }
             Ok(e.with_ws("", &trailing))
         }
         other => Err(p.err(format!("unexpected {}", describe(other)))),
@@ -84,6 +92,8 @@ struct Parser {
     rhs: u32,
 
     names_mode: bool,
+
+    empty_ws: String,
 }
 
 const MAX_FORMULA_CHARS: usize = 8192;
@@ -414,6 +424,8 @@ impl Parser {
     fn intersection(&mut self) -> Result<Expr, ParseError> {
         let mut left = self.range()?;
         while self.cur().space_before && Self::starts_operand(&self.cur().tok) {
+            let ws = self.cur().ws.clone();
+            left = left.with_ws("", &ws);
             let right = self.range()?;
             left = Expr::Binary {
                 op: BinOp::Intersect,
@@ -459,7 +471,7 @@ impl Parser {
     fn postfix(&mut self) -> Result<Expr, ParseError> {
         let mut e = self.primary()?;
         loop {
-            if self.is_op("#") && !self.cur().space_before {
+            if self.is_op("#") {
                 self.bump();
                 e = Expr::Spill(Box::new(demote_field(e)));
             } else if let Tok::Field(f) = &self.cur().tok {
@@ -481,13 +493,24 @@ impl Parser {
                 )
             {
                 let args = self.args()?;
+                let marker = self.empty_call_marker(&args);
                 e = Expr::Call {
                     callee: Box::new(e),
                     args,
-                };
+                }
+                .with_ws(&marker, "");
             } else {
                 return Ok(e);
             }
+        }
+    }
+
+    fn empty_call_marker(&mut self, args: &[Expr]) -> String {
+        let ws = std::mem::take(&mut self.empty_ws);
+        if args.is_empty() && !ws.is_empty() {
+            format!("\u{2}{ws}")
+        } else {
+            String::new()
         }
     }
 
@@ -505,6 +528,7 @@ impl Parser {
         self.expect_op("(")?;
         let mut args = Vec::new();
         if self.is_op(")") {
+            self.empty_ws = self.cur().ws.clone();
             self.bump();
             return Ok(args);
         }
@@ -558,6 +582,8 @@ impl Parser {
                 }
                 let mut e = self.expr()?;
                 while self.is_op(",") {
+                    let ws = self.cur().ws.clone();
+                    e = e.with_ws("", &ws);
                     self.bump();
                     let r = self.expr()?;
                     e = Expr::Binary {
@@ -648,7 +674,8 @@ impl Parser {
                     expr: Box::new(args.pop().unwrap()),
                 });
             }
-            return Ok(Expr::Func { name, args });
+            let marker = self.empty_call_marker(&args);
+            return Ok(Expr::Func { name, args }.with_ws(&marker, ""));
         }
         if sheet.is_none() && !self.names_mode && cell_part(&name).is_some() {
             let (mut n, mut dotted) = (1, None);
@@ -833,7 +860,61 @@ impl Parser {
     }
 }
 
-pub fn starts_like_r1c1(name: &str) -> bool {
+pub fn reads_as_r1c1(name: &str) -> bool {
+    let b = name.as_bytes();
+    let up = |i: usize| b.get(i).map(|c| c.to_ascii_uppercase());
+    let digits = |i: usize| {
+        let mut j = i;
+        let mut v = 0u64;
+        while j < b.len() && b[j].is_ascii_digit() {
+            v = v
+                .saturating_mul(10)
+                .saturating_add((b[j] - b'0') as u64)
+                .min(u64::MAX / 20);
+            j += 1;
+        }
+        (j, j - i, v)
+    };
+
+    let col = |i: usize| {
+        let (j, d, v) = digits(i);
+        if d == 0 {
+            return j >= b.len();
+        }
+        if v == 0 {
+            return false;
+        }
+        if j >= b.len() {
+            return true;
+        }
+        v <= 16384 && b[j] != b'.'
+    };
+    match up(0) {
+        Some(b'R') => {
+            let (j, d, v) = digits(1);
+            if d > 0 {
+                if v == 0 || v > 1_048_576 {
+                    return false;
+                }
+                return match up(j) {
+                    None => true,
+                    Some(b'C') => true,
+                    Some(b'.') => up(j + 1) == Some(b'C'),
+                    Some(_) => true,
+                };
+            }
+            match up(1) {
+                None => true,
+                Some(b'C') => col(2),
+                _ => false,
+            }
+        }
+        Some(b'C') => col(1),
+        _ => false,
+    }
+}
+
+pub fn r1c1_pair_with_tail(name: &str) -> bool {
     let b = name.as_bytes();
     let digits = |mut i: usize| {
         let st = i;
@@ -856,6 +937,26 @@ pub fn starts_like_r1c1(name: &str) -> bool {
     false
 }
 
+pub fn starts_like_r1c1(name: &str) -> bool {
+    if !reads_as_r1c1(name) {
+        return false;
+    }
+
+    let b = name.as_bytes();
+    let skip_digits = |i: &mut usize| {
+        while *i < b.len() && b[*i].is_ascii_digit() {
+            *i += 1;
+        }
+    };
+    let mut i = 1;
+    skip_digits(&mut i);
+    if b[0].eq_ignore_ascii_case(&b'R') && i < b.len() && b[i].eq_ignore_ascii_case(&b'C') {
+        i += 1;
+        skip_digits(&mut i);
+    }
+    i < b.len()
+}
+
 pub fn is_workbook_reserved_name(name: &str) -> bool {
     name.starts_with('\\') && name.chars().count() == 2
         || name.len() > 3
@@ -868,13 +969,16 @@ pub fn is_valid_name(name: &str) -> bool {
     let Some(first) = chars.next() else {
         return false;
     };
-    if !(first.is_alphabetic() || first == '_' || first == '\\') {
-        return false;
-    }
-    if !name
-        .chars()
-        .all(|c| c.is_alphanumeric() || c == '_' || c == '.' || c == '\\' || c == '?')
-    {
+    let ok = |c: char, first: bool| {
+        if c.is_ascii() {
+            c.is_ascii_alphabetic()
+                || matches!(c, '_' | '\\')
+                || (!first && (c.is_ascii_digit() || matches!(c, '.' | '?')))
+        } else {
+            namech::name_char(c, first)
+        }
+    };
+    if !ok(first, true) || !chars.all(|c| ok(c, false)) {
         return false;
     }
     if name.encode_utf16().count() > 255 || starts_like_r1c1(name) {
@@ -885,6 +989,12 @@ pub fn is_valid_name(name: &str) -> bool {
     }
     if name.eq_ignore_ascii_case("R") || name.eq_ignore_ascii_case("C") {
         return false;
+    }
+
+    if let Some((base, rest)) = name.split_once('.') {
+        if cell_part(base).is_some() && rest.split('.').any(|seg| cell_part(seg).is_some()) {
+            return false;
+        }
     }
     if cell_part(name).is_some() {
         return false;

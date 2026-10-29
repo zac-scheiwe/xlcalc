@@ -28,7 +28,7 @@ const VALUE_PAIRS: &str = concat!(
 );
 
 fn even_args(a: &[Expr]) -> Result<(), &'static str> {
-    if a.len() % 2 == 0 {
+    if a.len().is_multiple_of(2) {
         Ok(())
     } else {
         Err("needs range/criteria pairs")

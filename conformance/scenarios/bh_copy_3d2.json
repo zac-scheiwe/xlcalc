@@ -1,0 +1,82 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=SUM(Sheet1:Sheet2!A1)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C1"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1",
+"to": "Sheet1!B2"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C2"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1",
+"to": "Sheet1!C1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C2"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=Sheet1:Sheet2!A1"
+},
+{
+"op": "read",
+"range": "Sheet1!D1"
+},
+{
+"op": "copy",
+"from": "Sheet1!D1",
+"to": "Sheet1!D2"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=SUM(Sheet1:Sheet3!A1)"
+},
+{
+"op": "read",
+"range": "Sheet1!E1"
+},
+{
+"op": "copy",
+"from": "Sheet1!E1",
+"to": "Sheet1!E2"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E2"
+}
+]
+}

@@ -1,0 +1,88 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "x"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "y"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "z"
+},
+{
+"op": "format",
+"range": "Sheet1!B1",
+"fmt": "0.00"
+},
+{
+"op": "format",
+"range": "Sheet1!C1",
+"fmt": "d-mmm-yy"
+},
+{
+"op": "format",
+"range": "Sheet1!A1",
+"fmt": "0%"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:C2",
+"name": "Tb"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:C1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=Tb[0.00]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=Tb[2.00]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=Tb[[#Headers],[100%]]"
+},
+{
+"op": "tables"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:E3"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E1:E3"
+}
+]
+}

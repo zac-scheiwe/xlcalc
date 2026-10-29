@@ -10,7 +10,7 @@ fn numeric_grid(ctx: &mut EvalCtx, op: &Operand) -> R<(usize, usize, Vec<f64>)> 
         match v {
             Value::Number(n) => out.push(n),
             Value::Error(e) => return Err(e),
-            _ => return Err(XlError::Value),
+            _ => return Err(XlError::VALUE),
         }
     }
     Ok((r as usize, c as usize, out))
@@ -34,7 +34,7 @@ fn to_numbers(vals: Vec<Value>) -> R<Vec<f64>> {
     vals.into_iter()
         .map(|v| match v {
             Value::Number(n) => Ok(n),
-            _ => Err(XlError::Value),
+            _ => Err(XlError::VALUE),
         })
         .collect()
 }
@@ -45,7 +45,7 @@ fn to_numbers_e(vals: Vec<Value>) -> R<Vec<f64>> {
         match v {
             Value::Number(n) => out.push(n),
             Value::Error(e) => return Err(e),
-            _ => return Err(XlError::Value),
+            _ => return Err(XlError::VALUE),
         }
     }
     Ok(out)
@@ -82,7 +82,7 @@ fn design(
     let by_col = cy == 1 && rx == n;
     let by_row = ry == 1 && cx == n;
     if !(same || by_col || by_row) {
-        return Err(XlError::Ref);
+        return Err(XlError::REF);
     }
 
     let row = row || (n == 1 && !same && by_row && rx > 1);
@@ -265,12 +265,13 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
 
     let mut rinv = vec![vec![0.0; r]; r];
     for i in (0..r).rev() {
-        for c in 0..r {
+        let (head, below) = rinv.split_at_mut(i + 1);
+        for (c, cell) in head[i].iter_mut().enumerate() {
             let mut s = if i == c { 1.0 } else { 0.0 };
-            for jj in i + 1..r {
-                s = x87::sub(s, x87::mul(rr(i, jj), rinv[jj][c]));
+            for (off, row) in below.iter().enumerate() {
+                s = x87::sub(s, x87::mul(rr(i, i + 1 + off), row[c]));
             }
-            rinv[i][c] = if rdiag[i] == 0.0 {
+            *cell = if rdiag[i] == 0.0 {
                 0.0
             } else {
                 x87::div(s, rdiag[i])
@@ -282,8 +283,8 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
             return 0.0;
         }
         let mut s = 0.0;
-        for t in 0..r {
-            s = x87::add(s, x87::mul(rinv[a][t], rinv[b][t]));
+        for (&p, &q) in rinv[a].iter().zip(&rinv[b]) {
+            s = x87::add(s, x87::mul(p, q));
         }
         x87::div(x87::mul(s, ss_resid), df)
     };
@@ -299,8 +300,8 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         }
         let o = k;
         let mut v = cov_cols(o, o);
-        for j in 0..k {
-            v = x87::add(v, x87::mul(x87::mul(xbar[j], xbar[j]), cov_cols(j, j)));
+        for (j, &xj) in xbar.iter().enumerate().take(k) {
+            v = x87::add(v, x87::mul(x87::mul(xj, xj), cov_cols(j, j)));
         }
         for j in 0..k {
             for l in j + 1..k {
@@ -308,8 +309,8 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
                 v = x87::add(v, t);
             }
         }
-        for j in 0..k {
-            v = x87::add(v, x87::mul(-2.0 * xbar[j], cov_cols(o, j)));
+        for (j, &xj) in xbar.iter().enumerate().take(k) {
+            v = x87::add(v, x87::mul(-2.0 * xj, cov_cols(o, j)));
         }
         (b, Some(x87::sqrt(v)))
     } else {
@@ -362,14 +363,14 @@ fn opt_flag(o: Option<&Operand>, default: bool) -> R<bool> {
     match o {
         None | Some(Operand::Missing) => Ok(default),
         Some(Operand::Val(v)) => boolean(v),
-        Some(Operand::Ref(_)) => Err(XlError::Value),
+        Some(Operand::Ref(_)) => Err(XlError::VALUE),
     }
 }
 
 fn log_y(d: &mut Design) -> R<()> {
     for v in d.y.iter_mut() {
         if *v <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         *v = x87::ln(*v);
     }
@@ -474,7 +475,7 @@ pub fn trend(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
                 let (r, c, vals) = grid_values(ctx, op)?;
                 let (r, c) = (r as usize, c as usize);
                 if k > 1 && (if d.row { r != k } else { c != k }) {
-                    return Err(XlError::Ref);
+                    return Err(XlError::REF);
                 }
                 (r, c, to_numbers_e(vals)?)
             }
@@ -515,7 +516,7 @@ pub fn trend(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
 
         if d.row {
             if rows != k {
-                return Err(XlError::Ref);
+                return Err(XlError::REF);
             }
             let out: Vec<Value> = (0..cols)
                 .map(|i| predict(&(0..k).map(|j| nx[j * cols + i]).collect::<Vec<_>>()))
@@ -525,7 +526,7 @@ pub fn trend(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
             }))
         } else {
             if cols != k {
-                return Err(XlError::Ref);
+                return Err(XlError::REF);
             }
             let out: Vec<Value> = (0..rows)
                 .map(|i| predict(&nx[i * cols..(i + 1) * cols]))

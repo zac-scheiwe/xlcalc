@@ -1,0 +1,695 @@
+{
+"sheets": [
+"Inv",
+"Sum"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Inv!A1",
+"value": {
+"t": "s",
+"v": "Inv"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B1",
+"value": {
+"t": "s",
+"v": "Client"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C1",
+"value": {
+"t": "s",
+"v": "Raw"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!D1",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "setv",
+"cell": "Inv!E1",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "setv",
+"cell": "Inv!F1",
+"value": {
+"t": "s",
+"v": "Date"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!A2",
+"value": {
+"t": "s",
+"v": "INV-100"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B2",
+"value": {
+"t": "s",
+"v": "Acme Ltd "
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C2",
+"value": {
+"t": "s",
+"v": "30;40;5"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F2",
+"input": "1/1/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A3",
+"value": {
+"t": "s",
+"v": "INV-101"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B3",
+"value": {
+"t": "s",
+"v": "Bolt Inc"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C3",
+"value": {
+"t": "s",
+"v": "18;9.5;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F3",
+"input": "2/2/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A4",
+"value": {
+"t": "s",
+"v": "INV-102"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B4",
+"value": {
+"t": "s",
+"v": "Core LLC"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C4",
+"value": {
+"t": "s",
+"v": "44;9.5;5"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F4",
+"input": "3/3/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A5",
+"value": {
+"t": "s",
+"v": "INV-103"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B5",
+"value": {
+"t": "s",
+"v": "Dyn Co"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C5",
+"value": {
+"t": "s",
+"v": "33;12;10"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F5",
+"input": "4/4/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A6",
+"value": {
+"t": "s",
+"v": "INV-104"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B6",
+"value": {
+"t": "s",
+"v": "Acme Ltd"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C6",
+"value": {
+"t": "s",
+"v": "6;12;10"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F6",
+"input": "5/5/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A7",
+"value": {
+"t": "s",
+"v": "INV-105"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B7",
+"value": {
+"t": "s",
+"v": "Bolt Inc "
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C7",
+"value": {
+"t": "s",
+"v": "40;40;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F7",
+"input": "6/6/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A8",
+"value": {
+"t": "s",
+"v": "INV-106"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B8",
+"value": {
+"t": "s",
+"v": "Core LLC"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C8",
+"value": {
+"t": "s",
+"v": "47;12;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F8",
+"input": "7/7/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A9",
+"value": {
+"t": "s",
+"v": "INV-107"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B9",
+"value": {
+"t": "s",
+"v": "Dyn Co"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C9",
+"value": {
+"t": "s",
+"v": "46;12;10"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F9",
+"input": "8/8/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A10",
+"value": {
+"t": "s",
+"v": "INV-108"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B10",
+"value": {
+"t": "s",
+"v": "Acme Ltd"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C10",
+"value": {
+"t": "s",
+"v": "28;9.5;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F10",
+"input": "9/9/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A11",
+"value": {
+"t": "s",
+"v": "INV-109"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B11",
+"value": {
+"t": "s",
+"v": "Bolt Inc"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C11",
+"value": {
+"t": "s",
+"v": "16;9.5;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F11",
+"input": "10/10/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A12",
+"value": {
+"t": "s",
+"v": "INV-110"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B12",
+"value": {
+"t": "s",
+"v": "Core LLC "
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C12",
+"value": {
+"t": "s",
+"v": "9;40;10"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F12",
+"input": "11/11/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A13",
+"value": {
+"t": "s",
+"v": "INV-111"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B13",
+"value": {
+"t": "s",
+"v": "Dyn Co"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C13",
+"value": {
+"t": "s",
+"v": "5;40;5"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F13",
+"input": "12/12/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A14",
+"value": {
+"t": "s",
+"v": "INV-112"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B14",
+"value": {
+"t": "s",
+"v": "Acme Ltd"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C14",
+"value": {
+"t": "s",
+"v": "48;9.5;5"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F14",
+"input": "13/1/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A15",
+"value": {
+"t": "s",
+"v": "INV-113"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B15",
+"value": {
+"t": "s",
+"v": "Bolt Inc"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C15",
+"value": {
+"t": "s",
+"v": "14;40;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F15",
+"input": "14/2/2026"
+},
+{
+"op": "setv",
+"cell": "Inv!A16",
+"value": {
+"t": "s",
+"v": "INV-103"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!B16",
+"value": {
+"t": "s",
+"v": "Dyn Co"
+}
+},
+{
+"op": "setv",
+"cell": "Inv!C16",
+"value": {
+"t": "s",
+"v": "3;40;0"
+}
+},
+{
+"op": "set",
+"cell": "Inv!F16",
+"input": "4/4/2026"
+},
+{
+"op": "replace",
+"range": "Inv!C2:C16",
+"what": ";",
+"with": ",",
+"lookat": "part",
+"matchcase": false,
+"order": "rows"
+},
+{
+"op": "text_to_columns",
+"range": "Inv!C2:C16",
+"comma": true
+},
+{
+"op": "set",
+"cell": "Inv!C1",
+"input": "Qty"
+},
+{
+"op": "set",
+"cell": "Inv!D1",
+"input": "Price"
+},
+{
+"op": "set",
+"cell": "Inv!E1",
+"input": "Disc"
+},
+{
+"op": "read",
+"range": "Inv!A1:H17"
+},
+{
+"op": "table",
+"name": "tInv",
+"range": "Inv!A1:G16"
+},
+{
+"op": "set",
+"cell": "Inv!G2",
+"input": "=ROUND([@Qty]*[@Price]*(1-[@Disc]/100),2)"
+},
+{
+"op": "set",
+"cell": "Inv!H1",
+"input": "Key"
+},
+{
+"op": "set",
+"cell": "Inv!H2",
+"input": "=TRIM([@Client])&\"|\"&TEXT([@Date],\"yyyy-mm\")"
+},
+{
+"op": "set",
+"cell": "Sum!A1",
+"input": "=SUMIFS(tInv[Net],tInv[Client],\"Acme Ltd\")"
+},
+{
+"op": "set",
+"cell": "Sum!A2",
+"input": "=SUMIFS(tInv[Net],tInv[Client],\"Acme Ltd*\")"
+},
+{
+"op": "set",
+"cell": "Sum!A3",
+"input": "=SUMPRODUCT((TRIM(tInv[Client])=\"Acme Ltd\")*tInv[Net])"
+},
+{
+"op": "set",
+"cell": "Sum!A4",
+"input": "=COUNTA(UNIQUE(TRIM(tInv[Client])))"
+},
+{
+"op": "set",
+"cell": "Sum!A5",
+"input": "=SUM(tInv[Net])"
+},
+{
+"op": "set",
+"cell": "Sum!A6",
+"input": "=COUNTIF(tInv[Inv],\"INV-103\")"
+},
+{
+"op": "set",
+"cell": "Sum!A7",
+"input": "=SUMIFS(tInv[Net],tInv[Date],\">=\"&DATE(2026,3,1),tInv[Date],\"<\"&DATE(2026,6,1))"
+},
+{
+"op": "set",
+"cell": "Sum!A8",
+"input": "=TEXTJOIN(\",\",TRUE,UNIQUE(tInv[Key]))"
+},
+{
+"op": "read",
+"range": "Inv!A1:I18"
+},
+{
+"op": "read",
+"range": "Sum!A1:A10"
+},
+{
+"op": "remove_dups",
+"range": "Inv!A1:H16",
+"columns": [
+1
+]
+},
+{
+"op": "read",
+"range": "Inv!A1:I18"
+},
+{
+"op": "read",
+"range": "Sum!A1:A10"
+},
+{
+"op": "replace",
+"range": "Inv!B2:B16",
+"what": " ",
+"with": "",
+"lookat": "part",
+"matchcase": false,
+"order": "rows"
+},
+{
+"op": "read",
+"range": "Inv!A1:I18"
+},
+{
+"op": "read",
+"range": "Sum!A1:A10"
+},
+{
+"op": "paste_special",
+"from": "Inv!G2:G15",
+"to": "Inv!J2",
+"paste": "values",
+"operation": "none"
+},
+{
+"op": "paste_special",
+"from": "Inv!E2:E15",
+"to": "Inv!J2",
+"paste": "values",
+"operation": "mul"
+},
+{
+"op": "read",
+"range": "Inv!A1:K18"
+},
+{
+"op": "autofill",
+"from": "Inv!J2:J3",
+"to": "Inv!J2:J20",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Inv!J1:K22"
+},
+{
+"op": "sort",
+"range": "Inv!A2:H15",
+"keys": [
+{
+"key": 2,
+"order": "asc"
+},
+{
+"key": 3,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Inv!A1:I18"
+},
+{
+"op": "read",
+"range": "Sum!A1:A10"
+},
+{
+"op": "table_unlist",
+"name": "tInv"
+},
+{
+"op": "read",
+"range": "Sum!A1:A10"
+},
+{
+"op": "subtotal",
+"range": "Inv!A1:G15",
+"group": 2,
+"function": "sum",
+"totals": [
+7
+]
+},
+{
+"op": "read",
+"range": "Inv!A1:I25"
+}
+]
+}

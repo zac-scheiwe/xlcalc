@@ -1,0 +1,139 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "4"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B3",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "=SUM(Tb[b])"
+},
+{
+"op": "set",
+"cell": "Sheet2!A2",
+"input": "=Tb[[#Headers],[b]]"
+},
+{
+"op": "set",
+"cell": "Sheet2!A3",
+"input": "=FORMULATEXT(A1)"
+},
+{
+"op": "set",
+"cell": "Sheet2!A4",
+"input": "=INDIRECT(\"Tb[b]\")"
+},
+{
+"op": "set",
+"cell": "Sheet2!A5",
+"input": "=SUM(INDIRECT(\"Tb[[#All],[b]]\"))"
+},
+{
+"op": "name",
+"name": "nmq",
+"refers_to": "=Tb[[#Headers],[b]:[a]]"
+},
+{
+"op": "name",
+"name": "nmr",
+"refers_to": "=Tb[[#Data],[a]]"
+},
+{
+"op": "set",
+"cell": "Sheet2!A6",
+"input": "=SUM(nmr)"
+},
+{
+"op": "set",
+"cell": "Sheet2!A7",
+"input": "=COLUMNS(nmq)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "bee"
+},
+{
+"op": "names"
+},
+{
+"op": "read",
+"range": "Sheet2!A1:A7"
+},
+{
+"op": "read_text",
+"range": "Sheet2!A1:A7"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "names"
+},
+{
+"op": "read",
+"range": "Sheet2!A1:A7"
+},
+{
+"op": "read_text",
+"range": "Sheet2!A1:A7"
+},
+{
+"op": "table_rename",
+"name": "Tb",
+"to": "Tz"
+},
+{
+"op": "names"
+},
+{
+"op": "read",
+"range": "Sheet2!A1:A7"
+},
+{
+"op": "read_text",
+"range": "Sheet2!A1:A7"
+},
+{
+"op": "tables"
+}
+]
+}

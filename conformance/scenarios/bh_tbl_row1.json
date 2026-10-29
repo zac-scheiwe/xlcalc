@@ -1,0 +1,163 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "6"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B4",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=[@a]*10"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=Tb[@a]+Tb[@b]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=Tb[[#This Row],[a]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=[@]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=SUM(Tb[@])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=SUM([@a]:[@b])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=Tb[@a]"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=Tb[[#This Row],[b]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=SUM(Tb[@])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=Tb[@a]"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=Tb[[#Headers],[#Data],[a]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!J3",
+"input": "=Tb[[#Data],[#Totals],[a]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!J4",
+"input": "=Tb[[#Headers],[#Totals]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!J5",
+"input": "=Tb[[#All],[#Data]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!J6",
+"input": "=Tb[[#Data]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!J7",
+"input": "=Tb[[#This Row]]"
+},
+{
+"op": "read",
+"range": "Sheet1!C1:J8"
+},
+{
+"op": "read_text",
+"range": "Sheet1!C1:J8"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": true
+},
+{
+"op": "read",
+"range": "Sheet1!H1:J8"
+},
+{
+"op": "read_text",
+"range": "Sheet1!J1:J8"
+},
+{
+"op": "table_unlist",
+"name": "Tb"
+},
+{
+"op": "read_text",
+"range": "Sheet1!C1:J8"
+},
+{
+"op": "read",
+"range": "Sheet1!C1:J8"
+}
+]
+}

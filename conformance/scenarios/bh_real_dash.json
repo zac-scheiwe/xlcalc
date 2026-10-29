@@ -1,0 +1,516 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Rep"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Q1"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Q2"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Q3"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "s",
+"v": "N"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C2",
+"value": {
+"t": "n",
+"v": 120
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D2",
+"value": {
+"t": "n",
+"v": 150
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E2",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "Bob"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "s",
+"v": "S"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C3",
+"value": {
+"t": "n",
+"v": 90
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E3",
+"value": {
+"t": "n",
+"v": 110
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "s",
+"v": "N"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C4",
+"value": {
+"t": "n",
+"v": 200
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D4",
+"value": {
+"t": "n",
+"v": 180
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E4",
+"value": {
+"t": "n",
+"v": 190
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "Di"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "s",
+"v": "E"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C5",
+"value": {
+"t": "n",
+"v": 55.5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D5",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E5",
+"value": {
+"t": "n",
+"v": 65
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A6",
+"value": {
+"t": "s",
+"v": "Ed"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "s",
+"v": "S"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C6",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D6",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E6",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "s",
+"v": "Flo"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "s",
+"v": "W"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C7",
+"value": {
+"t": "n",
+"v": 300
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D7",
+"value": {
+"t": "n",
+"v": 310
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A8",
+"value": {
+"t": "s",
+"v": "Gus"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B8",
+"value": {
+"t": "s",
+"v": "E"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C8",
+"value": {
+"t": "n",
+"v": 88
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D8",
+"value": {
+"t": "n",
+"v": 92
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E8",
+"value": {
+"t": "n",
+"v": 95
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!G1",
+"input": "=SORT(A2:E8,3,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M1",
+"input": "=UNIQUE(B2:B8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N1",
+"input": "=SUMIFS(C2:C8,B2:B8,M1#)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O1",
+"input": "=TAKE(SORT(A2:C8,3,-1),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S1",
+"input": "=FILTER(A2:A8,(C2:C8>80)*(D2:D8<>\"\"),\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!T1",
+"input": "=BYROW(C2:E8,LAMBDA(r,SUM(r)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!U1",
+"input": "=MAP(A2:A8,C2:C8,LAMBDA(a,b,a&\":\"&b))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V1",
+"input": "=REDUCE(0,C2:C8,LAMBDA(acc,x,acc+x))"
+},
+{
+"op": "set",
+"cell": "Sheet1!W1",
+"input": "=SCAN(0,C2:C8,LAMBDA(a,x,a+x))"
+},
+{
+"op": "set",
+"cell": "Sheet1!X1",
+"input": "=LET(t,C2:E8,s,SUM(t),s/COUNT(t))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y1",
+"input": "=SEQUENCE(3,2,10,5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA1",
+"input": "=TEXTJOIN(\",\",TRUE,SORT(UNIQUE(B2:B8)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB1",
+"input": "=XLOOKUP(\"Cy\",A2:A8,C2:E8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC1",
+"input": "=HSTACK(A2:A4,C2:C4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AD1",
+"input": "=VSTACK(C2:D3,{9,9})"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE1",
+"input": "=COUNTA(G1#)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AF1",
+"input": "=SUM(T1#)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AG1",
+"input": "=INDEX(SORT(C2:C8,1,-1),SEQUENCE(3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AH1",
+"input": "=TRANSPOSE(A2:C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AI1",
+"input": "=MMULT(C2:D3,TRANSPOSE(C2:D3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AJ1",
+"input": "=TOCOL(C2:E8,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AK1",
+"input": "=CHOOSECOLS(A2:E8,1,5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AL1",
+"input": "=SORTBY(A2:A8,B2:B8,1,C2:C8,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AM1",
+"input": "=GROUPBY(B2:B8,C2:C8,SUM)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AN1",
+"input": "=PERCENTOF(C2:C4,C2:C8)"
+},
+{
+"op": "read",
+"range": "Sheet1!G1:AN12"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "95"
+},
+{
+"op": "read",
+"range": "Sheet1!G1:AN12"
+},
+{
+"op": "insert_rows",
+"sheet": "Sheet1",
+"at": 4,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!G1:AN12"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "Zoe"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "150"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "2"
+},
+{
+"op": "read",
+"range": "Sheet1!G1:AN12"
+},
+{
+"op": "delete_cols",
+"sheet": "Sheet1",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!F1:AM12"
+},
+{
+"op": "sort",
+"range": "Sheet1!A2:D9",
+"keys": [
+{
+"key": 2,
+"order": "asc"
+}
+]
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D9"
+},
+{
+"op": "read",
+"range": "Sheet1!F1:AM12"
+}
+]
+}

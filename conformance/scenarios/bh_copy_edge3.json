@@ -1,0 +1,182 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!XFB2",
+"input": "=SUM(XFB3:XFD3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFB4",
+"input": "=SUM(XFA5:XFB5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFB6",
+"input": "=SUM($XFB7:XFC$7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFB8",
+"input": "=SUM(XFC:XFD)"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFB10",
+"input": "=SUM(XFA:XFB)"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB2",
+"to": "Sheet1!XFC2"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB4",
+"to": "Sheet1!XFC4"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB6",
+"to": "Sheet1!XFC6"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB8",
+"to": "Sheet1!XFC8"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB10",
+"to": "Sheet1!XFA10"
+},
+{
+"op": "read",
+"range": "Sheet1!XFA2:XFD10"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB2",
+"to": "Sheet1!XFD2"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB4",
+"to": "Sheet1!XFD4"
+},
+{
+"op": "read",
+"range": "Sheet1!XFA2:XFD4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1048575",
+"input": "=SUM(A1048575:A1048576)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1048575",
+"input": "=SUM(C1048574:C1048575)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=SUM(E1:E2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=SUM(G2:G3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=SUM(I1:I1048576)"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1048575",
+"to": "Sheet1!B1048576"
+},
+{
+"op": "copy",
+"from": "Sheet1!D1048575",
+"to": "Sheet1!D1048576"
+},
+{
+"op": "copy",
+"from": "Sheet1!F3",
+"to": "Sheet1!F2"
+},
+{
+"op": "copy",
+"from": "Sheet1!H3",
+"to": "Sheet1!H2"
+},
+{
+"op": "copy",
+"from": "Sheet1!J2",
+"to": "Sheet1!J3"
+},
+{
+"op": "read",
+"range": "Sheet1!A1048575:J1048576"
+},
+{
+"op": "read",
+"range": "Sheet1!F2:J3"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1048575",
+"to": "Sheet1!B1048576",
+"paste": "formulas",
+"transpose": true
+},
+{
+"op": "autofill",
+"from": "Sheet1!XFB2",
+"to": "Sheet1!XFB2:XFD2",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!XFA2:XFD2"
+},
+{
+"op": "autofill",
+"from": "Sheet1!XFB4",
+"to": "Sheet1!XFB4:XFD4",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!XFA4:XFD4"
+},
+{
+"op": "autofill",
+"from": "Sheet1!H3",
+"to": "Sheet1!H1:H3",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H3"
+},
+{
+"op": "autofill",
+"from": "Sheet1!F3",
+"to": "Sheet1!F1:F3",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!F1:F3"
+}
+]
+}

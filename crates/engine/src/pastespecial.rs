@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
 use crate::calc::{self, RecalcReport};
 use crate::coerce;
-use crate::formula::{CRef, Formula, Node, Rc, SheetRef};
+use crate::formula::{CRef, Formula, Node, Rc};
 use crate::formula_print::print_node;
 use crate::parser::ast::{BinOp, UnaryOp};
 use crate::value::{Value, XlError};
@@ -181,7 +181,12 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
                     .then_some(CRef::Cell { row: nr, col: nc })
             }
         }
-        CRef::Area { r0, c0, r1, c1 } => area(r0, c0, r1, c1),
+        CRef::Area { r0, c0, r1, c1 } => {
+            if (r0.abs || c0.abs) && (r1.abs || c1.abs) {
+                return Some(retarget(cref, dr, dc));
+            }
+            area(r0, c0, r1, c1)
+        }
         CRef::Cols { c0, c1 } => {
             if c0.abs || c1.abs {
                 return Some(retarget(cref, dr, dc));
@@ -192,10 +197,12 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
             };
             let (nr0, nc0) = transpose_corner(abs(0), c0, from, to);
             let (nr1, nc1) = transpose_corner(abs(MAX_ROWS - 1), c1, from, to);
-            let ok = [nr0, nr1].iter().all(|r| on_grid(*r, to.row, MAX_ROWS));
+
+            let ok = [nr0, nr1].iter().all(|r| on_grid(*r, to.row, MAX_ROWS))
+                && on_grid(nc0, to.col, MAX_COLS);
             ok.then(|| CRef::Area {
                 r0: nr0,
-                c0: clip(nc0, to.col, MAX_COLS),
+                c0: nc0,
                 r1: nr1,
                 c1: clip(nc1, to.col, MAX_COLS),
             })
@@ -210,9 +217,10 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
             };
             let (nr0, nc0) = transpose_corner(r0, abs(0), from, to);
             let (_, nc1) = transpose_corner(r1, abs(MAX_COLS - 1), from, to);
-            let ok = [nc0, nc1].iter().all(|c| on_grid(*c, to.col, MAX_COLS));
+            let ok = [nc0, nc1].iter().all(|c| on_grid(*c, to.col, MAX_COLS))
+                && on_grid(nr0, to.row, MAX_ROWS);
             ok.then(|| CRef::Area {
-                r0: clip(nr0, to.row, MAX_ROWS),
+                r0: nr0,
                 c0: nc0,
 
                 r1: Rc {
@@ -239,6 +247,11 @@ impl Workbook {
                 self.copy_ref_edit(sh, cref, from, to)
             }
         });
+        let root = if transpose {
+            root
+        } else {
+            self.copy_struct_cols(&root, from, to, true)
+        };
         Formula {
             root,
             volatile: f.formula.volatile,
@@ -279,6 +292,25 @@ impl Workbook {
         let r = self.with_paste_block((dst_sheet, dst), |this| {
             this.paste_special_one(src_sheet, src, dst_sheet, dst, spec)
         });
+        if r.is_ok()
+            && matches!(
+                spec.what,
+                PasteWhat::All | PasteWhat::Formulas | PasteWhat::Values
+            )
+        {
+            let (lr, lc) = if spec.transpose {
+                (src.cols(), src.rows())
+            } else {
+                (src.rows(), src.cols())
+            };
+            let reach = Rect::new(
+                dst.r0,
+                dst.c0,
+                dst.r1.max(dst.r0 + lr - 1),
+                dst.c1.max(dst.c0 + lc - 1),
+            );
+            self.paste_ends_calc(dst_sheet, reach);
+        }
         if pending {
             self.restore_totals(src_sheet, src, None);
             self.restore_totals(dst_sheet, dst, Some(dst));
@@ -316,8 +348,8 @@ impl Workbook {
             (src.rows(), src.cols())
         };
 
-        let ok_r = dst.rows() % lr == 0 || dst.rows() == 1;
-        let ok_c = dst.cols() % lc == 0 || dst.cols() == 1;
+        let ok_r = dst.rows().is_multiple_of(lr) || dst.rows() == 1;
+        let ok_c = dst.cols().is_multiple_of(lc) || dst.cols() == 1;
         let (reps_r, reps_c) = if ok_r && ok_c {
             ((dst.rows() / lr).max(1), (dst.cols() / lc).max(1))
         } else {
@@ -365,7 +397,7 @@ impl Workbook {
         }
 
         let tile_is_src = |a0: u32, s0: u32, l: u32, reps: u32| {
-            s0 >= a0 && (s0 - a0) % l == 0 && (s0 - a0) / l < reps
+            s0 >= a0 && (s0 - a0).is_multiple_of(l) && (s0 - a0) / l < reps
         };
         if !spec.transpose
             && reps_r * reps_c > 1
@@ -537,6 +569,13 @@ impl Workbook {
                 self.grow_table_by_paste(ti, rect, rows, Some(info));
             }
         }
+        if spec.what == PasteWhat::All
+            && spec.op == PasteOp::None
+            && !spec.skip_blanks
+            && !spec.transpose
+        {
+            self.paste_copies_table(src_sheet, src, dst_sheet, target);
+        }
         Ok(calc::finish_report(report))
     }
 
@@ -656,7 +695,7 @@ impl Workbook {
                 PasteOp::Add => finite(n + s),
                 PasteOp::Sub => finite(n - s),
                 PasteOp::Mul => finite(n * s),
-                _ if s == 0.0 => Value::Error(XlError::Div0),
+                _ if s == 0.0 => Value::Error(XlError::DIV0),
                 _ => finite(n / s),
             }),
             (dest, operand) => {
@@ -700,9 +739,6 @@ fn finite(x: f64) -> Value {
     if x.is_finite() {
         Value::Number(x)
     } else {
-        Value::Error(XlError::Num)
+        Value::Error(XlError::NUM)
     }
 }
-
-#[allow(dead_code)]
-fn _unused(_: SheetRef) {}

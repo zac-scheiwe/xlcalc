@@ -41,6 +41,22 @@ pub fn round15(x: f64) -> f64 {
     if x == 0.0 || !x.is_finite() {
         return x;
     }
+
+    let long = format!("{:.15e}", x);
+    let (mant, exp) = long.split_once('e').unwrap_or((&long, "0"));
+    if mant.ends_with('5') {
+        let exact = format!("{:.60e}", x);
+        let (m60, _) = exact.split_once('e').unwrap_or((&exact, "0"));
+        if m60[mant.len()..].bytes().all(|b| b == b'0') {
+            let digits: String = mant.chars().filter(char::is_ascii_digit).collect();
+            let head: u64 = digits[..15].parse().unwrap_or(0);
+            let e: i32 = exp.parse().unwrap_or(0);
+            let sign = if x < 0.0 { "-" } else { "" };
+            return format!("{sign}{}e{}", head + 1, e - 14)
+                .parse()
+                .unwrap_or(x);
+        }
+    }
     format!("{:.14e}", x).parse().unwrap_or(x)
 }
 
@@ -138,10 +154,10 @@ fn mp_pack(d: u64, k: i64) -> f64 {
         (&NEG_LO, &NEG_MID)
     };
     let mut pieces = Vec::with_capacity(3);
-    if a % 16 != 0 {
+    if !a.is_multiple_of(16) {
         pieces.push(lo[(a % 16 - 1) as usize]);
     }
-    if (a / 16) % 16 != 0 {
+    if !(a / 16).is_multiple_of(16) {
         pieces.push(mid[((a / 16) % 16 - 1) as usize]);
     }
     if a >= 256 {
@@ -306,7 +322,7 @@ fn fixed_from_digits(digits: &str, exp: i32) -> String {
     if exp >= 0 {
         if exp + 1 >= n {
             let mut s = digits.to_string();
-            s.extend(std::iter::repeat('0').take((exp + 1 - n) as usize));
+            s.extend(std::iter::repeat_n('0', (exp + 1 - n) as usize));
             s
         } else {
             let split = (exp + 1) as usize;
@@ -316,7 +332,7 @@ fn fixed_from_digits(digits: &str, exp: i32) -> String {
         let zeros = (-exp - 1) as usize;
         let mut s = String::with_capacity(2 + zeros + digits.len());
         s.push_str("0.");
-        s.extend(std::iter::repeat('0').take(zeros));
+        s.extend(std::iter::repeat_n('0', zeros));
         s.push_str(digits);
         s
     }

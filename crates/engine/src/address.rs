@@ -196,7 +196,9 @@ pub fn parse_a1_cell(s: &str) -> Option<(u32, u32, bool, bool)> {
         return None;
     }
     let row: u32 = s[nz..i].parse().ok()?;
-    (row >= 1 && row <= MAX_ROWS).then_some((row - 1, col, row_abs, col_abs))
+    (1..=MAX_ROWS)
+        .contains(&row)
+        .then_some((row - 1, col, row_abs, col_abs))
 }
 
 pub fn parse_a1_rect(s: &str) -> Option<Rect> {

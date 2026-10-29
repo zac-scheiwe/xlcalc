@@ -1,0 +1,144 @@
+{
+"sheets": [
+"Sheet1",
+"My Sheet",
+"it's",
+"R1C1",
+"2020",
+"a.b"
+],
+"steps": [
+{
+"op": "set",
+"cell": "'My Sheet'!A1",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "'My Sheet'!A2",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "='My Sheet'!A1+'My Sheet'!A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=SUM('My Sheet'!A1:A2)"
+},
+{
+"op": "set",
+"cell": "'it''s'!A1",
+"input": "200"
+},
+{
+"op": "set",
+"cell": "'it''s'!A2",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "='it''s'!A1+'it''s'!A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=SUM('it''s'!A1:A2)"
+},
+{
+"op": "set",
+"cell": "'R1C1'!A1",
+"input": "300"
+},
+{
+"op": "set",
+"cell": "'R1C1'!A2",
+"input": "15"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "='R1C1'!A1+'R1C1'!A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "=SUM('R1C1'!A1:A2)"
+},
+{
+"op": "set",
+"cell": "'2020'!A1",
+"input": "400"
+},
+{
+"op": "set",
+"cell": "'2020'!A2",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "='2020'!A1+'2020'!A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=SUM('2020'!A1:A2)"
+},
+{
+"op": "set",
+"cell": "'a.b'!A1",
+"input": "500"
+},
+{
+"op": "set",
+"cell": "'a.b'!A2",
+"input": "25"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "='a.b'!A1+'a.b'!A$2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "=SUM('a.b'!A1:A2)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B5"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:B5",
+"to": "Sheet1!D2"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:E7"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:B5",
+"to": "'it''s'!C3"
+},
+{
+"op": "read",
+"range": "'it''s'!C3:D7"
+},
+{
+"op": "autofill",
+"from": "Sheet1!A1:B5",
+"to": "Sheet1!A1:F5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F5"
+}
+]
+}

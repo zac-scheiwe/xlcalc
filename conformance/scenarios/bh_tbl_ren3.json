@@ -1,0 +1,152 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "x"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "2"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B3",
+"name": "T1"
+},
+{
+"op": "table",
+"range": "Sheet1!D1:E3",
+"name": "T2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "y"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=SUM(T1[b])+[@x]"
+},
+{
+"op": "array",
+"range": "Sheet1!G1:G2",
+"input": "=T1[b]*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!I1",
+"input": "=SUM(T1[[a]:[b]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=T1[[#Headers],[b]]&\"!\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "bb"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E2:E3"
+},
+{
+"op": "read_text",
+"range": "Sheet1!G1:G2"
+},
+{
+"op": "read_text",
+"range": "Sheet1!I1:I2"
+},
+{
+"op": "read",
+"range": "Sheet1!E2:I3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "aa"
+},
+{
+"op": "read_text",
+"range": "Sheet1!I1:I2"
+},
+{
+"op": "read",
+"range": "Sheet1!I1:I2"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "xx"
+},
+{
+"op": "read_text",
+"range": "Sheet1!E2:E3"
+},
+{
+"op": "read",
+"range": "Sheet1!E2:E3"
+},
+{
+"op": "insert_cols",
+"sheet": "Sheet1",
+"at": 2,
+"count": 1
+},
+{
+"op": "read_text",
+"range": "Sheet1!E2:E3"
+},
+{
+"op": "read_text",
+"range": "Sheet1!I1:K2"
+},
+{
+"op": "read",
+"range": "Sheet1!E2:K3"
+},
+{
+"op": "tables"
+}
+]
+}

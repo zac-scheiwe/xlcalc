@@ -1,0 +1,95 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=B1+Sheet2!A1"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet2!B1",
+"input": "=Sheet1!A1+A1"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C1",
+"to": "Sheet1!B3:E6",
+"paste": "formulas"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F7"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C1",
+"to": "Sheet2!B3:E6",
+"paste": "formulas"
+},
+{
+"op": "read",
+"range": "Sheet2!A1:F7"
+},
+{
+"op": "paste_special",
+"from": "Sheet2!B1",
+"to": "Sheet1!H1:H4",
+"paste": "all"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H4"
+},
+{
+"op": "paste_special",
+"from": "Sheet2!B1",
+"to": "Sheet2!H1:H4",
+"paste": "all"
+},
+{
+"op": "read",
+"range": "Sheet2!H1:H4"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C1",
+"to": "Sheet1!B9:D9",
+"paste": "all"
+},
+{
+"op": "read",
+"range": "Sheet1!A9:F9"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!B1:C1",
+"to": "Sheet1!B11:C13",
+"paste": "all",
+"operation": "add"
+},
+{
+"op": "read",
+"range": "Sheet1!A11:F13"
+}
+]
+}

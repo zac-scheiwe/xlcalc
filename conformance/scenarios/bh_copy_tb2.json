@@ -1,0 +1,195 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "c"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "d"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "e"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "21"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "22"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "23"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "24"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "30"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "31"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "32"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "33"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "34"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "40"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "41"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "42"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "43"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "44"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:E4",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "f"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=[@a]+[@[b]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=SUM(Tb[[#This Row],[a]:[c]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=[@a]:[@c]"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F4"
+},
+{
+"op": "copy",
+"from": "Sheet1!F2:F4",
+"to": "Sheet1!H2"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:H5"
+},
+{
+"op": "copy",
+"from": "Sheet1!F2:F3",
+"to": "Sheet1!G6"
+},
+{
+"op": "read",
+"range": "Sheet1!G6:G9"
+},
+{
+"op": "copy",
+"from": "Sheet1!F2:F3",
+"to": "Sheet2!A2"
+},
+{
+"op": "read",
+"range": "Sheet2!A1:A4"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!F2:F3",
+"to": "Sheet1!B2:B3",
+"paste": "formulas"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F4"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!F2:F3",
+"to": "Sheet1!H10",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!H10:I11"
+},
+{
+"op": "copy",
+"from": "Sheet1!A2:C2",
+"to": "Sheet1!A6"
+},
+{
+"op": "read",
+"range": "Sheet1!A5:E7"
+}
+]
+}

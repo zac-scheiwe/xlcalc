@@ -8,7 +8,7 @@ fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
         Ok(x)
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 
@@ -31,22 +31,26 @@ fn scalar_num(ctx: &EvalCtx, op: &Operand, default: f64) -> R<f64> {
     match op {
         Operand::Val(v) => num(ctx, v),
         Operand::Missing => Ok(default),
-        Operand::Ref(_) => Err(XlError::Value),
+        Operand::Ref(_) => Err(XlError::VALUE),
     }
 }
 
 pub fn npv_of(rate: f64, values: &[f64]) -> R<f64> {
-    let b = 1.0 + rate;
+    use crate::x87;
+    let b = x87::add(rate, 1.0);
     if b == 0.0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
-    let mut acc = 0.0;
+    let mut acc = values.first().copied().unwrap_or(0.0);
     let mut d = 1.0;
-    for v in values {
-        acc += v / d;
-        d *= b;
+    for &v in values.iter().skip(1) {
+        d = x87::mul(d, b);
+        if !d.is_finite() {
+            return Err(XlError::DIV0);
+        }
+        acc = x87::add(x87::div(v, d), acc);
     }
-    finite(acc / b)
+    finite(x87::div(acc, b))
 }
 
 pub fn npv(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -57,21 +61,35 @@ pub fn npv(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     })())
 }
 
-fn irr_secant(values: &[f64], guess: f64) -> Option<f64> {
+fn irr_secant(values: &[f64], guess: f64) -> R<Option<f64>> {
     use crate::x87;
+    let div0 = std::cell::Cell::new(false);
     let npv = |w: f64| {
-        let b = x87::div(1.0, x87::add(w, 1.0));
+        let mut mp = x87::MpFlag::default();
+        let b = mp.div(1.0, x87::add(w, 1.0));
         let mut d = 1.0;
         let mut acc = values[0];
         for v in &values[1..] {
-            d = x87::mul(d, b);
-            acc = x87::add(acc, x87::div(*v, d));
+            d = mp.mul(d, b);
+            let t = mp.div(*v, d);
+            acc = mp.add(acc, t);
         }
-        acc
+        match mp.0 {
+            0 => acc,
+            4 => {
+                div0.set(true);
+                f64::NAN
+            }
+            _ => f64::NAN,
+        }
     };
-    let w = fn_iter(x87::div(guess, x87::sub(-1.0, guess)), npv)?;
+    let w = fn_iter(x87::div(guess, x87::sub(-1.0, guess)), npv);
+    if div0.get() {
+        return Err(XlError::DIV0);
+    }
+    let Some(w) = w else { return Ok(None) };
     let r = x87::sub(x87::div(1.0, x87::add(w, 1.0)), 1.0);
-    r.is_finite().then_some(r)
+    Ok(r.is_finite().then_some(r))
 }
 
 pub(super) fn fn_iter(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
@@ -118,15 +136,18 @@ pub(super) fn fn_iter(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
 
 fn irr_of(values: &[f64], guess: Option<f64>) -> R<f64> {
     if !values.iter().any(|&v| v > 0.0) || !values.iter().any(|&v| v < 0.0) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let restarts = [0.1, -0.09090909090909091, 2.0];
-    let first = guess.as_ref().map_or(&[][..], std::slice::from_ref);
+    let first = guess.as_slice();
     let runs = first.iter().chain(&restarts);
 
-    runs.filter_map(|&g| irr_secant(values, g))
-        .next()
-        .ok_or(XlError::Num)
+    for &g in runs {
+        if let Some(r) = irr_secant(values, g)? {
+            return Ok(r);
+        }
+    }
+    Err(XlError::NUM)
 }
 
 pub fn irr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -134,14 +155,14 @@ pub fn irr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         if let Operand::Val(Value::Error(e)) = &ops[0] {
             return Err(*e);
         }
-        let values = flow_values(ctx, &ops[0]).map_err(|_| XlError::Value)?;
+        let values = flow_values(ctx, &ops[0]).map_err(|_| XlError::VALUE)?;
         let guess = match ops.get(1) {
             None => None,
 
             Some(op) => Some(scalar_num(ctx, op, 0.0)?),
         };
         if guess.is_some_and(|g| g <= -1.0) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         irr_of(&values, guess).map(Value::num)
     })())
@@ -150,7 +171,7 @@ pub fn irr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 pub fn mirr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     opval((|| {
         if matches!(ops[0], Operand::Missing) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let values = flow_values(ctx, &ops[0])?;
         let fr = scalar_num(ctx, &ops[1], 0.0)?;
@@ -167,7 +188,7 @@ pub fn mirr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 pos = x87::add(pos, x87::div(v, prr));
             } else if v < 0.0 {
                 if pfr == 0.0 {
-                    return Err(XlError::Div0);
+                    return Err(XlError::DIV0);
                 }
                 neg = x87::add(neg, x87::div(v, pfr));
             }
@@ -175,7 +196,7 @@ pub fn mirr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             pfr = x87::mul(pfr, fr1);
         }
         if neg == 0.0 || n <= 1.0 || rr1 == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let fv = x87::div(x87::mul(pos, prr), rr1);
         let ratio = x87::div(fv, -neg);
@@ -201,9 +222,9 @@ fn cells(v: &Arg) -> R<Vec<Value>> {
 fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<f64>, Vec<f64>)> {
     let text_err = |first_date: bool| {
         if xirr || first_date {
-            XlError::Value
+            XlError::VALUE
         } else {
-            XlError::Num
+            XlError::NUM
         }
     };
     let vals = cells(&a[vi])?;
@@ -214,7 +235,7 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
             Value::Number(n) => v.push(*n),
             Value::Error(e) => return Err(*e),
             Value::Text(_) | Value::Bool(_) => return Err(text_err(false)),
-            _ => return Err(XlError::Num),
+            _ => return Err(XlError::NUM),
         }
     }
     let mut d = Vec::with_capacity(dates.len());
@@ -223,15 +244,15 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
             Value::Number(n) => d.push(atp::check_date(ctx, *n)? as f64),
             Value::Error(e) => return Err(*e),
             Value::Text(_) | Value::Bool(_) => return Err(text_err(i == 0)),
-            _ => return Err(XlError::Num),
+            _ => return Err(XlError::NUM),
         }
     }
     if v.len() != d.len() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     for &x in &d[1..] {
         if x < d[0] {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
     }
     Ok((v, d))
@@ -251,7 +272,7 @@ pub fn xnpv(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let rate = atp::req(ctx, a, 0)?;
         let (v, d) = xflows(ctx, a, 1, 2, false)?;
         if rate <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         finite(xnpv_of(rate, &v, &d))
     })())
@@ -262,7 +283,7 @@ fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
     let h = |x: f64| -> R<f64> {
         let b = 1.0 + x;
         if b <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let mut acc = 0.0;
         for (a, t) in v.iter().zip(d) {
@@ -283,7 +304,7 @@ fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
             hi *= 2.0;
             n += 1;
             if n > 2000 {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
         }
     } else if h0 < 0.0 {
@@ -314,7 +335,7 @@ fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
             hi = mid;
         }
     }
-    Err(XlError::Num)
+    Err(XlError::NUM)
 }
 
 pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
@@ -322,7 +343,7 @@ pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let (v, d) = xflows(ctx, a, 0, 1, true)?;
         let guess = atp::opt(ctx, a, 2, 0.1)?;
         if !v.iter().any(|&x| x > 0.0) || !v.iter().any(|&x| x < 0.0) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         finite(xirr_bisect(&v, &d, guess)?)
     })())

@@ -1,0 +1,472 @@
+{
+"sheets": [
+"D",
+"L"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "D!A1",
+"value": {
+"t": "s",
+"v": "n"
+}
+},
+{
+"op": "setv",
+"cell": "D!B1",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "setv",
+"cell": "D!C1",
+"value": {
+"t": "s",
+"v": "y"
+}
+},
+{
+"op": "setv",
+"cell": "D!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "D!C2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "D!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!B3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "D!A4",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "D!C4",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "D!A5",
+"value": {
+"t": "s",
+"v": "d"
+}
+},
+{
+"op": "setv",
+"cell": "D!B5",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "setv",
+"cell": "D!C5",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "D!A6",
+"value": {
+"t": "s",
+"v": "e"
+}
+},
+{
+"op": "setv",
+"cell": "D!B6",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "D!C6",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "name",
+"name": "Amort",
+"refers_to": "=LAMBDA(p,r,n,LET(m,-PMT(r/12,n,p),k,SEQUENCE(n),b,p*(1+r/12)^k-m*((1+r/12)^k-1)/(r/12),HSTACK(k,b)))"
+},
+{
+"op": "name",
+"name": "Clean",
+"refers_to": "=LAMBDA(t,TRIM(SUBSTITUTE(t,CHAR(160),\" \")))"
+},
+{
+"op": "name",
+"name": "Wavg",
+"refers_to": "=LAMBDA(v,w,SUMPRODUCT(v,w)/SUM(w))"
+},
+{
+"op": "name",
+"name": "Fib",
+"refers_to": "=LAMBDA(n,IF(n<2,n,Fib(n-1)+Fib(n-2)))"
+},
+{
+"op": "name",
+"name": "Cum",
+"refers_to": "=LAMBDA(a,SCAN(0,a,LAMBDA(s,v,s+v)))"
+},
+{
+"op": "name",
+"name": "Cnt",
+"refers_to": "=LAMBDA(r,SUMPRODUCT(--ISNUMBER(r)))"
+},
+{
+"op": "name",
+"name": "Wk",
+"refers_to": "=LAMBDA(d,d-WEEKDAY(d,2)+1)"
+},
+{
+"op": "name",
+"name": "Pick",
+"refers_to": "=LAMBDA(t,c,INDEX(t,0,c))"
+},
+{
+"op": "name",
+"name": "RowRel",
+"refers_to": "=D!A2"
+},
+{
+"op": "set",
+"cell": "L!A1",
+"input": "=Amort(1000,0.06,4)"
+},
+{
+"op": "set",
+"cell": "L!D1",
+"input": "=Wavg(D!B2:B6,D!C2:C6)"
+},
+{
+"op": "set",
+"cell": "L!E1",
+"input": "=Fib(15)"
+},
+{
+"op": "set",
+"cell": "L!F1",
+"input": "=Cum(SEQUENCE(5))"
+},
+{
+"op": "set",
+"cell": "L!G1",
+"input": "=Cnt(D!B2:C6)"
+},
+{
+"op": "set",
+"cell": "L!H1",
+"input": "=Wk(DATE(2026,10,28))"
+},
+{
+"op": "set",
+"cell": "L!I1",
+"input": "=Pick(D!A2:C6,2)"
+},
+{
+"op": "set",
+"cell": "L!J1",
+"input": "=Clean(\"  a\"&CHAR(160)&\"  b \")&\"|\""
+},
+{
+"op": "set",
+"cell": "L!A8",
+"input": "=MAP(D!B2:B6,D!C2:C6,LAMBDA(a,b,a+b))"
+},
+{
+"op": "set",
+"cell": "L!B8",
+"input": "=BYROW(D!B2:C6,LAMBDA(r,SUM(r)))"
+},
+{
+"op": "set",
+"cell": "L!C8",
+"input": "=BYCOL(D!B2:C6,LAMBDA(c,MAX(c)))"
+},
+{
+"op": "set",
+"cell": "L!D8",
+"input": "=REDUCE(0,D!B2:B6,LAMBDA(a,v,a+N(v)))"
+},
+{
+"op": "set",
+"cell": "L!E8",
+"input": "=MAKEARRAY(3,3,LAMBDA(r,c,r*c))"
+},
+{
+"op": "set",
+"cell": "L!H8",
+"input": "=REDUCE(\"\",D!A2:A6,LAMBDA(a,v,a&v))"
+},
+{
+"op": "set",
+"cell": "L!A14",
+"input": "=D!B2:B6+D!C2:C6"
+},
+{
+"op": "set",
+"cell": "L!B14",
+"input": "=D!B2:B6&D!C2:C6"
+},
+{
+"op": "set",
+"cell": "L!C14",
+"input": "=IF(D!B2:B6>2,\"hi\",\"lo\")"
+},
+{
+"op": "set",
+"cell": "L!D14",
+"input": "=D!B2:B6*{1,2}"
+},
+{
+"op": "set",
+"cell": "L!E14",
+"input": "=D!B2:B4+D!C2:C6"
+},
+{
+"op": "set",
+"cell": "L!F14",
+"input": "=SUM(D!B2:B6+D!C2:C6)"
+},
+{
+"op": "set",
+"cell": "L!G14",
+"input": "=MAX(IF(ISNUMBER(D!B2:B6),D!B2:B6))"
+},
+{
+"op": "set",
+"cell": "L!H14",
+"input": "=SUMPRODUCT(D!B2:B6,D!C2:C6)"
+},
+{
+"op": "set",
+"cell": "L!I14",
+"input": "=D!B2:B6>0"
+},
+{
+"op": "set",
+"cell": "L!J14",
+"input": "=AVERAGE(IF(D!B2:B6<>\"\",D!B2:B6))"
+},
+{
+"op": "set",
+"cell": "L!K14",
+"input": "=COUNT(D!B2:B6*1)"
+},
+{
+"op": "set",
+"cell": "L!L14",
+"input": "=INDEX(D!B2:C6,{1,2},{1;2})"
+},
+{
+"op": "set",
+"cell": "L!A21",
+"input": "=XLOOKUP(TRUE,ISBLANK(D!C2:C6),D!A2:A6)"
+},
+{
+"op": "set",
+"cell": "L!B21",
+"input": "=FILTER(D!A2:C6,ISNUMBER(D!B2:B6)*ISNUMBER(D!C2:C6))"
+},
+{
+"op": "set",
+"cell": "L!F21",
+"input": "=SORT(D!B2:C6,1,-1)"
+},
+{
+"op": "set",
+"cell": "L!I21",
+"input": "=UNIQUE(D!B2:B6)"
+},
+{
+"op": "set",
+"cell": "L!J21",
+"input": "=TOCOL(D!B2:C6,1)"
+},
+{
+"op": "set",
+"cell": "L!K21",
+"input": "=TOCOL(D!B2:C6,3)"
+},
+{
+"op": "set",
+"cell": "L!L21",
+"input": "=WRAPROWS(SEQUENCE(7),3,\"-\")"
+},
+{
+"op": "set",
+"cell": "L!M21",
+"input": "=EXPAND(D!B2:C3,4,3,0)"
+},
+{
+"op": "set",
+"cell": "L!A28",
+"input": "=CHOOSEROWS(D!A2:C6,-1,1)"
+},
+{
+"op": "set",
+"cell": "L!B28",
+"input": "=SEQUENCE(0)"
+},
+{
+"op": "set",
+"cell": "L!C28",
+"input": "=FILTER(D!A2:A6,D!B2:B6>100)"
+},
+{
+"op": "set",
+"cell": "L!D28",
+"input": "=TAKE(D!A2:C6,2,-1)"
+},
+{
+"op": "set",
+"cell": "L!E28",
+"input": "=DROP(D!A2:C6,3)"
+},
+{
+"op": "set",
+"cell": "L!F28",
+"input": "=HSTACK(D!A2:A3,D!B2:B5)"
+},
+{
+"op": "set",
+"cell": "L!H28",
+"input": "=VSTACK(1,{2,3})"
+},
+{
+"op": "set",
+"cell": "L!A33",
+"input": "=LET(a,1,b,a+1,c,b*2,a+b+c)"
+},
+{
+"op": "set",
+"cell": "L!B33",
+"input": "=LET(x,D!B2:B6,y,x*2,SUM(y))"
+},
+{
+"op": "set",
+"cell": "L!C33",
+"input": "=LET(f,LAMBDA(z,z+1),f(f(1)))"
+},
+{
+"op": "set",
+"cell": "L!D33",
+"input": "=ROWS(SEQUENCE(1000000))"
+},
+{
+"op": "set",
+"cell": "L!E33",
+"input": "=SEQUENCE(2,3,10,-2)"
+},
+{
+"op": "set",
+"cell": "L!F33",
+"input": "=RANDARRAY(0)"
+},
+{
+"op": "set",
+"cell": "L!G33",
+"input": "=ISOMITTED(1)"
+},
+{
+"op": "set",
+"cell": "L!H33",
+"input": "=LAMBDA(x,x)(5)"
+},
+{
+"op": "set",
+"cell": "L!I33",
+"input": "=LET(x,LAMBDA(a,a*2),MAP({1,2,3},x))"
+},
+{
+"op": "set",
+"cell": "L!J33",
+"input": "=BYROW({1,2;3,4},LAMBDA(r,r))"
+},
+{
+"op": "set",
+"cell": "L!K33",
+"input": "=SORTBY(D!A2:A6,D!B2:B6,1,D!C2:C6,-1)"
+},
+{
+"op": "read",
+"range": "L!A1:O40"
+},
+{
+"op": "set",
+"cell": "D!B3",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "D!C4",
+"input": "5"
+},
+{
+"op": "read",
+"range": "L!A1:O40"
+},
+{
+"op": "insert_rows",
+"sheet": "D",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "L!A1:O40"
+},
+{
+"op": "names"
+}
+]
+}

@@ -13,7 +13,7 @@ pub fn first_cell_or_lift(ctx: &mut EvalCtx, op: &Operand, f: fn(&Value) -> Valu
     let v = match op {
         Operand::Ref(r) => match r.areas().first() {
             Some(a) => ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0),
-            None => Value::Error(XlError::Ref),
+            None => Value::Error(XlError::REF),
         },
         Operand::Val(v) => v.clone(),
         Operand::Missing => Value::Blank,
@@ -64,14 +64,6 @@ pub fn boolean(v: &Value) -> R<bool> {
     coerce::to_bool(v)
 }
 
-#[allow(dead_code)]
-pub fn opt_bool(args: &[Value], i: usize, default: bool) -> R<bool> {
-    match args.get(i) {
-        None => Ok(default),
-        Some(v) => coerce::to_bool(v),
-    }
-}
-
 #[inline]
 pub fn sfix(x: f64) -> i64 {
     if x.is_nan() {
@@ -91,7 +83,7 @@ pub fn sfix(x: f64) -> i64 {
 #[inline]
 pub fn lfix(x: f64) -> i64 {
     let t = x.trunc();
-    if t >= -2147483648.0 && t < 2147483648.0 {
+    if (-2147483648.0..2147483648.0).contains(&t) {
         t as i64
     } else {
         i32::MIN as i64
@@ -110,12 +102,6 @@ pub fn ifuzz(x: f64) -> f64 {
 #[inline]
 pub fn ffuzz(x: f64) -> f64 {
     sfix(x) as f64
-}
-
-#[allow(dead_code)]
-#[inline]
-pub fn trunc(n: f64) -> f64 {
-    n.trunc()
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -163,7 +149,7 @@ pub fn visit_numbers(
     for op in ops {
         match op {
             Operand::Val(Value::Error(e)) if p.propagate_errors => return Err(*e),
-            Operand::Val(Value::Lambda(_)) if p.propagate_errors => return Err(XlError::Value),
+            Operand::Val(Value::Lambda(_)) if p.propagate_errors => return Err(XlError::VALUE),
             Operand::Val(v @ Value::Text(_)) if p.direct_text_error => {
                 ctx.to_number(v)?;
             }
@@ -193,7 +179,7 @@ pub fn visit_numbers(
                 }
                 Value::Lambda(_) => {
                     if p.propagate_errors {
-                        return Err(XlError::Value);
+                        return Err(XlError::VALUE);
                     }
                 }
                 Value::Array(_) => unreachable!(),
@@ -266,7 +252,7 @@ pub enum Grid {
 impl Grid {
     pub fn from_operand_3d(op: &Operand) -> R<Grid> {
         match op {
-            Operand::Ref(r) if r.is_span() && r.single().is_none() => Err(XlError::Ref),
+            Operand::Ref(r) if r.is_span() && r.single().is_none() => Err(XlError::REF),
             _ => Grid::from_operand(op),
         }
     }
@@ -274,7 +260,7 @@ impl Grid {
     pub fn from_operand(op: &Operand) -> R<Grid> {
         Ok(match op {
             Operand::Ref(crate::eval::Reference::Grid(g)) => Grid::Array(g.value_array()),
-            Operand::Ref(r) => Grid::Area(*r.single().ok_or(XlError::Value)?),
+            Operand::Ref(r) => Grid::Area(*r.single().ok_or(XlError::VALUE)?),
             Operand::Val(Value::Array(a)) => Grid::Array(a.clone()),
             Operand::Val(v) => Grid::Scalar(v.clone()),
             Operand::Missing => Grid::Scalar(Value::Blank),
@@ -337,13 +323,13 @@ pub fn array_or_scalar(rows: u32, cols: u32, f: impl FnMut(u32, u32) -> Value) -
 pub fn check_array_args(ctx: &mut EvalCtx, ops: &[&Operand]) -> R<()> {
     for op in ops {
         match op {
-            Operand::Missing | Operand::Val(Value::Blank) => return Err(XlError::Value),
+            Operand::Missing | Operand::Val(Value::Blank) => return Err(XlError::VALUE),
             Operand::Val(Value::Error(e)) => return Err(*e),
             Operand::Ref(r) => {
                 if let Some(a) = r.single() {
                     if a.rect.rows() == 1 && a.rect.cols() == 1 {
                         match ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0) {
-                            Value::Blank => return Err(XlError::Value),
+                            Value::Blank => return Err(XlError::VALUE),
                             Value::Error(e) => return Err(e),
                             _ => {}
                         }

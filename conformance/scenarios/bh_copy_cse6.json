@@ -1,0 +1,47 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "array",
+"range": "Sheet1!B1:C3",
+"input": "=A1:A3*{1,2}"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1",
+"to": "Sheet1!E1"
+},
+{
+"op": "read",
+"range": "Sheet1!E1:F3"
+},
+{
+"op": "copy",
+"from": "Sheet1!C2",
+"to": "Sheet1!H1"
+},
+{
+"op": "read",
+"range": "Sheet1!H1:I3"
+}
+]
+}

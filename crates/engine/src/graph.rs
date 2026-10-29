@@ -11,6 +11,8 @@ use crate::formula::{walk, Formula, Node, SheetRef};
 use crate::value::Text;
 use crate::workbook::{FormulaId, Workbook};
 
+type CellReaders = BTreeMap<(u32, u32), SmallVec<[FormulaId; 2]>>;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Prec {
     Cell(SheetId, u32, u32),
@@ -26,7 +28,7 @@ fn rect_geom(r: &Rect) -> Rectangle<[i64; 2]> {
 
 #[derive(Default)]
 pub struct DepGraph {
-    points: FxHashMap<SheetId, BTreeMap<(u32, u32), SmallVec<[FormulaId; 2]>>>,
+    points: FxHashMap<SheetId, CellReaders>,
     ranges: FxHashMap<SheetId, RTree<RangeEntry>>,
     names: FxHashMap<Text, FxHashSet<FormulaId>>,
 }

@@ -33,17 +33,19 @@ const OPS: [&str; 20] = [
 ];
 
 fn is_ident_start(c: char) -> bool {
-    c.is_alphabetic() || c == '_' || c == '\\' || c == '$' || c == '\u{3000}'
+    if c.is_ascii() {
+        c.is_ascii_alphabetic() || matches!(c, '_' | '\\' | '$')
+    } else {
+        super::namech::name_char(c, true)
+    }
 }
 
 fn is_ident_char(c: char) -> bool {
-    c.is_alphanumeric()
-        || c == '_'
-        || c == '.'
-        || c == '\\'
-        || c == '?'
-        || c == '$'
-        || c == '\u{3000}'
+    if c.is_ascii() {
+        c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '\\' | '?' | '$')
+    } else {
+        super::namech::name_char(c, false)
+    }
 }
 
 fn looks_like_ref_part(s: &str) -> bool {
@@ -138,6 +140,8 @@ impl<'a> Lexer<'a> {
                 self.quoted_sheet()?
             } else if c == '[' {
                 self.bracket(None)?
+            } else if let Some(t) = self.bare_sheet(&out)? {
+                t
             } else if c.is_ascii_digit()
                 || (c == '.' && self.peek(1).is_some_and(|d| d.is_ascii_digit()))
             {
@@ -181,6 +185,70 @@ impl<'a> Lexer<'a> {
                 ws,
             });
         }
+    }
+
+    fn sheet_run(&self, k: usize) -> usize {
+        let mut n = 0;
+        while self.peek(k + n).is_some_and(super::print::bare_sheet_char) {
+            n += 1;
+        }
+        n
+    }
+
+    fn bare_sheet(&mut self, out: &[Token]) -> Result<Option<Tok>, ParseError> {
+        let n = self.sheet_run(0);
+        if n == 0 || self.peek(0) == Some('.') {
+            return Ok(None);
+        }
+        let digit_led = self.peek(0).is_some_and(|c| c.is_ascii_digit());
+        let take = |s: &Self, k: usize, n: usize| -> String {
+            s.chars[s.i + k..s.i + k + n].iter().collect()
+        };
+        let (first, second, end) = if self.peek(n) == Some('!') {
+            (take(self, 0, n), None, n)
+        } else if digit_led && self.peek(n) == Some(':') {
+            let m = self.sheet_run(n + 1);
+            if m == 0 || self.peek(n + 1 + m) != Some('!') {
+                return Ok(None);
+            }
+            (take(self, 0, n), Some(take(self, n + 1, m)), n + 1 + m)
+        } else {
+            return Ok(None);
+        };
+        if digit_led {
+            let operand = |t: &Token| {
+                matches!(
+                    t.tok,
+                    Tok::Ident(_)
+                        | Tok::Number { .. }
+                        | Tok::Str(_)
+                        | Tok::Error(_)
+                        | Tok::StructRef { .. }
+                        | Tok::Field(_)
+                        | Tok::Op(")")
+                        | Tok::Op("}")
+                        | Tok::Op("#")
+                        | Tok::Op("%")
+                )
+            };
+            if let Some(last) = out.last() {
+                if matches!(last.tok, Tok::Op("-") | Tok::Op("+"))
+                    && !(out.len() >= 2 && operand(&out[out.len() - 2]))
+                {
+                    return Err(self.err("a sign cannot precede a sheet name"));
+                }
+            }
+        }
+        for name in std::iter::once(&first).chain(second.iter()) {
+            if !super::print::bare_sheet_name_ok(name) || name.encode_utf16().count() > 255 {
+                return Err(self.err("not a valid sheet name"));
+            }
+        }
+        self.i += end + 1;
+        Ok(Some(Tok::Sheet(match second {
+            Some(b) => SheetSpec::Range(first, b),
+            None => SheetSpec::Single(first),
+        })))
     }
 
     fn field_ahead(&self) -> bool {
@@ -244,14 +312,14 @@ impl<'a> Lexer<'a> {
 
     fn error_or_hash(&mut self) -> Tok {
         const LITERALS: [XlError; 8] = [
-            XlError::Null,
-            XlError::Div0,
-            XlError::Value,
-            XlError::Ref,
-            XlError::Name,
-            XlError::Num,
+            XlError::NULL,
+            XlError::DIV0,
+            XlError::VALUE,
+            XlError::REF,
+            XlError::NAME,
+            XlError::NUM,
             XlError::NA,
-            XlError::GettingData,
+            XlError::GETTING_DATA,
         ];
         for e in LITERALS {
             let lit: Vec<char> = e.as_str().chars().collect();
@@ -459,7 +527,7 @@ impl<'a> Lexer<'a> {
             name.pop();
             self.i -= 1;
         }
-        if super::starts_like_r1c1(&name) {
+        if super::r1c1_pair_with_tail(&name) {
             return Err(self.err("not a valid name"));
         }
         if name.encode_utf16().count() > 255 {
@@ -467,6 +535,9 @@ impl<'a> Lexer<'a> {
         }
         match self.peek(0) {
             Some('!') => {
+                if !super::print::bare_sheet_name_ok(&name) {
+                    return Err(self.err("not a valid sheet name"));
+                }
                 self.i += 1;
                 Ok(Tok::Sheet(SheetSpec::Single(name)))
             }

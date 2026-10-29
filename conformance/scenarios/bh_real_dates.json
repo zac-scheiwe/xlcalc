@@ -1,0 +1,1612 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Holidays"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1/1/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3/4/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "Easter"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "25/4/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!A7",
+"input": "1/6/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "26/10/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!A9",
+"input": "25/12/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!A10",
+"input": "26/12/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "1/1/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=EDATE(C2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=EOMONTH(C2,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=WORKDAY(C2,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=NETWORKDAYS(C2,EDATE(C2,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=DATEDIF(C2,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=YEARFRAC(C2,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=YEARFRAC(C2,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=YEARFRAC(C2,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L2",
+"input": "=YEARFRAC(C2,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M2",
+"input": "=YEARFRAC(C2,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N2",
+"input": "=WEEKDAY(C2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O2",
+"input": "=TEXT(C2,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P2",
+"input": "=DAYS360(C2,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q2",
+"input": "=DAYS360(C2,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R2",
+"input": "=WEEKNUM(C2,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S2",
+"input": "=WORKDAY.INTL(C2,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T2",
+"input": "=C2+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U2",
+"input": "=INT(YEARFRAC(C2,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V2",
+"input": "=DATEDIF(C2,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W2",
+"input": "=TEXT(C2,\"[$-409]mmm d, yy\")&TEXT(C2,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X2",
+"input": "=EDATE(C2,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y2",
+"input": "=EOMONTH(C2,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z2",
+"input": "=(MONTH(C2)-1)*30+DAY(C2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA2",
+"input": "=DATE(YEAR(C2),MONTH(C2)+14,DAY(C2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB2",
+"input": "=DATE(YEAR(C2),MONTH(C2),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC2",
+"input": "=ACCRINTM(C2,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "31/1/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=EDATE(C3,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=EOMONTH(C3,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=WORKDAY(C3,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G3",
+"input": "=NETWORKDAYS(C3,EDATE(C3,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=DATEDIF(C3,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I3",
+"input": "=YEARFRAC(C3,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J3",
+"input": "=YEARFRAC(C3,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K3",
+"input": "=YEARFRAC(C3,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L3",
+"input": "=YEARFRAC(C3,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M3",
+"input": "=YEARFRAC(C3,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N3",
+"input": "=WEEKDAY(C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O3",
+"input": "=TEXT(C3,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P3",
+"input": "=DAYS360(C3,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q3",
+"input": "=DAYS360(C3,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R3",
+"input": "=WEEKNUM(C3,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S3",
+"input": "=WORKDAY.INTL(C3,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T3",
+"input": "=C3+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U3",
+"input": "=INT(YEARFRAC(C3,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V3",
+"input": "=DATEDIF(C3,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W3",
+"input": "=TEXT(C3,\"[$-409]mmm d, yy\")&TEXT(C3,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X3",
+"input": "=EDATE(C3,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y3",
+"input": "=EOMONTH(C3,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z3",
+"input": "=(MONTH(C3)-1)*30+DAY(C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA3",
+"input": "=DATE(YEAR(C3),MONTH(C3)+14,DAY(C3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB3",
+"input": "=DATE(YEAR(C3),MONTH(C3),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC3",
+"input": "=ACCRINTM(C3,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "28/2/2024"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=EDATE(C4,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=EOMONTH(C4,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=WORKDAY(C4,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G4",
+"input": "=NETWORKDAYS(C4,EDATE(C4,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=DATEDIF(C4,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I4",
+"input": "=YEARFRAC(C4,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J4",
+"input": "=YEARFRAC(C4,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K4",
+"input": "=YEARFRAC(C4,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L4",
+"input": "=YEARFRAC(C4,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M4",
+"input": "=YEARFRAC(C4,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N4",
+"input": "=WEEKDAY(C4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O4",
+"input": "=TEXT(C4,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P4",
+"input": "=DAYS360(C4,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q4",
+"input": "=DAYS360(C4,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R4",
+"input": "=WEEKNUM(C4,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S4",
+"input": "=WORKDAY.INTL(C4,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T4",
+"input": "=C4+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U4",
+"input": "=INT(YEARFRAC(C4,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V4",
+"input": "=DATEDIF(C4,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W4",
+"input": "=TEXT(C4,\"[$-409]mmm d, yy\")&TEXT(C4,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X4",
+"input": "=EDATE(C4,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y4",
+"input": "=EOMONTH(C4,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z4",
+"input": "=(MONTH(C4)-1)*30+DAY(C4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA4",
+"input": "=DATE(YEAR(C4),MONTH(C4)+14,DAY(C4))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB4",
+"input": "=DATE(YEAR(C4),MONTH(C4),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC4",
+"input": "=ACCRINTM(C4,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "29/2/2024"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=EDATE(C5,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=EOMONTH(C5,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=WORKDAY(C5,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G5",
+"input": "=NETWORKDAYS(C5,EDATE(C5,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=DATEDIF(C5,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I5",
+"input": "=YEARFRAC(C5,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J5",
+"input": "=YEARFRAC(C5,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K5",
+"input": "=YEARFRAC(C5,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L5",
+"input": "=YEARFRAC(C5,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M5",
+"input": "=YEARFRAC(C5,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N5",
+"input": "=WEEKDAY(C5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O5",
+"input": "=TEXT(C5,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P5",
+"input": "=DAYS360(C5,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q5",
+"input": "=DAYS360(C5,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R5",
+"input": "=WEEKNUM(C5,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S5",
+"input": "=WORKDAY.INTL(C5,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T5",
+"input": "=C5+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U5",
+"input": "=INT(YEARFRAC(C5,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V5",
+"input": "=DATEDIF(C5,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W5",
+"input": "=TEXT(C5,\"[$-409]mmm d, yy\")&TEXT(C5,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X5",
+"input": "=EDATE(C5,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y5",
+"input": "=EOMONTH(C5,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z5",
+"input": "=(MONTH(C5)-1)*30+DAY(C5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA5",
+"input": "=DATE(YEAR(C5),MONTH(C5)+14,DAY(C5))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB5",
+"input": "=DATE(YEAR(C5),MONTH(C5),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC5",
+"input": "=ACCRINTM(C5,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "15/3/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=EDATE(C6,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=EOMONTH(C6,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=WORKDAY(C6,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G6",
+"input": "=NETWORKDAYS(C6,EDATE(C6,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=DATEDIF(C6,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I6",
+"input": "=YEARFRAC(C6,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J6",
+"input": "=YEARFRAC(C6,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K6",
+"input": "=YEARFRAC(C6,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L6",
+"input": "=YEARFRAC(C6,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M6",
+"input": "=YEARFRAC(C6,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N6",
+"input": "=WEEKDAY(C6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O6",
+"input": "=TEXT(C6,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P6",
+"input": "=DAYS360(C6,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q6",
+"input": "=DAYS360(C6,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R6",
+"input": "=WEEKNUM(C6,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S6",
+"input": "=WORKDAY.INTL(C6,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T6",
+"input": "=C6+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U6",
+"input": "=INT(YEARFRAC(C6,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V6",
+"input": "=DATEDIF(C6,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W6",
+"input": "=TEXT(C6,\"[$-409]mmm d, yy\")&TEXT(C6,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X6",
+"input": "=EDATE(C6,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y6",
+"input": "=EOMONTH(C6,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z6",
+"input": "=(MONTH(C6)-1)*30+DAY(C6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA6",
+"input": "=DATE(YEAR(C6),MONTH(C6)+14,DAY(C6))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB6",
+"input": "=DATE(YEAR(C6),MONTH(C6),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC6",
+"input": "=ACCRINTM(C6,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "31/12/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=EDATE(C7,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E7",
+"input": "=EOMONTH(C7,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=WORKDAY(C7,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G7",
+"input": "=NETWORKDAYS(C7,EDATE(C7,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=DATEDIF(C7,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I7",
+"input": "=YEARFRAC(C7,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J7",
+"input": "=YEARFRAC(C7,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K7",
+"input": "=YEARFRAC(C7,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L7",
+"input": "=YEARFRAC(C7,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M7",
+"input": "=YEARFRAC(C7,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N7",
+"input": "=WEEKDAY(C7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O7",
+"input": "=TEXT(C7,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P7",
+"input": "=DAYS360(C7,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q7",
+"input": "=DAYS360(C7,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R7",
+"input": "=WEEKNUM(C7,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S7",
+"input": "=WORKDAY.INTL(C7,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T7",
+"input": "=C7+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U7",
+"input": "=INT(YEARFRAC(C7,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V7",
+"input": "=DATEDIF(C7,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W7",
+"input": "=TEXT(C7,\"[$-409]mmm d, yy\")&TEXT(C7,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X7",
+"input": "=EDATE(C7,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y7",
+"input": "=EOMONTH(C7,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z7",
+"input": "=(MONTH(C7)-1)*30+DAY(C7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA7",
+"input": "=DATE(YEAR(C7),MONTH(C7)+14,DAY(C7))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB7",
+"input": "=DATE(YEAR(C7),MONTH(C7),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC7",
+"input": "=ACCRINTM(C7,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "1/3/1900"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=EDATE(C8,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=EOMONTH(C8,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=WORKDAY(C8,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G8",
+"input": "=NETWORKDAYS(C8,EDATE(C8,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=DATEDIF(C8,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I8",
+"input": "=YEARFRAC(C8,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J8",
+"input": "=YEARFRAC(C8,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K8",
+"input": "=YEARFRAC(C8,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L8",
+"input": "=YEARFRAC(C8,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M8",
+"input": "=YEARFRAC(C8,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N8",
+"input": "=WEEKDAY(C8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O8",
+"input": "=TEXT(C8,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P8",
+"input": "=DAYS360(C8,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q8",
+"input": "=DAYS360(C8,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R8",
+"input": "=WEEKNUM(C8,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S8",
+"input": "=WORKDAY.INTL(C8,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T8",
+"input": "=C8+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U8",
+"input": "=INT(YEARFRAC(C8,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V8",
+"input": "=DATEDIF(C8,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W8",
+"input": "=TEXT(C8,\"[$-409]mmm d, yy\")&TEXT(C8,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X8",
+"input": "=EDATE(C8,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y8",
+"input": "=EOMONTH(C8,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z8",
+"input": "=(MONTH(C8)-1)*30+DAY(C8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA8",
+"input": "=DATE(YEAR(C8),MONTH(C8)+14,DAY(C8))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB8",
+"input": "=DATE(YEAR(C8),MONTH(C8),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC8",
+"input": "=ACCRINTM(C8,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "28/2/1900"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=EDATE(C9,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=EOMONTH(C9,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=WORKDAY(C9,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G9",
+"input": "=NETWORKDAYS(C9,EDATE(C9,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=DATEDIF(C9,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I9",
+"input": "=YEARFRAC(C9,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J9",
+"input": "=YEARFRAC(C9,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K9",
+"input": "=YEARFRAC(C9,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L9",
+"input": "=YEARFRAC(C9,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M9",
+"input": "=YEARFRAC(C9,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N9",
+"input": "=WEEKDAY(C9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O9",
+"input": "=TEXT(C9,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P9",
+"input": "=DAYS360(C9,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q9",
+"input": "=DAYS360(C9,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R9",
+"input": "=WEEKNUM(C9,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S9",
+"input": "=WORKDAY.INTL(C9,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T9",
+"input": "=C9+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U9",
+"input": "=INT(YEARFRAC(C9,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V9",
+"input": "=DATEDIF(C9,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W9",
+"input": "=TEXT(C9,\"[$-409]mmm d, yy\")&TEXT(C9,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X9",
+"input": "=EDATE(C9,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y9",
+"input": "=EOMONTH(C9,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z9",
+"input": "=(MONTH(C9)-1)*30+DAY(C9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA9",
+"input": "=DATE(YEAR(C9),MONTH(C9)+14,DAY(C9))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB9",
+"input": "=DATE(YEAR(C9),MONTH(C9),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC9",
+"input": "=ACCRINTM(C9,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "1/1/1900"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=EDATE(C10,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=EOMONTH(C10,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=WORKDAY(C10,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G10",
+"input": "=NETWORKDAYS(C10,EDATE(C10,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=DATEDIF(C10,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I10",
+"input": "=YEARFRAC(C10,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J10",
+"input": "=YEARFRAC(C10,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K10",
+"input": "=YEARFRAC(C10,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L10",
+"input": "=YEARFRAC(C10,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M10",
+"input": "=YEARFRAC(C10,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N10",
+"input": "=WEEKDAY(C10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O10",
+"input": "=TEXT(C10,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P10",
+"input": "=DAYS360(C10,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q10",
+"input": "=DAYS360(C10,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R10",
+"input": "=WEEKNUM(C10,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S10",
+"input": "=WORKDAY.INTL(C10,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T10",
+"input": "=C10+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U10",
+"input": "=INT(YEARFRAC(C10,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V10",
+"input": "=DATEDIF(C10,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W10",
+"input": "=TEXT(C10,\"[$-409]mmm d, yy\")&TEXT(C10,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X10",
+"input": "=EDATE(C10,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y10",
+"input": "=EOMONTH(C10,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z10",
+"input": "=(MONTH(C10)-1)*30+DAY(C10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA10",
+"input": "=DATE(YEAR(C10),MONTH(C10)+14,DAY(C10))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB10",
+"input": "=DATE(YEAR(C10),MONTH(C10),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC10",
+"input": "=ACCRINTM(C10,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "30/6/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=EDATE(C11,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=EOMONTH(C11,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=WORKDAY(C11,10,$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G11",
+"input": "=NETWORKDAYS(C11,EDATE(C11,3),$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=DATEDIF(C11,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I11",
+"input": "=YEARFRAC(C11,DATE(2026,12,31),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J11",
+"input": "=YEARFRAC(C11,DATE(2026,12,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K11",
+"input": "=YEARFRAC(C11,DATE(2026,12,31),2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L11",
+"input": "=YEARFRAC(C11,DATE(2026,12,31),3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!M11",
+"input": "=YEARFRAC(C11,DATE(2026,12,31),4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N11",
+"input": "=WEEKDAY(C11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!O11",
+"input": "=TEXT(C11,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P11",
+"input": "=DAYS360(C11,DATE(2026,12,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q11",
+"input": "=DAYS360(C11,DATE(2026,12,31),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R11",
+"input": "=WEEKNUM(C11,21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!S11",
+"input": "=WORKDAY.INTL(C11,-5,\"0000110\",$A$2:$A$10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T11",
+"input": "=C11+365.25*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!U11",
+"input": "=INT(YEARFRAC(C11,DATE(2026,6,30)))"
+},
+{
+"op": "set",
+"cell": "Sheet1!V11",
+"input": "=DATEDIF(C11,DATE(2026,6,30),\"yd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W11",
+"input": "=TEXT(C11,\"[$-409]mmm d, yy\")&TEXT(C11,\"ww\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X11",
+"input": "=EDATE(C11,-14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y11",
+"input": "=EOMONTH(C11,-1)+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z11",
+"input": "=(MONTH(C11)-1)*30+DAY(C11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AA11",
+"input": "=DATE(YEAR(C11),MONTH(C11)+14,DAY(C11))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AB11",
+"input": "=DATE(YEAR(C11),MONTH(C11),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AC11",
+"input": "=ACCRINTM(C11,DATE(2026,12,31),0.05,1000,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE1",
+"input": "=NETWORKDAYS(A2,A3,A2:A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE2",
+"input": "=NETWORKDAYS(A3,A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE3",
+"input": "=DATEDIF(DATE(2026,5,1),DATE(2026,4,1),\"d\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE4",
+"input": "=EDATE(DATE(2026,1,31),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE5",
+"input": "=EOMONTH(DATE(2026,1,31),1.9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE6",
+"input": "=EDATE(\"31/1/2026\",1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE7",
+"input": "=DATEVALUE(\"29/02/2026\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE8",
+"input": "=DATE(2026,2,29)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE9",
+"input": "=DATE(1899,12,31)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE10",
+"input": "=DATE(1900,1,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE11",
+"input": "=DATE(1900,2,29)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE12",
+"input": "=TEXT(60,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE13",
+"input": "=TEXT(0,\"d mmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE14",
+"input": "=WEEKDAY(0)&WEEKDAY(1)&WEEKDAY(59)&WEEKDAY(60)&WEEKDAY(61)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE15",
+"input": "=TEXT(61,\"dddd\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE16",
+"input": "=DAY(60)&MONTH(60)&YEAR(60)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE17",
+"input": "=DATEDIF(1,61,\"d\")&DATEDIF(1,61,\"m\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE18",
+"input": "=NETWORKDAYS(1,100)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE19",
+"input": "=WORKDAY(1,50)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE20",
+"input": "=EOMONTH(59,0)&EOMONTH(60,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE21",
+"input": "=EDATE(59,1)&\"/\"&EDATE(30,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE22",
+"input": "=DAYS(DATE(2026,3,1),DATE(1900,3,1))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE23",
+"input": "=DATEDIF(DATE(1900,1,1),DATE(2026,3,1),\"d\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE24",
+"input": "=ISOWEEKNUM(DATE(2026,1,1))&\"/\"&ISOWEEKNUM(DATE(2027,1,1))&\"/\"&ISOWEEKNUM(DATE(2024,12,30))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE25",
+"input": "=TIME(12,0,0)+DATE(2026,3,15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE26",
+"input": "=TEXT(TIME(12,0,0)+DATE(2026,3,15),\"yyyy-mm-dd hh:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE27",
+"input": "=TEXT(0.999999,\"hh:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE28",
+"input": "=TEXT(0.9999999,\"hh:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE29",
+"input": "=HOUR(0.9999999)&MINUTE(0.9999999)&SECOND(0.9999999)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE30",
+"input": "=TEXT(1.5,\"[h]:mm\")&TEXT(-0.5,\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE31",
+"input": "=MINUTE(0.0006944444)&\":\"&SECOND(0.0006944444)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE32",
+"input": "=SECOND(TIME(0,0,1))&SECOND(1/86400)&SECOND(2/86400)&SECOND(59.5/86400)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE33",
+"input": "=TEXT(8.5/24,\"h:mm\")&\"|\"&TEXT(17.25/24-8.5/24,\"[h]:mm\")&\"|\"&TEXT(ROUND((17.25-8.5)*24,2),\"0.00\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE34",
+"input": "=(TIMEVALUE(\"17:15\")-TIMEVALUE(\"8:30\"))*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE35",
+"input": "=ROUND((TIMEVALUE(\"17:15\")-TIMEVALUE(\"8:30\"))*24,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE36",
+"input": "=MOD(TIMEVALUE(\"1:15\")-TIMEVALUE(\"23:30\"),1)*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE37",
+"input": "=INT((TIMEVALUE(\"17:15\")-TIMEVALUE(\"8:30\"))*24)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE38",
+"input": "=INT((TIMEVALUE(\"17:30\")-TIMEVALUE(\"8:30\"))*24)"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE39",
+"input": "=HOUR(TIMEVALUE(\"17:30\")-TIMEVALUE(\"8:30\"))"
+},
+{
+"op": "set",
+"cell": "Sheet1!AE40",
+"input": "=MINUTE(TIMEVALUE(\"17:20\")-TIMEVALUE(\"8:30\"))"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:AE40"
+}
+]
+}

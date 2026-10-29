@@ -1,0 +1,986 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Name"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Score"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Rank"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Grade"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Pct"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 88
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=IFERROR(RANK(B2,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=IF(B2=\"\",\"none\",IF(NOT(ISNUMBER(B2)),\"?\",IF(B2>=90,\"A\",IF(B2>=80,\"B\",IF(B2>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B2),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=IFERROR((B2-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=IFERROR(RANK.AVG(B2,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=IFERROR(RANK.EQ(B2,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B2,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=LOOKUP(N(B2),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=IFS(B2>=90,\"A\",B2>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L2",
+"input": "=IFERROR(CHOOSE(MATCH(B2,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "Bob"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": 92.5
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=IFERROR(RANK(B3,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=IF(B3=\"\",\"none\",IF(NOT(ISNUMBER(B3)),\"?\",IF(B3>=90,\"A\",IF(B3>=80,\"B\",IF(B3>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B3),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=IFERROR((B3-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G3",
+"input": "=IFERROR(RANK.AVG(B3,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=IFERROR(RANK.EQ(B3,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I3",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B3,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J3",
+"input": "=LOOKUP(N(B3),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K3",
+"input": "=IFS(B3>=90,\"A\",B3>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L3",
+"input": "=IFERROR(CHOOSE(MATCH(B3,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "n",
+"v": 67
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=IFERROR(RANK(B4,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=IF(B4=\"\",\"none\",IF(NOT(ISNUMBER(B4)),\"?\",IF(B4>=90,\"A\",IF(B4>=80,\"B\",IF(B4>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B4),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=IFERROR((B4-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G4",
+"input": "=IFERROR(RANK.AVG(B4,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=IFERROR(RANK.EQ(B4,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I4",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B4,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J4",
+"input": "=LOOKUP(N(B4),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K4",
+"input": "=IFS(B4>=90,\"A\",B4>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L4",
+"input": "=IFERROR(CHOOSE(MATCH(B4,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "Di"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "s",
+"v": "abs"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "=IFERROR(RANK(B5,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=IF(B5=\"\",\"none\",IF(NOT(ISNUMBER(B5)),\"?\",IF(B5>=90,\"A\",IF(B5>=80,\"B\",IF(B5>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=IFERROR((B5-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G5",
+"input": "=IFERROR(RANK.AVG(B5,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=IFERROR(RANK.EQ(B5,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I5",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B5,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J5",
+"input": "=LOOKUP(N(B5),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K5",
+"input": "=IFS(B5>=90,\"A\",B5>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L5",
+"input": "=IFERROR(CHOOSE(MATCH(B5,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A6",
+"value": {
+"t": "s",
+"v": "Ed"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "n",
+"v": 74
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "=IFERROR(RANK(B6,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=IF(B6=\"\",\"none\",IF(NOT(ISNUMBER(B6)),\"?\",IF(B6>=90,\"A\",IF(B6>=80,\"B\",IF(B6>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B6),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=IFERROR((B6-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G6",
+"input": "=IFERROR(RANK.AVG(B6,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=IFERROR(RANK.EQ(B6,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I6",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B6,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J6",
+"input": "=LOOKUP(N(B6),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K6",
+"input": "=IFS(B6>=90,\"A\",B6>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L6",
+"input": "=IFERROR(CHOOSE(MATCH(B6,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "s",
+"v": "Flo"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "n",
+"v": 92.5
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=IFERROR(RANK(B7,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=IF(B7=\"\",\"none\",IF(NOT(ISNUMBER(B7)),\"?\",IF(B7>=90,\"A\",IF(B7>=80,\"B\",IF(B7>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E7",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B7),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=IFERROR((B7-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G7",
+"input": "=IFERROR(RANK.AVG(B7,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=IFERROR(RANK.EQ(B7,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I7",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B7,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J7",
+"input": "=LOOKUP(N(B7),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K7",
+"input": "=IFS(B7>=90,\"A\",B7>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L7",
+"input": "=IFERROR(CHOOSE(MATCH(B7,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A8",
+"value": {
+"t": "s",
+"v": "Gus"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B8",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=IFERROR(RANK(B8,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=IF(B8=\"\",\"none\",IF(NOT(ISNUMBER(B8)),\"?\",IF(B8>=90,\"A\",IF(B8>=80,\"B\",IF(B8>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B8),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=IFERROR((B8-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G8",
+"input": "=IFERROR(RANK.AVG(B8,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=IFERROR(RANK.EQ(B8,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I8",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B8,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J8",
+"input": "=LOOKUP(N(B8),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K8",
+"input": "=IFS(B8>=90,\"A\",B8>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L8",
+"input": "=IFERROR(CHOOSE(MATCH(B8,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A9",
+"value": {
+"t": "s",
+"v": "Hal"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B9",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=IFERROR(RANK(B9,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=IF(B9=\"\",\"none\",IF(NOT(ISNUMBER(B9)),\"?\",IF(B9>=90,\"A\",IF(B9>=80,\"B\",IF(B9>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B9),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=IFERROR((B9-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G9",
+"input": "=IFERROR(RANK.AVG(B9,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=IFERROR(RANK.EQ(B9,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I9",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B9,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J9",
+"input": "=LOOKUP(N(B9),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K9",
+"input": "=IFS(B9>=90,\"A\",B9>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L9",
+"input": "=IFERROR(CHOOSE(MATCH(B9,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A10",
+"value": {
+"t": "s",
+"v": "Ivy"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=IFERROR(RANK(B10,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=IF(B10=\"\",\"none\",IF(NOT(ISNUMBER(B10)),\"?\",IF(B10>=90,\"A\",IF(B10>=80,\"B\",IF(B10>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B10),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=IFERROR((B10-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G10",
+"input": "=IFERROR(RANK.AVG(B10,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=IFERROR(RANK.EQ(B10,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I10",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B10,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J10",
+"input": "=LOOKUP(N(B10),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K10",
+"input": "=IFS(B10>=90,\"A\",B10>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L10",
+"input": "=IFERROR(CHOOSE(MATCH(B10,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A11",
+"value": {
+"t": "s",
+"v": "Jo"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B11",
+"value": {
+"t": "n",
+"v": 81
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=IFERROR(RANK(B11,$B$2:$B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=IF(B11=\"\",\"none\",IF(NOT(ISNUMBER(B11)),\"?\",IF(B11>=90,\"A\",IF(B11>=80,\"B\",IF(B11>=70,\"C\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=IFERROR(PERCENTRANK(B$2:B$11,B11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=IFERROR((B11-AVERAGE(B$2:B$11))/STDEV(B$2:B$11),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G11",
+"input": "=IFERROR(RANK.AVG(B11,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=IFERROR(RANK.EQ(B11,$B$2:$B$11,1),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I11",
+"input": "=IFERROR(PERCENTRANK.EXC(B$2:B$11,B11,5),\"-\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J11",
+"input": "=LOOKUP(N(B11),{0,60,70,80,90},{\"F\",\"D\",\"C\",\"B\",\"A\"})"
+},
+{
+"op": "set",
+"cell": "Sheet1!K11",
+"input": "=IFS(B11>=90,\"A\",B11>=80,\"B\",TRUE,\"C\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L11",
+"input": "=IFERROR(CHOOSE(MATCH(B11,{0,60,70,80,90},1),\"F\",\"D\",\"C\",\"B\",\"A\"),\"x\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N2",
+"input": "=AVERAGE(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N3",
+"input": "=MEDIAN(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N4",
+"input": "=MODE(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N5",
+"input": "=MODE.SNGL(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N6",
+"input": "=STDEV(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N7",
+"input": "=STDEV.P(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N8",
+"input": "=VAR(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N9",
+"input": "=VARP(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N10",
+"input": "=MAX(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N11",
+"input": "=MIN(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N12",
+"input": "=COUNT(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N13",
+"input": "=COUNTA(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N14",
+"input": "=COUNTBLANK(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N15",
+"input": "=SKEW(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N16",
+"input": "=KURT(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N17",
+"input": "=AVERAGEA(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N18",
+"input": "=STDEVA(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N19",
+"input": "=GEOMEAN(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N20",
+"input": "=HARMEAN(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N21",
+"input": "=SUMSQ(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N22",
+"input": "=DEVSQ(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!N23",
+"input": "=AVEDEV(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P2",
+"input": "=PERCENTILE(B2:B11,0.9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P3",
+"input": "=PERCENTILE.EXC(B2:B11,0.25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P4",
+"input": "=QUARTILE(B2:B11,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P5",
+"input": "=QUARTILE.EXC(B2:B11,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P6",
+"input": "=LARGE(B2:B11,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P7",
+"input": "=SMALL(B2:B11,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P8",
+"input": "=TRIMMEAN(B2:B11,0.2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P9",
+"input": "=CORREL(B2:B10,A2:A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P10",
+"input": "=FREQUENCY(B2:B11,{60;80;90})"
+},
+{
+"op": "set",
+"cell": "Sheet1!P11",
+"input": "=COUNTIF(B2:B11,\">=90\")/COUNT(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P12",
+"input": "=SUMPRODUCT((B2:B11>80)*1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P13",
+"input": "=AVERAGEIF(B2:B11,\">80\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P14",
+"input": "=MEDIAN(IF(ISNUMBER(B2:B11),B2:B11))"
+},
+{
+"op": "set",
+"cell": "Sheet1!P15",
+"input": "=STANDARDIZE(B2,AVERAGE(B2:B11),STDEV(B2:B11))"
+},
+{
+"op": "set",
+"cell": "Sheet1!P16",
+"input": "=FORECAST(5,B2:B4,A2:A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P17",
+"input": "=SLOPE(B2:B4,{1;2;3})"
+},
+{
+"op": "set",
+"cell": "Sheet1!P18",
+"input": "=INTERCEPT(B2:B4,{1;2;3})"
+},
+{
+"op": "set",
+"cell": "Sheet1!P19",
+"input": "=RSQ(B2:B4,{1;2;4})"
+},
+{
+"op": "set",
+"cell": "Sheet1!P20",
+"input": "=PERCENTILE(B2:B11,1/3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P21",
+"input": "=AGGREGATE(14,6,B2:B11,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P22",
+"input": "=AGGREGATE(16,6,B2:B11,0.3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P23",
+"input": "=MAXA(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P24",
+"input": "=MINA(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P25",
+"input": "=LARGE(B2:B11,COUNT(B2:B11))"
+},
+{
+"op": "set",
+"cell": "Sheet1!P26",
+"input": "=ROUND(AVERAGE(B2:B11),1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P27",
+"input": "=VAR.S(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P28",
+"input": "=PERCENTILE.INC(B2:B11,0.75)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P29",
+"input": "=MODE.MULT(B2:B11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P30",
+"input": "=RANK(92.5,B2:B11,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P31",
+"input": "=CONFIDENCE(0.05,STDEV(B2:B11),COUNT(B2:B11))"
+},
+{
+"op": "set",
+"cell": "Sheet1!P32",
+"input": "=CONFIDENCE.T(0.05,STDEV(B2:B11),COUNT(B2:B11))"
+},
+{
+"op": "set",
+"cell": "Sheet1!P33",
+"input": "=NORM.DIST(80,AVERAGE(B2:B11),STDEV(B2:B11),TRUE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!P34",
+"input": "=T.TEST(B2:B5,B7:B10,2,2)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:P34"
+}
+]
+}

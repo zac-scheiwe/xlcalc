@@ -1,0 +1,667 @@
+{
+"sheets": [
+"W",
+"N"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "W!A1",
+"value": {
+"t": "s",
+"v": "Item #"
+}
+},
+{
+"op": "setv",
+"cell": "W!B1",
+"value": {
+"t": "s",
+"v": "Unit Price ($)"
+}
+},
+{
+"op": "setv",
+"cell": "W!C1",
+"value": {
+"t": "s",
+"v": "% Disc"
+}
+},
+{
+"op": "setv",
+"cell": "W!D1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "W!E1",
+"value": {
+"t": "s",
+"v": "Tag[1]"
+}
+},
+{
+"op": "setv",
+"cell": "W!F1",
+"value": {
+"t": "s",
+"v": "Owner's"
+}
+},
+{
+"op": "setv",
+"cell": "W!G1",
+"value": {
+"t": "s",
+"v": "Net Amt"
+}
+},
+{
+"op": "setv",
+"cell": "W!A2",
+"value": {
+"t": "s",
+"v": "X0"
+}
+},
+{
+"op": "setv",
+"cell": "W!B2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "W!C2",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "W!D2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!E2",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F2",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A3",
+"value": {
+"t": "s",
+"v": "X1"
+}
+},
+{
+"op": "setv",
+"cell": "W!B3",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "W!C3",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "W!D3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "W!E3",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F3",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A4",
+"value": {
+"t": "s",
+"v": "X2"
+}
+},
+{
+"op": "setv",
+"cell": "W!B4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "W!C4",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "W!D4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "W!E4",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F4",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A5",
+"value": {
+"t": "s",
+"v": "X3"
+}
+},
+{
+"op": "setv",
+"cell": "W!B5",
+"value": {
+"t": "n",
+"v": 99.99
+}
+},
+{
+"op": "setv",
+"cell": "W!C5",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "W!D5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "W!E5",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F5",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A6",
+"value": {
+"t": "s",
+"v": "X4"
+}
+},
+{
+"op": "setv",
+"cell": "W!B6",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "W!C6",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "W!D6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "W!E6",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F6",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A7",
+"value": {
+"t": "s",
+"v": "X5"
+}
+},
+{
+"op": "setv",
+"cell": "W!B7",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "W!C7",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "W!D7",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "W!E7",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F7",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A8",
+"value": {
+"t": "s",
+"v": "X6"
+}
+},
+{
+"op": "setv",
+"cell": "W!B8",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "W!C8",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "W!D8",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "W!E8",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F8",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "setv",
+"cell": "W!A9",
+"value": {
+"t": "s",
+"v": "X7"
+}
+},
+{
+"op": "setv",
+"cell": "W!B9",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "W!C9",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "W!D9",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "W!E9",
+"value": {
+"t": "s",
+"v": "t"
+}
+},
+{
+"op": "setv",
+"cell": "W!F9",
+"value": {
+"t": "s",
+"v": "o"
+}
+},
+{
+"op": "table",
+"name": "Items",
+"range": "W!A1:G9"
+},
+{
+"op": "set",
+"cell": "W!G2",
+"input": "=Items[[#This Row],[Unit Price ($)]]*Items[[#This Row],[Qty]]*(1-Items[[#This Row],[% Disc]])"
+},
+{
+"op": "set",
+"cell": "N!A1",
+"input": "=SUM(Items[Net Amt])"
+},
+{
+"op": "set",
+"cell": "N!A2",
+"input": "=SUM(Items[Unit Price ($)])"
+},
+{
+"op": "set",
+"cell": "N!A3",
+"input": "=SUM(Items[% Disc])"
+},
+{
+"op": "set",
+"cell": "N!A4",
+"input": "=SUM(Items[Qty])"
+},
+{
+"op": "set",
+"cell": "N!A5",
+"input": "=COUNTA(Items[Tag['[1']])"
+},
+{
+"op": "set",
+"cell": "N!A6",
+"input": "=COUNTA(Items[Owner'''s])"
+},
+{
+"op": "set",
+"cell": "N!A7",
+"input": "=SUM(Items[[Qty]:[Net Amt]])"
+},
+{
+"op": "set",
+"cell": "N!A8",
+"input": "=Items[[#Headers],[Item '#]]"
+},
+{
+"op": "set",
+"cell": "N!A9",
+"input": "=INDEX(Items[Item '#],3)"
+},
+{
+"op": "set",
+"cell": "N!A10",
+"input": "=SUMPRODUCT(Items[Unit Price ($)],Items[Qty])"
+},
+{
+"op": "set",
+"cell": "N!A11",
+"input": "=ROWS(Items)&\"|\"&COLUMNS(Items)&\"|\"&ROW(Items[#Headers])"
+},
+{
+"op": "set",
+"cell": "N!A12",
+"input": "=CELL(\"address\",Items[Net Amt])"
+},
+{
+"op": "set",
+"cell": "N!A13",
+"input": "=@Items[Net Amt]"
+},
+{
+"op": "set",
+"cell": "N!A14",
+"input": "=SUM(Items[[Item '#]:[% Disc]])"
+},
+{
+"op": "set",
+"cell": "W!I2",
+"input": "=[@[Net Amt]]/SUM([Net Amt])"
+},
+{
+"op": "set",
+"cell": "W!H1",
+"input": "Share"
+},
+{
+"op": "read",
+"range": "W!A1:J10"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "set",
+"cell": "W!A10",
+"input": "Z9"
+},
+{
+"op": "set",
+"cell": "W!B10",
+"input": "50"
+},
+{
+"op": "set",
+"cell": "W!D10",
+"input": "2"
+},
+{
+"op": "read",
+"range": "W!A1:J11"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "set",
+"cell": "W!A1",
+"input": "Item No"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "set",
+"cell": "W!D1",
+"input": "Quantity"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "insert_cols",
+"sheet": "W",
+"at": 3,
+"count": 1
+},
+{
+"op": "set",
+"cell": "W!C1",
+"input": "Cat"
+},
+{
+"op": "read",
+"range": "W!A1:J11"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "delete_cols",
+"sheet": "W",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "W!A1:J11"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "table_totals",
+"sheet": "W",
+"name": "Items",
+"value": true
+},
+{
+"op": "set",
+"cell": "W!H12",
+"input": "=SUBTOTAL(109,[Net Amt])"
+},
+{
+"op": "read",
+"range": "W!A1:J13"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "table_sort",
+"name": "Items",
+"sheet": "W",
+"keys": [
+{
+"key": 3,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "W!A1:J13"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+},
+{
+"op": "table_rename",
+"name": "Items",
+"to": "Stock"
+},
+{
+"op": "read",
+"range": "N!A1:A15"
+}
+]
+}

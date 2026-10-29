@@ -1,0 +1,700 @@
+{
+"sheets": [
+"F",
+"Dash"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "F!A1",
+"value": {
+"t": "s",
+"v": "Rep"
+}
+},
+{
+"op": "setv",
+"cell": "F!B1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "F!C1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "F!D1",
+"value": {
+"t": "s",
+"v": "Sales"
+}
+},
+{
+"op": "setv",
+"cell": "F!A2",
+"value": {
+"t": "s",
+"v": "R0"
+}
+},
+{
+"op": "setv",
+"cell": "F!B2",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "F!C2",
+"value": {
+"t": "n",
+"v": 34
+}
+},
+{
+"op": "setv",
+"cell": "F!D2",
+"value": {
+"t": "n",
+"v": 212.94
+}
+},
+{
+"op": "setv",
+"cell": "F!A3",
+"value": {
+"t": "s",
+"v": "R1"
+}
+},
+{
+"op": "setv",
+"cell": "F!B3",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "F!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "F!D3",
+"value": {
+"t": "n",
+"v": 480.64
+}
+},
+{
+"op": "setv",
+"cell": "F!A4",
+"value": {
+"t": "s",
+"v": "R2"
+}
+},
+{
+"op": "setv",
+"cell": "F!B4",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "F!C4",
+"value": {
+"t": "n",
+"v": 19
+}
+},
+{
+"op": "setv",
+"cell": "F!D4",
+"value": {
+"t": "n",
+"v": 95.6
+}
+},
+{
+"op": "setv",
+"cell": "F!A5",
+"value": {
+"t": "s",
+"v": "R3"
+}
+},
+{
+"op": "setv",
+"cell": "F!B5",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "F!C5",
+"value": {
+"t": "n",
+"v": 46
+}
+},
+{
+"op": "setv",
+"cell": "F!D5",
+"value": {
+"t": "n",
+"v": 355.07
+}
+},
+{
+"op": "setv",
+"cell": "F!A6",
+"value": {
+"t": "s",
+"v": "R4"
+}
+},
+{
+"op": "setv",
+"cell": "F!B6",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "F!C6",
+"value": {
+"t": "n",
+"v": 43
+}
+},
+{
+"op": "setv",
+"cell": "F!D6",
+"value": {
+"t": "n",
+"v": 146.36
+}
+},
+{
+"op": "setv",
+"cell": "F!A7",
+"value": {
+"t": "s",
+"v": "R5"
+}
+},
+{
+"op": "setv",
+"cell": "F!B7",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "F!C7",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "F!D7",
+"value": {
+"t": "n",
+"v": 131.96
+}
+},
+{
+"op": "setv",
+"cell": "F!A8",
+"value": {
+"t": "s",
+"v": "R6"
+}
+},
+{
+"op": "setv",
+"cell": "F!B8",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "F!C8",
+"value": {
+"t": "n",
+"v": 48
+}
+},
+{
+"op": "setv",
+"cell": "F!D8",
+"value": {
+"t": "n",
+"v": 215.59
+}
+},
+{
+"op": "setv",
+"cell": "F!A9",
+"value": {
+"t": "s",
+"v": "R7"
+}
+},
+{
+"op": "setv",
+"cell": "F!B9",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "F!C9",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "F!D9",
+"value": {
+"t": "n",
+"v": 403.16
+}
+},
+{
+"op": "setv",
+"cell": "F!A10",
+"value": {
+"t": "s",
+"v": "R8"
+}
+},
+{
+"op": "setv",
+"cell": "F!B10",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "F!C10",
+"value": {
+"t": "n",
+"v": 41
+}
+},
+{
+"op": "setv",
+"cell": "F!D10",
+"value": {
+"t": "n",
+"v": 424.7
+}
+},
+{
+"op": "setv",
+"cell": "F!A11",
+"value": {
+"t": "s",
+"v": "R9"
+}
+},
+{
+"op": "setv",
+"cell": "F!B11",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "F!C11",
+"value": {
+"t": "n",
+"v": 47
+}
+},
+{
+"op": "setv",
+"cell": "F!D11",
+"value": {
+"t": "n",
+"v": 206.78
+}
+},
+{
+"op": "setv",
+"cell": "F!A12",
+"value": {
+"t": "s",
+"v": "R10"
+}
+},
+{
+"op": "setv",
+"cell": "F!B12",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "F!C12",
+"value": {
+"t": "n",
+"v": 36
+}
+},
+{
+"op": "setv",
+"cell": "F!D12",
+"value": {
+"t": "n",
+"v": 40.47
+}
+},
+{
+"op": "setv",
+"cell": "F!A13",
+"value": {
+"t": "s",
+"v": "R11"
+}
+},
+{
+"op": "setv",
+"cell": "F!B13",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "F!C13",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "F!D13",
+"value": {
+"t": "n",
+"v": 83.95
+}
+},
+{
+"op": "setv",
+"cell": "F!A14",
+"value": {
+"t": "s",
+"v": "R12"
+}
+},
+{
+"op": "setv",
+"cell": "F!B14",
+"value": {
+"t": "s",
+"v": "East"
+}
+},
+{
+"op": "setv",
+"cell": "F!C14",
+"value": {
+"t": "n",
+"v": 46
+}
+},
+{
+"op": "setv",
+"cell": "F!D14",
+"value": {
+"t": "n",
+"v": 271.1
+}
+},
+{
+"op": "setv",
+"cell": "F!A15",
+"value": {
+"t": "s",
+"v": "R13"
+}
+},
+{
+"op": "setv",
+"cell": "F!B15",
+"value": {
+"t": "s",
+"v": "West"
+}
+},
+{
+"op": "setv",
+"cell": "F!C15",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "F!D15",
+"value": {
+"t": "n",
+"v": 112.9
+}
+},
+{
+"op": "setv",
+"cell": "F!A16",
+"value": {
+"t": "s",
+"v": "R14"
+}
+},
+{
+"op": "setv",
+"cell": "F!B16",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "F!C16",
+"value": {
+"t": "n",
+"v": 35
+}
+},
+{
+"op": "setv",
+"cell": "F!D16",
+"value": {
+"t": "n",
+"v": 70.52
+}
+},
+{
+"op": "table",
+"name": "tF",
+"range": "F!A1:D16"
+},
+{
+"op": "table_totals",
+"sheet": "F",
+"name": "tF",
+"value": true
+},
+{
+"op": "set",
+"cell": "F!D17",
+"input": "=SUBTOTAL(109,[Sales])"
+},
+{
+"op": "set",
+"cell": "F!C17",
+"input": "=SUBTOTAL(103,[Units])"
+},
+{
+"op": "set",
+"cell": "Dash!A1",
+"input": "=SUBTOTAL(9,tF[Sales])"
+},
+{
+"op": "set",
+"cell": "Dash!A2",
+"input": "=SUBTOTAL(109,tF[Sales])"
+},
+{
+"op": "set",
+"cell": "Dash!A3",
+"input": "=SUBTOTAL(103,tF[Rep])"
+},
+{
+"op": "set",
+"cell": "Dash!A4",
+"input": "=AGGREGATE(9,5,tF[Sales])"
+},
+{
+"op": "set",
+"cell": "Dash!A5",
+"input": "=AGGREGATE(14,5,tF[Sales],1)"
+},
+{
+"op": "set",
+"cell": "Dash!A6",
+"input": "=AGGREGATE(1,5,tF[Units])"
+},
+{
+"op": "set",
+"cell": "Dash!A7",
+"input": "=SUMPRODUCT(SUBTOTAL(109,OFFSET(F!D2,ROW(tF[Sales])-ROW(F!D2),0)),--(tF[Region]=\"East\"))"
+},
+{
+"op": "set",
+"cell": "Dash!A8",
+"input": "=SUM(tF[Sales])"
+},
+{
+"op": "set",
+"cell": "Dash!A9",
+"input": "=SUBTOTAL(101,tF[Units])"
+},
+{
+"op": "set",
+"cell": "Dash!A10",
+"input": "=SUBTOTAL(104,tF[Units])&\"/\"&SUBTOTAL(105,tF[Units])"
+},
+{
+"op": "set",
+"cell": "Dash!A11",
+"input": "=ROWS(FILTER(tF,SUBTOTAL(103,OFFSET(F!A2,ROW(tF[Rep])-ROW(F!A2),0)))) "
+},
+{
+"op": "set",
+"cell": "Dash!A12",
+"input": "=SUBTOTAL(103,F!A2:A16)"
+},
+{
+"op": "set",
+"cell": "Dash!A13",
+"input": "=SUBTOTAL(2,F!C2:C16)"
+},
+{
+"op": "set",
+"cell": "Dash!A14",
+"input": "=SUBTOTAL(9,F!D2:D17)"
+},
+{
+"op": "set",
+"cell": "Dash!A15",
+"input": "=SUBTOTAL(109,F!D1:D17)"
+},
+{
+"op": "set",
+"cell": "Dash!A16",
+"input": "=SUBTOTAL(9,Dash!A1:A15)"
+},
+{
+"op": "set",
+"cell": "Dash!A17",
+"input": "=AGGREGATE(3,7,tF[Rep])"
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+},
+{
+"op": "read",
+"range": "F!A1:D17"
+},
+{
+"op": "autofilter",
+"table": "tF",
+"field": 2,
+"criteria1": "East"
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+},
+{
+"op": "read",
+"range": "F!A1:D17"
+},
+{
+"op": "autofilter",
+"table": "tF",
+"field": 3,
+"criteria1": ">20"
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+},
+{
+"op": "hide_rows",
+"sheet": "F",
+"at": 3,
+"count": 2
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+},
+{
+"op": "set",
+"cell": "F!C3",
+"input": "49"
+},
+{
+"op": "set",
+"cell": "F!C2",
+"input": "1"
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+},
+{
+"op": "autofilter_clear",
+"sheet": "F"
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+},
+{
+"op": "unhide_rows",
+"sheet": "F",
+"at": 3,
+"count": 2
+},
+{
+"op": "read",
+"range": "Dash!A1:A17"
+}
+]
+}

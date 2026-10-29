@@ -1,0 +1,150 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "p"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "q"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "5"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B3",
+"name": "Tb"
+},
+{
+"op": "name",
+"name": "nmxa",
+"refers_to": "=Tb[q]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=nmxa"
+},
+{
+"op": "name",
+"name": "nmxb",
+"refers_to": "=Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=nmxb"
+},
+{
+"op": "name",
+"name": "nmxc",
+"refers_to": "=Tb[[#Headers],[q]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=nmxc"
+},
+{
+"op": "name",
+"name": "nmxd",
+"refers_to": "=SUM(Tb[q])"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=nmxd"
+},
+{
+"op": "name",
+"name": "nmxe",
+"refers_to": "=Tb[[#All],[p]:[q]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=nmxe"
+},
+{
+"op": "name",
+"name": "nmxf",
+"refers_to": "=Tb[@q]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=nmxf"
+},
+{
+"op": "name",
+"name": "nmxg",
+"refers_to": "=Sheet1!$A$2:$A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=nmxg"
+},
+{
+"op": "name",
+"name": "nmxh",
+"refers_to": "=Tb[q]+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=nmxh"
+},
+{
+"op": "name",
+"name": "nmxi",
+"refers_to": "=INDEX(Tb[q],1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=nmxi"
+},
+{
+"op": "name",
+"name": "nmxj",
+"refers_to": "=Tb[#Totals]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=nmxj"
+},
+{
+"op": "names"
+},
+{
+"op": "read",
+"range": "Sheet1!D1:D10"
+},
+{
+"op": "read_text",
+"range": "Sheet1!D1:D10"
+}
+]
+}

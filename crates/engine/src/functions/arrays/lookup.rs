@@ -206,17 +206,17 @@ impl Pattern {
 fn target_of(op: &Operand) -> R<Value> {
     match op {
         Operand::Val(Value::Error(e)) => Err(*e),
-        Operand::Val(Value::Lambda(_)) => Err(XlError::Value),
+        Operand::Val(Value::Lambda(_)) => Err(XlError::VALUE),
         Operand::Val(v) => Ok(v.clone()),
         Operand::Missing => Ok(Value::Blank),
-        Operand::Ref(_) => Err(XlError::Value),
+        Operand::Ref(_) => Err(XlError::VALUE),
     }
 }
 
 fn lookup_src(op: &Operand) -> R<Src> {
     match op {
-        Operand::Missing => Err(XlError::Value),
-        Operand::Ref(r) if r.is_span() => Err(XlError::Value),
+        Operand::Missing => Err(XlError::VALUE),
+        Operand::Ref(r) if r.is_span() => Err(XlError::VALUE),
         Operand::Ref(r) if r.single().is_none() => Err(XlError::NA),
         op => Src::from_operand(op),
     }
@@ -231,7 +231,7 @@ fn int_mode(ctx: &EvalCtx, op: Option<&Operand>, default: i32, allowed: &[i32]) 
         .iter()
         .copied()
         .find(|&m| m as f64 == n)
-        .ok_or(XlError::Value)
+        .ok_or(XlError::VALUE)
 }
 
 fn modes(ctx: &EvalCtx, mm: Option<&Operand>, sm: Option<&Operand>) -> R<(i32, i32)> {
@@ -341,7 +341,7 @@ fn xfind(line: &Line, t: &Value, mm: i32, sm: i32) -> Option<u32> {
 fn line_shape(src: &Src) -> R<(u32, Option<bool>)> {
     let (r, c) = (src.rows(), src.cols());
     if r > 1 && c > 1 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     Ok(if r == 1 && c == 1 {
         (1, None)
@@ -367,7 +367,7 @@ pub fn xmatch(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             let src = src.as_ref().map_err(|e| *e)?;
             let (_, orient) = line_shape(src)?;
             if mm == 2 && sm.abs() == 2 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             let line = line.get_or_insert_with(|| Line::of(ctx, src, orient.unwrap_or(true), 0));
             match xfind(line, &target, mm, sm) {
@@ -389,7 +389,7 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
     let lifted = [0usize, 4, 5].iter().any(|&i| match ops.get(i) {
         Some(Operand::Val(Value::Array(_))) => true,
-        Some(Operand::Ref(r)) => r.single().map_or(true, |a| !a.rect.is_cell()),
+        Some(Operand::Ref(r)) => r.single().is_none_or(|a| !a.rect.is_cell()),
         _ => false,
     });
 
@@ -399,7 +399,7 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let r = (|| -> R<Operand> {
             let target = target_of(&ops[0])?;
             if blank {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             let src = src.as_ref().map_err(|e| *e)?;
             let ret = ret.as_ref().map_err(|e| *e)?;
@@ -414,15 +414,15 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     } else if ret.cols() == 1 {
                         false
                     } else {
-                        return Err(XlError::Value);
+                        return Err(XlError::VALUE);
                     }
                 }
             };
             if (vertical && ret.rows() != len) || (!vertical && ret.cols() != len) {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             if mm == 2 && sm.abs() == 2 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             let line = line.get_or_insert_with(|| Line::of(ctx, src, vertical, 0));
             match xfind(line, &target, mm, sm) {
@@ -433,8 +433,8 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 }),
                 None => match ops.get(3) {
                     None | Some(Operand::Missing) => Err(XlError::NA),
-                    Some(Operand::Ref(r)) if r.single().is_none() => Err(XlError::Value),
-                    Some(Operand::Ref(_)) if lifted => Err(XlError::Value),
+                    Some(Operand::Ref(r)) if r.single().is_none() => Err(XlError::VALUE),
+                    Some(Operand::Ref(_)) if lifted => Err(XlError::VALUE),
                     Some(op) => Ok(op.clone()),
                 },
             }
@@ -514,7 +514,7 @@ fn lookup_one(
             return Err(*e);
         }
         if matches!(ops.get(2), Some(Operand::Missing)) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         if let Some(Operand::Val(Value::Error(e))) = ops.get(2) {
             return Err(*e);

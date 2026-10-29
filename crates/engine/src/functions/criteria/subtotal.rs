@@ -63,9 +63,11 @@ impl Func {
 
 fn scalar_num(ctx: &EvalCtx, op: &Operand) -> R<f64> {
     match op {
-        Operand::Val(v) => ctx.to_number(v).map(f64::trunc),
-        Operand::Missing => Err(XlError::Value),
-        Operand::Ref(_) => Err(XlError::Value),
+        Operand::Val(v) => ctx
+            .to_number(v)
+            .map(|x| crate::functions::args::sfix(x) as f64),
+        Operand::Missing => Err(XlError::VALUE),
+        Operand::Ref(_) => Err(XlError::VALUE),
     }
 }
 
@@ -111,7 +113,7 @@ fn gather_ref(
 ) -> R<()> {
     let areas = r.areas();
     if areas.iter().any(|a| a.sheet != areas[0].sheet) {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     let wb = ctx.wb;
     let mut cache: FxHashMap<FormulaId, bool> = FxHashMap::default();
@@ -191,7 +193,7 @@ fn apply(f: Func, vals: &[Value], k: f64) -> R<Value> {
         Sum => stats::snapped_sum(&v),
         Average => {
             if v.is_empty() {
-                return Err(XlError::Div0);
+                return Err(XlError::DIV0);
             }
             stats::snapped_sum(&v) / v.len() as f64
         }
@@ -241,7 +243,7 @@ pub fn subtotal(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             101..=111 => Func::from_index(n - 100.0),
             _ => None,
         }
-        .ok_or(XlError::Value)?;
+        .ok_or(XlError::VALUE)?;
         let mut vals = Vec::new();
         let hide = if n >= 100.0 {
             Hide::Always
@@ -252,11 +254,11 @@ pub fn subtotal(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             match op {
                 Operand::Ref(r) => gather_ref(ctx, r, true, false, hide, &mut vals)?,
                 Operand::Val(Value::Error(e)) => return Err(*e),
-                _ => return Err(XlError::Value),
+                _ => return Err(XlError::VALUE),
             }
         }
         if ctx.interrupted() {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         apply(f, &vals, 0.0)
     })();
@@ -328,18 +330,18 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 return Ok(Array::new(
                     a.rows,
                     a.cols,
-                    vec![Value::Error(XlError::Value); a.data.len()],
+                    vec![Value::Error(XlError::VALUE); a.data.len()],
                 )
                 .into_value());
             }
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         };
         let opt = match &ops[1] {
             Operand::Missing => 0.0,
             op => scalar_num(ctx, op)?,
         };
         if !(0.0..=7.0).contains(&opt) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let opt = opt as u32;
         let skip_nested = opt <= 3;
@@ -351,28 +353,30 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 return Ok(Array::new(
                     a.rows,
                     a.cols,
-                    vec![Value::Error(XlError::Value); a.data.len()],
+                    vec![Value::Error(XlError::VALUE); a.data.len()],
                 )
                 .into_value());
             }
             for op in &ops[2..] {
                 match op {
+                    Operand::Ref(crate::eval::Reference::Grid(_)) => return Err(XlError::VALUE),
                     Operand::Ref(r) => {
                         gather_ref(ctx, r, skip_nested, skip_errors, hide, &mut vals)?
                     }
                     Operand::Val(Value::Error(e)) => return Err(*e),
-                    _ => return Err(XlError::Value),
+                    _ => return Err(XlError::VALUE),
                 }
             }
             if ctx.interrupted() {
-                return Err(XlError::Calc);
+                return Err(XlError::CALC);
             }
             return apply(f, &vals, 0.0);
         }
         if ops.len() != 4 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         match &ops[2] {
+            Operand::Ref(crate::eval::Reference::Grid(_)) => return Err(XlError::NA),
             Operand::Ref(r) => gather_ref(ctx, r, skip_nested, skip_errors, hide, &mut vals)?,
             Operand::Val(Value::Array(a)) => {
                 vals.extend(
@@ -386,7 +390,7 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
             Operand::Val(Value::Error(e)) => return Err(*e),
             Operand::Val(_) => {}
-            Operand::Missing => return Err(XlError::Value),
+            Operand::Missing => return Err(XlError::VALUE),
         }
 
         let k = match &ops[3] {
@@ -398,7 +402,7 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Operand::Val(v) => v.clone(),
         };
         if ctx.interrupted() {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         let one = |ctx: &EvalCtx, k: &Value| -> Value {
             match ctx.to_number(k) {
@@ -419,7 +423,7 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         Operand::Val(v @ Value::Text(_)) => ctx.to_number(v).is_err(),
         _ => false,
     });
-    if let (Err(XlError::Value), false) = (&r, text_head) {
+    if let (Err(XlError::VALUE), false) = (&r, text_head) {
         for (i, op) in ops.iter().enumerate().skip(1) {
             let e = match op {
                 Operand::Val(Value::Error(e)) => Some(*e),

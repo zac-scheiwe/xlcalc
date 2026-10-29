@@ -126,7 +126,7 @@ pub fn fmt_part(x: f64) -> String {
 
 pub fn format(z: C, suffix: Suffix) -> R<String> {
     if !z.finite() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let sfx = suffix.unwrap_or('i');
     let re = crate::number::normalize(z.re);
@@ -139,7 +139,7 @@ pub fn format(z: C, suffix: Suffix) -> R<String> {
         }
     };
     if too_big(re) || too_big(im) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let imag = |v: f64| -> String {
         let a = if v.abs() == 1.0 {
@@ -215,9 +215,9 @@ pub fn parse(ctx: &EvalCtx, v: &Value) -> R<(C, Suffix)> {
     match v {
         Value::Number(n) => Ok((C::new(*n, 0.0), None)),
         Value::Blank => Ok((C::new(0.0, 0.0), None)),
-        Value::Text(s) => parse_text(ctx, s).ok_or(XlError::Num),
+        Value::Text(s) => parse_text(ctx, s).ok_or(XlError::NUM),
         Value::Error(e) => Err(*e),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -246,11 +246,11 @@ pub fn complex_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     Some(Some(Value::Text(s))) => match &**s {
                         "" | "i" => 'i',
                         "j" => 'j',
-                        _ => return Err(XlError::Value),
+                        _ => return Err(XlError::VALUE),
                     },
                     Some(Some(Value::Blank)) | Some(None) | None => 'i',
                     Some(Some(Value::Error(e))) => return Err(*e),
-                    Some(Some(_)) => return Err(XlError::Value),
+                    Some(Some(_)) => return Err(XlError::VALUE),
                 })
             })();
 
@@ -278,7 +278,7 @@ pub fn unary(ctx: &mut EvalCtx, ops: &[Operand], f: fn(C) -> R<C>) -> Operand {
 
 pub fn imargument(z: C) -> R<f64> {
     if z.is_zero() {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     Ok(z.arg())
 }
@@ -288,7 +288,7 @@ pub fn imsub(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         val((|| {
             let (x, sx) = req(ctx, a, 0)?;
             let (y, sy) = req(ctx, a, 1)?;
-            let s = join(sx, sy, XlError::Num)?;
+            let s = join(sx, sy, XlError::NUM)?;
 
             let fin = |v: f64| if v.is_finite() { v } else { 0.0 };
             Ok(Value::from(format(
@@ -304,9 +304,9 @@ pub fn imdiv(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         val((|| {
             let (x, sx) = req(ctx, a, 0)?;
             let (y, sy) = req(ctx, a, 1)?;
-            let s = join(sx, sy, XlError::Num)?;
+            let s = join(sx, sy, XlError::NUM)?;
             if y.is_zero() {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             Ok(Value::from(format(x.div(y), s)?))
         })())
@@ -328,7 +328,7 @@ pub fn power(z: C, n: f64) -> R<C> {
         return if n > 0.0 {
             Ok(C::new(0.0, 0.0))
         } else {
-            Err(XlError::Num)
+            Err(XlError::NUM)
         };
     }
     let m = if z.im == 0.0 { z.re.abs() } else { z.modulus() };
@@ -341,7 +341,7 @@ pub fn power(z: C, n: f64) -> R<C> {
 }
 
 pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
-    if ops.first().map_or(true, |o| o.is_missing()) {
+    if ops.first().is_none_or(|o| o.is_missing()) {
         return Operand::err(XlError::NA);
     }
     let r: R<Value> = (|| {
@@ -350,7 +350,7 @@ pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
         for op in ops {
             atp::visit_list(ctx, op, |ctx, v| {
                 let (z, s) = parse(ctx, v)?;
-                sfx = join(sfx, s, XlError::Value)?;
+                sfx = join(sfx, s, XlError::VALUE)?;
                 acc = Some(match acc {
                     None => z,
                     Some(a) if product => a.mul(z),
@@ -361,7 +361,7 @@ pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
         }
         let z = acc.unwrap_or(C::new(0.0, 0.0));
         if !z.finite() {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         Ok(Value::from(format(z, sfx)?))
     })();
@@ -370,14 +370,14 @@ pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
 
 fn trig_sin(x: f64) -> R<f64> {
     if x.abs() >= xlmath::TRIG_LIMIT {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(xlmath::sin(x))
 }
 
 fn trig_cos(x: f64) -> R<f64> {
     if x.abs() >= xlmath::TRIG_LIMIT {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(xlmath::cos(x))
 }
@@ -429,7 +429,7 @@ pub fn imexp(z: C) -> R<C> {
 
 pub fn imln(z: C) -> R<C> {
     if z.is_zero() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
 
     let m = if z.im == 0.0 {
@@ -448,7 +448,7 @@ fn imlog_k(z: C, k: f64) -> R<C> {
 }
 
 pub fn imlog10(z: C) -> R<C> {
-    imlog_k(z, 0.4342944819032518)
+    imlog_k(z, std::f64::consts::LOG10_E)
 }
 
 pub fn imlog2(z: C) -> R<C> {
@@ -483,7 +483,7 @@ pub fn imcos(z: C) -> R<C> {
 fn sinh_cosh(z: C, cosh: bool) -> R<C> {
     let (x, y) = (z.re, z.im);
     let mut f = MpFlag::default();
-    let num = |_| XlError::Num;
+    let num = |_| XlError::NUM;
     if y == 0.0 {
         let v = if cosh {
             cosh2(&mut f, -x)
@@ -498,8 +498,8 @@ fn sinh_cosh(z: C, cosh: bool) -> R<C> {
         let ax = x.abs();
         let mut big = |t: f64| -> R<f64> {
             let h = f.div(t, 2.0);
-            if !(h > 0.0) {
-                return Err(XlError::Num);
+            if h <= 0.0 || h.is_nan() {
+                return Err(XlError::NUM);
             }
             Ok(f.exp(crate::x87::add(crate::x87::ln(h), ax)))
         };
@@ -576,7 +576,7 @@ fn recip(z: C) -> R<C> {
         return Ok(C::new(0.0, 0.0));
     }
     if z.is_zero() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(C::new(1.0, 0.0).div(z))
 }
@@ -623,7 +623,7 @@ fn cosh2(f: &mut MpFlag, t: f64) -> f64 {
 fn hyp_band(v: f64) -> u8 {
     if v <= 354.5 && v > -354.0 {
         0
-    } else if v <= 709.0 && v >= -708.0 {
+    } else if (-708.0..=709.0).contains(&v) {
         1
     } else {
         2
@@ -632,7 +632,7 @@ fn hyp_band(v: f64) -> u8 {
 
 fn mp_done(f: &MpFlag, w: C) -> R<C> {
     if f.0 != 0 {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     } else {
         Ok(C::new(w.re + 0.0, w.im + 0.0))
     }
@@ -641,7 +641,7 @@ fn mp_done(f: &MpFlag, w: C) -> R<C> {
 fn sec_csc(z: C, csc: bool) -> R<C> {
     let (x, y) = (z.re, z.im);
     let mut f = MpFlag::default();
-    let num = |_| XlError::Num;
+    let num = |_| XlError::NUM;
     if y == 0.0 {
         let t = if csc { x87_sin(x) } else { x87_cos(x) }.map_err(num)?;
         let r = f.div(1.0, t);
@@ -700,7 +700,7 @@ pub fn imcot(z: C) -> R<C> {
 fn sech_csch(z: C, csch: bool) -> R<C> {
     let (x, y) = (z.re, z.im);
     let mut f = MpFlag::default();
-    let num = |_| XlError::Num;
+    let num = |_| XlError::NUM;
     if y == 0.0 {
         let h = if csch {
             sinh2n(&mut f, -x)

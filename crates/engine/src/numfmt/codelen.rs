@@ -92,12 +92,19 @@ fn date_len(cs: &[char]) -> Option<u32> {
                 let inner: String = cs[i + 1..j].iter().collect::<String>().to_ascii_lowercase();
                 if inner.starts_with(['<', '>', '=']) {
                     len += 10;
-                } else if !inner.is_empty() && inner.chars().all(|c| matches!(c, 'h' | 'm' | 's')) {
-                    len += 2;
-                } else if matches!(
-                    inner.as_str(),
-                    "black" | "blue" | "cyan" | "green" | "magenta" | "red" | "white" | "yellow"
-                ) {
+                } else if !inner.is_empty() && inner.chars().all(|c| matches!(c, 'h' | 'm' | 's'))
+                    || matches!(
+                        inner.as_str(),
+                        "black"
+                            | "blue"
+                            | "cyan"
+                            | "green"
+                            | "magenta"
+                            | "red"
+                            | "white"
+                            | "yellow"
+                    )
+                {
                     len += 2;
                 } else {
                     return None;

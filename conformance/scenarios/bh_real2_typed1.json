@@ -1,0 +1,1336 @@
+{
+"sheets": [
+"T",
+"U"
+],
+"steps": [
+{
+"op": "set",
+"cell": "T!A1",
+"input": "$12.50"
+},
+{
+"op": "set",
+"cell": "U!A1",
+"input": "=ISNUMBER(T!A1)&\"|\"&T!A1&\"|\"&TEXT(T!A1,\"General\")&\"|\"&CELL(\"format\",T!A1)"
+},
+{
+"op": "set",
+"cell": "U!B1",
+"input": "=T!A1*1"
+},
+{
+"op": "set",
+"cell": "T!A2",
+"input": "NZ$5"
+},
+{
+"op": "set",
+"cell": "U!A2",
+"input": "=ISNUMBER(T!A2)&\"|\"&T!A2&\"|\"&TEXT(T!A2,\"General\")&\"|\"&CELL(\"format\",T!A2)"
+},
+{
+"op": "set",
+"cell": "U!B2",
+"input": "=T!A2*1"
+},
+{
+"op": "set",
+"cell": "T!A3",
+"input": "\u20ac3,50"
+},
+{
+"op": "set",
+"cell": "U!A3",
+"input": "=ISNUMBER(T!A3)&\"|\"&T!A3&\"|\"&TEXT(T!A3,\"General\")&\"|\"&CELL(\"format\",T!A3)"
+},
+{
+"op": "set",
+"cell": "U!B3",
+"input": "=T!A3*1"
+},
+{
+"op": "set",
+"cell": "T!A4",
+"input": "\u00a31,000"
+},
+{
+"op": "set",
+"cell": "U!A4",
+"input": "=ISNUMBER(T!A4)&\"|\"&T!A4&\"|\"&TEXT(T!A4,\"General\")&\"|\"&CELL(\"format\",T!A4)"
+},
+{
+"op": "set",
+"cell": "U!B4",
+"input": "=T!A4*1"
+},
+{
+"op": "set",
+"cell": "T!A5",
+"input": "12%"
+},
+{
+"op": "set",
+"cell": "U!A5",
+"input": "=ISNUMBER(T!A5)&\"|\"&T!A5&\"|\"&TEXT(T!A5,\"General\")&\"|\"&CELL(\"format\",T!A5)"
+},
+{
+"op": "set",
+"cell": "U!B5",
+"input": "=T!A5*1"
+},
+{
+"op": "set",
+"cell": "T!A6",
+"input": "-12.5%"
+},
+{
+"op": "set",
+"cell": "U!A6",
+"input": "=ISNUMBER(T!A6)&\"|\"&T!A6&\"|\"&TEXT(T!A6,\"General\")&\"|\"&CELL(\"format\",T!A6)"
+},
+{
+"op": "set",
+"cell": "U!B6",
+"input": "=T!A6*1"
+},
+{
+"op": "set",
+"cell": "T!A7",
+"input": "(5)"
+},
+{
+"op": "set",
+"cell": "U!A7",
+"input": "=ISNUMBER(T!A7)&\"|\"&T!A7&\"|\"&TEXT(T!A7,\"General\")&\"|\"&CELL(\"format\",T!A7)"
+},
+{
+"op": "set",
+"cell": "U!B7",
+"input": "=T!A7*1"
+},
+{
+"op": "set",
+"cell": "T!A8",
+"input": "(1,234.5)"
+},
+{
+"op": "set",
+"cell": "U!A8",
+"input": "=ISNUMBER(T!A8)&\"|\"&T!A8&\"|\"&TEXT(T!A8,\"General\")&\"|\"&CELL(\"format\",T!A8)"
+},
+{
+"op": "set",
+"cell": "U!B8",
+"input": "=T!A8*1"
+},
+{
+"op": "set",
+"cell": "T!A9",
+"input": "1,234"
+},
+{
+"op": "set",
+"cell": "U!A9",
+"input": "=ISNUMBER(T!A9)&\"|\"&T!A9&\"|\"&TEXT(T!A9,\"General\")&\"|\"&CELL(\"format\",T!A9)"
+},
+{
+"op": "set",
+"cell": "U!B9",
+"input": "=T!A9*1"
+},
+{
+"op": "set",
+"cell": "T!A10",
+"input": "1,23"
+},
+{
+"op": "set",
+"cell": "U!A10",
+"input": "=ISNUMBER(T!A10)&\"|\"&T!A10&\"|\"&TEXT(T!A10,\"General\")&\"|\"&CELL(\"format\",T!A10)"
+},
+{
+"op": "set",
+"cell": "U!B10",
+"input": "=T!A10*1"
+},
+{
+"op": "set",
+"cell": "T!A11",
+"input": "1.234,5"
+},
+{
+"op": "set",
+"cell": "U!A11",
+"input": "=ISNUMBER(T!A11)&\"|\"&T!A11&\"|\"&TEXT(T!A11,\"General\")&\"|\"&CELL(\"format\",T!A11)"
+},
+{
+"op": "set",
+"cell": "U!B11",
+"input": "=T!A11*1"
+},
+{
+"op": "set",
+"cell": "T!A12",
+"input": "5-Jan"
+},
+{
+"op": "set",
+"cell": "U!A12",
+"input": "=ISNUMBER(T!A12)&\"|\"&T!A12&\"|\"&TEXT(T!A12,\"General\")&\"|\"&CELL(\"format\",T!A12)"
+},
+{
+"op": "set",
+"cell": "U!B12",
+"input": "=T!A12*1"
+},
+{
+"op": "set",
+"cell": "T!A13",
+"input": "5-Jan-26"
+},
+{
+"op": "set",
+"cell": "U!A13",
+"input": "=ISNUMBER(T!A13)&\"|\"&T!A13&\"|\"&TEXT(T!A13,\"General\")&\"|\"&CELL(\"format\",T!A13)"
+},
+{
+"op": "set",
+"cell": "U!B13",
+"input": "=T!A13*1"
+},
+{
+"op": "set",
+"cell": "T!A14",
+"input": "Jan-26"
+},
+{
+"op": "set",
+"cell": "U!A14",
+"input": "=ISNUMBER(T!A14)&\"|\"&T!A14&\"|\"&TEXT(T!A14,\"General\")&\"|\"&CELL(\"format\",T!A14)"
+},
+{
+"op": "set",
+"cell": "U!B14",
+"input": "=T!A14*1"
+},
+{
+"op": "set",
+"cell": "T!A15",
+"input": "Jan 5"
+},
+{
+"op": "set",
+"cell": "U!A15",
+"input": "=ISNUMBER(T!A15)&\"|\"&T!A15&\"|\"&TEXT(T!A15,\"General\")&\"|\"&CELL(\"format\",T!A15)"
+},
+{
+"op": "set",
+"cell": "U!B15",
+"input": "=T!A15*1"
+},
+{
+"op": "set",
+"cell": "T!A16",
+"input": "1/2"
+},
+{
+"op": "set",
+"cell": "U!A16",
+"input": "=ISNUMBER(T!A16)&\"|\"&T!A16&\"|\"&TEXT(T!A16,\"General\")&\"|\"&CELL(\"format\",T!A16)"
+},
+{
+"op": "set",
+"cell": "U!B16",
+"input": "=T!A16*1"
+},
+{
+"op": "set",
+"cell": "T!A17",
+"input": "1/2/3"
+},
+{
+"op": "set",
+"cell": "U!A17",
+"input": "=ISNUMBER(T!A17)&\"|\"&T!A17&\"|\"&TEXT(T!A17,\"General\")&\"|\"&CELL(\"format\",T!A17)"
+},
+{
+"op": "set",
+"cell": "U!B17",
+"input": "=T!A17*1"
+},
+{
+"op": "set",
+"cell": "T!A18",
+"input": "31/2"
+},
+{
+"op": "set",
+"cell": "U!A18",
+"input": "=ISNUMBER(T!A18)&\"|\"&T!A18&\"|\"&TEXT(T!A18,\"General\")&\"|\"&CELL(\"format\",T!A18)"
+},
+{
+"op": "set",
+"cell": "U!B18",
+"input": "=T!A18*1"
+},
+{
+"op": "set",
+"cell": "T!A19",
+"input": "29/2/2026"
+},
+{
+"op": "set",
+"cell": "U!A19",
+"input": "=ISNUMBER(T!A19)&\"|\"&T!A19&\"|\"&TEXT(T!A19,\"General\")&\"|\"&CELL(\"format\",T!A19)"
+},
+{
+"op": "set",
+"cell": "U!B19",
+"input": "=T!A19*1"
+},
+{
+"op": "set",
+"cell": "T!A20",
+"input": "29/2/2028"
+},
+{
+"op": "set",
+"cell": "U!A20",
+"input": "=ISNUMBER(T!A20)&\"|\"&T!A20&\"|\"&TEXT(T!A20,\"General\")&\"|\"&CELL(\"format\",T!A20)"
+},
+{
+"op": "set",
+"cell": "U!B20",
+"input": "=T!A20*1"
+},
+{
+"op": "set",
+"cell": "T!A21",
+"input": "12:30 PM"
+},
+{
+"op": "set",
+"cell": "U!A21",
+"input": "=ISNUMBER(T!A21)&\"|\"&T!A21&\"|\"&TEXT(T!A21,\"General\")&\"|\"&CELL(\"format\",T!A21)"
+},
+{
+"op": "set",
+"cell": "U!B21",
+"input": "=T!A21*1"
+},
+{
+"op": "set",
+"cell": "T!A22",
+"input": "12:30:45.5"
+},
+{
+"op": "set",
+"cell": "U!A22",
+"input": "=ISNUMBER(T!A22)&\"|\"&T!A22&\"|\"&TEXT(T!A22,\"General\")&\"|\"&CELL(\"format\",T!A22)"
+},
+{
+"op": "set",
+"cell": "U!B22",
+"input": "=T!A22*1"
+},
+{
+"op": "set",
+"cell": "T!A23",
+"input": "25:00"
+},
+{
+"op": "set",
+"cell": "U!A23",
+"input": "=ISNUMBER(T!A23)&\"|\"&T!A23&\"|\"&TEXT(T!A23,\"General\")&\"|\"&CELL(\"format\",T!A23)"
+},
+{
+"op": "set",
+"cell": "U!B23",
+"input": "=T!A23*1"
+},
+{
+"op": "set",
+"cell": "T!A24",
+"input": "1:5"
+},
+{
+"op": "set",
+"cell": "U!A24",
+"input": "=ISNUMBER(T!A24)&\"|\"&T!A24&\"|\"&TEXT(T!A24,\"General\")&\"|\"&CELL(\"format\",T!A24)"
+},
+{
+"op": "set",
+"cell": "U!B24",
+"input": "=T!A24*1"
+},
+{
+"op": "set",
+"cell": "T!A25",
+"input": "1e3"
+},
+{
+"op": "set",
+"cell": "U!A25",
+"input": "=ISNUMBER(T!A25)&\"|\"&T!A25&\"|\"&TEXT(T!A25,\"General\")&\"|\"&CELL(\"format\",T!A25)"
+},
+{
+"op": "set",
+"cell": "U!B25",
+"input": "=T!A25*1"
+},
+{
+"op": "set",
+"cell": "T!A26",
+"input": "1E+3"
+},
+{
+"op": "set",
+"cell": "U!A26",
+"input": "=ISNUMBER(T!A26)&\"|\"&T!A26&\"|\"&TEXT(T!A26,\"General\")&\"|\"&CELL(\"format\",T!A26)"
+},
+{
+"op": "set",
+"cell": "U!B26",
+"input": "=T!A26*1"
+},
+{
+"op": "set",
+"cell": "T!A27",
+"input": "1.5e-3"
+},
+{
+"op": "set",
+"cell": "U!A27",
+"input": "=ISNUMBER(T!A27)&\"|\"&T!A27&\"|\"&TEXT(T!A27,\"General\")&\"|\"&CELL(\"format\",T!A27)"
+},
+{
+"op": "set",
+"cell": "U!B27",
+"input": "=T!A27*1"
+},
+{
+"op": "set",
+"cell": "T!A28",
+"input": "0x10"
+},
+{
+"op": "set",
+"cell": "U!A28",
+"input": "=ISNUMBER(T!A28)&\"|\"&T!A28&\"|\"&TEXT(T!A28,\"General\")&\"|\"&CELL(\"format\",T!A28)"
+},
+{
+"op": "set",
+"cell": "U!B28",
+"input": "=T!A28*1"
+},
+{
+"op": "set",
+"cell": "T!A29",
+"input": "010"
+},
+{
+"op": "set",
+"cell": "U!A29",
+"input": "=ISNUMBER(T!A29)&\"|\"&T!A29&\"|\"&TEXT(T!A29,\"General\")&\"|\"&CELL(\"format\",T!A29)"
+},
+{
+"op": "set",
+"cell": "U!B29",
+"input": "=T!A29*1"
+},
+{
+"op": "set",
+"cell": "T!A30",
+"input": "+5"
+},
+{
+"op": "set",
+"cell": "U!A30",
+"input": "=ISNUMBER(T!A30)&\"|\"&T!A30&\"|\"&TEXT(T!A30,\"General\")&\"|\"&CELL(\"format\",T!A30)"
+},
+{
+"op": "set",
+"cell": "U!B30",
+"input": "=T!A30*1"
+},
+{
+"op": "set",
+"cell": "T!A31",
+"input": "=5"
+},
+{
+"op": "set",
+"cell": "U!A31",
+"input": "=ISNUMBER(T!A31)&\"|\"&T!A31&\"|\"&TEXT(T!A31,\"General\")&\"|\"&CELL(\"format\",T!A31)"
+},
+{
+"op": "set",
+"cell": "U!B31",
+"input": "=T!A31*1"
+},
+{
+"op": "set",
+"cell": "T!A32",
+"input": "'5"
+},
+{
+"op": "set",
+"cell": "U!A32",
+"input": "=ISNUMBER(T!A32)&\"|\"&T!A32&\"|\"&TEXT(T!A32,\"General\")&\"|\"&CELL(\"format\",T!A32)"
+},
+{
+"op": "set",
+"cell": "U!B32",
+"input": "=T!A32*1"
+},
+{
+"op": "set",
+"cell": "T!A33",
+"input": "TRUE"
+},
+{
+"op": "set",
+"cell": "U!A33",
+"input": "=ISNUMBER(T!A33)&\"|\"&T!A33&\"|\"&TEXT(T!A33,\"General\")&\"|\"&CELL(\"format\",T!A33)"
+},
+{
+"op": "set",
+"cell": "U!B33",
+"input": "=T!A33*1"
+},
+{
+"op": "set",
+"cell": "T!A34",
+"input": "true"
+},
+{
+"op": "set",
+"cell": "U!A34",
+"input": "=ISNUMBER(T!A34)&\"|\"&T!A34&\"|\"&TEXT(T!A34,\"General\")&\"|\"&CELL(\"format\",T!A34)"
+},
+{
+"op": "set",
+"cell": "U!B34",
+"input": "=T!A34*1"
+},
+{
+"op": "set",
+"cell": "T!A35",
+"input": "#N/A"
+},
+{
+"op": "set",
+"cell": "U!A35",
+"input": "=ISNUMBER(T!A35)&\"|\"&T!A35&\"|\"&TEXT(T!A35,\"General\")&\"|\"&CELL(\"format\",T!A35)"
+},
+{
+"op": "set",
+"cell": "U!B35",
+"input": "=T!A35*1"
+},
+{
+"op": "set",
+"cell": "T!A36",
+"input": "#div/0!"
+},
+{
+"op": "set",
+"cell": "U!A36",
+"input": "=ISNUMBER(T!A36)&\"|\"&T!A36&\"|\"&TEXT(T!A36,\"General\")&\"|\"&CELL(\"format\",T!A36)"
+},
+{
+"op": "set",
+"cell": "U!B36",
+"input": "=T!A36*1"
+},
+{
+"op": "set",
+"cell": "T!A37",
+"input": " 5 "
+},
+{
+"op": "set",
+"cell": "U!A37",
+"input": "=ISNUMBER(T!A37)&\"|\"&T!A37&\"|\"&TEXT(T!A37,\"General\")&\"|\"&CELL(\"format\",T!A37)"
+},
+{
+"op": "set",
+"cell": "U!B37",
+"input": "=T!A37*1"
+},
+{
+"op": "set",
+"cell": "T!A38",
+"input": "5 "
+},
+{
+"op": "set",
+"cell": "U!A38",
+"input": "=ISNUMBER(T!A38)&\"|\"&T!A38&\"|\"&TEXT(T!A38,\"General\")&\"|\"&CELL(\"format\",T!A38)"
+},
+{
+"op": "set",
+"cell": "U!B38",
+"input": "=T!A38*1"
+},
+{
+"op": "set",
+"cell": "T!A39",
+"input": "1 1/2"
+},
+{
+"op": "set",
+"cell": "U!A39",
+"input": "=ISNUMBER(T!A39)&\"|\"&T!A39&\"|\"&TEXT(T!A39,\"General\")&\"|\"&CELL(\"format\",T!A39)"
+},
+{
+"op": "set",
+"cell": "U!B39",
+"input": "=T!A39*1"
+},
+{
+"op": "set",
+"cell": "T!A40",
+"input": "1/4"
+},
+{
+"op": "set",
+"cell": "U!A40",
+"input": "=ISNUMBER(T!A40)&\"|\"&T!A40&\"|\"&TEXT(T!A40,\"General\")&\"|\"&CELL(\"format\",T!A40)"
+},
+{
+"op": "set",
+"cell": "U!B40",
+"input": "=T!A40*1"
+},
+{
+"op": "set",
+"cell": "T!A41",
+"input": "0 1/4"
+},
+{
+"op": "set",
+"cell": "U!A41",
+"input": "=ISNUMBER(T!A41)&\"|\"&T!A41&\"|\"&TEXT(T!A41,\"General\")&\"|\"&CELL(\"format\",T!A41)"
+},
+{
+"op": "set",
+"cell": "U!B41",
+"input": "=T!A41*1"
+},
+{
+"op": "set",
+"cell": "T!A42",
+"input": "12/25"
+},
+{
+"op": "set",
+"cell": "U!A42",
+"input": "=ISNUMBER(T!A42)&\"|\"&T!A42&\"|\"&TEXT(T!A42,\"General\")&\"|\"&CELL(\"format\",T!A42)"
+},
+{
+"op": "set",
+"cell": "U!B42",
+"input": "=T!A42*1"
+},
+{
+"op": "set",
+"cell": "T!A43",
+"input": "2026-1-5"
+},
+{
+"op": "set",
+"cell": "U!A43",
+"input": "=ISNUMBER(T!A43)&\"|\"&T!A43&\"|\"&TEXT(T!A43,\"General\")&\"|\"&CELL(\"format\",T!A43)"
+},
+{
+"op": "set",
+"cell": "U!B43",
+"input": "=T!A43*1"
+},
+{
+"op": "set",
+"cell": "T!A44",
+"input": "2026/01/05"
+},
+{
+"op": "set",
+"cell": "U!A44",
+"input": "=ISNUMBER(T!A44)&\"|\"&T!A44&\"|\"&TEXT(T!A44,\"General\")&\"|\"&CELL(\"format\",T!A44)"
+},
+{
+"op": "set",
+"cell": "U!B44",
+"input": "=T!A44*1"
+},
+{
+"op": "set",
+"cell": "T!A45",
+"input": "5.1.2026"
+},
+{
+"op": "set",
+"cell": "U!A45",
+"input": "=ISNUMBER(T!A45)&\"|\"&T!A45&\"|\"&TEXT(T!A45,\"General\")&\"|\"&CELL(\"format\",T!A45)"
+},
+{
+"op": "set",
+"cell": "U!B45",
+"input": "=T!A45*1"
+},
+{
+"op": "set",
+"cell": "T!A46",
+"input": "5/1/26 3:15"
+},
+{
+"op": "set",
+"cell": "U!A46",
+"input": "=ISNUMBER(T!A46)&\"|\"&T!A46&\"|\"&TEXT(T!A46,\"General\")&\"|\"&CELL(\"format\",T!A46)"
+},
+{
+"op": "set",
+"cell": "U!B46",
+"input": "=T!A46*1"
+},
+{
+"op": "set",
+"cell": "T!A47",
+"input": "3pm"
+},
+{
+"op": "set",
+"cell": "U!A47",
+"input": "=ISNUMBER(T!A47)&\"|\"&T!A47&\"|\"&TEXT(T!A47,\"General\")&\"|\"&CELL(\"format\",T!A47)"
+},
+{
+"op": "set",
+"cell": "U!B47",
+"input": "=T!A47*1"
+},
+{
+"op": "set",
+"cell": "T!A48",
+"input": "3:15p"
+},
+{
+"op": "set",
+"cell": "U!A48",
+"input": "=ISNUMBER(T!A48)&\"|\"&T!A48&\"|\"&TEXT(T!A48,\"General\")&\"|\"&CELL(\"format\",T!A48)"
+},
+{
+"op": "set",
+"cell": "U!B48",
+"input": "=T!A48*1"
+},
+{
+"op": "set",
+"cell": "T!A49",
+"input": "1,2,3"
+},
+{
+"op": "set",
+"cell": "U!A49",
+"input": "=ISNUMBER(T!A49)&\"|\"&T!A49&\"|\"&TEXT(T!A49,\"General\")&\"|\"&CELL(\"format\",T!A49)"
+},
+{
+"op": "set",
+"cell": "U!B49",
+"input": "=T!A49*1"
+},
+{
+"op": "set",
+"cell": "T!A50",
+"input": "$-5"
+},
+{
+"op": "set",
+"cell": "U!A50",
+"input": "=ISNUMBER(T!A50)&\"|\"&T!A50&\"|\"&TEXT(T!A50,\"General\")&\"|\"&CELL(\"format\",T!A50)"
+},
+{
+"op": "set",
+"cell": "U!B50",
+"input": "=T!A50*1"
+},
+{
+"op": "set",
+"cell": "T!A51",
+"input": "-$5"
+},
+{
+"op": "set",
+"cell": "U!A51",
+"input": "=ISNUMBER(T!A51)&\"|\"&T!A51&\"|\"&TEXT(T!A51,\"General\")&\"|\"&CELL(\"format\",T!A51)"
+},
+{
+"op": "set",
+"cell": "U!B51",
+"input": "=T!A51*1"
+},
+{
+"op": "set",
+"cell": "T!A52",
+"input": "$(5)"
+},
+{
+"op": "set",
+"cell": "U!A52",
+"input": "=ISNUMBER(T!A52)&\"|\"&T!A52&\"|\"&TEXT(T!A52,\"General\")&\"|\"&CELL(\"format\",T!A52)"
+},
+{
+"op": "set",
+"cell": "U!B52",
+"input": "=T!A52*1"
+},
+{
+"op": "set",
+"cell": "T!A53",
+"input": "5-"
+},
+{
+"op": "set",
+"cell": "U!A53",
+"input": "=ISNUMBER(T!A53)&\"|\"&T!A53&\"|\"&TEXT(T!A53,\"General\")&\"|\"&CELL(\"format\",T!A53)"
+},
+{
+"op": "set",
+"cell": "U!B53",
+"input": "=T!A53*1"
+},
+{
+"op": "set",
+"cell": "T!A54",
+"input": "5%%"
+},
+{
+"op": "set",
+"cell": "U!A54",
+"input": "=ISNUMBER(T!A54)&\"|\"&T!A54&\"|\"&TEXT(T!A54,\"General\")&\"|\"&CELL(\"format\",T!A54)"
+},
+{
+"op": "set",
+"cell": "U!B54",
+"input": "=T!A54*1"
+},
+{
+"op": "set",
+"cell": "T!A55",
+"input": "1..2"
+},
+{
+"op": "set",
+"cell": "U!A55",
+"input": "=ISNUMBER(T!A55)&\"|\"&T!A55&\"|\"&TEXT(T!A55,\"General\")&\"|\"&CELL(\"format\",T!A55)"
+},
+{
+"op": "set",
+"cell": "U!B55",
+"input": "=T!A55*1"
+},
+{
+"op": "set",
+"cell": "T!A56",
+"input": ".5"
+},
+{
+"op": "set",
+"cell": "U!A56",
+"input": "=ISNUMBER(T!A56)&\"|\"&T!A56&\"|\"&TEXT(T!A56,\"General\")&\"|\"&CELL(\"format\",T!A56)"
+},
+{
+"op": "set",
+"cell": "U!B56",
+"input": "=T!A56*1"
+},
+{
+"op": "set",
+"cell": "T!A57",
+"input": "5."
+},
+{
+"op": "set",
+"cell": "U!A57",
+"input": "=ISNUMBER(T!A57)&\"|\"&T!A57&\"|\"&TEXT(T!A57,\"General\")&\"|\"&CELL(\"format\",T!A57)"
+},
+{
+"op": "set",
+"cell": "U!B57",
+"input": "=T!A57*1"
+},
+{
+"op": "set",
+"cell": "T!A58",
+"input": "-.5E2"
+},
+{
+"op": "set",
+"cell": "U!A58",
+"input": "=ISNUMBER(T!A58)&\"|\"&T!A58&\"|\"&TEXT(T!A58,\"General\")&\"|\"&CELL(\"format\",T!A58)"
+},
+{
+"op": "set",
+"cell": "U!B58",
+"input": "=T!A58*1"
+},
+{
+"op": "set",
+"cell": "T!A59",
+"input": "1 000"
+},
+{
+"op": "set",
+"cell": "U!A59",
+"input": "=ISNUMBER(T!A59)&\"|\"&T!A59&\"|\"&TEXT(T!A59,\"General\")&\"|\"&CELL(\"format\",T!A59)"
+},
+{
+"op": "set",
+"cell": "U!B59",
+"input": "=T!A59*1"
+},
+{
+"op": "set",
+"cell": "T!A60",
+"input": "1'000"
+},
+{
+"op": "set",
+"cell": "U!A60",
+"input": "=ISNUMBER(T!A60)&\"|\"&T!A60&\"|\"&TEXT(T!A60,\"General\")&\"|\"&CELL(\"format\",T!A60)"
+},
+{
+"op": "set",
+"cell": "U!B60",
+"input": "=T!A60*1"
+},
+{
+"op": "set",
+"cell": "T!A61",
+"input": "12abc"
+},
+{
+"op": "set",
+"cell": "U!A61",
+"input": "=ISNUMBER(T!A61)&\"|\"&T!A61&\"|\"&TEXT(T!A61,\"General\")&\"|\"&CELL(\"format\",T!A61)"
+},
+{
+"op": "set",
+"cell": "U!B61",
+"input": "=T!A61*1"
+},
+{
+"op": "set",
+"cell": "T!A62",
+"input": "00123"
+},
+{
+"op": "set",
+"cell": "U!A62",
+"input": "=ISNUMBER(T!A62)&\"|\"&T!A62&\"|\"&TEXT(T!A62,\"General\")&\"|\"&CELL(\"format\",T!A62)"
+},
+{
+"op": "set",
+"cell": "U!B62",
+"input": "=T!A62*1"
+},
+{
+"op": "set",
+"cell": "T!A63",
+"input": "1/1/1900"
+},
+{
+"op": "set",
+"cell": "U!A63",
+"input": "=ISNUMBER(T!A63)&\"|\"&T!A63&\"|\"&TEXT(T!A63,\"General\")&\"|\"&CELL(\"format\",T!A63)"
+},
+{
+"op": "set",
+"cell": "U!B63",
+"input": "=T!A63*1"
+},
+{
+"op": "set",
+"cell": "T!A64",
+"input": "1/1/1899"
+},
+{
+"op": "set",
+"cell": "U!A64",
+"input": "=ISNUMBER(T!A64)&\"|\"&T!A64&\"|\"&TEXT(T!A64,\"General\")&\"|\"&CELL(\"format\",T!A64)"
+},
+{
+"op": "set",
+"cell": "U!B64",
+"input": "=T!A64*1"
+},
+{
+"op": "set",
+"cell": "T!A65",
+"input": "31/12/9999"
+},
+{
+"op": "set",
+"cell": "U!A65",
+"input": "=ISNUMBER(T!A65)&\"|\"&T!A65&\"|\"&TEXT(T!A65,\"General\")&\"|\"&CELL(\"format\",T!A65)"
+},
+{
+"op": "set",
+"cell": "U!B65",
+"input": "=T!A65*1"
+},
+{
+"op": "set",
+"cell": "T!A66",
+"input": "1/13/2026"
+},
+{
+"op": "set",
+"cell": "U!A66",
+"input": "=ISNUMBER(T!A66)&\"|\"&T!A66&\"|\"&TEXT(T!A66,\"General\")&\"|\"&CELL(\"format\",T!A66)"
+},
+{
+"op": "set",
+"cell": "U!B66",
+"input": "=T!A66*1"
+},
+{
+"op": "set",
+"cell": "T!A67",
+"input": "0:00"
+},
+{
+"op": "set",
+"cell": "U!A67",
+"input": "=ISNUMBER(T!A67)&\"|\"&T!A67&\"|\"&TEXT(T!A67,\"General\")&\"|\"&CELL(\"format\",T!A67)"
+},
+{
+"op": "set",
+"cell": "U!B67",
+"input": "=T!A67*1"
+},
+{
+"op": "set",
+"cell": "T!A68",
+"input": "24:00:00"
+},
+{
+"op": "set",
+"cell": "U!A68",
+"input": "=ISNUMBER(T!A68)&\"|\"&T!A68&\"|\"&TEXT(T!A68,\"General\")&\"|\"&CELL(\"format\",T!A68)"
+},
+{
+"op": "set",
+"cell": "U!B68",
+"input": "=T!A68*1"
+},
+{
+"op": "set",
+"cell": "T!A69",
+"input": "1:60"
+},
+{
+"op": "set",
+"cell": "U!A69",
+"input": "=ISNUMBER(T!A69)&\"|\"&T!A69&\"|\"&TEXT(T!A69,\"General\")&\"|\"&CELL(\"format\",T!A69)"
+},
+{
+"op": "set",
+"cell": "U!B69",
+"input": "=T!A69*1"
+},
+{
+"op": "set",
+"cell": "T!A70",
+"input": "99%"
+},
+{
+"op": "set",
+"cell": "U!A70",
+"input": "=ISNUMBER(T!A70)&\"|\"&T!A70&\"|\"&TEXT(T!A70,\"General\")&\"|\"&CELL(\"format\",T!A70)"
+},
+{
+"op": "set",
+"cell": "U!B70",
+"input": "=T!A70*1"
+},
+{
+"op": "set",
+"cell": "T!A71",
+"input": "1e400"
+},
+{
+"op": "set",
+"cell": "U!A71",
+"input": "=ISNUMBER(T!A71)&\"|\"&T!A71&\"|\"&TEXT(T!A71,\"General\")&\"|\"&CELL(\"format\",T!A71)"
+},
+{
+"op": "set",
+"cell": "U!B71",
+"input": "=T!A71*1"
+},
+{
+"op": "set",
+"cell": "T!A72",
+"input": "1e-400"
+},
+{
+"op": "set",
+"cell": "U!A72",
+"input": "=ISNUMBER(T!A72)&\"|\"&T!A72&\"|\"&TEXT(T!A72,\"General\")&\"|\"&CELL(\"format\",T!A72)"
+},
+{
+"op": "set",
+"cell": "U!B72",
+"input": "=T!A72*1"
+},
+{
+"op": "set",
+"cell": "T!A73",
+"input": "123456789012345678"
+},
+{
+"op": "set",
+"cell": "U!A73",
+"input": "=ISNUMBER(T!A73)&\"|\"&T!A73&\"|\"&TEXT(T!A73,\"General\")&\"|\"&CELL(\"format\",T!A73)"
+},
+{
+"op": "set",
+"cell": "U!B73",
+"input": "=T!A73*1"
+},
+{
+"op": "set",
+"cell": "T!A74",
+"input": "0.1234567890123456789"
+},
+{
+"op": "set",
+"cell": "U!A74",
+"input": "=ISNUMBER(T!A74)&\"|\"&T!A74&\"|\"&TEXT(T!A74,\"General\")&\"|\"&CELL(\"format\",T!A74)"
+},
+{
+"op": "set",
+"cell": "U!B74",
+"input": "=T!A74*1"
+},
+{
+"op": "set",
+"cell": "T!A75",
+"input": "1,000,000.00"
+},
+{
+"op": "set",
+"cell": "U!A75",
+"input": "=ISNUMBER(T!A75)&\"|\"&T!A75&\"|\"&TEXT(T!A75,\"General\")&\"|\"&CELL(\"format\",T!A75)"
+},
+{
+"op": "set",
+"cell": "U!B75",
+"input": "=T!A75*1"
+},
+{
+"op": "set",
+"cell": "T!A76",
+"input": "Mon"
+},
+{
+"op": "set",
+"cell": "U!A76",
+"input": "=ISNUMBER(T!A76)&\"|\"&T!A76&\"|\"&TEXT(T!A76,\"General\")&\"|\"&CELL(\"format\",T!A76)"
+},
+{
+"op": "set",
+"cell": "U!B76",
+"input": "=T!A76*1"
+},
+{
+"op": "set",
+"cell": "T!A77",
+"input": "Monday 5 Jan 2026"
+},
+{
+"op": "set",
+"cell": "U!A77",
+"input": "=ISNUMBER(T!A77)&\"|\"&T!A77&\"|\"&TEXT(T!A77,\"General\")&\"|\"&CELL(\"format\",T!A77)"
+},
+{
+"op": "set",
+"cell": "U!B77",
+"input": "=T!A77*1"
+},
+{
+"op": "set",
+"cell": "T!A78",
+"input": "5 Jan 2026 10:00 AM"
+},
+{
+"op": "set",
+"cell": "U!A78",
+"input": "=ISNUMBER(T!A78)&\"|\"&T!A78&\"|\"&TEXT(T!A78,\"General\")&\"|\"&CELL(\"format\",T!A78)"
+},
+{
+"op": "set",
+"cell": "U!B78",
+"input": "=T!A78*1"
+},
+{
+"op": "set",
+"cell": "T!A79",
+"input": "1/1"
+},
+{
+"op": "set",
+"cell": "U!A79",
+"input": "=ISNUMBER(T!A79)&\"|\"&T!A79&\"|\"&TEXT(T!A79,\"General\")&\"|\"&CELL(\"format\",T!A79)"
+},
+{
+"op": "set",
+"cell": "U!B79",
+"input": "=T!A79*1"
+},
+{
+"op": "set",
+"cell": "T!A80",
+"input": "Dec 31"
+},
+{
+"op": "set",
+"cell": "U!A80",
+"input": "=ISNUMBER(T!A80)&\"|\"&T!A80&\"|\"&TEXT(T!A80,\"General\")&\"|\"&CELL(\"format\",T!A80)"
+},
+{
+"op": "set",
+"cell": "U!B80",
+"input": "=T!A80*1"
+},
+{
+"op": "set",
+"cell": "T!A81",
+"input": "Dec-31"
+},
+{
+"op": "set",
+"cell": "U!A81",
+"input": "=ISNUMBER(T!A81)&\"|\"&T!A81&\"|\"&TEXT(T!A81,\"General\")&\"|\"&CELL(\"format\",T!A81)"
+},
+{
+"op": "set",
+"cell": "U!B81",
+"input": "=T!A81*1"
+},
+{
+"op": "set",
+"cell": "T!A82",
+"input": "31-Dec"
+},
+{
+"op": "set",
+"cell": "U!A82",
+"input": "=ISNUMBER(T!A82)&\"|\"&T!A82&\"|\"&TEXT(T!A82,\"General\")&\"|\"&CELL(\"format\",T!A82)"
+},
+{
+"op": "set",
+"cell": "U!B82",
+"input": "=T!A82*1"
+},
+{
+"op": "set",
+"cell": "T!A83",
+"input": "10-11"
+},
+{
+"op": "set",
+"cell": "U!A83",
+"input": "=ISNUMBER(T!A83)&\"|\"&T!A83&\"|\"&TEXT(T!A83,\"General\")&\"|\"&CELL(\"format\",T!A83)"
+},
+{
+"op": "set",
+"cell": "U!B83",
+"input": "=T!A83*1"
+},
+{
+"op": "set",
+"cell": "T!A84",
+"input": "10-1"
+},
+{
+"op": "set",
+"cell": "U!A84",
+"input": "=ISNUMBER(T!A84)&\"|\"&T!A84&\"|\"&TEXT(T!A84,\"General\")&\"|\"&CELL(\"format\",T!A84)"
+},
+{
+"op": "set",
+"cell": "U!B84",
+"input": "=T!A84*1"
+},
+{
+"op": "set",
+"cell": "T!A85",
+"input": "1-10"
+},
+{
+"op": "set",
+"cell": "U!A85",
+"input": "=ISNUMBER(T!A85)&\"|\"&T!A85&\"|\"&TEXT(T!A85,\"General\")&\"|\"&CELL(\"format\",T!A85)"
+},
+{
+"op": "set",
+"cell": "U!B85",
+"input": "=T!A85*1"
+},
+{
+"op": "set",
+"cell": "T!A86",
+"input": "3/4/"
+},
+{
+"op": "set",
+"cell": "U!A86",
+"input": "=ISNUMBER(T!A86)&\"|\"&T!A86&\"|\"&TEXT(T!A86,\"General\")&\"|\"&CELL(\"format\",T!A86)"
+},
+{
+"op": "set",
+"cell": "U!B86",
+"input": "=T!A86*1"
+},
+{
+"op": "set",
+"cell": "T!A87",
+"input": "2:30:15 PM"
+},
+{
+"op": "set",
+"cell": "U!A87",
+"input": "=ISNUMBER(T!A87)&\"|\"&T!A87&\"|\"&TEXT(T!A87,\"General\")&\"|\"&CELL(\"format\",T!A87)"
+},
+{
+"op": "set",
+"cell": "U!B87",
+"input": "=T!A87*1"
+},
+{
+"op": "set",
+"cell": "T!A88",
+"input": "1:2:3:4"
+},
+{
+"op": "set",
+"cell": "U!A88",
+"input": "=ISNUMBER(T!A88)&\"|\"&T!A88&\"|\"&TEXT(T!A88,\"General\")&\"|\"&CELL(\"format\",T!A88)"
+},
+{
+"op": "set",
+"cell": "U!B88",
+"input": "=T!A88*1"
+},
+{
+"op": "read",
+"range": "T!A1:A88"
+},
+{
+"op": "read",
+"range": "U!A1:B88"
+}
+]
+}

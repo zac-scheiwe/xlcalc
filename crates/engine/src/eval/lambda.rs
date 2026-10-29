@@ -18,10 +18,10 @@ impl LambdaValue {
 
 pub fn invoke(ctx: &mut EvalCtx, lam: &LambdaValue, args: Vec<Operand>) -> Operand {
     if args.len() < lam.def.required || args.len() > lam.def.params.len() {
-        return Operand::err(XlError::Value);
+        return Operand::err(XlError::VALUE);
     }
     if ctx.depth >= MAX_CALL_DEPTH {
-        return Operand::err(XlError::Num);
+        return Operand::err(XlError::NUM);
     }
     let mut env = Vec::with_capacity(lam.captured.len() + lam.def.params.len());
     env.extend(lam.captured.iter().cloned());
@@ -55,23 +55,23 @@ pub fn call_value(ctx: &mut EvalCtx, f: Value, args: &[Node]) -> Operand {
             crate::value::Array::new(
                 a.rows,
                 a.cols,
-                vec![Value::Error(XlError::Value); a.data.len()],
+                vec![Value::Error(XlError::VALUE); a.data.len()],
             )
             .into_value(),
         ),
-        _ => Operand::err(XlError::Value),
+        _ => Operand::err(XlError::VALUE),
     }
 }
 
 pub fn call_named(ctx: &mut EvalCtx, key: &str, args: &[Node]) -> Operand {
     if ctx.wb.names.lookup(key, ctx.host.sheet).is_none() {
         let _ = eval_args(ctx, args);
-        return Operand::err(XlError::Name);
+        return Operand::err(XlError::NAME);
     }
     let f = super::refs::eval_name(ctx, key, None);
 
     if matches!(f, Operand::Ref(_)) {
-        return Operand::err(XlError::Ref);
+        return Operand::err(XlError::REF);
     }
     let f = ctx.deref(f);
     call_value(ctx, f, args)

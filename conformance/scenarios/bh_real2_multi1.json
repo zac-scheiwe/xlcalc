@@ -1,0 +1,692 @@
+{
+"sheets": [
+"Jan",
+"Feb",
+"Mar",
+"Apr",
+"Sum"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C1",
+"value": {
+"t": "s",
+"v": "Cost"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "Bolts"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C2",
+"value": {
+"t": "n",
+"v": 3.43
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "Nuts"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C3",
+"value": {
+"t": "n",
+"v": 4.83
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A4",
+"value": {
+"t": "s",
+"v": "Gears"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C4",
+"value": {
+"t": "n",
+"v": 1.53
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A5",
+"value": {
+"t": "s",
+"v": "Belts"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B5",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "Jan!C5",
+"value": {
+"t": "n",
+"v": 5.4
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C1",
+"value": {
+"t": "s",
+"v": "Cost"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A2",
+"value": {
+"t": "s",
+"v": "Bolts"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C2",
+"value": {
+"t": "n",
+"v": 7.4
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A3",
+"value": {
+"t": "s",
+"v": "Nuts"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C3",
+"value": {
+"t": "n",
+"v": 2.78
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A4",
+"value": {
+"t": "s",
+"v": "Gears"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B4",
+"value": {
+"t": "n",
+"v": 18
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C4",
+"value": {
+"t": "n",
+"v": 3.88
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A5",
+"value": {
+"t": "s",
+"v": "Belts"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B5",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "Feb!C5",
+"value": {
+"t": "n",
+"v": 7.61
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!C1",
+"value": {
+"t": "s",
+"v": "Cost"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A2",
+"value": {
+"t": "s",
+"v": "Bolts"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B2",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Mar!C2",
+"value": {
+"t": "n",
+"v": 2.72
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A3",
+"value": {
+"t": "s",
+"v": "Nuts"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Mar!C3",
+"value": {
+"t": "n",
+"v": 7.63
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A4",
+"value": {
+"t": "s",
+"v": "Gears"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B4",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Mar!C4",
+"value": {
+"t": "n",
+"v": 7.4
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A5",
+"value": {
+"t": "s",
+"v": "Belts"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B5",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Mar!C5",
+"value": {
+"t": "n",
+"v": 2.32
+}
+},
+{
+"op": "setv",
+"cell": "Apr!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!B1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!C1",
+"value": {
+"t": "s",
+"v": "Cost"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!A2",
+"value": {
+"t": "s",
+"v": "Bolts"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!B2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Apr!C2",
+"value": {
+"t": "n",
+"v": 6.02
+}
+},
+{
+"op": "setv",
+"cell": "Apr!A3",
+"value": {
+"t": "s",
+"v": "Nuts"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!B3",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "setv",
+"cell": "Apr!C3",
+"value": {
+"t": "n",
+"v": 1.69
+}
+},
+{
+"op": "setv",
+"cell": "Apr!A4",
+"value": {
+"t": "s",
+"v": "Gears"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!B4",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Apr!C4",
+"value": {
+"t": "n",
+"v": 3.7
+}
+},
+{
+"op": "setv",
+"cell": "Apr!A5",
+"value": {
+"t": "s",
+"v": "Belts"
+}
+},
+{
+"op": "setv",
+"cell": "Apr!B5",
+"value": {
+"t": "n",
+"v": 13
+}
+},
+{
+"op": "setv",
+"cell": "Apr!C5",
+"value": {
+"t": "n",
+"v": 5.05
+}
+},
+{
+"op": "name",
+"name": "Tax",
+"refers_to": "=0.15"
+},
+{
+"op": "name",
+"name": "WithTax",
+"refers_to": "=LAMBDA(x,x*(1+Tax))"
+},
+{
+"op": "name",
+"name": "Rng",
+"refers_to": "=LAMBDA(sheet,INDIRECT(\"'\"&sheet&\"'!B2:B5\"))"
+},
+{
+"op": "name",
+"name": "Cap",
+"refers_to": "=LAMBDA(s,UPPER(LEFT(s,1))&LOWER(MID(s,2,99)))"
+},
+{
+"op": "name",
+"name": "Fact",
+"refers_to": "=LAMBDA(n,IF(n<=1,1,n*Fact(n-1)))"
+},
+{
+"op": "name",
+"name": "Mths",
+"refers_to": "=Jan:Apr!$B$2:$B$5"
+},
+{
+"op": "name",
+"name": "Mlist",
+"refers_to": "={\"Jan\",\"Feb\",\"Mar\",\"Apr\"}"
+},
+{
+"op": "set",
+"cell": "Sum!A1",
+"input": "=SUM(Jan:Apr!B2)"
+},
+{
+"op": "set",
+"cell": "Sum!A2",
+"input": "=SUM(Jan:Apr!B2:C5)"
+},
+{
+"op": "set",
+"cell": "Sum!A3",
+"input": "=AVERAGE(Jan:Apr!C2:C5)"
+},
+{
+"op": "set",
+"cell": "Sum!A4",
+"input": "=COUNT(Jan:Apr!A1:C5)"
+},
+{
+"op": "set",
+"cell": "Sum!A5",
+"input": "=MAX(Jan:Apr!C3)"
+},
+{
+"op": "set",
+"cell": "Sum!A6",
+"input": "=SUM(Mths)"
+},
+{
+"op": "set",
+"cell": "Sum!A7",
+"input": "=SUM(Feb:Mar!B2:B5*Feb:Mar!C2:C5)"
+},
+{
+"op": "set",
+"cell": "Sum!B1",
+"input": "=WithTax(100)"
+},
+{
+"op": "set",
+"cell": "Sum!B2",
+"input": "=MAP(Mlist,LAMBDA(m,SUM(Rng(m))))"
+},
+{
+"op": "set",
+"cell": "Sum!B3",
+"input": "=Cap(\"hELLO\")"
+},
+{
+"op": "set",
+"cell": "Sum!B4",
+"input": "=Fact(10)"
+},
+{
+"op": "set",
+"cell": "Sum!B5",
+"input": "=SUM(INDIRECT(\"Jan:Apr!B2\"))"
+},
+{
+"op": "set",
+"cell": "Sum!A9",
+"input": "=MAP(Mlist,LAMBDA(m,SUMPRODUCT(INDIRECT(m&\"!B2:B5\"),INDIRECT(m&\"!C2:C5\"))))"
+},
+{
+"op": "set",
+"cell": "Sum!A10",
+"input": "=BYROW(Mlist,LAMBDA(r,ROWS(r)))"
+},
+{
+"op": "set",
+"cell": "Sum!A12",
+"input": "=SUMPRODUCT(--(INDIRECT(\"Feb!A2:A5\")=\"Gears\"),INDIRECT(\"Feb!B2:B5\"))"
+},
+{
+"op": "set",
+"cell": "Sum!A13",
+"input": "=VSTACK(Jan!A1:C3,Feb!A2:C3)"
+},
+{
+"op": "set",
+"cell": "Sum!E1",
+"input": "=SUMIF(Jan!A2:A5,\"Gears\",Jan!B2:B5)+SUMIF(Feb!A2:A5,\"Gears\",Feb!B2:B5)"
+},
+{
+"op": "set",
+"cell": "Sum!E2",
+"input": "=SUM(SUMIF(INDIRECT(\"'\"&Mlist&\"'!A2:A5\"),\"Gears\",INDIRECT(\"'\"&Mlist&\"'!B2:B5\")))"
+},
+{
+"op": "set",
+"cell": "Sum!E3",
+"input": "=ROUND(WithTax(SUM(Mths)*1.1),2)"
+},
+{
+"op": "set",
+"cell": "Sum!E4",
+"input": "=SHEET(Mar!A1)&\"/\"&SHEETS(Jan:Apr!A1)"
+},
+{
+"op": "set",
+"cell": "Sum!E5",
+"input": "=ROWS(Jan:Apr!A1:C5)&COLUMNS(Jan:Apr!A1:C5)"
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "set",
+"cell": "Jan!B2",
+"input": "100"
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "insert_rows",
+"sheet": "Feb",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "rename_sheet",
+"sheet": "Mar",
+"name": "March"
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "move_sheet",
+"sheet": "Apr",
+"before": "Feb"
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "delete_sheet",
+"sheet": "Apr"
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "copy_sheet",
+"sheet": "Jan",
+"before": "Sum"
+},
+{
+"op": "read",
+"range": "Sum!A1:F24"
+},
+{
+"op": "names"
+}
+]
+}

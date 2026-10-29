@@ -1,0 +1,134 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "k"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "v"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "c"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "d"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "4"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B5",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "w"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=[@v]*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "u"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=[@w]+1"
+},
+{
+"op": "table_sort",
+"sheet": "Sheet1",
+"name": "Tb",
+"keys": [
+{
+"key": 2,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D5"
+},
+{
+"op": "read_text",
+"range": "Sheet1!C2:D5"
+},
+{
+"op": "delete_cols",
+"sheet": "Sheet1",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D5"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:D5"
+},
+{
+"op": "tables"
+},
+{
+"op": "table_sort",
+"sheet": "Sheet1",
+"name": "Tb",
+"keys": [
+{
+"key": 1,
+"order": "asc"
+}
+]
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D5"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:D5"
+}
+]
+}

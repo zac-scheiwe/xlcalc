@@ -1,0 +1,691 @@
+{
+"sheets": [
+"North Reg",
+"O'Neil",
+"Q1-2026",
+"South",
+"Control",
+"Roll"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "North Reg!A1",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!B1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!C1",
+"value": {
+"t": "s",
+"v": "Rev"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!A2",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!B2",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!C2",
+"value": {
+"t": "n",
+"v": 397
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!A3",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!B3",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!C3",
+"value": {
+"t": "n",
+"v": 800
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!A4",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!B4",
+"value": {
+"t": "n",
+"v": 26
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!C4",
+"value": {
+"t": "n",
+"v": 290
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!A5",
+"value": {
+"t": "s",
+"v": "D"
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!B5",
+"value": {
+"t": "n",
+"v": 21
+}
+},
+{
+"op": "setv",
+"cell": "North Reg!C5",
+"value": {
+"t": "n",
+"v": 336
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!A1",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!B1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!C1",
+"value": {
+"t": "s",
+"v": "Rev"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!A2",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!B2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!C2",
+"value": {
+"t": "n",
+"v": 250
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!A3",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!B3",
+"value": {
+"t": "n",
+"v": 28
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!C3",
+"value": {
+"t": "n",
+"v": 330
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!A4",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!B4",
+"value": {
+"t": "n",
+"v": 21
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!C4",
+"value": {
+"t": "n",
+"v": 851
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!A5",
+"value": {
+"t": "s",
+"v": "D"
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!B5",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "O'Neil!C5",
+"value": {
+"t": "n",
+"v": 233
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!A1",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!B1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!C1",
+"value": {
+"t": "s",
+"v": "Rev"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!A2",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!B2",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!C2",
+"value": {
+"t": "n",
+"v": 644
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!A3",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!B3",
+"value": {
+"t": "n",
+"v": 28
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!C3",
+"value": {
+"t": "n",
+"v": 319
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!A4",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!B4",
+"value": {
+"t": "n",
+"v": 24
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!C4",
+"value": {
+"t": "n",
+"v": 401
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!A5",
+"value": {
+"t": "s",
+"v": "D"
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!B5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!C5",
+"value": {
+"t": "n",
+"v": 541
+}
+},
+{
+"op": "setv",
+"cell": "South!A1",
+"value": {
+"t": "s",
+"v": "Product"
+}
+},
+{
+"op": "setv",
+"cell": "South!B1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "South!C1",
+"value": {
+"t": "s",
+"v": "Rev"
+}
+},
+{
+"op": "setv",
+"cell": "South!A2",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "South!B2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "South!C2",
+"value": {
+"t": "n",
+"v": 800
+}
+},
+{
+"op": "setv",
+"cell": "South!A3",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "South!B3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "South!C3",
+"value": {
+"t": "n",
+"v": 114
+}
+},
+{
+"op": "setv",
+"cell": "South!A4",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "South!B4",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "South!C4",
+"value": {
+"t": "n",
+"v": 250
+}
+},
+{
+"op": "setv",
+"cell": "South!A5",
+"value": {
+"t": "s",
+"v": "D"
+}
+},
+{
+"op": "setv",
+"cell": "South!B5",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "South!C5",
+"value": {
+"t": "n",
+"v": 368
+}
+},
+{
+"op": "setv",
+"cell": "Control!A1",
+"value": {
+"t": "s",
+"v": "Sheets"
+}
+},
+{
+"op": "setv",
+"cell": "Control!A2",
+"value": {
+"t": "s",
+"v": "North Reg"
+}
+},
+{
+"op": "setv",
+"cell": "Control!A3",
+"value": {
+"t": "s",
+"v": "O'Neil"
+}
+},
+{
+"op": "setv",
+"cell": "Control!A4",
+"value": {
+"t": "s",
+"v": "Q1-2026"
+}
+},
+{
+"op": "setv",
+"cell": "Control!A5",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Control!C1",
+"value": {
+"t": "s",
+"v": "Prod"
+}
+},
+{
+"op": "setv",
+"cell": "Control!D1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Roll!A1",
+"input": "=MAP(Control!A2:A5,LAMBDA(s,SUM(INDIRECT(\"'\"&SUBSTITUTE(s,\"'\",\"''\")&\"'!C2:C5\"))))"
+},
+{
+"op": "set",
+"cell": "Roll!B1",
+"input": "=MAP(Control!A2:A5,LAMBDA(s,SUMIF(INDIRECT(\"'\"&SUBSTITUTE(s,\"'\",\"''\")&\"'!A2:A5\"),Control!D1,INDIRECT(\"'\"&SUBSTITUTE(s,\"'\",\"''\")&\"'!B2:B5\"))))"
+},
+{
+"op": "set",
+"cell": "Roll!C1",
+"input": "=BYROW(Control!A2:A5,LAMBDA(s,XLOOKUP(Control!D1,INDIRECT(\"'\"&SUBSTITUTE(s,\"'\",\"''\")&\"'!A2:A5\"),INDIRECT(\"'\"&SUBSTITUTE(s,\"'\",\"''\")&\"'!C2:C5\"))))"
+},
+{
+"op": "set",
+"cell": "Roll!D1",
+"input": "=SUM('North Reg':South!C2:C5)"
+},
+{
+"op": "set",
+"cell": "Roll!D2",
+"input": "=SUM('North Reg':South!B3)"
+},
+{
+"op": "set",
+"cell": "Roll!D4",
+"input": "=COUNT('North Reg':South!A1:C5)"
+},
+{
+"op": "set",
+"cell": "Roll!D5",
+"input": "=INDIRECT(\"'O''Neil'!C3\")"
+},
+{
+"op": "set",
+"cell": "Roll!D6",
+"input": "=SHEETS('North Reg':South!A1)"
+},
+{
+"op": "set",
+"cell": "Roll!D7",
+"input": "=TEXTJOIN(\",\",TRUE,MAP(Control!A2:A5,LAMBDA(s,LEN(s))))"
+},
+{
+"op": "set",
+"cell": "Roll!D8",
+"input": "=SUM(INDEX('North Reg':South!C2:C5,0))"
+},
+{
+"op": "set",
+"cell": "Roll!D9",
+"input": "=ROWS('North Reg':South!C2:C5)"
+},
+{
+"op": "set",
+"cell": "Roll!D10",
+"input": "=AVERAGE('North Reg':South!B2:B5)"
+},
+{
+"op": "set",
+"cell": "Roll!D11",
+"input": "=SUMIF('North Reg'!A2:A5,\"B\",'North Reg'!C2:C5)+SUMIF('O''Neil'!A2:A5,\"B\",'O''Neil'!C2:C5)"
+},
+{
+"op": "set",
+"cell": "Roll!D12",
+"input": "=CELL(\"address\",'O''Neil'!C3)&\"|\"&CELL(\"filename\",'Q1-2026'!A1)"
+},
+{
+"op": "set",
+"cell": "Roll!D13",
+"input": "=SHEET('Q1-2026'!A1)"
+},
+{
+"op": "set",
+"cell": "Roll!D14",
+"input": "=FORMULATEXT(D1)&FORMULATEXT(D5)"
+},
+{
+"op": "set",
+"cell": "Roll!D16",
+"input": "=ROW(INDIRECT(\"'O''Neil'!B3\"))"
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+},
+{
+"op": "set",
+"cell": "South!C3",
+"input": "999"
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+},
+{
+"op": "rename_sheet",
+"sheet": "O'Neil",
+"name": "O'Neil 2"
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+},
+{
+"op": "insert_cols",
+"sheet": "South",
+"at": 1,
+"count": 1
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+},
+{
+"op": "move_sheet",
+"sheet": "South",
+"before": "North Reg"
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+},
+{
+"op": "copy_sheet",
+"sheet": "Q1-2026",
+"after": "Q1-2026"
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+},
+{
+"op": "delete_sheet",
+"sheet": "Q1-2026"
+},
+{
+"op": "read",
+"range": "Roll!A1:F20"
+}
+]
+}

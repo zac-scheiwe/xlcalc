@@ -1,0 +1,66 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!XFD2",
+"input": "=XFC2"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFC3",
+"input": "=XFD3+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFC4",
+"input": "=XFB4:XFC4"
+},
+{
+"op": "set",
+"cell": "Sheet1!XFB5",
+"input": "=SUM(XFB:XFC)"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFD2",
+"to": "Sheet1!XFC2"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFC3",
+"to": "Sheet1!XFD3"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFC4",
+"to": "Sheet1!XFD4"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFB5",
+"to": "Sheet1!XFC5"
+},
+{
+"op": "read",
+"range": "Sheet1!XFB2:XFD5"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFC3",
+"to": "Sheet1!XFD6"
+},
+{
+"op": "copy",
+"from": "Sheet1!XFC4",
+"to": "Sheet1!XFC6"
+},
+{
+"op": "read",
+"range": "Sheet1!XFB6:XFD6"
+}
+]
+}

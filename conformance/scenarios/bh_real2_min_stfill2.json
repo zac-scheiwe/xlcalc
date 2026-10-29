@@ -1,0 +1,230 @@
+{
+"sheets": [
+"D",
+"R"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "D!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "D!B1",
+"value": {
+"t": "s",
+"v": "Q1"
+}
+},
+{
+"op": "setv",
+"cell": "D!C1",
+"value": {
+"t": "s",
+"v": "Q2"
+}
+},
+{
+"op": "setv",
+"cell": "D!D1",
+"value": {
+"t": "s",
+"v": "Q3"
+}
+},
+{
+"op": "setv",
+"cell": "D!E1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "D!F1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "D!G1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "D!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "D!C2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "D!D2",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "D!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "D!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "D!D3",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "D!A4",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "D!B4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "D!C4",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "D!D4",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "table",
+"name": "tD",
+"range": "D!A1:G4"
+},
+{
+"op": "set",
+"cell": "D!E2",
+"input": "=[@Q1]*2"
+},
+{
+"op": "set",
+"cell": "D!F2",
+"input": "=tD[@Q2]+[@Q1]"
+},
+{
+"op": "set",
+"cell": "D!G2",
+"input": "=SUM(tD[@[Q1]:[Q3]])"
+},
+{
+"op": "set",
+"cell": "R!A1",
+"input": "=tD[[#This Row],[Q1]]"
+},
+{
+"op": "read",
+"range": "D!A1:G5"
+},
+{
+"op": "copy",
+"from": "D!E2:E3",
+"to": "D!F2"
+},
+{
+"op": "read",
+"range": "D!A1:G5"
+},
+{
+"op": "autofill",
+"from": "D!E2:E4",
+"to": "D!E2:G4",
+"type": "default"
+},
+{
+"op": "read",
+"range": "D!A1:G5"
+},
+{
+"op": "cut",
+"from": "D!E2:E4",
+"to": "R!C2"
+},
+{
+"op": "read",
+"range": "D!A1:G5"
+},
+{
+"op": "read",
+"range": "R!A1:D6"
+},
+{
+"op": "copy",
+"from": "D!B2:B4",
+"to": "D!E2"
+},
+{
+"op": "read",
+"range": "D!A1:G5"
+}
+]
+}

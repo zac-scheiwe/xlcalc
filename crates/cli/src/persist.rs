@@ -71,7 +71,7 @@ pub fn load(doc: &J) -> Result<Workbook, String> {
                 "s" => Value::from(t["v"].as_str().unwrap_or("")),
                 "b" => Value::Bool(t["v"].as_bool().unwrap_or(false)),
                 "e" => Value::Error(
-                    XlError::parse(t["v"].as_str().unwrap_or("")).unwrap_or(XlError::Value),
+                    XlError::parse(t["v"].as_str().unwrap_or("")).unwrap_or(XlError::VALUE),
                 ),
                 "f" => {
                     formulas.push((a, t["v"].as_str().unwrap_or("").to_string()));

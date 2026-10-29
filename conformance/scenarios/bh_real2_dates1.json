@@ -1,0 +1,2032 @@
+{
+"sheets": [
+"Tx",
+"Rpt"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Tx!A1",
+"value": {
+"t": "s",
+"v": "Date"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!B1",
+"value": {
+"t": "s",
+"v": "Cust"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C1",
+"value": {
+"t": "s",
+"v": "Amt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D1",
+"value": {
+"t": "s",
+"v": "Cat"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A2",
+"input": "5/1/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B2",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C2",
+"value": {
+"t": "n",
+"v": 367.44
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D2",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A3",
+"input": "14/1/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B3",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C3",
+"value": {
+"t": "n",
+"v": 742.72
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D3",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A4",
+"input": "25/1/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B4",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C4",
+"value": {
+"t": "n",
+"v": 532.85
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D4",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A5",
+"input": "9/2/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B5",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C5",
+"value": {
+"t": "n",
+"v": 53.0
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D5",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A6",
+"input": "20/2/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B6",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C6",
+"value": {
+"t": "n",
+"v": 81.47
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D6",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A7",
+"input": "28/2/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B7",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C7",
+"value": {
+"t": "n",
+"v": 393.58
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D7",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A8",
+"input": "15/3/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B8",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C8",
+"value": {
+"t": "n",
+"v": 853.76
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D8",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A9",
+"input": "28/3/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B9",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C9",
+"value": {
+"t": "n",
+"v": 853.98
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D9",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A10",
+"input": "7/4/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B10",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C10",
+"value": {
+"t": "n",
+"v": 369.08
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D10",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A11",
+"input": "15/4/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B11",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C11",
+"value": {
+"t": "n",
+"v": 509.87
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D11",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A12",
+"input": "27/4/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B12",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C12",
+"value": {
+"t": "n",
+"v": 388.84
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D12",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A13",
+"input": "11/5/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B13",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C13",
+"value": {
+"t": "n",
+"v": 522.4
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D13",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A14",
+"input": "22/5/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B14",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C14",
+"value": {
+"t": "n",
+"v": 110.69
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D14",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A15",
+"input": "2/6/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B15",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C15",
+"value": {
+"t": "n",
+"v": 347.71
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D15",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A16",
+"input": "14/6/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B16",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C16",
+"value": {
+"t": "n",
+"v": 516.64
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D16",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A17",
+"input": "25/6/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B17",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C17",
+"value": {
+"t": "n",
+"v": 456.84
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D17",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A18",
+"input": "6/7/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B18",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C18",
+"value": {
+"t": "n",
+"v": 703.96
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D18",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A19",
+"input": "17/7/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B19",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C19",
+"value": {
+"t": "n",
+"v": 832.63
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D19",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A20",
+"input": "27/7/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B20",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C20",
+"value": {
+"t": "n",
+"v": 238.62
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D20",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A21",
+"input": "6/8/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B21",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C21",
+"value": {
+"t": "n",
+"v": 92.03
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D21",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A22",
+"input": "19/8/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B22",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C22",
+"value": {
+"t": "n",
+"v": 455.7
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D22",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A23",
+"input": "30/8/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B23",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C23",
+"value": {
+"t": "n",
+"v": 273.39
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D23",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A24",
+"input": "8/9/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B24",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C24",
+"value": {
+"t": "n",
+"v": 470.5
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D24",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A25",
+"input": "20/9/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B25",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C25",
+"value": {
+"t": "n",
+"v": 153.75
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D25",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A26",
+"input": "4/10/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B26",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C26",
+"value": {
+"t": "n",
+"v": 54.5
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D26",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A27",
+"input": "17/10/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B27",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C27",
+"value": {
+"t": "n",
+"v": 692.82
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D27",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A28",
+"input": "27/10/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B28",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C28",
+"value": {
+"t": "n",
+"v": 319.31
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D28",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A29",
+"input": "6/11/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B29",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C29",
+"value": {
+"t": "n",
+"v": 457.07
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D29",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A30",
+"input": "18/11/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B30",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C30",
+"value": {
+"t": "n",
+"v": 759.17
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D30",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A31",
+"input": "28/11/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B31",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C31",
+"value": {
+"t": "n",
+"v": 633.4
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D31",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A32",
+"input": "8/12/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B32",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C32",
+"value": {
+"t": "n",
+"v": 663.42
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D32",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A33",
+"input": "21/12/2025"
+},
+{
+"op": "setv",
+"cell": "Tx!B33",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C33",
+"value": {
+"t": "n",
+"v": 893.92
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D33",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A34",
+"input": "2/1/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B34",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C34",
+"value": {
+"t": "n",
+"v": 650.63
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D34",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A35",
+"input": "15/1/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B35",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C35",
+"value": {
+"t": "n",
+"v": 39.86
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D35",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A36",
+"input": "25/1/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B36",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C36",
+"value": {
+"t": "n",
+"v": 167.88
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D36",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A37",
+"input": "2/2/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B37",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C37",
+"value": {
+"t": "n",
+"v": 71.88
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D37",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A38",
+"input": "15/2/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B38",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C38",
+"value": {
+"t": "n",
+"v": 669.76
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D38",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A39",
+"input": "28/2/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B39",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C39",
+"value": {
+"t": "n",
+"v": 826.8
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D39",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A40",
+"input": "11/3/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B40",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C40",
+"value": {
+"t": "n",
+"v": 166.4
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D40",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A41",
+"input": "22/3/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B41",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C41",
+"value": {
+"t": "n",
+"v": 264.5
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D41",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A42",
+"input": "1/4/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B42",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C42",
+"value": {
+"t": "n",
+"v": 780.31
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D42",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A43",
+"input": "13/4/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B43",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C43",
+"value": {
+"t": "n",
+"v": 888.09
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D43",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A44",
+"input": "27/4/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B44",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C44",
+"value": {
+"t": "n",
+"v": 862.8
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D44",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A45",
+"input": "4/5/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B45",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C45",
+"value": {
+"t": "n",
+"v": 175.07
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D45",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A46",
+"input": "16/5/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B46",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C46",
+"value": {
+"t": "n",
+"v": 30.62
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D46",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A47",
+"input": "30/5/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B47",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C47",
+"value": {
+"t": "n",
+"v": 251.22
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D47",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A48",
+"input": "6/6/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B48",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C48",
+"value": {
+"t": "n",
+"v": 388.67
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D48",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A49",
+"input": "20/6/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B49",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C49",
+"value": {
+"t": "n",
+"v": 518.38
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D49",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A50",
+"input": "30/6/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B50",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C50",
+"value": {
+"t": "n",
+"v": 856.2
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D50",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A51",
+"input": "15/7/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B51",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C51",
+"value": {
+"t": "n",
+"v": 421.85
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D51",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A52",
+"input": "27/7/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B52",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C52",
+"value": {
+"t": "n",
+"v": 365.29
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D52",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A53",
+"input": "5/8/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B53",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C53",
+"value": {
+"t": "n",
+"v": 111.11
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D53",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A54",
+"input": "18/8/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B54",
+"value": {
+"t": "s",
+"v": "Dyn"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C54",
+"value": {
+"t": "n",
+"v": 74.78
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D54",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A55",
+"input": "24/8/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B55",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C55",
+"value": {
+"t": "n",
+"v": 407.75
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D55",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A56",
+"input": "5/9/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B56",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C56",
+"value": {
+"t": "n",
+"v": 548.64
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D56",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A57",
+"input": "16/9/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B57",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C57",
+"value": {
+"t": "n",
+"v": 518.77
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D57",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A58",
+"input": "1/10/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B58",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C58",
+"value": {
+"t": "n",
+"v": 855.07
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D58",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A59",
+"input": "13/10/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B59",
+"value": {
+"t": "s",
+"v": "Acme"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C59",
+"value": {
+"t": "n",
+"v": 81.88
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D59",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A60",
+"input": "21/10/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B60",
+"value": {
+"t": "s",
+"v": "Eon"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C60",
+"value": {
+"t": "n",
+"v": 351.08
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D60",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "set",
+"cell": "Tx!A61",
+"input": "5/11/2026"
+},
+{
+"op": "setv",
+"cell": "Tx!B61",
+"value": {
+"t": "s",
+"v": "Core"
+}
+},
+{
+"op": "setv",
+"cell": "Tx!C61",
+"value": {
+"t": "n",
+"v": 860.81
+}
+},
+{
+"op": "setv",
+"cell": "Tx!D61",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "table",
+"name": "Tx",
+"range": "Tx!A1:D61"
+},
+{
+"op": "set",
+"cell": "Rpt!A1",
+"input": "=EOMONTH(MIN(Tx[Date]),-1)+1"
+},
+{
+"op": "set",
+"cell": "Rpt!A2",
+"input": "=EDATE(A1,SEQUENCE(24,1,0,1))"
+},
+{
+"op": "set",
+"cell": "Rpt!B2",
+"input": "=SUMIFS(Tx[Amt],Tx[Date],\">=\"&A2#,Tx[Date],\"<\"&EDATE(A2#,1))"
+},
+{
+"op": "set",
+"cell": "Rpt!C2",
+"input": "=SCAN(0,B2#,LAMBDA(a,b,a+b))"
+},
+{
+"op": "set",
+"cell": "Rpt!D2",
+"input": "=IFERROR(B2#/DROP(VSTACK(0,B2#),-1)-1,\"\")"
+},
+{
+"op": "set",
+"cell": "Rpt!E2",
+"input": "=TEXT(A2#,\"mmm yy\")"
+},
+{
+"op": "set",
+"cell": "Rpt!F2",
+"input": "=COUNTIFS(Tx[Date],\">=\"&A2#,Tx[Date],\"<\"&EDATE(A2#,1))"
+},
+{
+"op": "set",
+"cell": "Rpt!G2",
+"input": "=IF(F2#=0,\"\",B2#/F2#)"
+},
+{
+"op": "set",
+"cell": "Rpt!H2",
+"input": "=SUMPRODUCT((YEAR(Tx[Date])=YEAR(A2#))*(MONTH(Tx[Date])=MONTH(A2#))*Tx[Amt])"
+},
+{
+"op": "set",
+"cell": "Rpt!I2",
+"input": "=MAP(A2#,LAMBDA(m,SUM(FILTER(Tx[Amt],(Tx[Date]>=m)*(Tx[Date]<EDATE(m,1)),0))))"
+},
+{
+"op": "set",
+"cell": "Rpt!J2",
+"input": "=RANK.EQ(B2#,B2#)"
+},
+{
+"op": "set",
+"cell": "Rpt!K2",
+"input": "=XLOOKUP(A2#,Tx[Date],Tx[Amt],\"-\",-1)"
+},
+{
+"op": "set",
+"cell": "Rpt!L2",
+"input": "=YEARFRAC(A2#,DATE(2026,6,30),1)"
+},
+{
+"op": "set",
+"cell": "Rpt!M2",
+"input": "=WEEKDAY(A2#)&TEXT(A2#,\"ddd\")"
+},
+{
+"op": "set",
+"cell": "Rpt!N2",
+"input": "=DATEDIF(A2#,DATE(2026,12,31),\"m\")"
+},
+{
+"op": "set",
+"cell": "Rpt!Q1",
+"input": "=SLOPE(B2:B25,SEQUENCE(24))"
+},
+{
+"op": "set",
+"cell": "Rpt!Q2",
+"input": "=INTERCEPT(B2:B25,SEQUENCE(24))"
+},
+{
+"op": "set",
+"cell": "Rpt!Q3",
+"input": "=RSQ(B2:B25,SEQUENCE(24))"
+},
+{
+"op": "set",
+"cell": "Rpt!Q4",
+"input": "=FORECAST.LINEAR(25,B2:B25,SEQUENCE(24))"
+},
+{
+"op": "set",
+"cell": "Rpt!Q5",
+"input": "=TREND(B2:B25,SEQUENCE(24),{25;26})"
+},
+{
+"op": "set",
+"cell": "Rpt!Q8",
+"input": "=LINEST(B2:B25,SEQUENCE(24)^{1,2})"
+},
+{
+"op": "set",
+"cell": "Rpt!Q10",
+"input": "=CORREL(B2:B25,F2:F25)"
+},
+{
+"op": "set",
+"cell": "Rpt!Q11",
+"input": "=QUARTILE.INC(Tx[Amt],{1,2,3})"
+},
+{
+"op": "set",
+"cell": "Rpt!Q12",
+"input": "=FREQUENCY(Tx[Amt],{100,300,600})"
+},
+{
+"op": "set",
+"cell": "Rpt!S1",
+"input": "=GROWTH(B2:B25,SEQUENCE(24),26)"
+},
+{
+"op": "set",
+"cell": "Rpt!S3",
+"input": "=UNIQUE(Tx[Cust])"
+},
+{
+"op": "set",
+"cell": "Rpt!T3",
+"input": "=SUMIFS(Tx[Amt],Tx[Cust],S3#)"
+},
+{
+"op": "set",
+"cell": "Rpt!U3",
+"input": "=RANK.EQ(T3#,T3#,1)"
+},
+{
+"op": "set",
+"cell": "Rpt!V3",
+"input": "=TAKE(SORTBY(S3#,T3#,-1),2)"
+},
+{
+"op": "set",
+"cell": "Rpt!W3",
+"input": "=COUNTIFS(Tx[Cust],S3#,Tx[Cat],TRANSPOSE(UNIQUE(Tx[Cat])))"
+},
+{
+"op": "set",
+"cell": "Rpt!A28",
+"input": "=AVERAGE(TAKE(B2#,-3))"
+},
+{
+"op": "set",
+"cell": "Rpt!A29",
+"input": "=SUM(OFFSET(B2,3,0,3,1))"
+},
+{
+"op": "set",
+"cell": "Rpt!A30",
+"input": "=MAX(INDEX(B2#,0))-MIN(INDEX(B2#,0))"
+},
+{
+"op": "set",
+"cell": "Rpt!A31",
+"input": "=TEXTJOIN(\"; \",TRUE,TEXT(TAKE(A2#,3),\"d/m/yyyy\"))"
+},
+{
+"op": "set",
+"cell": "Rpt!A32",
+"input": "=CONCAT(TAKE(E2#,3))"
+},
+{
+"op": "set",
+"cell": "Rpt!A33",
+"input": "=XMATCH(MAX(B2#),B2#)"
+},
+{
+"op": "set",
+"cell": "Rpt!A34",
+"input": "=ROUND(STDEV.P(B2#),4)"
+},
+{
+"op": "read",
+"range": "Rpt!A1:W36"
+},
+{
+"op": "set",
+"cell": "Tx!A62",
+"input": "5/3/2026"
+},
+{
+"op": "set",
+"cell": "Tx!B62",
+"input": "Acme"
+},
+{
+"op": "set",
+"cell": "Tx!C62",
+"input": "1234.5"
+},
+{
+"op": "set",
+"cell": "Tx!D62",
+"input": "A"
+},
+{
+"op": "read",
+"range": "Rpt!A1:W36"
+},
+{
+"op": "set",
+"cell": "Tx!C5",
+"input": "1e3"
+},
+{
+"op": "read",
+"range": "Rpt!A1:W36"
+},
+{
+"op": "table_sort",
+"name": "Tx",
+"sheet": "Tx",
+"keys": [
+{
+"key": 3,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Rpt!A1:W36"
+},
+{
+"op": "delete_rows",
+"sheet": "Tx",
+"at": 10,
+"count": 4
+},
+{
+"op": "read",
+"range": "Rpt!A1:W36"
+}
+]
+}

@@ -52,7 +52,7 @@ impl Workbook {
             } else {
                 (src.r0, src.r1, dst.0)
             };
-            self.fmt_lines(ss, ds, cols, a0, a1, d0, true);
+            self.fmt_lines(ss, ds, cols, a0..=a1, d0, true);
             return;
         }
         if src.rows() as u64 * src.cols() as u64 > CELL_LIMIT {
@@ -87,7 +87,7 @@ impl Workbook {
             } else {
                 (src.r0, src.r1, dst.row)
             };
-            self.fmt_lines(ss, dst.sheet, cols, a0, a1, d0, false);
+            self.fmt_lines(ss, dst.sheet, cols, a0..=a1, d0, false);
             return;
         }
         if src.rows() as u64 * src.cols() as u64 > CELL_LIMIT {
@@ -105,17 +105,16 @@ impl Workbook {
         self.fmt_copy_pairs(&pairs);
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn fmt_lines(
         &mut self,
         ss: SheetId,
         ds: SheetId,
         cols: bool,
-        a0: u32,
-        a1: u32,
+        span: std::ops::RangeInclusive<u32>,
         d0: u32,
         mv: bool,
     ) {
+        let (a0, a1) = (*span.start(), *span.end());
         let n = a1 - a0 + 1;
         let f = &mut self.cellfmt;
         let line_map = |f: &mut crate::cellfmt::CellFormats| {

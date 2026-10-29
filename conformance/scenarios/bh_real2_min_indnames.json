@@ -1,0 +1,1089 @@
+{
+"sheets": [
+"Q1-2026",
+"Jan-26",
+"2026",
+"Q1",
+"A1",
+"R1C1",
+"R",
+"C",
+"RC",
+"Sheet.1",
+"Sheet_1",
+"a b",
+"a&b",
+"a+b",
+"a(b)",
+"\u00e9",
+"\u65e5\u672c",
+"1st",
+"x1y",
+"TRUE",
+"FALSE",
+"a,b",
+"a;b",
+"a#b",
+"a%b",
+"a$b",
+"a!b",
+"a'b",
+"Jan26",
+"AB1",
+"XFD1",
+"XFE1",
+"ZZZ99999",
+"a-b",
+"-a",
+"a=b",
+"a@b",
+"a{b}",
+"a^b",
+"a~b",
+"_a",
+"a.",
+"LOG10",
+"NA",
+"a b c",
+"R2",
+"R2C",
+"C2",
+"RC2",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Q1-2026!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Q1-2026!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "Jan-26!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Jan-26!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "2026!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "2026!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "Q1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Q1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "A1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "A1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "R1C1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "R1C1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "R!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "R!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "C!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "C!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "RC!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "RC!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "Sheet.1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet.1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "Sheet_1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet_1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a&b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a&b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a+b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a+b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a(b)!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a(b)!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "\u00e9!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "\u00e9!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "\u65e5\u672c!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "\u65e5\u672c!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "1st!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "1st!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "x1y!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "x1y!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "TRUE!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "TRUE!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "FALSE!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "FALSE!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a,b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a,b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a;b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a;b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a#b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a#b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a%b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a%b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a$b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a$b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a!b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a!b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a'b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a'b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "Jan26!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Jan26!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "AB1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "AB1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "XFD1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "XFD1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "XFE1!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "XFE1!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "ZZZ99999!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "ZZZ99999!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a-b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a-b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "-a!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "-a!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a=b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a=b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a@b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a@b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a{b}!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a{b}!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a^b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a^b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a~b!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a~b!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "_a!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "_a!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a.!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a.!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "LOG10!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "LOG10!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "NA!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "NA!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "a b c!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "a b c!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "R2!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "R2!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "R2C!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "R2C!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "C2!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "C2!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "setv",
+"cell": "RC2!A1",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "RC2!B2",
+"value": {
+"t": "n",
+"v": 42
+}
+},
+{
+"op": "set",
+"cell": "S!A1",
+"input": "=IFERROR(INDIRECT(\"Q1-2026!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'Q1-2026'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A2",
+"input": "=IFERROR(INDIRECT(\"Jan-26!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'Jan-26'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A3",
+"input": "=IFERROR(INDIRECT(\"2026!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'2026'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A4",
+"input": "=IFERROR(INDIRECT(\"Q1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'Q1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A5",
+"input": "=IFERROR(INDIRECT(\"A1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'A1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A6",
+"input": "=IFERROR(INDIRECT(\"R1C1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'R1C1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A7",
+"input": "=IFERROR(INDIRECT(\"R!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'R'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A8",
+"input": "=IFERROR(INDIRECT(\"C!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'C'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A9",
+"input": "=IFERROR(INDIRECT(\"RC!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'RC'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A10",
+"input": "=IFERROR(INDIRECT(\"Sheet.1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'Sheet.1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A11",
+"input": "=IFERROR(INDIRECT(\"Sheet_1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'Sheet_1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A12",
+"input": "=IFERROR(INDIRECT(\"a b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A13",
+"input": "=IFERROR(INDIRECT(\"a&b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a&b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A14",
+"input": "=IFERROR(INDIRECT(\"a+b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a+b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A15",
+"input": "=IFERROR(INDIRECT(\"a(b)!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a(b)'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A16",
+"input": "=IFERROR(INDIRECT(\"\u00e9!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'\u00e9'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A17",
+"input": "=IFERROR(INDIRECT(\"\u65e5\u672c!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'\u65e5\u672c'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A18",
+"input": "=IFERROR(INDIRECT(\"1st!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'1st'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A19",
+"input": "=IFERROR(INDIRECT(\"x1y!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'x1y'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A20",
+"input": "=IFERROR(INDIRECT(\"TRUE!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'TRUE'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A21",
+"input": "=IFERROR(INDIRECT(\"FALSE!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'FALSE'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A22",
+"input": "=IFERROR(INDIRECT(\"a,b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a,b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A23",
+"input": "=IFERROR(INDIRECT(\"a;b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a;b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A24",
+"input": "=IFERROR(INDIRECT(\"a#b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a#b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A25",
+"input": "=IFERROR(INDIRECT(\"a%b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a%b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A26",
+"input": "=IFERROR(INDIRECT(\"a$b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a$b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A27",
+"input": "=IFERROR(INDIRECT(\"a!b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a!b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A28",
+"input": "=IFERROR(INDIRECT(\"a'b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a''b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A29",
+"input": "=IFERROR(INDIRECT(\"Jan26!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'Jan26'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A30",
+"input": "=IFERROR(INDIRECT(\"AB1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'AB1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A31",
+"input": "=IFERROR(INDIRECT(\"XFD1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'XFD1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A32",
+"input": "=IFERROR(INDIRECT(\"XFE1!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'XFE1'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A33",
+"input": "=IFERROR(INDIRECT(\"ZZZ99999!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'ZZZ99999'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A34",
+"input": "=IFERROR(INDIRECT(\"a-b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a-b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A35",
+"input": "=IFERROR(INDIRECT(\"-a!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'-a'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A36",
+"input": "=IFERROR(INDIRECT(\"a=b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a=b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A37",
+"input": "=IFERROR(INDIRECT(\"a@b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a@b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A38",
+"input": "=IFERROR(INDIRECT(\"a{b}!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a{b}'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A39",
+"input": "=IFERROR(INDIRECT(\"a^b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a^b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A40",
+"input": "=IFERROR(INDIRECT(\"a~b!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a~b'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A41",
+"input": "=IFERROR(INDIRECT(\"_a!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'_a'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A42",
+"input": "=IFERROR(INDIRECT(\"a.!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a.'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A43",
+"input": "=IFERROR(INDIRECT(\"LOG10!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'LOG10'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A44",
+"input": "=IFERROR(INDIRECT(\"NA!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'NA'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A45",
+"input": "=IFERROR(INDIRECT(\"a b c!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'a b c'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A46",
+"input": "=IFERROR(INDIRECT(\"R2!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'R2'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A47",
+"input": "=IFERROR(INDIRECT(\"R2C!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'R2C'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A48",
+"input": "=IFERROR(INDIRECT(\"C2!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'C2'!B2\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "S!A49",
+"input": "=IFERROR(INDIRECT(\"RC2!B2\"),\"E\")&\"|\"&IFERROR(INDIRECT(\"'RC2'!B2\"),\"E\")"
+},
+{
+"op": "read",
+"range": "S!A1:A49"
+}
+]
+}

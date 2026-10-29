@@ -46,6 +46,8 @@ pub struct RefGrid {
     pub items: Vec<Result<Area, XlError>>,
 
     pub areas: Arc<[Area]>,
+
+    pub by_index: bool,
 }
 
 impl RefGrid {
@@ -61,6 +63,7 @@ impl RefGrid {
             cols,
             items,
             areas,
+            by_index: false,
         }
     }
 
@@ -70,7 +73,7 @@ impl RefGrid {
             self.cols,
             self.items
                 .iter()
-                .map(|i| Value::Error(i.err().unwrap_or(XlError::Value)))
+                .map(|i| Value::Error(i.err().unwrap_or(XlError::VALUE)))
                 .collect(),
         ))
     }
@@ -142,14 +145,6 @@ impl Operand {
     pub fn is_missing(&self) -> bool {
         matches!(self, Operand::Missing)
     }
-
-    #[allow(dead_code)]
-    pub fn as_ref(&self) -> Option<&Reference> {
-        match self {
-            Operand::Ref(r) => Some(r),
-            _ => None,
-        }
-    }
 }
 
 impl From<Value> for Operand {
@@ -220,6 +215,12 @@ pub struct EvalCtx<'a> {
     pub(crate) name_key: Option<crate::value::Text>,
 
     pub(crate) arr_direct: bool,
+
+    pub(crate) name_first: bool,
+
+    pub(crate) fn_depth: u32,
+
+    pub(crate) legacy_form: bool,
 }
 
 impl<'a> EvalCtx<'a> {
@@ -248,6 +249,9 @@ impl<'a> EvalCtx<'a> {
             arr_ctx: 0,
             name_key: None,
             arr_direct: false,
+            name_first: false,
+            fn_depth: 0,
+            legacy_form: false,
         }
     }
 
@@ -354,13 +358,13 @@ impl<'a> EvalCtx<'a> {
             self.circ_fid.get_or_insert(fid);
         }
         self.circ_live += 1;
-        Value::Error(XlError::Circ)
+        Value::Error(XlError::CIRC)
     }
 
     pub fn cell_value(&mut self, sheet: SheetId, row: u32, col: u32) -> Value {
         let wb = self.wb;
         let Some(sh) = wb.sheet(sheet) else {
-            return Value::Error(XlError::Ref);
+            return Value::Error(XlError::REF);
         };
         match sh.cells.get(row, col) {
             Some(Entry::Const(v)) => v.clone(),
@@ -469,7 +473,7 @@ impl<'a> EvalCtx<'a> {
         let n = rows as u64 * cols as u64;
         if n > crate::workbook::MAX_ARRAY_CELLS {
             self.too_big(n as f64);
-            return Value::Error(XlError::Num);
+            return Value::Error(XlError::NUM);
         }
         let mut data = vec![Value::Blank; n as usize];
 
@@ -501,7 +505,7 @@ impl<'a> EvalCtx<'a> {
             .iter()
             .map(|i| match i {
                 Ok(a) if a.rect.is_cell() => self.cell_value(a.sheet, a.rect.r0, a.rect.c0),
-                Ok(_) => Value::Error(XlError::Value),
+                Ok(_) => Value::Error(XlError::VALUE),
                 Err(e) => Value::Error(*e),
             })
             .collect();
@@ -529,6 +533,12 @@ impl<'a> EvalCtx<'a> {
         }
     }
 
+    pub(crate) fn in_array_block(&self) -> bool {
+        self.wb
+            .formula_at(self.host)
+            .is_some_and(|f| self.wb.formula(f).array.is_some())
+    }
+
     pub fn deref(&mut self, op: Operand) -> Value {
         match op {
             Operand::Val(v) => v,
@@ -541,22 +551,23 @@ impl<'a> EvalCtx<'a> {
                 }
 
                 None if r.areas().iter().any(|a| a.sheet != r.areas()[0].sheet) => {
-                    Value::Error(XlError::Ref)
+                    Value::Error(XlError::REF)
                 }
-                None => Value::Error(XlError::Value),
+                None => Value::Error(XlError::VALUE),
             },
         }
     }
 
     pub fn eval(&mut self, node: &Node) -> Operand {
         if self.interrupt.is_some() {
-            return Operand::err(XlError::Calc);
+            return Operand::err(XlError::CALC);
         }
         stacker::maybe_grow(64 * 1024, 2 * 1024 * 1024, || self.eval_inner(node))
     }
 
     fn eval_inner(&mut self, node: &Node) -> Operand {
         let direct = std::mem::replace(&mut self.arr_direct, false);
+        let first = std::mem::replace(&mut self.name_first, false);
         match node {
             Node::Lit(v) => Operand::Val(v.clone()),
             Node::Ref(sheet, cref) => refs::resolve(self, sheet, cref),
@@ -569,15 +580,37 @@ impl<'a> EvalCtx<'a> {
                 let saved = std::mem::replace(&mut self.arr_ctx, inner);
                 let out = refs::eval_name(self, key, sheet.as_ref());
                 self.arr_ctx = saved;
-                out
+                match out {
+                    Operand::Ref(Reference::Grid(g)) if first => match g.items.first() {
+                        Some(Ok(a)) => Operand::Ref(Reference::Area(*a)),
+                        Some(Err(e)) => Operand::err(*e),
+                        None => Operand::err(XlError::VALUE),
+                    },
+                    out => out,
+                }
             }
             Node::Local { slot, .. } => self
                 .env
                 .get(*slot as usize)
                 .cloned()
-                .unwrap_or(Operand::err(XlError::Name)),
+                .unwrap_or(Operand::err(XlError::NAME)),
             Node::Unary(UnaryOp::Implicit | UnaryOp::ImplicitQuiet, x) => {
+                let quiet = matches!(node, Node::Unary(UnaryOp::ImplicitQuiet, _));
+                let saved = self.legacy_form;
+                self.legacy_form = saved || quiet;
                 let v = self.eval(x);
+                self.legacy_form = saved;
+
+                let v = match v {
+                    Operand::Ref(Reference::Grid(g)) if matches!(**x, Node::Name { .. }) => {
+                        match g.items.first() {
+                            Some(Ok(a)) => Operand::Ref(Reference::Area(*a)),
+                            Some(Err(e)) => Operand::err(*e),
+                            None => Operand::err(XlError::VALUE),
+                        }
+                    }
+                    v => v,
+                };
                 refs::implicit_intersection(self, v)
             }
             Node::Unary(UnaryOp::ArrayZero, x) => {
@@ -589,6 +622,10 @@ impl<'a> EvalCtx<'a> {
             }
             Node::Unary(op, x) => {
                 let v = self.eval(x);
+
+                if *op == UnaryOp::Plus && matches!(v, Operand::Ref(Reference::Grid(_))) {
+                    return v;
+                }
                 let v = self.deref(v);
                 Operand::Val(ops::unary(self, *op, v))
             }
@@ -608,13 +645,13 @@ impl<'a> EvalCtx<'a> {
 
                     let dead = |n: &Node, o: &Operand| {
                         matches!(n, Node::Ref(crate::formula::SheetRef::Missing(_), _))
-                            && matches!(o, Operand::Val(Value::Error(XlError::Ref)))
+                            && matches!(o, Operand::Val(Value::Error(XlError::REF)))
                     };
                     if *op == BinOp::Range
                         && (dead(a, &l) && matches!(r, Operand::Ref(_))
                             || dead(b, &r) && matches!(l, Operand::Ref(_)))
                     {
-                        return Operand::err(XlError::Value);
+                        return Operand::err(XlError::VALUE);
                     }
                     refs::ref_op(self, *op, l, r)
                 }
@@ -635,7 +672,7 @@ impl<'a> EvalCtx<'a> {
             Node::Call { callee, args } => {
                 let f = self.eval(callee);
                 if matches!(f, Operand::Ref(_)) {
-                    return Operand::err(XlError::Ref);
+                    return Operand::err(XlError::REF);
                 }
                 let f = self.deref(f);
                 lambda::call_value(self, f, args)
@@ -664,7 +701,7 @@ impl<'a> EvalCtx<'a> {
             }
             Node::Missing => Operand::Missing,
             Node::Unsupported { error, .. } => Operand::err(*error),
-            Node::DeadRef(_) => Operand::err(XlError::Ref),
+            Node::DeadRef(_) => Operand::err(XlError::REF),
             Node::StructRef { table, spec, .. } => refs::struct_ref(self, table, spec),
             Node::Ws { node, .. } => {
                 self.arr_direct = direct;
@@ -685,7 +722,27 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
         }
         _ => {
             let op = ctx.eval(root);
-            ctx.deref(op)
+
+            match &op {
+                Operand::Ref(Reference::Grid(g)) if ctx.in_array_block() => {
+                    let one = ctx
+                        .wb
+                        .formula_at(ctx.host)
+                        .and_then(|f| ctx.wb.formula(f).array)
+                        == Some((1, 1));
+                    if g.by_index || one {
+                        let g = g.clone();
+                        let v = ctx.grid_cells(&g);
+                        match v {
+                            Value::Array(a) if one => a.data[0].clone(),
+                            v => v,
+                        }
+                    } else {
+                        ctx.deref(op)
+                    }
+                }
+                _ => ctx.deref(op),
+            }
         }
     };
     if ctx.has_placeholders() && contains_circ(&v) {
@@ -709,11 +766,11 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
 
 pub(crate) fn contains_circ(v: &Value) -> bool {
     match v {
-        Value::Error(XlError::Circ) => true,
+        Value::Error(XlError::CIRC) => true,
         Value::Array(a) => a
             .data
             .iter()
-            .any(|x| matches!(x, Value::Error(XlError::Circ))),
+            .any(|x| matches!(x, Value::Error(XlError::CIRC))),
         _ => false,
     }
 }
@@ -721,9 +778,9 @@ pub(crate) fn contains_circ(v: &Value) -> bool {
 pub fn finalize(v: Value) -> Value {
     match v {
         Value::Blank => Value::Number(0.0),
-        Value::Lambda(_) => Value::Error(XlError::Calc),
+        Value::Lambda(_) => Value::Error(XlError::CALC),
         Value::Text(ref s) if s.len() > MAX_TEXT_LEN && s.encode_utf16().count() > MAX_TEXT_LEN => {
-            Value::Error(XlError::Value)
+            Value::Error(XlError::VALUE)
         }
         Value::Array(a) => {
             if a.rows == 1 && a.cols == 1 {
@@ -738,7 +795,7 @@ pub fn finalize(v: Value) -> Value {
                     .iter()
                     .map(|x| match x {
                         Value::Blank => Value::Number(0.0),
-                        Value::Lambda(_) | Value::Array(_) => Value::Error(XlError::Calc),
+                        Value::Lambda(_) | Value::Array(_) => Value::Error(XlError::CALC),
                         other => other.clone(),
                     })
                     .collect();

@@ -2,35 +2,6 @@ use super::decimal::{digits_to_string, Dec};
 
 pub const TEXT_GENERAL_WIDTH: usize = 11;
 
-#[allow(dead_code)]
-
-pub fn format_general_cell(x: f64, width: f64) -> String {
-    let w = if width.is_finite() && width > 0.0 {
-        width.floor() as i32
-    } else {
-        0
-    };
-    let hashes = || "#".repeat(w.max(1) as usize);
-    if x == 0.0 || !x.is_finite() {
-        return if w >= 1 { "0".to_string() } else { hashes() };
-    }
-    let neg = x < 0.0;
-    let body_w = (w - neg as i32).min(TEXT_GENERAL_WIDTH as i32);
-    if body_w < 1 {
-        return hashes();
-    }
-    let d = Dec::from_f64(x);
-    let body = general_body(&d, body_w);
-    if body.chars().count() as i32 <= body_w {
-        return if neg { format!("-{body}") } else { body };
-    }
-    if d.exp < 0 {
-        "0".to_string()
-    } else {
-        hashes()
-    }
-}
-
 pub fn format_general_width(x: f64, width: usize) -> String {
     if x == 0.0 || !x.is_finite() {
         return "0".to_string();
@@ -155,34 +126,6 @@ mod tests {
         ];
         for (x, want) in cases {
             assert_eq!(format_general_width(*x, 11), *want, "for {x:e}");
-        }
-    }
-
-    #[test]
-    fn general_in_cells() {
-        let cases: &[(f64, f64, &str)] = &[
-            (1234567890123.0, 8.43, "1.23E+12"),
-            (1.0 / 3.0, 8.43, "0.333333"),
-            (-1234.5678, 8.43, "-1234.57"),
-            (0.000012345, 8.43, "1.23E-05"),
-            (99999999999.0, 8.43, "1E+11"),
-            (1234567890123.0, 4.0, "####"),
-            (1e-10, 4.0, "0"),
-            (-0.5, 2.0, "-1"),
-            (-0.5, 1.0, "#"),
-            (123456.0, 5.0, "1E+05"),
-            (1.5e300, 5.0, "#####"),
-            (1.5e300, 6.0, "2E+300"),
-            (-1234567890123.0, 12.0, "-1.23457E+12"),
-            (-1234567890123.0, 11.0, "-1.2346E+12"),
-            (1234567.891, 7.0, "1234568"),
-            (-1234567.891, 7.0, "-1E+06"),
-            (0.0001234, 7.0, "0.00012"),
-            (12345678901.0, 7.0, "1.2E+10"),
-            (1.0 / 7.0, 25.0, "0.142857143"),
-        ];
-        for (x, w, want) in cases {
-            assert_eq!(format_general_cell(*x, *w), *want, "for {x:e} at width {w}");
         }
     }
 }

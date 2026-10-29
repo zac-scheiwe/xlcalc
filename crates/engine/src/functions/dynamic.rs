@@ -28,23 +28,23 @@ fn n_arg(ctx: &EvalCtx, ops: &[Operand], i: usize, d: f64) -> R<f64> {
     match ops.get(i) {
         None | Some(Operand::Missing) => Ok(d),
         Some(Operand::Val(v)) => ctx.to_number(v),
-        Some(_) => Err(XlError::Value),
+        Some(_) => Err(XlError::VALUE),
     }
 }
 
 fn check_size(ctx: &mut EvalCtx, rows: f64, cols: f64) -> R<(u32, u32)> {
     if rows < 0.0 || cols < 0.0 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
 
     if rows > 1048576.0 || cols > 1048576.0 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     if rows < 1.0 || cols < 1.0 {
-        return Err(XlError::Calc);
+        return Err(XlError::CALC);
     }
     if ctx.too_big(rows * cols) || rows * cols > MAX_ARRAY_CELLS as f64 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok((rows as u32, cols as u32))
 }
@@ -75,11 +75,11 @@ fn randarray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let whole = match ops.get(4) {
             None | Some(Operand::Missing) => false,
             Some(Operand::Val(v)) => boolean(v)?,
-            Some(_) => return Err(XlError::Value),
+            Some(_) => return Err(XlError::VALUE),
         };
         let (rows, cols) = check_size(ctx, rows, cols)?;
         if lo > hi || (whole && (lo.fract() != 0.0 || hi.fract() != 0.0)) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let wb = ctx.wb;
         Ok(array_always(rows, cols, |_, _| {
@@ -126,9 +126,9 @@ fn elem_arg(op: &Operand, arr: &Array, idx: usize) -> Operand {
 fn lambda_arg(op: &Operand, arity: usize) -> R<Arc<LambdaValue>> {
     match op {
         Operand::Val(Value::Lambda(l)) if l.arity() == arity => Ok(l.clone()),
-        Operand::Val(Value::Lambda(_)) => Err(XlError::Value),
+        Operand::Val(Value::Lambda(_)) => Err(XlError::VALUE),
         Operand::Val(Value::Error(e)) => Err(*e),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -155,7 +155,7 @@ fn call_scalar(
     let in_used = blank_in_used(ctx, &out);
     let v = match ctx.deref(out) {
         Value::Array(a) if a.rows == 1 && a.cols == 1 => a.data[0].clone(),
-        Value::Array(_) => return Err(XlError::Calc),
+        Value::Array(_) => return Err(XlError::CALC),
         v => v,
     };
 
@@ -203,15 +203,15 @@ fn map(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             .iter()
             .any(|o| matches!(o, Operand::Val(Value::Error(_))))
         {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
 
         for (i, op) in arrs.iter().enumerate() {
             match op {
-                Operand::Missing => return Err(XlError::Value),
+                Operand::Missing => return Err(XlError::VALUE),
                 Operand::Val(Value::Array(_)) | Operand::Ref(_) | Operand::Val(Value::Error(_)) => {
                 }
-                Operand::Val(_) if i > 0 => return Err(XlError::Value),
+                Operand::Val(_) if i > 0 => return Err(XlError::VALUE),
                 _ => {}
             }
         }
@@ -252,7 +252,7 @@ fn map(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     .collect();
                 data.push(call_scalar(ctx, &f, args, &mut hard)?);
                 if ctx.interrupted() {
-                    return Err(XlError::Calc);
+                    return Err(XlError::CALC);
                 }
             }
         }
@@ -303,12 +303,12 @@ fn reduce_scan(ctx: &mut EvalCtx, ops: &[Operand], scan: bool) -> Operand {
             };
             hard |= matches!(acc, Operand::Val(Value::Blank)) && !in_used;
             if ctx.interrupted() {
-                return Err(XlError::Calc);
+                return Err(XlError::CALC);
             }
             if scan {
                 out.push(match &acc {
                     Operand::Val(Value::Array(a)) if a.data.len() == 1 => a.data[0].clone(),
-                    Operand::Val(Value::Array(_)) => return Err(XlError::Calc),
+                    Operand::Val(Value::Array(_)) => return Err(XlError::CALC),
                     Operand::Val(v) => v.clone(),
                     _ => Value::Blank,
                 });
@@ -343,16 +343,16 @@ fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             || rows >= 4294967295.0
             || cols >= 4294967295.0
         {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         if ctx.too_big(rows * cols) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         if rows > 1048576.0
             || cols > 16384.0
             || rows * cols > crate::workbook::MAX_ARRAY_CELLS as f64
         {
-            return Err(XlError::Spill);
+            return Err(XlError::SPILL);
         }
         let (rows, cols) = (rows as u32, cols as u32);
         if wrong_arity {
@@ -369,7 +369,7 @@ fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 ];
                 data.push(call_scalar(ctx, &f, args, &mut hard)?);
                 if ctx.interrupted() {
-                    return Err(XlError::Calc);
+                    return Err(XlError::CALC);
                 }
             }
         }
@@ -379,7 +379,7 @@ fn makearray(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 fn by_line(ctx: &mut EvalCtx, ops: &[Operand], by_row: bool) -> Operand {
     if ops.len() == 1 {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     opval((|| {
         let arr = arrays(ctx, &ops[..1])?.pop().unwrap();
@@ -436,7 +436,7 @@ fn by_line(ctx: &mut EvalCtx, ops: &[Operand], by_row: bool) -> Operand {
             };
             data.push(call_scalar(ctx, &f, vec![arg], &mut hard)?);
             if ctx.interrupted() {
-                return Err(XlError::Calc);
+                return Err(XlError::CALC);
             }
         }
         Ok(if by_row {
@@ -473,12 +473,12 @@ fn filter(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 .filter_map(|c| keep(inc.get(0, c)).map(|k| k.then_some(c)).transpose())
                 .collect::<R<_>>()?;
         } else {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         if picked.is_empty() {
             return match ops.get(2) {
-                None | Some(Operand::Missing) => Err(XlError::Calc),
-                Some(Operand::Ref(r)) if r.single().is_none() => Err(XlError::Value),
+                None | Some(Operand::Missing) => Err(XlError::CALC),
+                Some(Operand::Ref(r)) if r.single().is_none() => Err(XlError::VALUE),
                 Some(op) => Ok(ctx.deref(op.clone())),
             };
         }

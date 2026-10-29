@@ -1,0 +1,511 @@
+{
+"sheets": [
+"Model"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Model!A1",
+"value": {
+"t": "s",
+"v": "Price"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B1",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Model!A2",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B2",
+"value": {
+"t": "n",
+"v": 1000
+}
+},
+{
+"op": "setv",
+"cell": "Model!A3",
+"value": {
+"t": "s",
+"v": "VarCost"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B3",
+"value": {
+"t": "n",
+"v": 0.6
+}
+},
+{
+"op": "setv",
+"cell": "Model!A4",
+"value": {
+"t": "s",
+"v": "Fixed"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B4",
+"value": {
+"t": "n",
+"v": 25000
+}
+},
+{
+"op": "setv",
+"cell": "Model!A5",
+"value": {
+"t": "s",
+"v": "TaxRate"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B5",
+"value": {
+"t": "n",
+"v": 0.25
+}
+},
+{
+"op": "setv",
+"cell": "Model!A6",
+"value": {
+"t": "s",
+"v": "Revenue"
+}
+},
+{
+"op": "set",
+"cell": "Model!B6",
+"input": "=B1*B2"
+},
+{
+"op": "setv",
+"cell": "Model!A7",
+"value": {
+"t": "s",
+"v": "Costs"
+}
+},
+{
+"op": "set",
+"cell": "Model!B7",
+"input": "=B1*B3*B2+B4"
+},
+{
+"op": "setv",
+"cell": "Model!A8",
+"value": {
+"t": "s",
+"v": "Profit"
+}
+},
+{
+"op": "set",
+"cell": "Model!B8",
+"input": "=(B6-B7)*(1-B5)"
+},
+{
+"op": "setv",
+"cell": "Model!A10",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B10",
+"value": {
+"t": "n",
+"v": 0.065
+}
+},
+{
+"op": "setv",
+"cell": "Model!A11",
+"value": {
+"t": "s",
+"v": "Years"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B11",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Model!A12",
+"value": {
+"t": "s",
+"v": "Loan"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B12",
+"value": {
+"t": "n",
+"v": 350000
+}
+},
+{
+"op": "setv",
+"cell": "Model!A13",
+"value": {
+"t": "s",
+"v": "Pmt"
+}
+},
+{
+"op": "set",
+"cell": "Model!B13",
+"input": "=-PMT(B10/12,B11*12,B12)"
+},
+{
+"op": "setv",
+"cell": "Model!A14",
+"value": {
+"t": "s",
+"v": "Total int"
+}
+},
+{
+"op": "set",
+"cell": "Model!B14",
+"input": "=B13*B11*12-B12"
+},
+{
+"op": "setv",
+"cell": "Model!A16",
+"value": {
+"t": "s",
+"v": "IRR"
+}
+},
+{
+"op": "set",
+"cell": "Model!B16",
+"input": "=IRR(D1:D6)"
+},
+{
+"op": "setv",
+"cell": "Model!D1",
+"value": {
+"t": "n",
+"v": -1000
+}
+},
+{
+"op": "setv",
+"cell": "Model!D2",
+"value": {
+"t": "n",
+"v": 300
+}
+},
+{
+"op": "setv",
+"cell": "Model!D3",
+"value": {
+"t": "n",
+"v": 400
+}
+},
+{
+"op": "setv",
+"cell": "Model!D4",
+"value": {
+"t": "n",
+"v": 500
+}
+},
+{
+"op": "setv",
+"cell": "Model!D5",
+"value": {
+"t": "n",
+"v": 200
+}
+},
+{
+"op": "setv",
+"cell": "Model!D6",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Model!A17",
+"value": {
+"t": "s",
+"v": "NPV"
+}
+},
+{
+"op": "set",
+"cell": "Model!B17",
+"input": "=NPV(B18,D2:D6)+D1"
+},
+{
+"op": "setv",
+"cell": "Model!A18",
+"value": {
+"t": "s",
+"v": "Disc"
+}
+},
+{
+"op": "setv",
+"cell": "Model!B18",
+"value": {
+"t": "n",
+"v": 0.08
+}
+},
+{
+"op": "setv",
+"cell": "Model!F3",
+"value": {
+"t": "n",
+"v": 80
+}
+},
+{
+"op": "setv",
+"cell": "Model!F4",
+"value": {
+"t": "n",
+"v": 90
+}
+},
+{
+"op": "setv",
+"cell": "Model!F5",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Model!F6",
+"value": {
+"t": "n",
+"v": 110
+}
+},
+{
+"op": "setv",
+"cell": "Model!F7",
+"value": {
+"t": "n",
+"v": 120
+}
+},
+{
+"op": "set",
+"cell": "Model!G2",
+"input": "=B8"
+},
+{
+"op": "set",
+"cell": "Model!H2",
+"input": "=B6"
+},
+{
+"op": "set",
+"cell": "Model!J2",
+"input": "=B13"
+},
+{
+"op": "setv",
+"cell": "Model!K2",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Model!L2",
+"value": {
+"t": "n",
+"v": 0.06
+}
+},
+{
+"op": "setv",
+"cell": "Model!M2",
+"value": {
+"t": "n",
+"v": 0.07
+}
+},
+{
+"op": "setv",
+"cell": "Model!N2",
+"value": {
+"t": "n",
+"v": 0.08
+}
+},
+{
+"op": "setv",
+"cell": "Model!J3",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Model!J4",
+"value": {
+"t": "n",
+"v": 15
+}
+},
+{
+"op": "setv",
+"cell": "Model!J5",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Model!J6",
+"value": {
+"t": "n",
+"v": 25
+}
+},
+{
+"op": "data_table",
+"range": "Model!F2:H7",
+"col_input": "Model!B1"
+},
+{
+"op": "data_table",
+"range": "Model!J2:N6",
+"row_input": "Model!B10",
+"col_input": "Model!B11"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "set",
+"cell": "Model!B3",
+"input": "0.7"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "set",
+"cell": "Model!B2",
+"input": "1200"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "goal_seek",
+"cell": "Model!B8",
+"goal": 50000,
+"changing": "Model!B1"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "goal_seek",
+"cell": "Model!B13",
+"goal": 2000,
+"changing": "Model!B12"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "goal_seek",
+"cell": "Model!B17",
+"goal": 0,
+"changing": "Model!B18"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "goal_seek",
+"cell": "Model!B14",
+"goal": 200000,
+"changing": "Model!B10"
+},
+{
+"op": "read",
+"range": "Model!A1:N20"
+},
+{
+"op": "insert_rows",
+"sheet": "Model",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Model!A1:N22"
+},
+{
+"op": "insert_cols",
+"sheet": "Model",
+"at": 6,
+"count": 1
+},
+{
+"op": "read",
+"range": "Model!A1:O22"
+},
+{
+"op": "set",
+"cell": "Model!B4",
+"input": "500"
+},
+{
+"op": "read",
+"range": "Model!A1:O22"
+}
+]
+}

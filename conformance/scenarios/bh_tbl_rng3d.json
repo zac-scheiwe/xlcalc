@@ -1,0 +1,67 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a b"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "c"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "d"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "5"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:C3",
+"name": "Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=SUM(Tb[@c:[d]])"
+},
+{
+"op": "read",
+"range": "Sheet1!G2"
+},
+{
+"op": "read_text",
+"range": "Sheet1!G2"
+}
+]
+}

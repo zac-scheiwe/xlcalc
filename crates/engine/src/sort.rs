@@ -10,6 +10,8 @@ use crate::structure::map_refs;
 use crate::value::Value;
 use crate::workbook::{CalcMode, EditError, Entry, Workbook};
 
+pub(crate) type MovedCell = Result<Value, (Arc<Formula>, String, Value, Option<(u32, u32)>)>;
+
 #[derive(Clone, Copy, Debug)]
 pub struct SortKey {
     pub index: u32,
@@ -335,11 +337,7 @@ impl Workbook {
             .enumerate()
             .map(|(i, e)| ((e.0, e.1), i))
             .collect();
-        #[allow(clippy::type_complexity)]
-        let mut plan: Vec<(
-            CellAddr,
-            Result<Value, (Arc<Formula>, String, Value, Option<(u32, u32)>)>,
-        )> = Vec::new();
+        let mut plan: Vec<(CellAddr, MovedCell)> = Vec::new();
         let mut fmt_pairs: Vec<(CellAddr, CellAddr)> = Vec::new();
         for (j, &src_line) in order.iter().enumerate() {
             let (dst_line, src_line) = (skip + j as u32, skip + src_line);

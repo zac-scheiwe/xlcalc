@@ -1,0 +1,287 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Name"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Hours"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Pay"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "Ann"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 38
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C2",
+"value": {
+"t": "n",
+"v": 31.5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "Bob"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": 40.5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C3",
+"value": {
+"t": "n",
+"v": 28
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "Cy"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C4",
+"value": {
+"t": "n",
+"v": 45.25
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "Di"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C5",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "table",
+"name": "Pay",
+"range": "Sheet1!A1:D5"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=[@Hours]*[@Rate]"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D5"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=SUM(Pay[Pay])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=SUMPRODUCT(Pay[Hours],Pay[Rate])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=INDEX(Pay[Name],MATCH(MAX(Pay[Pay]),Pay[Pay],0))"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=COUNTIFS(Pay[Hours],\">0\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=Pay[@Hours]"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=SUM(Pay[[Hours]:[Rate]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=ROWS(Pay)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=COLUMNS(Pay)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=Pay[[#Headers],[Pay]]"
+},
+{
+"op": "read",
+"range": "Sheet1!F1:F9"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "Ed"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "20"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F9"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "Hrs"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F9"
+},
+{
+"op": "insert_cols",
+"sheet": "Sheet1",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "Bonus"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "5"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "delete_cols",
+"sheet": "Sheet1",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "table_totals",
+"name": "Pay",
+"sheet": "Sheet1",
+"value": true
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H10"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=SUM([Pay])"
+},
+{
+"op": "read",
+"range": "Sheet1!A6:H10"
+},
+{
+"op": "table_unlist",
+"name": "Pay"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H10"
+}
+]
+}

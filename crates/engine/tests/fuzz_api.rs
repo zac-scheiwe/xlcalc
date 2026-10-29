@@ -362,12 +362,12 @@ impl Gen {
             0 => Value::Blank,
             1 => Value::Bool(self.rng.chance(50)),
             2 => Value::Error(*self.rng.pick(&[
-                XlError::Div0,
+                XlError::DIV0,
                 XlError::NA,
-                XlError::Ref,
-                XlError::Num,
-                XlError::Value,
-                XlError::Spill,
+                XlError::REF,
+                XlError::NUM,
+                XlError::VALUE,
+                XlError::SPILL,
             ])),
             3 => Value::from("text"),
             4 => Value::Number(*self.rng.pick(&[
@@ -440,10 +440,6 @@ impl Gen {
             _ => format!("T{}", self.rng.below(4)),
         }
     }
-}
-
-fn describe<T: std::fmt::Debug>(name: &str, args: T) -> String {
-    format!("{name}{args:?}")
 }
 
 fn one_op(g: &mut Gen, wb: &mut Workbook, desc: &mut String) {
@@ -1130,11 +1126,6 @@ fn random_api_calls_long() {
     });
     eprintln!("ops done: {}", OPS_DONE.load(Ordering::Relaxed));
     report(&failures);
-}
-
-#[allow(dead_code)]
-fn _unused() -> String {
-    describe("x", ())
 }
 
 static PROFILE: Mutex<std::collections::BTreeMap<String, (u32, Duration, Duration, String)>> =

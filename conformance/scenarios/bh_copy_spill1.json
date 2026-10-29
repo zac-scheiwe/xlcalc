@@ -1,0 +1,121 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "=SEQUENCE(3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1#*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=SUM(A1#)"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=ROWS(A1#)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "x"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:D1",
+"to": "Sheet1!F1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:I5"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1",
+"to": "Sheet1!A5"
+},
+{
+"op": "read",
+"range": "Sheet1!A4:A9"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1",
+"to": "Sheet1!B3"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:I9"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:A3",
+"to": "Sheet1!K1"
+},
+{
+"op": "read",
+"range": "Sheet1!K1:K5"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1",
+"to": "Sheet1!K3"
+},
+{
+"op": "read",
+"range": "Sheet1!K1:K6"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:B1",
+"to": "Sheet1!M1",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!M1:N5"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:A3",
+"to": "Sheet1!P1",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!P1:S3"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1",
+"to": "Sheet1!P5",
+"paste": "values"
+},
+{
+"op": "read",
+"range": "Sheet1!P5:P8"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1",
+"to": "Sheet1!P5",
+"paste": "formulas"
+},
+{
+"op": "read",
+"range": "Sheet1!P5:P8"
+}
+]
+}

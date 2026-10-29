@@ -1,0 +1,115 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1+Sheet2!A1+Sheet3!A1"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet2!B1",
+"input": "=Sheet1!A1+A1"
+},
+{
+"op": "set",
+"cell": "Sheet3!A1",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet2!C1",
+"input": "=SUM(Sheet1:Sheet3!A1)"
+},
+{
+"op": "set",
+"cell": "Sheet2!D1",
+"input": "=INDIRECT(\"Sheet1!A1\")"
+},
+{
+"op": "name",
+"name": "Wg",
+"refers_to": "=Sheet2!$A$1"
+},
+{
+"op": "name",
+"name": "Wl",
+"refers_to": "=Sheet2!$A$1",
+"scope": "Sheet2"
+},
+{
+"op": "name",
+"name": "Wr",
+"refers_to": "=Sheet2!A1",
+"scope": "Sheet2"
+},
+{
+"op": "set",
+"cell": "Sheet2!E1",
+"input": "=Wg+Wl+Wr"
+},
+{
+"op": "copy_sheet",
+"sheet": "Sheet2",
+"name": "S2b",
+"after": "Sheet3"
+},
+{
+"op": "read",
+"range": "S2b!A1:E1"
+},
+{
+"op": "names"
+},
+{
+"op": "set",
+"cell": "S2b!A1",
+"input": "50"
+},
+{
+"op": "read",
+"range": "S2b!A1:E1"
+},
+{
+"op": "read",
+"range": "Sheet2!A1:E1"
+},
+{
+"op": "copy_sheet",
+"sheet": "Sheet1",
+"name": "S1b",
+"after": "Sheet1"
+},
+{
+"op": "read",
+"range": "S1b!A1:B1"
+},
+{
+"op": "set",
+"cell": "S1b!A1",
+"input": "7"
+},
+{
+"op": "read",
+"range": "S1b!A1:B1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:B1"
+}
+]
+}

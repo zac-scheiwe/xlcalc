@@ -1,6 +1,6 @@
 use serde_json::Value as J;
 use xlcalc::{parse_cell_ref, parse_range_ref, SheetId, Workbook};
-use xlcalc::{SortKey, SortSpec};
+use xlcalc::{FilterSpec, SortKey, SortSpec};
 
 use super::{Outcome, Tally};
 
@@ -349,8 +349,14 @@ pub fn run(
             let r = match op {
                 "hide_rows" => wb.set_rows_hidden(sid, at, count, true).map(|_| ()),
                 "unhide_rows" => wb.set_rows_hidden(sid, at, count, false).map(|_| ()),
-                "hide_cols" => Ok(wb.set_cols_hidden(sid, at, count, true)),
-                "unhide_cols" => Ok(wb.set_cols_hidden(sid, at, count, false)),
+                "hide_cols" => {
+                    wb.set_cols_hidden(sid, at, count, true);
+                    Ok(())
+                }
+                "unhide_cols" => {
+                    wb.set_cols_hidden(sid, at, count, false);
+                    Ok(())
+                }
                 "group_rows" => wb.group_rows(sid, at, count, true).map(|_| ()),
                 "ungroup_rows" => wb.group_rows(sid, at, count, false).map(|_| ()),
                 "outline_show" => {
@@ -378,10 +384,12 @@ pub fn run(
                                 sid,
                                 rect,
                                 table,
-                                f as u32,
-                                joined.as_deref(),
-                                step["operator"].as_str(),
-                                step["criteria2"].as_str(),
+                                FilterSpec {
+                                    field: f as u32,
+                                    criteria1: joined.as_deref(),
+                                    operator: step["operator"].as_str(),
+                                    criteria2: step["criteria2"].as_str(),
+                                },
                             )
                             .map(|_| ()),
                         (Some(rect), None) if table.is_none() => {

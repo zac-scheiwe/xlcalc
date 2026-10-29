@@ -2,7 +2,7 @@ use crate::address::{col_to_letters, CellAddr, MAX_COLS, MAX_ROWS};
 use crate::formula::{CRef, Node, Rc, SheetRef};
 use crate::functions;
 use crate::number::format_literal;
-use crate::parser::ast::UnaryOp;
+use crate::parser::ast::{BinOp, UnaryOp};
 use crate::parser::print::{sheet_name_text, text_literal};
 use crate::value::Value;
 use crate::workbook::Workbook;
@@ -123,6 +123,27 @@ fn args(wb: &Workbook, args: &[Node], host: CellAddr, s: &mut String) {
     s.push(')');
 }
 
+fn write_ws(wb: &Workbook, before: &str, node: &Node, after: &str, host: CellAddr, s: &mut String) {
+    match before.split_once('\u{2}') {
+        Some((outer, inner)) => {
+            s.push_str(outer);
+            let mut t = String::new();
+            write(wb, node, host, &mut t);
+            if t.ends_with(')') {
+                t.pop();
+                t.push_str(inner);
+                t.push(')');
+            }
+            s.push_str(&t);
+        }
+        None => {
+            s.push_str(before);
+            write(wb, node, host, s);
+        }
+    }
+    s.push_str(after);
+}
+
 fn write(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
     crate::deep(|| write_inner(wb, node, host, s))
 }
@@ -217,7 +238,11 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         }
         Node::Binary(op, a, b) => {
             write(wb, a, host, s);
-            s.push_str(op.symbol());
+
+            let typed = matches!(&**a, Node::Ws { after, .. } if !after.is_empty());
+            if !(*op == BinOp::Intersect && typed) {
+                s.push_str(op.symbol());
+            }
             write(wb, b, host, s);
         }
         Node::Paren(x) => {
@@ -274,6 +299,22 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         } => {
             s.push_str("LET(");
             for (n, v) in names.iter().zip(values) {
+                let v = match v {
+                    Node::Ws {
+                        before,
+                        after,
+                        node,
+                    } if before.starts_with('\u{3}') => {
+                        let (name_ws, rest) = before[1..].split_once('\u{3}').unwrap_or(("", ""));
+                        s.push_str(name_ws);
+                        s.push_str(n);
+                        s.push(',');
+                        write_ws(wb, rest, node, after, host, s);
+                        s.push(',');
+                        continue;
+                    }
+                    v => v,
+                };
                 s.push_str(n);
                 s.push(',');
                 write(wb, v, host, s);
@@ -303,11 +344,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
             before,
             after,
             node,
-        } => {
-            s.push_str(before);
-            write(wb, node, host, s);
-            s.push_str(after);
-        }
+        } => write_ws(wb, before, node, after, host, s),
         Node::StructRef {
             table,
             implicit,

@@ -1,0 +1,78 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=A1+$A2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=A2:A3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "=A$1:A$3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=SUM(A:A,1:1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "=$A:A"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "=A:$A"
+},
+{
+"op": "set",
+"cell": "Sheet1!B7",
+"input": "=1:2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B8",
+"input": "=$1:2"
+},
+{
+"op": "autofill",
+"from": "Sheet1!B1:B8",
+"to": "Sheet1!B1:F8",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F8"
+},
+{
+"op": "autofill",
+"from": "Sheet1!F1:F8",
+"to": "Sheet1!B1:F8",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F8"
+}
+]
+}

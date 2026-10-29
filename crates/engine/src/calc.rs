@@ -583,7 +583,7 @@ fn store_result(wb: &mut Workbook, fid: FormulaId, value: Value, report: &mut Re
             let c1 = addr.col as u64 + a.cols as u64 - 1;
             if r1 >= MAX_ROWS as u64 || c1 >= MAX_COLS as u64 {
                 blocked = Some(Rect::new(addr.row, addr.col, MAX_ROWS - 1, MAX_COLS - 1));
-                Value::Error(XlError::Spill)
+                Value::Error(XlError::SPILL)
             } else {
                 let want = Rect::new(addr.row, addr.col, r1 as u32, c1 as u32);
                 let sh = wb.sheet(addr.sheet).unwrap();
@@ -598,7 +598,7 @@ fn store_result(wb: &mut Workbook, fid: FormulaId, value: Value, report: &mut Re
                     || sh.spills.intersecting(&want).iter().any(|(g, _)| *g != fid);
                 if occupied {
                     blocked = Some(want);
-                    Value::Error(XlError::Spill)
+                    Value::Error(XlError::SPILL)
                 } else {
                     new_spill = Some(want);
                     Value::Array(a)
@@ -678,7 +678,7 @@ pub(crate) fn block_spill_at(wb: &mut Workbook, addr: CellAddr) {
     }
     {
         let f = wb.formula_mut(fid);
-        f.value = Value::Error(XlError::Spill);
+        f.value = Value::Error(XlError::SPILL);
         f.spill = None;
     }
     wb.sheet_mut(addr.sheet)

@@ -1,0 +1,412 @@
+{
+"sheets": [
+"D",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "D!A1",
+"value": {
+"t": "s",
+"v": "k"
+}
+},
+{
+"op": "setv",
+"cell": "D!B1",
+"value": {
+"t": "s",
+"v": "v"
+}
+},
+{
+"op": "setv",
+"cell": "D!C1",
+"value": {
+"t": "s",
+"v": "w"
+}
+},
+{
+"op": "setv",
+"cell": "D!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "D!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "D!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "D!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "D!A4",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "D!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "D!A5",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "D!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "D!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "D!A6",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!B6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "D!C6",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "D!A7",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!B7",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "D!C7",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "D!E1",
+"value": {
+"t": "s",
+"v": "lst"
+}
+},
+{
+"op": "setv",
+"cell": "D!E2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!E3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "S!C1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "S!A1",
+"input": "=SUMPRODUCT(SUBTOTAL(9,OFFSET(D!B2,ROW(D!B2:B7)-ROW(D!B2),0)))"
+},
+{
+"op": "set",
+"cell": "S!A2",
+"input": "=SUMPRODUCT(SUBTOTAL(9,OFFSET(D!B2,0,0,ROW(D!B2:B7)-ROW(D!B2)+1)))"
+},
+{
+"op": "set",
+"cell": "S!A3",
+"input": "=SUBTOTAL(9,OFFSET(D!B1,{1,2,3},0))"
+},
+{
+"op": "set",
+"cell": "S!A4",
+"input": "=SUM(SUMIF(D!A2:A7,D!E2:E3,D!B2:B7))"
+},
+{
+"op": "set",
+"cell": "S!A5",
+"input": "=SUMPRODUCT(SUMIF(D!A2:A7,D!E2:E3,D!C2:C7))"
+},
+{
+"op": "set",
+"cell": "S!A6",
+"input": "=SUM(INDEX(D!B2:B7,{1,2,3}))"
+},
+{
+"op": "set",
+"cell": "S!A7",
+"input": "=SUM(INDEX(D!B2:C7,0,{1,2}))"
+},
+{
+"op": "set",
+"cell": "S!A8",
+"input": "=SUMPRODUCT(N(OFFSET(D!B2,{0;1;2},{0,1})))"
+},
+{
+"op": "set",
+"cell": "S!A9",
+"input": "=SUM(N(OFFSET(D!B2,{0,1},0)))"
+},
+{
+"op": "set",
+"cell": "S!A10",
+"input": "=SUMPRODUCT(MAX(INDEX((D!A2:A7=D!E2:E3)*D!B2:B7,0)))"
+},
+{
+"op": "set",
+"cell": "S!A11",
+"input": "=SUM(COUNTIF(OFFSET(D!A1,{1,2},0,3,1),\"a\"))"
+},
+{
+"op": "set",
+"cell": "S!A12",
+"input": "=SUM(ROW(INDIRECT(\"1:\"&S!C1+2)))"
+},
+{
+"op": "set",
+"cell": "S!A13",
+"input": "=SUMPRODUCT(LEN(INDIRECT(\"D!A2:A\"&S!C1+3)))"
+},
+{
+"op": "set",
+"cell": "S!A14",
+"input": "=SUM(CHOOSE({1,2},D!B2,D!C2))"
+},
+{
+"op": "set",
+"cell": "S!A15",
+"input": "=SUMPRODUCT(SUMIFS(D!B2:B7,D!A2:A7,D!E2:E3,D!C2:C7,\">\"&{0;25}))"
+},
+{
+"op": "set",
+"cell": "S!A16",
+"input": "=SUM(COUNTIF(D!A2:A7,INDEX(D!E2:E3,{1,2})))"
+},
+{
+"op": "set",
+"cell": "S!A17",
+"input": "=SUM(SUMIF(INDIRECT(\"D!A2:A7\"),D!E2:E3,INDIRECT(\"D!B2:B7\")))"
+},
+{
+"op": "set",
+"cell": "S!A18",
+"input": "=SUM(SUMIF(OFFSET(D!A1,1,0,6,1),D!E2:E3,OFFSET(D!A1,1,1,6,1)))"
+},
+{
+"op": "set",
+"cell": "S!A19",
+"input": "=SUM(SUMIF(INDEX(D!A:A,2):INDEX(D!A:A,7),D!E2:E3,D!B2:B7))"
+},
+{
+"op": "set",
+"cell": "S!A20",
+"input": "=SUMPRODUCT(--(INDIRECT({\"D!A2\",\"D!A3\"})=\"a\"))"
+},
+{
+"op": "set",
+"cell": "S!A21",
+"input": "=SUM(MMULT(TRANSPOSE(D!B2:B4),D!C2:C4))"
+},
+{
+"op": "set",
+"cell": "S!A22",
+"input": "=SUMPRODUCT(COUNTIF(D!A2:A7,D!A2:A7))"
+},
+{
+"op": "set",
+"cell": "S!A23",
+"input": "=SUM(SUMIF(D!A2:A7,D!A2:A7,D!B2:B7))"
+},
+{
+"op": "set",
+"cell": "S!A24",
+"input": "=SUM(MATCH(D!E2:E3,D!A2:A7,0))"
+},
+{
+"op": "set",
+"cell": "S!A25",
+"input": "=SUM(VLOOKUP(D!E2:E3,D!A2:C7,{2,3},FALSE))"
+},
+{
+"op": "set",
+"cell": "S!A26",
+"input": "=SUM(SUMIF(CHOOSE({1,2},D!A2:A7,D!A2:A7),\"a\",CHOOSE({1,2},D!B2:B7,D!C2:C7)))"
+},
+{
+"op": "set",
+"cell": "S!A27",
+"input": "=SUMPRODUCT(SUMIF(OFFSET(D!A2,0,0,{3,6}),\"a\",OFFSET(D!B2,0,0,{3,6})))"
+},
+{
+"op": "set",
+"cell": "S!A28",
+"input": "=SUM(IF(D!A2:A7=D!E2:E3,D!B2:B7,0))"
+},
+{
+"op": "set",
+"cell": "S!A29",
+"input": "=SUM(AVERAGEIF(D!A2:A7,D!E2:E3,D!B2:B7))"
+},
+{
+"op": "set",
+"cell": "S!A30",
+"input": "=SUM(INDIRECT(\"D!B\"&{2,3}))"
+},
+{
+"op": "set",
+"cell": "S!A31",
+"input": "=SUM(INDIRECT(\"R\"&{2,3}&\"C2\",FALSE))"
+},
+{
+"op": "set",
+"cell": "S!A32",
+"input": "=SUM(INDIRECT(ADDRESS({2,3},2,1,TRUE,\"D\")))"
+},
+{
+"op": "set",
+"cell": "S!A33",
+"input": "=COUNT(OFFSET(D!A1,0,0,{2;3},{1,2}))"
+},
+{
+"op": "read",
+"range": "S!A1:A40"
+},
+{
+"op": "set",
+"cell": "S!C1",
+"input": "2"
+},
+{
+"op": "read",
+"range": "S!A1:A40"
+},
+{
+"op": "set",
+"cell": "D!B3",
+"input": "20"
+},
+{
+"op": "read",
+"range": "S!A1:A40"
+},
+{
+"op": "insert_rows",
+"sheet": "D",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "S!A1:A40"
+},
+{
+"op": "calc"
+},
+{
+"op": "read",
+"range": "S!A1:A40"
+}
+]
+}

@@ -1,0 +1,87 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "name",
+"name": "G",
+"refers_to": "=Sheet1!$A$1"
+},
+{
+"op": "name",
+"name": "Rel",
+"refers_to": "=Sheet1!A1"
+},
+{
+"op": "name",
+"name": "Lc",
+"refers_to": "=Sheet1!$A$2",
+"scope": "Sheet1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=G+Rel+Lc"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=Rel"
+},
+{
+"op": "copy_sheet",
+"sheet": "Sheet1",
+"name": "Cp",
+"after": "Sheet1"
+},
+{
+"op": "read",
+"range": "Cp!A1:B2"
+},
+{
+"op": "names"
+},
+{
+"op": "set",
+"cell": "Sheet2!A1",
+"input": "7"
+},
+{
+"op": "name",
+"name": "Lc",
+"refers_to": "=Sheet2!$A$1",
+"scope": "Sheet2"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:B2",
+"to": "Sheet2!C3"
+},
+{
+"op": "read",
+"range": "Sheet2!C3:C4"
+},
+{
+"op": "copy",
+"from": "Sheet1!B1:B2",
+"to": "Cp!C3"
+},
+{
+"op": "read",
+"range": "Cp!C3:C4"
+}
+]
+}

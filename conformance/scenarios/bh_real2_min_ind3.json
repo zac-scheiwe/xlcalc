@@ -1,0 +1,111 @@
+{
+"sheets": [
+"D",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "D!A1",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!A2",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "D!A3",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "D!A4",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "S!C1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "S!A1",
+"input": "=SUMPRODUCT(--(INDIRECT({\"D!A1\",\"D!A2\"})=\"a\"))"
+},
+{
+"op": "set",
+"cell": "S!A2",
+"input": "=SUMPRODUCT(--(INDIRECT({\"D!A1\",\"D!A3\"})=\"a\"))"
+},
+{
+"op": "set",
+"cell": "S!A3",
+"input": "=SUM(--(INDIRECT({\"D!A1\",\"D!A3\"})=\"a\"))"
+},
+{
+"op": "set",
+"cell": "S!A4",
+"input": "=SUMPRODUCT(N(INDIRECT({\"D!A1\",\"D!A3\"})=\"a\"))"
+},
+{
+"op": "set",
+"cell": "S!A5",
+"input": "=SUMPRODUCT(INDIRECT({\"D!A1\",\"D!A3\"})&\"\")"
+},
+{
+"op": "set",
+"cell": "S!A6",
+"input": "=INDIRECT({\"D!A1\",\"D!A3\"})"
+},
+{
+"op": "set",
+"cell": "S!A7",
+"input": "=INDIRECT({\"D!A1\";\"D!A3\"})&\"\""
+},
+{
+"op": "set",
+"cell": "S!A8",
+"input": "=COUNTIF(INDIRECT({\"D!A1\",\"D!A3\"}),\"a\")"
+},
+{
+"op": "read",
+"range": "S!A1:C10"
+},
+{
+"op": "set",
+"cell": "S!C1",
+"input": "2"
+},
+{
+"op": "read",
+"range": "S!A1:C10"
+},
+{
+"op": "insert_rows",
+"sheet": "D",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "S!A1:C10"
+}
+]
+}

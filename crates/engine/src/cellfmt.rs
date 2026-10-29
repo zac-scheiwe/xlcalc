@@ -210,7 +210,9 @@ impl Workbook {
     }
 
     pub(crate) fn is_text_format(&self, addr: CellAddr) -> bool {
-        self.cellfmt.get(addr).is_some_and(|f| &**f == "@")
+        self.cellfmt
+            .get(addr)
+            .is_some_and(|f| is_text_format_code(f))
     }
 
     pub(crate) fn yielding_format(&self, cur: &str) -> bool {
@@ -283,7 +285,7 @@ impl Workbook {
     }
 
     fn apply_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) {
-        let fmt: Arc<str> = Arc::from(if fmt.eq_ignore_ascii_case("general") {
+        let fmt: Arc<str> = Arc::from(if fmt.is_empty() || fmt.eq_ignore_ascii_case("general") {
             "General"
         } else {
             fmt
@@ -349,7 +351,7 @@ impl Workbook {
     }
 
     fn set_number_format_body(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
-        if self.sheet(sheet).is_none() {
+        if self.sheet(sheet).is_none() || at_sign_rejected(fmt) {
             return RecalcReport::default();
         }
         let before = self.late_candidates(sheet, rect);
@@ -578,15 +580,79 @@ impl Workbook {
         if r < 0 || c < 0 {
             return None;
         }
-        self.cellfmt
+        let f = self
+            .cellfmt
             .get(CellAddr::new(sheet, r as u32, c as u32))
-            .cloned()
+            .cloned()?;
+
+        if sheet != host.sheet && !self.is_builtin_format(&f) {
+            return None;
+        }
+        Some(f)
+    }
+
+    fn is_builtin_format(&self, f: &str) -> bool {
+        const FIXED: [&str; 16] = [
+            "General",
+            "0",
+            "0.00",
+            "#,##0",
+            "#,##0.00",
+            "0%",
+            "0.00%",
+            "0.00E+00",
+            "# ?/?",
+            "# ??/??",
+            "d-mmm-yy",
+            "d-mmm",
+            "mmm-yy",
+            "h:mm AM/PM",
+            "h:mm:ss AM/PM",
+            "h:mm",
+        ];
+        const MORE: [&str; 8] = [
+            "h:mm:ss",
+            "mm:ss",
+            "[h]:mm:ss",
+            "mm:ss.0",
+            "##0.0E+0",
+            "@",
+            "#,##0 ;(#,##0)",
+            "#,##0 ;[Red](#,##0)",
+        ];
+        if FIXED
+            .iter()
+            .chain(MORE.iter())
+            .any(|y| y.eq_ignore_ascii_case(f))
+        {
+            return true;
+        }
+        let loc = self.input_env().locale;
+        let (short, c) = (&loc.short_date_format, &loc.currency);
+        [
+            short.clone(),
+            format!("{short} h:mm"),
+            format!("{c}#,##0;[Red]-{c}#,##0"),
+            format!("{c}#,##0.00;[Red]-{c}#,##0.00"),
+            format!("{c}#,##0;-{c}#,##0"),
+            format!("{c}#,##0.00;-{c}#,##0.00"),
+            "#,##0 ;(#,##0)".into(),
+            "#,##0.00;(#,##0.00)".into(),
+            "#,##0.00;[Red](#,##0.00)".into(),
+        ]
+        .iter()
+        .any(|y| y.eq_ignore_ascii_case(f))
     }
 
     pub(crate) fn infer_format(&mut self, n: &Node, host: CellAddr) -> Option<Arc<str>> {
         let mut reg = Reg::Unset;
+        SUM_SEEN.with(|c| c.set(false));
+        FN_DEPTH.with(|d| d.set(0));
         self.infer_walk(n, host, &mut reg);
         match reg {
+            Reg::Fmt(f) if f.eq_ignore_ascii_case("h:mm:ss") && SUM_SEEN.with(|c| c.get()) => {
+                Some(Arc::from("[h]:mm:ss"))
+            }
             Reg::Fmt(f) => Some(f),
             _ => None,
         }
@@ -672,6 +738,12 @@ impl Workbook {
                     "SUM" | "MIN" | "MAX" | "AVERAGE" | "MEDIAN" | "MOD" | "ROUND" | "ROUNDUP"
                     | "ROUNDDOWN" | "TRUNC" | "INT" => {
                         let mut lead: Option<Arc<str>> = None;
+
+                        let outer = FN_DEPTH.with(|d| d.get()) == 0;
+                        if outer && functions::def(*id).name == "SUM" {
+                            SUM_SEEN.with(|c| c.set(true));
+                        }
+                        FN_DEPTH.with(|d| d.set(d.get() + 1));
                         for a in args {
                             let f = self.infer_walk(a, host, reg);
                             if lead.is_some() {
@@ -682,6 +754,7 @@ impl Workbook {
                         if matches!(reg, Reg::Hard) {
                             *reg = Reg::Unset;
                         }
+                        FN_DEPTH.with(|d| d.set(d.get() - 1));
                         return lead;
                     }
                     _ => return None,
@@ -696,6 +769,11 @@ impl Workbook {
     }
 }
 
+thread_local! {
+    static FN_DEPTH: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+    static SUM_SEEN: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
 enum Reg {
     Unset,
     Fmt(Arc<str>),
@@ -703,4 +781,72 @@ enum Reg {
     Hard,
 
     Date,
+}
+
+pub(crate) fn is_text_format_code(f: &str) -> bool {
+    let secs = format_sections(f);
+    let Some(text) = secs.last() else {
+        return false;
+    };
+    if !text.contains('@') || secs.len() > 4 {
+        return false;
+    }
+    let numeric = |s: &str| {
+        let l = s.to_ascii_lowercase().replace("general", "");
+        l.contains([
+            '0', '#', '?', '%', 'd', 'm', 'y', 'h', 's', 'e', '@', 'b', 'g',
+        ])
+    };
+    let n = secs.len();
+    if n == 1 {
+        let l = text.to_ascii_lowercase();
+        return !l.contains(['0', '#', '?', '%', 'd', 'm', 'y', 'h', 's', 'e', 'b', 'g']);
+    }
+    secs[..n - 1].iter().all(|s| !numeric(s))
+        && !text.to_ascii_lowercase().contains(['0', '#', '?'])
+}
+
+fn at_sign_rejected(f: &str) -> bool {
+    let secs = format_sections(f);
+    let n = secs.len();
+
+    if secs.iter().any(|s| s.contains("e+") || s.contains("e-")) {
+        return true;
+    }
+    secs.iter().enumerate().any(|(i, s)| {
+        if !s.contains('@') {
+            return false;
+        }
+        let l = s.to_ascii_lowercase();
+        i + 1 != n || l.contains(['0', '#', '?', '%', 'd', 'm', 'y', 'h', 's', 'e', 'g'])
+    })
+}
+
+fn format_sections(f: &str) -> Vec<String> {
+    let mut secs: Vec<String> = vec![String::new()];
+    let mut it = f.chars();
+    while let Some(c) = it.next() {
+        match c {
+            '"' => {
+                for d in it.by_ref() {
+                    if d == '"' {
+                        break;
+                    }
+                }
+            }
+            '\\' | '_' | '*' => {
+                it.next();
+            }
+            '[' => {
+                for d in it.by_ref() {
+                    if d == ']' {
+                        break;
+                    }
+                }
+            }
+            ';' => secs.push(String::new()),
+            c => secs.last_mut().unwrap().push(c),
+        }
+    }
+    secs
 }

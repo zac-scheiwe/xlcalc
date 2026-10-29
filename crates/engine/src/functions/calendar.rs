@@ -23,7 +23,7 @@ fn sys(ctx: &EvalCtx) -> DateSystem {
 
 fn day(ctx: &EvalCtx, n: f64) -> R<i64> {
     if n < 0.0 || n.floor() > sys(ctx).max_serial() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(n.floor() as i64)
 }
@@ -42,17 +42,17 @@ fn weekend_arg(ctx: &EvalCtx, v: Option<&Value>, workday: bool) -> R<Weekend> {
     let Some(v) = v else { return Ok(SAT_SUN) };
     match v {
         Value::Error(_) => Err(if workday {
-            XlError::Num
+            XlError::NUM
         } else {
-            XlError::Value
+            XlError::VALUE
         }),
         Value::Text(s) => {
             let b = s.as_bytes();
             if b.len() != 7 || b.iter().any(|&c| c != b'0' && c != b'1') {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             if workday && b.iter().all(|&c| c == b'1') {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
 
             let mut w = [false; 7];
@@ -73,7 +73,7 @@ fn weekend_arg(ctx: &EvalCtx, v: Option<&Value>, workday: bool) -> R<Weekend> {
                 c @ 11..=17 if code == c as f64 => {
                     w[(c - 11) as usize] = true;
                 }
-                _ => return Err(XlError::Num),
+                _ => return Err(XlError::NUM),
             }
             Ok(w)
         }
@@ -85,7 +85,7 @@ fn holidays(ctx: &mut EvalCtx, op: Option<&Operand>) -> R<Vec<i64>> {
     let Some(op) = op else { return Ok(out) };
 
     if matches!(op, Operand::Ref(r) if r.single().is_none()) {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     atp::visit_list(ctx, op, |ctx, v| {
         let n = match v {
@@ -93,7 +93,7 @@ fn holidays(ctx: &mut EvalCtx, op: Option<&Operand>) -> R<Vec<i64>> {
             Value::Number(n) => *n,
             Value::Text(_) => ctx.to_number(v)?,
             Value::Error(e) => return Err(*e),
-            _ => return Err(XlError::Value),
+            _ => return Err(XlError::VALUE),
         };
         out.push(day(ctx, n)?);
         Ok(())
@@ -154,7 +154,7 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
             let days = atp::req_num(ctx, a, 1)?.floor();
 
             if sys(ctx) == DateSystem::D1904 && s as f64 + days > 2_955_541.0 {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
 
             if days == 0.0 {
@@ -162,7 +162,7 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
             }
 
             if s as f64 + days < 0.0 || s as f64 + days > sys(ctx).max_serial() {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             let w = if intl {
                 let w = weekend_arg(ctx, a.get(2).and_then(|v| v.as_ref()), true);
@@ -179,7 +179,7 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
             let hol_res = holidays(ctx, raw.get(hol_idx));
             let max = sys(ctx).max_serial() as i64;
             if days.abs() > 4.0 * max as f64 {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             let bad_hol = hol_res.as_ref().err().copied();
             let hol = hol_res.unwrap_or_default();
@@ -189,7 +189,7 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
             while left > 0 {
                 d += step;
                 if d < 0 || d > max {
-                    return Err(XlError::Num);
+                    return Err(XlError::NUM);
                 }
                 if !w[weekday(ctx, d)] && hol.binary_search(&d).is_err() {
                     left -= 1;
@@ -231,7 +231,7 @@ fn weeknum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 2 | 11 => 1,
                 t @ 12..=16 => t - 10,
                 21 => return Ok(Value::Number(iso_week(cal, s) as f64)),
-                _ => return Err(XlError::Num),
+                _ => return Err(XlError::NUM),
             };
             let j = jan1(cal, s);
             let offset = (dt::weekday_from_serial(cal, j) as i64 - start).rem_euclid(7);
@@ -264,14 +264,14 @@ fn datedif(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let unit = text(&a[2])?;
         let (sf, ef) = (s, e);
 
-        let lim = sys(ctx).max_serial() as f64 + 1.0;
+        let lim = sys(ctx).max_serial() + 1.0;
         if s + 0.5 / 86_400.0 >= lim || e + 0.5 / 86_400.0 >= lim {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let s = day(ctx, s)?;
         let e = day(ctx, e)?;
         if s > e {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let sy = sys(ctx);
 
@@ -295,10 +295,10 @@ fn datedif(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             "YD" => {
                 let ym = months.rem_euclid(12);
                 let anchor = dt::date_serial(sy, y1 as f64, (m1 as i64 + ym) as f64, d1 as f64)
-                    .ok_or(XlError::Num)?;
+                    .ok_or(XlError::NUM)?;
                 anchor as i64 - dt::split_serial(sf).0 + md
             }
-            _ => return Err(XlError::Num),
+            _ => return Err(XlError::NUM),
         };
         Ok(Value::Number(r as f64))
     })())

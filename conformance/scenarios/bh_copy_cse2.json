@@ -1,0 +1,34 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2"
+},
+{
+"op": "array",
+"range": "Sheet1!B1:B2",
+"input": "=A1:A2*2"
+},
+{
+"op": "autofill",
+"from": "Sheet1!B1:B2",
+"to": "Sheet1!B1:D2",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E3"
+}
+]
+}

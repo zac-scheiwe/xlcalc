@@ -1,0 +1,464 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Day"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "In"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Out"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Break"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Hours"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F1",
+"value": {
+"t": "s",
+"v": "Pay"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "2/3/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "8:30"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "17:15"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=TIME(0,30,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=(C2-B2-D2)*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=ROUND(E2*27.5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=TEXT(C2-B2,\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=TEXT(A2,\"ddd d mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=MOD(C2-B2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=HOUR(C2-B2)*60+MINUTE(C2-B2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=WEEKDAY(A2,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3/3/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "9:00"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "17:45"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=TIME(0,45,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=(C3-B3-D3)*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=ROUND(E3*27.5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G3",
+"input": "=TEXT(C3-B3,\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=TEXT(A3,\"ddd d mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I3",
+"input": "=MOD(C3-B3,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J3",
+"input": "=HOUR(C3-B3)*60+MINUTE(C3-B3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K3",
+"input": "=WEEKDAY(A3,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "4/3/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "7:45"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "16:00"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=TIME(0,30,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=(C4-B4-D4)*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=ROUND(E4*27.5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G4",
+"input": "=TEXT(C4-B4,\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=TEXT(A4,\"ddd d mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I4",
+"input": "=MOD(C4-B4,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J4",
+"input": "=HOUR(C4-B4)*60+MINUTE(C4-B4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K4",
+"input": "=WEEKDAY(A4,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "5/3/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "8:00"
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "18:30"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=TIME(0,60,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=(C5-B5-D5)*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=ROUND(E5*27.5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G5",
+"input": "=TEXT(C5-B5,\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=TEXT(A5,\"ddd d mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I5",
+"input": "=MOD(C5-B5,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J5",
+"input": "=HOUR(C5-B5)*60+MINUTE(C5-B5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K5",
+"input": "=WEEKDAY(A5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "6/3/2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "9:15"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "13:00"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=TIME(0,0,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=(C6-B6-D6)*24"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=ROUND(E6*27.5,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G6",
+"input": "=TEXT(C6-B6,\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=TEXT(A6,\"ddd d mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I6",
+"input": "=MOD(C6-B6,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J6",
+"input": "=HOUR(C6-B6)*60+MINUTE(C6-B6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!K6",
+"input": "=WEEKDAY(A6,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=SUM(F2:F6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G8",
+"input": "=TEXT(SUM(C2:C6-B2:B6),\"[h]:mm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=SUM(C2:C6-B2:B6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A10",
+"input": "=NETWORKDAYS(DATE(2026,3,1),DATE(2026,3,31))"
+},
+{
+"op": "set",
+"cell": "Sheet1!A11",
+"input": "=NETWORKDAYS(DATE(2026,3,1),EOMONTH(DATE(2026,3,1),0),A2:A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A12",
+"input": "=WORKDAY(DATE(2026,3,27),5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A13",
+"input": "=EOMONTH(A2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A14",
+"input": "=EOMONTH(A2,-3)-A2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A15",
+"input": "=DATEDIF(DATE(2024,2,29),A2,\"y\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A16",
+"input": "=DATEDIF(DATE(2024,2,29),A2,\"ym\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A17",
+"input": "=DATEDIF(DATE(2024,2,29),A2,\"md\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A18",
+"input": "=YEARFRAC(DATE(2024,2,29),A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A19",
+"input": "=YEARFRAC(DATE(2024,2,29),A2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A20",
+"input": "=NETWORKDAYS.INTL(A2,A6,\"0000011\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A21",
+"input": "=WEEKNUM(A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A22",
+"input": "=ISOWEEKNUM(A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A23",
+"input": "=TEXT(E8/24,\"[h]:mm:ss\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A24",
+"input": "=TIME(25,70,80)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A25",
+"input": "=TEXT(TIME(25,70,80),\"h:mm:ss AM/PM\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A26",
+"input": "=MROUND(E2,0.25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A27",
+"input": "=FLOOR(E3,0.25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A28",
+"input": "=CEILING(E4,0.25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A29",
+"input": "=TIMEVALUE(\"5:45 PM\")-TIMEVALUE(\"8:30 AM\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A30",
+"input": "=DAYS(A6,A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A31",
+"input": "=A2+MOD(7-WEEKDAY(A2,2),7)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:K31"
+}
+]
+}

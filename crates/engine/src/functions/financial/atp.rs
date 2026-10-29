@@ -34,7 +34,7 @@ pub fn call_ex(
             Operand::Ref(crate::eval::Reference::Grid(g)) => Some(ctx.grid_cells(g)),
             Operand::Ref(r) => {
                 let Some(area) = r.single() else {
-                    return Operand::err(XlError::Value);
+                    return Operand::err(XlError::VALUE);
                 };
                 if !is_array_param && !area.rect.is_cell() {
                     if quirk {
@@ -44,11 +44,11 @@ pub fn call_ex(
                     } else {
                         multi.push((
                             i,
-                            Value::Error(XlError::Value),
-                            Value::Error(XlError::Value),
+                            Value::Error(XlError::VALUE),
+                            Value::Error(XlError::VALUE),
                         ));
                     }
-                    vals.push(Some(Value::Error(XlError::Value)));
+                    vals.push(Some(Value::Error(XlError::VALUE)));
                     continue;
                 }
                 Some(ctx.deref(op.clone()))
@@ -58,7 +58,7 @@ pub fn call_ex(
         vals.push(v);
     }
     if ctx.interrupted() {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let mut shape: Option<(u32, u32)> = None;
     let mut lifted = Vec::new();
@@ -74,7 +74,7 @@ pub fn call_ex(
     }
     let Some((rows, cols)) = shape else {
         if !multi.is_empty() && !late {
-            return Operand::err(XlError::Value);
+            return Operand::err(XlError::VALUE);
         }
         return Operand::Val(f(ctx, &vals));
     };
@@ -89,7 +89,7 @@ pub fn call_ex(
             }
             for (i, first, last) in &multi {
                 elem[*i] = Some(match r * cols + c {
-                    0 => Value::Error(XlError::Value),
+                    0 => Value::Error(XlError::VALUE),
                     1 => first.clone(),
                     _ => last.clone(),
                 });
@@ -106,8 +106,8 @@ pub fn num_of(ctx: &EvalCtx, v: &Value) -> R<f64> {
         Value::Blank => Ok(0.0),
         Value::Text(_) => ctx.to_number_atp(v),
         Value::Error(e) => Err(*e),
-        Value::Bool(_) | Value::Array(_) => Err(XlError::Value),
-        Value::Lambda(_) => Err(XlError::Calc),
+        Value::Bool(_) | Value::Array(_) => Err(XlError::VALUE),
+        Value::Lambda(_) => Err(XlError::CALC),
     }
 }
 
@@ -131,7 +131,7 @@ pub fn date_system(ctx: &EvalCtx) -> DateSystem {
 
 pub fn check_date(ctx: &EvalCtx, x: f64) -> R<i64> {
     if x < 0.0 || x >= date_system(ctx).max_serial() + 1.0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(x.floor() as i64)
 }
@@ -146,9 +146,10 @@ pub fn date(ctx: &EvalCtx, a: &[Arg], i: usize) -> R<i64> {
 }
 
 pub fn basis(ctx: &EvalCtx, a: &[Arg], i: usize) -> R<i32> {
-    let b = opt(ctx, a, i, 0.0)?.trunc();
-    if !(0.0..=4.0).contains(&b) {
-        return Err(XlError::Num);
+    let raw = opt(ctx, a, i, 0.0)?;
+    let b = raw.trunc();
+    if raw < 0.0 || !(0.0..=4.0).contains(&b) {
+        return Err(XlError::NUM);
     }
     Ok(b as i32)
 }
@@ -158,7 +159,7 @@ pub fn frequency(x: f64) -> R<i32> {
     if f == 1.0 || f == 2.0 || f == 4.0 {
         Ok(f as i32)
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 

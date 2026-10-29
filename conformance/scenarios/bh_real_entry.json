@@ -1,0 +1,3221 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1,234"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=IFERROR(TYPE(A1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "=IFERROR(A1+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=CELL(\"format\",A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=IFERROR(TEXT(A1,\"General\"),\"E\")&\"|\"&A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=ISFORMULA(A1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1,234.5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=IFERROR(TYPE(A2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=IFERROR(A2+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=CELL(\"format\",A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=IFERROR(TEXT(A2,\"General\"),\"E\")&\"|\"&A2"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=ISFORMULA(A2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "12/3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "=IFERROR(TYPE(A3),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=IFERROR(A3+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=CELL(\"format\",A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=IFERROR(TEXT(A3,\"General\"),\"E\")&\"|\"&A3"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=ISFORMULA(A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "12/3/26"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=IFERROR(TYPE(A4),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=IFERROR(A4+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=CELL(\"format\",A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=IFERROR(TEXT(A4,\"General\"),\"E\")&\"|\"&A4"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=ISFORMULA(A4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "3-Mar"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "=IFERROR(TYPE(A5),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "=IFERROR(A5+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=CELL(\"format\",A5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=IFERROR(TEXT(A5,\"General\"),\"E\")&\"|\"&A5"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=ISFORMULA(A5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "Mar-26"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "=IFERROR(TYPE(A6),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "=IFERROR(A6+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=CELL(\"format\",A6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=IFERROR(TEXT(A6,\"General\"),\"E\")&\"|\"&A6"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=ISFORMULA(A6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A7",
+"input": "March 2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B7",
+"input": "=IFERROR(TYPE(A7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=IFERROR(A7+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=CELL(\"format\",A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E7",
+"input": "=IFERROR(TEXT(A7,\"General\"),\"E\")&\"|\"&A7"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=ISFORMULA(A7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "1e3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B8",
+"input": "=IFERROR(TYPE(A8),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=IFERROR(A8+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=CELL(\"format\",A8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=IFERROR(TEXT(A8,\"General\"),\"E\")&\"|\"&A8"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=ISFORMULA(A8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A9",
+"input": "1E-3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B9",
+"input": "=IFERROR(TYPE(A9),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=IFERROR(A9+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=CELL(\"format\",A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=IFERROR(TEXT(A9,\"General\"),\"E\")&\"|\"&A9"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=ISFORMULA(A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A10",
+"input": "  5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B10",
+"input": "=IFERROR(TYPE(A10),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=IFERROR(A10+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=CELL(\"format\",A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=IFERROR(TEXT(A10,\"General\"),\"E\")&\"|\"&A10"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=ISFORMULA(A10)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A11",
+"input": "5 "
+},
+{
+"op": "set",
+"cell": "Sheet1!B11",
+"input": "=IFERROR(TYPE(A11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=IFERROR(A11+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=CELL(\"format\",A11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=IFERROR(TEXT(A11,\"General\"),\"E\")&\"|\"&A11"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=ISFORMULA(A11)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A12",
+"input": "$5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B12",
+"input": "=IFERROR(TYPE(A12),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C12",
+"input": "=IFERROR(A12+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D12",
+"input": "=CELL(\"format\",A12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E12",
+"input": "=IFERROR(TEXT(A12,\"General\"),\"E\")&\"|\"&A12"
+},
+{
+"op": "set",
+"cell": "Sheet1!F12",
+"input": "=ISFORMULA(A12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A13",
+"input": "$5.50"
+},
+{
+"op": "set",
+"cell": "Sheet1!B13",
+"input": "=IFERROR(TYPE(A13),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C13",
+"input": "=IFERROR(A13+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D13",
+"input": "=CELL(\"format\",A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E13",
+"input": "=IFERROR(TEXT(A13,\"General\"),\"E\")&\"|\"&A13"
+},
+{
+"op": "set",
+"cell": "Sheet1!F13",
+"input": "=ISFORMULA(A13)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A14",
+"input": "5%"
+},
+{
+"op": "set",
+"cell": "Sheet1!B14",
+"input": "=IFERROR(TYPE(A14),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C14",
+"input": "=IFERROR(A14+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D14",
+"input": "=CELL(\"format\",A14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E14",
+"input": "=IFERROR(TEXT(A14,\"General\"),\"E\")&\"|\"&A14"
+},
+{
+"op": "set",
+"cell": "Sheet1!F14",
+"input": "=ISFORMULA(A14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A15",
+"input": "50.5%"
+},
+{
+"op": "set",
+"cell": "Sheet1!B15",
+"input": "=IFERROR(TYPE(A15),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C15",
+"input": "=IFERROR(A15+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D15",
+"input": "=CELL(\"format\",A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=IFERROR(TEXT(A15,\"General\"),\"E\")&\"|\"&A15"
+},
+{
+"op": "set",
+"cell": "Sheet1!F15",
+"input": "=ISFORMULA(A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A16",
+"input": "(5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B16",
+"input": "=IFERROR(TYPE(A16),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C16",
+"input": "=IFERROR(A16+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D16",
+"input": "=CELL(\"format\",A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=IFERROR(TEXT(A16,\"General\"),\"E\")&\"|\"&A16"
+},
+{
+"op": "set",
+"cell": "Sheet1!F16",
+"input": "=ISFORMULA(A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A17",
+"input": "-5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B17",
+"input": "=IFERROR(TYPE(A17),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C17",
+"input": "=IFERROR(A17+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D17",
+"input": "=CELL(\"format\",A17)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E17",
+"input": "=IFERROR(TEXT(A17,\"General\"),\"E\")&\"|\"&A17"
+},
+{
+"op": "set",
+"cell": "Sheet1!F17",
+"input": "=ISFORMULA(A17)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A18",
+"input": "+5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B18",
+"input": "=IFERROR(TYPE(A18),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C18",
+"input": "=IFERROR(A18+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D18",
+"input": "=CELL(\"format\",A18)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E18",
+"input": "=IFERROR(TEXT(A18,\"General\"),\"E\")&\"|\"&A18"
+},
+{
+"op": "set",
+"cell": "Sheet1!F18",
+"input": "=ISFORMULA(A18)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A19",
+"input": "1/2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B19",
+"input": "=IFERROR(TYPE(A19),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C19",
+"input": "=IFERROR(A19+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D19",
+"input": "=CELL(\"format\",A19)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E19",
+"input": "=IFERROR(TEXT(A19,\"General\"),\"E\")&\"|\"&A19"
+},
+{
+"op": "set",
+"cell": "Sheet1!F19",
+"input": "=ISFORMULA(A19)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A20",
+"input": "1 1/2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B20",
+"input": "=IFERROR(TYPE(A20),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C20",
+"input": "=IFERROR(A20+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D20",
+"input": "=CELL(\"format\",A20)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E20",
+"input": "=IFERROR(TEXT(A20,\"General\"),\"E\")&\"|\"&A20"
+},
+{
+"op": "set",
+"cell": "Sheet1!F20",
+"input": "=ISFORMULA(A20)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A21",
+"input": "0 1/2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B21",
+"input": "=IFERROR(TYPE(A21),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C21",
+"input": "=IFERROR(A21+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D21",
+"input": "=CELL(\"format\",A21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E21",
+"input": "=IFERROR(TEXT(A21,\"General\"),\"E\")&\"|\"&A21"
+},
+{
+"op": "set",
+"cell": "Sheet1!F21",
+"input": "=ISFORMULA(A21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A22",
+"input": "12:30"
+},
+{
+"op": "set",
+"cell": "Sheet1!B22",
+"input": "=IFERROR(TYPE(A22),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C22",
+"input": "=IFERROR(A22+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D22",
+"input": "=CELL(\"format\",A22)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E22",
+"input": "=IFERROR(TEXT(A22,\"General\"),\"E\")&\"|\"&A22"
+},
+{
+"op": "set",
+"cell": "Sheet1!F22",
+"input": "=ISFORMULA(A22)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A23",
+"input": "12:30:15"
+},
+{
+"op": "set",
+"cell": "Sheet1!B23",
+"input": "=IFERROR(TYPE(A23),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C23",
+"input": "=IFERROR(A23+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D23",
+"input": "=CELL(\"format\",A23)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E23",
+"input": "=IFERROR(TEXT(A23,\"General\"),\"E\")&\"|\"&A23"
+},
+{
+"op": "set",
+"cell": "Sheet1!F23",
+"input": "=ISFORMULA(A23)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A24",
+"input": "12:30 PM"
+},
+{
+"op": "set",
+"cell": "Sheet1!B24",
+"input": "=IFERROR(TYPE(A24),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C24",
+"input": "=IFERROR(A24+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D24",
+"input": "=CELL(\"format\",A24)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E24",
+"input": "=IFERROR(TEXT(A24,\"General\"),\"E\")&\"|\"&A24"
+},
+{
+"op": "set",
+"cell": "Sheet1!F24",
+"input": "=ISFORMULA(A24)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A25",
+"input": "1:2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B25",
+"input": "=IFERROR(TYPE(A25),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C25",
+"input": "=IFERROR(A25+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D25",
+"input": "=CELL(\"format\",A25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E25",
+"input": "=IFERROR(TEXT(A25,\"General\"),\"E\")&\"|\"&A25"
+},
+{
+"op": "set",
+"cell": "Sheet1!F25",
+"input": "=ISFORMULA(A25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A26",
+"input": "25:00"
+},
+{
+"op": "set",
+"cell": "Sheet1!B26",
+"input": "=IFERROR(TYPE(A26),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C26",
+"input": "=IFERROR(A26+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D26",
+"input": "=CELL(\"format\",A26)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E26",
+"input": "=IFERROR(TEXT(A26,\"General\"),\"E\")&\"|\"&A26"
+},
+{
+"op": "set",
+"cell": "Sheet1!F26",
+"input": "=ISFORMULA(A26)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A27",
+"input": "2026-03-15"
+},
+{
+"op": "set",
+"cell": "Sheet1!B27",
+"input": "=IFERROR(TYPE(A27),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C27",
+"input": "=IFERROR(A27+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D27",
+"input": "=CELL(\"format\",A27)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E27",
+"input": "=IFERROR(TEXT(A27,\"General\"),\"E\")&\"|\"&A27"
+},
+{
+"op": "set",
+"cell": "Sheet1!F27",
+"input": "=ISFORMULA(A27)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A28",
+"input": "15-3-2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B28",
+"input": "=IFERROR(TYPE(A28),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C28",
+"input": "=IFERROR(A28+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D28",
+"input": "=CELL(\"format\",A28)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E28",
+"input": "=IFERROR(TEXT(A28,\"General\"),\"E\")&\"|\"&A28"
+},
+{
+"op": "set",
+"cell": "Sheet1!F28",
+"input": "=ISFORMULA(A28)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A29",
+"input": "15.3.2026"
+},
+{
+"op": "set",
+"cell": "Sheet1!B29",
+"input": "=IFERROR(TYPE(A29),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C29",
+"input": "=IFERROR(A29+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D29",
+"input": "=CELL(\"format\",A29)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E29",
+"input": "=IFERROR(TEXT(A29,\"General\"),\"E\")&\"|\"&A29"
+},
+{
+"op": "set",
+"cell": "Sheet1!F29",
+"input": "=ISFORMULA(A29)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A30",
+"input": "2026/3/15"
+},
+{
+"op": "set",
+"cell": "Sheet1!B30",
+"input": "=IFERROR(TYPE(A30),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C30",
+"input": "=IFERROR(A30+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D30",
+"input": "=CELL(\"format\",A30)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E30",
+"input": "=IFERROR(TEXT(A30,\"General\"),\"E\")&\"|\"&A30"
+},
+{
+"op": "set",
+"cell": "Sheet1!F30",
+"input": "=ISFORMULA(A30)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A31",
+"input": "1st"
+},
+{
+"op": "set",
+"cell": "Sheet1!B31",
+"input": "=IFERROR(TYPE(A31),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C31",
+"input": "=IFERROR(A31+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D31",
+"input": "=CELL(\"format\",A31)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E31",
+"input": "=IFERROR(TEXT(A31,\"General\"),\"E\")&\"|\"&A31"
+},
+{
+"op": "set",
+"cell": "Sheet1!F31",
+"input": "=ISFORMULA(A31)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A32",
+"input": "1.5.3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B32",
+"input": "=IFERROR(TYPE(A32),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C32",
+"input": "=IFERROR(A32+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D32",
+"input": "=CELL(\"format\",A32)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E32",
+"input": "=IFERROR(TEXT(A32,\"General\"),\"E\")&\"|\"&A32"
+},
+{
+"op": "set",
+"cell": "Sheet1!F32",
+"input": "=ISFORMULA(A32)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A33",
+"input": "0x1F"
+},
+{
+"op": "set",
+"cell": "Sheet1!B33",
+"input": "=IFERROR(TYPE(A33),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C33",
+"input": "=IFERROR(A33+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D33",
+"input": "=CELL(\"format\",A33)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E33",
+"input": "=IFERROR(TEXT(A33,\"General\"),\"E\")&\"|\"&A33"
+},
+{
+"op": "set",
+"cell": "Sheet1!F33",
+"input": "=ISFORMULA(A33)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A34",
+"input": "00123"
+},
+{
+"op": "set",
+"cell": "Sheet1!B34",
+"input": "=IFERROR(TYPE(A34),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C34",
+"input": "=IFERROR(A34+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D34",
+"input": "=CELL(\"format\",A34)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E34",
+"input": "=IFERROR(TEXT(A34,\"General\"),\"E\")&\"|\"&A34"
+},
+{
+"op": "set",
+"cell": "Sheet1!F34",
+"input": "=ISFORMULA(A34)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A35",
+"input": "1,2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B35",
+"input": "=IFERROR(TYPE(A35),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C35",
+"input": "=IFERROR(A35+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D35",
+"input": "=CELL(\"format\",A35)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E35",
+"input": "=IFERROR(TEXT(A35,\"General\"),\"E\")&\"|\"&A35"
+},
+{
+"op": "set",
+"cell": "Sheet1!F35",
+"input": "=ISFORMULA(A35)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A36",
+"input": "1,23,456"
+},
+{
+"op": "set",
+"cell": "Sheet1!B36",
+"input": "=IFERROR(TYPE(A36),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C36",
+"input": "=IFERROR(A36+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D36",
+"input": "=CELL(\"format\",A36)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E36",
+"input": "=IFERROR(TEXT(A36,\"General\"),\"E\")&\"|\"&A36"
+},
+{
+"op": "set",
+"cell": "Sheet1!F36",
+"input": "=ISFORMULA(A36)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A37",
+"input": ".5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B37",
+"input": "=IFERROR(TYPE(A37),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C37",
+"input": "=IFERROR(A37+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D37",
+"input": "=CELL(\"format\",A37)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E37",
+"input": "=IFERROR(TEXT(A37,\"General\"),\"E\")&\"|\"&A37"
+},
+{
+"op": "set",
+"cell": "Sheet1!F37",
+"input": "=ISFORMULA(A37)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A38",
+"input": "5."
+},
+{
+"op": "set",
+"cell": "Sheet1!B38",
+"input": "=IFERROR(TYPE(A38),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C38",
+"input": "=IFERROR(A38+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D38",
+"input": "=CELL(\"format\",A38)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E38",
+"input": "=IFERROR(TEXT(A38,\"General\"),\"E\")&\"|\"&A38"
+},
+{
+"op": "set",
+"cell": "Sheet1!F38",
+"input": "=ISFORMULA(A38)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A39",
+"input": "-.5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B39",
+"input": "=IFERROR(TYPE(A39),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C39",
+"input": "=IFERROR(A39+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D39",
+"input": "=CELL(\"format\",A39)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E39",
+"input": "=IFERROR(TEXT(A39,\"General\"),\"E\")&\"|\"&A39"
+},
+{
+"op": "set",
+"cell": "Sheet1!F39",
+"input": "=ISFORMULA(A39)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A40",
+"input": "1e"
+},
+{
+"op": "set",
+"cell": "Sheet1!B40",
+"input": "=IFERROR(TYPE(A40),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C40",
+"input": "=IFERROR(A40+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D40",
+"input": "=CELL(\"format\",A40)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E40",
+"input": "=IFERROR(TEXT(A40,\"General\"),\"E\")&\"|\"&A40"
+},
+{
+"op": "set",
+"cell": "Sheet1!F40",
+"input": "=ISFORMULA(A40)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A41",
+"input": "TRUE"
+},
+{
+"op": "set",
+"cell": "Sheet1!B41",
+"input": "=IFERROR(TYPE(A41),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C41",
+"input": "=IFERROR(A41+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D41",
+"input": "=CELL(\"format\",A41)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E41",
+"input": "=IFERROR(TEXT(A41,\"General\"),\"E\")&\"|\"&A41"
+},
+{
+"op": "set",
+"cell": "Sheet1!F41",
+"input": "=ISFORMULA(A41)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A42",
+"input": "true"
+},
+{
+"op": "set",
+"cell": "Sheet1!B42",
+"input": "=IFERROR(TYPE(A42),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C42",
+"input": "=IFERROR(A42+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D42",
+"input": "=CELL(\"format\",A42)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E42",
+"input": "=IFERROR(TEXT(A42,\"General\"),\"E\")&\"|\"&A42"
+},
+{
+"op": "set",
+"cell": "Sheet1!F42",
+"input": "=ISFORMULA(A42)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A43",
+"input": "FALSE"
+},
+{
+"op": "set",
+"cell": "Sheet1!B43",
+"input": "=IFERROR(TYPE(A43),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C43",
+"input": "=IFERROR(A43+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D43",
+"input": "=CELL(\"format\",A43)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E43",
+"input": "=IFERROR(TEXT(A43,\"General\"),\"E\")&\"|\"&A43"
+},
+{
+"op": "set",
+"cell": "Sheet1!F43",
+"input": "=ISFORMULA(A43)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A44",
+"input": "#N/A"
+},
+{
+"op": "set",
+"cell": "Sheet1!B44",
+"input": "=IFERROR(TYPE(A44),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C44",
+"input": "=IFERROR(A44+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D44",
+"input": "=CELL(\"format\",A44)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E44",
+"input": "=IFERROR(TEXT(A44,\"General\"),\"E\")&\"|\"&A44"
+},
+{
+"op": "set",
+"cell": "Sheet1!F44",
+"input": "=ISFORMULA(A44)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A45",
+"input": "#DIV/0!"
+},
+{
+"op": "set",
+"cell": "Sheet1!B45",
+"input": "=IFERROR(TYPE(A45),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C45",
+"input": "=IFERROR(A45+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D45",
+"input": "=CELL(\"format\",A45)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E45",
+"input": "=IFERROR(TEXT(A45,\"General\"),\"E\")&\"|\"&A45"
+},
+{
+"op": "set",
+"cell": "Sheet1!F45",
+"input": "=ISFORMULA(A45)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A46",
+"input": "=1/0"
+},
+{
+"op": "set",
+"cell": "Sheet1!B46",
+"input": "=IFERROR(TYPE(A46),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C46",
+"input": "=IFERROR(A46+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D46",
+"input": "=CELL(\"format\",A46)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E46",
+"input": "=IFERROR(TEXT(A46,\"General\"),\"E\")&\"|\"&A46"
+},
+{
+"op": "set",
+"cell": "Sheet1!F46",
+"input": "=ISFORMULA(A46)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A47",
+"input": "='x"
+},
+{
+"op": "set",
+"cell": "Sheet1!B47",
+"input": "=IFERROR(TYPE(A47),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C47",
+"input": "=IFERROR(A47+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D47",
+"input": "=CELL(\"format\",A47)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E47",
+"input": "=IFERROR(TEXT(A47,\"General\"),\"E\")&\"|\"&A47"
+},
+{
+"op": "set",
+"cell": "Sheet1!F47",
+"input": "=ISFORMULA(A47)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A48",
+"input": "'123"
+},
+{
+"op": "set",
+"cell": "Sheet1!B48",
+"input": "=IFERROR(TYPE(A48),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C48",
+"input": "=IFERROR(A48+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D48",
+"input": "=CELL(\"format\",A48)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E48",
+"input": "=IFERROR(TEXT(A48,\"General\"),\"E\")&\"|\"&A48"
+},
+{
+"op": "set",
+"cell": "Sheet1!F48",
+"input": "=ISFORMULA(A48)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A49",
+"input": "=+5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B49",
+"input": "=IFERROR(TYPE(A49),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C49",
+"input": "=IFERROR(A49+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D49",
+"input": "=CELL(\"format\",A49)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E49",
+"input": "=IFERROR(TEXT(A49,\"General\"),\"E\")&\"|\"&A49"
+},
+{
+"op": "set",
+"cell": "Sheet1!F49",
+"input": "=ISFORMULA(A49)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A50",
+"input": "=--5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B50",
+"input": "=IFERROR(TYPE(A50),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C50",
+"input": "=IFERROR(A50+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D50",
+"input": "=CELL(\"format\",A50)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E50",
+"input": "=IFERROR(TEXT(A50,\"General\"),\"E\")&\"|\"&A50"
+},
+{
+"op": "set",
+"cell": "Sheet1!F50",
+"input": "=ISFORMULA(A50)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A51",
+"input": "=5%"
+},
+{
+"op": "set",
+"cell": "Sheet1!B51",
+"input": "=IFERROR(TYPE(A51),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C51",
+"input": "=IFERROR(A51+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D51",
+"input": "=CELL(\"format\",A51)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E51",
+"input": "=IFERROR(TEXT(A51,\"General\"),\"E\")&\"|\"&A51"
+},
+{
+"op": "set",
+"cell": "Sheet1!F51",
+"input": "=ISFORMULA(A51)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A52",
+"input": "= 1 + 2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B52",
+"input": "=IFERROR(TYPE(A52),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C52",
+"input": "=IFERROR(A52+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D52",
+"input": "=CELL(\"format\",A52)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E52",
+"input": "=IFERROR(TEXT(A52,\"General\"),\"E\")&\"|\"&A52"
+},
+{
+"op": "set",
+"cell": "Sheet1!F52",
+"input": "=ISFORMULA(A52)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A53",
+"input": "=sum(1,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B53",
+"input": "=IFERROR(TYPE(A53),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C53",
+"input": "=IFERROR(A53+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D53",
+"input": "=CELL(\"format\",A53)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E53",
+"input": "=IFERROR(TEXT(A53,\"General\"),\"E\")&\"|\"&A53"
+},
+{
+"op": "set",
+"cell": "Sheet1!F53",
+"input": "=ISFORMULA(A53)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A54",
+"input": "=SUM (1,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B54",
+"input": "=IFERROR(TYPE(A54),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C54",
+"input": "=IFERROR(A54+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D54",
+"input": "=CELL(\"format\",A54)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E54",
+"input": "=IFERROR(TEXT(A54,\"General\"),\"E\")&\"|\"&A54"
+},
+{
+"op": "set",
+"cell": "Sheet1!F54",
+"input": "=ISFORMULA(A54)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A55",
+"input": "=1,5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B55",
+"input": "=IFERROR(TYPE(A55),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C55",
+"input": "=IFERROR(A55+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D55",
+"input": "=CELL(\"format\",A55)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E55",
+"input": "=IFERROR(TEXT(A55,\"General\"),\"E\")&\"|\"&A55"
+},
+{
+"op": "set",
+"cell": "Sheet1!F55",
+"input": "=ISFORMULA(A55)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A56",
+"input": "=1;2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B56",
+"input": "=IFERROR(TYPE(A56),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C56",
+"input": "=IFERROR(A56+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D56",
+"input": "=CELL(\"format\",A56)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E56",
+"input": "=IFERROR(TEXT(A56,\"General\"),\"E\")&\"|\"&A56"
+},
+{
+"op": "set",
+"cell": "Sheet1!F56",
+"input": "=ISFORMULA(A56)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A57",
+"input": "=A1:A2 A2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B57",
+"input": "=IFERROR(TYPE(A57),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C57",
+"input": "=IFERROR(A57+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D57",
+"input": "=CELL(\"format\",A57)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E57",
+"input": "=IFERROR(TEXT(A57,\"General\"),\"E\")&\"|\"&A57"
+},
+{
+"op": "set",
+"cell": "Sheet1!F57",
+"input": "=ISFORMULA(A57)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A58",
+"input": "=TRUE+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B58",
+"input": "=IFERROR(TYPE(A58),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C58",
+"input": "=IFERROR(A58+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D58",
+"input": "=CELL(\"format\",A58)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E58",
+"input": "=IFERROR(TEXT(A58,\"General\"),\"E\")&\"|\"&A58"
+},
+{
+"op": "set",
+"cell": "Sheet1!F58",
+"input": "=ISFORMULA(A58)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A59",
+"input": "=\"\"&1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B59",
+"input": "=IFERROR(TYPE(A59),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C59",
+"input": "=IFERROR(A59+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D59",
+"input": "=CELL(\"format\",A59)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E59",
+"input": "=IFERROR(TEXT(A59,\"General\"),\"E\")&\"|\"&A59"
+},
+{
+"op": "set",
+"cell": "Sheet1!F59",
+"input": "=ISFORMULA(A59)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A60",
+"input": "=\"a\"&\"b\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B60",
+"input": "=IFERROR(TYPE(A60),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C60",
+"input": "=IFERROR(A60+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D60",
+"input": "=CELL(\"format\",A60)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E60",
+"input": "=IFERROR(TEXT(A60,\"General\"),\"E\")&\"|\"&A60"
+},
+{
+"op": "set",
+"cell": "Sheet1!F60",
+"input": "=ISFORMULA(A60)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A61",
+"input": "=1&2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B61",
+"input": "=IFERROR(TYPE(A61),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C61",
+"input": "=IFERROR(A61+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D61",
+"input": "=CELL(\"format\",A61)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E61",
+"input": "=IFERROR(TEXT(A61,\"General\"),\"E\")&\"|\"&A61"
+},
+{
+"op": "set",
+"cell": "Sheet1!F61",
+"input": "=ISFORMULA(A61)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A62",
+"input": "=3>2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B62",
+"input": "=IFERROR(TYPE(A62),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C62",
+"input": "=IFERROR(A62+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D62",
+"input": "=CELL(\"format\",A62)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E62",
+"input": "=IFERROR(TEXT(A62,\"General\"),\"E\")&\"|\"&A62"
+},
+{
+"op": "set",
+"cell": "Sheet1!F62",
+"input": "=ISFORMULA(A62)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A63",
+"input": "=2^3^2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B63",
+"input": "=IFERROR(TYPE(A63),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C63",
+"input": "=IFERROR(A63+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D63",
+"input": "=CELL(\"format\",A63)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E63",
+"input": "=IFERROR(TEXT(A63,\"General\"),\"E\")&\"|\"&A63"
+},
+{
+"op": "set",
+"cell": "Sheet1!F63",
+"input": "=ISFORMULA(A63)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A64",
+"input": "=-2^2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B64",
+"input": "=IFERROR(TYPE(A64),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C64",
+"input": "=IFERROR(A64+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D64",
+"input": "=CELL(\"format\",A64)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E64",
+"input": "=IFERROR(TEXT(A64,\"General\"),\"E\")&\"|\"&A64"
+},
+{
+"op": "set",
+"cell": "Sheet1!F64",
+"input": "=ISFORMULA(A64)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A65",
+"input": "=1E3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B65",
+"input": "=IFERROR(TYPE(A65),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C65",
+"input": "=IFERROR(A65+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D65",
+"input": "=CELL(\"format\",A65)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E65",
+"input": "=IFERROR(TEXT(A65,\"General\"),\"E\")&\"|\"&A65"
+},
+{
+"op": "set",
+"cell": "Sheet1!F65",
+"input": "=ISFORMULA(A65)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A66",
+"input": "=1e3+0x1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B66",
+"input": "=IFERROR(TYPE(A66),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C66",
+"input": "=IFERROR(A66+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D66",
+"input": "=CELL(\"format\",A66)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E66",
+"input": "=IFERROR(TEXT(A66,\"General\"),\"E\")&\"|\"&A66"
+},
+{
+"op": "set",
+"cell": "Sheet1!F66",
+"input": "=ISFORMULA(A66)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A67",
+"input": "=.5+.5"
+},
+{
+"op": "set",
+"cell": "Sheet1!B67",
+"input": "=IFERROR(TYPE(A67),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C67",
+"input": "=IFERROR(A67+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D67",
+"input": "=CELL(\"format\",A67)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E67",
+"input": "=IFERROR(TEXT(A67,\"General\"),\"E\")&\"|\"&A67"
+},
+{
+"op": "set",
+"cell": "Sheet1!F67",
+"input": "=ISFORMULA(A67)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A68",
+"input": "=5.%"
+},
+{
+"op": "set",
+"cell": "Sheet1!B68",
+"input": "=IFERROR(TYPE(A68),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C68",
+"input": "=IFERROR(A68+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D68",
+"input": "=CELL(\"format\",A68)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E68",
+"input": "=IFERROR(TEXT(A68,\"General\"),\"E\")&\"|\"&A68"
+},
+{
+"op": "set",
+"cell": "Sheet1!F68",
+"input": "=ISFORMULA(A68)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A69",
+"input": "=1.2.3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B69",
+"input": "=IFERROR(TYPE(A69),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C69",
+"input": "=IFERROR(A69+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D69",
+"input": "=CELL(\"format\",A69)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E69",
+"input": "=IFERROR(TEXT(A69,\"General\"),\"E\")&\"|\"&A69"
+},
+{
+"op": "set",
+"cell": "Sheet1!F69",
+"input": "=ISFORMULA(A69)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A70",
+"input": "=A1:"
+},
+{
+"op": "set",
+"cell": "Sheet1!B70",
+"input": "=IFERROR(TYPE(A70),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C70",
+"input": "=IFERROR(A70+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D70",
+"input": "=CELL(\"format\",A70)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E70",
+"input": "=IFERROR(TEXT(A70,\"General\"),\"E\")&\"|\"&A70"
+},
+{
+"op": "set",
+"cell": "Sheet1!F70",
+"input": "=ISFORMULA(A70)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A71",
+"input": "=(1+2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B71",
+"input": "=IFERROR(TYPE(A71),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C71",
+"input": "=IFERROR(A71+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D71",
+"input": "=CELL(\"format\",A71)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E71",
+"input": "=IFERROR(TEXT(A71,\"General\"),\"E\")&\"|\"&A71"
+},
+{
+"op": "set",
+"cell": "Sheet1!F71",
+"input": "=ISFORMULA(A71)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A72",
+"input": "=1+"
+},
+{
+"op": "set",
+"cell": "Sheet1!B72",
+"input": "=IFERROR(TYPE(A72),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C72",
+"input": "=IFERROR(A72+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D72",
+"input": "=CELL(\"format\",A72)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E72",
+"input": "=IFERROR(TEXT(A72,\"General\"),\"E\")&\"|\"&A72"
+},
+{
+"op": "set",
+"cell": "Sheet1!F72",
+"input": "=ISFORMULA(A72)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A73",
+"input": "=SUM("
+},
+{
+"op": "set",
+"cell": "Sheet1!B73",
+"input": "=IFERROR(TYPE(A73),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C73",
+"input": "=IFERROR(A73+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D73",
+"input": "=CELL(\"format\",A73)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E73",
+"input": "=IFERROR(TEXT(A73,\"General\"),\"E\")&\"|\"&A73"
+},
+{
+"op": "set",
+"cell": "Sheet1!F73",
+"input": "=ISFORMULA(A73)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A74",
+"input": "=NA"
+},
+{
+"op": "set",
+"cell": "Sheet1!B74",
+"input": "=IFERROR(TYPE(A74),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C74",
+"input": "=IFERROR(A74+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D74",
+"input": "=CELL(\"format\",A74)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E74",
+"input": "=IFERROR(TEXT(A74,\"General\"),\"E\")&\"|\"&A74"
+},
+{
+"op": "set",
+"cell": "Sheet1!F74",
+"input": "=ISFORMULA(A74)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A75",
+"input": "=#N/A"
+},
+{
+"op": "set",
+"cell": "Sheet1!B75",
+"input": "=IFERROR(TYPE(A75),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C75",
+"input": "=IFERROR(A75+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D75",
+"input": "=CELL(\"format\",A75)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E75",
+"input": "=IFERROR(TEXT(A75,\"General\"),\"E\")&\"|\"&A75"
+},
+{
+"op": "set",
+"cell": "Sheet1!F75",
+"input": "=ISFORMULA(A75)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A76",
+"input": "=#REF!+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B76",
+"input": "=IFERROR(TYPE(A76),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C76",
+"input": "=IFERROR(A76+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D76",
+"input": "=CELL(\"format\",A76)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E76",
+"input": "=IFERROR(TEXT(A76,\"General\"),\"E\")&\"|\"&A76"
+},
+{
+"op": "set",
+"cell": "Sheet1!F76",
+"input": "=ISFORMULA(A76)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A77",
+"input": "=\"abc\"+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B77",
+"input": "=IFERROR(TYPE(A77),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C77",
+"input": "=IFERROR(A77+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D77",
+"input": "=CELL(\"format\",A77)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E77",
+"input": "=IFERROR(TEXT(A77,\"General\"),\"E\")&\"|\"&A77"
+},
+{
+"op": "set",
+"cell": "Sheet1!F77",
+"input": "=ISFORMULA(A77)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A78",
+"input": "=--\"1,000\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B78",
+"input": "=IFERROR(TYPE(A78),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C78",
+"input": "=IFERROR(A78+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D78",
+"input": "=CELL(\"format\",A78)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E78",
+"input": "=IFERROR(TEXT(A78,\"General\"),\"E\")&\"|\"&A78"
+},
+{
+"op": "set",
+"cell": "Sheet1!F78",
+"input": "=ISFORMULA(A78)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A79",
+"input": "=--\"1 000\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B79",
+"input": "=IFERROR(TYPE(A79),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C79",
+"input": "=IFERROR(A79+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D79",
+"input": "=CELL(\"format\",A79)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E79",
+"input": "=IFERROR(TEXT(A79,\"General\"),\"E\")&\"|\"&A79"
+},
+{
+"op": "set",
+"cell": "Sheet1!F79",
+"input": "=ISFORMULA(A79)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A80",
+"input": "=--\"1e3\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B80",
+"input": "=IFERROR(TYPE(A80),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C80",
+"input": "=IFERROR(A80+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D80",
+"input": "=CELL(\"format\",A80)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E80",
+"input": "=IFERROR(TEXT(A80,\"General\"),\"E\")&\"|\"&A80"
+},
+{
+"op": "set",
+"cell": "Sheet1!F80",
+"input": "=ISFORMULA(A80)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A81",
+"input": "=--\"$1,000.50\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B81",
+"input": "=IFERROR(TYPE(A81),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C81",
+"input": "=IFERROR(A81+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D81",
+"input": "=CELL(\"format\",A81)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E81",
+"input": "=IFERROR(TEXT(A81,\"General\"),\"E\")&\"|\"&A81"
+},
+{
+"op": "set",
+"cell": "Sheet1!F81",
+"input": "=ISFORMULA(A81)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A82",
+"input": "=--\"12:30\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B82",
+"input": "=IFERROR(TYPE(A82),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C82",
+"input": "=IFERROR(A82+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D82",
+"input": "=CELL(\"format\",A82)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E82",
+"input": "=IFERROR(TEXT(A82,\"General\"),\"E\")&\"|\"&A82"
+},
+{
+"op": "set",
+"cell": "Sheet1!F82",
+"input": "=ISFORMULA(A82)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A83",
+"input": "=--\"3/15/2026\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B83",
+"input": "=IFERROR(TYPE(A83),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C83",
+"input": "=IFERROR(A83+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D83",
+"input": "=CELL(\"format\",A83)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E83",
+"input": "=IFERROR(TEXT(A83,\"General\"),\"E\")&\"|\"&A83"
+},
+{
+"op": "set",
+"cell": "Sheet1!F83",
+"input": "=ISFORMULA(A83)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A84",
+"input": "=--\"15/3/2026\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B84",
+"input": "=IFERROR(TYPE(A84),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C84",
+"input": "=IFERROR(A84+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D84",
+"input": "=CELL(\"format\",A84)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E84",
+"input": "=IFERROR(TEXT(A84,\"General\"),\"E\")&\"|\"&A84"
+},
+{
+"op": "set",
+"cell": "Sheet1!F84",
+"input": "=ISFORMULA(A84)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A85",
+"input": "=--\"March 15, 2026\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B85",
+"input": "=IFERROR(TYPE(A85),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C85",
+"input": "=IFERROR(A85+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D85",
+"input": "=CELL(\"format\",A85)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E85",
+"input": "=IFERROR(TEXT(A85,\"General\"),\"E\")&\"|\"&A85"
+},
+{
+"op": "set",
+"cell": "Sheet1!F85",
+"input": "=ISFORMULA(A85)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A86",
+"input": "=--\"1-Mar\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B86",
+"input": "=IFERROR(TYPE(A86),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C86",
+"input": "=IFERROR(A86+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D86",
+"input": "=CELL(\"format\",A86)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E86",
+"input": "=IFERROR(TEXT(A86,\"General\"),\"E\")&\"|\"&A86"
+},
+{
+"op": "set",
+"cell": "Sheet1!F86",
+"input": "=ISFORMULA(A86)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A87",
+"input": "=--\"TRUE\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B87",
+"input": "=IFERROR(TYPE(A87),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C87",
+"input": "=IFERROR(A87+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D87",
+"input": "=CELL(\"format\",A87)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E87",
+"input": "=IFERROR(TEXT(A87,\"General\"),\"E\")&\"|\"&A87"
+},
+{
+"op": "set",
+"cell": "Sheet1!F87",
+"input": "=ISFORMULA(A87)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A88",
+"input": "=--\" \""
+},
+{
+"op": "set",
+"cell": "Sheet1!B88",
+"input": "=IFERROR(TYPE(A88),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C88",
+"input": "=IFERROR(A88+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D88",
+"input": "=CELL(\"format\",A88)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E88",
+"input": "=IFERROR(TEXT(A88,\"General\"),\"E\")&\"|\"&A88"
+},
+{
+"op": "set",
+"cell": "Sheet1!F88",
+"input": "=ISFORMULA(A88)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A89",
+"input": "=--\"\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B89",
+"input": "=IFERROR(TYPE(A89),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C89",
+"input": "=IFERROR(A89+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D89",
+"input": "=CELL(\"format\",A89)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E89",
+"input": "=IFERROR(TEXT(A89,\"General\"),\"E\")&\"|\"&A89"
+},
+{
+"op": "set",
+"cell": "Sheet1!F89",
+"input": "=ISFORMULA(A89)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A90",
+"input": "=-\"5\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B90",
+"input": "=IFERROR(TYPE(A90),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C90",
+"input": "=IFERROR(A90+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D90",
+"input": "=CELL(\"format\",A90)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E90",
+"input": "=IFERROR(TEXT(A90,\"General\"),\"E\")&\"|\"&A90"
+},
+{
+"op": "set",
+"cell": "Sheet1!F90",
+"input": "=ISFORMULA(A90)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A91",
+"input": "=+\"5\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B91",
+"input": "=IFERROR(TYPE(A91),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C91",
+"input": "=IFERROR(A91+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D91",
+"input": "=CELL(\"format\",A91)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E91",
+"input": "=IFERROR(TEXT(A91,\"General\"),\"E\")&\"|\"&A91"
+},
+{
+"op": "set",
+"cell": "Sheet1!F91",
+"input": "=ISFORMULA(A91)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A92",
+"input": "=\"5\"*\"2\""
+},
+{
+"op": "set",
+"cell": "Sheet1!B92",
+"input": "=IFERROR(TYPE(A92),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C92",
+"input": "=IFERROR(A92+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D92",
+"input": "=CELL(\"format\",A92)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E92",
+"input": "=IFERROR(TEXT(A92,\"General\"),\"E\")&\"|\"&A92"
+},
+{
+"op": "set",
+"cell": "Sheet1!F92",
+"input": "=ISFORMULA(A92)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A93",
+"input": "=1=1.0000000000000001"
+},
+{
+"op": "set",
+"cell": "Sheet1!B93",
+"input": "=IFERROR(TYPE(A93),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C93",
+"input": "=IFERROR(A93+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D93",
+"input": "=CELL(\"format\",A93)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E93",
+"input": "=IFERROR(TEXT(A93,\"General\"),\"E\")&\"|\"&A93"
+},
+{
+"op": "set",
+"cell": "Sheet1!F93",
+"input": "=ISFORMULA(A93)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A94",
+"input": "=1.0000000000000001=1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B94",
+"input": "=IFERROR(TYPE(A94),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C94",
+"input": "=IFERROR(A94+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D94",
+"input": "=CELL(\"format\",A94)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E94",
+"input": "=IFERROR(TEXT(A94,\"General\"),\"E\")&\"|\"&A94"
+},
+{
+"op": "set",
+"cell": "Sheet1!F94",
+"input": "=ISFORMULA(A94)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A95",
+"input": "=123456789012345678"
+},
+{
+"op": "set",
+"cell": "Sheet1!B95",
+"input": "=IFERROR(TYPE(A95),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C95",
+"input": "=IFERROR(A95+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D95",
+"input": "=CELL(\"format\",A95)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E95",
+"input": "=IFERROR(TEXT(A95,\"General\"),\"E\")&\"|\"&A95"
+},
+{
+"op": "set",
+"cell": "Sheet1!F95",
+"input": "=ISFORMULA(A95)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A96",
+"input": "=0.1234567890123456789"
+},
+{
+"op": "set",
+"cell": "Sheet1!B96",
+"input": "=IFERROR(TYPE(A96),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C96",
+"input": "=IFERROR(A96+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D96",
+"input": "=CELL(\"format\",A96)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E96",
+"input": "=IFERROR(TEXT(A96,\"General\"),\"E\")&\"|\"&A96"
+},
+{
+"op": "set",
+"cell": "Sheet1!F96",
+"input": "=ISFORMULA(A96)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A97",
+"input": "=1234567890123456789012"
+},
+{
+"op": "set",
+"cell": "Sheet1!B97",
+"input": "=IFERROR(TYPE(A97),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C97",
+"input": "=IFERROR(A97+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D97",
+"input": "=CELL(\"format\",A97)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E97",
+"input": "=IFERROR(TEXT(A97,\"General\"),\"E\")&\"|\"&A97"
+},
+{
+"op": "set",
+"cell": "Sheet1!F97",
+"input": "=ISFORMULA(A97)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A98",
+"input": "=9.99999999999999E307*10"
+},
+{
+"op": "set",
+"cell": "Sheet1!B98",
+"input": "=IFERROR(TYPE(A98),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C98",
+"input": "=IFERROR(A98+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D98",
+"input": "=CELL(\"format\",A98)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E98",
+"input": "=IFERROR(TEXT(A98,\"General\"),\"E\")&\"|\"&A98"
+},
+{
+"op": "set",
+"cell": "Sheet1!F98",
+"input": "=ISFORMULA(A98)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A99",
+"input": "=1E-320"
+},
+{
+"op": "set",
+"cell": "Sheet1!B99",
+"input": "=IFERROR(TYPE(A99),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C99",
+"input": "=IFERROR(A99+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D99",
+"input": "=CELL(\"format\",A99)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E99",
+"input": "=IFERROR(TEXT(A99,\"General\"),\"E\")&\"|\"&A99"
+},
+{
+"op": "set",
+"cell": "Sheet1!F99",
+"input": "=ISFORMULA(A99)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A100",
+"input": "=1E-330"
+},
+{
+"op": "set",
+"cell": "Sheet1!B100",
+"input": "=IFERROR(TYPE(A100),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C100",
+"input": "=IFERROR(A100+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D100",
+"input": "=CELL(\"format\",A100)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E100",
+"input": "=IFERROR(TEXT(A100,\"General\"),\"E\")&\"|\"&A100"
+},
+{
+"op": "set",
+"cell": "Sheet1!F100",
+"input": "=ISFORMULA(A100)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A101",
+"input": "=2^1023*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!B101",
+"input": "=IFERROR(TYPE(A101),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C101",
+"input": "=IFERROR(A101+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D101",
+"input": "=CELL(\"format\",A101)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E101",
+"input": "=IFERROR(TEXT(A101,\"General\"),\"E\")&\"|\"&A101"
+},
+{
+"op": "set",
+"cell": "Sheet1!F101",
+"input": "=ISFORMULA(A101)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A102",
+"input": "=-0"
+},
+{
+"op": "set",
+"cell": "Sheet1!B102",
+"input": "=IFERROR(TYPE(A102),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C102",
+"input": "=IFERROR(A102+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D102",
+"input": "=CELL(\"format\",A102)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E102",
+"input": "=IFERROR(TEXT(A102,\"General\"),\"E\")&\"|\"&A102"
+},
+{
+"op": "set",
+"cell": "Sheet1!F102",
+"input": "=ISFORMULA(A102)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A103",
+"input": "=0*-1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B103",
+"input": "=IFERROR(TYPE(A103),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C103",
+"input": "=IFERROR(A103+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D103",
+"input": "=CELL(\"format\",A103)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E103",
+"input": "=IFERROR(TEXT(A103,\"General\"),\"E\")&\"|\"&A103"
+},
+{
+"op": "set",
+"cell": "Sheet1!F103",
+"input": "=ISFORMULA(A103)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A104",
+"input": "=-0=0"
+},
+{
+"op": "set",
+"cell": "Sheet1!B104",
+"input": "=IFERROR(TYPE(A104),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C104",
+"input": "=IFERROR(A104+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D104",
+"input": "=CELL(\"format\",A104)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E104",
+"input": "=IFERROR(TEXT(A104,\"General\"),\"E\")&\"|\"&A104"
+},
+{
+"op": "set",
+"cell": "Sheet1!F104",
+"input": "=ISFORMULA(A104)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A105",
+"input": "=1/-0"
+},
+{
+"op": "set",
+"cell": "Sheet1!B105",
+"input": "=IFERROR(TYPE(A105),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C105",
+"input": "=IFERROR(A105+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D105",
+"input": "=CELL(\"format\",A105)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E105",
+"input": "=IFERROR(TEXT(A105,\"General\"),\"E\")&\"|\"&A105"
+},
+{
+"op": "set",
+"cell": "Sheet1!F105",
+"input": "=ISFORMULA(A105)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A106",
+"input": "=0^0"
+},
+{
+"op": "set",
+"cell": "Sheet1!B106",
+"input": "=IFERROR(TYPE(A106),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C106",
+"input": "=IFERROR(A106+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D106",
+"input": "=CELL(\"format\",A106)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E106",
+"input": "=IFERROR(TEXT(A106,\"General\"),\"E\")&\"|\"&A106"
+},
+{
+"op": "set",
+"cell": "Sheet1!F106",
+"input": "=ISFORMULA(A106)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A107",
+"input": "=0/0"
+},
+{
+"op": "set",
+"cell": "Sheet1!B107",
+"input": "=IFERROR(TYPE(A107),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C107",
+"input": "=IFERROR(A107+0,\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D107",
+"input": "=CELL(\"format\",A107)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E107",
+"input": "=IFERROR(TEXT(A107,\"General\"),\"E\")&\"|\"&A107"
+},
+{
+"op": "set",
+"cell": "Sheet1!F107",
+"input": "=ISFORMULA(A107)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F107"
+}
+]
+}

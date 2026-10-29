@@ -1,0 +1,668 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C2",
+"value": {
+"t": "n",
+"v": 1500
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=TEXT(A2,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "s",
+"v": "Food"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C3",
+"value": {
+"t": "n",
+"v": 212.35
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=TEXT(A3,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "5/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "s",
+"v": "Fuel"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C4",
+"value": {
+"t": "n",
+"v": 88.9
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=TEXT(A4,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "7/4/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "s",
+"v": "Fun"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C5",
+"value": {
+"t": "n",
+"v": 45
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=TEXT(A5,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "9/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "s",
+"v": "Food"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C6",
+"value": {
+"t": "n",
+"v": 199.99
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=TEXT(A6,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A7",
+"input": "11/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C7",
+"value": {
+"t": "n",
+"v": 1500
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=TEXT(A7,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "13/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B8",
+"value": {
+"t": "s",
+"v": "Fuel"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C8",
+"value": {
+"t": "n",
+"v": 92.15
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=TEXT(A8,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A9",
+"input": "15/4/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B9",
+"value": {
+"t": "s",
+"v": "Food"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C9",
+"value": {
+"t": "s",
+"v": "n/a"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=TEXT(A9,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A10",
+"input": "17/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B10",
+"value": {
+"t": "s",
+"v": "Fun"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C10",
+"value": {
+"t": "n",
+"v": 60.5
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=TEXT(A10,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A11",
+"input": "19/2/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B11",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C11",
+"value": {
+"t": "n",
+"v": 1500
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=TEXT(A11,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A12",
+"input": "21/3/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B12",
+"value": {
+"t": "s",
+"v": "Food"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D12",
+"input": "=TEXT(A12,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A13",
+"input": "23/4/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B13",
+"value": {
+"t": "s",
+"v": "Fuel"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C13",
+"value": {
+"t": "n",
+"v": 101.1
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D13",
+"input": "=TEXT(A13,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!A14",
+"input": "25/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B14",
+"value": {
+"t": "s",
+"v": "Gift"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C14",
+"value": {
+"t": "n",
+"v": 35
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!D14",
+"input": "=TEXT(A14,\"mmm\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Date"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Cat"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Amt"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F1",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F2",
+"value": {
+"t": "s",
+"v": "Food"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F3",
+"value": {
+"t": "s",
+"v": "Fuel"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F4",
+"value": {
+"t": "s",
+"v": "Fun"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F5",
+"value": {
+"t": "s",
+"v": "Gift"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F6",
+"value": {
+"t": "s",
+"v": "Misc"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!G1",
+"input": "=SUMIFS($C$2:$C$14,$B$2:$B$14,F1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=COUNTIFS($B$2:$B$14,F1,$C$2:$C$14,\">100\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I1",
+"input": "=IFERROR(AVERAGEIFS($C$2:$C$14,$B$2:$B$14,F1),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J1",
+"input": "=XLOOKUP(F1,$B$2:$B$14,$C$2:$C$14,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K1",
+"input": "=XLOOKUP(F1,$B$2:$B$14,$C$2:$C$14,\"none\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L1",
+"input": "=SUMPRODUCT(($B$2:$B$14=F1)*(MONTH($A$2:$A$14)=2)*$C$2:$C$14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G2",
+"input": "=SUMIFS($C$2:$C$14,$B$2:$B$14,F2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=COUNTIFS($B$2:$B$14,F2,$C$2:$C$14,\">100\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I2",
+"input": "=IFERROR(AVERAGEIFS($C$2:$C$14,$B$2:$B$14,F2),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J2",
+"input": "=XLOOKUP(F2,$B$2:$B$14,$C$2:$C$14,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K2",
+"input": "=XLOOKUP(F2,$B$2:$B$14,$C$2:$C$14,\"none\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L2",
+"input": "=SUMPRODUCT(($B$2:$B$14=F2)*(MONTH($A$2:$A$14)=2)*$C$2:$C$14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G3",
+"input": "=SUMIFS($C$2:$C$14,$B$2:$B$14,F3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=COUNTIFS($B$2:$B$14,F3,$C$2:$C$14,\">100\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I3",
+"input": "=IFERROR(AVERAGEIFS($C$2:$C$14,$B$2:$B$14,F3),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J3",
+"input": "=XLOOKUP(F3,$B$2:$B$14,$C$2:$C$14,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K3",
+"input": "=XLOOKUP(F3,$B$2:$B$14,$C$2:$C$14,\"none\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L3",
+"input": "=SUMPRODUCT(($B$2:$B$14=F3)*(MONTH($A$2:$A$14)=2)*$C$2:$C$14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G4",
+"input": "=SUMIFS($C$2:$C$14,$B$2:$B$14,F4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=COUNTIFS($B$2:$B$14,F4,$C$2:$C$14,\">100\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I4",
+"input": "=IFERROR(AVERAGEIFS($C$2:$C$14,$B$2:$B$14,F4),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J4",
+"input": "=XLOOKUP(F4,$B$2:$B$14,$C$2:$C$14,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K4",
+"input": "=XLOOKUP(F4,$B$2:$B$14,$C$2:$C$14,\"none\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L4",
+"input": "=SUMPRODUCT(($B$2:$B$14=F4)*(MONTH($A$2:$A$14)=2)*$C$2:$C$14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G5",
+"input": "=SUMIFS($C$2:$C$14,$B$2:$B$14,F5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=COUNTIFS($B$2:$B$14,F5,$C$2:$C$14,\">100\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I5",
+"input": "=IFERROR(AVERAGEIFS($C$2:$C$14,$B$2:$B$14,F5),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J5",
+"input": "=XLOOKUP(F5,$B$2:$B$14,$C$2:$C$14,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K5",
+"input": "=XLOOKUP(F5,$B$2:$B$14,$C$2:$C$14,\"none\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L5",
+"input": "=SUMPRODUCT(($B$2:$B$14=F5)*(MONTH($A$2:$A$14)=2)*$C$2:$C$14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G6",
+"input": "=SUMIFS($C$2:$C$14,$B$2:$B$14,F6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=COUNTIFS($B$2:$B$14,F6,$C$2:$C$14,\">100\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I6",
+"input": "=IFERROR(AVERAGEIFS($C$2:$C$14,$B$2:$B$14,F6),0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!J6",
+"input": "=XLOOKUP(F6,$B$2:$B$14,$C$2:$C$14,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K6",
+"input": "=XLOOKUP(F6,$B$2:$B$14,$C$2:$C$14,\"none\",0,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!L6",
+"input": "=SUMPRODUCT(($B$2:$B$14=F6)*(MONTH($A$2:$A$14)=2)*$C$2:$C$14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G7",
+"input": "=SUM(G1:G6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G8",
+"input": "=SUM(C2:C14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G9",
+"input": "=G7-G8"
+},
+{
+"op": "set",
+"cell": "Sheet1!G10",
+"input": "=SUMIFS(C2:C14,A2:A14,\">=\"&DATE(2026,2,1),A2:A14,\"<\"&EDATE(DATE(2026,2,1),1))"
+},
+{
+"op": "set",
+"cell": "Sheet1!G11",
+"input": "=SUMIF(D2:D14,\"Feb\",C2:C14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G12",
+"input": "=SUMIFS(C2:C14,B2:B14,\"F*\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G13",
+"input": "=SUMIFS(C2:C14,B2:B14,\"<>Food\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G14",
+"input": "=MAXIFS(C2:C14,B2:B14,\"Food\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G15",
+"input": "=MINIFS(C2:C14,B2:B14,\"Food\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G16",
+"input": "=SUMPRODUCT(C2:C14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G17",
+"input": "=SUM(C2:C14)/COUNT(C2:C14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G18",
+"input": "=AVERAGE(C2:C14)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G19",
+"input": "=TEXT(G8,\"#,##0.00\")&\" total\""
+},
+{
+"op": "set",
+"cell": "Sheet1!G20",
+"input": "=ROUND(G8/13,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!G21",
+"input": "=PRODUCT(C2:C4)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:L21"
+}
+]
+}

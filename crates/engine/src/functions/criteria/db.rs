@@ -32,7 +32,7 @@ pub enum DKind {
 pub fn dfunc(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> Operand {
     if let Some(Operand::Val(Value::Array(a))) = ops.get(2) {
         return Operand::Val(
-            Array::filled(a.rows, a.cols, Value::Error(XlError::Value)).into_value(),
+            Array::filled(a.rows, a.cols, Value::Error(XlError::VALUE)).into_value(),
         );
     }
 
@@ -41,10 +41,10 @@ pub fn dfunc(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> Operand {
     ops[1] = match field {
         Operand::Ref(r) => match r.single() {
             Some(a) if a.rect.is_cell() => match ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0) {
-                Value::Error(_) => Operand::err(XlError::Value),
+                Value::Error(_) => Operand::err(XlError::VALUE),
                 v => Operand::Val(v),
             },
-            _ => Operand::err(XlError::Value),
+            _ => Operand::err(XlError::VALUE),
         },
         other => other,
     };
@@ -90,7 +90,7 @@ fn resolve_field(v: &Value, headers: &[Value]) -> R<usize> {
                 _ => matches!(v, Value::Bool(true)) as u8 as f64,
             };
             if n < 1.0 || n > headers.len() as f64 {
-                Err(XlError::Value)
+                Err(XlError::VALUE)
             } else {
                 Ok(n as usize - 1)
             }
@@ -98,10 +98,10 @@ fn resolve_field(v: &Value, headers: &[Value]) -> R<usize> {
         Value::Text(s) if s.is_empty() => headers
             .iter()
             .position(|h| matches!(h, Value::Blank) || matches!(h, Value::Text(t) if t.is_empty()))
-            .ok_or(XlError::Value),
-        Value::Text(s) => find_header(headers, s).ok_or(XlError::Value),
+            .ok_or(XlError::VALUE),
+        Value::Text(s) => find_header(headers, s).ok_or(XlError::VALUE),
         Value::Error(e) => Err(*e),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -118,7 +118,7 @@ enum Cond {
 fn run(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> R<Value> {
     let db = area_of(&ops[0])?;
     if db.rect.rows() < 2 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     let ncols = db.rect.cols();
     let headers: Vec<Value> = (0..ncols)
@@ -127,26 +127,26 @@ fn run(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> R<Value> {
     let field = match &ops[1] {
         Operand::Missing => None,
         Operand::Val(v) => Some(resolve_field(v, &headers)?),
-        Operand::Ref(_) => return Err(XlError::Value),
+        Operand::Ref(_) => return Err(XlError::VALUE),
     };
     if field.is_none() && !matches!(kind, DKind::Count | DKind::CountA) {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     let crit = match &ops[2] {
-        Operand::Ref(r) => *r.single().ok_or(XlError::Value)?,
+        Operand::Ref(r) => *r.single().ok_or(XlError::VALUE)?,
         Operand::Val(Value::Error(e)) => return Err(*e),
-        _ => return Err(XlError::Value),
+        _ => return Err(XlError::VALUE),
     };
     if crit.rect.rows() < 2 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     let rows = conditions(ctx, &crit, &db, &headers)?;
     if ctx.interrupted() {
-        return Err(XlError::Calc);
+        return Err(XlError::CALC);
     }
 
     let wb = ctx.wb;
-    let sh = wb.sheet(db.sheet).ok_or(XlError::Ref)?;
+    let sh = wb.sheet(db.sheet).ok_or(XlError::REF)?;
     let all_cols = Rect {
         r0: db.rect.r0,
         c0: 0,
@@ -170,7 +170,7 @@ fn run(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> R<Value> {
             matched.push(k);
         }
         if ctx.interrupted() {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
     }
     let Some(col) = field else {
@@ -196,9 +196,9 @@ fn aggregate(kind: DKind, vals: &[&Value]) -> R<Value> {
         DKind::Get => {
             let mut it = vals.iter().filter(|v| !v.is_blank());
             match (it.next(), it.next()) {
-                (None, _) => Err(XlError::Value),
+                (None, _) => Err(XlError::VALUE),
                 (Some(v), None) => Ok((*v).clone()),
-                _ => Err(XlError::Num),
+                _ => Err(XlError::NUM),
             }
         }
         _ => {
@@ -214,7 +214,7 @@ fn aggregate(kind: DKind, vals: &[&Value]) -> R<Value> {
                 DKind::Sum => nums.iter().fold(0.0, |a, x| a + x),
                 DKind::Average => {
                     if nums.is_empty() {
-                        return Err(XlError::Div0);
+                        return Err(XlError::DIV0);
                     }
                     nums.iter().fold(0.0, |a, x| a + x) / nums.len() as f64
                 }
@@ -240,7 +240,7 @@ fn aggregate(kind: DKind, vals: &[&Value]) -> R<Value> {
 
 fn conditions(ctx: &mut EvalCtx, crit: &Area, db: &Area, headers: &[Value]) -> R<Vec<Vec<Cond>>> {
     let wb = ctx.wb;
-    let sh = wb.sheet(crit.sheet).ok_or(XlError::Ref)?;
+    let sh = wb.sheet(crit.sheet).ok_or(XlError::REF)?;
     let Some(used) = sh.bounded(&crit.rect) else {
         return Ok(vec![Vec::new()]);
     };
@@ -336,9 +336,9 @@ fn row_relative(c: &CRef) -> bool {
     }
 }
 
-fn targets_db(sheet: &SheetRef, host: CellAddr, db: &Area) -> bool {
+fn targets_db(sheet: &SheetRef, _host: CellAddr, db: &Area) -> bool {
     match sheet {
-        SheetRef::Current => host.sheet == db.sheet,
+        SheetRef::Current => true,
         SheetRef::Sheet(id) => *id == db.sheet,
         _ => false,
     }
@@ -411,7 +411,7 @@ fn rebase(node: &Node, host: CellAddr, db: &Area, k: i32) -> Node {
                             },
                         )
                     }
-                    None => Node::Lit(Value::Error(XlError::Ref)),
+                    None => Node::Lit(Value::Error(XlError::REF)),
                 },
             )
         }

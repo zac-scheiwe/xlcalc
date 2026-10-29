@@ -1,0 +1,40 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=SUM(B$2:C$3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=SUM($B2:$C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C12",
+"input": "=SUM(B$2:$C3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!C13",
+"input": "=SUM($B$2:C3)"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!C10:C13",
+"to": "Sheet1!H4",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!H4:K4"
+}
+]
+}

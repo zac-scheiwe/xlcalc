@@ -1,0 +1,1127 @@
+{
+"sheets": [
+"W",
+"N"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "W!A1",
+"value": {
+"t": "s",
+"v": "k"
+}
+},
+{
+"op": "setv",
+"cell": "W!B1",
+"value": {
+"t": "s",
+"v": "Qty."
+}
+},
+{
+"op": "setv",
+"cell": "W!C1",
+"value": {
+"t": "s",
+"v": "A.B"
+}
+},
+{
+"op": "setv",
+"cell": "W!D1",
+"value": {
+"t": "s",
+"v": "a,b"
+}
+},
+{
+"op": "setv",
+"cell": "W!E1",
+"value": {
+"t": "s",
+"v": "a:b"
+}
+},
+{
+"op": "setv",
+"cell": "W!F1",
+"value": {
+"t": "s",
+"v": "a$b"
+}
+},
+{
+"op": "setv",
+"cell": "W!G1",
+"value": {
+"t": "s",
+"v": "a+b"
+}
+},
+{
+"op": "setv",
+"cell": "W!H1",
+"value": {
+"t": "s",
+"v": "a-b"
+}
+},
+{
+"op": "setv",
+"cell": "W!I1",
+"value": {
+"t": "s",
+"v": "a/b"
+}
+},
+{
+"op": "setv",
+"cell": "W!J1",
+"value": {
+"t": "s",
+"v": "a=b"
+}
+},
+{
+"op": "setv",
+"cell": "W!K1",
+"value": {
+"t": "s",
+"v": "a&b"
+}
+},
+{
+"op": "setv",
+"cell": "W!L1",
+"value": {
+"t": "s",
+"v": "a*b"
+}
+},
+{
+"op": "setv",
+"cell": "W!M1",
+"value": {
+"t": "s",
+"v": "a^b"
+}
+},
+{
+"op": "setv",
+"cell": "W!N1",
+"value": {
+"t": "s",
+"v": "a<b"
+}
+},
+{
+"op": "setv",
+"cell": "W!O1",
+"value": {
+"t": "s",
+"v": "a>b"
+}
+},
+{
+"op": "setv",
+"cell": "W!P1",
+"value": {
+"t": "s",
+"v": "a(b)"
+}
+},
+{
+"op": "setv",
+"cell": "W!Q1",
+"value": {
+"t": "s",
+"v": "a!b"
+}
+},
+{
+"op": "setv",
+"cell": "W!R1",
+"value": {
+"t": "s",
+"v": "a%b"
+}
+},
+{
+"op": "setv",
+"cell": "W!S1",
+"value": {
+"t": "s",
+"v": "a?b"
+}
+},
+{
+"op": "setv",
+"cell": "W!T1",
+"value": {
+"t": "s",
+"v": "a;b"
+}
+},
+{
+"op": "setv",
+"cell": "W!U1",
+"value": {
+"t": "s",
+"v": "a~b"
+}
+},
+{
+"op": "setv",
+"cell": "W!V1",
+"value": {
+"t": "s",
+"v": "a|b"
+}
+},
+{
+"op": "setv",
+"cell": "W!W1",
+"value": {
+"t": "s",
+"v": "a b"
+}
+},
+{
+"op": "setv",
+"cell": "W!X1",
+"value": {
+"t": "s",
+"v": "1a"
+}
+},
+{
+"op": "setv",
+"cell": "W!Y1",
+"value": {
+"t": "s",
+"v": "a_b"
+}
+},
+{
+"op": "setv",
+"cell": "W!Z1",
+"value": {
+"t": "s",
+"v": "a#b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AA1",
+"value": {
+"t": "s",
+"v": "a'b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AB1",
+"value": {
+"t": "s",
+"v": "a\"b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AC1",
+"value": {
+"t": "s",
+"v": "a{b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AD1",
+"value": {
+"t": "s",
+"v": "a}b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AE1",
+"value": {
+"t": "s",
+"v": "a[b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AF1",
+"value": {
+"t": "s",
+"v": "a]b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AG1",
+"value": {
+"t": "s",
+"v": "_x"
+}
+},
+{
+"op": "setv",
+"cell": "W!AH1",
+"value": {
+"t": "s",
+"v": "\u00e9"
+}
+},
+{
+"op": "setv",
+"cell": "W!AI1",
+"value": {
+"t": "s",
+"v": "a\u00a3b"
+}
+},
+{
+"op": "setv",
+"cell": "W!AJ1",
+"value": {
+"t": "s",
+"v": "a\u00a0b"
+}
+},
+{
+"op": "setv",
+"cell": "W!A2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!C2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!D2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!F2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!G2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!H2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!I2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!J2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!K2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!L2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!M2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!N2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!O2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!P2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!Q2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!R2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!S2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!T2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!U2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!V2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!W2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!X2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!Y2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!Z2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AA2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AB2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AC2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AD2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AE2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AF2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AG2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AH2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AI2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "W!AJ2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "table",
+"name": "T",
+"range": "W!A1:AJ2"
+},
+{
+"op": "set",
+"cell": "N!A1",
+"input": "=T[[#This Row],[Qty.]]"
+},
+{
+"op": "set",
+"cell": "N!B1",
+"input": "=SUM(T[Qty.])"
+},
+{
+"op": "set",
+"cell": "N!C1",
+"input": "=SUM(T[[Qty.]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A2",
+"input": "=T[[#This Row],[A.B]]"
+},
+{
+"op": "set",
+"cell": "N!B2",
+"input": "=SUM(T[A.B])"
+},
+{
+"op": "set",
+"cell": "N!C2",
+"input": "=SUM(T[[A.B]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A3",
+"input": "=T[[#This Row],[a,b]]"
+},
+{
+"op": "set",
+"cell": "N!B3",
+"input": "=SUM(T[a,b])"
+},
+{
+"op": "set",
+"cell": "N!C3",
+"input": "=SUM(T[[a,b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A4",
+"input": "=T[[#This Row],[a:b]]"
+},
+{
+"op": "set",
+"cell": "N!B4",
+"input": "=SUM(T[a:b])"
+},
+{
+"op": "set",
+"cell": "N!C4",
+"input": "=SUM(T[[a:b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A5",
+"input": "=T[[#This Row],[a$b]]"
+},
+{
+"op": "set",
+"cell": "N!B5",
+"input": "=SUM(T[a$b])"
+},
+{
+"op": "set",
+"cell": "N!C5",
+"input": "=SUM(T[[a$b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A6",
+"input": "=T[[#This Row],[a+b]]"
+},
+{
+"op": "set",
+"cell": "N!B6",
+"input": "=SUM(T[a+b])"
+},
+{
+"op": "set",
+"cell": "N!C6",
+"input": "=SUM(T[[a+b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A7",
+"input": "=T[[#This Row],[a-b]]"
+},
+{
+"op": "set",
+"cell": "N!B7",
+"input": "=SUM(T[a-b])"
+},
+{
+"op": "set",
+"cell": "N!C7",
+"input": "=SUM(T[[a-b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A8",
+"input": "=T[[#This Row],[a/b]]"
+},
+{
+"op": "set",
+"cell": "N!B8",
+"input": "=SUM(T[a/b])"
+},
+{
+"op": "set",
+"cell": "N!C8",
+"input": "=SUM(T[[a/b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A9",
+"input": "=T[[#This Row],[a=b]]"
+},
+{
+"op": "set",
+"cell": "N!B9",
+"input": "=SUM(T[a=b])"
+},
+{
+"op": "set",
+"cell": "N!C9",
+"input": "=SUM(T[[a=b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A10",
+"input": "=T[[#This Row],[a&b]]"
+},
+{
+"op": "set",
+"cell": "N!B10",
+"input": "=SUM(T[a&b])"
+},
+{
+"op": "set",
+"cell": "N!C10",
+"input": "=SUM(T[[a&b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A11",
+"input": "=T[[#This Row],[a*b]]"
+},
+{
+"op": "set",
+"cell": "N!B11",
+"input": "=SUM(T[a*b])"
+},
+{
+"op": "set",
+"cell": "N!C11",
+"input": "=SUM(T[[a*b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A12",
+"input": "=T[[#This Row],[a^b]]"
+},
+{
+"op": "set",
+"cell": "N!B12",
+"input": "=SUM(T[a^b])"
+},
+{
+"op": "set",
+"cell": "N!C12",
+"input": "=SUM(T[[a^b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A13",
+"input": "=T[[#This Row],[a<b]]"
+},
+{
+"op": "set",
+"cell": "N!B13",
+"input": "=SUM(T[a<b])"
+},
+{
+"op": "set",
+"cell": "N!C13",
+"input": "=SUM(T[[a<b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A14",
+"input": "=T[[#This Row],[a>b]]"
+},
+{
+"op": "set",
+"cell": "N!B14",
+"input": "=SUM(T[a>b])"
+},
+{
+"op": "set",
+"cell": "N!C14",
+"input": "=SUM(T[[a>b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A15",
+"input": "=T[[#This Row],[a(b)]]"
+},
+{
+"op": "set",
+"cell": "N!B15",
+"input": "=SUM(T[a(b)])"
+},
+{
+"op": "set",
+"cell": "N!C15",
+"input": "=SUM(T[[a(b)]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A16",
+"input": "=T[[#This Row],[a!b]]"
+},
+{
+"op": "set",
+"cell": "N!B16",
+"input": "=SUM(T[a!b])"
+},
+{
+"op": "set",
+"cell": "N!C16",
+"input": "=SUM(T[[a!b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A17",
+"input": "=T[[#This Row],[a%b]]"
+},
+{
+"op": "set",
+"cell": "N!B17",
+"input": "=SUM(T[a%b])"
+},
+{
+"op": "set",
+"cell": "N!C17",
+"input": "=SUM(T[[a%b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A18",
+"input": "=T[[#This Row],[a?b]]"
+},
+{
+"op": "set",
+"cell": "N!B18",
+"input": "=SUM(T[a?b])"
+},
+{
+"op": "set",
+"cell": "N!C18",
+"input": "=SUM(T[[a?b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A19",
+"input": "=T[[#This Row],[a;b]]"
+},
+{
+"op": "set",
+"cell": "N!B19",
+"input": "=SUM(T[a;b])"
+},
+{
+"op": "set",
+"cell": "N!C19",
+"input": "=SUM(T[[a;b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A20",
+"input": "=T[[#This Row],[a~b]]"
+},
+{
+"op": "set",
+"cell": "N!B20",
+"input": "=SUM(T[a~b])"
+},
+{
+"op": "set",
+"cell": "N!C20",
+"input": "=SUM(T[[a~b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A21",
+"input": "=T[[#This Row],[a|b]]"
+},
+{
+"op": "set",
+"cell": "N!B21",
+"input": "=SUM(T[a|b])"
+},
+{
+"op": "set",
+"cell": "N!C21",
+"input": "=SUM(T[[a|b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A22",
+"input": "=T[[#This Row],[a b]]"
+},
+{
+"op": "set",
+"cell": "N!B22",
+"input": "=SUM(T[a b])"
+},
+{
+"op": "set",
+"cell": "N!C22",
+"input": "=SUM(T[[a b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A23",
+"input": "=T[[#This Row],[1a]]"
+},
+{
+"op": "set",
+"cell": "N!B23",
+"input": "=SUM(T[1a])"
+},
+{
+"op": "set",
+"cell": "N!C23",
+"input": "=SUM(T[[1a]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A24",
+"input": "=T[[#This Row],[a_b]]"
+},
+{
+"op": "set",
+"cell": "N!B24",
+"input": "=SUM(T[a_b])"
+},
+{
+"op": "set",
+"cell": "N!C24",
+"input": "=SUM(T[[a_b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A25",
+"input": "=T[[#This Row],[a'#b]]"
+},
+{
+"op": "set",
+"cell": "N!B25",
+"input": "=SUM(T[a'#b])"
+},
+{
+"op": "set",
+"cell": "N!C25",
+"input": "=SUM(T[[a'#b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A26",
+"input": "=T[[#This Row],[a''b]]"
+},
+{
+"op": "set",
+"cell": "N!B26",
+"input": "=SUM(T[a''b])"
+},
+{
+"op": "set",
+"cell": "N!C26",
+"input": "=SUM(T[[a''b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A27",
+"input": "=T[[#This Row],[a\"b]]"
+},
+{
+"op": "set",
+"cell": "N!B27",
+"input": "=SUM(T[a\"b])"
+},
+{
+"op": "set",
+"cell": "N!C27",
+"input": "=SUM(T[[a\"b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A28",
+"input": "=T[[#This Row],[a{b]]"
+},
+{
+"op": "set",
+"cell": "N!B28",
+"input": "=SUM(T[a{b])"
+},
+{
+"op": "set",
+"cell": "N!C28",
+"input": "=SUM(T[[a{b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A29",
+"input": "=T[[#This Row],[a}b]]"
+},
+{
+"op": "set",
+"cell": "N!B29",
+"input": "=SUM(T[a}b])"
+},
+{
+"op": "set",
+"cell": "N!C29",
+"input": "=SUM(T[[a}b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A30",
+"input": "=T[[#This Row],[a'[b]]"
+},
+{
+"op": "set",
+"cell": "N!B30",
+"input": "=SUM(T[a'[b])"
+},
+{
+"op": "set",
+"cell": "N!C30",
+"input": "=SUM(T[[a'[b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A31",
+"input": "=T[[#This Row],[a']b]]"
+},
+{
+"op": "set",
+"cell": "N!B31",
+"input": "=SUM(T[a']b])"
+},
+{
+"op": "set",
+"cell": "N!C31",
+"input": "=SUM(T[[a']b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A32",
+"input": "=T[[#This Row],[_x]]"
+},
+{
+"op": "set",
+"cell": "N!B32",
+"input": "=SUM(T[_x])"
+},
+{
+"op": "set",
+"cell": "N!C32",
+"input": "=SUM(T[[_x]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A33",
+"input": "=T[[#This Row],[\u00e9]]"
+},
+{
+"op": "set",
+"cell": "N!B33",
+"input": "=SUM(T[\u00e9])"
+},
+{
+"op": "set",
+"cell": "N!C33",
+"input": "=SUM(T[[\u00e9]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A34",
+"input": "=T[[#This Row],[a\u00a3b]]"
+},
+{
+"op": "set",
+"cell": "N!B34",
+"input": "=SUM(T[a\u00a3b])"
+},
+{
+"op": "set",
+"cell": "N!C34",
+"input": "=SUM(T[[a\u00a3b]:[k]])"
+},
+{
+"op": "set",
+"cell": "N!A35",
+"input": "=T[[#This Row],[a\u00a0b]]"
+},
+{
+"op": "set",
+"cell": "N!B35",
+"input": "=SUM(T[a\u00a0b])"
+},
+{
+"op": "set",
+"cell": "N!C35",
+"input": "=SUM(T[[a\u00a0b]:[k]])"
+},
+{
+"op": "set",
+"cell": "W!A3",
+"input": "=1"
+},
+{
+"op": "read",
+"range": "N!A1:C35"
+},
+{
+"op": "read",
+"range": "W!A1:A3"
+}
+]
+}

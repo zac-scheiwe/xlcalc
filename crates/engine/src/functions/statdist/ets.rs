@@ -112,10 +112,10 @@ fn int_arg(ctx: &EvalCtx, o: Option<&Operand>, optional: bool, lo: i64, hi: i64)
             return if optional { Ok(None) } else { Err(XlError::NA) };
         }
         Some(Operand::Val(v)) => ctx.to_number(v)?,
-        Some(Operand::Ref(_)) => return Err(XlError::Value),
+        Some(Operand::Ref(_)) => return Err(XlError::VALUE),
     };
     if v.fract() != 0.0 || !v.is_finite() || v < lo as f64 || v >= hi as f64 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     Ok(Some(v as i64))
 }
@@ -125,7 +125,7 @@ fn series(ctx: &mut EvalCtx, o: Option<&Operand>) -> R<Vec<Value>> {
         Some(Operand::Val(Value::Error(e))) => Err(*e),
         Some(op @ Operand::Val(Value::Array(_))) => flat_values(ctx, op),
         Some(op @ Operand::Ref(r)) if r.single().is_some() => flat_values(ctx, op),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -137,7 +137,7 @@ pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
             match &o[0] {
                 Operand::Val(v) => ctx.to_number(v)?,
                 Operand::Missing => 0.0,
-                Operand::Ref(_) => return Err(XlError::Value),
+                Operand::Ref(_) => return Err(XlError::VALUE),
             }
         } else {
             0.0
@@ -147,9 +147,9 @@ pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
         if vals
             .iter()
             .chain(&times)
-            .any(|v| matches!(v, Value::Error(XlError::Circ)))
+            .any(|v| matches!(v, Value::Error(XlError::CIRC)))
         {
-            return Err(XlError::Circ);
+            return Err(XlError::CIRC);
         }
         if vals.len() != times.len() {
             return Err(XlError::NA);
@@ -160,10 +160,10 @@ pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
             if let Some(Operand::Val(v)) = o.get(j) {
                 cl = ctx.to_number(v)?;
                 if !(0.0..1.0).contains(&cl) {
-                    return Err(XlError::Num);
+                    return Err(XlError::NUM);
                 }
             } else if let Some(Operand::Ref(_)) = o.get(j) {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             j += 1;
         }
@@ -200,7 +200,7 @@ pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
     })();
     Operand::Val(match r {
         Ok(x) if x.is_finite() => Value::num(x),
-        Ok(_) => Value::Error(XlError::Num),
+        Ok(_) => Value::Error(XlError::NUM),
         Err(e) => Value::Error(e),
     })
 }
@@ -226,7 +226,7 @@ fn copy_pairs(vals: &[Value], times: &[Value], zero_fill: bool, aggr: u8) -> R<V
         }
     }
     if out.len() < 2 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     out.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
     Ok(out)
@@ -258,7 +258,7 @@ fn detect_step(t: &[f64], sys: DateSystem) -> R<Step> {
     }
     if max == min || (dups != 0 && max == 0.0) {
         if max == 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let (months, days) = if dates {
             unique_months(max, (n - dups - 1) as i32)
@@ -329,7 +329,7 @@ fn detect_step(t: &[f64], sys: DateSystem) -> R<Step> {
             days,
         })
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 
@@ -761,7 +761,7 @@ fn correct(
         maxrun = 2;
     }
     if maxrun == 0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let (t0, tend) = (p[0].0, p[n - 1].0);
     let span = sub(tend, t0);
@@ -776,7 +776,7 @@ fn correct(
             }
         }
     }
-    let pi = pick.ok_or(XlError::Num)?;
+    let pi = pick.ok_or(XlError::NUM)?;
     let mut rows: Vec<(f64, f64)> = Vec::new();
     let mut missing = 0usize;
     let (grid, ins) = if pi == end {
@@ -814,13 +814,13 @@ fn correct(
             (gap, sub(prev, mul(gap as f64, step)))
         };
         let (ci, cd) = closest(p, j, g);
-        let ins;
-        if cd <= tol2 {
+
+        let ins = if cd <= tol2 {
             g = p[ci].0;
-            ins = g;
+            g
         } else {
-            ins = p[ci].0;
-        }
+            p[ci].0
+        };
         let (v, b) = aggregate(p, j, sub(g, tol), aggr, count_mode);
         if gap > 1 && months > 0 {
             let mut d = Dtr::from_serial(prev, sys);
@@ -855,10 +855,10 @@ fn correct(
     rows.reverse();
     let count = rows.len();
     if missing * 100 > 30 * count {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if count < 2 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     Ok(Corrected {
         times: rows.iter().map(|r| r.0).collect(),
@@ -910,14 +910,14 @@ fn complete(y0: &[f64], m: usize, seasonal: bool) -> Vec<f64> {
         return y;
     }
     let mut extra = mul((7 * m - 2 * n) as f64, 0.5).ceil() as usize;
-    let slope;
-    if n < m {
+
+    let slope = if n < m {
         let last = y[n - 1];
         y.resize(m, last);
         extra -= m - n;
-        slope = 0.0;
+        0.0
     } else if !seasonal {
-        slope = ols_slope(y0, None);
+        ols_slope(y0, None)
     } else {
         let mut s = 0.0;
         for i in 0..m {
@@ -928,8 +928,8 @@ fn complete(y0: &[f64], m: usize, seasonal: bool) -> Vec<f64> {
                 .collect();
             s = add(s, ols_slope(&sub_, None));
         }
-        slope = div(div(s, m as f64), m as f64);
-    }
+        div(div(s, m as f64), m as f64)
+    };
     for i in 0..extra {
         let j = (n + i) % m;
         let v = add(mul(sub((n + i) as f64, j as f64), slope), y[j]);
@@ -1015,9 +1015,9 @@ fn train(y0: &[f64], seasonality: usize) -> Model {
         let mut w = s.clone();
         let mut idx = m + 1;
         let thr = div(best, 0.1);
-        for r in 0..nn {
+        for (r, &yr) in y.iter().enumerate().take(nn) {
             let f = add(add(w[0], w[1]), w[idx]);
-            let e = sub(y[r], f);
+            let e = sub(yr, f);
             sse = add(mul(e, e), sse);
             if sse > thr {
                 break;
@@ -1221,7 +1221,7 @@ impl Forecaster {
         let (off, frac) = self.offset(target);
         let h = fix(off);
         if h <= -(self.count as i64) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let mut v = self.model.forecast(h);
         if frac {
@@ -1243,7 +1243,7 @@ impl Forecaster {
         let (off, frac) = self.offset(target);
         let h = fix(off);
         if h < 0 || (h == 0 && !frac) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let mut v = if h > 0 { self.model.variance(h) } else { 0.0 };
         if frac {

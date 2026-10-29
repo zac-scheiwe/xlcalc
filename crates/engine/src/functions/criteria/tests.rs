@@ -252,11 +252,11 @@ fn numeric_criteria_use_fifteen_digit_equality() {
 #[test]
 fn only_classic_error_literals_are_criteria() {
     let mut b = Book::new(&[
-        ("A1", E(XlError::Spill)),
+        ("A1", E(XlError::SPILL)),
         ("A2", N(1.0)),
-        ("A3", E(XlError::Calc)),
-        ("A4", E(XlError::Null)),
-        ("A5", E(XlError::Field)),
+        ("A3", E(XlError::CALC)),
+        ("A4", E(XlError::NULL)),
+        ("A5", E(XlError::FIELD)),
         ("B1", N(1.0)),
         ("B2", N(2.0)),
         ("B3", N(4.0)),
@@ -409,12 +409,12 @@ fn subtotal_skips_nested_subtotals() {
         ("=AGGREGATE(3,4,P!F1:G4)", 5.0),
     ]);
     b.check_err(&[
-        ("=SUBTOTAL(9,P!A1:A10)", XlError::Div0),
-        ("=AGGREGATE(9,4,P!A1:A10)", XlError::Div0),
-        ("=AGGREGATE(9,0,P!A1:A10)", XlError::Div0),
-        ("=AGGREGATE(14,0,P!A1:A10,1)", XlError::Div0),
-        ("=AGGREGATE(15,0,P!A1:A11,1)", XlError::Div0),
-        ("=AGGREGATE(15,0,P!G1:G3,1)", XlError::Num),
+        ("=SUBTOTAL(9,P!A1:A10)", XlError::DIV0),
+        ("=AGGREGATE(9,4,P!A1:A10)", XlError::DIV0),
+        ("=AGGREGATE(9,0,P!A1:A10)", XlError::DIV0),
+        ("=AGGREGATE(14,0,P!A1:A10,1)", XlError::DIV0),
+        ("=AGGREGATE(15,0,P!A1:A11,1)", XlError::DIV0),
+        ("=AGGREGATE(15,0,P!G1:G3,1)", XlError::NUM),
     ]);
 }
 
@@ -710,10 +710,10 @@ fn database_text_criteria_are_prefixes() {
     let sd = b.num("=STDEV(5,10,20)");
     b.check(&[("=DSTDEV(P!A1:D10,\"Qty\",P!F1:F2)", sd)]);
     b.check_err(&[
-        ("=DGET(P!A1:D10,\"Name\",P!F1:F2)", XlError::Num),
-        ("=DGET(P!A1:D10,\"Date\",P!G1:G2)", XlError::Value),
+        ("=DGET(P!A1:D10,\"Name\",P!F1:F2)", XlError::NUM),
+        ("=DGET(P!A1:D10,\"Date\",P!G1:G2)", XlError::VALUE),
         ("=DMAX(P!A1:D10,\"Date\",P!A1:A10)", XlError::NA),
-        ("=DSUM(P!A1:D10,\"Bit\",P!A1:A1)", XlError::Value),
+        ("=DSUM(P!A1:D10,\"Bit\",P!A1:A1)", XlError::VALUE),
     ]);
 }
 
@@ -776,18 +776,18 @@ fn database_headers_and_dget() {
         ("=DSUM(P!A1:G7,\"Bit\",P!A1:D2)", 1.0),
     ]);
     b.check_err(&[
-        ("=DSUM(P!A1:G7,10,P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,8,P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,-1,P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,\"10.0\",P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,\"1E1\",P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,P!F1,P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,P!H1,P!A1:A2)", XlError::Value),
-        ("=DSUM(P!A1:G7,\"Bit\",P!A1:B1)", XlError::Value),
-        ("=DGET(P!A1:G7,\"Date\",P!P1:P2)", XlError::Value),
-        ("=DGET(P!A1:G7,\"Name\",P!Q1:Q2)", XlError::Value),
-        ("=DGET(P!A1:G7,\"Name\",P!S1:S2)", XlError::Value),
-        ("=DGET(P!A1:G7,\"Date\",P!J1:J2)", XlError::Value),
+        ("=DSUM(P!A1:G7,10,P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,8,P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,-1,P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,\"10.0\",P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,\"1E1\",P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,P!F1,P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,P!H1,P!A1:A2)", XlError::VALUE),
+        ("=DSUM(P!A1:G7,\"Bit\",P!A1:B1)", XlError::VALUE),
+        ("=DGET(P!A1:G7,\"Date\",P!P1:P2)", XlError::VALUE),
+        ("=DGET(P!A1:G7,\"Name\",P!Q1:Q2)", XlError::VALUE),
+        ("=DGET(P!A1:G7,\"Name\",P!S1:S2)", XlError::VALUE),
+        ("=DGET(P!A1:G7,\"Date\",P!J1:J2)", XlError::VALUE),
     ]);
 }
 

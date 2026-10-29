@@ -1,0 +1,75 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "x"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "y"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "2"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B3",
+"name": "T_1"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:B3",
+"to": "Sheet1!A8"
+},
+{
+"op": "tables"
+},
+{
+"op": "copy",
+"from": "Sheet1!A8:B10",
+"to": "Sheet1!A15"
+},
+{
+"op": "tables"
+}
+]
+}

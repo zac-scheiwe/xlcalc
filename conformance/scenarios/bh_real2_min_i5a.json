@@ -1,0 +1,141 @@
+{
+"sheets": [
+"Jan",
+"Feb",
+"S"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A1",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B1",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A2",
+"value": {
+"t": "s",
+"v": "H"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A3",
+"value": {
+"t": "s",
+"v": "G"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B3",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "S!Z1",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "S!A1",
+"input": "=COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"),\"G\")"
+},
+{
+"op": "set",
+"cell": "S!A2",
+"input": "=SUM(COUNTIF(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"),\"G\"))"
+},
+{
+"op": "set",
+"cell": "S!A3",
+"input": "=AREAS(INDIRECT({\"Jan\",\"Feb\"}&\"!A1:A3\"))"
+},
+{
+"op": "read",
+"range": "S!A1:C4"
+},
+{
+"op": "set",
+"cell": "S!Z1",
+"input": "2"
+},
+{
+"op": "read",
+"range": "S!A1:C4"
+}
+]
+}

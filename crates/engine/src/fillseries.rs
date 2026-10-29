@@ -222,12 +222,10 @@ impl Workbook {
                 SeriesType::Growth if spec.stop.is_some() && !spec.trend => {
                     match self.growth_stop_count(first, spec.stop.unwrap_or(0.0), step) {
                         GrowthCount::Skip => Vec::new(),
-                        GrowthCount::Run => {
-                            self.series_line(&at, l, len, ty, spec, step, step_given)
-                        }
+                        GrowthCount::Run => self.series_line(&at, l, len, ty, spec, step),
                     }
                 }
-                _ => self.series_line(&at, l, len, ty, spec, step, step_given),
+                _ => self.series_line(&at, l, len, ty, spec, step),
             };
             let fmt = self.number_format(first).to_string();
             for (addr, v) in cells {
@@ -270,7 +268,6 @@ impl Workbook {
         GrowthCount::Run
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn series_line(
         &self,
         at: &dyn Fn(u32, u32) -> CellAddr,
@@ -279,7 +276,6 @@ impl Workbook {
         ty: SeriesType,
         spec: &SeriesSpec,
         step: f64,
-        _step_given: Option<f64>,
     ) -> Vec<(CellAddr, Value)> {
         let mut out = Vec::new();
         let growth = ty == SeriesType::Growth;

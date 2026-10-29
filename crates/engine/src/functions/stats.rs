@@ -102,7 +102,7 @@ fn countblank(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     match &ops[0] {
         Operand::Ref(r) => {
             let Some(area) = r.single() else {
-                return Operand::err(XlError::Value);
+                return Operand::err(XlError::VALUE);
             };
             let area = *area;
             let total = area.rect.cell_count() as f64;
@@ -115,7 +115,7 @@ fn countblank(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Operand::Val(Value::Number(total - filled))
         }
         Operand::Val(Value::Error(e)) => Operand::err(*e),
-        _ => Operand::err(XlError::Value),
+        _ => Operand::err(XlError::VALUE),
     }
 }
 
@@ -123,7 +123,7 @@ fn agg(
     ctx: &mut EvalCtx,
     ops: &[Operand],
     p: AggPolicy,
-    f: impl Fn(&mut Vec<f64>) -> R<f64>,
+    f: impl Fn(&mut [f64]) -> R<f64>,
 ) -> Operand {
     opval(
         collect_numbers(ctx, ops, p)
@@ -140,45 +140,48 @@ fn x87_mean(v: &[f64]) -> f64 {
     crate::x87::div(s, v.len() as f64)
 }
 
-fn average(v: &mut Vec<f64>) -> R<f64> {
+fn average(v: &mut [f64]) -> R<f64> {
     if v.is_empty() {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
 
     let acc = crate::functions::criteria::stats::snapped_sum(v);
     Ok(crate::x87::div(acc, v.len() as f64))
 }
 
-fn min(v: &mut Vec<f64>) -> R<f64> {
+fn min(v: &mut [f64]) -> R<f64> {
     Ok(v.iter()
         .copied()
         .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.min(x))))
         .unwrap_or(0.0))
 }
 
-fn max(v: &mut Vec<f64>) -> R<f64> {
+fn max(v: &mut [f64]) -> R<f64> {
     Ok(v.iter()
         .copied()
         .fold(None, |m: Option<f64>, x| Some(m.map_or(x, |m| m.max(x))))
         .unwrap_or(0.0))
 }
 
-fn median(v: &mut Vec<f64>) -> R<f64> {
+fn median(v: &mut [f64]) -> R<f64> {
     if v.is_empty() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     v.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let n = v.len();
     Ok(if n % 2 == 1 {
         v[n / 2]
     } else {
-        v[n / 2 - 1] + 0.5 * (v[n / 2] - v[n / 2 - 1])
+        crate::x87::add(
+            v[n / 2 - 1],
+            crate::x87::mul(crate::x87::sub(v[n / 2], v[n / 2 - 1]), 0.5),
+        )
     })
 }
 
-fn devsq(v: &mut Vec<f64>) -> R<f64> {
+fn devsq(v: &mut [f64]) -> R<f64> {
     if v.is_empty() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
 
     let m = x87_mean(v);
@@ -190,21 +193,21 @@ fn devsq(v: &mut Vec<f64>) -> R<f64> {
     Ok(acc)
 }
 
-fn var(v: &mut Vec<f64>, sample: bool) -> R<f64> {
+fn var(v: &mut [f64], sample: bool) -> R<f64> {
     let n = v.len() as f64;
     if n < 1.0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     crate::functions::criteria::stats::var(v, sample)
 }
 
-fn stdev(v: &mut Vec<f64>, sample: bool) -> R<f64> {
+fn stdev(v: &mut [f64], sample: bool) -> R<f64> {
     var(v, sample).map(crate::x87::sqrt)
 }
 
-fn avedev(v: &mut Vec<f64>) -> R<f64> {
+fn avedev(v: &mut [f64]) -> R<f64> {
     if v.is_empty() {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     let m = x87_mean(v);
     let mut acc = 0.0;
@@ -214,43 +217,47 @@ fn avedev(v: &mut Vec<f64>) -> R<f64> {
     Ok(crate::x87::div(acc, v.len() as f64))
 }
 
-fn geomean(v: &mut Vec<f64>) -> R<f64> {
+fn geomean(v: &mut [f64]) -> R<f64> {
     if v.is_empty() || v.iter().any(|&x| x <= 0.0) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
 
     let n = v.len() as i64;
+    if n == 1 {
+        return Ok(v[0]);
+    }
     let (mut m, mut e) = (1.0f64, 0i64);
     for &x in v.iter() {
         let (mx, ex) = frexp1(x);
         m = crate::x87::mul(m, mx);
-        e += ex;
-        if m > 1e300 {
-            let (mm, em) = frexp1(m);
-            m = mm;
-            e += em;
+        if !m.is_finite() {
+            return Err(XlError::NUM);
         }
+        e += ex;
     }
-
     let (mm, em) = frexp1(m);
-    m = mm;
     e += em;
     let r = e % n;
     let q = e / n;
-    if r.abs() > 1000 {
-        let p = 1.0 / n as f64;
-        return Ok(v.iter().map(|&x| crate::xmath::pow(x, p)).product());
-    }
-    let base = m * 2f64.powi(r as i32);
+    let with_field = |x: f64, add: i64| {
+        let bits = x.to_bits();
+        let f = (((bits >> 52) & 0x7ff) as i64 + add).rem_euclid(2048) as u64;
+        f64::from_bits((bits & !(0x7ffu64 << 52)) | (f << 52))
+    };
+    let base = with_field(mm, if r > 1000 { 1000 } else { r });
     let root = crate::x87::exp(crate::x87::mul(
         crate::x87::ln(base),
         crate::x87::div(1.0, n as f64),
     ));
-    let res = root * 2f64.powi(q.clamp(-2000, 2000) as i32);
+    let mut res = with_field(root, q);
+    if r > 1000 {
+        let t = crate::x87::mul(n as f64, f64::from_bits(0x3FF7_1547_652B_82FF));
+        res = crate::x87::mul(crate::x87::exp(crate::x87::div((r - 1000) as f64, t)), res);
+    }
     if res.is_finite() {
         Ok(res)
     } else {
-        Err(XlError::Num)
+        Err(XlError::NUM)
     }
 }
 
@@ -267,12 +274,12 @@ fn frexp1(x: f64) -> (f64, i64) {
     )
 }
 
-fn harmean(v: &mut Vec<f64>) -> R<f64> {
+fn harmean(v: &mut [f64]) -> R<f64> {
     if v.is_empty() {
         return Err(XlError::NA);
     }
     if v.iter().any(|&x| x <= 0.0) {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
 
     let mut sum = 0.0;
@@ -288,7 +295,7 @@ fn kth(ctx: &mut EvalCtx, ops: &[Operand], largest: bool) -> Operand {
             Ok(k) => k,
             Err(e) => return Operand::err(e),
         },
-        _ => return Operand::err(XlError::Num),
+        _ => return Operand::err(XlError::NUM),
     };
     let v = match collect_numbers(ctx, &ops[..1], SUM_POLICY) {
         Ok(v) => v,

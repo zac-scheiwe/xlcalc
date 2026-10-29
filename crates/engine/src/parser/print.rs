@@ -342,6 +342,19 @@ fn sheet_char_plain(c: char, first: bool) -> bool {
         return c.is_ascii_alphabetic() || c == '_' || (!first && (c.is_ascii_digit() || c == '.'));
     }
     !in_ranges(if first { QUOTED_LEAD } else { QUOTED_INNER }, c)
+        && (!first || super::namech::name_char(c, true))
+}
+
+pub fn bare_sheet_name_ok(name: &str) -> bool {
+    !name.is_empty()
+        && name.chars().all(bare_sheet_char)
+        && !name.eq_ignore_ascii_case("true")
+        && !name.eq_ignore_ascii_case("false")
+        && !super::starts_like_r1c1(name)
+}
+
+pub fn bare_sheet_char(c: char) -> bool {
+    sheet_char_plain(c, false)
 }
 
 pub fn sheet_name_text(name: &str) -> String {
@@ -349,7 +362,7 @@ pub fn sheet_name_text(name: &str) -> String {
         && name
             .chars()
             .enumerate()
-            .all(|(i, c)| sheet_char_plain(c, i == 0))
+            .all(|(i, c)| sheet_char_plain(c, i == 0) || (i > 0 && c == '?') || c == '\\')
         && crate::address::parse_a1_cell(name).is_none()
         && !looks_like_r1c1(name)
         && !name.eq_ignore_ascii_case("true")
@@ -362,15 +375,7 @@ pub fn sheet_name_text(name: &str) -> String {
 }
 
 fn looks_like_r1c1(name: &str) -> bool {
-    let up = name.to_ascii_uppercase();
-    let rest = match up.strip_prefix('R') {
-        Some(r) => r.trim_start_matches(|c: char| c.is_ascii_digit()),
-        None => &up,
-    };
-    match rest.strip_prefix('C') {
-        Some(r) => r.chars().all(|c| c.is_ascii_digit()),
-        None => rest.is_empty() && up.starts_with('R'),
-    }
+    super::reads_as_r1c1(name)
 }
 
 pub fn sheet_spec_text(spec: &SheetSpec) -> String {
@@ -525,7 +530,11 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
         }
         Expr::Binary { op, left, right } => {
             write_expr(s, left);
-            s.push_str(op.symbol());
+
+            let typed = matches!(&**left, Expr::Ws { after, .. } if !after.is_empty());
+            if !(*op == BinOp::Intersect && typed) {
+                s.push_str(op.symbol());
+            }
             write_expr(s, right);
         }
         Expr::Paren(x) => {

@@ -80,7 +80,7 @@ pub fn xl_gamma_prefactor(a: f64, x: f64) -> f64 {
 }
 
 fn xl_series_p(a: f64, x: f64) -> Option<f64> {
-    if a == 0.5 || a == 1.0 || !(a > 0.0 && a <= 30.0) || !(x <= 1.0) {
+    if a == 0.5 || a == 1.0 || !(a > 0.0 && a <= 30.0) || x > 1.0 || x.is_nan() {
         return None;
     }
     let (mut r, mut c, mut ans) = (a, 1.0, 1.0);
@@ -88,7 +88,7 @@ fn xl_series_p(a: f64, x: f64) -> Option<f64> {
         r += 1.0;
         c *= x / r;
         ans += c;
-        if !(c / ans > MACHEP) {
+        if (c / ans).partial_cmp(&MACHEP) != Some(std::cmp::Ordering::Greater) {
             break;
         }
     }
@@ -128,14 +128,6 @@ fn gamma_pq_raw(a: f64, x: f64, xl: bool) -> (f64, f64) {
         return (ONE.sub(q).hi(), q.hi());
     }
     (igam(a, x), igamc(a, x))
-}
-
-pub fn gamma_p_cr(a: f64, x: f64) -> f64 {
-    crate::number::flush_subnormal(gamma_pq_raw(a, x, false).0)
-}
-
-pub fn gamma_q_cr(a: f64, x: f64) -> f64 {
-    crate::number::flush_subnormal(gamma_pq_raw(a, x, false).1)
 }
 
 fn beta_cf(a: f64, b: f64, x: DD) -> Option<DD> {
@@ -205,7 +197,7 @@ pub fn beta_inc_xy(a: f64, b: f64, x: f64, y: f64) -> (f64, f64) {
 }
 
 fn beta_inc_dd(a: f64, b: f64, x: f64, xc_hint: f64) -> f64 {
-    if !(x > 0.0) {
+    if x <= 0.0 || x.is_nan() {
         return 0.0;
     }
     if x >= 1.0 {

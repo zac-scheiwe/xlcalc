@@ -1,5 +1,5 @@
 use super::args::*;
-use super::text::{left_right, mid, replace};
+use super::text::{left_right, map_case, mid, replace};
 use super::{args, scalar, FnDef};
 use crate::eval::{EvalCtx, Operand};
 use crate::number::format_general;
@@ -57,7 +57,7 @@ fn limited(s: String, max: usize, e: XlError) -> Value {
 fn text_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let v = match &a[0] {
         Value::Error(e) => return err(*e),
-        Value::Text(s) if utf16_len(s) > MAX_FORMATTED => return err(XlError::Value),
+        Value::Text(s) if utf16_len(s) > MAX_FORMATTED => return err(XlError::VALUE),
         Value::Text(s) => match ctx.to_number(&a[0]) {
             Ok(n) => Value::Number(n),
             Err(_) => Value::Text(s.clone()),
@@ -69,14 +69,14 @@ fn text_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         Value::Number(n) => format_general(*n),
         Value::Blank => String::new(),
         Value::Error(e) => return err(*e),
-        _ => return err(XlError::Value),
+        _ => return err(XlError::VALUE),
     };
     let f = match NumberFormat::parse(&code) {
         Ok(f) => f,
         Err(e) => return err(e),
     };
     match f.format(&v, &ctx.wb.locale, ctx.wb.settings.date_system) {
-        Ok(r) => limited(r.text, MAX_FORMATTED, XlError::Value),
+        Ok(r) => limited(r.text, MAX_FORMATTED, XlError::VALUE),
         Err(e) => err(e),
     }
 }
@@ -88,7 +88,7 @@ fn decimals_arg(ctx: &EvalCtx, a: &[Value], blank_default: f64) -> R<i32> {
         Some(v) => ifuzz(num(ctx, v)?),
     };
     if d > 127.0 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     Ok(d.max(-400.0) as i32)
 }
@@ -114,7 +114,7 @@ fn fixed(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         } else {
             body
         };
-        Ok(limited(s, MAX_FORMATTED, XlError::Value))
+        Ok(limited(s, MAX_FORMATTED, XlError::VALUE))
     })())
 }
 
@@ -131,7 +131,7 @@ fn dollar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         } else {
             format!("{}{body}", loc.currency)
         };
-        Ok(limited(s, MAX_FORMATTED, XlError::Value))
+        Ok(limited(s, MAX_FORMATTED, XlError::VALUE))
     })())
 }
 
@@ -143,7 +143,7 @@ fn strict_arg(ctx: &EvalCtx, v: Option<&Value>) -> R<bool> {
     match f as i64 {
         0 => Ok(false),
         1 => Ok(true),
-        _ => Err(XlError::Value),
+        _ => Err(XlError::VALUE),
     }
 }
 
@@ -164,7 +164,7 @@ fn value_text(v: &Value, strict: bool) -> String {
         Value::Bool(b) => if *b { "TRUE" } else { "FALSE" }.to_string(),
         Value::Error(e) => e.as_str().to_string(),
         Value::Blank => String::new(),
-        Value::Array(_) | Value::Lambda(_) => XlError::Value.as_str().to_string(),
+        Value::Array(_) | Value::Lambda(_) => XlError::VALUE.as_str().to_string(),
     }
 }
 
@@ -173,7 +173,7 @@ fn valuetotext(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         Ok(s) => s,
         Err(e) => return err(e),
     };
-    limited(value_text(&a[0], strict), MAX_TEXT_LEN, XlError::Calc)
+    limited(value_text(&a[0], strict), MAX_TEXT_LEN, XlError::CALC)
 }
 
 fn arraytotext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -183,7 +183,7 @@ fn arraytotext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Ok(s) => s,
             Err(e) => return Operand::err(e),
         },
-        Some(_) => return Operand::err(XlError::Value),
+        Some(_) => return Operand::err(XlError::VALUE),
     };
     let grid = match Grid::from_operand_3d(&ops[0]) {
         Ok(g) => g,
@@ -194,7 +194,7 @@ fn arraytotext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         match grid.get(ctx, 0, 0) {
             Value::Error(e) if !matches!(grid, Grid::Array(_)) => return Operand::err(e),
             Value::Blank if !matches!(grid, Grid::Scalar(_)) => {
-                return Operand::err(XlError::Value)
+                return Operand::err(XlError::VALUE)
             }
             _ => {}
         }
@@ -218,23 +218,19 @@ fn arraytotext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             out.push_str(&value_text(&v, strict));
         }
         if utf16_len(&out) > MAX_TEXT_LEN {
-            return Operand::err(XlError::Calc);
+            return Operand::err(XlError::CALC);
         }
     }
     if strict {
         out.push('}');
     }
-    Operand::Val(limited(out, MAX_TEXT_LEN, XlError::Calc))
+    Operand::Val(limited(out, MAX_TEXT_LEN, XlError::CALC))
 }
 
-fn fold(c: char) -> char {
-    let mut l = c.to_lowercase();
-    let first = l.next().unwrap_or(c);
-    if l.next().is_some() {
-        c
-    } else {
-        first
-    }
+fn lower_chars(t: &[char]) -> Vec<char> {
+    map_case(&t.iter().collect::<String>(), false)
+        .chars()
+        .collect()
 }
 
 fn scalar_like(op: &Operand) -> bool {
@@ -267,7 +263,7 @@ fn delimiters(ctx: &mut EvalCtx, op: &Operand, forbid_empty: bool) -> R<Vec<Vec<
             let v = grid.get(ctx, r, c);
             let t: Vec<char> = text(&v)?.chars().collect();
             if forbid_empty && t.is_empty() {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             out.push(t);
         }
@@ -283,14 +279,19 @@ struct Matcher {
 impl Matcher {
     fn new(delims: Vec<Vec<char>>, fold: bool) -> Matcher {
         let delims = if fold {
-            delims
-                .into_iter()
-                .map(|d| d.into_iter().map(self::fold).collect())
-                .collect()
+            delims.iter().map(|d| lower_chars(d)).collect()
         } else {
             delims
         };
         Matcher { delims, fold }
+    }
+
+    fn view(&self, t: &[char]) -> Vec<char> {
+        if self.fold {
+            lower_chars(t)
+        } else {
+            t.to_vec()
+        }
     }
 
     fn longest_at(&self, t: &[char], p: usize, end: usize) -> Option<usize> {
@@ -299,12 +300,7 @@ impl Matcher {
             if d.is_empty() || p + d.len() > end {
                 continue;
             }
-            let ok = if self.fold {
-                d.iter().zip(&t[p..]).all(|(a, b)| *a == fold(*b))
-            } else {
-                d[..] == t[p..p + d.len()]
-            };
-            if ok && best.is_none_or(|b| d.len() > b) {
+            if d[..] == t[p..p + d.len()] && best.is_none_or(|b| d.len() > b) {
                 best = Some(d.len());
             }
         }
@@ -316,7 +312,7 @@ fn flag_value(ctx: &EvalCtx, op: Option<&Operand>) -> R<Option<f64>> {
     match op {
         None | Some(Operand::Missing) => Ok(None),
         Some(Operand::Val(v)) => Ok(Some(num(ctx, v)?.floor())),
-        Some(_) => Err(XlError::Value),
+        Some(_) => Err(XlError::VALUE),
     }
 }
 
@@ -327,9 +323,9 @@ fn int_flag(ctx: &EvalCtx, op: Option<&Operand>) -> R<bool> {
 fn flag_bool(x: Option<f64>) -> R<bool> {
     match x {
         None => Ok(false),
-        Some(x) if x == 0.0 => Ok(false),
-        Some(x) if x == 1.0 => Ok(true),
-        Some(_) => Err(XlError::Value),
+        Some(0.0) => Ok(false),
+        Some(1.0) => Ok(true),
+        Some(_) => Err(XlError::VALUE),
     }
 }
 
@@ -347,7 +343,7 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
         let n = match ops.get(2) {
             None | Some(Operand::Missing) => 1.0,
             Some(Operand::Val(v)) => ffuzz(num(ctx, v)?),
-            Some(_) => return Err(XlError::Value),
+            Some(_) => return Err(XlError::VALUE),
         };
 
         let (fold, match_end) = (flag_value(ctx, ops.get(3))?, flag_value(ctx, ops.get(4))?);
@@ -355,14 +351,14 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
         let not_found = match ops.get(5) {
             None | Some(Operand::Missing) => None,
             Some(Operand::Val(v)) => Some(v.clone()),
-            Some(_) => return Err(XlError::Value),
+            Some(_) => return Err(XlError::VALUE),
         };
         let delims = match &ops[1] {
             Operand::Missing => vec![Vec::new()],
             op => delimiters(ctx, op, false)?,
         };
         if n == 0.0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let slice =
             |a: usize, b: usize| -> Value { Value::from(t[a..b].iter().collect::<String>()) };
@@ -378,17 +374,18 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
         let min_len = delims.iter().map(|d| u16len(d)).min().unwrap_or(0) as f64;
         let max_instance = u16len(&t) as f64 - min_len + 1.0;
         if explicit && n.abs() > max_instance {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let fits = max_instance >= 1.0;
         let m = Matcher::new(delims, fold);
+        let tv = m.view(&t);
         let want = n.abs() as usize;
         let mut count = 0usize;
         let mut found: Option<(usize, usize)> = None;
         if n > 0.0 {
             let mut p = 0;
             while p < len {
-                if let Some(l) = m.longest_at(&t, p, len) {
+                if let Some(l) = m.longest_at(&tv, p, len) {
                     count += 1;
                     if count == want {
                         found = Some((p, l));
@@ -404,7 +401,7 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
             let mut p = len;
             while p > 0 {
                 p -= 1;
-                if let Some(l) = m.longest_at(&t, p, end) {
+                if let Some(l) = m.longest_at(&tv, p, end) {
                     count += 1;
                     if count == want {
                         found = Some((p, l));
@@ -452,44 +449,45 @@ fn textsplit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let ignore_empty = match ops.get(3) {
             None | Some(Operand::Missing) => false,
             Some(Operand::Val(v)) => boolean(v)?,
-            Some(_) => return Err(XlError::Value),
+            Some(_) => return Err(XlError::VALUE),
         };
         let fold = int_flag(ctx, ops.get(4))?;
         let pad = match ops.get(5) {
             None => Value::Error(XlError::NA),
             Some(Operand::Missing) => Value::Blank,
-            Some(Operand::Ref(r)) if r.is_span() => Value::Error(XlError::Ref),
-            Some(Operand::Ref(r)) if r.single().is_none() => Value::Error(XlError::Value),
-            Some(Operand::Val(Value::Array(_))) => return Err(XlError::Value),
+            Some(Operand::Ref(r)) if r.is_span() => Value::Error(XlError::REF),
+            Some(Operand::Ref(r)) if r.single().is_none() => Value::Error(XlError::VALUE),
+            Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
             Some(op) => match Grid::from_operand(op)? {
                 g if g.rows() == 1 && g.cols() == 1 => g.get(ctx, 0, 0),
-                _ => return Err(XlError::Value),
+                _ => return Err(XlError::VALUE),
             },
         };
         let col = split_delims(ctx, ops.get(1));
         let row = split_delims(ctx, ops.get(2));
 
         if t.is_empty() && (col.is_err() || row.is_err()) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let (col, row) = (col?, row?);
         if col.is_none() && row.is_none() {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         if t.is_empty() {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let cm = Matcher::new(col.unwrap_or_default(), fold);
         let rm = Matcher::new(row.unwrap_or_default(), fold);
+        let tv = cm.view(&t);
         let len = t.len();
         let mut rows: Vec<Vec<String>> = vec![Vec::new()];
         let (mut start, mut p) = (0usize, 0usize);
         while p < len {
-            if let Some(l) = cm.longest_at(&t, p, len) {
+            if let Some(l) = cm.longest_at(&tv, p, len) {
                 rows.last_mut().unwrap().push(t[start..p].iter().collect());
                 p += l;
                 start = p;
-            } else if let Some(l) = rm.longest_at(&t, p, len) {
+            } else if let Some(l) = rm.longest_at(&tv, p, len) {
                 rows.last_mut().unwrap().push(t[start..p].iter().collect());
                 rows.push(Vec::new());
                 p += l;
@@ -507,7 +505,7 @@ fn textsplit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 .collect();
         }
         if rows.is_empty() {
-            return Err(XlError::Calc);
+            return Err(XlError::CALC);
         }
         let width = rows.iter().map(Vec::len).max().unwrap_or(1);
         let nrows = rows.len();
@@ -623,7 +621,7 @@ fn midb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let start = lfix(num(ctx, &a[1])?);
         let n = lfix(num(ctx, &a[2])?);
         if start < 1 || n < 0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         Ok(())
     })();
@@ -644,21 +642,26 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
             || start as usize > len + 1
             || (start as usize > len && (search || !needle.is_empty()))
         {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let start = start as usize - 1;
         if needle.is_empty() {
             return Ok(Value::Number(start as f64 + 1.0));
         }
-        let pos = if search {
-            Wildcard::new(&needle).find(&hay, start)
-        } else {
+        if search {
+            let unit_start: usize = hay.chars().take(start).map(char::len_utf16).sum();
+            let pos = Wildcard::new(&needle)
+                .find(&hay, unit_start)
+                .ok_or(XlError::VALUE)?;
+            return Ok(Value::Number(pos as f64 + 1.0));
+        }
+        let pos = {
             let byte_start = hay.char_indices().nth(start).map_or(hay.len(), |(i, _)| i);
             hay[byte_start..]
                 .find(&*needle)
                 .map(|b| start + hay[byte_start..byte_start + b].chars().count())
         };
-        let pos = pos.ok_or(XlError::Value)?;
+        let pos = pos.ok_or(XlError::VALUE)?;
         let units: usize = hay.chars().take(pos).map(char::len_utf16).sum();
         Ok(Value::Number(units as f64 + 1.0))
     })())

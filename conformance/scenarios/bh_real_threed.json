@@ -1,0 +1,685 @@
+{
+"sheets": [
+"Jan",
+"Feb",
+"Mar",
+"Summary"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Jan!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B1",
+"value": {
+"t": "s",
+"v": "Amt"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A2",
+"value": {
+"t": "s",
+"v": "Sales"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B2",
+"value": {
+"t": "n",
+"v": 1000.55
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A3",
+"value": {
+"t": "s",
+"v": "COGS"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B3",
+"value": {
+"t": "n",
+"v": -400
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A4",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B4",
+"value": {
+"t": "n",
+"v": -1500
+}
+},
+{
+"op": "setv",
+"cell": "Jan!A5",
+"value": {
+"t": "s",
+"v": "Misc"
+}
+},
+{
+"op": "setv",
+"cell": "Jan!B5",
+"value": {
+"t": "n",
+"v": -33.33
+}
+},
+{
+"op": "set",
+"cell": "Jan!B6",
+"input": "=SUM(B2:B5)"
+},
+{
+"op": "setv",
+"cell": "Feb!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B1",
+"value": {
+"t": "s",
+"v": "Amt"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A2",
+"value": {
+"t": "s",
+"v": "Sales"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B2",
+"value": {
+"t": "n",
+"v": 2000.55
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A3",
+"value": {
+"t": "s",
+"v": "COGS"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B3",
+"value": {
+"t": "n",
+"v": -800
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A4",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Feb!B4",
+"value": {
+"t": "n",
+"v": -1500
+}
+},
+{
+"op": "setv",
+"cell": "Feb!A5",
+"value": {
+"t": "s",
+"v": "Misc"
+}
+},
+{
+"op": "set",
+"cell": "Feb!B6",
+"input": "=SUM(B2:B5)"
+},
+{
+"op": "setv",
+"cell": "Mar!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B1",
+"value": {
+"t": "s",
+"v": "Amt"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A2",
+"value": {
+"t": "s",
+"v": "Sales"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B2",
+"value": {
+"t": "n",
+"v": 3000.55
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A3",
+"value": {
+"t": "s",
+"v": "COGS"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B3",
+"value": {
+"t": "n",
+"v": -1200
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A4",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B4",
+"value": {
+"t": "n",
+"v": -1500
+}
+},
+{
+"op": "setv",
+"cell": "Mar!A5",
+"value": {
+"t": "s",
+"v": "Misc"
+}
+},
+{
+"op": "setv",
+"cell": "Mar!B5",
+"value": {
+"t": "n",
+"v": -99.99
+}
+},
+{
+"op": "set",
+"cell": "Mar!B6",
+"input": "=SUM(B2:B5)"
+},
+{
+"op": "setv",
+"cell": "Summary!A1",
+"value": {
+"t": "s",
+"v": "Item"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!B1",
+"value": {
+"t": "s",
+"v": "Q1"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!C1",
+"value": {
+"t": "s",
+"v": "Share"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!D1",
+"value": {
+"t": "s",
+"v": "Check"
+}
+},
+{
+"op": "setv",
+"cell": "Summary!A2",
+"value": {
+"t": "s",
+"v": "Sales"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B2",
+"input": "=SUM(Jan:Mar!B2)"
+},
+{
+"op": "set",
+"cell": "Summary!C2",
+"input": "=B2/B$2"
+},
+{
+"op": "set",
+"cell": "Summary!D2",
+"input": "=SUMIF(Jan!A:A,A2,Jan!B:B)+SUMIF(Feb!A:A,A2,Feb!B:B)+SUMIF(Mar!A:A,A2,Mar!B:B)-B2"
+},
+{
+"op": "set",
+"cell": "Summary!E2",
+"input": "=INDIRECT(\"Feb!B\"&ROW())"
+},
+{
+"op": "set",
+"cell": "Summary!F2",
+"input": "=SUM(INDIRECT(\"Jan!B\"&ROW()&\":Mar!B\"&ROW()))"
+},
+{
+"op": "set",
+"cell": "Summary!G2",
+"input": "=VLOOKUP(A2,Mar!A:B,2,0)"
+},
+{
+"op": "set",
+"cell": "Summary!H2",
+"input": "=AVERAGE(Jan:Mar!B2)"
+},
+{
+"op": "set",
+"cell": "Summary!I2",
+"input": "=COUNT(Jan:Mar!B2)"
+},
+{
+"op": "set",
+"cell": "Summary!J2",
+"input": "=MAX(Jan:Mar!B2)-MIN(Jan:Mar!B2)"
+},
+{
+"op": "setv",
+"cell": "Summary!A3",
+"value": {
+"t": "s",
+"v": "COGS"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B3",
+"input": "=SUM(Jan:Mar!B3)"
+},
+{
+"op": "set",
+"cell": "Summary!C3",
+"input": "=B3/B$2"
+},
+{
+"op": "set",
+"cell": "Summary!D3",
+"input": "=SUMIF(Jan!A:A,A3,Jan!B:B)+SUMIF(Feb!A:A,A3,Feb!B:B)+SUMIF(Mar!A:A,A3,Mar!B:B)-B3"
+},
+{
+"op": "set",
+"cell": "Summary!E3",
+"input": "=INDIRECT(\"Feb!B\"&ROW())"
+},
+{
+"op": "set",
+"cell": "Summary!F3",
+"input": "=SUM(INDIRECT(\"Jan!B\"&ROW()&\":Mar!B\"&ROW()))"
+},
+{
+"op": "set",
+"cell": "Summary!G3",
+"input": "=VLOOKUP(A3,Mar!A:B,2,0)"
+},
+{
+"op": "set",
+"cell": "Summary!H3",
+"input": "=AVERAGE(Jan:Mar!B3)"
+},
+{
+"op": "set",
+"cell": "Summary!I3",
+"input": "=COUNT(Jan:Mar!B3)"
+},
+{
+"op": "set",
+"cell": "Summary!J3",
+"input": "=MAX(Jan:Mar!B3)-MIN(Jan:Mar!B3)"
+},
+{
+"op": "setv",
+"cell": "Summary!A4",
+"value": {
+"t": "s",
+"v": "Rent"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B4",
+"input": "=SUM(Jan:Mar!B4)"
+},
+{
+"op": "set",
+"cell": "Summary!C4",
+"input": "=B4/B$2"
+},
+{
+"op": "set",
+"cell": "Summary!D4",
+"input": "=SUMIF(Jan!A:A,A4,Jan!B:B)+SUMIF(Feb!A:A,A4,Feb!B:B)+SUMIF(Mar!A:A,A4,Mar!B:B)-B4"
+},
+{
+"op": "set",
+"cell": "Summary!E4",
+"input": "=INDIRECT(\"Feb!B\"&ROW())"
+},
+{
+"op": "set",
+"cell": "Summary!F4",
+"input": "=SUM(INDIRECT(\"Jan!B\"&ROW()&\":Mar!B\"&ROW()))"
+},
+{
+"op": "set",
+"cell": "Summary!G4",
+"input": "=VLOOKUP(A4,Mar!A:B,2,0)"
+},
+{
+"op": "set",
+"cell": "Summary!H4",
+"input": "=AVERAGE(Jan:Mar!B4)"
+},
+{
+"op": "set",
+"cell": "Summary!I4",
+"input": "=COUNT(Jan:Mar!B4)"
+},
+{
+"op": "set",
+"cell": "Summary!J4",
+"input": "=MAX(Jan:Mar!B4)-MIN(Jan:Mar!B4)"
+},
+{
+"op": "setv",
+"cell": "Summary!A5",
+"value": {
+"t": "s",
+"v": "Misc"
+}
+},
+{
+"op": "set",
+"cell": "Summary!B5",
+"input": "=SUM(Jan:Mar!B5)"
+},
+{
+"op": "set",
+"cell": "Summary!C5",
+"input": "=B5/B$2"
+},
+{
+"op": "set",
+"cell": "Summary!D5",
+"input": "=SUMIF(Jan!A:A,A5,Jan!B:B)+SUMIF(Feb!A:A,A5,Feb!B:B)+SUMIF(Mar!A:A,A5,Mar!B:B)-B5"
+},
+{
+"op": "set",
+"cell": "Summary!E5",
+"input": "=INDIRECT(\"Feb!B\"&ROW())"
+},
+{
+"op": "set",
+"cell": "Summary!F5",
+"input": "=SUM(INDIRECT(\"Jan!B\"&ROW()&\":Mar!B\"&ROW()))"
+},
+{
+"op": "set",
+"cell": "Summary!G5",
+"input": "=VLOOKUP(A5,Mar!A:B,2,0)"
+},
+{
+"op": "set",
+"cell": "Summary!H5",
+"input": "=AVERAGE(Jan:Mar!B5)"
+},
+{
+"op": "set",
+"cell": "Summary!I5",
+"input": "=COUNT(Jan:Mar!B5)"
+},
+{
+"op": "set",
+"cell": "Summary!J5",
+"input": "=MAX(Jan:Mar!B5)-MIN(Jan:Mar!B5)"
+},
+{
+"op": "set",
+"cell": "Summary!B6",
+"input": "=SUM(Jan:Mar!B6)"
+},
+{
+"op": "set",
+"cell": "Summary!B7",
+"input": "=SUM(B2:B5)-B6"
+},
+{
+"op": "set",
+"cell": "Summary!B8",
+"input": "=B6/B2"
+},
+{
+"op": "set",
+"cell": "Summary!B9",
+"input": "=TEXT(B8,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "Summary!B10",
+"input": "=-B2^2"
+},
+{
+"op": "set",
+"cell": "Summary!B11",
+"input": "=2^-1"
+},
+{
+"op": "set",
+"cell": "Summary!B12",
+"input": "=-2^2^2"
+},
+{
+"op": "set",
+"cell": "Summary!B13",
+"input": "=10%*5%"
+},
+{
+"op": "set",
+"cell": "Summary!B14",
+"input": "=5%^2"
+},
+{
+"op": "set",
+"cell": "Summary!B15",
+"input": "=50%+\"5%\""
+},
+{
+"op": "set",
+"cell": "Summary!B16",
+"input": "=ROW(Jan:Mar!B3)"
+},
+{
+"op": "set",
+"cell": "Summary!B17",
+"input": "=ROWS(Jan:Mar!A1:B3)"
+},
+{
+"op": "set",
+"cell": "Summary!B18",
+"input": "=SUMPRODUCT(Jan!B2:B5,Feb!B2:B5)"
+},
+{
+"op": "set",
+"cell": "Summary!B19",
+"input": "=SUM(Jan!B2:B5*Feb!B2:B5)"
+},
+{
+"op": "set",
+"cell": "Summary!B20",
+"input": "=OFFSET(Jan!B2,1,0,2,1)"
+},
+{
+"op": "set",
+"cell": "Summary!B22",
+"input": "=SUM(OFFSET(Jan!B1,1,0,4,1))"
+},
+{
+"op": "set",
+"cell": "Summary!B23",
+"input": "=COLUMNS(Jan:Mar!A1:B3)"
+},
+{
+"op": "set",
+"cell": "Summary!B24",
+"input": "=INDEX(Jan:Mar!B2:B5,2)"
+},
+{
+"op": "set",
+"cell": "Summary!B25",
+"input": "=CHOOSE(2,Jan!B2,Feb!B2,Mar!B2)+0"
+},
+{
+"op": "set",
+"cell": "Summary!B26",
+"input": "=SUM(CHOOSE({1,2,3},Jan!B2,Feb!B2,Mar!B2))"
+},
+{
+"op": "set",
+"cell": "Summary!B27",
+"input": "=SHEETS(Jan:Mar!A1)"
+},
+{
+"op": "set",
+"cell": "Summary!B28",
+"input": "=SHEET(Feb!A1)"
+},
+{
+"op": "set",
+"cell": "Summary!B29",
+"input": "=CELL(\"address\",Feb!B3)"
+},
+{
+"op": "set",
+"cell": "Summary!B30",
+"input": "=ISREF(Jan:Mar!B2)"
+},
+{
+"op": "set",
+"cell": "Summary!B31",
+"input": "=AREAS((Jan!B2,Feb!B2))"
+},
+{
+"op": "set",
+"cell": "Summary!B32",
+"input": "=SUM((Jan!B2,Feb!B2))"
+},
+{
+"op": "set",
+"cell": "Summary!B33",
+"input": "=SUM(Jan!B2:B3 Jan!B3:B4)"
+},
+{
+"op": "set",
+"cell": "Summary!B34",
+"input": "=Jan!B2:B5 Jan!A3:B3"
+},
+{
+"op": "set",
+"cell": "Summary!B35",
+"input": "=@Jan!B2:B5"
+},
+{
+"op": "set",
+"cell": "Summary!B36",
+"input": "=SUMIF(Jan!A2:A5,\"*s*\",Jan!B2:B5)"
+},
+{
+"op": "read",
+"range": "Summary!A1:J36"
+},
+{
+"op": "rename_sheet",
+"sheet": "Feb",
+"name": "Feb 26"
+},
+{
+"op": "read",
+"range": "Summary!A1:J12"
+},
+{
+"op": "insert_rows",
+"sheet": "Jan",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Summary!A1:J12"
+},
+{
+"op": "delete_sheet",
+"sheet": "Mar"
+},
+{
+"op": "read",
+"range": "Summary!A1:J12"
+},
+{
+"op": "sheets"
+}
+]
+}

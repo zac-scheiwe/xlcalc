@@ -211,7 +211,7 @@ fn typed_value(t: &J) -> Value {
         "n" => Value::Number(num_of(t)),
         "s" => Value::from(t["v"].as_str().unwrap()),
         "b" => Value::Bool(t["v"].as_bool().unwrap()),
-        "e" => Value::Error(XlError::parse(t["v"].as_str().unwrap()).unwrap_or(XlError::Value)),
+        "e" => Value::Error(XlError::parse(t["v"].as_str().unwrap()).unwrap_or(XlError::VALUE)),
         _ => Value::Blank,
     }
 }

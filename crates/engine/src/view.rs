@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::address::{CellAddr, Rect, SheetId, MAX_ROWS};
 use crate::calc::{self, RecalcReport};
 use crate::eval::EvalCtx;
-use crate::functions::criteria::crit::{Criterion, Flavor};
+use crate::functions::criteria::crit::{Criterion, Flavor, Pattern};
 use crate::value::Value;
 use crate::workbook::{EditError, Workbook};
 
@@ -339,6 +339,10 @@ impl Workbook {
         }
     }
 
+    fn cell_is_date(&self, addr: CellAddr) -> bool {
+        crate::numfmt::NumberFormat::parse(self.number_format(addr)).is_ok_and(|f| f.is_date())
+    }
+
     fn field_pass(
         &self,
         sheet: SheetId,
@@ -409,11 +413,92 @@ impl Workbook {
                     .collect(),
             );
         }
+        if op == Some("dynamic") {
+            let code: u32 = cc.c1.as_deref().and_then(|s| s.trim().parse().ok())?;
+            let nums: Vec<f64> = vals
+                .iter()
+                .filter_map(|v| {
+                    if let Value::Number(x) = v {
+                        Some(*x)
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            return match code {
+                33 | 34 => {
+                    let mean = nums.iter().sum::<f64>() / nums.len().max(1) as f64;
+                    Some(
+                        vals.iter()
+                            .map(|v| match v {
+                                Value::Number(x) => {
+                                    (code == 33 && *x > mean) || (code == 34 && *x < mean)
+                                }
+                                _ => false,
+                            })
+                            .collect(),
+                    )
+                }
+                17..=32 => {
+                    let sys = self.settings.date_system;
+                    Some(
+                        vals.iter()
+                            .enumerate()
+                            .map(|(i, v)| match v {
+                                Value::Number(x)
+                                    if *x >= 0.0
+                                        && self.cell_is_date(CellAddr::new(
+                                            sheet,
+                                            rect.r0 + 1 + i as u32,
+                                            col,
+                                        )) =>
+                                {
+                                    let (_, m, _) =
+                                        crate::datetime::ymd_from_serial(sys, x.floor() as i64);
+                                    if code <= 20 {
+                                        (m - 1) / 3 + 17 == code
+                                    } else {
+                                        m + 20 == code
+                                    }
+                                }
+                                _ => false,
+                            })
+                            .collect(),
+                    )
+                }
+                _ => None,
+            };
+        }
         let host = CellAddr::new(sheet, rect.r0, rect.c0);
         let ctx = EvalCtx::new(self, host);
-        let crit = |s: &str, v: &Value| -> bool {
-            match Criterion::parse(&ctx, &Value::from(s), Flavor::Ifs) {
-                Ok(c) => c.matches(&ctx, v),
+
+        let trim = |s: &str| s.trim_matches(' ').to_string();
+        let crit = |s: &str, v: &Value, r: u32| -> bool {
+            let (op, rest) = ["<=", ">=", "<>", "<", ">", "="]
+                .iter()
+                .find_map(|p| s.strip_prefix(p).map(|r| (*p, r)))
+                .unwrap_or(("=", s.trim_matches(' ')));
+            let shown = trim(&self.display_text(CellAddr::new(sheet, r, col)));
+            let blank_rest = rest.trim_matches(' ').is_empty();
+            if matches!(op, "=" | "<>") && blank_rest {
+                return (v.is_blank() || shown.is_empty()) == (op == "=");
+            }
+
+            if op == "=" && !Pattern::has_wildcards(rest) {
+                let literal = ctx.to_number(&Value::from(rest)).is_ok()
+                    || rest.eq_ignore_ascii_case("TRUE")
+                    || rest.eq_ignore_ascii_case("FALSE")
+                    || rest.starts_with('#');
+                if literal || !matches!(v, Value::Text(_)) {
+                    return crate::text::eq_ci(&shown, rest);
+                }
+            }
+            let v = match v {
+                Value::Text(_) => Value::from(shown.as_str()),
+                v => v.clone(),
+            };
+            match Criterion::parse(&ctx, &Value::from(format!("{op}{rest}")), Flavor::Ifs) {
+                Ok(c) => c.matches(&ctx, &v),
                 Err(_) => false,
             }
         };
@@ -422,21 +507,22 @@ impl Workbook {
             if op == Some("values") {
                 let list = cc.c1.as_deref().unwrap_or("");
                 return list.split(VALUES_SEP).any(|item| {
+                    let item = item.trim_matches(' ');
                     if item.is_empty() || item == "=" {
-                        return matches!(v, Value::Blank)
-                            || matches!(v, Value::Text(t) if t.is_empty());
+                        return v.is_blank()
+                            || trim(&self.display_text(CellAddr::new(sheet, r, col))).is_empty();
                     }
                     if item.starts_with(['=', '<', '>']) || item.contains(['*', '?']) {
-                        return crit(item, v);
+                        return crit(item, v, r);
                     }
-                    let shown = self.display_text(CellAddr::new(sheet, r, col));
-                    shown.to_lowercase() == item.to_lowercase()
+                    let shown = trim(&self.display_text(CellAddr::new(sheet, r, col)));
+                    crate::text::eq_ci(&shown, item)
                 });
             }
-            let a = cc.c1.as_deref().is_none_or(|c| crit(c, v));
+            let a = cc.c1.as_deref().is_none_or(|c| crit(c, v, r));
             match (op, &cc.c2) {
-                (Some("or"), Some(c2)) => a || crit(c2, v),
-                (Some("and"), Some(c2)) => a && crit(c2, v),
+                (Some("or"), Some(c2)) => a || crit(c2, v, r),
+                (Some("and"), Some(c2)) => a && crit(c2, v, r),
                 _ => a,
             }
         };
@@ -557,17 +643,19 @@ impl Workbook {
         Ok(self.view_settle())
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub fn autofilter(
         &mut self,
         sheet: SheetId,
         range: Rect,
         table: Option<&str>,
-        field: u32,
-        c1: Option<&str>,
-        op: Option<&str>,
-        c2: Option<&str>,
+        spec: FilterSpec<'_>,
     ) -> Result<RecalcReport, EditError> {
+        let FilterSpec {
+            field,
+            criteria1: c1,
+            operator: op,
+            criteria2: c2,
+        } = spec;
         let bad = || EditError::Compile("AutoFilter method of Range class failed".into());
         if self.sheet(sheet).is_none() {
             return Err(EditError::NoSuchSheet);
@@ -575,7 +663,14 @@ impl Workbook {
         if let Some(op) = op {
             if !matches!(
                 op,
-                "and" | "or" | "top10" | "bottom10" | "top10pct" | "bottom10pct" | "values"
+                "and"
+                    | "or"
+                    | "top10"
+                    | "bottom10"
+                    | "top10pct"
+                    | "bottom10pct"
+                    | "values"
+                    | "dynamic"
             ) {
                 return Err(bad());
             }
@@ -886,7 +981,7 @@ impl Workbook {
                 let nb = if e <= b {
                     b - count
                 } else if at <= b {
-                    at.saturating_sub(1).max(0)
+                    at.saturating_sub(1)
                 } else {
                     b
                 };
@@ -977,4 +1072,15 @@ impl Workbook {
         self.view_mut(sheet).filters.remove(i);
         self.rows_visibility_changed(sheet, &changed);
     }
+}
+
+#[derive(Clone, Copy, Debug, Default)]
+pub struct FilterSpec<'a> {
+    pub field: u32,
+
+    pub criteria1: Option<&'a str>,
+
+    pub operator: Option<&'a str>,
+
+    pub criteria2: Option<&'a str>,
 }

@@ -1,0 +1,89 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=D1+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=$E1+E$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=D2*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=$E2+E$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=D3+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=$E3+E$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=D4*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=$E4+E$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=D5+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=$E5+E$1"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "=D6*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=$E6+E$1"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E5:F6",
+"to": "Sheet1!A5:F6",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F6"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E1:F6",
+"to": "Sheet1!A1:F6",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F6"
+}
+]
+}

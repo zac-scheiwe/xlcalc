@@ -1,0 +1,594 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Principal"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "n",
+"v": 250000
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "n",
+"v": 0.0649
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "s",
+"v": "Years"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": 25
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "s",
+"v": "Monthly"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=-PMT(B2/12,B3*12,B1)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "s",
+"v": "Total int"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "=B4*B3*12-B1"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "s",
+"v": "N"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "s",
+"v": "Pmt"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C7",
+"value": {
+"t": "s",
+"v": "Int"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D7",
+"value": {
+"t": "s",
+"v": "Princ"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E7",
+"value": {
+"t": "s",
+"v": "Bal"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F7",
+"value": {
+"t": "s",
+"v": "CumInt"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A8",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B8",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=B1*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=B8-C8"
+},
+{
+"op": "set",
+"cell": "Sheet1!E8",
+"input": "=$B$1-D8"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=SUM(C$8:C8)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A9",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B9",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=E8*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=B9-C9"
+},
+{
+"op": "set",
+"cell": "Sheet1!E9",
+"input": "=E8-D9"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=SUM(C$8:C9)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A10",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B10",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C10",
+"input": "=E9*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D10",
+"input": "=B10-C10"
+},
+{
+"op": "set",
+"cell": "Sheet1!E10",
+"input": "=E9-D10"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=SUM(C$8:C10)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A11",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B11",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C11",
+"input": "=E10*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D11",
+"input": "=B11-C11"
+},
+{
+"op": "set",
+"cell": "Sheet1!E11",
+"input": "=E10-D11"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=SUM(C$8:C11)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A12",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B12",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C12",
+"input": "=E11*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D12",
+"input": "=B12-C12"
+},
+{
+"op": "set",
+"cell": "Sheet1!E12",
+"input": "=E11-D12"
+},
+{
+"op": "set",
+"cell": "Sheet1!F12",
+"input": "=SUM(C$8:C12)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A13",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B13",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C13",
+"input": "=E12*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D13",
+"input": "=B13-C13"
+},
+{
+"op": "set",
+"cell": "Sheet1!E13",
+"input": "=E12-D13"
+},
+{
+"op": "set",
+"cell": "Sheet1!F13",
+"input": "=SUM(C$8:C13)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A14",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B14",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C14",
+"input": "=E13*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D14",
+"input": "=B14-C14"
+},
+{
+"op": "set",
+"cell": "Sheet1!E14",
+"input": "=E13-D14"
+},
+{
+"op": "set",
+"cell": "Sheet1!F14",
+"input": "=SUM(C$8:C14)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A15",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B15",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C15",
+"input": "=E14*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D15",
+"input": "=B15-C15"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=E14-D15"
+},
+{
+"op": "set",
+"cell": "Sheet1!F15",
+"input": "=SUM(C$8:C15)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A16",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B16",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C16",
+"input": "=E15*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D16",
+"input": "=B16-C16"
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=E15-D16"
+},
+{
+"op": "set",
+"cell": "Sheet1!F16",
+"input": "=SUM(C$8:C16)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A17",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B17",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C17",
+"input": "=E16*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D17",
+"input": "=B17-C17"
+},
+{
+"op": "set",
+"cell": "Sheet1!E17",
+"input": "=E16-D17"
+},
+{
+"op": "set",
+"cell": "Sheet1!F17",
+"input": "=SUM(C$8:C17)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A18",
+"value": {
+"t": "n",
+"v": 11
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B18",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C18",
+"input": "=E17*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D18",
+"input": "=B18-C18"
+},
+{
+"op": "set",
+"cell": "Sheet1!E18",
+"input": "=E17-D18"
+},
+{
+"op": "set",
+"cell": "Sheet1!F18",
+"input": "=SUM(C$8:C18)"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A19",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B19",
+"input": "=$B$4"
+},
+{
+"op": "set",
+"cell": "Sheet1!C19",
+"input": "=E18*$B$2/12"
+},
+{
+"op": "set",
+"cell": "Sheet1!D19",
+"input": "=B19-C19"
+},
+{
+"op": "set",
+"cell": "Sheet1!E19",
+"input": "=E18-D19"
+},
+{
+"op": "set",
+"cell": "Sheet1!F19",
+"input": "=SUM(C$8:C19)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=IPMT(B2/12,5,B3*12,B1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=PPMT(B2/12,5,B3*12,B1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=CUMIPMT(B2/12,B3*12,B1,1,12,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=CUMPRINC(B2/12,B3*12,B1,1,12,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=NPER(B2/12,-B4,B1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=RATE(B3*12,-B4,B1)*12"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=FV(B2/12,12,-B4,B1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=ROUND(B4,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=TEXT(B4,\"$#,##0.00\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H10",
+"input": "=E19-ROUND(E19,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H11",
+"input": "=EFFECT(B2,12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H12",
+"input": "=NOMINAL(H11,12)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H13",
+"input": "=ISPMT(B2/12,1,B3*12,B1)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H19"
+}
+]
+}

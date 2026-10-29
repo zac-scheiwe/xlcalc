@@ -33,14 +33,14 @@ pub fn interpret(s: &str, env: &ParseEnv) -> Entered {
     if let Some(e) = XlError::parse(s).filter(|e| {
         matches!(
             *e,
-            XlError::Null
-                | XlError::Div0
-                | XlError::Value
-                | XlError::Ref
-                | XlError::Name
-                | XlError::Num
+            XlError::NULL
+                | XlError::DIV0
+                | XlError::VALUE
+                | XlError::REF
+                | XlError::NAME
+                | XlError::NUM
                 | XlError::NA
-                | XlError::GettingData
+                | XlError::GETTING_DATA
         )
     }) {
         return Entered::Value(Value::Error(e));

@@ -1,0 +1,3060 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A6",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A7",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A9",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A10",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A11",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "pear"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "s",
+"v": "Apple"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "s",
+"v": "fig"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "s",
+"v": "apple"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "s",
+"v": "Cherry"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "s",
+"v": "date"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "s",
+"v": "banana"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B9",
+"value": {
+"t": "s",
+"v": "Fig"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B10",
+"value": {
+"t": "s",
+"v": "~x*"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B11",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C2",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C3",
+"value": {
+"t": "n",
+"v": 70
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C4",
+"value": {
+"t": "n",
+"v": 80
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C5",
+"value": {
+"t": "n",
+"v": 90
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C6",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D2",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D4",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D7",
+"value": {
+"t": "n",
+"v": 70
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A15",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B15",
+"input": "=IFERROR(MATCH(A15,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C15",
+"input": "=IFERROR(MATCH(A15,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D15",
+"input": "=IFERROR(MATCH(A15,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E15",
+"input": "=IFERROR(MATCH(A15,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F15",
+"input": "=IFERROR(MATCH(A15,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G15",
+"input": "=IFERROR(MATCH(A15,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H15",
+"input": "=IFERROR(XMATCH(A15,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I15",
+"input": "=IFERROR(XMATCH(A15,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J15",
+"input": "=IFERROR(XMATCH(A15,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K15",
+"input": "=IFERROR(XMATCH(A15,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L15",
+"input": "=IFERROR(XMATCH(A15,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M15",
+"input": "=IFERROR(XMATCH(A15,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N15",
+"input": "=IFERROR(XMATCH(A15,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O15",
+"input": "=IFERROR(VLOOKUP(A15,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P15",
+"input": "=IFERROR(LOOKUP(A15,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q15",
+"input": "=IFERROR(LOOKUP(A15,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R15",
+"input": "=IFERROR(HLOOKUP(A15,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S15",
+"input": "=COUNTIF($A$1:$B$11,A15)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T15",
+"input": "=IFERROR(XLOOKUP(A15,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U15",
+"input": "=IFERROR(XLOOKUP(A15,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V15",
+"input": "=IFERROR(XLOOKUP(A15,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W15",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A15,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X15",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A15,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y15",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A15,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z15",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A15,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A16",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B16",
+"input": "=IFERROR(MATCH(A16,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C16",
+"input": "=IFERROR(MATCH(A16,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D16",
+"input": "=IFERROR(MATCH(A16,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E16",
+"input": "=IFERROR(MATCH(A16,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F16",
+"input": "=IFERROR(MATCH(A16,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G16",
+"input": "=IFERROR(MATCH(A16,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H16",
+"input": "=IFERROR(XMATCH(A16,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I16",
+"input": "=IFERROR(XMATCH(A16,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J16",
+"input": "=IFERROR(XMATCH(A16,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K16",
+"input": "=IFERROR(XMATCH(A16,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L16",
+"input": "=IFERROR(XMATCH(A16,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M16",
+"input": "=IFERROR(XMATCH(A16,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N16",
+"input": "=IFERROR(XMATCH(A16,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O16",
+"input": "=IFERROR(VLOOKUP(A16,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P16",
+"input": "=IFERROR(LOOKUP(A16,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q16",
+"input": "=IFERROR(LOOKUP(A16,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R16",
+"input": "=IFERROR(HLOOKUP(A16,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S16",
+"input": "=COUNTIF($A$1:$B$11,A16)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T16",
+"input": "=IFERROR(XLOOKUP(A16,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U16",
+"input": "=IFERROR(XLOOKUP(A16,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V16",
+"input": "=IFERROR(XLOOKUP(A16,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W16",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A16,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X16",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A16,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y16",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A16,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z16",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A16,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A17",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B17",
+"input": "=IFERROR(MATCH(A17,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C17",
+"input": "=IFERROR(MATCH(A17,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D17",
+"input": "=IFERROR(MATCH(A17,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E17",
+"input": "=IFERROR(MATCH(A17,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F17",
+"input": "=IFERROR(MATCH(A17,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G17",
+"input": "=IFERROR(MATCH(A17,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H17",
+"input": "=IFERROR(XMATCH(A17,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I17",
+"input": "=IFERROR(XMATCH(A17,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J17",
+"input": "=IFERROR(XMATCH(A17,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K17",
+"input": "=IFERROR(XMATCH(A17,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L17",
+"input": "=IFERROR(XMATCH(A17,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M17",
+"input": "=IFERROR(XMATCH(A17,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N17",
+"input": "=IFERROR(XMATCH(A17,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O17",
+"input": "=IFERROR(VLOOKUP(A17,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P17",
+"input": "=IFERROR(LOOKUP(A17,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q17",
+"input": "=IFERROR(LOOKUP(A17,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R17",
+"input": "=IFERROR(HLOOKUP(A17,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S17",
+"input": "=COUNTIF($A$1:$B$11,A17)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T17",
+"input": "=IFERROR(XLOOKUP(A17,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U17",
+"input": "=IFERROR(XLOOKUP(A17,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V17",
+"input": "=IFERROR(XLOOKUP(A17,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W17",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A17,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X17",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A17,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y17",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A17,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z17",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A17,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A18",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B18",
+"input": "=IFERROR(MATCH(A18,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C18",
+"input": "=IFERROR(MATCH(A18,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D18",
+"input": "=IFERROR(MATCH(A18,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E18",
+"input": "=IFERROR(MATCH(A18,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F18",
+"input": "=IFERROR(MATCH(A18,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G18",
+"input": "=IFERROR(MATCH(A18,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H18",
+"input": "=IFERROR(XMATCH(A18,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I18",
+"input": "=IFERROR(XMATCH(A18,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J18",
+"input": "=IFERROR(XMATCH(A18,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K18",
+"input": "=IFERROR(XMATCH(A18,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L18",
+"input": "=IFERROR(XMATCH(A18,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M18",
+"input": "=IFERROR(XMATCH(A18,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N18",
+"input": "=IFERROR(XMATCH(A18,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O18",
+"input": "=IFERROR(VLOOKUP(A18,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P18",
+"input": "=IFERROR(LOOKUP(A18,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q18",
+"input": "=IFERROR(LOOKUP(A18,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R18",
+"input": "=IFERROR(HLOOKUP(A18,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S18",
+"input": "=COUNTIF($A$1:$B$11,A18)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T18",
+"input": "=IFERROR(XLOOKUP(A18,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U18",
+"input": "=IFERROR(XLOOKUP(A18,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V18",
+"input": "=IFERROR(XLOOKUP(A18,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W18",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A18,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X18",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A18,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y18",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A18,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z18",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A18,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A19",
+"value": {
+"t": "n",
+"v": 100
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B19",
+"input": "=IFERROR(MATCH(A19,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C19",
+"input": "=IFERROR(MATCH(A19,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D19",
+"input": "=IFERROR(MATCH(A19,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E19",
+"input": "=IFERROR(MATCH(A19,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F19",
+"input": "=IFERROR(MATCH(A19,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G19",
+"input": "=IFERROR(MATCH(A19,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H19",
+"input": "=IFERROR(XMATCH(A19,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I19",
+"input": "=IFERROR(XMATCH(A19,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J19",
+"input": "=IFERROR(XMATCH(A19,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K19",
+"input": "=IFERROR(XMATCH(A19,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L19",
+"input": "=IFERROR(XMATCH(A19,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M19",
+"input": "=IFERROR(XMATCH(A19,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N19",
+"input": "=IFERROR(XMATCH(A19,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O19",
+"input": "=IFERROR(VLOOKUP(A19,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P19",
+"input": "=IFERROR(LOOKUP(A19,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q19",
+"input": "=IFERROR(LOOKUP(A19,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R19",
+"input": "=IFERROR(HLOOKUP(A19,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S19",
+"input": "=COUNTIF($A$1:$B$11,A19)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T19",
+"input": "=IFERROR(XLOOKUP(A19,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U19",
+"input": "=IFERROR(XLOOKUP(A19,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V19",
+"input": "=IFERROR(XLOOKUP(A19,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W19",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A19,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X19",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A19,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y19",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A19,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z19",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A19,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A20",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B20",
+"input": "=IFERROR(MATCH(A20,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C20",
+"input": "=IFERROR(MATCH(A20,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D20",
+"input": "=IFERROR(MATCH(A20,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E20",
+"input": "=IFERROR(MATCH(A20,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F20",
+"input": "=IFERROR(MATCH(A20,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G20",
+"input": "=IFERROR(MATCH(A20,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H20",
+"input": "=IFERROR(XMATCH(A20,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I20",
+"input": "=IFERROR(XMATCH(A20,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J20",
+"input": "=IFERROR(XMATCH(A20,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K20",
+"input": "=IFERROR(XMATCH(A20,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L20",
+"input": "=IFERROR(XMATCH(A20,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M20",
+"input": "=IFERROR(XMATCH(A20,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N20",
+"input": "=IFERROR(XMATCH(A20,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O20",
+"input": "=IFERROR(VLOOKUP(A20,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P20",
+"input": "=IFERROR(LOOKUP(A20,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q20",
+"input": "=IFERROR(LOOKUP(A20,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R20",
+"input": "=IFERROR(HLOOKUP(A20,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S20",
+"input": "=COUNTIF($A$1:$B$11,A20)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T20",
+"input": "=IFERROR(XLOOKUP(A20,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U20",
+"input": "=IFERROR(XLOOKUP(A20,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V20",
+"input": "=IFERROR(XLOOKUP(A20,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W20",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A20,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X20",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A20,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y20",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A20,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z20",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A20,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A21",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B21",
+"input": "=IFERROR(MATCH(A21,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C21",
+"input": "=IFERROR(MATCH(A21,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D21",
+"input": "=IFERROR(MATCH(A21,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E21",
+"input": "=IFERROR(MATCH(A21,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F21",
+"input": "=IFERROR(MATCH(A21,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G21",
+"input": "=IFERROR(MATCH(A21,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H21",
+"input": "=IFERROR(XMATCH(A21,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I21",
+"input": "=IFERROR(XMATCH(A21,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J21",
+"input": "=IFERROR(XMATCH(A21,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K21",
+"input": "=IFERROR(XMATCH(A21,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L21",
+"input": "=IFERROR(XMATCH(A21,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M21",
+"input": "=IFERROR(XMATCH(A21,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N21",
+"input": "=IFERROR(XMATCH(A21,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O21",
+"input": "=IFERROR(VLOOKUP(A21,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P21",
+"input": "=IFERROR(LOOKUP(A21,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q21",
+"input": "=IFERROR(LOOKUP(A21,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R21",
+"input": "=IFERROR(HLOOKUP(A21,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S21",
+"input": "=COUNTIF($A$1:$B$11,A21)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T21",
+"input": "=IFERROR(XLOOKUP(A21,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U21",
+"input": "=IFERROR(XLOOKUP(A21,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V21",
+"input": "=IFERROR(XLOOKUP(A21,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W21",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A21,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X21",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A21,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y21",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A21,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z21",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A21,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A22",
+"value": {
+"t": "s",
+"v": "*"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B22",
+"input": "=IFERROR(MATCH(A22,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C22",
+"input": "=IFERROR(MATCH(A22,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D22",
+"input": "=IFERROR(MATCH(A22,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E22",
+"input": "=IFERROR(MATCH(A22,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F22",
+"input": "=IFERROR(MATCH(A22,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G22",
+"input": "=IFERROR(MATCH(A22,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H22",
+"input": "=IFERROR(XMATCH(A22,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I22",
+"input": "=IFERROR(XMATCH(A22,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J22",
+"input": "=IFERROR(XMATCH(A22,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K22",
+"input": "=IFERROR(XMATCH(A22,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L22",
+"input": "=IFERROR(XMATCH(A22,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M22",
+"input": "=IFERROR(XMATCH(A22,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N22",
+"input": "=IFERROR(XMATCH(A22,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O22",
+"input": "=IFERROR(VLOOKUP(A22,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P22",
+"input": "=IFERROR(LOOKUP(A22,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q22",
+"input": "=IFERROR(LOOKUP(A22,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R22",
+"input": "=IFERROR(HLOOKUP(A22,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S22",
+"input": "=COUNTIF($A$1:$B$11,A22)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T22",
+"input": "=IFERROR(XLOOKUP(A22,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U22",
+"input": "=IFERROR(XLOOKUP(A22,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V22",
+"input": "=IFERROR(XLOOKUP(A22,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W22",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A22,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X22",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A22,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y22",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A22,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z22",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A22,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A23",
+"value": {
+"t": "s",
+"v": "p*"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B23",
+"input": "=IFERROR(MATCH(A23,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C23",
+"input": "=IFERROR(MATCH(A23,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D23",
+"input": "=IFERROR(MATCH(A23,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E23",
+"input": "=IFERROR(MATCH(A23,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F23",
+"input": "=IFERROR(MATCH(A23,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G23",
+"input": "=IFERROR(MATCH(A23,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H23",
+"input": "=IFERROR(XMATCH(A23,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I23",
+"input": "=IFERROR(XMATCH(A23,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J23",
+"input": "=IFERROR(XMATCH(A23,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K23",
+"input": "=IFERROR(XMATCH(A23,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L23",
+"input": "=IFERROR(XMATCH(A23,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M23",
+"input": "=IFERROR(XMATCH(A23,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N23",
+"input": "=IFERROR(XMATCH(A23,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O23",
+"input": "=IFERROR(VLOOKUP(A23,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P23",
+"input": "=IFERROR(LOOKUP(A23,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q23",
+"input": "=IFERROR(LOOKUP(A23,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R23",
+"input": "=IFERROR(HLOOKUP(A23,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S23",
+"input": "=COUNTIF($A$1:$B$11,A23)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T23",
+"input": "=IFERROR(XLOOKUP(A23,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U23",
+"input": "=IFERROR(XLOOKUP(A23,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V23",
+"input": "=IFERROR(XLOOKUP(A23,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W23",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A23,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X23",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A23,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y23",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A23,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z23",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A23,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A24",
+"value": {
+"t": "s",
+"v": "?ig"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B24",
+"input": "=IFERROR(MATCH(A24,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C24",
+"input": "=IFERROR(MATCH(A24,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D24",
+"input": "=IFERROR(MATCH(A24,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E24",
+"input": "=IFERROR(MATCH(A24,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F24",
+"input": "=IFERROR(MATCH(A24,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G24",
+"input": "=IFERROR(MATCH(A24,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H24",
+"input": "=IFERROR(XMATCH(A24,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I24",
+"input": "=IFERROR(XMATCH(A24,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J24",
+"input": "=IFERROR(XMATCH(A24,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K24",
+"input": "=IFERROR(XMATCH(A24,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L24",
+"input": "=IFERROR(XMATCH(A24,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M24",
+"input": "=IFERROR(XMATCH(A24,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N24",
+"input": "=IFERROR(XMATCH(A24,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O24",
+"input": "=IFERROR(VLOOKUP(A24,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P24",
+"input": "=IFERROR(LOOKUP(A24,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q24",
+"input": "=IFERROR(LOOKUP(A24,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R24",
+"input": "=IFERROR(HLOOKUP(A24,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S24",
+"input": "=COUNTIF($A$1:$B$11,A24)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T24",
+"input": "=IFERROR(XLOOKUP(A24,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U24",
+"input": "=IFERROR(XLOOKUP(A24,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V24",
+"input": "=IFERROR(XLOOKUP(A24,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W24",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A24,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X24",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A24,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y24",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A24,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z24",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A24,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A25",
+"value": {
+"t": "s",
+"v": "~*"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B25",
+"input": "=IFERROR(MATCH(A25,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C25",
+"input": "=IFERROR(MATCH(A25,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D25",
+"input": "=IFERROR(MATCH(A25,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E25",
+"input": "=IFERROR(MATCH(A25,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F25",
+"input": "=IFERROR(MATCH(A25,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G25",
+"input": "=IFERROR(MATCH(A25,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H25",
+"input": "=IFERROR(XMATCH(A25,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I25",
+"input": "=IFERROR(XMATCH(A25,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J25",
+"input": "=IFERROR(XMATCH(A25,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K25",
+"input": "=IFERROR(XMATCH(A25,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L25",
+"input": "=IFERROR(XMATCH(A25,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M25",
+"input": "=IFERROR(XMATCH(A25,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N25",
+"input": "=IFERROR(XMATCH(A25,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O25",
+"input": "=IFERROR(VLOOKUP(A25,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P25",
+"input": "=IFERROR(LOOKUP(A25,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q25",
+"input": "=IFERROR(LOOKUP(A25,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R25",
+"input": "=IFERROR(HLOOKUP(A25,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S25",
+"input": "=COUNTIF($A$1:$B$11,A25)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T25",
+"input": "=IFERROR(XLOOKUP(A25,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U25",
+"input": "=IFERROR(XLOOKUP(A25,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V25",
+"input": "=IFERROR(XLOOKUP(A25,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W25",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A25,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X25",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A25,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y25",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A25,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z25",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A25,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A26",
+"value": {
+"t": "s",
+"v": "apple"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B26",
+"input": "=IFERROR(MATCH(A26,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C26",
+"input": "=IFERROR(MATCH(A26,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D26",
+"input": "=IFERROR(MATCH(A26,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E26",
+"input": "=IFERROR(MATCH(A26,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F26",
+"input": "=IFERROR(MATCH(A26,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G26",
+"input": "=IFERROR(MATCH(A26,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H26",
+"input": "=IFERROR(XMATCH(A26,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I26",
+"input": "=IFERROR(XMATCH(A26,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J26",
+"input": "=IFERROR(XMATCH(A26,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K26",
+"input": "=IFERROR(XMATCH(A26,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L26",
+"input": "=IFERROR(XMATCH(A26,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M26",
+"input": "=IFERROR(XMATCH(A26,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N26",
+"input": "=IFERROR(XMATCH(A26,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O26",
+"input": "=IFERROR(VLOOKUP(A26,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P26",
+"input": "=IFERROR(LOOKUP(A26,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q26",
+"input": "=IFERROR(LOOKUP(A26,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R26",
+"input": "=IFERROR(HLOOKUP(A26,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S26",
+"input": "=COUNTIF($A$1:$B$11,A26)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T26",
+"input": "=IFERROR(XLOOKUP(A26,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U26",
+"input": "=IFERROR(XLOOKUP(A26,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V26",
+"input": "=IFERROR(XLOOKUP(A26,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W26",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A26,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X26",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A26,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y26",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A26,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z26",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A26,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A27",
+"value": {
+"t": "s",
+"v": "FIG"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B27",
+"input": "=IFERROR(MATCH(A27,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C27",
+"input": "=IFERROR(MATCH(A27,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D27",
+"input": "=IFERROR(MATCH(A27,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E27",
+"input": "=IFERROR(MATCH(A27,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F27",
+"input": "=IFERROR(MATCH(A27,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G27",
+"input": "=IFERROR(MATCH(A27,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H27",
+"input": "=IFERROR(XMATCH(A27,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I27",
+"input": "=IFERROR(XMATCH(A27,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J27",
+"input": "=IFERROR(XMATCH(A27,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K27",
+"input": "=IFERROR(XMATCH(A27,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L27",
+"input": "=IFERROR(XMATCH(A27,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M27",
+"input": "=IFERROR(XMATCH(A27,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N27",
+"input": "=IFERROR(XMATCH(A27,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O27",
+"input": "=IFERROR(VLOOKUP(A27,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P27",
+"input": "=IFERROR(LOOKUP(A27,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q27",
+"input": "=IFERROR(LOOKUP(A27,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R27",
+"input": "=IFERROR(HLOOKUP(A27,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S27",
+"input": "=COUNTIF($A$1:$B$11,A27)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T27",
+"input": "=IFERROR(XLOOKUP(A27,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U27",
+"input": "=IFERROR(XLOOKUP(A27,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V27",
+"input": "=IFERROR(XLOOKUP(A27,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W27",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A27,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X27",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A27,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y27",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A27,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z27",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A27,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A28",
+"value": {
+"t": "s",
+"v": "zzz"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B28",
+"input": "=IFERROR(MATCH(A28,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C28",
+"input": "=IFERROR(MATCH(A28,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D28",
+"input": "=IFERROR(MATCH(A28,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E28",
+"input": "=IFERROR(MATCH(A28,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F28",
+"input": "=IFERROR(MATCH(A28,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G28",
+"input": "=IFERROR(MATCH(A28,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H28",
+"input": "=IFERROR(XMATCH(A28,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I28",
+"input": "=IFERROR(XMATCH(A28,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J28",
+"input": "=IFERROR(XMATCH(A28,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K28",
+"input": "=IFERROR(XMATCH(A28,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L28",
+"input": "=IFERROR(XMATCH(A28,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M28",
+"input": "=IFERROR(XMATCH(A28,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N28",
+"input": "=IFERROR(XMATCH(A28,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O28",
+"input": "=IFERROR(VLOOKUP(A28,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P28",
+"input": "=IFERROR(LOOKUP(A28,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q28",
+"input": "=IFERROR(LOOKUP(A28,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R28",
+"input": "=IFERROR(HLOOKUP(A28,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S28",
+"input": "=COUNTIF($A$1:$B$11,A28)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T28",
+"input": "=IFERROR(XLOOKUP(A28,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U28",
+"input": "=IFERROR(XLOOKUP(A28,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V28",
+"input": "=IFERROR(XLOOKUP(A28,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W28",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A28,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X28",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A28,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y28",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A28,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z28",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A28,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!B29",
+"input": "=IFERROR(MATCH(A29,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C29",
+"input": "=IFERROR(MATCH(A29,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D29",
+"input": "=IFERROR(MATCH(A29,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E29",
+"input": "=IFERROR(MATCH(A29,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F29",
+"input": "=IFERROR(MATCH(A29,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G29",
+"input": "=IFERROR(MATCH(A29,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H29",
+"input": "=IFERROR(XMATCH(A29,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I29",
+"input": "=IFERROR(XMATCH(A29,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J29",
+"input": "=IFERROR(XMATCH(A29,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K29",
+"input": "=IFERROR(XMATCH(A29,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L29",
+"input": "=IFERROR(XMATCH(A29,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M29",
+"input": "=IFERROR(XMATCH(A29,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N29",
+"input": "=IFERROR(XMATCH(A29,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O29",
+"input": "=IFERROR(VLOOKUP(A29,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P29",
+"input": "=IFERROR(LOOKUP(A29,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q29",
+"input": "=IFERROR(LOOKUP(A29,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R29",
+"input": "=IFERROR(HLOOKUP(A29,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S29",
+"input": "=COUNTIF($A$1:$B$11,A29)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T29",
+"input": "=IFERROR(XLOOKUP(A29,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U29",
+"input": "=IFERROR(XLOOKUP(A29,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V29",
+"input": "=IFERROR(XLOOKUP(A29,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W29",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A29,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X29",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A29,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y29",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A29,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z29",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A29,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A30",
+"value": {
+"t": "s",
+"v": ""
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B30",
+"input": "=IFERROR(MATCH(A30,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C30",
+"input": "=IFERROR(MATCH(A30,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D30",
+"input": "=IFERROR(MATCH(A30,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E30",
+"input": "=IFERROR(MATCH(A30,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F30",
+"input": "=IFERROR(MATCH(A30,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G30",
+"input": "=IFERROR(MATCH(A30,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H30",
+"input": "=IFERROR(XMATCH(A30,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I30",
+"input": "=IFERROR(XMATCH(A30,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J30",
+"input": "=IFERROR(XMATCH(A30,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K30",
+"input": "=IFERROR(XMATCH(A30,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L30",
+"input": "=IFERROR(XMATCH(A30,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M30",
+"input": "=IFERROR(XMATCH(A30,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N30",
+"input": "=IFERROR(XMATCH(A30,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O30",
+"input": "=IFERROR(VLOOKUP(A30,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P30",
+"input": "=IFERROR(LOOKUP(A30,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q30",
+"input": "=IFERROR(LOOKUP(A30,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R30",
+"input": "=IFERROR(HLOOKUP(A30,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S30",
+"input": "=COUNTIF($A$1:$B$11,A30)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T30",
+"input": "=IFERROR(XLOOKUP(A30,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U30",
+"input": "=IFERROR(XLOOKUP(A30,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V30",
+"input": "=IFERROR(XLOOKUP(A30,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W30",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A30,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X30",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A30,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y30",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A30,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z30",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A30,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A31",
+"value": {
+"t": "n",
+"v": -1
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B31",
+"input": "=IFERROR(MATCH(A31,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C31",
+"input": "=IFERROR(MATCH(A31,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D31",
+"input": "=IFERROR(MATCH(A31,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E31",
+"input": "=IFERROR(MATCH(A31,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F31",
+"input": "=IFERROR(MATCH(A31,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G31",
+"input": "=IFERROR(MATCH(A31,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H31",
+"input": "=IFERROR(XMATCH(A31,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I31",
+"input": "=IFERROR(XMATCH(A31,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J31",
+"input": "=IFERROR(XMATCH(A31,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K31",
+"input": "=IFERROR(XMATCH(A31,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L31",
+"input": "=IFERROR(XMATCH(A31,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M31",
+"input": "=IFERROR(XMATCH(A31,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N31",
+"input": "=IFERROR(XMATCH(A31,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O31",
+"input": "=IFERROR(VLOOKUP(A31,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P31",
+"input": "=IFERROR(LOOKUP(A31,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q31",
+"input": "=IFERROR(LOOKUP(A31,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R31",
+"input": "=IFERROR(HLOOKUP(A31,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S31",
+"input": "=COUNTIF($A$1:$B$11,A31)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T31",
+"input": "=IFERROR(XLOOKUP(A31,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U31",
+"input": "=IFERROR(XLOOKUP(A31,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V31",
+"input": "=IFERROR(XLOOKUP(A31,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W31",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A31,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X31",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A31,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y31",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A31,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z31",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A31,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A32",
+"value": {
+"t": "s",
+"v": "7"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B32",
+"input": "=IFERROR(MATCH(A32,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C32",
+"input": "=IFERROR(MATCH(A32,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D32",
+"input": "=IFERROR(MATCH(A32,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E32",
+"input": "=IFERROR(MATCH(A32,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F32",
+"input": "=IFERROR(MATCH(A32,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G32",
+"input": "=IFERROR(MATCH(A32,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H32",
+"input": "=IFERROR(XMATCH(A32,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I32",
+"input": "=IFERROR(XMATCH(A32,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J32",
+"input": "=IFERROR(XMATCH(A32,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K32",
+"input": "=IFERROR(XMATCH(A32,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L32",
+"input": "=IFERROR(XMATCH(A32,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M32",
+"input": "=IFERROR(XMATCH(A32,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N32",
+"input": "=IFERROR(XMATCH(A32,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O32",
+"input": "=IFERROR(VLOOKUP(A32,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P32",
+"input": "=IFERROR(LOOKUP(A32,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q32",
+"input": "=IFERROR(LOOKUP(A32,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R32",
+"input": "=IFERROR(HLOOKUP(A32,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S32",
+"input": "=COUNTIF($A$1:$B$11,A32)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T32",
+"input": "=IFERROR(XLOOKUP(A32,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U32",
+"input": "=IFERROR(XLOOKUP(A32,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V32",
+"input": "=IFERROR(XLOOKUP(A32,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W32",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A32,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X32",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A32,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y32",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A32,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z32",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A32,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A33",
+"value": {
+"t": "n",
+"v": 3.5
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B33",
+"input": "=IFERROR(MATCH(A33,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C33",
+"input": "=IFERROR(MATCH(A33,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D33",
+"input": "=IFERROR(MATCH(A33,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E33",
+"input": "=IFERROR(MATCH(A33,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F33",
+"input": "=IFERROR(MATCH(A33,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G33",
+"input": "=IFERROR(MATCH(A33,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H33",
+"input": "=IFERROR(XMATCH(A33,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I33",
+"input": "=IFERROR(XMATCH(A33,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J33",
+"input": "=IFERROR(XMATCH(A33,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K33",
+"input": "=IFERROR(XMATCH(A33,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L33",
+"input": "=IFERROR(XMATCH(A33,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M33",
+"input": "=IFERROR(XMATCH(A33,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N33",
+"input": "=IFERROR(XMATCH(A33,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O33",
+"input": "=IFERROR(VLOOKUP(A33,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P33",
+"input": "=IFERROR(LOOKUP(A33,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q33",
+"input": "=IFERROR(LOOKUP(A33,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R33",
+"input": "=IFERROR(HLOOKUP(A33,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S33",
+"input": "=COUNTIF($A$1:$B$11,A33)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T33",
+"input": "=IFERROR(XLOOKUP(A33,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U33",
+"input": "=IFERROR(XLOOKUP(A33,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V33",
+"input": "=IFERROR(XLOOKUP(A33,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W33",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A33,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X33",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A33,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y33",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A33,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z33",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A33,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A34",
+"value": {
+"t": "s",
+"v": "a*"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B34",
+"input": "=IFERROR(MATCH(A34,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C34",
+"input": "=IFERROR(MATCH(A34,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D34",
+"input": "=IFERROR(MATCH(A34,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E34",
+"input": "=IFERROR(MATCH(A34,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F34",
+"input": "=IFERROR(MATCH(A34,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G34",
+"input": "=IFERROR(MATCH(A34,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H34",
+"input": "=IFERROR(XMATCH(A34,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I34",
+"input": "=IFERROR(XMATCH(A34,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J34",
+"input": "=IFERROR(XMATCH(A34,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K34",
+"input": "=IFERROR(XMATCH(A34,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L34",
+"input": "=IFERROR(XMATCH(A34,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M34",
+"input": "=IFERROR(XMATCH(A34,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N34",
+"input": "=IFERROR(XMATCH(A34,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O34",
+"input": "=IFERROR(VLOOKUP(A34,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P34",
+"input": "=IFERROR(LOOKUP(A34,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q34",
+"input": "=IFERROR(LOOKUP(A34,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R34",
+"input": "=IFERROR(HLOOKUP(A34,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S34",
+"input": "=COUNTIF($A$1:$B$11,A34)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T34",
+"input": "=IFERROR(XLOOKUP(A34,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U34",
+"input": "=IFERROR(XLOOKUP(A34,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V34",
+"input": "=IFERROR(XLOOKUP(A34,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W34",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A34,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X34",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A34,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y34",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A34,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z34",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A34,$A$1:$A$11),\"E\")"
+},
+{
+"op": "setv",
+"cell": "Sheet1!A35",
+"value": {
+"t": "s",
+"v": "*e"
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!B35",
+"input": "=IFERROR(MATCH(A35,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!C35",
+"input": "=IFERROR(MATCH(A35,$A$1:$A$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!D35",
+"input": "=IFERROR(MATCH(A35,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!E35",
+"input": "=IFERROR(MATCH(A35,$B$1:$B$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F35",
+"input": "=IFERROR(MATCH(A35,$B$1:$B$11,0),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!G35",
+"input": "=IFERROR(MATCH(A35,$B$1:$B$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H35",
+"input": "=IFERROR(XMATCH(A35,$A$1:$A$11,1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!I35",
+"input": "=IFERROR(XMATCH(A35,$A$1:$A$11,-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J35",
+"input": "=IFERROR(XMATCH(A35,$B$1:$B$11,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!K35",
+"input": "=IFERROR(XMATCH(A35,$A$1:$A$11,0,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!L35",
+"input": "=IFERROR(XMATCH(A35,$A$1:$A$11,0,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!M35",
+"input": "=IFERROR(XMATCH(A35,$C$1:$C$6,-1,2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N35",
+"input": "=IFERROR(XMATCH(A35,$C$1:$C$6,1,-2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!O35",
+"input": "=IFERROR(VLOOKUP(A35,$C$1:$D$7,2,TRUE),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!P35",
+"input": "=IFERROR(LOOKUP(A35,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Q35",
+"input": "=IFERROR(LOOKUP(A35,$C$1:$C$7,$D$1:$D$7),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!R35",
+"input": "=IFERROR(HLOOKUP(A35,TRANSPOSE($C$1:$D$7),2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!S35",
+"input": "=COUNTIF($A$1:$B$11,A35)"
+},
+{
+"op": "set",
+"cell": "Sheet1!T35",
+"input": "=IFERROR(XLOOKUP(A35,$C$1:$C$7,$D$1:$D$7,\"nf\",-1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!U35",
+"input": "=IFERROR(XLOOKUP(A35,$C$1:$C$7,$D$1:$D$7,\"nf\",1),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!V35",
+"input": "=IFERROR(XLOOKUP(A35,$B$1:$B$11,$A$1:$A$11,\"nf\",2),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!W35",
+"input": "=IFERROR(INDEX($D$1:$D$7,MATCH(A35,$C$1:$C$7,1)),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!X35",
+"input": "=IFERROR(SUMIF($B$1:$B$11,A35,$A$1:$A$11),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Y35",
+"input": "=IFERROR(COUNTIFS($B$1:$B$11,A35,$A$1:$A$11,\">3\"),\"E\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z35",
+"input": "=IFERROR(AVERAGEIF($B$1:$B$11,A35,$A$1:$A$11),\"E\")"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:Z35"
+}
+]
+}

@@ -1,0 +1,410 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Order"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "s",
+"v": "Cust"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C1",
+"value": {
+"t": "s",
+"v": "Qty"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D1",
+"value": {
+"t": "s",
+"v": "Unit"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E1",
+"value": {
+"t": "s",
+"v": "Disc"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!F1",
+"value": {
+"t": "s",
+"v": "Net"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A2",
+"value": {
+"t": "n",
+"v": 1001
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B2",
+"value": {
+"t": "s",
+"v": "acme"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D2",
+"value": {
+"t": "n",
+"v": 12.5
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E2",
+"value": {
+"t": "n",
+"v": 0.1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A3",
+"value": {
+"t": "n",
+"v": 1002
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "s",
+"v": "Bolt"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C3",
+"value": {
+"t": "n",
+"v": 12
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D3",
+"value": {
+"t": "n",
+"v": 3.99
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E3",
+"value": {
+"t": "n",
+"v": 0
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A4",
+"value": {
+"t": "n",
+"v": 1003
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "s",
+"v": "acme"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D4",
+"value": {
+"t": "n",
+"v": 250
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E4",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!A5",
+"value": {
+"t": "n",
+"v": 1004
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "s",
+"v": "Cog"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!C5",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!D5",
+"value": {
+"t": "n",
+"v": 19.95
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!E5",
+"value": {
+"t": "n",
+"v": 0.15
+}
+},
+{
+"op": "table",
+"name": "tOrd",
+"range": "Sheet1!A1:F5"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=SUM(tOrd[Net])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=SUMIFS(tOrd[Net],tOrd[Cust],\"acme\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=COUNTIFS(tOrd[Cust],\"ACME\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=AVERAGE(tOrd[Unit])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=MAX(tOrd[Qty])*MIN(tOrd[Unit])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=XLOOKUP(1003,tOrd[Order],tOrd[Net])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=TEXTJOIN(\",\",TRUE,tOrd[Cust])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=ROWS(tOrd[#Data])&\"/\"&ROWS(tOrd[#All])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=SUM(tOrd[[Qty]:[Unit]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=ROUND(tOrd[[#This Row],[Qty]]*tOrd[[#This Row],[Unit]]*(1-tOrd[[#This Row],[Disc]]),2)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "1005"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "Bolt"
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "4.2"
+},
+{
+"op": "set",
+"cell": "Sheet1!E6",
+"input": "0.333"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "table_totals",
+"name": "tOrd",
+"sheet": "Sheet1",
+"value": true
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "read",
+"range": "Sheet1!A7:F7"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=SUBTOTAL(109,tOrd[Net])"
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=SUBTOTAL(101,tOrd[Qty])"
+},
+{
+"op": "read",
+"range": "Sheet1!A6:F8"
+},
+{
+"op": "table_sort",
+"name": "tOrd",
+"sheet": "Sheet1",
+"keys": [
+{
+"key": 6,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "autofilter",
+"table": "tOrd",
+"field": 2,
+"criteria1": "acme"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "table_rename",
+"name": "tOrd",
+"to": "Orders"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "table_resize",
+"sheet": "Sheet1",
+"name": "Orders",
+"range": "Sheet1!A1:F4"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "delete_rows",
+"sheet": "Sheet1",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H9"
+},
+{
+"op": "insert_cols",
+"sheet": "Sheet1",
+"at": 3,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!A1:I9"
+},
+{
+"op": "remove_dups",
+"range": "Sheet1!A2:G5",
+"columns": [
+3
+]
+},
+{
+"op": "read",
+"range": "Sheet1!A1:I9"
+}
+]
+}

@@ -1,0 +1,172 @@
+{
+"sheets": [
+"Sales"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sales!A1",
+"value": {
+"t": "s",
+"v": "Region"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B1",
+"value": {
+"t": "s",
+"v": "Rep"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C1",
+"value": {
+"t": "s",
+"v": "Units"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D1",
+"value": {
+"t": "s",
+"v": "Price"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!E1",
+"value": {
+"t": "s",
+"v": "Total"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!A2",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B2",
+"value": {
+"t": "s",
+"v": "Zed"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D2",
+"value": {
+"t": "n",
+"v": 9.99
+}
+},
+{
+"op": "set",
+"cell": "Sales!E2",
+"input": "=C2*D2"
+},
+{
+"op": "setv",
+"cell": "Sales!A3",
+"value": {
+"t": "s",
+"v": "South"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B3",
+"value": {
+"t": "s",
+"v": "Amy"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C3",
+"value": {
+"t": "n",
+"v": 25
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D3",
+"value": {
+"t": "n",
+"v": 4.5
+}
+},
+{
+"op": "set",
+"cell": "Sales!E3",
+"input": "=C3*D3"
+},
+{
+"op": "setv",
+"cell": "Sales!A4",
+"value": {
+"t": "s",
+"v": "North"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!B4",
+"value": {
+"t": "s",
+"v": "Bea"
+}
+},
+{
+"op": "setv",
+"cell": "Sales!C4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "Sales!D4",
+"value": {
+"t": "n",
+"v": 19.25
+}
+},
+{
+"op": "set",
+"cell": "Sales!E4",
+"input": "=C4*D4"
+},
+{
+"op": "table",
+"name": "tSales",
+"range": "Sales!A1:E4"
+},
+{
+"op": "set",
+"cell": "Sales!C5",
+"input": "5"
+},
+{
+"op": "read",
+"range": "Sales!A1:F6"
+}
+]
+}

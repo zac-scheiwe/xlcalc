@@ -1,0 +1,115 @@
+{
+"sheets": [
+"S",
+"R"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "S!A1",
+"value": {
+"t": "s",
+"v": "k"
+}
+},
+{
+"op": "setv",
+"cell": "S!B1",
+"value": {
+"t": "s",
+"v": "v"
+}
+},
+{
+"op": "setv",
+"cell": "S!A2",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "S!B2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "S!A3",
+"value": {
+"t": "s",
+"v": "b"
+}
+},
+{
+"op": "setv",
+"cell": "S!B3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "S!A4",
+"value": {
+"t": "s",
+"v": "a"
+}
+},
+{
+"op": "setv",
+"cell": "S!B4",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "setv",
+"cell": "S!A5",
+"value": {
+"t": "s",
+"v": "c"
+}
+},
+{
+"op": "setv",
+"cell": "S!B5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "R!A1",
+"input": "=UNIQUE(S!A2:A20)"
+},
+{
+"op": "name",
+"name": "rel",
+"refers_to": "=R!A1"
+},
+{
+"op": "set",
+"cell": "R!C1",
+"input": "=rel"
+},
+{
+"op": "cut",
+"from": "R!A1",
+"to": "R!A15"
+},
+{
+"op": "read",
+"range": "R!A1:C22"
+},
+{
+"op": "names"
+}
+]
+}

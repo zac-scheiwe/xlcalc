@@ -1,0 +1,1104 @@
+{
+"sheets": [
+"Va",
+"Vb",
+"Vc",
+"Vd",
+"Ve",
+"Vf",
+"Vg"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Va!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Va!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Va!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Va!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Va!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Va!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Va!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Va!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Va!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Va!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Va!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Va!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Va!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Va!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Va!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Va!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Vb!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Vb!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Vb!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Vb!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Vb!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Vb!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Vb!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Vb!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Vb!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Vc!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Vc!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Vc!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Vc!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Vc!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Vc!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Vc!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Vc!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Vc!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Vd!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Vd!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Vd!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Vd!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Vd!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Vd!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Vd!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Vd!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Vd!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Ve!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Ve!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Ve!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Ve!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Ve!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Ve!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Ve!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Ve!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Ve!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Vf!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Vf!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Vf!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Vf!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Vf!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Vf!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Vf!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Vf!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Vf!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "Vg!A1",
+"value": {
+"t": "s",
+"v": "K"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!B1",
+"value": {
+"t": "s",
+"v": "A"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!C1",
+"value": {
+"t": "s",
+"v": "B"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!D1",
+"value": {
+"t": "s",
+"v": "C"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!A2",
+"value": {
+"t": "s",
+"v": "k0"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!B2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "Vg!C2",
+"value": {
+"t": "n",
+"v": 10
+}
+},
+{
+"op": "setv",
+"cell": "Vg!A3",
+"value": {
+"t": "s",
+"v": "k1"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!B3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "Vg!C3",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "Vg!A4",
+"value": {
+"t": "s",
+"v": "k2"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "Vg!C4",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "Vg!A5",
+"value": {
+"t": "s",
+"v": "k3"
+}
+},
+{
+"op": "setv",
+"cell": "Vg!B5",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "Vg!C5",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "table",
+"name": "TVa",
+"range": "Va!A1:D5"
+},
+{
+"op": "set",
+"cell": "Va!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "copy",
+"from": "Va!D2:D5",
+"to": "Va!D2"
+},
+{
+"op": "paste_special",
+"from": "Va!D2:D5",
+"to": "Va!D2",
+"paste": "values",
+"operation": "none"
+},
+{
+"op": "set",
+"cell": "Va!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Va!A1:F8"
+},
+{
+"op": "table",
+"name": "TVb",
+"range": "Vb!A1:D5"
+},
+{
+"op": "set",
+"cell": "Vb!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "paste_special",
+"from": "Vb!B2:B5",
+"to": "Vb!D2",
+"paste": "values",
+"operation": "none"
+},
+{
+"op": "set",
+"cell": "Vb!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Vb!A1:F8"
+},
+{
+"op": "table",
+"name": "TVc",
+"range": "Vc!A1:D5"
+},
+{
+"op": "set",
+"cell": "Vc!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "paste_special",
+"from": "Vc!B2:B4",
+"to": "Vc!D2",
+"paste": "values",
+"operation": "none"
+},
+{
+"op": "set",
+"cell": "Vc!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Vc!A1:F8"
+},
+{
+"op": "table",
+"name": "TVd",
+"range": "Vd!A1:D5"
+},
+{
+"op": "set",
+"cell": "Vd!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "set",
+"cell": "Vd!D2",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Vd!D3",
+"input": "6"
+},
+{
+"op": "set",
+"cell": "Vd!D4",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "Vd!D5",
+"input": "8"
+},
+{
+"op": "set",
+"cell": "Vd!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Vd!A1:F8"
+},
+{
+"op": "table",
+"name": "TVe",
+"range": "Ve!A1:D5"
+},
+{
+"op": "set",
+"cell": "Ve!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "clear",
+"range": "Ve!D2:D5"
+},
+{
+"op": "set",
+"cell": "Ve!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Ve!A1:F8"
+},
+{
+"op": "table",
+"name": "TVf",
+"range": "Vf!A1:D5"
+},
+{
+"op": "set",
+"cell": "Vf!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "copy",
+"from": "Vf!B2:B5",
+"to": "Vf!D2"
+},
+{
+"op": "set",
+"cell": "Vf!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Vf!A1:F8"
+},
+{
+"op": "table",
+"name": "TVg",
+"range": "Vg!A1:D5"
+},
+{
+"op": "set",
+"cell": "Vg!D2",
+"input": "=[@A]+[@B]"
+},
+{
+"op": "paste_special",
+"from": "Vg!B2:B5",
+"to": "Vg!D2",
+"paste": "formulas",
+"operation": "none"
+},
+{
+"op": "set",
+"cell": "Vg!A6",
+"input": "9"
+},
+{
+"op": "read",
+"range": "Vg!A1:F8"
+}
+]
+}

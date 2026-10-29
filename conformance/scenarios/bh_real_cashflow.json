@@ -1,0 +1,373 @@
+{
+"sheets": [
+"Sheet1"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "Sheet1!A1",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "Sheet1!B1",
+"value": {
+"t": "n",
+"v": 0.08
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "1/1/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B3",
+"value": {
+"t": "n",
+"v": -100000
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "=B3/(1+$B$1)^(YEAR(A3)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=SUM(B$3:B3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "30/6/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B4",
+"value": {
+"t": "n",
+"v": 18000
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "=B4/(1+$B$1)^(YEAR(A4)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=SUM(B$3:B4)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "31/12/2026"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B5",
+"value": {
+"t": "n",
+"v": 22500
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "=B5/(1+$B$1)^(YEAR(A5)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D5",
+"input": "=SUM(B$3:B5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "15/5/2027"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B6",
+"value": {
+"t": "n",
+"v": 31000
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C6",
+"input": "=B6/(1+$B$1)^(YEAR(A6)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=SUM(B$3:B6)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A7",
+"input": "1/1/2028"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B7",
+"value": {
+"t": "n",
+"v": 40250.5
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C7",
+"input": "=B7/(1+$B$1)^(YEAR(A7)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=SUM(B$3:B7)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A8",
+"input": "29/2/2028"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B8",
+"value": {
+"t": "n",
+"v": 38000
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C8",
+"input": "=B8/(1+$B$1)^(YEAR(A8)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D8",
+"input": "=SUM(B$3:B8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!A9",
+"input": "31/12/2029"
+},
+{
+"op": "setv",
+"cell": "Sheet1!B9",
+"value": {
+"t": "n",
+"v": 45000
+}
+},
+{
+"op": "set",
+"cell": "Sheet1!C9",
+"input": "=B9/(1+$B$1)^(YEAR(A9)-YEAR($A$3))"
+},
+{
+"op": "set",
+"cell": "Sheet1!D9",
+"input": "=SUM(B$3:B9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=NPV(B1,B4:B9)+B3"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=IRR(B3:B9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=XNPV(B1,B3:B9,A3:A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=XIRR(B3:B9,A3:A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=MIRR(B3:B9,B1,0.05)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=SUM(C3:C9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=IRR(B3:B9,0.5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=NPV(B1,B3:B9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=PV(B1,6,-30000)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=IRR(D3:D9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=IFERROR(INDEX(A3:A9,MATCH(TRUE,INDEX(D3:D9>0,0),0)),\"never\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F12",
+"input": "=TEXT(F2,\"0.00%\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F13",
+"input": "=ROUND(F4*100,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F14",
+"input": "=FV(B1/12,60,-500)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F15",
+"input": "=SLN(50000,5000,8)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F16",
+"input": "=DB(50000,5000,8,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F17",
+"input": "=DDB(50000,5000,8,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F18",
+"input": "=SYD(50000,5000,8,3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F19",
+"input": "=VDB(50000,5000,8,0,3.5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F20",
+"input": "=RRI(10,100,250)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F21",
+"input": "=PDURATION(0.05,100,250)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F22",
+"input": "=FVSCHEDULE(1000,{0.05,0.06,0.07})"
+},
+{
+"op": "set",
+"cell": "Sheet1!F23",
+"input": "=XNPV(0,B3:B9,A3:A9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F24",
+"input": "=NPV(B1,B4:B9,5000)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F25",
+"input": "=IRR(B3:B5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F26",
+"input": "=IRR(B3:B9,-0.5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F27",
+"input": "=XIRR(B3:B9,A3:A9,0.5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F28",
+"input": "=XNPV(B1,B3:B5,A3:A5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=NPV(B1,B3,B4,B5)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H2",
+"input": "=NPV(B1,B3:B4,B7:B9)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H3",
+"input": "=MIRR(B3:B9,0.1,0.1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H4",
+"input": "=PRICE(DATE(2026,3,1),DATE(2031,1,15),0.05,0.06,100,2,0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H5",
+"input": "=YIELD(DATE(2026,3,1),DATE(2031,1,15),0.05,98.5,100,2,1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H6",
+"input": "=DURATION(DATE(2026,3,1),DATE(2031,1,15),0.05,0.06,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H7",
+"input": "=ACCRINT(DATE(2026,1,15),DATE(2026,7,15),DATE(2026,3,1),0.05,1000,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H8",
+"input": "=DISC(DATE(2026,3,1),DATE(2026,9,1),97,100)"
+},
+{
+"op": "set",
+"cell": "Sheet1!H9",
+"input": "=TBILLPRICE(DATE(2026,3,1),DATE(2026,9,1),0.04)"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:H28"
+}
+]
+}

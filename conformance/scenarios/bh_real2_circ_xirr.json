@@ -1,0 +1,589 @@
+{
+"sheets": [
+"C",
+"X"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "C!A1",
+"value": {
+"t": "s",
+"v": "Principal"
+}
+},
+{
+"op": "setv",
+"cell": "C!B1",
+"value": {
+"t": "n",
+"v": 100000
+}
+},
+{
+"op": "setv",
+"cell": "C!A2",
+"value": {
+"t": "s",
+"v": "Rate"
+}
+},
+{
+"op": "setv",
+"cell": "C!B2",
+"value": {
+"t": "n",
+"v": 0.05
+}
+},
+{
+"op": "setv",
+"cell": "C!A3",
+"value": {
+"t": "s",
+"v": "Payment"
+}
+},
+{
+"op": "setv",
+"cell": "C!B3",
+"value": {
+"t": "n",
+"v": 8000
+}
+},
+{
+"op": "setv",
+"cell": "C!A5",
+"value": {
+"t": "s",
+"v": "Year"
+}
+},
+{
+"op": "setv",
+"cell": "C!B5",
+"value": {
+"t": "s",
+"v": "Open"
+}
+},
+{
+"op": "setv",
+"cell": "C!C5",
+"value": {
+"t": "s",
+"v": "Interest"
+}
+},
+{
+"op": "setv",
+"cell": "C!D5",
+"value": {
+"t": "s",
+"v": "Close"
+}
+},
+{
+"op": "setv",
+"cell": "C!E5",
+"value": {
+"t": "s",
+"v": "Payment"
+}
+},
+{
+"op": "setv",
+"cell": "C!A6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "set",
+"cell": "C!B6",
+"input": "=B1"
+},
+{
+"op": "set",
+"cell": "C!C6",
+"input": "=(B6+D6)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D6",
+"input": "=B6+C6-E6"
+},
+{
+"op": "set",
+"cell": "C!E6",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A7",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "set",
+"cell": "C!B7",
+"input": "=D6"
+},
+{
+"op": "set",
+"cell": "C!C7",
+"input": "=(B7+D7)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D7",
+"input": "=B7+C7-E7"
+},
+{
+"op": "set",
+"cell": "C!E7",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A8",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "set",
+"cell": "C!B8",
+"input": "=D7"
+},
+{
+"op": "set",
+"cell": "C!C8",
+"input": "=(B8+D8)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D8",
+"input": "=B8+C8-E8"
+},
+{
+"op": "set",
+"cell": "C!E8",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A9",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "set",
+"cell": "C!B9",
+"input": "=D8"
+},
+{
+"op": "set",
+"cell": "C!C9",
+"input": "=(B9+D9)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D9",
+"input": "=B9+C9-E9"
+},
+{
+"op": "set",
+"cell": "C!E9",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A10",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "set",
+"cell": "C!B10",
+"input": "=D9"
+},
+{
+"op": "set",
+"cell": "C!C10",
+"input": "=(B10+D10)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D10",
+"input": "=B10+C10-E10"
+},
+{
+"op": "set",
+"cell": "C!E10",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A11",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "set",
+"cell": "C!B11",
+"input": "=D10"
+},
+{
+"op": "set",
+"cell": "C!C11",
+"input": "=(B11+D11)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D11",
+"input": "=B11+C11-E11"
+},
+{
+"op": "set",
+"cell": "C!E11",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A12",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "set",
+"cell": "C!B12",
+"input": "=D11"
+},
+{
+"op": "set",
+"cell": "C!C12",
+"input": "=(B12+D12)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D12",
+"input": "=B12+C12-E12"
+},
+{
+"op": "set",
+"cell": "C!E12",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A13",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "set",
+"cell": "C!B13",
+"input": "=D12"
+},
+{
+"op": "set",
+"cell": "C!C13",
+"input": "=(B13+D13)/2*$B$2"
+},
+{
+"op": "set",
+"cell": "C!D13",
+"input": "=B13+C13-E13"
+},
+{
+"op": "set",
+"cell": "C!E13",
+"input": "=$B$3"
+},
+{
+"op": "setv",
+"cell": "C!A15",
+"value": {
+"t": "s",
+"v": "Total int"
+}
+},
+{
+"op": "set",
+"cell": "C!B15",
+"input": "=SUM(C6:C13)"
+},
+{
+"op": "set",
+"cell": "X!A1",
+"input": "1/1/2025"
+},
+{
+"op": "setv",
+"cell": "X!B1",
+"value": {
+"t": "n",
+"v": -1000
+}
+},
+{
+"op": "set",
+"cell": "X!A2",
+"input": "1/7/2025"
+},
+{
+"op": "setv",
+"cell": "X!B2",
+"value": {
+"t": "n",
+"v": 200
+}
+},
+{
+"op": "set",
+"cell": "X!A3",
+"input": "15/3/2026"
+},
+{
+"op": "setv",
+"cell": "X!B3",
+"value": {
+"t": "n",
+"v": 300
+}
+},
+{
+"op": "set",
+"cell": "X!A4",
+"input": "1/1/2027"
+},
+{
+"op": "setv",
+"cell": "X!B4",
+"value": {
+"t": "n",
+"v": 400
+}
+},
+{
+"op": "set",
+"cell": "X!A5",
+"input": "30/6/2027"
+},
+{
+"op": "setv",
+"cell": "X!B5",
+"value": {
+"t": "n",
+"v": 500
+}
+},
+{
+"op": "iteration",
+"enabled": true,
+"max_iter": 100,
+"max_change": 0.001
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "set",
+"cell": "C!B2",
+"input": "0.06"
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "set",
+"cell": "C!B3",
+"input": "12000"
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "iteration",
+"enabled": true,
+"max_iter": 5,
+"max_change": 0.001
+},
+{
+"op": "set",
+"cell": "C!B2",
+"input": "0.07"
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "iteration",
+"enabled": false
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "iteration",
+"enabled": true,
+"max_iter": 100,
+"max_change": 0.0001
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "fullcalc"
+},
+{
+"op": "read",
+"range": "C!A1:E16"
+},
+{
+"op": "set",
+"cell": "X!D1",
+"input": "=XIRR(B1:B5,A1:A5)"
+},
+{
+"op": "set",
+"cell": "X!D2",
+"input": "=XNPV(0.1,B1:B5,A1:A5)"
+},
+{
+"op": "set",
+"cell": "X!D3",
+"input": "=XIRR(B1:B5,A1:A5,0.5)"
+},
+{
+"op": "set",
+"cell": "X!D4",
+"input": "=IRR(B1:B5)"
+},
+{
+"op": "set",
+"cell": "X!D5",
+"input": "=MIRR(B1:B5,0.08,0.1)"
+},
+{
+"op": "set",
+"cell": "X!D6",
+"input": "=NPV(0.1,B2:B5)+B1"
+},
+{
+"op": "set",
+"cell": "X!D7",
+"input": "=RATE(10,-100,800)"
+},
+{
+"op": "set",
+"cell": "X!D8",
+"input": "=NPER(0.05,-100,1000)"
+},
+{
+"op": "set",
+"cell": "X!D9",
+"input": "=FV(0.05/12,36,-200,-1000)"
+},
+{
+"op": "set",
+"cell": "X!D10",
+"input": "=CUMIPMT(0.05/12,60,20000,1,12,0)"
+},
+{
+"op": "set",
+"cell": "X!D11",
+"input": "=CUMPRINC(0.05/12,60,20000,13,24,0)"
+},
+{
+"op": "set",
+"cell": "X!D12",
+"input": "=IPMT(0.05/12,5,60,20000)+PPMT(0.05/12,5,60,20000)"
+},
+{
+"op": "set",
+"cell": "X!D13",
+"input": "=XIRR(B1:B3,A1:A3)"
+},
+{
+"op": "set",
+"cell": "X!D14",
+"input": "=PRICE(DATE(2026,1,15),DATE(2031,6,30),0.05,0.06,100,2,1)"
+},
+{
+"op": "set",
+"cell": "X!D15",
+"input": "=YIELD(DATE(2026,1,15),DATE(2031,6,30),0.05,98,100,2,1)"
+},
+{
+"op": "set",
+"cell": "X!D16",
+"input": "=DURATION(DATE(2026,1,15),DATE(2031,6,30),0.05,0.06,2,1)"
+},
+{
+"op": "set",
+"cell": "X!D17",
+"input": "=SLN(10000,1000,5)&\"|\"&DDB(10000,1000,5,2)&\"|\"&SYD(10000,1000,5,2)&\"|\"&VDB(10000,1000,5,0,2.5)"
+},
+{
+"op": "set",
+"cell": "X!D18",
+"input": "=EFFECT(0.06,12)&\"|\"&NOMINAL(0.0617,12)&\"|\"&PDURATION(0.05,1000,2000)&\"|\"&RRI(10,1000,2000)"
+},
+{
+"op": "read",
+"range": "X!A1:D18"
+},
+{
+"op": "set",
+"cell": "X!B2",
+"input": "-50"
+},
+{
+"op": "read",
+"range": "X!A1:D18"
+},
+{
+"op": "goal_seek",
+"cell": "X!D2",
+"goal": 0,
+"changing": "X!B1"
+},
+{
+"op": "read",
+"range": "X!A1:D18"
+},
+{
+"op": "autofill",
+"from": "X!A1:A2",
+"to": "X!A1:A9",
+"type": "default"
+},
+{
+"op": "read",
+"range": "X!A1:D18"
+}
+]
+}

@@ -15,9 +15,9 @@ pub(super) fn pairs(ctx: &mut EvalCtx, a: &Operand, b: &Operand) -> R<(Vec<f64>,
     if va
         .iter()
         .chain(vb.iter())
-        .any(|v| matches!(v, Value::Error(XlError::Circ)))
+        .any(|v| matches!(v, Value::Error(XlError::CIRC)))
     {
-        return Err(XlError::Circ);
+        return Err(XlError::CIRC);
     }
     let mut xs = Vec::with_capacity(va.len());
     let mut ys = Vec::with_capacity(va.len());
@@ -26,10 +26,10 @@ pub(super) fn pairs(ctx: &mut EvalCtx, a: &Operand, b: &Operand) -> R<(Vec<f64>,
     for (x, y) in va.iter().zip(vb.iter()) {
         for v in [x, y] {
             match v {
-                Value::Error(XlError::Calc) => calc = true,
+                Value::Error(XlError::CALC) => calc = true,
                 Value::Error(e) => {
-                    return Err(if *e == XlError::Spill {
-                        XlError::Value
+                    return Err(if *e == XlError::SPILL {
+                        XlError::VALUE
                     } else {
                         *e
                     })
@@ -43,7 +43,7 @@ pub(super) fn pairs(ctx: &mut EvalCtx, a: &Operand, b: &Operand) -> R<(Vec<f64>,
         }
     }
     if calc {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     Ok((xs, ys))
 }
@@ -103,7 +103,7 @@ fn pearson_xl(x: &[f64], y: &[f64], d: f64) -> R<f64> {
     use x87::chk;
     let c = centred(x, y, true)?;
     if c.sxx == 0.0 || c.syy == 0.0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     let sd = chk(x87::mul(
         x87::sqrt(x87::div(c.sxx, d)),
@@ -116,7 +116,7 @@ pub fn correl(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
     opfin((|| {
         let (x, y) = pairs(ctx, &o[0], &o[1])?;
         if x.is_empty() {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         pearson_xl(&x, &y, x.len() as f64)
     })())
@@ -126,7 +126,7 @@ pub fn rsq(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
     opfin((|| {
         let (x, y) = pairs(ctx, &o[0], &o[1])?;
         if x.is_empty() {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let r = pearson_xl(&x, &y, x.len() as f64 - 1.0)?;
         Ok(x87::mul(r, r))
@@ -136,11 +136,11 @@ pub fn rsq(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
 fn line(ctx: &mut EvalCtx, y: &Operand, x: &Operand) -> R<(f64, f64)> {
     let (ys, xs) = pairs(ctx, y, x)?;
     if xs.is_empty() {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     let c = centred(&xs, &ys, false)?;
     if c.sxx == 0.0 {
-        return Err(XlError::Div0);
+        return Err(XlError::DIV0);
     }
     let b = x87::chk(x87::div(c.sxy, c.sxx))?;
     let a = x87::chk(x87::add(-x87::chk(x87::mul(c.mx, b))?, c.my))?;
@@ -162,10 +162,10 @@ pub fn steyx(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
 
         let c = centred(&xs, &ys, true)?;
         if xs.len() < 3 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         if c.sxx == 0.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
 
         let n2 = xs.len() as f64 - 2.0;
@@ -173,7 +173,7 @@ pub fn steyx(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         let r = x87::div(chk(x87::add(c.syy, -q))?, n2);
 
         if r.is_nan() || r < 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(x87::sqrt(r))
     })())
@@ -192,7 +192,7 @@ pub fn covar(ctx: &mut EvalCtx, o: &[Operand], sample: bool) -> Operand {
         let (x, y) = pairs(ctx, &o[0], &o[1])?;
         let n = x.len() as f64;
         if n == 0.0 || (sample && n < 2.0) {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
 
         Ok(x87::div(
@@ -211,15 +211,15 @@ fn sorted_numbers(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
 fn percentile_of(v: &[f64], k: f64, exclusive: bool) -> R<f64> {
     let n = v.len();
     if n == 0 {
-        return Err(XlError::Num);
+        return Err(XlError::NUM);
     }
     if exclusive {
         if !(k > 0.0 && k < 1.0) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
-        let r = k * (n as f64 + 1.0);
+        let r = x87::mul(k, n as f64 + 1.0);
         if r < 1.0 || r > n as f64 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let i = r.floor();
         let f = r - i;
@@ -227,20 +227,20 @@ fn percentile_of(v: &[f64], k: f64, exclusive: bool) -> R<f64> {
         if i >= n {
             return Ok(v[n - 1]);
         }
-        Ok(v[i - 1] + f * (v[i] - v[i - 1]))
+        Ok(x87::add(v[i - 1], x87::mul(x87::sub(v[i], v[i - 1]), f)))
     } else {
         if !(0.0..=1.0).contains(&k) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
-        let r = k * (n as f64 - 1.0) + 1.0;
+        let r = x87::add(x87::mul(k, n as f64 - 1.0), 1.0);
         let i = r.floor();
         let f = r - i;
         let i = i as usize;
         if i >= n {
             return Ok(v[n - 1]);
         }
-        Ok(v[i - 1] + f * (v[i] - v[i - 1]))
+        Ok(x87::add(v[i - 1], x87::mul(x87::sub(v[i], v[i - 1]), f)))
     }
 }
 
@@ -258,10 +258,10 @@ pub fn quartile(ctx: &mut EvalCtx, o: &[Operand], exclusive: bool) -> Operand {
         let v = sorted_numbers(ctx, &o[0])?;
         if exclusive {
             if !(1.0..=3.0).contains(&q) {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
         } else if !(0.0..=4.0).contains(&q) {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         percentile_of(&v, q / 4.0, exclusive)
     })())
@@ -284,11 +284,11 @@ pub fn percentrank(ctx: &mut EvalCtx, o: &[Operand], exclusive: bool) -> Operand
             return Ok(1.0);
         }
         if sig < 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         if sig >= 309.0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let nf = n as f64;
         let rank = {
@@ -338,7 +338,7 @@ pub fn rank(ctx: &mut EvalCtx, o: &[Operand], avg: bool) -> Operand {
         match &o[1] {
             Operand::Ref(_) => {}
             Operand::Val(Value::Error(e)) => return Err(*e),
-            _ => return Err(XlError::Value),
+            _ => return Err(XlError::VALUE),
         }
         let ascending = match o.get(2) {
             None | Some(Operand::Missing) => false,
@@ -346,7 +346,7 @@ pub fn rank(ctx: &mut EvalCtx, o: &[Operand], avg: bool) -> Operand {
             Some(Operand::Val(Value::Text(t))) => match t.to_ascii_lowercase().as_str() {
                 "true" => true,
                 "false" => false,
-                _ => return Err(XlError::Value),
+                _ => return Err(XlError::VALUE),
             },
             Some(op) => opnum(ctx, op)? != 0.0,
         };
@@ -375,13 +375,13 @@ pub fn rank(ctx: &mut EvalCtx, o: &[Operand], avg: bool) -> Operand {
 fn mode_values(ctx: &mut EvalCtx, ops: &[Operand]) -> R<Vec<f64>> {
     for op in ops {
         match op {
-            Operand::Missing => return Err(XlError::Value),
+            Operand::Missing => return Err(XlError::VALUE),
             Operand::Val(Value::Error(e)) => return Err(*e),
 
             Operand::Ref(r) if r.single().is_some_and(|a| a.rect.is_cell()) => {
                 let area = *r.single().unwrap();
                 match ctx.area_array(&area) {
-                    Value::Blank => return Err(XlError::Value),
+                    Value::Blank => return Err(XlError::VALUE),
                     Value::Error(e) => return Err(e),
                     _ => {}
                 }
@@ -435,13 +435,13 @@ pub fn trimmean(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         let mut v = data.clone();
         v.sort_by(|a, b| a.partial_cmp(b).unwrap());
         if !(0.0..1.0).contains(&p) || v.is_empty() {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
 
         let n = v.len();
         let k = x87::div(x87::mul(n as f64, p), 2.0).trunc() as usize;
         if 2 * k >= n {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         let (lo, hi) = (v[k], v[n - 1 - k]);
         let (mut klo, mut khi) = (k, k);
@@ -570,7 +570,7 @@ pub fn kurt(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
     opfin((|| {
         let v = collect_numbers(ctx, o, SUM_POLICY)?;
         if v.len() < 4 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
 
         let mut f = x87::MpFlag::default();
@@ -591,7 +591,7 @@ pub fn skew(ctx: &mut EvalCtx, o: &[Operand], population: bool) -> Operand {
     opfin((|| {
         let v = collect_numbers(ctx, o, SUM_POLICY)?;
         if v.len() < 3 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         let mut f = x87::MpFlag::default();
         let (m, s, n) = moment_base(&v, population, &mut f);
@@ -612,7 +612,7 @@ pub fn standardize(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
         if s <= 0.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok((x - m) / s)
     })())
@@ -622,7 +622,7 @@ pub fn fisher(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
         let x = num(ctx, &a[0])?;
         if x <= -1.0 || x >= 1.0 {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(0.5 * ((1.0 + x) / (1.0 - x)).ln())
     })())
@@ -668,7 +668,7 @@ pub fn prob(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
             };
             counted += 1;
             if !(0.0..=1.0).contains(&p) {
-                return Err(XlError::Num);
+                return Err(XlError::NUM);
             }
             total += p;
             if x >= lower && x <= upper {
@@ -676,10 +676,10 @@ pub fn prob(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
             }
         }
         if counted == 0 {
-            return Err(XlError::Div0);
+            return Err(XlError::DIV0);
         }
         if number::cmp_numbers(total, 1.0) != std::cmp::Ordering::Equal {
-            return Err(XlError::Num);
+            return Err(XlError::NUM);
         }
         Ok(acc)
     })())

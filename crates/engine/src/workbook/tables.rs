@@ -282,6 +282,7 @@ impl Workbook {
             named.iter().flatten().map(|s| key(s)).collect();
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
         let mut next_blank = 1u32;
+        let mut dup_counter = 2u32;
         let mut generated: Vec<String> = Vec::new();
         for given in &named {
             let mut n = match given {
@@ -300,11 +301,15 @@ impl Workbook {
                 Some(s) => s.clone(),
             };
             if seen.contains(&key(&n)) {
-                let mut k = 2;
-                while seen.contains(&key(&format!("{n}{k}"))) {
-                    k += 1;
+                loop {
+                    let cand = format!("{n}{dup_counter}");
+                    dup_counter += 1;
+                    let k = key(&cand);
+                    if !seen.contains(&k) && !named_keys.contains(&k) {
+                        n = cand;
+                        break;
+                    }
                 }
-                n = format!("{n}{k}");
             }
             seen.insert(key(&n));
             columns.push(n);
@@ -348,6 +353,7 @@ impl Workbook {
         for c in rect.c0..=rect.c1 {
             self.init_col_dxf(ti, c);
         }
+        self.infer_calc_columns(ti);
 
         let anchors: Vec<_> = self
             .sheet(sheet)
@@ -365,6 +371,160 @@ impl Workbook {
             calc::mark_dirty(self, f);
         }
         Ok(self.table_changed(name))
+    }
+
+    fn infer_calc_columns(&mut self, ti: usize) {
+        let (d0, d1) = self.tables[ti].data_rows();
+        let (sheet, c0) = (self.tables[ti].sheet, self.tables[ti].rect.c0);
+        let n = d1 - d0 + 1;
+        for idx in 0..self.tables[ti].columns.len() {
+            let col = c0 + idx as u32;
+            let key = |r: u32| -> Option<String> {
+                self.formula_at(CellAddr::new(sheet, r, col))
+                    .filter(|&f| !self.formula(f).spill.is_some_and(|s| !s.is_cell()))
+                    .map(|f| format!("{:?}", self.formula(f).formula.root))
+            };
+            let Some(last) = key(d1) else {
+                continue;
+            };
+            let same = (d0..=d1)
+                .filter(|&r| key(r).as_deref() == Some(last.as_str()))
+                .count() as u32;
+            if same + 1 < n {
+                continue;
+            }
+            let name = self.tables[ti].columns[idx].to_lowercase();
+            let t = &mut self.tables[ti];
+            t.calc[idx] = true;
+            t.calc_key.retain(|(n, _)| *n != name);
+            t.calc_key.push((name, last));
+        }
+    }
+
+    pub(crate) fn paste_ends_calc(&mut self, sheet: SheetId, dest: Rect) {
+        if self.op_on(super::Op::NoAutoExpand) {
+            return;
+        }
+        for ti in 0..self.tables.len() {
+            let t = &self.tables[ti];
+            if t.sheet != sheet || !t.calc.iter().any(|&c| c) {
+                continue;
+            }
+            let (d0, d1) = t.data_rows();
+            if dest.r0 > d0 || dest.r1 < d1 {
+                continue;
+            }
+            for idx in 0..t.calc.len() {
+                let col = self.tables[ti].rect.c0 + idx as u32;
+                if !self.tables[ti].calc[idx] || col < dest.c0 || col > dest.c1 {
+                    continue;
+                }
+                let all_const = (d0..=d1).all(|r| {
+                    matches!(
+                        self.sheet(sheet).and_then(|s| s.cells.get(r, col)),
+                        Some(Entry::Const(v)) if !matches!(v, Value::Blank)
+                    )
+                });
+                if all_const {
+                    let name = self.tables[ti].columns[idx].to_lowercase();
+                    let t = &mut self.tables[ti];
+                    t.calc[idx] = false;
+                    t.calc_key.retain(|(n, _)| *n != name);
+                    t.calc_snap.retain(|(n, _)| *n != name);
+                }
+            }
+        }
+    }
+
+    pub(crate) fn paste_copies_table(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dest: Rect,
+    ) {
+        let Some(ti) = self.tables.iter().position(|t| {
+            t.sheet == src_sheet
+                && t.headers
+                && src.r0 <= t.rect.r0
+                && t.rect.r1 <= src.r1
+                && src.c0 <= t.rect.c0
+                && t.rect.c1 <= src.c1
+        }) else {
+            return;
+        };
+        if (dest.rows(), dest.cols()) != (src.rows(), src.cols()) {
+            return;
+        }
+        let tr = self.tables[ti].rect;
+        let (dr, dc) = (
+            dest.r0 as i64 - src.r0 as i64,
+            dest.c0 as i64 - src.c0 as i64,
+        );
+        let dest = Rect::new(
+            (tr.r0 as i64 + dr) as u32,
+            (tr.c0 as i64 + dc) as u32,
+            (tr.r1 as i64 + dr) as u32,
+            (tr.c1 as i64 + dc) as u32,
+        );
+        if self
+            .tables
+            .iter()
+            .any(|t| t.sheet == dst_sheet && t.rect.intersects(&dest))
+        {
+            return;
+        }
+        let old_name = self.tables[ti].name.clone();
+        let name = self.copy_table_name(&old_name);
+        let mut copy = self.tables[ti].clone();
+        copy.name = name.clone();
+        copy.sheet = dst_sheet;
+        copy.rect = dest;
+        self.tables_made += 1;
+        self.tables.push(copy);
+        let nti = self.tables.len() - 1;
+
+        let ids: Vec<FormulaId> = self
+            .sheet(dst_sheet)
+            .map(|sh| {
+                sh.cells
+                    .iter_rect(dest)
+                    .filter_map(|(r, c, _)| self.formula_at(CellAddr::new(dst_sheet, r, c)))
+                    .collect()
+            })
+            .unwrap_or_default();
+        for fid in ids {
+            let (addr, f) = {
+                let x = self.formula(fid);
+                (x.addr, x.formula.clone())
+            };
+            let mut hit = false;
+            let root = crate::formula::map_node(&f.root, &mut |n| match n {
+                crate::formula::Node::StructRef {
+                    table,
+                    implicit,
+                    spec,
+                } if crate::text::eq_ordinal_ci(table, &old_name) => {
+                    hit = true;
+                    Some(crate::formula::Node::StructRef {
+                        table: name.as_str().into(),
+                        implicit: *implicit,
+                        spec: spec.clone(),
+                    })
+                }
+                _ => None,
+            });
+            if hit {
+                let text = crate::formula_print::print_node(self, &root, addr);
+                let nf = Arc::new(Formula {
+                    root,
+                    volatile: f.volatile,
+                });
+                self.set_compiled_formula(addr, nf, text);
+            }
+        }
+        let _ = nti;
+        let _ = self.table_changed(&name);
     }
 
     pub fn restore_table_totals(&mut self, name: &str, rect: crate::address::Rect) {
@@ -1239,7 +1399,11 @@ impl Workbook {
         let name = self.tables[ti].name.clone();
         let old = self.tables[ti].rect;
         self.tables[ti].rect = rect;
-        let refs_grew = !grow_col && self.grow_exact_refs(ti, old, rect.r1 - old.r1, false);
+        let (refs_grew, firsts) = if grow_col {
+            (false, Vec::new())
+        } else {
+            self.grow_exact_refs_typed(ti, old, rect.r1 - old.r1)
+        };
         if grow_col {
             self.extend_col_formats(ti);
         } else {
@@ -1274,7 +1438,7 @@ impl Workbook {
         }
         let _ = self.table_changed(&name);
         if !grow_col {
-            self.table_fill_new_rows(ti, (rect.r1, rect.r1), &[], true);
+            self.table_fill_new_rows(ti, (rect.r1, rect.r1), &firsts, true);
         }
     }
 
@@ -1675,6 +1839,28 @@ impl Workbook {
                 }
             }
         }
+
+        let names: Vec<_> = self.names.iter().cloned().collect();
+        for mut def in names {
+            let host = def.host();
+            let mut changed = false;
+            let root = map_struct_refs(&def.formula.root, &mut |table, spec| {
+                if !crate::text::eq_ordinal_ci(table, &table_name) {
+                    return None;
+                }
+                let r = rename(spec);
+                changed |= r.is_some();
+                r
+            });
+            if changed {
+                def.refers_to = crate::formula_print::print_node(self, &root, host);
+                def.formula = Arc::new(Formula {
+                    root,
+                    volatile: def.formula.volatile,
+                });
+                self.names.insert(def);
+            }
+        }
         let _ = self.table_changed(&table_name);
     }
 
@@ -1702,7 +1888,7 @@ pub fn escape_column(name: &str) -> String {
 
 fn needs_brackets(name: &str) -> bool {
     name.chars()
-        .any(|c| !(c.is_alphanumeric() || c == '_' || c == '.'))
+        .any(|c| c.is_ascii() && !(c.is_ascii_alphanumeric() || c == '|'))
 }
 
 #[derive(Clone, Debug, PartialEq, Default)]
@@ -1926,7 +2112,7 @@ pub fn spec_text(table: Option<&str>, spec: &Spec) -> String {
         }
     } else if item_list.is_empty() {
         if let Some((a, b)) = &spec.cols {
-            if a == b && !spec.range {
+            if a == b && !spec.range && a.trim() == a {
                 s.push_str(&spec.pad.0);
                 s.push_str(&escape_column(a));
                 s.push_str(&spec.pad.1);
@@ -1948,29 +2134,6 @@ pub fn spec_text(table: Option<&str>, spec: &Spec) -> String {
     }
     s.push(']');
     s
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn specs() {
-        let t = |x: &str| spec_text(Some("Sales"), &parse_spec(x).unwrap());
-        assert_eq!(t("Qty"), "Sales[Qty]");
-        assert_eq!(t("[#This Row],[Qty]"), "Sales[@Qty]");
-        assert_eq!(t("@[Unit Price]"), "Sales[@[Unit Price]]");
-        assert_eq!(t("[#All],[Qty]"), "Sales[[#All],[Qty]]");
-        assert_eq!(t("#Headers"), "Sales[#Headers]");
-        assert_eq!(
-            t("[#Headers],[Item]:[Qty]"),
-            "Sales[[#Headers],[Item]:[Qty]]"
-        );
-        assert_eq!(t("[Qty]:[Unit Price]"), "Sales[[Qty]:[Unit Price]]");
-        assert_eq!(t("Unit Price"), "Sales[Unit Price]");
-        assert_eq!(t("#Data"), "Sales[#Data]");
-        assert_eq!(t(""), "Sales");
-    }
 }
 
 pub(crate) fn next_header_name(prev: &str, columns: &[String]) -> Option<String> {
@@ -2007,4 +2170,27 @@ pub(crate) fn next_header_name(prev: &str, columns: &[String]) -> Option<String>
         return Some(cand);
     }
     (2..).map(|k| format!("{prev}{k}")).find(|c| !taken(c))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn specs() {
+        let t = |x: &str| spec_text(Some("Sales"), &parse_spec(x).unwrap());
+        assert_eq!(t("Qty"), "Sales[Qty]");
+        assert_eq!(t("[#This Row],[Qty]"), "Sales[@Qty]");
+        assert_eq!(t("@[Unit Price]"), "Sales[@[Unit Price]]");
+        assert_eq!(t("[#All],[Qty]"), "Sales[[#All],[Qty]]");
+        assert_eq!(t("#Headers"), "Sales[#Headers]");
+        assert_eq!(
+            t("[#Headers],[Item]:[Qty]"),
+            "Sales[[#Headers],[Item]:[Qty]]"
+        );
+        assert_eq!(t("[Qty]:[Unit Price]"), "Sales[[Qty]:[Unit Price]]");
+        assert_eq!(t("Unit Price"), "Sales[Unit Price]");
+        assert_eq!(t("#Data"), "Sales[#Data]");
+        assert_eq!(t(""), "Sales");
+    }
 }

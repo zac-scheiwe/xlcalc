@@ -67,7 +67,7 @@ impl Criterion {
             Value::Bool(b) => eq(Target::Bool(*b)),
             Value::Error(e) => eq(Target::Err(*e)),
             Value::Text(s) => Self::parse_text(ctx, s, flavor),
-            Value::Array(_) => Err(XlError::Value),
+            Value::Array(_) => Err(XlError::VALUE),
 
             Value::Lambda(_) => Ok(Criterion {
                 op: Op::Lt,
@@ -78,7 +78,7 @@ impl Criterion {
 
     fn parse_text(ctx: &EvalCtx, s: &Text, flavor: Flavor) -> Result<Criterion, XlError> {
         if s.len() > MAX_CRITERION_LEN && utf16_len(s) > MAX_CRITERION_LEN {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let (op, rest, bare) = if let Some(r) = s.strip_prefix("<=") {
             (Op::Le, r, false)
@@ -209,11 +209,7 @@ fn fold(c: char) -> char {
     if c.is_ascii() {
         return c.to_ascii_lowercase();
     }
-    let mut l = c.to_lowercase();
-    match (l.next(), l.next()) {
-        (Some(x), None) => x,
-        _ => c,
-    }
+    crate::functions::text::lower_char(c)
 }
 
 impl Pattern {

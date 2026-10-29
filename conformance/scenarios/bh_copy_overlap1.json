@@ -1,0 +1,86 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "=A1+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "=A2+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "=SUM(A1:A3)"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "=$A1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "=B1+A2"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:B4",
+"to": "Sheet1!A2"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:C7"
+},
+{
+"op": "copy",
+"from": "Sheet1!A2:B5",
+"to": "Sheet1!B3"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D8"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:A5",
+"to": "Sheet1!A1"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D8"
+},
+{
+"op": "copy",
+"from": "Sheet1!A1:B3",
+"to": "Sheet1!A1:B9"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:D10"
+},
+{
+"op": "paste_special",
+"from": "Sheet1!A1:B3",
+"to": "Sheet1!B2",
+"paste": "all",
+"transpose": true
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E8"
+}
+]
+}

@@ -1,0 +1,35 @@
+{
+"sheets": [
+"Sheet1",
+"Sheet2",
+"Sheet3"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!E5",
+"input": "=D5+1"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=$E5+E$5"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E5:F5",
+"to": "Sheet1!E1:F5",
+"type": "default"
+},
+{
+"op": "autofill",
+"from": "Sheet1!E1:F5",
+"to": "Sheet1!A1:F5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:F5"
+}
+]
+}

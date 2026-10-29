@@ -70,7 +70,7 @@ pub const DEFS: &[FnDef] = &[
         first_cell_or_lift(c, &o[0], |v| match v {
             Value::Text(s) => Value::Text(s.clone()),
             Value::Error(e) => Value::Error(*e),
-            Value::Lambda(_) => Value::Error(XlError::Value),
+            Value::Lambda(_) => Value::Error(XlError::VALUE),
             _ => Value::empty_text(),
         })
     }),
@@ -78,7 +78,7 @@ pub const DEFS: &[FnDef] = &[
 
 fn checked(s: String) -> Value {
     if utf16_len(&s) > MAX_TEXT_LEN {
-        err(XlError::Value)
+        err(XlError::VALUE)
     } else {
         Value::from(s)
     }
@@ -87,7 +87,7 @@ fn checked(s: String) -> Value {
 fn count_arg(ctx: &EvalCtx, a: &[Value], i: usize, default: f64) -> R<usize> {
     let n = opt_num(ctx, a, i, default)?;
     if n < 0.0 {
-        return Err(XlError::Value);
+        return Err(XlError::VALUE);
     }
     Ok(ifuzz(n).min(1e9) as usize)
 }
@@ -112,7 +112,7 @@ pub(super) fn mid(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let start = num(ctx, &a[1])?.trunc();
         let n = num(ctx, &a[2])?;
         if start < 1.0 || n < 0.0 || start > 2147483648.0 || n >= 2147483648.0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let n = n.trunc();
         Ok(Value::from(utf16_slice(
@@ -136,6 +136,21 @@ fn table_map(table: &[(u16, u16)], c: char) -> char {
     }
 }
 
+pub fn lower_char(c: char) -> char {
+    match c {
+        '\u{3C2}' => '\u{3C3}',
+        '\u{3F5}' => '\u{3B5}',
+        '\u{13A0}'..='\u{13F5}' | '\u{1C90}'..='\u{1CBF}' => c,
+        _ => {
+            let mut l = c.to_lowercase();
+            match (l.next(), l.next()) {
+                (Some(x), None) => x,
+                _ => c,
+            }
+        }
+    }
+}
+
 const SIGMA_FINAL_BEFORE: &str = ".,;?!:/\\|{}[]-_'\"<>@#$%&+= \t\r\n";
 
 pub fn map_case(s: &str, upper: bool) -> String {
@@ -143,7 +158,7 @@ pub fn map_case(s: &str, upper: bool) -> String {
     let mut it = s.chars().peekable();
     while let Some(c) = it.next() {
         if !upper && c == '\u{3A3}' {
-            let fin = it.peek().map_or(true, |n| SIGMA_FINAL_BEFORE.contains(*n));
+            let fin = it.peek().is_none_or(|n| SIGMA_FINAL_BEFORE.contains(*n));
             out.push(if fin { '\u{3C2}' } else { '\u{3C3}' });
             continue;
         }
@@ -258,7 +273,7 @@ fn concat(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
     }
     if utf16_len(&out) > MAX_TEXT_LEN {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     Operand::Val(Value::from(out))
 }
@@ -272,6 +287,8 @@ fn textjoin(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Ok(b) => b,
             Err(e) => return Operand::err(e),
         },
+
+        Operand::Missing => true,
         _ => false,
     };
 
@@ -309,7 +326,7 @@ fn textjoin(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         .map(|i| utf16_len(&delims[i % delims.len()]))
         .sum();
     if all_len + gaps > MAX_TEXT_LEN {
-        return Operand::err(XlError::Calc);
+        return Operand::err(XlError::CALC);
     }
     let mut out = String::new();
     for (i, p) in parts.iter().enumerate() {
@@ -326,14 +343,28 @@ fn rept(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = text(&a[0])?;
         let n = num(ctx, &a[1])?;
         if n < 0.0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let n = n.trunc();
         if utf16_len(&s) as f64 * n > MAX_TEXT_LEN as f64 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         Ok(Value::from(s.repeat(n as usize)))
     })())
+}
+
+fn nth_overlapping(s: &str, old: &str, k: usize) -> Option<usize> {
+    let mut from = 0;
+    let mut n = 0;
+    while let Some(p) = s[from..].find(old) {
+        let i = from + p;
+        n += 1;
+        if n == k {
+            return Some(i);
+        }
+        from = i + s[i..].chars().next()?.len_utf8();
+    }
+    None
 }
 
 fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -344,11 +375,11 @@ fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
         let k = match a.get(3) {
             None => None,
-            Some(Value::Bool(_)) => return Err(XlError::Value),
+            Some(Value::Bool(_)) => return Err(XlError::VALUE),
             Some(v) => {
                 let k = ifuzz(num(ctx, v)?);
                 if k < 1.0 || k >= 2147483647.0 {
-                    return Err(XlError::Value);
+                    return Err(XlError::VALUE);
                 }
                 Some(k as usize)
             }
@@ -358,8 +389,8 @@ fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         }
         match k {
             None => Ok(checked(s.replace(&*old, &new))),
-            Some(k) => match s.match_indices(&*old).nth(k - 1) {
-                Some((i, _)) => {
+            Some(k) => match nth_overlapping(&s, &old, k) {
+                Some(i) => {
                     let mut out = String::with_capacity(s.len());
                     out.push_str(&s[..i]);
                     out.push_str(&new);
@@ -379,7 +410,7 @@ pub(super) fn replace(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let n = num(ctx, &a[2])?;
         let new = text(&a[3])?;
         if start < 1.0 || n < 0.0 || start > 32767.0 || n > 32767.0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let n = ifuzz(n);
         let start = (start as usize - 1).min(utf16_len(&s));
@@ -405,13 +436,14 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
             || start as usize > len + 1
             || (start as usize > len && (search || !needle.is_empty()))
         {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let start = start as usize - 1;
         if needle.is_empty() {
             return Ok(Value::Number(start as f64 + 1.0));
         }
 
+        let unit_start = start;
         let start = {
             let mut units = 0;
             let mut idx = 0;
@@ -424,15 +456,19 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
             }
             idx
         };
-        let pos = if search {
-            Wildcard::new(&needle).find(&hay, start)
-        } else {
+        if search {
+            let pos = Wildcard::new(&needle)
+                .find(&hay, unit_start)
+                .ok_or(XlError::VALUE)?;
+            return Ok(Value::Number(pos as f64 + 1.0));
+        }
+        let pos = {
             let byte_start = hay.char_indices().nth(start).map_or(hay.len(), |(i, _)| i);
             hay[byte_start..]
                 .find(&*needle)
                 .map(|b| start + hay[byte_start..byte_start + b].chars().count())
         };
-        let pos = pos.ok_or(XlError::Value)?;
+        let pos = pos.ok_or(XlError::VALUE)?;
 
         let units: usize = hay.chars().take(pos).map(char::len_utf16).sum();
         Ok(Value::Number(units as f64 + 1.0))
@@ -445,9 +481,9 @@ fn value(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         Value::Blank => Value::Number(0.0),
         Value::Text(s) => val(crate::coerce::parse_number_text(s, ctx.parse_env())
             .map(|p| Value::Number(p.value))
-            .ok_or(XlError::Value)),
+            .ok_or(XlError::VALUE)),
         Value::Error(e) => Value::Error(*e),
-        _ => err(XlError::Value),
+        _ => err(XlError::VALUE),
     }
 }
 
@@ -456,7 +492,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = text(&a[0])?;
         let env = ctx.parse_env();
         let first =
-            |v: &Value| -> Result<char, XlError> { text(v)?.chars().next().ok_or(XlError::Value) };
+            |v: &Value| -> Result<char, XlError> { text(v)?.chars().next().ok_or(XlError::VALUE) };
         let ldec = env.locale.decimal_sep;
         let dec = match a.get(1) {
             Some(v) => first(v)?,
@@ -468,7 +504,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         };
         if dec == group {
             if a.len() != 2 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             group = ldec;
         }
@@ -479,7 +515,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
                 continue;
             }
             if cleaned.len() >= 255 {
-                return Err(XlError::Value);
+                return Err(XlError::VALUE);
             }
             if c == dec {
                 seen_dec = true;
@@ -506,7 +542,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
                 ..env
             },
         )
-        .ok_or(XlError::Value)?
+        .ok_or(XlError::VALUE)?
         .value;
         for _ in 0..pct {
             n /= 100.0;
@@ -525,7 +561,7 @@ fn char_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let n = ifuzz(num(ctx, &a[0])?);
         if !(1.0..=255.0).contains(&n) {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let n = n as u32;
         let cp = if (128..160).contains(&n) {
@@ -540,7 +576,7 @@ fn char_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn code(_: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let c = s.chars().next().ok_or(XlError::Value)? as u32;
+        let c = s.chars().next().ok_or(XlError::VALUE)? as u32;
         let code = if c < 128
             || (128..160).contains(&c) && !CP1252_HIGH.contains(&c)
             || (160..256).contains(&c)
@@ -560,7 +596,7 @@ fn unichar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let n = num(ctx, &a[0])?.trunc();
         if n < 1.0 || n >= 2147483648.0 {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         let u = n as u32;
 
@@ -568,7 +604,7 @@ fn unichar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             return Err(XlError::NA);
         }
         if u > 0x10FFFF {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
 
         if (0xFDD0..=0xFDEF).contains(&u) || (u & 0xFFFE) == 0xFFFE {
@@ -582,7 +618,7 @@ fn unichar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn unicode(_: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let c = s.chars().next().ok_or(XlError::Value)?;
+        let c = s.chars().next().ok_or(XlError::VALUE)?;
         Ok(Value::Number(c as u32 as f64))
     })())
 }
@@ -599,7 +635,7 @@ fn encodeurl(_: &mut EvalCtx, a: &[Value]) -> Value {
             }
         }
         if utf16_len(&out) > MAX_TEXT_LEN {
-            return Err(XlError::Value);
+            return Err(XlError::VALUE);
         }
         Ok(Value::from(out))
     })())
@@ -621,7 +657,7 @@ fn locale_stub(_: &mut EvalCtx, a: &[Value]) -> Value {
     a.iter()
         .find(|v| v.is_error())
         .cloned()
-        .unwrap_or(err(XlError::Value))
+        .unwrap_or(err(XlError::VALUE))
 }
 
 fn na_stub(c: &mut EvalCtx, a: &[Value]) -> Value {

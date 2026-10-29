@@ -56,10 +56,10 @@ impl Workbook {
                 Node::Name {
                     key, sheet: None, ..
                 }
-                | Node::NamedCall { key, .. } => {
-                    if !keys.contains(key) {
-                        keys.push(key.clone());
-                    }
+                | Node::NamedCall { key, .. }
+                    if !keys.contains(key) =>
+                {
+                    keys.push(key.clone());
                 }
                 _ => {}
             });
@@ -436,7 +436,7 @@ impl Workbook {
         unreachable!()
     }
 
-    fn copy_table_name(&self, base: &str) -> String {
+    pub(crate) fn copy_table_name(&self, base: &str) -> String {
         let mut n = self.tables_made + 2;
         loop {
             let name = if base.ends_with(|c: char| c.is_ascii_digit()) {
@@ -688,7 +688,7 @@ impl Workbook {
             for fid in fids {
                 formula::walk(&self.formula(fid).formula.root, &mut |n| match n {
                     Node::Name { key, sheet, .. } => {
-                        if matches!(sheet, None)
+                        if sheet.is_none()
                             || matches!(sheet, Some(SheetRef::Sheet(s)) if *s == src)
                                 && !todo.contains(key)
                         {

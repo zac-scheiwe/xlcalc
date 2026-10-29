@@ -1,0 +1,235 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "reg"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "amt"
+},
+{
+"op": "set",
+"cell": "Sheet1!C1",
+"input": "d"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "S"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Sheet1!C3",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A4",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "30"
+},
+{
+"op": "set",
+"cell": "Sheet1!C4",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "E"
+},
+{
+"op": "set",
+"cell": "Sheet1!B5",
+"input": "40"
+},
+{
+"op": "set",
+"cell": "Sheet1!C5",
+"input": "4"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:C5",
+"name": "Sales"
+},
+{
+"op": "set",
+"cell": "Sheet1!F1",
+"input": "=SUMIFS(Sales[amt],Sales[reg],\"N\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F2",
+"input": "=SUMIFS(Sales[amt],Sales[reg],\"N\",Sales[d],\">1\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F3",
+"input": "=XLOOKUP(\"E\",Sales[reg],Sales[amt])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F4",
+"input": "=ROWS(Sales)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F5",
+"input": "=ROWS(Sales[#All])"
+},
+{
+"op": "set",
+"cell": "Sheet1!F6",
+"input": "=COLUMNS(Sales)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F7",
+"input": "=INDEX(Sales,2,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F8",
+"input": "=INDEX(Sales,0,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F9",
+"input": "=INDEX(Sales[#All],1,2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F10",
+"input": "=COUNTIF(Sales[reg],\"N\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!F11",
+"input": "=MATCH(\"S\",Sales[reg],0)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F12",
+"input": "=VLOOKUP(\"E\",Sales,2,FALSE)"
+},
+{
+"op": "set",
+"cell": "Sheet1!F13",
+"input": "=SUM(INDEX(Sales,0,2))"
+},
+{
+"op": "set",
+"cell": "Sheet1!F14",
+"input": "=ROWS(Sales[[#Headers],[#Data]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!H1",
+"input": "=FILTER(Sales[amt],Sales[reg]=\"N\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!J1",
+"input": "=FILTER(Sales,Sales[reg]=\"N\")"
+},
+{
+"op": "set",
+"cell": "Sheet1!N1",
+"input": "=SORT(Sales,2,-1)"
+},
+{
+"op": "set",
+"cell": "Sheet1!R1",
+"input": "=TAKE(Sales[#All],2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!U1",
+"input": "=Sales[amt]*2"
+},
+{
+"op": "set",
+"cell": "Sheet1!W1",
+"input": "=TRANSPOSE(Sales[[#Headers],[reg]:[d]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!Z1",
+"input": "=UNIQUE(Sales[reg])"
+},
+{
+"op": "read",
+"range": "Sheet1!F1:AA10"
+},
+{
+"op": "read_text",
+"range": "Sheet1!F1:F14"
+},
+{
+"op": "set",
+"cell": "Sheet1!A6",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "Sheet1!B6",
+"input": "50"
+},
+{
+"op": "read",
+"range": "Sheet1!F1:AA10"
+},
+{
+"op": "insert_rows",
+"sheet": "Sheet1",
+"at": 2,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sheet1!F1:Z10"
+},
+{
+"op": "delete_rows",
+"sheet": "Sheet1",
+"at": 2,
+"count": 2
+},
+{
+"op": "read",
+"range": "Sheet1!F1:Z10"
+},
+{
+"op": "read_text",
+"range": "Sheet1!F1:F3"
+}
+]
+}

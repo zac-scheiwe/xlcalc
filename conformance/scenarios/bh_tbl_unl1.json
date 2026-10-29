@@ -1,0 +1,134 @@
+{
+"steps": [
+{
+"op": "set",
+"cell": "Sheet1!A1",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Sheet1!B1",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sheet1!B2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Sheet1!A3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Sheet1!B3",
+"input": "4"
+},
+{
+"op": "table",
+"range": "Sheet1!A1:B3",
+"name": "Tb"
+},
+{
+"op": "table_totals",
+"sheet": "Sheet1",
+"name": "Tb",
+"value": true
+},
+{
+"op": "set",
+"cell": "Sheet1!B4",
+"input": "=SUM(Tb[b])"
+},
+{
+"op": "set",
+"cell": "Sheet1!D1",
+"input": "=SUM(Tb[a])"
+},
+{
+"op": "set",
+"cell": "Sheet1!D2",
+"input": "=Tb[[#Headers],[a]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D3",
+"input": "=Tb"
+},
+{
+"op": "set",
+"cell": "Sheet1!D4",
+"input": "=Tb[#All]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D6",
+"input": "=Tb[[#Totals],[b]]"
+},
+{
+"op": "set",
+"cell": "Sheet1!D7",
+"input": "=Tb[@a]"
+},
+{
+"op": "set",
+"cell": "Sheet1!C2",
+"input": "=[@a]+[@b]"
+},
+{
+"op": "set",
+"cell": "Sheet1!E1",
+"input": "=ROWS(Tb[[#Data],[a]:[b]])"
+},
+{
+"op": "set",
+"cell": "Sheet1!E2",
+"input": "=INDEX(Tb[b],2)"
+},
+{
+"op": "set",
+"cell": "Sheet1!E3",
+"input": "=SUMPRODUCT(Tb[a],Tb[b])"
+},
+{
+"op": "set",
+"cell": "Sheet1!E4",
+"input": "=Tb[[#Data],[#Totals]]"
+},
+{
+"op": "table_unlist",
+"name": "Tb"
+},
+{
+"op": "read_text",
+"range": "Sheet1!A1:E8"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E10"
+},
+{
+"op": "tables"
+},
+{
+"op": "set",
+"cell": "Sheet1!A5",
+"input": "9"
+},
+{
+"op": "set",
+"cell": "Sheet1!A2",
+"input": "100"
+},
+{
+"op": "read",
+"range": "Sheet1!A1:E10"
+}
+]
+}
