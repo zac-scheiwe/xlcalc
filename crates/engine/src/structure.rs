@@ -250,6 +250,12 @@ impl Workbook {
                     return None;
                 }
                 let t = self.table_by_name(table)?;
+
+                if keep_implicit
+                    && (t.sheet != from.sheet || from.col < t.rect.c0 || from.col > t.rect.c1)
+                {
+                    return None;
+                }
                 let i = t.column_index(a)? as i64;
 
                 let j = i + delta;

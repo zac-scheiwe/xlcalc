@@ -16,7 +16,13 @@ pub fn call_builtin(ctx: &mut EvalCtx, id: FuncId, args: &[Node]) -> Operand {
         _ => {}
     }
     ctx.fn_depth += 1;
+
+    let chain = ctx.vchain;
+    if matches!(def.imp, Imp::Lazy(_)) {
+        ctx.vchain = false;
+    }
     let out = call_builtin_inner(ctx, def, args);
+    ctx.vchain = chain;
     ctx.fn_depth -= 1;
     ctx.arr_ctx = saved;
     if ctx.has_placeholders() {
@@ -55,7 +61,81 @@ fn array_slot(name: &str, i: usize) -> bool {
     }
 }
 
+fn excel_value_class(name: &str, i: usize) -> bool {
+    crate::legacy_classes::legacy_classes(name).is_some_and(|c| {
+        let b = c.as_bytes();
+        !b.is_empty() && crate::legacy_classes::class_at(name, c, i) == b'V'
+    })
+}
+
 fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
+    let value = excel_value_class(name, i);
+    let saved = ctx.vchain;
+
+    ctx.vchain = saved && (value || name == "N");
+    let v = eval_arg_class(ctx, name, i, a);
+    let chain = ctx.vchain;
+    ctx.vchain = saved;
+
+    if saved && IS_FNS.contains(&name) && ctx.in_array_block() {
+        if let Operand::Ref(Reference::Grid(g)) = &v {
+            let g = g.clone();
+            let (mut rows, mut cols) = (g.rows, g.cols);
+            if ctx.fn_depth == 1 {
+                if let Some((br, bc)) = ctx
+                    .wb
+                    .formula_at(ctx.host)
+                    .and_then(|f| ctx.wb.formula(f).array)
+                {
+                    rows = rows.max(br);
+                    cols = cols.max(bc);
+                }
+            }
+            let mut data = Vec::with_capacity((rows * cols) as usize);
+            for r in 0..rows {
+                for c in 0..cols {
+                    data.push(match g.broadcast_get(r, c) {
+                        Operand::Ref(Reference::Area(a)) if a.rect.is_cell() => {
+                            ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0)
+                        }
+                        Operand::Ref(_) => Value::Error(XlError::VALUE),
+                        o => ctx.deref(o),
+                    });
+                }
+            }
+            return Operand::Val(Array::new(rows, cols, data).into_value());
+        }
+    }
+
+    if value && name != "TYPE" {
+        ctx.cse_value_grid(v, chain)
+    } else {
+        v
+    }
+}
+
+fn eval_arg_class(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
+    let slot = if excel_array_class(name, i) {
+        true
+    } else if ARR_BREAK.contains(&name) || matches!((name, i), ("INDEX", 1..) | ("XLOOKUP", 0)) {
+        false
+    } else {
+        ctx.arr_slot
+    };
+    let saved = std::mem::replace(&mut ctx.arr_slot, slot);
+    let v = eval_arg_class_inner(ctx, name, i, a);
+    ctx.arr_slot = saved;
+    v
+}
+
+fn excel_array_class(name: &str, i: usize) -> bool {
+    crate::legacy_classes::legacy_classes(name).is_some_and(|c| {
+        let b = c.as_bytes();
+        !b.is_empty() && b[i.min(b.len() - 1)] == b'A'
+    })
+}
+
+fn eval_arg_class_inner(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
     if ctx.arr_ctx == 0 {
         if !array_slot(name, i) {
             return ctx.eval(a);
@@ -122,6 +202,19 @@ const PLAIN_EMPTY: &[&str] = &[
     "TOROW",
 ];
 
+fn child_reduce(def: &FnDef, i: usize, inherited: bool) -> bool {
+    if array_slot(def.name, i)
+        || matches!(
+            def.name,
+            "TRANSPOSE" | "INDEX" | "XLOOKUP" | "LET" | "IF" | "IFS" | "CHOOSE"
+        )
+    {
+        return inherited;
+    }
+    def.param_class(i) == crate::functions::ParamClass::Raw
+        && !matches!(def.name, "N" | "T" | "MMULT")
+}
+
 fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> Operand {
     match def.imp {
         Imp::Lazy(f) => {
@@ -134,15 +227,22 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
         }
         Imp::Scalar(f) => {
             let mut ops = Vec::with_capacity(args.len());
+            let mut carried = false;
             for (i, a) in args.iter().enumerate() {
                 ctx.name_first = def.param_letter(i) != b'Q' && matches!(a, Node::Name { .. });
+                ctx.cse_lifted = false;
+                let saved_reduce = std::mem::replace(&mut ctx.dyn_reduce, false);
                 let v = eval_arg(ctx, def.name, i, a);
+                ctx.dyn_reduce = saved_reduce;
+                carried |= std::mem::take(&mut ctx.cse_lifted);
                 ops.push(v);
             }
             if ctx.interrupted() {
                 return Operand::err(XlError::CALC);
             }
             note_circ_args(ctx, &ops);
+
+            ctx.cse_lifted = carried && ctx.fn_depth > 1;
             call_lifted(ctx, def, ops, &mut |ctx, ops| {
                 if long_text(ctx, def.name, ops) {
                     return Operand::err(XlError::VALUE);
@@ -162,21 +262,32 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
                 return r;
             }
             let mut ops = Vec::with_capacity(args.len());
+            let mut carried = Vec::new();
             for (i, a) in args.iter().enumerate() {
-                let named = matches!(a, Node::Name { .. });
+                let named = ctx.is_name_node(a);
 
                 let reduce = ctx.legacy_form || (def.name == "INDEX" && args.len() > 2);
                 ctx.name_first = named
                     && match (def.name, i) {
-                        ("INDEX", 0) => reduce,
-                        ("OFFSET", 0) => true,
-                        _ => ctx.legacy_form || def.param_letter(i) != b'Q',
+                        ("INDEX", 0) => reduce || ctx.dyn_reduce,
+
+                        ("OFFSET", 0) => ctx.legacy_form || ctx.fn_depth > 1 || ctx.arr_slot,
+
+                        _ if array_slot(def.name, i) && !ctx.legacy_form => ctx.dyn_reduce,
+                        ("TRANSPOSE", 0) if !ctx.legacy_form => false,
+
+                        ("SORTBY", _) | ("XLOOKUP", 2) if !ctx.legacy_form => ctx.dyn_reduce,
+                        _ => ctx.legacy_form || ctx.arr_slot || def.param_letter(i) != b'Q',
                     };
+                ctx.name_keep = named && !ctx.name_first && (def.name, i) == ("XLOOKUP", 2);
+                ctx.cse_lifted = false;
+                let saved_reduce = ctx.dyn_reduce;
+                ctx.dyn_reduce = child_reduce(def, i, saved_reduce);
                 let mut v = eval_arg(ctx, def.name, i, a);
-                if named && def.name == "INDEX" && i == 0 {
-                    if let Operand::Ref(Reference::Grid(g)) = &v {
-                        v = Operand::Val(Value::Array(g.value_array()));
-                    }
+                ctx.dyn_reduce = saved_reduce;
+
+                if std::mem::take(&mut ctx.cse_lifted) && !excel_array_class(def.name, i) {
+                    carried.push(i);
                 }
 
                 if named
@@ -191,7 +302,7 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             if ctx.interrupted() {
                 return Operand::err(XlError::CALC);
             }
-            if let Some(r) = cse_lift(ctx, def.name, &ops, &mut |ctx, ops| {
+            if let Some(r) = cse_lift(ctx, def.name, &ops, &carried, &mut |ctx, ops| {
                 args_tail(ctx, def, f, ops)
             }) {
                 return r;
@@ -205,10 +316,20 @@ fn cse_lift(
     ctx: &mut EvalCtx,
     name: &str,
     ops: &[Operand],
+    carried: &[usize],
     run: &mut dyn FnMut(&mut EvalCtx, Vec<Operand>) -> Operand,
 ) -> Option<Operand> {
     let grids = |o: &Operand| matches!(o, Operand::Ref(Reference::Grid(_)));
-    if !ops.iter().any(grids) {
+
+    let carried_arr = |i: usize| match &ops[i] {
+        Operand::Val(Value::Array(a)) if carried.contains(&i) => Some(a.clone()),
+        _ => None,
+    };
+    if !ops.iter().any(grids) && carried.is_empty() {
+        return None;
+    }
+
+    if NO_CSE_LIFT.contains(&name) {
         return None;
     }
     let block = ctx
@@ -218,19 +339,37 @@ fn cse_lift(
     let (br, bc) = block?;
 
     let (mut rows, mut cols) = if ctx.fn_depth == 1 { (br, bc) } else { (1, 1) };
-    for o in ops {
+    for (i, o) in ops.iter().enumerate() {
         if let Operand::Ref(Reference::Grid(g)) = o {
             rows = rows.max(g.rows);
             cols = cols.max(g.cols);
         }
+        if let Some(a) = carried_arr(i) {
+            rows = rows.max(a.rows);
+            cols = cols.max(a.cols);
+        }
     }
+    let value_slot = |i: usize| excel_value_class(name, i);
     let mut data = Vec::with_capacity(rows as usize * cols as usize);
     for r in 0..rows {
         for c in 0..cols {
             let mut padded = false;
             let elem: Vec<Operand> = ops
                 .iter()
-                .map(|o| match o {
+                .enumerate()
+                .map(|(i, o)| match o {
+                    _ if carried.contains(&i) => match carried_arr(i) {
+                        Some(a) => {
+                            let rr = if a.rows == 1 { 0 } else { r };
+                            let cc = if a.cols == 1 { 0 } else { c };
+                            if rr >= a.rows || cc >= a.cols {
+                                padded = true;
+                                return Operand::err(XlError::NA);
+                            }
+                            Operand::Val(a.data[(rr * a.cols + cc) as usize].clone())
+                        }
+                        None => o.clone(),
+                    },
                     Operand::Ref(Reference::Grid(g)) => {
                         let rr = if g.rows == 1 { 0 } else { r };
                         let cc = if g.cols == 1 { 0 } else { c };
@@ -242,6 +381,26 @@ fn cse_lift(
                             Ok(a) => Operand::Ref(Reference::Area(*a)),
                             Err(e) => Operand::err(*e),
                         }
+                    }
+
+                    Operand::Val(Value::Array(a)) if value_slot(i) && a.data.len() > 1 => {
+                        let rr = if a.rows == 1 { 0 } else { r };
+                        let cc = if a.cols == 1 { 0 } else { c };
+                        if rr >= a.rows || cc >= a.cols {
+                            return Operand::err(XlError::NA);
+                        }
+                        Operand::Val(a.data[(rr * a.cols + cc) as usize].clone())
+                    }
+                    Operand::Ref(Reference::Area(a)) if value_slot(i) && !a.rect.is_cell() => {
+                        let rr = if a.rect.rows() == 1 { 0 } else { r };
+                        let cc = if a.rect.cols() == 1 { 0 } else { c };
+                        if rr >= a.rect.rows() || cc >= a.rect.cols() {
+                            return Operand::err(XlError::NA);
+                        }
+                        Operand::Ref(Reference::Area(crate::eval::Area {
+                            sheet: a.sheet,
+                            rect: crate::address::Rect::cell(a.rect.r0 + rr, a.rect.c0 + cc),
+                        }))
                     }
                     o => o.clone(),
                 })
@@ -258,12 +417,43 @@ fn cse_lift(
             });
         }
     }
+
+    let by_index = ops
+        .iter()
+        .any(|o| matches!(o, Operand::Ref(Reference::Grid(g)) if g.by_index));
+    ctx.cse_lifted =
+        ctx.fn_depth > 1 && (!REF_ARRAY_FNS.contains(&name) || by_index || !carried.is_empty());
     Some(Operand::Val(if data.len() == 1 {
         data.pop().unwrap()
     } else {
         Array::new(rows, cols, data).into_value()
     }))
 }
+
+const IS_FNS: &[&str] = &[
+    "ISBLANK",
+    "ISERR",
+    "ISERROR",
+    "ISLOGICAL",
+    "ISNA",
+    "ISNONTEXT",
+    "ISNUMBER",
+    "ISTEXT",
+];
+
+const NO_CSE_LIFT: &[&str] = &["TYPE", "SUMPRODUCT", "LARGE", "SMALL"];
+
+const REF_ARRAY_FNS: &[&str] = &[
+    "N",
+    "T",
+    "SUBTOTAL",
+    "COUNTIF",
+    "COUNTIFS",
+    "SUMIF",
+    "SUMIFS",
+    "AVERAGEIF",
+    "AVERAGEIFS",
+];
 
 fn args_tail(
     ctx: &mut EvalCtx,
@@ -547,7 +737,10 @@ fn grid_args(ctx: &mut EvalCtx, name: &str, ops: &mut [Operand]) -> Option<Opera
         "CORREL" if any => XlError::NUM,
 
         "MATCH" | "XMATCH" | "XLOOKUP" | "LOOKUP" | "VLOOKUP" | "HLOOKUP" => {
-            for o in ops.iter_mut() {
+            for (i, o) in ops.iter_mut().enumerate() {
+                if (name, i) == ("XLOOKUP", 2) {
+                    continue;
+                }
                 if let Operand::Ref(Reference::Grid(g)) = o {
                     *o = Operand::Val(Value::Array(g.value_array()));
                 }
@@ -745,6 +938,17 @@ pub fn call_lifted(
     let Some((rows, cols)) = shape else {
         return body(ctx, &ops);
     };
+
+    if def.name == "INDEX" && ctx.name_ref_root == Some(ctx.fn_depth) && cse_block(ctx).is_none() {
+        for &i in &lifted {
+            ops[i] = match &ops[i] {
+                Operand::Val(Value::Array(a)) => Operand::Val(a.broadcast_get(0, 0)),
+                Operand::Ref(Reference::Grid(g)) => g.broadcast_get(0, 0),
+                o => o.clone(),
+            };
+        }
+        return body(ctx, &ops);
+    }
     let circ = ctx.has_placeholders()
         && lifted
             .iter()
@@ -783,7 +987,11 @@ pub fn call_lifted(
             }
             let out = body(ctx, &elem);
 
-            if def.name == "INDEX" && (cse_block(ctx).is_some()) {
+            if (def.name == "INDEX"
+                && (cse_block(ctx).is_some() || ctx.name_ref_root == Some(ctx.fn_depth)))
+                || (def.name == "OFFSET"
+                    && matches!(ops.first(), Some(Operand::Ref(Reference::Grid(_)))))
+            {
                 match &out {
                     Operand::Ref(Reference::Area(a)) => picked.push(Ok(*a)),
                     Operand::Val(Value::Error(e)) => picked.push(Err(*e)),

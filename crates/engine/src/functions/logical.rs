@@ -239,6 +239,11 @@ fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Op
             if alt.is_missing() {
                 return alt;
             }
+
+            let at = ctx.legacy_form || ctx.at_call == Some(ctx.fn_depth);
+            if let (true, Operand::Ref(crate::eval::Reference::Area(_))) = (at, &alt) {
+                return alt;
+            }
             let alt = ctx.deref(alt);
             Operand::Val(alt)
         }

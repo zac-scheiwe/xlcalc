@@ -41,7 +41,8 @@ pub fn syd(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn ddb_core(cost: f64, salvage: f64, life: f64, period: f64, factor: f64) -> f64 {
     use crate::x87::{div, mul, sub};
-    let rate = div(factor, life);
+
+    let rate = if life == 0.0 { 0.0 } else { div(factor, life) };
     let book = if rate >= 1.0 {
         if period <= 1.0 {
             cost
@@ -221,7 +222,7 @@ pub fn vdb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             || cost < 0.0
             || salvage < 0.0
             || factor < 0.0
-            || life <= 0.0
+            || life < 0.0
         {
             return Err(XlError::NUM);
         }
@@ -229,6 +230,10 @@ pub fn vdb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let int_end = end.ceil();
         let mut result = 0.0;
         if no_switch {
+            if life == 0.0 {
+                return Err(XlError::DIV0);
+            }
+
             use crate::x87::{add, mul, sub};
             let mut i = int_start + 1.0;
             while i <= int_end {
@@ -268,15 +273,18 @@ fn amor_args(ctx: &EvalCtx, a: &[Arg]) -> R<Amor> {
     let salvage = atp::req(ctx, a, 3)?;
     let period = atp::req(ctx, a, 4)?;
     let rate = atp::req(ctx, a, 5)?;
-    let basis = atp::basis(ctx, a, 6)?;
-    if basis == 2
-        || cost <= 0.0
+
+    if cost <= 0.0
         || salvage < 0.0
         || salvage > cost
         || period < 0.0
         || rate <= 0.0
         || purchased > first
     {
+        return Err(XlError::NUM);
+    }
+    let basis = atp::basis(ctx, a, 6)?;
+    if basis == 2 {
         return Err(XlError::NUM);
     }
     Ok(Amor {

@@ -42,6 +42,8 @@ pub fn parse(src: &str) -> Result<Expr, ParseError> {
         rhs: 0,
         names_mode: false,
         empty_ws: String::new(),
+        binder: 0,
+        locals: Vec::new(),
     };
     let mut e = p.expr()?;
 
@@ -94,6 +96,10 @@ struct Parser {
     names_mode: bool,
 
     empty_ws: String,
+
+    binder: u8,
+
+    locals: Vec<String>,
 }
 
 const MAX_FORMULA_CHARS: usize = 8192;
@@ -519,7 +525,9 @@ impl Parser {
         if self.funcs > MAX_FUNC_DEPTH {
             return Err(self.err("functions nested too deeply"));
         }
+        let mark = self.locals.len();
         let r = self.args_inner();
+        self.locals.truncate(mark);
         self.funcs -= 1;
         r
     }
@@ -532,11 +540,42 @@ impl Parser {
             self.bump();
             return Ok(args);
         }
+        let binder = std::mem::take(&mut self.binder);
+        let mut pending: Option<String> = None;
         loop {
+            let k = args.len();
             if self.is_op(",") || self.is_op(")") {
                 args.push(Expr::Missing);
             } else {
-                args.push(self.expr()?);
+                let var = match (&self.cur().tok, self.peek_tok(1)) {
+                    (Tok::Ident(w), Tok::Op(","))
+                        if binder != 0
+                            && (binder == 2 || k % 2 == 0)
+                            && !w.contains('$')
+                            && cell_part(w).is_some()
+                            && split_fields(w).is_none() =>
+                    {
+                        Some(w.clone())
+                    }
+                    _ => None,
+                };
+                if let Some(w) = var {
+                    self.bump();
+                    if binder == 2 {
+                        self.locals.push(w.to_uppercase());
+                    } else {
+                        pending = Some(w.to_uppercase());
+                    }
+                    args.push(Expr::Name {
+                        sheet: None,
+                        name: w,
+                    });
+                } else {
+                    args.push(self.expr()?);
+                    if let Some(w) = pending.take() {
+                        self.locals.push(w);
+                    }
+                }
             }
             if self.is_op(",") {
                 self.bump();
@@ -663,6 +702,11 @@ impl Parser {
         }
 
         if sheet.is_none() && self.is_op("(") && !self.cur().space_before {
+            self.binder = match name.to_ascii_uppercase().trim_start_matches("_XLFN.") {
+                "LET" => 1,
+                "LAMBDA" => 2,
+                _ => 0,
+            };
             let mut args = self.args()?;
 
             if args.len() == 1
@@ -739,6 +783,16 @@ impl Parser {
             ));
         }
         if let Some((row, col)) = cell_part(&name) {
+            if sheet.is_none()
+                && !self.locals.is_empty()
+                && self.locals.contains(&name.to_uppercase())
+                && !self.is_op(":")
+                && !self.is_op("(")
+                && !(self.i >= 2 && matches!(self.toks[self.i - 2].tok, Tok::Op(":")))
+            {
+                return Ok(Expr::Name { sheet, name });
+            }
+
             if self.is_op(":") {
                 if let Tok::Ident(second) = self.peek_tok(1) {
                     let second = second.clone();

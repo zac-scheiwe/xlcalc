@@ -142,12 +142,37 @@ impl Workbook {
                 }
             }
         }
+
+        let this_row: Vec<crate::workbook::FormulaId> = self
+            .formula_ids()
+            .filter(|&fid| {
+                let mut root = &self.formula(fid).formula.root;
+                while let Node::Paren(x) | Node::Ws { node: x, .. } = root {
+                    root = x;
+                }
+                matches!(root, Node::StructRef { table, spec, .. }
+                    if spec.items.this_row
+                        && spec.cols.as_ref().is_some_and(|(a, b)| a == b)
+                        && crate::text::eq_ordinal_ci(table, &t.name))
+            })
+            .collect();
         self.rewrite_nodes(&mut |n, host| match n {
             Node::StructRef { table, spec, .. } if crate::text::eq_ordinal_ci(table, &t.name) => {
                 Some(t.plain_ref(spec, host))
             }
             _ => None,
         });
+        for fid in this_row {
+            let f = &self.formula(fid).formula;
+            let wrapped = crate::formula::Formula {
+                root: Node::Unary(
+                    crate::parser::ast::UnaryOp::ImplicitQuiet,
+                    Box::new(f.root.clone()),
+                ),
+                volatile: f.volatile,
+            };
+            self.formula_mut(fid).formula = std::sync::Arc::new(wrapped);
+        }
         self.view_drop_table(t.sheet, &t.name);
         self.tables.remove(ti);
         let report = self.relink_and_recalc();

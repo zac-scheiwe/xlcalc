@@ -218,9 +218,25 @@ pub struct EvalCtx<'a> {
 
     pub(crate) name_first: bool,
 
+    pub(crate) name_keep: bool,
+
+    pub(crate) let_names: Vec<(u32, crate::value::Text, Node)>,
+
+    pub(crate) name_ref_root: Option<u32>,
+
+    pub(crate) arr_slot: bool,
+
+    pub(crate) dyn_reduce: bool,
+
+    pub(crate) cse_lifted: bool,
+
     pub(crate) fn_depth: u32,
 
     pub(crate) legacy_form: bool,
+
+    pub(crate) at_call: Option<u32>,
+
+    pub(crate) vchain: bool,
 }
 
 impl<'a> EvalCtx<'a> {
@@ -250,8 +266,32 @@ impl<'a> EvalCtx<'a> {
             name_key: None,
             arr_direct: false,
             name_first: false,
+            name_keep: false,
+            let_names: Vec::new(),
+            name_ref_root: None,
+            arr_slot: false,
+            dyn_reduce: false,
             fn_depth: 0,
             legacy_form: false,
+            at_call: None,
+            vchain: true,
+            cse_lifted: false,
+        }
+    }
+
+    pub(crate) fn let_name(&self, slot: u32, name: &str) -> Option<&Node> {
+        self.let_names
+            .iter()
+            .rev()
+            .find(|(s, n, _)| *s == slot && n.eq_ignore_ascii_case(name))
+            .map(|(_, _, node)| node)
+    }
+
+    pub(crate) fn is_name_node(&self, node: &Node) -> bool {
+        match node {
+            Node::Name { .. } => true,
+            Node::Local { slot, name } => self.let_name(*slot, name).is_some(),
+            _ => false,
         }
     }
 
@@ -539,6 +579,27 @@ impl<'a> EvalCtx<'a> {
             .is_some_and(|f| self.wb.formula(f).array.is_some())
     }
 
+    pub(crate) fn cse_value_grid(&mut self, op: Operand, chain: bool) -> Operand {
+        let Operand::Ref(Reference::Grid(g)) = &op else {
+            return op;
+        };
+        let Some(block) = self
+            .wb
+            .formula_at(self.host)
+            .and_then(|f| self.wb.formula(f).array)
+        else {
+            return op;
+        };
+        if chain && block == (1, 1) {
+            return match g.items.first() {
+                Some(Ok(a)) => Operand::Ref(Reference::Area(*a)),
+                Some(Err(e)) => Operand::err(*e),
+                None => Operand::err(XlError::VALUE),
+            };
+        }
+        Operand::Val(Value::Array(g.value_array()))
+    }
+
     pub fn deref(&mut self, op: Operand) -> Value {
         match op {
             Operand::Val(v) => v,
@@ -568,6 +629,7 @@ impl<'a> EvalCtx<'a> {
     fn eval_inner(&mut self, node: &Node) -> Operand {
         let direct = std::mem::replace(&mut self.arr_direct, false);
         let first = std::mem::replace(&mut self.name_first, false);
+        let keep = std::mem::replace(&mut self.name_keep, false);
         match node {
             Node::Lit(v) => Operand::Val(v.clone()),
             Node::Ref(sheet, cref) => refs::resolve(self, sheet, cref),
@@ -578,16 +640,29 @@ impl<'a> EvalCtx<'a> {
                     0
                 };
                 let saved = std::mem::replace(&mut self.arr_ctx, inner);
+
+                let root = (first || keep || self.legacy_form).then_some(self.fn_depth + 1);
+                let saved_root = std::mem::replace(&mut self.name_ref_root, root);
                 let out = refs::eval_name(self, key, sheet.as_ref());
+                self.name_ref_root = saved_root;
                 self.arr_ctx = saved;
                 match out {
-                    Operand::Ref(Reference::Grid(g)) if first => match g.items.first() {
-                        Some(Ok(a)) => Operand::Ref(Reference::Area(*a)),
-                        Some(Err(e)) => Operand::err(*e),
-                        None => Operand::err(XlError::VALUE),
-                    },
+                    Operand::Ref(Reference::Grid(g)) if first || self.legacy_form => {
+                        match g.items.first() {
+                            Some(Ok(a)) => Operand::Ref(Reference::Area(*a)),
+                            Some(Err(e)) => Operand::err(*e),
+                            None => Operand::err(XlError::VALUE),
+                        }
+                    }
                     out => out,
                 }
+            }
+            Node::Local { slot, name } if self.let_name(*slot, name).is_some() => {
+                let n = self.let_name(*slot, name).cloned().unwrap_or(Node::Missing);
+                self.name_first = first;
+                self.name_keep = keep;
+                self.arr_direct = direct;
+                self.eval(&n)
             }
             Node::Local { slot, .. } => self
                 .env
@@ -598,7 +673,11 @@ impl<'a> EvalCtx<'a> {
                 let quiet = matches!(node, Node::Unary(UnaryOp::ImplicitQuiet, _));
                 let saved = self.legacy_form;
                 self.legacy_form = saved || quiet;
+                let at_call =
+                    matches!(x.unwrap_ws(), Node::Func { .. }).then_some(self.fn_depth + 1);
+                let saved_at = std::mem::replace(&mut self.at_call, at_call);
                 let v = self.eval(x);
+                self.at_call = saved_at;
                 self.legacy_form = saved;
 
                 let v = match v {
@@ -621,16 +700,30 @@ impl<'a> EvalCtx<'a> {
                 }
             }
             Node::Unary(op, x) => {
+                let saved = std::mem::replace(&mut self.dyn_reduce, false);
                 let v = self.eval(x);
+                self.dyn_reduce = saved;
 
-                if *op == UnaryOp::Plus && matches!(v, Operand::Ref(Reference::Grid(_))) {
-                    return v;
+                if *op == UnaryOp::Plus && self.fn_depth > 0 {
+                    if let Operand::Ref(Reference::Grid(g)) = &v {
+                        if g.items
+                            .iter()
+                            .all(|i| i.as_ref().is_ok_and(|a| a.rect.is_cell()))
+                        {
+                            let g = g.clone();
+                            return Operand::Val(self.grid_cells(&g));
+                        }
+                        return v;
+                    }
                 }
+                let v = self.cse_value_grid(v, self.vchain);
                 let v = self.deref(v);
                 Operand::Val(ops::unary(self, *op, v))
             }
             Node::Percent(x) => {
+                let saved = std::mem::replace(&mut self.dyn_reduce, false);
                 let v = self.eval(x);
+                self.dyn_reduce = saved;
                 let v = self.deref(v);
                 Operand::Val(ops::percent(self, v))
             }
@@ -656,9 +749,15 @@ impl<'a> EvalCtx<'a> {
                     refs::ref_op(self, *op, l, r)
                 }
                 _ => {
+                    let saved = std::mem::replace(&mut self.dyn_reduce, false);
                     let l = self.eval(a);
+                    self.dyn_reduce = saved;
+                    let l = self.cse_value_grid(l, self.vchain);
                     let l = self.deref(l);
+                    let saved = std::mem::replace(&mut self.dyn_reduce, false);
                     let r = self.eval(b);
+                    self.dyn_reduce = saved;
+                    let r = self.cse_value_grid(r, self.vchain);
                     let r = self.deref(r);
                     Operand::Val(ops::binary(self, *op, l, r))
                 }
@@ -678,16 +777,28 @@ impl<'a> EvalCtx<'a> {
                 lambda::call_value(self, f, args)
             }
             Node::Let {
-                values, body, base, ..
+                names,
+                values,
+                body,
+                base,
             } => {
                 let saved = std::mem::replace(&mut self.arr_ctx, 0);
                 let base = *base as usize;
                 self.env.truncate(base);
-                for v in values {
+                let aliases = self.let_names.len();
+                for (k, v) in values.iter().enumerate() {
                     let x = self.eval(v);
                     self.env.push(x);
+                    if let (Node::Name { .. }, Some(var)) = (v.unwrap_ws(), names.get(k)) {
+                        self.let_names.push((
+                            (base + k) as u32,
+                            var.clone(),
+                            v.unwrap_ws().clone(),
+                        ));
+                    }
                 }
                 let out = self.eval(body);
+                self.let_names.truncate(aliases);
                 self.env.truncate(base);
                 self.arr_ctx = saved;
                 out
@@ -731,8 +842,15 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
                         .and_then(|f| ctx.wb.formula(f).array)
                         == Some((1, 1));
                     if g.by_index || one {
-                        let g = g.clone();
-                        let v = ctx.grid_cells(&g);
+                        let data = g
+                            .items
+                            .iter()
+                            .map(|i| match i {
+                                Ok(a) => ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0),
+                                Err(e) => Value::Error(*e),
+                            })
+                            .collect();
+                        let v = Array::new(g.rows, g.cols, data).into_value();
                         match v {
                             Value::Array(a) if one => a.data[0].clone(),
                             v => v,

@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use super::{lift_values, type_rank, xl_cmp, xl_eq, Src};
 use crate::address::{MAX_COLS, MAX_ROWS};
-use crate::eval::{Area, EvalCtx, Operand};
+use crate::eval::{Area, EvalCtx, Operand, Reference};
 use crate::value::{Value, XlError};
 
 use super::super::args::{sfix, R};
@@ -217,6 +217,8 @@ fn lookup_src(op: &Operand) -> R<Src> {
     match op {
         Operand::Missing => Err(XlError::VALUE),
         Operand::Ref(r) if r.is_span() => Err(XlError::VALUE),
+
+        Operand::Ref(Reference::Grid(_)) => Src::from_operand(op),
         Operand::Ref(r) if r.single().is_none() => Err(XlError::NA),
         op => Src::from_operand(op),
     }
@@ -385,6 +387,10 @@ pub fn xmatch(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let src = lookup_src(&ops[1]);
     let ret = lookup_src(&ops[2]);
+    let grid = match &ops[2] {
+        Operand::Ref(Reference::Grid(g)) => Some(g.clone()),
+        _ => None,
+    };
     let mut line: Option<Line> = None;
 
     let lifted = [0usize, 4, 5].iter().any(|&i| match ops.get(i) {
@@ -425,13 +431,31 @@ pub fn xlookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 return Err(XlError::VALUE);
             }
             let line = line.get_or_insert_with(|| Line::of(ctx, src, vertical, 0));
-            match xfind(line, &target, mm, sm) {
-                Some(i) => Ok(if vertical {
+            match (xfind(line, &target, mm, sm), grid.as_ref()) {
+                (Some(i), Some(g)) => {
+                    let (r0, r1, c0, c1) = if vertical {
+                        (i, i, 0, g.cols - 1)
+                    } else {
+                        (0, g.rows - 1, i, i)
+                    };
+                    let items: Vec<_> = (r0..=r1)
+                        .flat_map(|r| (c0..=c1).map(move |c| (r, c)))
+                        .map(|(r, c)| g.items[(r * g.cols + c) as usize])
+                        .collect();
+                    Ok(match items[..] {
+                        [Ok(a)] => Operand::Ref(Reference::Area(a)),
+                        [Err(e)] => Operand::err(e),
+                        _ => Operand::Ref(Reference::Grid(std::sync::Arc::new(
+                            crate::eval::RefGrid::new(r1 - r0 + 1, c1 - c0 + 1, items),
+                        ))),
+                    })
+                }
+                (Some(i), None) => Ok(if vertical {
                     ret.slice(i, i, 0, ret.cols() - 1)
                 } else {
                     ret.slice(0, ret.rows() - 1, i, i)
                 }),
-                None => match ops.get(3) {
+                (None, _) => match ops.get(3) {
                     None | Some(Operand::Missing) => Err(XlError::NA),
                     Some(Operand::Ref(r)) if r.single().is_none() => Err(XlError::VALUE),
                     Some(Operand::Ref(_)) if lifted => Err(XlError::VALUE),

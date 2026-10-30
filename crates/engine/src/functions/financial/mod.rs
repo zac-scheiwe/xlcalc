@@ -33,6 +33,15 @@ macro_rules! atp_fa {
     }};
 }
 
+macro_rules! atp_late {
+    ($name:literal, $min:expr, $max:expr, $quirk:expr, $f:path) => {{
+        fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+            atp::call_ex(ctx, ops, &[], $quirk, true, $f)
+        }
+        args($name, $min, $max, "R", wrapper)
+    }};
+}
+
 pub const DEFS: &[FnDef] = &[
     scalar("PMT", 3, 5, tvm::pmt),
     scalar("IPMT", 4, 6, tvm::ipmt),
@@ -59,22 +68,22 @@ pub const DEFS: &[FnDef] = &[
     scalar("DDB", 4, 5, dep::ddb),
     scalar("DB", 4, 5, dep::db),
     scalar("VDB", 5, 7, dep::vdb),
-    atp_fn!("AMORDEGRC", 6, 7, dep::amordegrc),
-    atp_fn!("AMORLINC", 6, 7, dep::amorlinc),
+    atp_late!("AMORDEGRC", 6, 7, true, dep::amordegrc),
+    atp_late!("AMORLINC", 6, 7, true, dep::amorlinc),
     atp_fn!("DOLLARDE", 2, 2, dep::dollarde),
     atp_fn!("DOLLARFR", 2, 2, dep::dollarfr),
     args("YEARFRAC", 2, 3, "R", |c, o| {
         atp::call_ex(c, o, &[], true, true, days::yearfrac)
     }),
     scalar("DAYS360", 2, 3, days::days360),
-    atp_fn!("COUPDAYBS", 3, 4, days::coupdaybs),
-    atp_fn!("COUPDAYS", 3, 4, days::coupdays),
-    atp_fn!("COUPDAYSNC", 3, 4, days::coupdaysnc),
-    atp_fn!("COUPNCD", 3, 4, days::coupncd),
-    atp_fa!("COUPNUM", 3, 4, days::coupnum),
-    atp_fn!("COUPPCD", 3, 4, days::couppcd),
-    atp_fa!("ACCRINT", 6, 8, bonds::accrint),
-    atp_fn!("ACCRINTM", 4, 5, bonds::accrintm),
+    atp_late!("COUPDAYBS", 3, 4, true, days::coupdaybs),
+    atp_late!("COUPDAYS", 3, 4, true, days::coupdays),
+    atp_late!("COUPDAYSNC", 3, 4, true, days::coupdaysnc),
+    atp_late!("COUPNCD", 3, 4, true, days::coupncd),
+    atp_late!("COUPNUM", 3, 4, false, days::coupnum),
+    atp_late!("COUPPCD", 3, 4, true, days::couppcd),
+    atp_late!("ACCRINT", 6, 8, false, bonds::accrint),
+    atp_late!("ACCRINTM", 4, 5, true, bonds::accrintm),
     atp_fn!("DISC", 4, 5, bonds::disc),
     atp_fn!("INTRATE", 4, 5, bonds::intrate),
     atp_fn!("RECEIVED", 4, 5, bonds::received),
@@ -87,10 +96,10 @@ pub const DEFS: &[FnDef] = &[
     atp_fa!("TBILLYIELD", 3, 3, bonds::tbillyield),
     atp_fn!("PRICE", 6, 7, bonds::price),
     atp_fn!("YIELD", 6, 7, bonds::yield_),
-    atp_fn!("DURATION", 5, 6, bonds::duration),
-    atp_fn!("MDURATION", 5, 6, bonds::mduration),
-    atp_fn!("ODDFPRICE", 8, 9, bonds::oddfprice),
-    atp_fn!("ODDFYIELD", 8, 9, bonds::oddfyield),
-    atp_fn!("ODDLPRICE", 7, 8, bonds::oddlprice),
-    atp_fn!("ODDLYIELD", 7, 8, bonds::oddlyield),
+    atp_late!("DURATION", 5, 6, true, bonds::duration),
+    atp_late!("MDURATION", 5, 6, true, bonds::mduration),
+    atp_late!("ODDFPRICE", 8, 9, true, bonds::oddfprice),
+    atp_late!("ODDFYIELD", 8, 9, true, bonds::oddfyield),
+    atp_late!("ODDLPRICE", 7, 8, true, bonds::oddlprice),
+    atp_late!("ODDLYIELD", 7, 8, true, bonds::oddlyield),
 ];

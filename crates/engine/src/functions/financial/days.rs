@@ -434,11 +434,12 @@ impl Basis {
 fn coup_args(ctx: &EvalCtx, a: &[Arg]) -> R<(Basis, i64, i64, i32, Coupons)> {
     let settle = atp::date(ctx, a, 0)?;
     let mat = atp::date(ctx, a, 1)?;
-    let freq = atp::frequency(atp::req(ctx, a, 2)?)?;
-    let basis = atp::basis(ctx, a, 3)?;
+
     if settle >= mat {
         return Err(XlError::NUM);
     }
+    let freq = atp::frequency(atp::req(ctx, a, 2)?)?;
+    let basis = atp::basis(ctx, a, 3)?;
     let sys = atp::date_system(ctx);
     Ok((
         Basis { sys, basis },

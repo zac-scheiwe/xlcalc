@@ -229,29 +229,67 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
     };
     let vals = cells(&a[vi])?;
     let dates = cells(&a[di])?;
-    let mut v = Vec::with_capacity(vals.len());
-    for x in &vals {
-        match x {
-            Value::Number(n) => v.push(*n),
-            Value::Error(e) => return Err(*e),
-            Value::Text(_) | Value::Bool(_) => return Err(text_err(false)),
-            _ => return Err(XlError::NUM),
+    let is_arr = |i: usize| matches!(a[i], Some(Value::Array(_)));
+    let (v_arr, d_arr) = (is_arr(vi), is_arr(di));
+
+    let classify_v = |i: usize, x: &Value| match x {
+        Value::Number(n) => Ok(*n),
+        Value::Error(e) => Err(*e),
+        Value::Text(_) | Value::Bool(_) => Err(text_err(false)),
+        Value::Blank if xirr || !v_arr => Ok(0.0),
+        Value::Blank if i == 0 => Err(XlError::VALUE),
+        _ => Err(XlError::NUM),
+    };
+    let classify_d = |i: usize, x: &Value| match x {
+        Value::Number(n) => atp::check_date(ctx, *n).map(|d| d as f64),
+        Value::Error(e) => Err(*e),
+        Value::Text(_) | Value::Bool(_) => Err(text_err(i == 0)),
+        Value::Blank if xirr => Ok(0.0),
+        Value::Blank if d_arr && i == 0 => Err(XlError::VALUE),
+        _ => Err(XlError::NUM),
+    };
+
+    if !v_arr {
+        if let Some(x) = a[vi].as_ref().filter(|x| !matches!(x, Value::Blank)) {
+            classify_v(0, x)?;
         }
     }
+    if !d_arr {
+        if let Some(x) = a[di].as_ref().filter(|x| !matches!(x, Value::Blank)) {
+            classify_d(0, x)?;
+        }
+    }
+    if xirr {
+        atp::opt(ctx, a, 2, 0.1)?;
+    }
+
+    let mut v = Vec::with_capacity(vals.len());
     let mut d = Vec::with_capacity(dates.len());
-    for (i, x) in dates.iter().enumerate() {
-        match x {
-            Value::Number(n) => d.push(atp::check_date(ctx, *n)? as f64),
-            Value::Error(e) => return Err(*e),
-            Value::Text(_) | Value::Bool(_) => return Err(text_err(i == 0)),
-            _ => return Err(XlError::NUM),
+    if !xirr && !dates.is_empty() {
+        d.push(classify_d(0, &dates[0])?);
+    }
+    for i in 0..vals.len().max(dates.len()) {
+        if xirr && i < dates.len() {
+            d.push(classify_d(i, &dates[i])?);
+        }
+        if !xirr {
+            if let Some(Value::Error(e)) = vals.get(i) {
+                return Err(*e);
+            }
+            if i >= 1 && i < dates.len() {
+                d.push(classify_d(i, &dates[i])?);
+            }
+        }
+        if i < vals.len() {
+            v.push(classify_v(i, &vals[i])?);
         }
     }
     if v.len() != d.len() {
         return Err(XlError::NUM);
     }
-    for &x in &d[1..] {
-        if x < d[0] {
+
+    for (i, &x) in d.iter().enumerate().skip(1) {
+        if x < d[0] && !(xirr && v[i] == 0.0) {
             return Err(XlError::NUM);
         }
     }
@@ -340,8 +378,12 @@ fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
 
 pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
-        let (v, d) = xflows(ctx, a, 0, 1, true)?;
         let guess = atp::opt(ctx, a, 2, 0.1)?;
+        let (v, d) = xflows(ctx, a, 0, 1, true)?;
+
+        if v.len() == 1 {
+            return Err(XlError::NA);
+        }
         if !v.iter().any(|&x| x > 0.0) || !v.iter().any(|&x| x < 0.0) {
             return Err(XlError::NUM);
         }

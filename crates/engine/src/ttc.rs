@@ -133,7 +133,11 @@ fn ttc_date(t: &str, order: DateOrder, ours: DateOrder, year_now: i64) -> Option
         match num(p, 2) {
             Some(m) => (1..=12).contains(&m).then_some(m),
             None if names && p.bytes().all(|c| c.is_ascii_alphabetic()) => {
-                crate::locale::month_from_name(p).map(i64::from)
+                crate::locale::month_from_name(p)
+                    .filter(|&m| {
+                        p.len() == 3 || p.len() == crate::locale::MONTH_NAMES[m as usize - 1].len()
+                    })
+                    .map(i64::from)
             }
             None => None,
         }
@@ -154,7 +158,32 @@ fn ttc_date(t: &str, order: DateOrder, ours: DateOrder, year_now: i64) -> Option
     const MON: [&str; 12] = [
         "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
     ];
+
+    let mut split: Vec<&str> = Vec::new();
+    if parts.len() == 1 && parts[0].bytes().all(|c| c.is_ascii_digit()) {
+        let p = parts[0];
+        match (p.len(), order) {
+            (4, _) => split.extend([&p[..2], &p[2..]]),
+            (6, _) => split.extend([&p[..2], &p[2..4], &p[4..]]),
+            (5, DateOrder::MDY) => split.extend([&p[..1], &p[1..3], &p[3..]]),
+            (5, _) => split.extend([&p[..2], &p[2..3], &p[3..]]),
+            (8, DateOrder::YMD) => split.extend([&p[..4], &p[4..6], &p[6..]]),
+            _ => return None,
+        }
+        parts = split;
+    }
     let named = parts.iter().any(|p| p.as_bytes()[0].is_ascii_alphabetic());
+    let fmt3 = |d: i64, m: i64, y: i64| -> String {
+        if named {
+            format!("{}-{}-{}", d, MON[m as usize - 1], y)
+        } else {
+            match ours {
+                DateOrder::DMY => format!("{}/{}/{}", d, m, y),
+                DateOrder::MDY => format!("{}/{}/{}", m, d, y),
+                DateOrder::YMD => format!("{}/{}/{}", y, m, d),
+            }
+        }
+    };
     match parts.len() {
         3 => {
             let (dp, mp, yp) = match order {
@@ -163,31 +192,60 @@ fn ttc_date(t: &str, order: DateOrder, ours: DateOrder, year_now: i64) -> Option
                 DateOrder::YMD => (parts[2], parts[1], parts[0]),
             };
             let (m, y, d) = (month(mp, true)?, year(yp)?, num(dp, 2)?);
-            if !day_ok(y, m, d) {
-                return None;
-            }
-            Some(if named {
-                format!("{}-{}-{}", d, MON[m as usize - 1], y)
-            } else {
-                match ours {
-                    DateOrder::DMY => format!("{}/{}/{}", d, m, y),
-                    DateOrder::MDY => format!("{}/{}/{}", m, d, y),
-                    DateOrder::YMD => format!("{}/{}/{}", y, m, d),
-                }
-            })
+            day_ok(y, m, d).then(|| fmt3(d, m, y))
         }
         2 => {
             let md = |mp: &str, dp: &str, names: bool| -> Option<String> {
                 let (m, d) = (month(mp, names)?, num(dp, 2)?);
                 day_ok(year_now, m, d).then(|| format!("{}-{}", d, MON[m as usize - 1]))
             };
+
+            let my = |mp: &str, yp: &str| -> Option<String> {
+                let (m, y) = (month(mp, true)?, year(yp)?);
+                (num(yp, 4)? != 0).then(|| format!("{}-{}", MON[m as usize - 1], y))
+            };
+
+            let name_first = parts[0].starts_with(|c: char| c.is_ascii_alphabetic());
+            let plain = !s.contains(|c: char| c.is_ascii_punctuation() && c != '-' && c != '/');
+            let strict = plain && s.contains([' ', '-', '/']);
+            let ym = || my(parts[1], parts[0]);
+            let m_y = || my(parts[0], parts[1]);
             match order {
-                DateOrder::DMY => md(parts[1], parts[0], true).or_else(|| {
-                    let (m, y) = (month(parts[0], false)?, year(parts[1])?);
-                    Some(format!("{}-{}", MON[m as usize - 1], y))
-                }),
-                DateOrder::MDY => md(parts[0], parts[1], true),
-                DateOrder::YMD => md(parts[0], parts[1], false),
+                DateOrder::DMY if named => {
+                    if name_first {
+                        strict.then(m_y)?
+                    } else {
+                        md(parts[1], parts[0], true)
+                    }
+                }
+                DateOrder::DMY => md(parts[1], parts[0], true).or_else(m_y),
+
+                DateOrder::MDY if named && !name_first => {
+                    plain.then(|| md(parts[1], parts[0], true))?
+                }
+                DateOrder::MDY => md(parts[0], parts[1], true)
+                    .or_else(|| {
+                        let p = parts[1];
+                        if !(3..=4).contains(&p.len()) || !p.bytes().all(|c| c.is_ascii_digit()) {
+                            return None;
+                        }
+                        let (m, d, y) = (month(parts[0], true)?, num(&p[..2], 2)?, year(&p[2..])?);
+                        day_ok(y, m, d).then(|| fmt3(d, m, y))
+                    })
+                    .or_else(|| {
+                        if named {
+                            strict.then(m_y)?
+                        } else {
+                            (parts[0].len() <= 2)
+                                .then(ym)
+                                .flatten()
+                                .or_else(|| strict.then(m_y)?)
+                        }
+                    }),
+
+                DateOrder::YMD => md(parts[0], parts[1], false)
+                    .or_else(ym)
+                    .or_else(|| strict.then(m_y)?),
             }
         }
         _ => None,
@@ -196,7 +254,7 @@ fn ttc_date(t: &str, order: DateOrder, ours: DateOrder, year_now: i64) -> Option
 
 fn trailing_minus(t: &str) -> Option<String> {
     let s = t.trim();
-    let body = s.strip_suffix('-')?;
+    let body = s.strip_suffix('-')?.trim_end();
     (!body.is_empty()
         && body
             .chars()

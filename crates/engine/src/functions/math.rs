@@ -139,7 +139,7 @@ pub const DEFS: &[FnDef] = &[
     scalar("DEGREES", 1, 1, |c, a| m1(c, a, f64::to_degrees)),
     scalar("RADIANS", 1, 1, |c, a| m1(c, a, f64::to_radians)),
     volatile(scalar("RAND", 0, 0, |c, _| Value::Number(c.wb.random()))),
-    volatile(scalar("RANDBETWEEN", 2, 2, randbetween)),
+    volatile(args("RANDBETWEEN", 2, 2, "R", randbetween)),
 ];
 
 fn int_fn(x: f64) -> f64 {
@@ -807,23 +807,22 @@ fn atan2(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
-fn randbetween(ctx: &mut EvalCtx, a: &[Value]) -> Value {
-    val((|| {
-        if matches!(a[0], Value::Bool(_)) || matches!(a[1], Value::Bool(_)) {
-            return Err(XlError::VALUE);
-        }
-        let lo = num(ctx, &a[0])?;
-        let hi = num(ctx, &a[1])?;
-        if lo > hi {
-            return Err(XlError::NUM);
-        }
-        let (c, f) = (lo.ceil(), hi.floor());
-        let range = crate::x87::add(crate::x87::sub(f, c), 1.0);
-        let r = ctx.wb.random();
-        Ok(Value::num(
-            crate::x87::add(crate::x87::mul(r, range).floor(), c) + 0.0,
-        ))
-    })())
+fn randbetween(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    atp::call(ctx, ops, "aa", |ctx, a, _| {
+        val((|| {
+            let hi = atp::req_num(ctx, a, 1)?;
+            let lo = atp::req_num(ctx, a, 0)?;
+            if lo > hi {
+                return Err(XlError::NUM);
+            }
+            let (c, f) = (lo.ceil(), hi.floor());
+            let range = crate::x87::add(crate::x87::sub(f, c), 1.0);
+            let r = ctx.wb.random();
+            Ok(Value::num(
+                crate::x87::add(crate::x87::mul(r, range).floor(), c) + 0.0,
+            ))
+        })())
+    })
 }
 
 #[cfg(test)]

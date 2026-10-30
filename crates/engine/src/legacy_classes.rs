@@ -1,3 +1,27 @@
+pub(crate) fn class_at(name: &str, classes: &str, i: usize) -> u8 {
+    let b = classes.as_bytes();
+    if i < b.len() {
+        return b[i];
+    }
+    match name {
+        "SUMIFS" | "AVERAGEIFS" | "MAXIFS" | "MINIFS" | "SORTBY" => {
+            if i.is_multiple_of(2) {
+                b'V'
+            } else {
+                b[1]
+            }
+        }
+        "COUNTIFS" => {
+            if i.is_multiple_of(2) {
+                b'Q'
+            } else {
+                b'V'
+            }
+        }
+        _ => b[b.len() - 1],
+    }
+}
+
 pub(crate) fn legacy_classes(name: &str) -> Option<&'static str> {
     Some(match name {
         "ABS" => "V",
@@ -521,7 +545,7 @@ pub(crate) fn legacy_array_args(name: &str) -> Option<&'static str> {
         "ACOT" => "1000",
         "ACOTH" => "1000",
         "ADDRESS" => "10001000100010001000",
-        "AGGREGATE" => "100010000000",
+        "AGGREGATE" => "1000100000001000",
         "AMORDEGRC" => "100010001000100010001000",
         "AMORLINC" => "100010001000100010001000",
         "ARABIC" => "1000",

@@ -472,6 +472,25 @@ impl Workbook {
                 }
             }
         }
+
+        if spec.transpose
+            && spec.op == PasteOp::None
+            && spec.what != PasteWhat::Values
+            && target.rows() == src.cols()
+            && target.cols() == src.rows()
+        {
+            for (fid, b) in self.array_blocks(ss) {
+                if inside(&b, &src) {
+                    let at =
+                        CellAddr::new(ds, target.r0 + (b.c0 - src.c0), target.c0 + (b.r0 - src.r0));
+                    plan.push((
+                        at,
+                        Arc::new(self.moved_formula(fid, at, Some(src))),
+                        (b.cols(), b.rows()),
+                    ));
+                }
+            }
+        }
         self.remove_arrays_in(ds, target);
         Ok(plan)
     }

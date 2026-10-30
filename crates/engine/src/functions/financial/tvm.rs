@@ -265,6 +265,9 @@ pub fn rri(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let a = A { ctx, a };
     val((|| {
         let (n, pv, fv) = (a.n(0)?, a.n(1)?, a.n(2)?);
+        if n > 0.0 && pv == 0.0 && fv == 0.0 {
+            return Ok(Value::num(0.0));
+        }
         if n <= 0.0 || pv == 0.0 {
             return Err(XlError::NUM);
         }

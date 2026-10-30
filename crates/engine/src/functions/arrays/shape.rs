@@ -361,6 +361,10 @@ fn key_of(v: &Value) -> Key {
 }
 
 pub fn unique(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    if let Some(Operand::Ref(crate::eval::Reference::Grid(g))) = ops.first() {
+        let g = g.clone();
+        return unique_refs(ctx, &g, ops);
+    }
     if let Some(r) = lift_flags(ctx, ops, &[1, 2], unique_one, false) {
         return r;
     }
@@ -377,6 +381,67 @@ pub fn unique(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         })
         .collect();
     unique_one(ctx, &ops)
+}
+
+fn unique_refs(ctx: &mut EvalCtx, g: &crate::eval::RefGrid, ops: &[Operand]) -> Operand {
+    let flag = |ctx: &mut EvalCtx, i: usize| match ops.get(i) {
+        Some(o @ Operand::Ref(_)) => opt_flag(Some(&Operand::Val(ctx.deref(o.clone())))),
+        o => opt_flag(o),
+    };
+    let (by_col, once) = match (flag(ctx, 1), flag(ctx, 2)) {
+        (Ok(b), Ok(o)) => (b, o),
+        (Err(e), _) | (_, Err(e)) => return Operand::err(e),
+    };
+    let host = ctx.host.sheet;
+    let (n, w) = if by_col {
+        (g.cols, g.rows)
+    } else {
+        (g.rows, g.cols)
+    };
+    let item = |line: u32, k: u32| {
+        let (r, c) = if by_col { (k, line) } else { (line, k) };
+        g.items[(r * g.cols + c) as usize]
+    };
+
+    let keys: Vec<Option<Vec<u32>>> = (0..n)
+        .map(|line| {
+            (0..w)
+                .map(|k| match item(line, k) {
+                    Ok(a) if a.sheet == host => Some(a.rect.r0),
+                    _ => None,
+                })
+                .collect()
+        })
+        .collect();
+    let count = |key: &Option<Vec<u32>>| match key {
+        Some(k) => keys.iter().filter(|x| x.as_ref() == Some(k)).count(),
+        None => 1,
+    };
+    let mut kept: Vec<u32> = Vec::new();
+    for (line, key) in keys.iter().enumerate() {
+        let first = key.is_none() || keys[..line].iter().all(|x| x != key);
+        if first && (!once || count(key) == 1) {
+            kept.push(line as u32);
+        }
+    }
+    if kept.is_empty() {
+        return Operand::err(XlError::CALC);
+    }
+    let lines = kept.len() as u32;
+    let (rows, cols) = if by_col { (w, lines) } else { (lines, w) };
+    let mut items = Vec::with_capacity((rows * cols) as usize);
+    for r in 0..rows {
+        for c in 0..cols {
+            items.push(if by_col {
+                item(kept[c as usize], r)
+            } else {
+                item(kept[r as usize], c)
+            });
+        }
+    }
+    Operand::Ref(crate::eval::Reference::Grid(std::sync::Arc::new(
+        crate::eval::RefGrid::new(rows, cols, items),
+    )))
 }
 
 fn unique_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {

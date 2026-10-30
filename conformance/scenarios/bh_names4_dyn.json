@@ -1,0 +1,7204 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "k"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B1",
+   "input": "v"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B3",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A4",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B4",
+   "input": "40"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A5",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B5",
+   "input": "50"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A6",
+   "input": "0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A7",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B7",
+   "input": "70"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A8",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A9",
+   "input": "0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B9",
+   "input": "90"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A10",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B10",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A11",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B11",
+   "input": "110"
+  },
+  {
+   "op": "name",
+   "name": "nA",
+   "refers_to": "=OFFSET(Sheet2!$A$1,1,0,3,1)"
+  },
+  {
+   "op": "name",
+   "name": "nB",
+   "refers_to": "=OFFSET(Sheet2!$A$1,{1;2;3},0)"
+  },
+  {
+   "op": "name",
+   "name": "nC",
+   "refers_to": "=INDEX(Sheet2!$B$2:$B$11,{1;2;3})"
+  },
+  {
+   "op": "name",
+   "name": "nD",
+   "refers_to": "=CHOOSE({1,2},Sheet2!$A$2:$A$4,Sheet2!$B$2:$B$4)"
+  },
+  {
+   "op": "name",
+   "name": "nE",
+   "refers_to": "=(Sheet2!$A$2:$A$4,Sheet2!$B$2:$B$4)"
+  },
+  {
+   "op": "name",
+   "name": "nF",
+   "refers_to": "=OFFSET(Sheet2!$A$1,1,{0,1},3,1)"
+  },
+  {
+   "op": "name",
+   "name": "nG",
+   "refers_to": "=OFFSET(Sheet2!$A$1,{1;2},0,2,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=UNIQUE(nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F1",
+   "input": "=ROWS(UNIQUE(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G1",
+   "input": "=SUM(UNIQUE(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H1",
+   "input": "=COLUMNS(UNIQUE(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1",
+   "input": "=UNIQUE(nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K1",
+   "input": "=ROWS(UNIQUE(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L1",
+   "input": "=SUM(UNIQUE(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M1",
+   "input": "=COLUMNS(UNIQUE(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "=SORT(nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F7",
+   "input": "=ROWS(SORT(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G7",
+   "input": "=SUM(SORT(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H7",
+   "input": "=COLUMNS(SORT(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J7",
+   "input": "=SORT(nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K7",
+   "input": "=ROWS(SORT(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L7",
+   "input": "=SUM(SORT(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M7",
+   "input": "=COLUMNS(SORT(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A13",
+   "input": "=SORT(nA,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F13",
+   "input": "=ROWS(SORT(nA,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G13",
+   "input": "=SUM(SORT(nA,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H13",
+   "input": "=COLUMNS(SORT(nA,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J13",
+   "input": "=SORT(nA,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K13",
+   "input": "=ROWS(SORT(nA,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L13",
+   "input": "=SUM(SORT(nA,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M13",
+   "input": "=COLUMNS(SORT(nA,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A19",
+   "input": "=SORTBY(nA,nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F19",
+   "input": "=ROWS(SORTBY(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G19",
+   "input": "=SUM(SORTBY(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H19",
+   "input": "=COLUMNS(SORTBY(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J19",
+   "input": "=SORTBY(nA,nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K19",
+   "input": "=ROWS(SORTBY(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L19",
+   "input": "=SUM(SORTBY(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M19",
+   "input": "=COLUMNS(SORTBY(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A25",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F25",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G25",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H25",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J25",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K25",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L25",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M25",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A31",
+   "input": "=FILTER(nA,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F31",
+   "input": "=ROWS(FILTER(nA,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G31",
+   "input": "=SUM(FILTER(nA,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H31",
+   "input": "=COLUMNS(FILTER(nA,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J31",
+   "input": "=FILTER(nA,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K31",
+   "input": "=ROWS(FILTER(nA,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L31",
+   "input": "=SUM(FILTER(nA,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M31",
+   "input": "=COLUMNS(FILTER(nA,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A37",
+   "input": "=TAKE(nA,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F37",
+   "input": "=ROWS(TAKE(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G37",
+   "input": "=SUM(TAKE(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H37",
+   "input": "=COLUMNS(TAKE(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J37",
+   "input": "=TAKE(nA,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K37",
+   "input": "=ROWS(TAKE(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L37",
+   "input": "=SUM(TAKE(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M37",
+   "input": "=COLUMNS(TAKE(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A43",
+   "input": "=DROP(nA,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F43",
+   "input": "=ROWS(DROP(nA,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G43",
+   "input": "=SUM(DROP(nA,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H43",
+   "input": "=COLUMNS(DROP(nA,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J43",
+   "input": "=DROP(nA,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K43",
+   "input": "=ROWS(DROP(nA,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L43",
+   "input": "=SUM(DROP(nA,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M43",
+   "input": "=COLUMNS(DROP(nA,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A49",
+   "input": "=CHOOSEROWS(nA,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F49",
+   "input": "=ROWS(CHOOSEROWS(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G49",
+   "input": "=SUM(CHOOSEROWS(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H49",
+   "input": "=COLUMNS(CHOOSEROWS(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J49",
+   "input": "=CHOOSEROWS(nA,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K49",
+   "input": "=ROWS(CHOOSEROWS(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L49",
+   "input": "=SUM(CHOOSEROWS(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M49",
+   "input": "=COLUMNS(CHOOSEROWS(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A55",
+   "input": "=CHOOSECOLS(nA,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F55",
+   "input": "=ROWS(CHOOSECOLS(nA,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G55",
+   "input": "=SUM(CHOOSECOLS(nA,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H55",
+   "input": "=COLUMNS(CHOOSECOLS(nA,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J55",
+   "input": "=CHOOSECOLS(nA,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K55",
+   "input": "=ROWS(CHOOSECOLS(nA,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L55",
+   "input": "=SUM(CHOOSECOLS(nA,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M55",
+   "input": "=COLUMNS(CHOOSECOLS(nA,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A61",
+   "input": "=VSTACK(nA,nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F61",
+   "input": "=ROWS(VSTACK(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G61",
+   "input": "=SUM(VSTACK(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H61",
+   "input": "=COLUMNS(VSTACK(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J61",
+   "input": "=VSTACK(nA,nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K61",
+   "input": "=ROWS(VSTACK(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L61",
+   "input": "=SUM(VSTACK(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M61",
+   "input": "=COLUMNS(VSTACK(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A67",
+   "input": "=HSTACK(nA,nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F67",
+   "input": "=ROWS(HSTACK(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G67",
+   "input": "=SUM(HSTACK(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H67",
+   "input": "=COLUMNS(HSTACK(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J67",
+   "input": "=HSTACK(nA,nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K67",
+   "input": "=ROWS(HSTACK(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L67",
+   "input": "=SUM(HSTACK(nA,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M67",
+   "input": "=COLUMNS(HSTACK(nA,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A73",
+   "input": "=TOCOL(nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F73",
+   "input": "=ROWS(TOCOL(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G73",
+   "input": "=SUM(TOCOL(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H73",
+   "input": "=COLUMNS(TOCOL(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J73",
+   "input": "=TOCOL(nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K73",
+   "input": "=ROWS(TOCOL(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L73",
+   "input": "=SUM(TOCOL(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M73",
+   "input": "=COLUMNS(TOCOL(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A79",
+   "input": "=TOROW(nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F79",
+   "input": "=ROWS(TOROW(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G79",
+   "input": "=SUM(TOROW(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H79",
+   "input": "=COLUMNS(TOROW(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J79",
+   "input": "=TOROW(nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K79",
+   "input": "=ROWS(TOROW(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L79",
+   "input": "=SUM(TOROW(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M79",
+   "input": "=COLUMNS(TOROW(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A85",
+   "input": "=WRAPROWS(nA,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F85",
+   "input": "=ROWS(WRAPROWS(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G85",
+   "input": "=SUM(WRAPROWS(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H85",
+   "input": "=COLUMNS(WRAPROWS(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J85",
+   "input": "=WRAPROWS(nA,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K85",
+   "input": "=ROWS(WRAPROWS(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L85",
+   "input": "=SUM(WRAPROWS(nA,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M85",
+   "input": "=COLUMNS(WRAPROWS(nA,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A91",
+   "input": "=EXPAND(nA,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F91",
+   "input": "=ROWS(EXPAND(nA,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G91",
+   "input": "=SUM(EXPAND(nA,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H91",
+   "input": "=COLUMNS(EXPAND(nA,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J91",
+   "input": "=EXPAND(nA,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K91",
+   "input": "=ROWS(EXPAND(nA,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L91",
+   "input": "=SUM(EXPAND(nA,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M91",
+   "input": "=COLUMNS(EXPAND(nA,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A97",
+   "input": "=TRANSPOSE(nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F97",
+   "input": "=ROWS(TRANSPOSE(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G97",
+   "input": "=SUM(TRANSPOSE(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H97",
+   "input": "=COLUMNS(TRANSPOSE(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J97",
+   "input": "=TRANSPOSE(nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K97",
+   "input": "=ROWS(TRANSPOSE(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L97",
+   "input": "=SUM(TRANSPOSE(nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M97",
+   "input": "=COLUMNS(TRANSPOSE(nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A103",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nA)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F103",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G103",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H103",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J103",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nA)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K103",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L103",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nA))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M103",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nA))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A109",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F109",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G109",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H109",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J109",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K109",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L109",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M109",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nA,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A115",
+   "input": "=UNIQUE(nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F115",
+   "input": "=ROWS(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G115",
+   "input": "=SUM(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H115",
+   "input": "=COLUMNS(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J115",
+   "input": "=UNIQUE(nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K115",
+   "input": "=ROWS(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L115",
+   "input": "=SUM(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M115",
+   "input": "=COLUMNS(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A121",
+   "input": "=SORT(nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F121",
+   "input": "=ROWS(SORT(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G121",
+   "input": "=SUM(SORT(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H121",
+   "input": "=COLUMNS(SORT(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J121",
+   "input": "=SORT(nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K121",
+   "input": "=ROWS(SORT(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L121",
+   "input": "=SUM(SORT(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M121",
+   "input": "=COLUMNS(SORT(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A127",
+   "input": "=SORT(nB,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F127",
+   "input": "=ROWS(SORT(nB,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G127",
+   "input": "=SUM(SORT(nB,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H127",
+   "input": "=COLUMNS(SORT(nB,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J127",
+   "input": "=SORT(nB,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K127",
+   "input": "=ROWS(SORT(nB,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L127",
+   "input": "=SUM(SORT(nB,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M127",
+   "input": "=COLUMNS(SORT(nB,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A133",
+   "input": "=SORTBY(nB,nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F133",
+   "input": "=ROWS(SORTBY(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G133",
+   "input": "=SUM(SORTBY(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H133",
+   "input": "=COLUMNS(SORTBY(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J133",
+   "input": "=SORTBY(nB,nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K133",
+   "input": "=ROWS(SORTBY(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L133",
+   "input": "=SUM(SORTBY(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M133",
+   "input": "=COLUMNS(SORTBY(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A139",
+   "input": "=FILTER(nB,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F139",
+   "input": "=ROWS(FILTER(nB,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G139",
+   "input": "=SUM(FILTER(nB,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H139",
+   "input": "=COLUMNS(FILTER(nB,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J139",
+   "input": "=FILTER(nB,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K139",
+   "input": "=ROWS(FILTER(nB,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L139",
+   "input": "=SUM(FILTER(nB,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M139",
+   "input": "=COLUMNS(FILTER(nB,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A145",
+   "input": "=TAKE(nB,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F145",
+   "input": "=ROWS(TAKE(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G145",
+   "input": "=SUM(TAKE(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H145",
+   "input": "=COLUMNS(TAKE(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J145",
+   "input": "=TAKE(nB,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K145",
+   "input": "=ROWS(TAKE(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L145",
+   "input": "=SUM(TAKE(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M145",
+   "input": "=COLUMNS(TAKE(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A151",
+   "input": "=DROP(nB,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F151",
+   "input": "=ROWS(DROP(nB,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G151",
+   "input": "=SUM(DROP(nB,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H151",
+   "input": "=COLUMNS(DROP(nB,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J151",
+   "input": "=DROP(nB,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K151",
+   "input": "=ROWS(DROP(nB,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L151",
+   "input": "=SUM(DROP(nB,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M151",
+   "input": "=COLUMNS(DROP(nB,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A157",
+   "input": "=CHOOSEROWS(nB,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F157",
+   "input": "=ROWS(CHOOSEROWS(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G157",
+   "input": "=SUM(CHOOSEROWS(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H157",
+   "input": "=COLUMNS(CHOOSEROWS(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J157",
+   "input": "=CHOOSEROWS(nB,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K157",
+   "input": "=ROWS(CHOOSEROWS(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L157",
+   "input": "=SUM(CHOOSEROWS(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M157",
+   "input": "=COLUMNS(CHOOSEROWS(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A163",
+   "input": "=CHOOSECOLS(nB,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F163",
+   "input": "=ROWS(CHOOSECOLS(nB,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G163",
+   "input": "=SUM(CHOOSECOLS(nB,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H163",
+   "input": "=COLUMNS(CHOOSECOLS(nB,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J163",
+   "input": "=CHOOSECOLS(nB,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K163",
+   "input": "=ROWS(CHOOSECOLS(nB,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L163",
+   "input": "=SUM(CHOOSECOLS(nB,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M163",
+   "input": "=COLUMNS(CHOOSECOLS(nB,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A169",
+   "input": "=VSTACK(nB,nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F169",
+   "input": "=ROWS(VSTACK(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G169",
+   "input": "=SUM(VSTACK(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H169",
+   "input": "=COLUMNS(VSTACK(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J169",
+   "input": "=VSTACK(nB,nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K169",
+   "input": "=ROWS(VSTACK(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L169",
+   "input": "=SUM(VSTACK(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M169",
+   "input": "=COLUMNS(VSTACK(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A175",
+   "input": "=HSTACK(nB,nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F175",
+   "input": "=ROWS(HSTACK(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G175",
+   "input": "=SUM(HSTACK(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H175",
+   "input": "=COLUMNS(HSTACK(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J175",
+   "input": "=HSTACK(nB,nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K175",
+   "input": "=ROWS(HSTACK(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L175",
+   "input": "=SUM(HSTACK(nB,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M175",
+   "input": "=COLUMNS(HSTACK(nB,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A181",
+   "input": "=TOCOL(nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F181",
+   "input": "=ROWS(TOCOL(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G181",
+   "input": "=SUM(TOCOL(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H181",
+   "input": "=COLUMNS(TOCOL(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J181",
+   "input": "=TOCOL(nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K181",
+   "input": "=ROWS(TOCOL(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L181",
+   "input": "=SUM(TOCOL(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M181",
+   "input": "=COLUMNS(TOCOL(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A187",
+   "input": "=TOROW(nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F187",
+   "input": "=ROWS(TOROW(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G187",
+   "input": "=SUM(TOROW(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H187",
+   "input": "=COLUMNS(TOROW(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J187",
+   "input": "=TOROW(nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K187",
+   "input": "=ROWS(TOROW(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L187",
+   "input": "=SUM(TOROW(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M187",
+   "input": "=COLUMNS(TOROW(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A193",
+   "input": "=WRAPROWS(nB,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F193",
+   "input": "=ROWS(WRAPROWS(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G193",
+   "input": "=SUM(WRAPROWS(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H193",
+   "input": "=COLUMNS(WRAPROWS(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J193",
+   "input": "=WRAPROWS(nB,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K193",
+   "input": "=ROWS(WRAPROWS(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L193",
+   "input": "=SUM(WRAPROWS(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M193",
+   "input": "=COLUMNS(WRAPROWS(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A199",
+   "input": "=EXPAND(nB,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F199",
+   "input": "=ROWS(EXPAND(nB,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G199",
+   "input": "=SUM(EXPAND(nB,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H199",
+   "input": "=COLUMNS(EXPAND(nB,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J199",
+   "input": "=EXPAND(nB,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K199",
+   "input": "=ROWS(EXPAND(nB,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L199",
+   "input": "=SUM(EXPAND(nB,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M199",
+   "input": "=COLUMNS(EXPAND(nB,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A205",
+   "input": "=TRANSPOSE(nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F205",
+   "input": "=ROWS(TRANSPOSE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G205",
+   "input": "=SUM(TRANSPOSE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H205",
+   "input": "=COLUMNS(TRANSPOSE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J205",
+   "input": "=TRANSPOSE(nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K205",
+   "input": "=ROWS(TRANSPOSE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L205",
+   "input": "=SUM(TRANSPOSE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M205",
+   "input": "=COLUMNS(TRANSPOSE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A211",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F211",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G211",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H211",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J211",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K211",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L211",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M211",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A217",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F217",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G217",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H217",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J217",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K217",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L217",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M217",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nB,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A223",
+   "input": "=UNIQUE(nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F223",
+   "input": "=ROWS(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G223",
+   "input": "=SUM(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H223",
+   "input": "=COLUMNS(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J223",
+   "input": "=UNIQUE(nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K223",
+   "input": "=ROWS(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L223",
+   "input": "=SUM(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M223",
+   "input": "=COLUMNS(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A229",
+   "input": "=SORT(nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F229",
+   "input": "=ROWS(SORT(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G229",
+   "input": "=SUM(SORT(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H229",
+   "input": "=COLUMNS(SORT(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J229",
+   "input": "=SORT(nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K229",
+   "input": "=ROWS(SORT(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L229",
+   "input": "=SUM(SORT(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M229",
+   "input": "=COLUMNS(SORT(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A235",
+   "input": "=SORT(nC,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F235",
+   "input": "=ROWS(SORT(nC,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G235",
+   "input": "=SUM(SORT(nC,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H235",
+   "input": "=COLUMNS(SORT(nC,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J235",
+   "input": "=SORT(nC,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K235",
+   "input": "=ROWS(SORT(nC,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L235",
+   "input": "=SUM(SORT(nC,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M235",
+   "input": "=COLUMNS(SORT(nC,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A241",
+   "input": "=SORTBY(nC,nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F241",
+   "input": "=ROWS(SORTBY(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G241",
+   "input": "=SUM(SORTBY(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H241",
+   "input": "=COLUMNS(SORTBY(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J241",
+   "input": "=SORTBY(nC,nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K241",
+   "input": "=ROWS(SORTBY(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L241",
+   "input": "=SUM(SORTBY(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M241",
+   "input": "=COLUMNS(SORTBY(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A247",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F247",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G247",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H247",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J247",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K247",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L247",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M247",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A253",
+   "input": "=FILTER(nC,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F253",
+   "input": "=ROWS(FILTER(nC,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G253",
+   "input": "=SUM(FILTER(nC,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H253",
+   "input": "=COLUMNS(FILTER(nC,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J253",
+   "input": "=FILTER(nC,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K253",
+   "input": "=ROWS(FILTER(nC,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L253",
+   "input": "=SUM(FILTER(nC,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M253",
+   "input": "=COLUMNS(FILTER(nC,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A259",
+   "input": "=TAKE(nC,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F259",
+   "input": "=ROWS(TAKE(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G259",
+   "input": "=SUM(TAKE(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H259",
+   "input": "=COLUMNS(TAKE(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J259",
+   "input": "=TAKE(nC,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K259",
+   "input": "=ROWS(TAKE(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L259",
+   "input": "=SUM(TAKE(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M259",
+   "input": "=COLUMNS(TAKE(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A265",
+   "input": "=DROP(nC,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F265",
+   "input": "=ROWS(DROP(nC,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G265",
+   "input": "=SUM(DROP(nC,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H265",
+   "input": "=COLUMNS(DROP(nC,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J265",
+   "input": "=DROP(nC,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K265",
+   "input": "=ROWS(DROP(nC,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L265",
+   "input": "=SUM(DROP(nC,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M265",
+   "input": "=COLUMNS(DROP(nC,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A271",
+   "input": "=CHOOSEROWS(nC,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F271",
+   "input": "=ROWS(CHOOSEROWS(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G271",
+   "input": "=SUM(CHOOSEROWS(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H271",
+   "input": "=COLUMNS(CHOOSEROWS(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J271",
+   "input": "=CHOOSEROWS(nC,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K271",
+   "input": "=ROWS(CHOOSEROWS(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L271",
+   "input": "=SUM(CHOOSEROWS(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M271",
+   "input": "=COLUMNS(CHOOSEROWS(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A277",
+   "input": "=CHOOSECOLS(nC,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F277",
+   "input": "=ROWS(CHOOSECOLS(nC,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G277",
+   "input": "=SUM(CHOOSECOLS(nC,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H277",
+   "input": "=COLUMNS(CHOOSECOLS(nC,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J277",
+   "input": "=CHOOSECOLS(nC,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K277",
+   "input": "=ROWS(CHOOSECOLS(nC,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L277",
+   "input": "=SUM(CHOOSECOLS(nC,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M277",
+   "input": "=COLUMNS(CHOOSECOLS(nC,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A283",
+   "input": "=VSTACK(nC,nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F283",
+   "input": "=ROWS(VSTACK(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G283",
+   "input": "=SUM(VSTACK(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H283",
+   "input": "=COLUMNS(VSTACK(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J283",
+   "input": "=VSTACK(nC,nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K283",
+   "input": "=ROWS(VSTACK(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L283",
+   "input": "=SUM(VSTACK(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M283",
+   "input": "=COLUMNS(VSTACK(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A289",
+   "input": "=HSTACK(nC,nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F289",
+   "input": "=ROWS(HSTACK(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G289",
+   "input": "=SUM(HSTACK(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H289",
+   "input": "=COLUMNS(HSTACK(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J289",
+   "input": "=HSTACK(nC,nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K289",
+   "input": "=ROWS(HSTACK(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L289",
+   "input": "=SUM(HSTACK(nC,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M289",
+   "input": "=COLUMNS(HSTACK(nC,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A295",
+   "input": "=TOCOL(nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F295",
+   "input": "=ROWS(TOCOL(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G295",
+   "input": "=SUM(TOCOL(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H295",
+   "input": "=COLUMNS(TOCOL(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J295",
+   "input": "=TOCOL(nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K295",
+   "input": "=ROWS(TOCOL(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L295",
+   "input": "=SUM(TOCOL(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M295",
+   "input": "=COLUMNS(TOCOL(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A301",
+   "input": "=TOROW(nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F301",
+   "input": "=ROWS(TOROW(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G301",
+   "input": "=SUM(TOROW(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H301",
+   "input": "=COLUMNS(TOROW(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J301",
+   "input": "=TOROW(nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K301",
+   "input": "=ROWS(TOROW(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L301",
+   "input": "=SUM(TOROW(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M301",
+   "input": "=COLUMNS(TOROW(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A307",
+   "input": "=WRAPROWS(nC,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F307",
+   "input": "=ROWS(WRAPROWS(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G307",
+   "input": "=SUM(WRAPROWS(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H307",
+   "input": "=COLUMNS(WRAPROWS(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J307",
+   "input": "=WRAPROWS(nC,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K307",
+   "input": "=ROWS(WRAPROWS(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L307",
+   "input": "=SUM(WRAPROWS(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M307",
+   "input": "=COLUMNS(WRAPROWS(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A313",
+   "input": "=EXPAND(nC,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F313",
+   "input": "=ROWS(EXPAND(nC,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G313",
+   "input": "=SUM(EXPAND(nC,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H313",
+   "input": "=COLUMNS(EXPAND(nC,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J313",
+   "input": "=EXPAND(nC,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K313",
+   "input": "=ROWS(EXPAND(nC,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L313",
+   "input": "=SUM(EXPAND(nC,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M313",
+   "input": "=COLUMNS(EXPAND(nC,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A319",
+   "input": "=TRANSPOSE(nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F319",
+   "input": "=ROWS(TRANSPOSE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G319",
+   "input": "=SUM(TRANSPOSE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H319",
+   "input": "=COLUMNS(TRANSPOSE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J319",
+   "input": "=TRANSPOSE(nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K319",
+   "input": "=ROWS(TRANSPOSE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L319",
+   "input": "=SUM(TRANSPOSE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M319",
+   "input": "=COLUMNS(TRANSPOSE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A325",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F325",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G325",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H325",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J325",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K325",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L325",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M325",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A331",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F331",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G331",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H331",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J331",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K331",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L331",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M331",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nC,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A337",
+   "input": "=UNIQUE(nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F337",
+   "input": "=ROWS(UNIQUE(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G337",
+   "input": "=SUM(UNIQUE(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H337",
+   "input": "=COLUMNS(UNIQUE(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J337",
+   "input": "=UNIQUE(nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K337",
+   "input": "=ROWS(UNIQUE(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L337",
+   "input": "=SUM(UNIQUE(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M337",
+   "input": "=COLUMNS(UNIQUE(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A343",
+   "input": "=SORT(nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F343",
+   "input": "=ROWS(SORT(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G343",
+   "input": "=SUM(SORT(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H343",
+   "input": "=COLUMNS(SORT(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J343",
+   "input": "=SORT(nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K343",
+   "input": "=ROWS(SORT(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L343",
+   "input": "=SUM(SORT(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M343",
+   "input": "=COLUMNS(SORT(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A349",
+   "input": "=SORT(nD,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F349",
+   "input": "=ROWS(SORT(nD,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G349",
+   "input": "=SUM(SORT(nD,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H349",
+   "input": "=COLUMNS(SORT(nD,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J349",
+   "input": "=SORT(nD,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K349",
+   "input": "=ROWS(SORT(nD,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L349",
+   "input": "=SUM(SORT(nD,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M349",
+   "input": "=COLUMNS(SORT(nD,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A355",
+   "input": "=SORTBY(nD,nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F355",
+   "input": "=ROWS(SORTBY(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G355",
+   "input": "=SUM(SORTBY(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H355",
+   "input": "=COLUMNS(SORTBY(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J355",
+   "input": "=SORTBY(nD,nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K355",
+   "input": "=ROWS(SORTBY(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L355",
+   "input": "=SUM(SORTBY(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M355",
+   "input": "=COLUMNS(SORTBY(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A361",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F361",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G361",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H361",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J361",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K361",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L361",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M361",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A367",
+   "input": "=FILTER(nD,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F367",
+   "input": "=ROWS(FILTER(nD,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G367",
+   "input": "=SUM(FILTER(nD,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H367",
+   "input": "=COLUMNS(FILTER(nD,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J367",
+   "input": "=FILTER(nD,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K367",
+   "input": "=ROWS(FILTER(nD,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L367",
+   "input": "=SUM(FILTER(nD,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M367",
+   "input": "=COLUMNS(FILTER(nD,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A373",
+   "input": "=TAKE(nD,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F373",
+   "input": "=ROWS(TAKE(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G373",
+   "input": "=SUM(TAKE(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H373",
+   "input": "=COLUMNS(TAKE(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J373",
+   "input": "=TAKE(nD,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K373",
+   "input": "=ROWS(TAKE(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L373",
+   "input": "=SUM(TAKE(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M373",
+   "input": "=COLUMNS(TAKE(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A379",
+   "input": "=DROP(nD,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F379",
+   "input": "=ROWS(DROP(nD,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G379",
+   "input": "=SUM(DROP(nD,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H379",
+   "input": "=COLUMNS(DROP(nD,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J379",
+   "input": "=DROP(nD,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K379",
+   "input": "=ROWS(DROP(nD,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L379",
+   "input": "=SUM(DROP(nD,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M379",
+   "input": "=COLUMNS(DROP(nD,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A385",
+   "input": "=CHOOSEROWS(nD,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F385",
+   "input": "=ROWS(CHOOSEROWS(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G385",
+   "input": "=SUM(CHOOSEROWS(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H385",
+   "input": "=COLUMNS(CHOOSEROWS(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J385",
+   "input": "=CHOOSEROWS(nD,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K385",
+   "input": "=ROWS(CHOOSEROWS(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L385",
+   "input": "=SUM(CHOOSEROWS(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M385",
+   "input": "=COLUMNS(CHOOSEROWS(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A391",
+   "input": "=CHOOSECOLS(nD,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F391",
+   "input": "=ROWS(CHOOSECOLS(nD,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G391",
+   "input": "=SUM(CHOOSECOLS(nD,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H391",
+   "input": "=COLUMNS(CHOOSECOLS(nD,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J391",
+   "input": "=CHOOSECOLS(nD,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K391",
+   "input": "=ROWS(CHOOSECOLS(nD,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L391",
+   "input": "=SUM(CHOOSECOLS(nD,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M391",
+   "input": "=COLUMNS(CHOOSECOLS(nD,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A397",
+   "input": "=VSTACK(nD,nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F397",
+   "input": "=ROWS(VSTACK(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G397",
+   "input": "=SUM(VSTACK(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H397",
+   "input": "=COLUMNS(VSTACK(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J397",
+   "input": "=VSTACK(nD,nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K397",
+   "input": "=ROWS(VSTACK(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L397",
+   "input": "=SUM(VSTACK(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M397",
+   "input": "=COLUMNS(VSTACK(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A403",
+   "input": "=HSTACK(nD,nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F403",
+   "input": "=ROWS(HSTACK(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G403",
+   "input": "=SUM(HSTACK(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H403",
+   "input": "=COLUMNS(HSTACK(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J403",
+   "input": "=HSTACK(nD,nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K403",
+   "input": "=ROWS(HSTACK(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L403",
+   "input": "=SUM(HSTACK(nD,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M403",
+   "input": "=COLUMNS(HSTACK(nD,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A409",
+   "input": "=TOCOL(nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F409",
+   "input": "=ROWS(TOCOL(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G409",
+   "input": "=SUM(TOCOL(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H409",
+   "input": "=COLUMNS(TOCOL(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J409",
+   "input": "=TOCOL(nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K409",
+   "input": "=ROWS(TOCOL(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L409",
+   "input": "=SUM(TOCOL(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M409",
+   "input": "=COLUMNS(TOCOL(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A415",
+   "input": "=TOROW(nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F415",
+   "input": "=ROWS(TOROW(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G415",
+   "input": "=SUM(TOROW(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H415",
+   "input": "=COLUMNS(TOROW(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J415",
+   "input": "=TOROW(nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K415",
+   "input": "=ROWS(TOROW(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L415",
+   "input": "=SUM(TOROW(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M415",
+   "input": "=COLUMNS(TOROW(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A421",
+   "input": "=WRAPROWS(nD,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F421",
+   "input": "=ROWS(WRAPROWS(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G421",
+   "input": "=SUM(WRAPROWS(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H421",
+   "input": "=COLUMNS(WRAPROWS(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J421",
+   "input": "=WRAPROWS(nD,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K421",
+   "input": "=ROWS(WRAPROWS(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L421",
+   "input": "=SUM(WRAPROWS(nD,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M421",
+   "input": "=COLUMNS(WRAPROWS(nD,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A427",
+   "input": "=EXPAND(nD,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F427",
+   "input": "=ROWS(EXPAND(nD,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G427",
+   "input": "=SUM(EXPAND(nD,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H427",
+   "input": "=COLUMNS(EXPAND(nD,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J427",
+   "input": "=EXPAND(nD,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K427",
+   "input": "=ROWS(EXPAND(nD,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L427",
+   "input": "=SUM(EXPAND(nD,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M427",
+   "input": "=COLUMNS(EXPAND(nD,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A433",
+   "input": "=TRANSPOSE(nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F433",
+   "input": "=ROWS(TRANSPOSE(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G433",
+   "input": "=SUM(TRANSPOSE(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H433",
+   "input": "=COLUMNS(TRANSPOSE(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J433",
+   "input": "=TRANSPOSE(nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K433",
+   "input": "=ROWS(TRANSPOSE(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L433",
+   "input": "=SUM(TRANSPOSE(nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M433",
+   "input": "=COLUMNS(TRANSPOSE(nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A439",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nD)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F439",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G439",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H439",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J439",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nD)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K439",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L439",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nD))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M439",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nD))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A445",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F445",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G445",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H445",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J445",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K445",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L445",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M445",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nD,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A451",
+   "input": "=UNIQUE(nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F451",
+   "input": "=ROWS(UNIQUE(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G451",
+   "input": "=SUM(UNIQUE(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H451",
+   "input": "=COLUMNS(UNIQUE(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J451",
+   "input": "=UNIQUE(nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K451",
+   "input": "=ROWS(UNIQUE(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L451",
+   "input": "=SUM(UNIQUE(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M451",
+   "input": "=COLUMNS(UNIQUE(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A457",
+   "input": "=SORT(nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F457",
+   "input": "=ROWS(SORT(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G457",
+   "input": "=SUM(SORT(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H457",
+   "input": "=COLUMNS(SORT(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J457",
+   "input": "=SORT(nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K457",
+   "input": "=ROWS(SORT(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L457",
+   "input": "=SUM(SORT(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M457",
+   "input": "=COLUMNS(SORT(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A463",
+   "input": "=SORT(nE,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F463",
+   "input": "=ROWS(SORT(nE,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G463",
+   "input": "=SUM(SORT(nE,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H463",
+   "input": "=COLUMNS(SORT(nE,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J463",
+   "input": "=SORT(nE,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K463",
+   "input": "=ROWS(SORT(nE,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L463",
+   "input": "=SUM(SORT(nE,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M463",
+   "input": "=COLUMNS(SORT(nE,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A469",
+   "input": "=SORTBY(nE,nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F469",
+   "input": "=ROWS(SORTBY(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G469",
+   "input": "=SUM(SORTBY(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H469",
+   "input": "=COLUMNS(SORTBY(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J469",
+   "input": "=SORTBY(nE,nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K469",
+   "input": "=ROWS(SORTBY(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L469",
+   "input": "=SUM(SORTBY(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M469",
+   "input": "=COLUMNS(SORTBY(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A475",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F475",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G475",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H475",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J475",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K475",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L475",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M475",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A481",
+   "input": "=FILTER(nE,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F481",
+   "input": "=ROWS(FILTER(nE,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G481",
+   "input": "=SUM(FILTER(nE,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H481",
+   "input": "=COLUMNS(FILTER(nE,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J481",
+   "input": "=FILTER(nE,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K481",
+   "input": "=ROWS(FILTER(nE,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L481",
+   "input": "=SUM(FILTER(nE,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M481",
+   "input": "=COLUMNS(FILTER(nE,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A487",
+   "input": "=TAKE(nE,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F487",
+   "input": "=ROWS(TAKE(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G487",
+   "input": "=SUM(TAKE(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H487",
+   "input": "=COLUMNS(TAKE(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J487",
+   "input": "=TAKE(nE,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K487",
+   "input": "=ROWS(TAKE(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L487",
+   "input": "=SUM(TAKE(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M487",
+   "input": "=COLUMNS(TAKE(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A493",
+   "input": "=DROP(nE,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F493",
+   "input": "=ROWS(DROP(nE,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G493",
+   "input": "=SUM(DROP(nE,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H493",
+   "input": "=COLUMNS(DROP(nE,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J493",
+   "input": "=DROP(nE,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K493",
+   "input": "=ROWS(DROP(nE,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L493",
+   "input": "=SUM(DROP(nE,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M493",
+   "input": "=COLUMNS(DROP(nE,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A499",
+   "input": "=CHOOSEROWS(nE,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F499",
+   "input": "=ROWS(CHOOSEROWS(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G499",
+   "input": "=SUM(CHOOSEROWS(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H499",
+   "input": "=COLUMNS(CHOOSEROWS(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J499",
+   "input": "=CHOOSEROWS(nE,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K499",
+   "input": "=ROWS(CHOOSEROWS(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L499",
+   "input": "=SUM(CHOOSEROWS(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M499",
+   "input": "=COLUMNS(CHOOSEROWS(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A505",
+   "input": "=CHOOSECOLS(nE,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F505",
+   "input": "=ROWS(CHOOSECOLS(nE,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G505",
+   "input": "=SUM(CHOOSECOLS(nE,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H505",
+   "input": "=COLUMNS(CHOOSECOLS(nE,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J505",
+   "input": "=CHOOSECOLS(nE,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K505",
+   "input": "=ROWS(CHOOSECOLS(nE,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L505",
+   "input": "=SUM(CHOOSECOLS(nE,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M505",
+   "input": "=COLUMNS(CHOOSECOLS(nE,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A511",
+   "input": "=VSTACK(nE,nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F511",
+   "input": "=ROWS(VSTACK(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G511",
+   "input": "=SUM(VSTACK(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H511",
+   "input": "=COLUMNS(VSTACK(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J511",
+   "input": "=VSTACK(nE,nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K511",
+   "input": "=ROWS(VSTACK(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L511",
+   "input": "=SUM(VSTACK(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M511",
+   "input": "=COLUMNS(VSTACK(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A517",
+   "input": "=HSTACK(nE,nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F517",
+   "input": "=ROWS(HSTACK(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G517",
+   "input": "=SUM(HSTACK(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H517",
+   "input": "=COLUMNS(HSTACK(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J517",
+   "input": "=HSTACK(nE,nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K517",
+   "input": "=ROWS(HSTACK(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L517",
+   "input": "=SUM(HSTACK(nE,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M517",
+   "input": "=COLUMNS(HSTACK(nE,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A523",
+   "input": "=TOCOL(nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F523",
+   "input": "=ROWS(TOCOL(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G523",
+   "input": "=SUM(TOCOL(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H523",
+   "input": "=COLUMNS(TOCOL(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J523",
+   "input": "=TOCOL(nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K523",
+   "input": "=ROWS(TOCOL(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L523",
+   "input": "=SUM(TOCOL(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M523",
+   "input": "=COLUMNS(TOCOL(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A529",
+   "input": "=TOROW(nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F529",
+   "input": "=ROWS(TOROW(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G529",
+   "input": "=SUM(TOROW(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H529",
+   "input": "=COLUMNS(TOROW(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J529",
+   "input": "=TOROW(nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K529",
+   "input": "=ROWS(TOROW(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L529",
+   "input": "=SUM(TOROW(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M529",
+   "input": "=COLUMNS(TOROW(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A535",
+   "input": "=WRAPROWS(nE,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F535",
+   "input": "=ROWS(WRAPROWS(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G535",
+   "input": "=SUM(WRAPROWS(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H535",
+   "input": "=COLUMNS(WRAPROWS(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J535",
+   "input": "=WRAPROWS(nE,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K535",
+   "input": "=ROWS(WRAPROWS(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L535",
+   "input": "=SUM(WRAPROWS(nE,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M535",
+   "input": "=COLUMNS(WRAPROWS(nE,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A541",
+   "input": "=EXPAND(nE,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F541",
+   "input": "=ROWS(EXPAND(nE,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G541",
+   "input": "=SUM(EXPAND(nE,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H541",
+   "input": "=COLUMNS(EXPAND(nE,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J541",
+   "input": "=EXPAND(nE,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K541",
+   "input": "=ROWS(EXPAND(nE,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L541",
+   "input": "=SUM(EXPAND(nE,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M541",
+   "input": "=COLUMNS(EXPAND(nE,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A547",
+   "input": "=TRANSPOSE(nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F547",
+   "input": "=ROWS(TRANSPOSE(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G547",
+   "input": "=SUM(TRANSPOSE(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H547",
+   "input": "=COLUMNS(TRANSPOSE(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J547",
+   "input": "=TRANSPOSE(nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K547",
+   "input": "=ROWS(TRANSPOSE(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L547",
+   "input": "=SUM(TRANSPOSE(nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M547",
+   "input": "=COLUMNS(TRANSPOSE(nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A553",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nE)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F553",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G553",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H553",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J553",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nE)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K553",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L553",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nE))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M553",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nE))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A559",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F559",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G559",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H559",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J559",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K559",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L559",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M559",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nE,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A565",
+   "input": "=UNIQUE(nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F565",
+   "input": "=ROWS(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G565",
+   "input": "=SUM(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H565",
+   "input": "=COLUMNS(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J565",
+   "input": "=UNIQUE(nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K565",
+   "input": "=ROWS(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L565",
+   "input": "=SUM(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M565",
+   "input": "=COLUMNS(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A571",
+   "input": "=SORT(nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F571",
+   "input": "=ROWS(SORT(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G571",
+   "input": "=SUM(SORT(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H571",
+   "input": "=COLUMNS(SORT(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J571",
+   "input": "=SORT(nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K571",
+   "input": "=ROWS(SORT(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L571",
+   "input": "=SUM(SORT(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M571",
+   "input": "=COLUMNS(SORT(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A577",
+   "input": "=SORT(nF,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F577",
+   "input": "=ROWS(SORT(nF,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G577",
+   "input": "=SUM(SORT(nF,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H577",
+   "input": "=COLUMNS(SORT(nF,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J577",
+   "input": "=SORT(nF,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K577",
+   "input": "=ROWS(SORT(nF,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L577",
+   "input": "=SUM(SORT(nF,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M577",
+   "input": "=COLUMNS(SORT(nF,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A583",
+   "input": "=SORTBY(nF,nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F583",
+   "input": "=ROWS(SORTBY(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G583",
+   "input": "=SUM(SORTBY(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H583",
+   "input": "=COLUMNS(SORTBY(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J583",
+   "input": "=SORTBY(nF,nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K583",
+   "input": "=ROWS(SORTBY(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L583",
+   "input": "=SUM(SORTBY(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M583",
+   "input": "=COLUMNS(SORTBY(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A589",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F589",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G589",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H589",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J589",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K589",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L589",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M589",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A595",
+   "input": "=FILTER(nF,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F595",
+   "input": "=ROWS(FILTER(nF,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G595",
+   "input": "=SUM(FILTER(nF,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H595",
+   "input": "=COLUMNS(FILTER(nF,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J595",
+   "input": "=FILTER(nF,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K595",
+   "input": "=ROWS(FILTER(nF,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L595",
+   "input": "=SUM(FILTER(nF,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M595",
+   "input": "=COLUMNS(FILTER(nF,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A601",
+   "input": "=TAKE(nF,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F601",
+   "input": "=ROWS(TAKE(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G601",
+   "input": "=SUM(TAKE(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H601",
+   "input": "=COLUMNS(TAKE(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J601",
+   "input": "=TAKE(nF,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K601",
+   "input": "=ROWS(TAKE(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L601",
+   "input": "=SUM(TAKE(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M601",
+   "input": "=COLUMNS(TAKE(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A607",
+   "input": "=DROP(nF,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F607",
+   "input": "=ROWS(DROP(nF,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G607",
+   "input": "=SUM(DROP(nF,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H607",
+   "input": "=COLUMNS(DROP(nF,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J607",
+   "input": "=DROP(nF,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K607",
+   "input": "=ROWS(DROP(nF,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L607",
+   "input": "=SUM(DROP(nF,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M607",
+   "input": "=COLUMNS(DROP(nF,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A613",
+   "input": "=CHOOSEROWS(nF,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F613",
+   "input": "=ROWS(CHOOSEROWS(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G613",
+   "input": "=SUM(CHOOSEROWS(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H613",
+   "input": "=COLUMNS(CHOOSEROWS(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J613",
+   "input": "=CHOOSEROWS(nF,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K613",
+   "input": "=ROWS(CHOOSEROWS(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L613",
+   "input": "=SUM(CHOOSEROWS(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M613",
+   "input": "=COLUMNS(CHOOSEROWS(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A619",
+   "input": "=CHOOSECOLS(nF,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F619",
+   "input": "=ROWS(CHOOSECOLS(nF,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G619",
+   "input": "=SUM(CHOOSECOLS(nF,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H619",
+   "input": "=COLUMNS(CHOOSECOLS(nF,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J619",
+   "input": "=CHOOSECOLS(nF,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K619",
+   "input": "=ROWS(CHOOSECOLS(nF,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L619",
+   "input": "=SUM(CHOOSECOLS(nF,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M619",
+   "input": "=COLUMNS(CHOOSECOLS(nF,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A625",
+   "input": "=VSTACK(nF,nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F625",
+   "input": "=ROWS(VSTACK(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G625",
+   "input": "=SUM(VSTACK(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H625",
+   "input": "=COLUMNS(VSTACK(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J625",
+   "input": "=VSTACK(nF,nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K625",
+   "input": "=ROWS(VSTACK(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L625",
+   "input": "=SUM(VSTACK(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M625",
+   "input": "=COLUMNS(VSTACK(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A631",
+   "input": "=HSTACK(nF,nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F631",
+   "input": "=ROWS(HSTACK(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G631",
+   "input": "=SUM(HSTACK(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H631",
+   "input": "=COLUMNS(HSTACK(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J631",
+   "input": "=HSTACK(nF,nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K631",
+   "input": "=ROWS(HSTACK(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L631",
+   "input": "=SUM(HSTACK(nF,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M631",
+   "input": "=COLUMNS(HSTACK(nF,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A637",
+   "input": "=TOCOL(nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F637",
+   "input": "=ROWS(TOCOL(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G637",
+   "input": "=SUM(TOCOL(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H637",
+   "input": "=COLUMNS(TOCOL(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J637",
+   "input": "=TOCOL(nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K637",
+   "input": "=ROWS(TOCOL(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L637",
+   "input": "=SUM(TOCOL(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M637",
+   "input": "=COLUMNS(TOCOL(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A643",
+   "input": "=TOROW(nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F643",
+   "input": "=ROWS(TOROW(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G643",
+   "input": "=SUM(TOROW(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H643",
+   "input": "=COLUMNS(TOROW(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J643",
+   "input": "=TOROW(nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K643",
+   "input": "=ROWS(TOROW(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L643",
+   "input": "=SUM(TOROW(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M643",
+   "input": "=COLUMNS(TOROW(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A649",
+   "input": "=WRAPROWS(nF,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F649",
+   "input": "=ROWS(WRAPROWS(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G649",
+   "input": "=SUM(WRAPROWS(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H649",
+   "input": "=COLUMNS(WRAPROWS(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J649",
+   "input": "=WRAPROWS(nF,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K649",
+   "input": "=ROWS(WRAPROWS(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L649",
+   "input": "=SUM(WRAPROWS(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M649",
+   "input": "=COLUMNS(WRAPROWS(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A655",
+   "input": "=EXPAND(nF,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F655",
+   "input": "=ROWS(EXPAND(nF,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G655",
+   "input": "=SUM(EXPAND(nF,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H655",
+   "input": "=COLUMNS(EXPAND(nF,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J655",
+   "input": "=EXPAND(nF,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K655",
+   "input": "=ROWS(EXPAND(nF,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L655",
+   "input": "=SUM(EXPAND(nF,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M655",
+   "input": "=COLUMNS(EXPAND(nF,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A661",
+   "input": "=TRANSPOSE(nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F661",
+   "input": "=ROWS(TRANSPOSE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G661",
+   "input": "=SUM(TRANSPOSE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H661",
+   "input": "=COLUMNS(TRANSPOSE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J661",
+   "input": "=TRANSPOSE(nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K661",
+   "input": "=ROWS(TRANSPOSE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L661",
+   "input": "=SUM(TRANSPOSE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M661",
+   "input": "=COLUMNS(TRANSPOSE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A667",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F667",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G667",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H667",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J667",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K667",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L667",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M667",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A673",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F673",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G673",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H673",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J673",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K673",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L673",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M673",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nF,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A679",
+   "input": "=UNIQUE(nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F679",
+   "input": "=ROWS(UNIQUE(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G679",
+   "input": "=SUM(UNIQUE(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H679",
+   "input": "=COLUMNS(UNIQUE(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J679",
+   "input": "=UNIQUE(nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K679",
+   "input": "=ROWS(UNIQUE(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L679",
+   "input": "=SUM(UNIQUE(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M679",
+   "input": "=COLUMNS(UNIQUE(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A685",
+   "input": "=SORT(nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F685",
+   "input": "=ROWS(SORT(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G685",
+   "input": "=SUM(SORT(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H685",
+   "input": "=COLUMNS(SORT(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J685",
+   "input": "=SORT(nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K685",
+   "input": "=ROWS(SORT(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L685",
+   "input": "=SUM(SORT(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M685",
+   "input": "=COLUMNS(SORT(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A691",
+   "input": "=SORT(nG,1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F691",
+   "input": "=ROWS(SORT(nG,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G691",
+   "input": "=SUM(SORT(nG,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H691",
+   "input": "=COLUMNS(SORT(nG,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J691",
+   "input": "=SORT(nG,1,-1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K691",
+   "input": "=ROWS(SORT(nG,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L691",
+   "input": "=SUM(SORT(nG,1,-1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M691",
+   "input": "=COLUMNS(SORT(nG,1,-1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A697",
+   "input": "=SORTBY(nG,nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F697",
+   "input": "=ROWS(SORTBY(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G697",
+   "input": "=SUM(SORTBY(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H697",
+   "input": "=COLUMNS(SORTBY(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J697",
+   "input": "=SORTBY(nG,nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K697",
+   "input": "=ROWS(SORTBY(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L697",
+   "input": "=SUM(SORTBY(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M697",
+   "input": "=COLUMNS(SORTBY(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A703",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F703",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G703",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H703",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J703",
+   "input": "=SORTBY(Sheet2!$B$2:$B$4,nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K703",
+   "input": "=ROWS(SORTBY(Sheet2!$B$2:$B$4,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L703",
+   "input": "=SUM(SORTBY(Sheet2!$B$2:$B$4,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M703",
+   "input": "=COLUMNS(SORTBY(Sheet2!$B$2:$B$4,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A709",
+   "input": "=FILTER(nG,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F709",
+   "input": "=ROWS(FILTER(nG,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G709",
+   "input": "=SUM(FILTER(nG,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H709",
+   "input": "=COLUMNS(FILTER(nG,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J709",
+   "input": "=FILTER(nG,{TRUE;FALSE;TRUE})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K709",
+   "input": "=ROWS(FILTER(nG,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L709",
+   "input": "=SUM(FILTER(nG,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M709",
+   "input": "=COLUMNS(FILTER(nG,{TRUE;FALSE;TRUE}))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A715",
+   "input": "=TAKE(nG,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F715",
+   "input": "=ROWS(TAKE(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G715",
+   "input": "=SUM(TAKE(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H715",
+   "input": "=COLUMNS(TAKE(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J715",
+   "input": "=TAKE(nG,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K715",
+   "input": "=ROWS(TAKE(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L715",
+   "input": "=SUM(TAKE(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M715",
+   "input": "=COLUMNS(TAKE(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A721",
+   "input": "=DROP(nG,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F721",
+   "input": "=ROWS(DROP(nG,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G721",
+   "input": "=SUM(DROP(nG,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H721",
+   "input": "=COLUMNS(DROP(nG,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J721",
+   "input": "=DROP(nG,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K721",
+   "input": "=ROWS(DROP(nG,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L721",
+   "input": "=SUM(DROP(nG,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M721",
+   "input": "=COLUMNS(DROP(nG,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A727",
+   "input": "=CHOOSEROWS(nG,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F727",
+   "input": "=ROWS(CHOOSEROWS(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G727",
+   "input": "=SUM(CHOOSEROWS(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H727",
+   "input": "=COLUMNS(CHOOSEROWS(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J727",
+   "input": "=CHOOSEROWS(nG,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K727",
+   "input": "=ROWS(CHOOSEROWS(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L727",
+   "input": "=SUM(CHOOSEROWS(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M727",
+   "input": "=COLUMNS(CHOOSEROWS(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A733",
+   "input": "=CHOOSECOLS(nG,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F733",
+   "input": "=ROWS(CHOOSECOLS(nG,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G733",
+   "input": "=SUM(CHOOSECOLS(nG,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H733",
+   "input": "=COLUMNS(CHOOSECOLS(nG,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J733",
+   "input": "=CHOOSECOLS(nG,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K733",
+   "input": "=ROWS(CHOOSECOLS(nG,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L733",
+   "input": "=SUM(CHOOSECOLS(nG,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M733",
+   "input": "=COLUMNS(CHOOSECOLS(nG,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A739",
+   "input": "=VSTACK(nG,nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F739",
+   "input": "=ROWS(VSTACK(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G739",
+   "input": "=SUM(VSTACK(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H739",
+   "input": "=COLUMNS(VSTACK(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J739",
+   "input": "=VSTACK(nG,nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K739",
+   "input": "=ROWS(VSTACK(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L739",
+   "input": "=SUM(VSTACK(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M739",
+   "input": "=COLUMNS(VSTACK(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A745",
+   "input": "=HSTACK(nG,nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F745",
+   "input": "=ROWS(HSTACK(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G745",
+   "input": "=SUM(HSTACK(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H745",
+   "input": "=COLUMNS(HSTACK(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J745",
+   "input": "=HSTACK(nG,nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K745",
+   "input": "=ROWS(HSTACK(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L745",
+   "input": "=SUM(HSTACK(nG,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M745",
+   "input": "=COLUMNS(HSTACK(nG,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A751",
+   "input": "=TOCOL(nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F751",
+   "input": "=ROWS(TOCOL(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G751",
+   "input": "=SUM(TOCOL(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H751",
+   "input": "=COLUMNS(TOCOL(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J751",
+   "input": "=TOCOL(nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K751",
+   "input": "=ROWS(TOCOL(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L751",
+   "input": "=SUM(TOCOL(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M751",
+   "input": "=COLUMNS(TOCOL(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A757",
+   "input": "=TOROW(nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F757",
+   "input": "=ROWS(TOROW(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G757",
+   "input": "=SUM(TOROW(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H757",
+   "input": "=COLUMNS(TOROW(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J757",
+   "input": "=TOROW(nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K757",
+   "input": "=ROWS(TOROW(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L757",
+   "input": "=SUM(TOROW(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M757",
+   "input": "=COLUMNS(TOROW(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A763",
+   "input": "=WRAPROWS(nG,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F763",
+   "input": "=ROWS(WRAPROWS(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G763",
+   "input": "=SUM(WRAPROWS(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H763",
+   "input": "=COLUMNS(WRAPROWS(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J763",
+   "input": "=WRAPROWS(nG,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K763",
+   "input": "=ROWS(WRAPROWS(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L763",
+   "input": "=SUM(WRAPROWS(nG,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M763",
+   "input": "=COLUMNS(WRAPROWS(nG,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A769",
+   "input": "=EXPAND(nG,4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F769",
+   "input": "=ROWS(EXPAND(nG,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G769",
+   "input": "=SUM(EXPAND(nG,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H769",
+   "input": "=COLUMNS(EXPAND(nG,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J769",
+   "input": "=EXPAND(nG,4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K769",
+   "input": "=ROWS(EXPAND(nG,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L769",
+   "input": "=SUM(EXPAND(nG,4))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M769",
+   "input": "=COLUMNS(EXPAND(nG,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A775",
+   "input": "=TRANSPOSE(nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F775",
+   "input": "=ROWS(TRANSPOSE(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G775",
+   "input": "=SUM(TRANSPOSE(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H775",
+   "input": "=COLUMNS(TRANSPOSE(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J775",
+   "input": "=TRANSPOSE(nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K775",
+   "input": "=ROWS(TRANSPOSE(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L775",
+   "input": "=SUM(TRANSPOSE(nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M775",
+   "input": "=COLUMNS(TRANSPOSE(nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A781",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nG)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F781",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G781",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H781",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J781",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,nG)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K781",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L781",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nG))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M781",
+   "input": "=COLUMNS(XLOOKUP(2,Sheet2!$A$2:$A$4,nG))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A787",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!F787",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!G787",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H787",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J787",
+   "input": "=XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!K787",
+   "input": "=ROWS(XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!L787",
+   "input": "=SUM(XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!M787",
+   "input": "=COLUMNS(XLOOKUP(1,Sheet2!$A$2:$A$4,nG,,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A793",
+   "input": "=SORT(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J793",
+   "input": "=SORT(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A799",
+   "input": "=TAKE(SORT(nB),2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J799",
+   "input": "=TAKE(SORT(nB),2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A805",
+   "input": "=TRANSPOSE(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J805",
+   "input": "=TRANSPOSE(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A811",
+   "input": "=UNIQUE(TRANSPOSE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J811",
+   "input": "=UNIQUE(TRANSPOSE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A817",
+   "input": "=ROWS(TRANSPOSE(UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J817",
+   "input": "=ROWS(TRANSPOSE(UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A823",
+   "input": "=SUM(TRANSPOSE(UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J823",
+   "input": "=SUM(TRANSPOSE(UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A829",
+   "input": "=SUM(UNIQUE(TRANSPOSE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J829",
+   "input": "=SUM(UNIQUE(TRANSPOSE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A835",
+   "input": "=UNIQUE(nB)&\"\""
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J835",
+   "input": "=UNIQUE(nB)&\"\""
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A841",
+   "input": "=UNIQUE(nB)+0"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J841",
+   "input": "=UNIQUE(nB)+0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A847",
+   "input": "=-UNIQUE(nB)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J847",
+   "input": "=-UNIQUE(nB)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A853",
+   "input": "=IF(TRUE,UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J853",
+   "input": "=IF(TRUE,UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A859",
+   "input": "=LET(x,UNIQUE(nB),x)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J859",
+   "input": "=LET(x,UNIQUE(nB),x)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A865",
+   "input": "=LET(x,nB,UNIQUE(x))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J865",
+   "input": "=LET(x,nB,UNIQUE(x))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A871",
+   "input": "=LET(x,nB,ROWS(UNIQUE(x)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J871",
+   "input": "=LET(x,nB,ROWS(UNIQUE(x)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A877",
+   "input": "=SUMPRODUCT(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J877",
+   "input": "=SUMPRODUCT(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A883",
+   "input": "=SUMPRODUCT(TRANSPOSE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J883",
+   "input": "=SUMPRODUCT(TRANSPOSE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A889",
+   "input": "=INDEX(UNIQUE(nB),2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J889",
+   "input": "=INDEX(UNIQUE(nB),2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A895",
+   "input": "=ROWS(SORT(UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J895",
+   "input": "=ROWS(SORT(UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A901",
+   "input": "=SUM(SORT(UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J901",
+   "input": "=SUM(SORT(UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A907",
+   "input": "=VSTACK(UNIQUE(nB),1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J907",
+   "input": "=VSTACK(UNIQUE(nB),1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A913",
+   "input": "=SUM(VSTACK(UNIQUE(nB),1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J913",
+   "input": "=SUM(VSTACK(UNIQUE(nB),1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A919",
+   "input": "=SUM(IF(TRUE,UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J919",
+   "input": "=SUM(IF(TRUE,UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A925",
+   "input": "=MMULT(TRANSPOSE(nB),{1;1;1})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J925",
+   "input": "=MMULT(TRANSPOSE(nB),{1;1;1})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A931",
+   "input": "=SUM(SORT(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J931",
+   "input": "=SUM(SORT(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A937",
+   "input": "=SUM(TAKE(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J937",
+   "input": "=SUM(TAKE(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A943",
+   "input": "=IFERROR(UNIQUE(nB),0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J943",
+   "input": "=IFERROR(UNIQUE(nB),0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A949",
+   "input": "=SUM(CHOOSE(1,UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J949",
+   "input": "=SUM(CHOOSE(1,UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A955",
+   "input": "=ROWS(IF(TRUE,UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J955",
+   "input": "=ROWS(IF(TRUE,UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A961",
+   "input": "=ROWS(UNIQUE(nB)&\"\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J961",
+   "input": "=ROWS(UNIQUE(nB)&\"\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A967",
+   "input": "=SORT(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J967",
+   "input": "=SORT(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A973",
+   "input": "=TAKE(SORT(nC),2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J973",
+   "input": "=TAKE(SORT(nC),2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A979",
+   "input": "=TRANSPOSE(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J979",
+   "input": "=TRANSPOSE(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A985",
+   "input": "=UNIQUE(TRANSPOSE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J985",
+   "input": "=UNIQUE(TRANSPOSE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A991",
+   "input": "=ROWS(TRANSPOSE(UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J991",
+   "input": "=ROWS(TRANSPOSE(UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A997",
+   "input": "=SUM(TRANSPOSE(UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J997",
+   "input": "=SUM(TRANSPOSE(UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1003",
+   "input": "=SUM(UNIQUE(TRANSPOSE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1003",
+   "input": "=SUM(UNIQUE(TRANSPOSE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1009",
+   "input": "=UNIQUE(nC)&\"\""
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1009",
+   "input": "=UNIQUE(nC)&\"\""
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1015",
+   "input": "=UNIQUE(nC)+0"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1015",
+   "input": "=UNIQUE(nC)+0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1021",
+   "input": "=-UNIQUE(nC)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1021",
+   "input": "=-UNIQUE(nC)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1027",
+   "input": "=IF(TRUE,UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1027",
+   "input": "=IF(TRUE,UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1033",
+   "input": "=LET(x,UNIQUE(nC),x)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1033",
+   "input": "=LET(x,UNIQUE(nC),x)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1039",
+   "input": "=LET(x,nC,UNIQUE(x))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1039",
+   "input": "=LET(x,nC,UNIQUE(x))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1045",
+   "input": "=LET(x,nC,ROWS(UNIQUE(x)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1045",
+   "input": "=LET(x,nC,ROWS(UNIQUE(x)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1051",
+   "input": "=SUMPRODUCT(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1051",
+   "input": "=SUMPRODUCT(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1057",
+   "input": "=SUMPRODUCT(TRANSPOSE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1057",
+   "input": "=SUMPRODUCT(TRANSPOSE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1063",
+   "input": "=INDEX(UNIQUE(nC),2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1063",
+   "input": "=INDEX(UNIQUE(nC),2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1069",
+   "input": "=ROWS(SORT(UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1069",
+   "input": "=ROWS(SORT(UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1075",
+   "input": "=SUM(SORT(UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1075",
+   "input": "=SUM(SORT(UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1081",
+   "input": "=VSTACK(UNIQUE(nC),1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1081",
+   "input": "=VSTACK(UNIQUE(nC),1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1087",
+   "input": "=SUM(VSTACK(UNIQUE(nC),1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1087",
+   "input": "=SUM(VSTACK(UNIQUE(nC),1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1093",
+   "input": "=SUM(IF(TRUE,UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1093",
+   "input": "=SUM(IF(TRUE,UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1099",
+   "input": "=MMULT(TRANSPOSE(nC),{1;1;1})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1099",
+   "input": "=MMULT(TRANSPOSE(nC),{1;1;1})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1105",
+   "input": "=SUM(SORT(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1105",
+   "input": "=SUM(SORT(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1111",
+   "input": "=SUM(TAKE(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1111",
+   "input": "=SUM(TAKE(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1117",
+   "input": "=IFERROR(UNIQUE(nC),0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1117",
+   "input": "=IFERROR(UNIQUE(nC),0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1123",
+   "input": "=SUM(CHOOSE(1,UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1123",
+   "input": "=SUM(CHOOSE(1,UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1129",
+   "input": "=ROWS(IF(TRUE,UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1129",
+   "input": "=ROWS(IF(TRUE,UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1135",
+   "input": "=ROWS(UNIQUE(nC)&\"\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1135",
+   "input": "=ROWS(UNIQUE(nC)&\"\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1141",
+   "input": "=SORT(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1141",
+   "input": "=SORT(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1147",
+   "input": "=TAKE(SORT(nF),2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1147",
+   "input": "=TAKE(SORT(nF),2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1153",
+   "input": "=TRANSPOSE(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1153",
+   "input": "=TRANSPOSE(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1159",
+   "input": "=UNIQUE(TRANSPOSE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1159",
+   "input": "=UNIQUE(TRANSPOSE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1165",
+   "input": "=ROWS(TRANSPOSE(UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1165",
+   "input": "=ROWS(TRANSPOSE(UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1171",
+   "input": "=SUM(TRANSPOSE(UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1171",
+   "input": "=SUM(TRANSPOSE(UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1177",
+   "input": "=SUM(UNIQUE(TRANSPOSE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1177",
+   "input": "=SUM(UNIQUE(TRANSPOSE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1183",
+   "input": "=UNIQUE(nF)&\"\""
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1183",
+   "input": "=UNIQUE(nF)&\"\""
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1189",
+   "input": "=UNIQUE(nF)+0"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1189",
+   "input": "=UNIQUE(nF)+0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1195",
+   "input": "=-UNIQUE(nF)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1195",
+   "input": "=-UNIQUE(nF)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1201",
+   "input": "=IF(TRUE,UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1201",
+   "input": "=IF(TRUE,UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1207",
+   "input": "=LET(x,UNIQUE(nF),x)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1207",
+   "input": "=LET(x,UNIQUE(nF),x)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1213",
+   "input": "=LET(x,nF,UNIQUE(x))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1213",
+   "input": "=LET(x,nF,UNIQUE(x))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1219",
+   "input": "=LET(x,nF,ROWS(UNIQUE(x)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1219",
+   "input": "=LET(x,nF,ROWS(UNIQUE(x)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1225",
+   "input": "=SUMPRODUCT(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1225",
+   "input": "=SUMPRODUCT(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1231",
+   "input": "=SUMPRODUCT(TRANSPOSE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1231",
+   "input": "=SUMPRODUCT(TRANSPOSE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1237",
+   "input": "=INDEX(UNIQUE(nF),2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1237",
+   "input": "=INDEX(UNIQUE(nF),2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1243",
+   "input": "=ROWS(SORT(UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1243",
+   "input": "=ROWS(SORT(UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1249",
+   "input": "=SUM(SORT(UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1249",
+   "input": "=SUM(SORT(UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1255",
+   "input": "=VSTACK(UNIQUE(nF),1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1255",
+   "input": "=VSTACK(UNIQUE(nF),1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1261",
+   "input": "=SUM(VSTACK(UNIQUE(nF),1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1261",
+   "input": "=SUM(VSTACK(UNIQUE(nF),1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1267",
+   "input": "=SUM(IF(TRUE,UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1267",
+   "input": "=SUM(IF(TRUE,UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1273",
+   "input": "=MMULT(TRANSPOSE(nF),{1;1;1})"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1273",
+   "input": "=MMULT(TRANSPOSE(nF),{1;1;1})"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1279",
+   "input": "=SUM(SORT(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1279",
+   "input": "=SUM(SORT(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1285",
+   "input": "=SUM(TAKE(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1285",
+   "input": "=SUM(TAKE(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1291",
+   "input": "=IFERROR(UNIQUE(nF),0)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1291",
+   "input": "=IFERROR(UNIQUE(nF),0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1297",
+   "input": "=SUM(CHOOSE(1,UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1297",
+   "input": "=SUM(CHOOSE(1,UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1303",
+   "input": "=ROWS(IF(TRUE,UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1303",
+   "input": "=ROWS(IF(TRUE,UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1309",
+   "input": "=ROWS(UNIQUE(nF)&\"\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1309",
+   "input": "=ROWS(UNIQUE(nF)&\"\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1315",
+   "input": "=ABS(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1315",
+   "input": "=ABS(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1321",
+   "input": "=LEN(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1321",
+   "input": "=LEN(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1327",
+   "input": "=MAX(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1327",
+   "input": "=MAX(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1333",
+   "input": "=COUNT(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1333",
+   "input": "=COUNT(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1339",
+   "input": "=SUM(UNIQUE(nB)&\"\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1339",
+   "input": "=SUM(UNIQUE(nB)&\"\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1345",
+   "input": "=SUM(--UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1345",
+   "input": "=SUM(--UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1351",
+   "input": "=SUM(UNIQUE(nB)*1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1351",
+   "input": "=SUM(UNIQUE(nB)*1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1357",
+   "input": "=SUM(ABS(UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1357",
+   "input": "=SUM(ABS(UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1363",
+   "input": "=TEXTJOIN(\",\",,UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1363",
+   "input": "=TEXTJOIN(\",\",,UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1369",
+   "input": "=CONCAT(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1369",
+   "input": "=CONCAT(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1375",
+   "input": "=COUNTIF(UNIQUE(nB),\">0\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1375",
+   "input": "=COUNTIF(UNIQUE(nB),\">0\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1381",
+   "input": "=SUMIF(UNIQUE(nB),\">0\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1381",
+   "input": "=SUMIF(UNIQUE(nB),\">0\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1387",
+   "input": "=MMULT(UNIQUE(nB),1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1387",
+   "input": "=MMULT(UNIQUE(nB),1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1393",
+   "input": "=AND(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1393",
+   "input": "=AND(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1399",
+   "input": "=N(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1399",
+   "input": "=N(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1405",
+   "input": "=T(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1405",
+   "input": "=T(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1411",
+   "input": "=ROW(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1411",
+   "input": "=ROW(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1417",
+   "input": "=ROWS(ABS(UNIQUE(nB)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1417",
+   "input": "=ROWS(ABS(UNIQUE(nB)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1423",
+   "input": "=ROWS(INDEX(UNIQUE(nB),0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1423",
+   "input": "=ROWS(INDEX(UNIQUE(nB),0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1429",
+   "input": "=ISNUMBER(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1429",
+   "input": "=ISNUMBER(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1435",
+   "input": "=ISREF(UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1435",
+   "input": "=ISREF(UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1441",
+   "input": "=ROWS(LET(x,UNIQUE(nB),x))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1441",
+   "input": "=ROWS(LET(x,UNIQUE(nB),x))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1447",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,UNIQUE(nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1447",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,UNIQUE(nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1453",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1453",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1459",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,INDEX(nB,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1459",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,INDEX(nB,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1465",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1465",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nB))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1471",
+   "input": "=INDEX(nB,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1471",
+   "input": "=INDEX(nB,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1477",
+   "input": "=INDEX(nB,2,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1477",
+   "input": "=INDEX(nB,2,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1483",
+   "input": "=SUM(INDEX(nB,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1483",
+   "input": "=SUM(INDEX(nB,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1489",
+   "input": "=ROWS(INDEX(nB,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1489",
+   "input": "=ROWS(INDEX(nB,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1495",
+   "input": "=ABS(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1495",
+   "input": "=ABS(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1501",
+   "input": "=LEN(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1501",
+   "input": "=LEN(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1507",
+   "input": "=MAX(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1507",
+   "input": "=MAX(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1513",
+   "input": "=COUNT(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1513",
+   "input": "=COUNT(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1519",
+   "input": "=SUM(UNIQUE(nC)&\"\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1519",
+   "input": "=SUM(UNIQUE(nC)&\"\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1525",
+   "input": "=SUM(--UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1525",
+   "input": "=SUM(--UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1531",
+   "input": "=SUM(UNIQUE(nC)*1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1531",
+   "input": "=SUM(UNIQUE(nC)*1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1537",
+   "input": "=SUM(ABS(UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1537",
+   "input": "=SUM(ABS(UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1543",
+   "input": "=TEXTJOIN(\",\",,UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1543",
+   "input": "=TEXTJOIN(\",\",,UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1549",
+   "input": "=CONCAT(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1549",
+   "input": "=CONCAT(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1555",
+   "input": "=COUNTIF(UNIQUE(nC),\">0\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1555",
+   "input": "=COUNTIF(UNIQUE(nC),\">0\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1561",
+   "input": "=SUMIF(UNIQUE(nC),\">0\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1561",
+   "input": "=SUMIF(UNIQUE(nC),\">0\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1567",
+   "input": "=MMULT(UNIQUE(nC),1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1567",
+   "input": "=MMULT(UNIQUE(nC),1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1573",
+   "input": "=AND(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1573",
+   "input": "=AND(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1579",
+   "input": "=N(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1579",
+   "input": "=N(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1585",
+   "input": "=T(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1585",
+   "input": "=T(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1591",
+   "input": "=ROW(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1591",
+   "input": "=ROW(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1597",
+   "input": "=ROWS(ABS(UNIQUE(nC)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1597",
+   "input": "=ROWS(ABS(UNIQUE(nC)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1603",
+   "input": "=ROWS(INDEX(UNIQUE(nC),0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1603",
+   "input": "=ROWS(INDEX(UNIQUE(nC),0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1609",
+   "input": "=ISNUMBER(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1609",
+   "input": "=ISNUMBER(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1615",
+   "input": "=ISREF(UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1615",
+   "input": "=ISREF(UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1621",
+   "input": "=ROWS(LET(x,UNIQUE(nC),x))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1621",
+   "input": "=ROWS(LET(x,UNIQUE(nC),x))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1627",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,UNIQUE(nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1627",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,UNIQUE(nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1633",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1633",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1639",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,INDEX(nC,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1639",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,INDEX(nC,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1645",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1645",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nC))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1651",
+   "input": "=INDEX(nC,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1651",
+   "input": "=INDEX(nC,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1657",
+   "input": "=INDEX(nC,2,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1657",
+   "input": "=INDEX(nC,2,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1663",
+   "input": "=SUM(INDEX(nC,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1663",
+   "input": "=SUM(INDEX(nC,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1669",
+   "input": "=ROWS(INDEX(nC,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1669",
+   "input": "=ROWS(INDEX(nC,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1675",
+   "input": "=ABS(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1675",
+   "input": "=ABS(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1681",
+   "input": "=LEN(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1681",
+   "input": "=LEN(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1687",
+   "input": "=MAX(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1687",
+   "input": "=MAX(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1693",
+   "input": "=COUNT(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1693",
+   "input": "=COUNT(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1699",
+   "input": "=SUM(UNIQUE(nF)&\"\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1699",
+   "input": "=SUM(UNIQUE(nF)&\"\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1705",
+   "input": "=SUM(--UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1705",
+   "input": "=SUM(--UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1711",
+   "input": "=SUM(UNIQUE(nF)*1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1711",
+   "input": "=SUM(UNIQUE(nF)*1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1717",
+   "input": "=SUM(ABS(UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1717",
+   "input": "=SUM(ABS(UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1723",
+   "input": "=TEXTJOIN(\",\",,UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1723",
+   "input": "=TEXTJOIN(\",\",,UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1729",
+   "input": "=CONCAT(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1729",
+   "input": "=CONCAT(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1735",
+   "input": "=COUNTIF(UNIQUE(nF),\">0\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1735",
+   "input": "=COUNTIF(UNIQUE(nF),\">0\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1741",
+   "input": "=SUMIF(UNIQUE(nF),\">0\")"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1741",
+   "input": "=SUMIF(UNIQUE(nF),\">0\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1747",
+   "input": "=MMULT(UNIQUE(nF),1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1747",
+   "input": "=MMULT(UNIQUE(nF),1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1753",
+   "input": "=AND(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1753",
+   "input": "=AND(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1759",
+   "input": "=N(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1759",
+   "input": "=N(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1765",
+   "input": "=T(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1765",
+   "input": "=T(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1771",
+   "input": "=ROW(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1771",
+   "input": "=ROW(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1777",
+   "input": "=ROWS(ABS(UNIQUE(nF)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1777",
+   "input": "=ROWS(ABS(UNIQUE(nF)))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1783",
+   "input": "=ROWS(INDEX(UNIQUE(nF),0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1783",
+   "input": "=ROWS(INDEX(UNIQUE(nF),0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1789",
+   "input": "=ISNUMBER(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1789",
+   "input": "=ISNUMBER(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1795",
+   "input": "=ISREF(UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1795",
+   "input": "=ISREF(UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1801",
+   "input": "=ROWS(LET(x,UNIQUE(nF),x))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1801",
+   "input": "=ROWS(LET(x,UNIQUE(nF),x))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1807",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,UNIQUE(nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1807",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,UNIQUE(nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1813",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1813",
+   "input": "=SUM(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1819",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,INDEX(nF,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1819",
+   "input": "=XLOOKUP(2,Sheet2!$A$2:$A$4,INDEX(nF,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1825",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1825",
+   "input": "=ROWS(XLOOKUP(2,Sheet2!$A$2:$A$4,nF))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1831",
+   "input": "=INDEX(nF,2)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1831",
+   "input": "=INDEX(nF,2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1837",
+   "input": "=INDEX(nF,2,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1837",
+   "input": "=INDEX(nF,2,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1843",
+   "input": "=SUM(INDEX(nF,2))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1843",
+   "input": "=SUM(INDEX(nF,2))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1849",
+   "input": "=ROWS(INDEX(nF,0))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!J1849",
+   "input": "=ROWS(INDEX(nF,0))"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:M1855"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:M1855"
+  }
+ ]
+}

@@ -1280,6 +1280,27 @@ impl Workbook {
         }
         let compiled = self.compile_formula(body, host)?;
 
+        let active = self.session.active;
+        let mut one_column = false;
+        formula::walk(&compiled.root, &mut |n| {
+            if let formula::Node::StructRef { table, spec, .. } = n {
+                let under_cursor = self
+                    .table_by_name(table)
+                    .is_some_and(|t| t.sheet == active && t.rect.contains(0, 0));
+                if !under_cursor {
+                    return;
+                }
+                let single = spec.cols.as_ref().is_some_and(|(a, b)| a == b) && !spec.range;
+                let implicit = spec.items == tables::Items::DATA && !spec.explicit_data;
+                one_column |= single && (spec.items.this_row || implicit);
+            }
+        });
+        if one_column {
+            return Err(EditError::Compile(
+                "There's a problem with this formula.".into(),
+            ));
+        }
+
         self.note_placeholders(&compiled, host);
         if bad_name {
             return Err(EditError::BadName(name.to_string()));

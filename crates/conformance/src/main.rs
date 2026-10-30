@@ -562,7 +562,8 @@ fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool) -> Tally {
         }
         let host = parse_cell_ref(&wb, it["host"].as_str().unwrap(), t_id).unwrap();
         let invalid = it["invalid"].as_bool().unwrap_or(false);
-        match if formula == "=" {
+
+        match if !formula.starts_with('=') || formula == "=" {
             wb.set_input(host, formula)
         } else {
             wb.set_formula(host, formula)

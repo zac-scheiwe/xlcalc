@@ -276,6 +276,7 @@ impl Workbook {
         } else {
             fmt
         };
+        let fmt = &*unquote_dollar(fmt);
         let line = self.cellfmt.line(addr).map_or("General", |f| &**f);
         if fmt == line {
             self.cellfmt.map.remove(&key);
@@ -286,9 +287,9 @@ impl Workbook {
 
     fn apply_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) {
         let fmt: Arc<str> = Arc::from(if fmt.is_empty() || fmt.eq_ignore_ascii_case("general") {
-            "General"
+            "General".into()
         } else {
-            fmt
+            unquote_dollar(fmt)
         });
         let f = &mut self.cellfmt;
         if rect.is_full_columns() || rect.is_full_rows() {
@@ -849,4 +850,42 @@ fn format_sections(f: &str) -> Vec<String> {
         }
     }
     secs
+}
+
+fn unquote_dollar(fmt: &str) -> std::borrow::Cow<'_, str> {
+    if !fmt.contains("\"$\"") {
+        return fmt.into();
+    }
+    let mut out = String::with_capacity(fmt.len());
+    let mut it = fmt.chars().peekable();
+    while let Some(c) = it.next() {
+        match c {
+            '\\' => {
+                out.push(c);
+                out.extend(it.next());
+            }
+            '"' => {
+                let mut lit = String::new();
+                let mut closed = false;
+                for d in it.by_ref() {
+                    if d == '"' {
+                        closed = true;
+                        break;
+                    }
+                    lit.push(d);
+                }
+                if closed && lit == "$" {
+                    out.push('$');
+                } else {
+                    out.push('"');
+                    out.push_str(&lit);
+                    if closed {
+                        out.push('"');
+                    }
+                }
+            }
+            _ => out.push(c),
+        }
+    }
+    out.into()
 }

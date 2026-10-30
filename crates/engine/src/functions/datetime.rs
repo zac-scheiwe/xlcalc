@@ -168,7 +168,11 @@ fn edate(ctx: &mut EvalCtx, s: f64, shift: f64, months: f64, end_of_month: bool)
         }
         let dim = dt::days_in_month(ny, nm);
         let nd = if end_of_month { dim } else { d.min(dim) };
-        let r = dt::serial_from_ymd(csys, ny, nm as i64, nd as i64);
+        let mut r = dt::serial_from_ymd(csys, ny, nm as i64, nd as i64);
+
+        if !end_of_month && csys == DateSystem::D1900 && d == 0 && (ny, nm) == (1900, 3) {
+            r = 60;
+        }
 
         if r < 0 && sys(ctx) == DateSystem::D1900 {
             return Err(XlError::NUM);

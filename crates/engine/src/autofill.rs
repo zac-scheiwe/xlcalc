@@ -594,6 +594,17 @@ fn linear_in(xs: &[f64], ys: &[f64]) -> bool {
     (0..n).all(|k| (ys[k] - ys[0]) * dx == dy * (xs[k] - xs[0]))
 }
 
+const TOD_STEP: f64 = 5.787_037_037_037_037e-6;
+
+fn tod_units(v: f64) -> i64 {
+    let f = v - v.trunc();
+    ((f / TOD_STEP) * 100.0).trunc() as i64
+}
+
+fn tod_frac(t: i64) -> f64 {
+    (t as f64 * TOD_STEP) / 100.0
+}
+
 fn mod_floor(a: i64, m: i64) -> i64 {
     a.rem_euclid(m)
 }
@@ -747,6 +758,18 @@ fn numeric_value(
     let fin = |v: f64| round15(if time && v < 0.0 { v - v.floor() } else { v });
     let m = slots.len();
     let ty = ctx.ty;
+
+    let snapped: Vec<f64>;
+    let ys = if !time
+        && m > 1
+        && ys.iter().any(|y| *y != y.round())
+        && ys.iter().all(|y| (y - y.round()).abs() < TOD_STEP)
+    {
+        snapped = ys.iter().map(|y| y.round()).collect();
+        &snapped[..]
+    } else {
+        ys
+    };
     if matches!(
         ty,
         FillType::Days | FillType::Weekdays | FillType::Months | FillType::Years
@@ -946,6 +969,8 @@ enum DMode {
     Series { step: i64 },
     ShiftDays(i64),
     ShiftMonths(i64),
+
+    YearShift { eom: bool, dom: u32 },
 }
 
 fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> Option<Value> {
@@ -1067,6 +1092,15 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
                 let aligned_years = aligned && mi.iter().all(|x| (x - mi[0]) % 12 == 0);
                 if aligned_years {
                     months_mode(12)
+                } else if aligned
+                    && months_linear
+                    && months_slope.fract() == 0.0
+                    && mi[m - 1] != mi[0]
+                {
+                    DMode::YearShift {
+                        eom: all_eom,
+                        dom: dom0,
+                    }
                 } else if m >= 3 && !days_linear {
                     DMode::Cycle
                 } else {
@@ -1110,7 +1144,25 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
         DMode::Days { slope } => {
             let x = if m == 1 { pf } else { x_new };
 
-            let v = dv[0] + slope * x;
+            let mut v = dv[0] + slope * x;
+            if time && matches!(ty, FillType::Default | FillType::Series | FillType::Values) {
+                let tt: Vec<i64> = raw.iter().map(|&r| tod_units(r)).collect();
+                let series = if m == 1 {
+                    Some((slope, 0.0))
+                } else {
+                    let c = coords(slots);
+                    let dx = c.xs[m - 1] - c.xs[0];
+                    let ttf: Vec<f64> = tt.iter().map(|&t| t as f64).collect();
+                    let idf: Vec<f64> = ints.iter().map(|&i| i as f64).collect();
+                    let dt = (tt[m - 1] - tt[0]) as f64 / dx;
+                    (linear_in(&c.xs, &idf) && linear_in(&c.xs, &ttf) && dt.fract() == 0.0)
+                        .then(|| ((ints[m - 1] - ints[0]) as f64 / dx, dt))
+                };
+                if let Some((day_slope, td)) = series {
+                    v = (ints[0] as f64 + day_slope * x)
+                        + (x * tod_frac(td as i64) + tod_frac(tt[0]));
+                }
+            }
             if v >= sys.max_serial() + 1.0 {
                 return None;
             }
@@ -1146,16 +1198,21 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
             }
         }
         DMode::ShiftDays(n) => roll_back_weekend(sys, ints[k] + n * p) as f64,
+        DMode::YearShift { eom, dom } => {
+            let target = mi[k] + 12 * ctx.sign * p;
+            date_in_month(sys, target, dom, eom) as f64
+        }
         DMode::ShiftMonths(n) => {
-            let (y0, m0, d0) = ymd[0];
-            let t = (y0 * 12 + m0 as i64 - 1) + n * p;
+            let b = if ctx.sign < 0 { m - 1 } else { 0 };
+            let (y0, m0, d0) = ymd[b];
+            let day_field = d0 as i64 + (ints[k] - ints[b]);
+            let to_end = day_field == dim(sys, y0, m0) as i64;
+            let t = mi[b] + n * p;
             let (y, m) = (t.div_euclid(12), t.rem_euclid(12) + 1);
-            let first = serial_from_ymd(sys, y, m, d0 as i64);
-
-            let d = if k == 0 && ty != FillType::Weekdays {
-                date_in_month(sys, t, d0, false)
+            let d = if to_end || ((day_field == 29 || day_field == 30) && m == 2) {
+                date_in_month(sys, t, d0, true)
             } else {
-                first + (ints[k] - ints[0])
+                serial_from_ymd(sys, y, m, day_field)
             };
             if ty == FillType::Weekdays {
                 roll_back_weekend(sys, d) as f64
@@ -1164,6 +1221,10 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
             }
         }
     };
+
+    if v < 0.0 && !matches!(mode, DMode::Days { .. }) {
+        return None;
+    }
     Some(Value::Number(v))
 }
 

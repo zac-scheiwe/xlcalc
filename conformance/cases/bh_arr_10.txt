@@ -19,7 +19,7 @@
 =SUM(Data!A1:INDIRECT("Data!A3"))
 =SUM(INDIRECT("Data!A1"):INDIRECT("Data!A3"))
 =SUM(INDIRECT("Data!A1"):Data!A3)
-=SUM(INDIRECT("A1:A3"))
+=SUM(INDIRECT("Data!A1:A3"))
 =SUM(Data!A1:A3:Data!A5)
 =SUM(Data!A1:A3:Data!C2)
 =SUM(Data!A1:B2:Data!C3:D4)

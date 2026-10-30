@@ -23,13 +23,6 @@ fn basis_of(ctx: &EvalCtx, a: &[Arg], i: usize) -> R<Basis> {
 
 pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
-        let issue = atp::date(ctx, a, 0)?;
-        let first = atp::date(ctx, a, 1)?;
-        let settle = atp::date(ctx, a, 2)?;
-        let rate = atp::req(ctx, a, 3)?;
-        let par = atp::opt(ctx, a, 4, 1000.0)?;
-        let freq = atp::frequency(atp::req(ctx, a, 5)?)?;
-        let b = basis_of(ctx, a, 6)?;
         let calc_method = match a.get(7) {
             Some(Some(v)) => match v {
                 Value::Blank => false,
@@ -37,6 +30,13 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             },
             _ => true,
         };
+        let issue = atp::date(ctx, a, 0)?;
+        let first = atp::date(ctx, a, 1)?;
+        let settle = atp::date(ctx, a, 2)?;
+        let rate = atp::req(ctx, a, 3)?;
+        let par = atp::opt(ctx, a, 4, 1000.0)?;
+        let freq = atp::frequency(atp::req(ctx, a, 5)?)?;
+        let b = basis_of(ctx, a, 6)?;
         if issue < 1 || first < 1 {
             return Err(XlError::NUM);
         }
@@ -369,6 +369,7 @@ fn price_core(bd: &Bond, rate: f64, yld: f64, redemption: f64) -> f64 {
 
 pub fn price(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
+        basis_of(ctx, a, 6)?;
         let settle = atp::date(ctx, a, 0)?;
         let mat = atp::date(ctx, a, 1)?;
         let rate = atp::req(ctx, a, 2)?;
@@ -385,6 +386,7 @@ pub fn price(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 
 pub fn yield_(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
+        basis_of(ctx, a, 6)?;
         let settle = atp::date(ctx, a, 0)?;
         let mat = atp::date(ctx, a, 1)?;
         let rate = atp::req(ctx, a, 2)?;

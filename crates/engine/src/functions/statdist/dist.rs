@@ -1437,6 +1437,10 @@ fn hypgeom(k: f64, n: f64, kk: f64, nn: f64, cum: bool) -> R<f64> {
     if [k, n, kk, nn].iter().any(|v| *v >= 2147483647.0) {
         return Err(XlError::NUM);
     }
+
+    if nn == 0.0 && n == 0.0 && kk == 0.0 && k >= 0.0 {
+        return Ok(if cum || k == 0.0 { 1.0 } else { 0.0 });
+    }
     if k < 0.0 || n < 0.0 || kk < 0.0 || nn <= 0.0 || n > nn || kk > nn {
         return Err(XlError::NUM);
     }

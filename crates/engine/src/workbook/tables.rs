@@ -281,29 +281,29 @@ impl Workbook {
         let named_keys: std::collections::HashSet<String> =
             named.iter().flatten().map(|s| key(s)).collect();
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
-        let mut next_blank = 1u32;
-        let mut dup_counter = 2u32;
+
+        let mut counter = 0u32;
         let mut generated: Vec<String> = Vec::new();
         for given in &named {
             let mut n = match given {
                 None => {
-                    loop {
-                        let k = key(&format!("Column{next_blank}"));
-                        if named_keys.contains(&k) || seen.contains(&k) {
-                            next_blank += 1;
-                        } else {
-                            break;
+                    let cand = loop {
+                        counter += 1;
+                        let cand = format!("Column{counter}");
+                        let k = key(&cand);
+                        if !named_keys.contains(&k) && !seen.contains(&k) {
+                            break cand;
                         }
-                    }
-                    generated.push(key(&format!("Column{next_blank}")));
-                    format!("Column{next_blank}")
+                    };
+                    generated.push(key(&cand));
+                    cand
                 }
                 Some(s) => s.clone(),
             };
             if seen.contains(&key(&n)) {
                 loop {
-                    let cand = format!("{n}{dup_counter}");
-                    dup_counter += 1;
+                    counter = (counter + 1).max(2);
+                    let cand = format!("{n}{counter}");
                     let k = key(&cand);
                     if !seen.contains(&k) && !named_keys.contains(&k) {
                         n = cand;

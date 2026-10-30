@@ -116,8 +116,18 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         Operand::Ref(r) if r.is_span() => Operand::err(XlError::VALUE),
 
         Operand::Ref(Reference::Grid(g)) => match pick(g.rows, g.cols, row, col, explicit_col) {
-            Ok((r0, r1, c0, c1)) if r0 == r1 && c0 == c1 => g.broadcast_get(r0, c0),
-            Ok(_) => Operand::err(XlError::VALUE),
+            Ok((r0, r1, c0, c1)) if r0 == r1 && c0 == c1 && (explicit_col || g.rows == 1) => {
+                g.broadcast_get(r0, c0)
+            }
+            Ok((r0, r1, c0, c1)) => {
+                let items = (r0..=r1)
+                    .flat_map(|r| (c0..=c1).map(move |c| (r, c)))
+                    .map(|(r, c)| g.items[(r * g.cols + c) as usize])
+                    .collect();
+                Operand::Ref(Reference::Grid(std::sync::Arc::new(
+                    crate::eval::RefGrid::new(r1 - r0 + 1, c1 - c0 + 1, items),
+                )))
+            }
             Err(e) => Operand::err(e),
         },
         Operand::Ref(r) => {

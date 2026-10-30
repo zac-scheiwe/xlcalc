@@ -75,6 +75,51 @@ const ARRAY_RESULT: &[&str] = &[
     "TEXTSPLIT",
 ];
 
+const PASS_THROUGH: &[&str] = &["IF", "IFS", "CHOOSE", "SWITCH", "IFERROR", "IFNA", "LET"];
+
+const NO_LIFT: &[&str] = &[
+    "LET",
+    "LAMBDA",
+    "MAP",
+    "SCAN",
+    "REDUCE",
+    "BYROW",
+    "BYCOL",
+    "MAKEARRAY",
+    "CELL",
+    "CHOOSE",
+    "CHOOSECOLS",
+    "CHOOSEROWS",
+    "DROP",
+    "EXPAND",
+    "FIELDVALUE",
+    "FILTER",
+    "FILTERXML",
+    "HLOOKUP",
+    "HYPERLINK",
+    "IF",
+    "IFERROR",
+    "IFNA",
+    "IFS",
+    "INDEX",
+    "MUNIT",
+    "RANDARRAY",
+    "SEQUENCE",
+    "SORT",
+    "STOCKHISTORY",
+    "SWITCH",
+    "TAKE",
+    "TEXTSPLIT",
+    "TOCOL",
+    "TOROW",
+    "TRANSPOSE",
+    "UNIQUE",
+    "VLOOKUP",
+    "WRAPCOLS",
+    "WRAPROWS",
+    "XLOOKUP",
+];
+
 fn legacy_params(name: &str) -> Option<&'static str> {
     Some(match name {
         "MATCH" => "VRV",
@@ -97,7 +142,27 @@ thread_local! {
     static RANGE_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
     static COMPUTED_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
 
+    static SCALAR_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+
+    static ONE_CELL_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+
     static KNOWN_NAMES: std::cell::RefCell<Option<Vec<String>>> = const { std::cell::RefCell::new(None) };
+
+    static IN_AGG: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+fn walk_agg(e: Expr, c: Ctx) -> Expr {
+    if c == Ctx::Value {
+        return walk(e, c);
+    }
+    let saved = IN_AGG.with(|f| f.replace(true));
+    let out = walk(e, c);
+    IN_AGG.with(|f| f.set(saved));
+    out
+}
+
+fn in_agg() -> bool {
+    IN_AGG.with(|f| f.get())
 }
 
 fn undefined_name(name: &str) -> bool {
@@ -160,6 +225,58 @@ fn is_multi_ref(e: &Expr) -> bool {
     }
 }
 
+fn is_native_array_call(e: &Expr) -> bool {
+    match e {
+        Expr::Func { name, .. } => {
+            let up = name.to_uppercase();
+            ARRAY_RESULT.contains(&up.as_str())
+                && !matches!(
+                    up.as_str(),
+                    "INDEX" | "OFFSET" | "INDIRECT" | "CELL" | "FILTERXML"
+                )
+        }
+        _ => false,
+    }
+}
+
+fn takes_ref(e: &Expr) -> bool {
+    match e {
+        Expr::Func { name, args } => {
+            let up = name.to_uppercase();
+            let bare = up.strip_prefix("_XLFN.").unwrap_or(&up);
+            matches!(bare, "TAKE" | "DROP")
+                && args.first().is_some_and(|a| match a.unwrap_ws() {
+                    Expr::Func { name, .. } => ref_call(name),
+                    x => is_multi_ref(x) && !is_computed_name(x),
+                })
+        }
+        _ => false,
+    }
+}
+
+fn ref_call(name: &str) -> bool {
+    name.eq_ignore_ascii_case("OFFSET") || name.eq_ignore_ascii_case("INDIRECT")
+}
+
+fn index_of_ref(e: &Expr) -> bool {
+    crate::deep(|| match e.unwrap_ws() {
+        Expr::Func { name, args } if name.eq_ignore_ascii_case("INDEX") => {
+            args.first().is_some_and(|a| match a.unwrap_ws() {
+                Expr::Ref { .. } | Expr::Spill(_) => true,
+                Expr::Binary {
+                    op: BinOp::Range, ..
+                } => true,
+                n @ Expr::Name { .. } => {
+                    !is_computed_name(n) && (is_multi_ref(n) || is_scalar_name(n))
+                }
+                Expr::Func { name, .. } if ref_call(name) => true,
+                f => index_of_ref(f),
+            })
+        }
+        _ => false,
+    })
+}
+
 fn at(e: Expr) -> Expr {
     Expr::Unary {
         op: UnaryOp::Implicit,
@@ -210,6 +327,11 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
     fn arrayish(e: &Expr) -> bool {
         crate::deep(|| match e.unwrap_ws() {
             Expr::Binary { left, right, .. } => arrayish(left) || arrayish(right),
+
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                ..
+            } => false,
             Expr::Unary { expr, .. } => arrayish(expr),
             x => is_multi_ref(x) || array_capable(x),
         })
@@ -233,29 +355,97 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
                 .is_some_and(|a| matches!(a.unwrap_ws(), Expr::Number(n) if *n == 0.0));
             !(nonzero >= 2 || (zero && is_range_name(&args[0])))
         }
+
+        "INDEX"
+            if args.first().is_some_and(|a| {
+                is_scalar_name(a)
+                    || matches!(
+                        a.unwrap_ws(),
+                        Expr::Ref {
+                            kind: RefKind::Cell { .. },
+                            ..
+                        }
+                    )
+            }) && !args[1..].iter().any(has_arr) =>
+        {
+            false
+        }
         "INDEX" => {
-            args.first()
-                .is_some_and(|a| matches!(a.unwrap_ws(), Expr::Func { .. }) && array_capable(a))
+            let first = args.first().map(|a| a.unwrap_ws());
+            let computed = first.is_some_and(|a| match a {
+                Expr::Func { name, .. } if ref_call(name) || index_of_ref(a) => false,
+                Expr::Func { name, args } => {
+                    array_capable(a)
+                        || (matches!(
+                            name.to_uppercase().as_str(),
+                            "ABS" | "INT" | "ROUND" | "SQRT" | "SIGN"
+                        ) && args
+                            .iter()
+                            .any(|x| is_multi_ref(x.unwrap_ws()) || arrayish(x)))
+                }
+                Expr::Binary { op, .. }
+                    if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) =>
+                {
+                    arrayish(a)
+                }
+                Expr::Unary { op, .. } if *op != UnaryOp::Implicit => arrayish(a),
+                Expr::Call { .. } => true,
+                _ => false,
+            });
+
+            let literal = |e: &Expr| match e.unwrap_ws() {
+                Expr::Number(n) => *n != 0.0,
+                f @ Expr::Func { .. } => !array_capable(f),
+                _ => false,
+            };
+            let ranged = first.is_some_and(|f| {
+                is_multi_ref(f)
+                    || matches!(f, Expr::Func { name, .. } if (ref_call(name) || index_of_ref(f)) && array_capable(f))
+            }) && !args[1..].iter().all(literal);
+            computed
+                || ranged
                 || args
                     .iter()
                     .skip(1)
                     .any(|a| zero_or_missing(a) || has_arr(a))
         }
         "OFFSET" => {
+            let one = |a: &Expr| matches!(a.unwrap_ws(), Expr::Number(n) if *n == 1.0);
+
+            let sized = args.len() == 5 && args[3..].iter().all(one);
             args.iter().skip(1).take(2).any(has_arr)
+                || args.iter().skip(3).take(2).any(|a| !one(a))
                 || args
-                    .iter()
-                    .skip(3)
-                    .take(2)
-                    .any(|a| !matches!(a.unwrap_ws(), Expr::Number(n) if *n == 1.0))
-                || args.first().is_some_and(|a| is_multi_ref(a.unwrap_ws()))
+                    .first()
+                    .is_some_and(|a| is_computed_name(a) || (is_multi_ref(a.unwrap_ws()) && !sized))
         }
-        "IFERROR" | "IFNA" => args.get(1).is_some_and(multi),
+        "IFERROR" | "IFNA" => args.get(1).is_some_and(array_capable),
         "ROW" | "COLUMN" | "ISFORMULA" | "FORMULATEXT" => args.first().is_some_and(multi),
 
         "XLOOKUP" => {
-            args.get(3).is_some_and(multi)
+            let ret = |a: &Expr| match a.unwrap_ws() {
+                n @ Expr::Name { .. } => is_computed_name(n) && !is_one_cell_name(n),
+                Expr::Ref {
+                    kind: RefKind::Area { r0, c0, r1, c1 },
+                    ..
+                } => r0.index != r1.index && c0.index != c1.index,
+                Expr::Ref {
+                    kind: RefKind::Cols { c0, c1 },
+                    ..
+                } => c0.index != c1.index,
+                Expr::Ref {
+                    kind: RefKind::Rows { r0, r1 },
+                    ..
+                } => r0.index != r1.index,
+                Expr::Ref { .. } | Expr::Spill(_) => false,
+                Expr::Binary {
+                    op: BinOp::Range, ..
+                } => false,
+                x => multi(x),
+            };
+            args.get(3).is_some_and(array_capable)
                 || (args.get(2).is_some_and(multi) && !args.get(1).is_some_and(multi))
+                || args.get(2).is_some_and(ret)
         }
         _ => ARRAY_RESULT.contains(&name),
     }
@@ -271,16 +461,15 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
             Expr::Func { name, args } => {
                 let upper = name.to_uppercase();
                 let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
-                let c = if bare == "TRANSPOSE" {
-                    Ctx::Value
-                } else {
-                    Ctx::Array
-                };
+                if NO_LIFT.contains(&bare) && !EVAL_FORM.with(|f| f.get()) {
+                    return walk_inner(Expr::Func { name, args }, Ctx::Ref);
+                }
                 Expr::Func {
                     name,
-                    args: args.into_iter().map(|a| walk(a, c)).collect(),
+                    args: args.into_iter().map(|a| walk(a, Ctx::Array)).collect(),
                 }
             }
+            c @ Expr::Call { .. } => walk_inner(c, Ctx::Ref),
             Expr::Ws {
                 before,
                 after,
@@ -333,7 +522,7 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
         }
         Expr::Array(rows) => {
             let multi = rows.len() > 1 || rows.first().is_some_and(|r| r.len() > 1);
-            if ctx == Ctx::Value && multi {
+            if ctx == Ctx::Value && multi && !in_agg() {
                 at(Expr::Array(rows))
             } else {
                 Expr::Array(rows)
@@ -343,6 +532,20 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
             op,
             expr: Box::new(walk(*expr, Ctx::Value)),
         },
+
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr,
+        } if matches!(expr.unwrap_ws(), Expr::Binary { op, .. }
+                if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union))
+            || matches!(expr.unwrap_ws(), Expr::Unary { op, .. } if *op != UnaryOp::Implicit)
+            || matches!(expr.unwrap_ws(), Expr::Percent(_)) =>
+        {
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr: Box::new(walk(*expr, Ctx::Value)),
+            }
+        }
         Expr::Percent(x) => Expr::Percent(Box::new(walk(*x, Ctx::Value))),
         Expr::Binary { op, left, right }
             if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) =>
@@ -360,7 +563,7 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
                 callee: Box::new(callee),
                 args,
             };
-            if ctx == Ctx::Value {
+            if ctx == Ctx::Value && !in_agg() {
                 at(call)
             } else {
                 call
@@ -377,13 +580,34 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
                 .or_else(|| crate::legacy_classes::legacy_classes(&bare).map(|_| "0000"));
             if let Some(t) = measured {
                 let t = t.as_bytes();
-                let col = if ctx == Ctx::Value { 0 } else { 2 };
+
+                let col = if ctx == Ctx::Value && (!in_agg() || bare == "CHOOSE") {
+                    0
+                } else {
+                    2
+                };
                 for (i, a) in args.iter_mut().enumerate() {
                     let multi = matches!(a.unwrap_ws(), Expr::Array(rows)
-                        if rows.len() > 1 || rows.first().is_some_and(|r| r.len() > 1));
-                    if multi {
+                        if rows.len() > 1 || rows.first().is_some_and(|r| r.len() > 1))
+                        || (bare == "AGGREGATE"
+                            && i == 3
+                            && matches!(a.unwrap_ws(), Expr::Array(_)));
+
+                    let refused = functions::lookup(&bare).is_some_and(|id| {
+                        functions::def(id).param_class(i) == functions::ParamClass::Reference
+                    });
+
+                    let refused = refused || (bare == "AGGREGATE" && i >= 4);
+
+                    let ref_arg = crate::legacy_classes::legacy_classes(&bare).is_some_and(|p| {
+                        p.as_bytes().get(i.min(p.len().saturating_sub(1))) == Some(&b'R')
+                    });
+                    let native = is_native_array_call(a.unwrap_ws())
+                        && !(ref_arg && takes_ref(a.unwrap_ws()));
+                    if (multi || native) && !refused {
                         let k = (i * 4).min(t.len() - 4) + col;
                         let arr = std::mem::replace(a, Expr::Number(0.0));
+                        let arr = if native { walk(arr, Ctx::Ref) } else { arr };
                         inner.push((i, arr, t[k] == b'1'));
                         outer_arr |= t[k + 1] == b'1';
                     }
@@ -398,14 +622,81 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
                 bare.as_str(),
                 "ROW" | "COLUMN" | "ISFORMULA" | "FORMULATEXT"
             );
+
+            let hoisted = bare == "LET"
+                && ctx == Ctx::Value
+                && args.len() % 2 == 1
+                && args.last_mut().is_some_and(|l| hoist_leftmost(l, true));
             let call = Expr::Func { name, args };
-            if outer_arr || ((ctx == Ctx::Value || rowcol) && array_capable(&call)) {
+            if hoisted {
+                return at(call);
+            }
+
+            let native = in_agg()
+                && ARRAY_RESULT.contains(&bare.as_str())
+                && !matches!(
+                    bare.as_str(),
+                    "INDEX" | "OFFSET" | "INDIRECT" | "CELL" | "FILTERXML"
+                );
+            if outer_arr || ((ctx == Ctx::Value || rowcol) && !native && array_capable(&call)) {
                 at(call)
             } else {
                 call
             }
         }
         e => e,
+    }
+}
+
+fn hoist_leftmost(e: &mut Expr, top: bool) -> bool {
+    match e {
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr,
+        } => {
+            let native = match expr.unwrap_ws() {
+                Expr::Func { name, .. } => {
+                    let up = name.to_uppercase();
+                    ARRAY_RESULT.contains(&up.as_str())
+                        && !matches!(
+                            up.as_str(),
+                            "INDEX" | "OFFSET" | "INDIRECT" | "CELL" | "FILTERXML"
+                        )
+                }
+                Expr::Array(_) => true,
+                _ => false,
+            };
+            let whole = top
+                && match expr.unwrap_ws() {
+                    Expr::Func { name, .. } => !matches!(
+                        name.to_uppercase().as_str(),
+                        "ROW" | "COLUMN" | "ISFORMULA" | "FORMULATEXT" | "CELL"
+                    ),
+                    Expr::Call { .. } | Expr::Ref { .. } => true,
+                    Expr::Binary {
+                        op: BinOp::Range, ..
+                    } => true,
+                    _ => false,
+                };
+            if native || whole {
+                let inner = std::mem::replace(&mut **expr, Expr::Number(0.0));
+                *e = inner;
+                true
+            } else {
+                false
+            }
+        }
+        Expr::Unary { expr, .. } | Expr::Paren(expr) | Expr::Ws { expr, .. } => {
+            hoist_leftmost(expr, false)
+        }
+        Expr::Binary { op, left, right }
+            if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) =>
+        {
+            let l = hoist_leftmost(left, false);
+            let r = hoist_leftmost(right, false);
+            l || r
+        }
+        _ => false,
     }
 }
 
@@ -419,10 +710,23 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
                 _ => None,
             })
             .collect();
+        let own = params.clone();
         MULTI_NAMES.with(|m| m.borrow_mut().extend(params));
         let mut args = args;
         let body = args.pop().unwrap();
-        args.push(walk(body, Ctx::Value));
+
+        fn bare_param(e: &Expr, own: &[String]) -> bool {
+            match e.unwrap_ws() {
+                Expr::Paren(x) => bare_param(x, own),
+                Expr::Name { sheet: None, name } => own.contains(&name.to_uppercase()),
+                _ => false,
+            }
+        }
+        args.push(if bare_param(&body, &own) {
+            body
+        } else {
+            walk(body, Ctx::Value)
+        });
         return args;
     }
 
@@ -434,7 +738,7 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
         while out.len() + 1 < n {
             let var = it.next().unwrap();
             let val = it.next().unwrap();
-            if is_multi_ref(val.unwrap_ws()) {
+            if is_multi_ref(val.unwrap_ws()) || is_native_array_call(val.unwrap_ws()) {
                 if let Expr::Name { name, .. } = var.unwrap_ws() {
                     added.push(name.to_uppercase());
                 }
@@ -447,6 +751,8 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
 
         out.push(if matches!(last.unwrap_ws(), Expr::Name { .. }) {
             last
+        } else if in_agg() && matches!(last.unwrap_ws(), Expr::Func { .. }) {
+            walk(last, Ctx::Ref)
         } else {
             walk(last, Ctx::Value)
         });
@@ -456,22 +762,35 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
     if let Some(classes) =
         crate::legacy_classes::legacy_classes(name).filter(|_| !EVAL_FORM.with(|f| f.get()))
     {
-        let b = classes.as_bytes();
         return args
             .into_iter()
             .enumerate()
             .map(|(i, a)| {
-                let c = match b[i.min(b.len() - 1)] {
+                let c = match crate::legacy_classes::class_at(name, classes, i) {
+
+                    b'V' if matches!(name, "HLOOKUP" | "VLOOKUP") && i == 2 && in_agg() => Ctx::Ref,
                     b'V' => Ctx::Value,
+
+                    b'A' if name != "SUMPRODUCT"
+                        && matches!(a.unwrap_ws(), Expr::Func { name: f, .. }
+                            if f.eq_ignore_ascii_case("OFFSET") || f.eq_ignore_ascii_case("INDIRECT")) =>
+                    {
+                        Ctx::Ref
+                    }
                     b'A' => Ctx::Array,
                     _ => Ctx::Ref,
                 };
-                walk(a, c)
+
+                if PASS_THROUGH.contains(&name) {
+                    walk(a, c)
+                } else {
+                    walk_agg(a, c)
+                }
             })
             .collect();
     }
     if ARRAY_ARGS.contains(&name) {
-        return args.into_iter().map(|a| walk(a, Ctx::Array)).collect();
+        return args.into_iter().map(|a| walk_agg(a, Ctx::Array)).collect();
     }
 
     if matches!(name, "IF" | "CHOOSE") {
@@ -504,7 +823,11 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
                 b[i.min(b.len() - 1)]
             };
             let c = if letter == b'V' { Ctx::Value } else { Ctx::Ref };
-            walk(a, c)
+            if PASS_THROUGH.contains(&name) {
+                walk(a, c)
+            } else {
+                walk_agg(a, c)
+            }
         })
         .collect()
 }
@@ -613,10 +936,80 @@ impl Workbook {
             return Some(t);
         }
         match parse(&t) {
-            Ok(e) => Some(format!("={}", print(&strip_at(e)))),
+            Ok(e) => Some(format!("={}", print(&strip_at_keep_cell(e)))),
             Err(_) => Some(t),
         }
     }
+}
+
+fn strip_at_keep_cell(e: Expr) -> Expr {
+    crate::deep(|| match e {
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr,
+        } if matches!(
+            expr.unwrap_ws(),
+            Expr::Ref {
+                kind: RefKind::Cell { .. },
+                ..
+            }
+        ) =>
+        {
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr,
+            }
+        }
+        Expr::Func { name, args } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+            let classes = crate::legacy_classes::legacy_classes(bare).map(str::as_bytes);
+            let args = args
+                .into_iter()
+                .enumerate()
+                .map(|(i, a)| {
+                    let q = classes.is_some_and(|b| !b.is_empty() && b[i.min(b.len() - 1)] == b'Q');
+                    match a {
+                        Expr::Unary {
+                            op: UnaryOp::Implicit,
+                            expr,
+                        } if q => Expr::Unary {
+                            op: UnaryOp::Implicit,
+                            expr: Box::new(strip_at_keep_cell(*expr)),
+                        },
+                        a => strip_at_keep_cell(a),
+                    }
+                })
+                .collect();
+            Expr::Func { name, args }
+        }
+        Expr::Unary {
+            op: UnaryOp::Implicit | UnaryOp::ImplicitQuiet,
+            expr,
+        } => strip_at_keep_cell(*expr),
+        Expr::Unary { op, expr } => Expr::Unary {
+            op,
+            expr: Box::new(strip_at_keep_cell(*expr)),
+        },
+        Expr::Ws {
+            before,
+            after,
+            expr,
+        } => Expr::Ws {
+            before,
+            after,
+            expr: Box::new(strip_at_keep_cell(*expr)),
+        },
+        Expr::Paren(x) => Expr::Paren(Box::new(strip_at_keep_cell(*x))),
+        Expr::Percent(x) => Expr::Percent(Box::new(strip_at_keep_cell(*x))),
+        Expr::Spill(x) => Expr::Spill(Box::new(strip_at_keep_cell(*x))),
+        Expr::Binary { op, left, right } => Expr::Binary {
+            op,
+            left: Box::new(strip_at_keep_cell(*left)),
+            right: Box::new(strip_at_keep_cell(*right)),
+        },
+        e => strip_at(e),
+    })
 }
 
 pub(crate) fn legacy_quiet_expr(text: &str) -> Option<Expr> {
@@ -1030,12 +1423,69 @@ fn is_computed_name(e: &Expr) -> bool {
 }
 
 fn computed_name(e: &Expr) -> bool {
-    crate::deep(|| match e.unwrap_ws() {
-        Expr::Paren(x) => computed_name(x),
-        Expr::Func { .. } | Expr::Unary { .. } | Expr::Percent(_) => true,
-        Expr::Binary { .. } => true,
+    matches!(
+        e.unwrap_ws(),
+        Expr::Paren(_)
+            | Expr::Array(_)
+            | Expr::Func { .. }
+            | Expr::Unary { .. }
+            | Expr::Percent(_)
+            | Expr::Binary { .. }
+    )
+}
+
+fn scalar_name_def(e: &Expr) -> bool {
+    matches!(
+        e.unwrap_ws(),
+        Expr::Number(_)
+            | Expr::Text(_)
+            | Expr::Bool(_)
+            | Expr::Error(_)
+            | Expr::Ref {
+                kind: RefKind::Cell { .. },
+                ..
+            }
+    )
+}
+
+fn one_cell_index(e: &Expr) -> bool {
+    let first_nonzero = |a: &Expr| match a.unwrap_ws() {
+        Expr::Number(n) => *n != 0.0,
+        Expr::Array(rows) => rows
+            .first()
+            .and_then(|r| r.first())
+            .is_some_and(|x| matches!(x, crate::parser::ast::ArrayItem::Number(n) if *n != 0.0)),
         _ => false,
-    })
+    };
+    match e.unwrap_ws() {
+        Expr::Func { name, args } if name.eq_ignore_ascii_case("INDEX") && args.len() >= 2 => {
+            matches!(
+                args[0].unwrap_ws(),
+                Expr::Ref { .. }
+                    | Expr::Binary {
+                        op: BinOp::Range,
+                        ..
+                    }
+            ) && args[1..].iter().all(first_nonzero)
+        }
+        _ => false,
+    }
+}
+
+fn is_one_cell_name(e: &Expr) -> bool {
+    match e.unwrap_ws() {
+        Expr::Name { name, .. } => {
+            ONE_CELL_NAMES.with(|c| c.borrow().contains(&name.to_uppercase()))
+        }
+        _ => false,
+    }
+}
+
+fn is_scalar_name(e: &Expr) -> bool {
+    match e.unwrap_ws() {
+        Expr::Name { name, .. } => SCALAR_NAMES.with(|c| c.borrow().contains(&name.to_uppercase())),
+        _ => false,
+    }
 }
 
 fn multi_names(wb: &Workbook) -> Vec<String> {
@@ -1065,6 +1515,26 @@ fn multi_names(wb: &Workbook) -> Vec<String> {
             .map(|n| n.name.to_uppercase())
             .collect()
     });
+    SCALAR_NAMES.with(|c| {
+        *c.borrow_mut() = wb
+            .names
+            .iter()
+            .filter(|n| {
+                parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| scalar_name_def(&e))
+            })
+            .map(|n| n.name.to_uppercase())
+            .collect()
+    });
+    ONE_CELL_NAMES.with(|c| {
+        *c.borrow_mut() = wb
+            .names
+            .iter()
+            .filter(|n| {
+                parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| one_cell_index(&e))
+            })
+            .map(|n| n.name.to_uppercase())
+            .collect()
+    });
     wb.names
         .iter()
         .filter(|n| {
@@ -1076,7 +1546,11 @@ fn multi_names(wb: &Workbook) -> Vec<String> {
 }
 
 pub(crate) fn scalar_entry_expr(wb: &Workbook, body: &str, host: CellAddr) -> Option<Expr> {
-    if body.contains('@') || body.contains('[') || body.contains("#REF!") || body.contains("Book1!")
+    let legacy = LEGACY_ENTRY.with(|l| l.get());
+    if (body.contains('@') && !legacy)
+        || body.contains('[')
+        || body.contains("#REF!")
+        || body.contains("Book1!")
     {
         return None;
     }
@@ -1084,7 +1558,7 @@ pub(crate) fn scalar_entry_expr(wb: &Workbook, body: &str, host: CellAddr) -> Op
     UNDEFINED.with(|u| u.set(false));
 
     if uses_name(&e, wb) != Some(true)
-        || may_array(&e, wb, host.sheet, &mut Vec::new())
+        || (may_array(&e, wb, host.sheet, &mut Vec::new()) && !legacy)
         || UNDEFINED.with(|u| u.get())
     {
         return None;
@@ -1093,16 +1567,114 @@ pub(crate) fn scalar_entry_expr(wb: &Workbook, body: &str, host: CellAddr) -> Op
 }
 
 pub(crate) fn legacy_eval_expr(wb: &Workbook, body: &str) -> Option<Expr> {
-    let e = parse(body).ok()?;
+    let shown = parse(body).ok()?;
     MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
     EVAL_FORM.with(|f| f.set(true));
-    let w = walk(e, Ctx::Value);
+    let w = walk(strip_at(shown.clone()), Ctx::Value);
     EVAL_FORM.with(|f| f.set(false));
     MULTI_NAMES.with(|m| m.borrow_mut().clear());
     Some(Expr::Unary {
         op: UnaryOp::ImplicitQuiet,
-        expr: Box::new(rewrite_at(w, true)),
+        expr: Box::new(merge_at(w, &shown)),
     })
+}
+
+fn merge_at(eval: Expr, shown: &Expr) -> Expr {
+    crate::deep(|| merge_at_inner(eval, shown))
+}
+
+fn merge_at_inner(eval: Expr, shown: &Expr) -> Expr {
+    let boxed = |e: Box<Expr>, s: &Expr| Box::new(merge_at(*e, s));
+    match (eval, shown) {
+        (
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr,
+            },
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr: s,
+            },
+        ) => Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr: boxed(expr, s),
+        },
+        (
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr,
+            },
+            s,
+        ) => Expr::Unary {
+            op: UnaryOp::ImplicitQuiet,
+            expr: boxed(expr, s),
+        },
+
+        (
+            e,
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr: s,
+            },
+        ) => Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr: Box::new(merge_at(e, s)),
+        },
+        (Expr::Unary { op, expr }, Expr::Unary { op: o, expr: s }) if op == *o => Expr::Unary {
+            op,
+            expr: boxed(expr, s),
+        },
+        (Expr::Func { name, args }, Expr::Func { args: sa, .. }) if args.len() == sa.len() => {
+            Expr::Func {
+                name,
+                args: args
+                    .into_iter()
+                    .zip(sa)
+                    .map(|(a, s)| merge_at(a, s))
+                    .collect(),
+            }
+        }
+        (
+            Expr::Call { callee, args },
+            Expr::Call {
+                callee: sc,
+                args: sa,
+            },
+        ) if args.len() == sa.len() => Expr::Call {
+            callee: boxed(callee, sc),
+            args: args
+                .into_iter()
+                .zip(sa)
+                .map(|(a, s)| merge_at(a, s))
+                .collect(),
+        },
+        (
+            Expr::Binary { op, left, right },
+            Expr::Binary {
+                left: l, right: r, ..
+            },
+        ) => Expr::Binary {
+            op,
+            left: boxed(left, l),
+            right: boxed(right, r),
+        },
+        (Expr::Paren(x), Expr::Paren(s)) => Expr::Paren(boxed(x, s)),
+        (Expr::Percent(x), Expr::Percent(s)) => Expr::Percent(boxed(x, s)),
+        (Expr::Spill(x), Expr::Spill(s)) => Expr::Spill(boxed(x, s)),
+        (
+            Expr::Ws {
+                before,
+                after,
+                expr,
+            },
+            Expr::Ws { expr: s, .. },
+        ) => Expr::Ws {
+            before,
+            after,
+            expr: boxed(expr, s),
+        },
+        (e, _) => rewrite_at(e, true),
+    }
 }
 
 impl Workbook {

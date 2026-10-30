@@ -1,5 +1,5 @@
 use super::args::*;
-use super::{args, lazy, scalar, volatile, FnDef};
+use super::{args, lazy, scalar, scalar_p, volatile, FnDef};
 use crate::eval::{EvalCtx, Operand};
 use crate::value::{Value, XlError};
 use crate::workbook::Entry;
@@ -79,18 +79,35 @@ pub const DEFS: &[FnDef] = &[
     volatile(scalar("INFO", 1, 1, info_fn)),
     scalar("SINGLE", 1, 1, |_, a| a[0].clone()),
     scalar("WEBSERVICE", 1, 1, |_, a| fixed_err(a, XlError::VALUE)),
-    scalar("CUBEVALUE", 1, super::MANY, |_, a| {
+    scalar_p("CUBEVALUE", 1, super::MANY, "VR", |_, a| {
         fixed_err(a, XlError::NA)
     }),
-    scalar("CUBEMEMBER", 2, 3, |_, a| fixed_err(a, XlError::NA)),
-    scalar("CUBEKPIMEMBER", 3, 4, |_, a| fixed_err(a, XlError::VALUE)),
+    scalar_p("CUBEMEMBER", 2, 3, "VRV", |_, a| fixed_err(a, XlError::NA)),
+    scalar("CUBEKPIMEMBER", 3, 4, |_, a| {
+        let kind = if matches!(a[0], Value::Text(_)) {
+            XlError::VALUE
+        } else {
+            XlError::NA
+        };
+        fixed_err(a, kind)
+    }),
     scalar("CUBEMEMBERPROPERTY", 3, 3, |_, a| fixed_err(a, XlError::NA)),
     scalar("CUBERANKEDMEMBER", 3, 4, |c, a| cube_numeric(c, a, 2)),
-    scalar("CUBESET", 2, 5, |c, a| cube_numeric(c, a, 3)),
+    scalar_p("CUBESET", 2, 5, "VRV", |c, a| cube_numeric(c, a, 3)),
     scalar("CUBESETCOUNT", 1, 1, |_, a| fixed_err(a, XlError::NA)),
     scalar("RTD", 3, super::MANY, |_, a| fixed_err(a, XlError::NA)),
-    scalar("FIELDVALUE", 2, 2, |_, a| fixed_err(a, XlError::FIELD)),
-    scalar("STOCKHISTORY", 2, 8, |_, a| fixed_err(a, XlError::BLOCKED)),
+    scalar("FIELDVALUE", 2, 2, |_, a| match a[1] {
+        Value::Error(e) => Value::Error(e),
+        _ => err(XlError::FIELD),
+    }),
+    scalar("STOCKHISTORY", 2, 8, |_, a| {
+        let kind = if matches!(a[0], Value::Text(_)) {
+            XlError::BLOCKED
+        } else {
+            XlError::VALUE
+        };
+        fixed_err(a, kind)
+    }),
     scalar("IMAGE", 1, 5, |_, a| {
         a.iter()
             .find_map(|v| {
@@ -102,7 +119,32 @@ pub const DEFS: &[FnDef] = &[
             })
             .unwrap_or_else(|| err(XlError::VALUE))
     }),
-    args("GETPIVOTDATA", 2, super::MANY, "R", |_, _| {
+    args("GETPIVOTDATA", 2, super::MANY, "R", |ctx, o| {
+        for (i, op) in o.iter().enumerate() {
+            let name_slot = i < 2 || i % 2 == 0;
+            let multi =
+                matches!(op, Operand::Ref(r) if r.single().is_none_or(|a| !a.rect.is_cell()));
+            if multi && i >= 2 && name_slot && ctx.legacy_form {
+                return Operand::err(XlError::VALUE);
+            }
+
+            if multi && i >= 2 && name_slot {
+                if let Operand::Ref(r) = op {
+                    if let Some(a) = r.single() {
+                        let (rows, cols) = (a.rect.r1 - a.rect.r0 + 1, a.rect.c1 - a.rect.c0 + 1);
+                        let e = Value::Error(XlError::REF);
+                        return Operand::Val(
+                            crate::value::Array::filled(rows, cols, e).into_value(),
+                        );
+                    }
+                }
+            }
+            if name_slot && !multi {
+                if let Operand::Val(Value::Error(e)) = op {
+                    return Operand::err(*e);
+                }
+            }
+        }
         Operand::err(XlError::REF)
     }),
     args("PHONETIC", 1, 1, "Q", |_, o| {

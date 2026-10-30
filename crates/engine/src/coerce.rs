@@ -192,7 +192,12 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
             if let Some(g) = group_len.as_mut() {
                 *g += 1;
             }
-        } else if c == loc.thousands_sep {
+        } else if c == loc.thousands_sep
+            && !(c == ' '
+                && int_digits > 0
+                && b[i + 1..].iter().take_while(|d| d.is_ascii_digit()).count() < 3
+                && scan_fraction(b, i + 1).is_some())
+        {
             if int_digits == 0 || group_len.is_some_and(|g| g < 3) {
                 return None;
             }

@@ -76,6 +76,8 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
         None => Some(ctx.host.sheet),
 
         Some(SheetRef::Sheet(id)) if ctx.wb.sheet(*id).is_none() => None,
+
+        Some(SheetRef::Missing(_)) => return Operand::err(XlError::NAME),
         Some(s) => match resolve_sheets(ctx, s).as_slice() {
             [id] => Some(*id),
             _ => return Operand::err(XlError::REF),

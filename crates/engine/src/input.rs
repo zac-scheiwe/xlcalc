@@ -54,7 +54,12 @@ pub fn interpret(s: &str, env: &ParseEnv) -> Entered {
             return Entered::Value(Value::Number(p.value));
         }
     }
-    if (s.starts_with('+') || s.starts_with('-')) && s.len() > 1 && crate::parser::parse(s).is_ok()
+
+    let point_ok = env.locale.decimal_sep == '.' || !s.contains('.');
+    if (s.starts_with('+') || s.starts_with('-'))
+        && s.len() > 1
+        && point_ok
+        && crate::parser::parse(s).is_ok()
     {
         return Entered::Formula(s.to_string());
     }

@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId};
@@ -17,13 +16,86 @@ pub struct DedupSpec {
     pub header: bool,
 }
 
-#[derive(PartialEq, Eq, Hash)]
 enum Key {
     Blank,
+
     Text(Vec<u32>),
-    Num(u64, String),
-    Bool(bool),
-    Other(String),
+
+    Num(f64, Vec<u32>),
+
+    Bool(bool, Vec<u32>),
+
+    Err(usize),
+}
+
+impl Key {
+    fn rank(&self) -> u8 {
+        match self {
+            Key::Blank => 0,
+            Key::Num(..) => 1,
+            Key::Text(_) => 2,
+            Key::Bool(..) => 4,
+            Key::Err(_) => 5,
+        }
+    }
+
+    fn text(&self) -> &[u32] {
+        match self {
+            Key::Text(t) | Key::Num(_, t) | Key::Bool(_, t) => t,
+            _ => &[],
+        }
+    }
+}
+
+fn sgn<T: Ord>(a: T, b: T) -> i32 {
+    a.cmp(&b) as i32
+}
+
+fn cmp_cell(a: &Key, b: &Key) -> i32 {
+    let (ra, rb) = (a.rank(), b.rank());
+    if ra == rb {
+        return match (a, b) {
+            (Key::Blank, _) => 0,
+            (Key::Num(x, tx), Key::Num(y, ty)) => {
+                let (x, y) = (x.to_bits() as i64, y.to_bits() as i64);
+                let c = sgn(x, y);
+                let c = if x < 0 && y < 0 { -c } else { c };
+                if c == 0 && tx != ty {
+                    sgn(tx, ty)
+                } else {
+                    c
+                }
+            }
+            (Key::Bool(x, _), Key::Bool(y, _)) => sgn(x, y),
+            (Key::Err(x), Key::Err(y)) => sgn(x, y),
+            _ => sgn(a.text(), b.text()),
+        };
+    }
+    if ra == 0 {
+        return 1;
+    }
+    if rb == 0 {
+        return -1;
+    }
+    if ra == 5 {
+        return 1;
+    }
+    if rb == 5 {
+        return -1;
+    }
+    match (ra, rb) {
+        (2, 1) => 1,
+        (1, 2) => -1,
+        _ => sgn(a.text(), b.text()),
+    }
+}
+
+fn cmp_row(a: &[Key], b: &[Key]) -> i32 {
+    a.iter()
+        .zip(b)
+        .map(|(x, y)| cmp_cell(x, y))
+        .find(|&c| c != 0)
+        .unwrap_or(0)
 }
 
 const TOTAL_FUNCS: [&str; 8] = [
@@ -73,12 +145,21 @@ impl Workbook {
         match self.value(addr) {
             Value::Blank => Key::Blank,
             Value::Text(s) => Key::Text(crate::functions::arrays::collate::key(&s)),
-            Value::Number(n) => {
-                let n = if n == 0.0 { 0.0 } else { n };
-                Key::Num(n.to_bits(), self.display_text(addr))
-            }
-            Value::Bool(b) => Key::Bool(b),
-            v => Key::Other(format!("{v:?}")),
+            Value::Number(n) => Key::Num(
+                n,
+                crate::functions::arrays::collate::key(&self.display_text(addr)),
+            ),
+            Value::Bool(b) => Key::Bool(
+                b,
+                crate::functions::arrays::collate::key(if b { "TRUE" } else { "FALSE" }),
+            ),
+            Value::Error(e) => Key::Err(
+                crate::value::XlError::ALL
+                    .iter()
+                    .position(|&x| x == e)
+                    .unwrap_or(99),
+            ),
+            _ => Key::Blank,
         }
     }
 
@@ -209,14 +290,33 @@ impl Workbook {
             return Ok(RecalcReport::default());
         }
         let rows: Vec<u32> = (first..=end).collect();
-        let mut seen: HashSet<Vec<Key>> = HashSet::new();
+
+        let mut sorted: Vec<Vec<Key>> = Vec::new();
         let mut kept: Vec<u32> = Vec::new();
         for &r in &rows {
             let k: Vec<Key> = keys
                 .iter()
                 .map(|&c| self.dedup_key(CellAddr::new(sheet, r, c)))
                 .collect();
-            if seen.insert(k) {
+            let n = sorted.len();
+            let pos = if n == 0 || cmp_row(&sorted[n - 1], &k) < 0 {
+                Some(n)
+            } else {
+                let (mut lo, mut hi) = (0, n);
+                loop {
+                    if lo == hi {
+                        break Some(lo);
+                    }
+                    let mid = lo + (hi - lo) / 2;
+                    match cmp_row(&sorted[mid], &k) {
+                        0 => break None,
+                        c if c < 0 => lo = mid + 1,
+                        _ => hi = mid,
+                    }
+                }
+            };
+            if let Some(p) = pos {
+                sorted.insert(p, k);
                 kept.push(r);
             }
         }

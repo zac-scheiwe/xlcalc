@@ -125,12 +125,19 @@ fn series(ctx: &mut EvalCtx, o: Option<&Operand>) -> R<Vec<Value>> {
         Some(Operand::Val(Value::Error(e))) => Err(*e),
         Some(op @ Operand::Val(Value::Array(_))) => flat_values(ctx, op),
         Some(op @ Operand::Ref(r)) if r.single().is_some() => flat_values(ctx, op),
+
+        Some(Operand::Val(v)) => Ok(vec![v.clone()]),
         _ => Err(XlError::VALUE),
     }
 }
 
 pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
     let r = (|| -> R<f64> {
+        for op in o {
+            if let Operand::Val(Value::Error(e)) = op {
+                return Err(*e);
+            }
+        }
         let mut i = 0;
         let target = if matches!(kind, Kind::Value | Kind::Confint) {
             i = 1;

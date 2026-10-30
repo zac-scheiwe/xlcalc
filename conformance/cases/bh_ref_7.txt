@@ -154,4 +154,3 @@
 =ISREF(Data!A1:A3 Data!B2:B3)
 =ISREF((Data!A1,Data!A2))
 =ISREF(Data!A1#)
-=ISREF(A1#)

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
 use crate::calc::{self, RecalcReport};
 use crate::coerce;
-use crate::formula::{CRef, Formula, Node, Rc};
+use crate::formula::{CRef, Formula, Node, Rc, SheetRef};
 use crate::formula_print::print_node;
 use crate::parser::ast::{BinOp, UnaryOp};
 use crate::value::{Value, XlError};
@@ -154,7 +154,13 @@ fn clip(r: Rc, host: u32, max: u32) -> Rc {
     }
 }
 
-fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
+fn transpose_ref(
+    cref: &CRef,
+    sheet: &SheetRef,
+    from: CellAddr,
+    to: CellAddr,
+    src: Rect,
+) -> Option<CRef> {
     let (dr, dc) = (
         to.row as i64 - from.row as i64,
         to.col as i64 - from.col as i64,
@@ -170,6 +176,20 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
             r1: nr1,
             c1: nc1,
         })
+    };
+
+    let in_block = || -> bool {
+        let same = match sheet {
+            SheetRef::Current => true,
+            SheetRef::Sheet(id) => *id == from.sheet,
+            _ => false,
+        };
+        let (r, c) = match *cref {
+            CRef::Rows { r0, r1 } => (pos(r0, from.row).min(pos(r1, from.row)), 0),
+            CRef::Cols { c0, c1 } => (0, pos(c0, from.col).min(pos(c1, from.col))),
+            _ => return false,
+        };
+        same && r >= 0 && c >= 0 && src.contains(r as u32, c as u32)
     };
     match *cref {
         CRef::Cell { row, col } => {
@@ -188,7 +208,7 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
             area(r0, c0, r1, c1)
         }
         CRef::Cols { c0, c1 } => {
-            if c0.abs || c1.abs {
+            if (c0.abs || c1.abs) && !in_block() {
                 return Some(retarget(cref, dr, dc));
             }
             let abs = |v: u32| Rc {
@@ -208,7 +228,7 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
             })
         }
         CRef::Rows { r0, r1 } => {
-            if r0.abs || r1.abs {
+            if (r0.abs || r1.abs) && !in_block() {
                 return Some(retarget(cref, dr, dc));
             }
             let abs = |v: u32| Rc {
@@ -234,12 +254,12 @@ fn transpose_ref(cref: &CRef, from: CellAddr, to: CellAddr) -> Option<CRef> {
 }
 
 impl Workbook {
-    fn moved_formula(&self, fid: u32, to: CellAddr, transpose: bool) -> Formula {
+    pub(crate) fn moved_formula(&self, fid: u32, to: CellAddr, transpose: Option<Rect>) -> Formula {
         let f = self.formula(fid);
         let from = f.addr;
         let root = crate::structure::edit_refs(&f.formula.root, &mut |sh, cref| {
-            if transpose {
-                match transpose_ref(cref, from, to) {
+            if let Some(src) = transpose {
+                match transpose_ref(cref, sh, from, to, src) {
                     Some(c) => crate::structure::RefEdit::Set(sh.clone(), c),
                     None => crate::structure::RefEdit::Dead(sh.clone()),
                 }
@@ -247,7 +267,7 @@ impl Workbook {
                 self.copy_ref_edit(sh, cref, from, to)
             }
         });
-        let root = if transpose {
+        let root = if transpose.is_some() {
             root
         } else {
             self.copy_struct_cols(&root, from, to, true)
@@ -377,7 +397,11 @@ impl Workbook {
             && src.r0
                 < dst.r0
                     + if only_formats {
-                        dst.rows()
+                        if dst.is_cell() {
+                            lr
+                        } else {
+                            dst.rows()
+                        }
                     } else {
                         reps_r * lr
                     }
@@ -385,7 +409,11 @@ impl Workbook {
             && src.c0
                 < dst.c0
                     + if only_formats {
-                        dst.cols()
+                        if dst.is_cell() {
+                            lc
+                        } else {
+                            dst.cols()
+                        }
                     } else {
                         reps_c * lc
                     }
@@ -455,7 +483,7 @@ impl Workbook {
                         let to =
                             CellAddr::new(dst_sheet, dst.r0 + rr * lr + i, dst.c0 + rc * lc + j);
                         let from = CellAddr::new(src_sheet, sr, sc);
-                        let act = self.paste_cell(from, to, spec);
+                        let act = self.paste_cell(from, to, spec, src);
 
                         let skipped = spec.skip_blanks && self.src_blank(from);
                         if spec.what != PasteWhat::Values
@@ -584,7 +612,7 @@ impl Workbook {
             .is_none_or(|s| s.cells.get(from.row, from.col).is_none())
     }
 
-    fn paste_cell(&self, from: CellAddr, to: CellAddr, spec: &PasteSpecial) -> Act {
+    fn paste_cell(&self, from: CellAddr, to: CellAddr, spec: &PasteSpecial, src: Rect) -> Act {
         let entry = self
             .sheet(from.sheet)
             .and_then(|s| s.cells.get(from.row, from.col))
@@ -610,7 +638,10 @@ impl Workbook {
                 Some(Entry::Const(v)) => Act::Set(v),
                 Some(Entry::Formula(fid)) => {
                     let shown = self.formula(fid).value_at(from.row, from.col);
-                    Act::Formula(self.moved_formula(fid, to, spec.transpose), Some(shown))
+                    Act::Formula(
+                        self.moved_formula(fid, to, spec.transpose.then_some(src)),
+                        Some(shown),
+                    )
                 }
                 None => Act::Set(Value::Blank),
             };
@@ -634,26 +665,27 @@ impl Workbook {
             Lit(f64),
             Formula(Formula),
         }
-        let operand =
-            if blank {
-                Operand::Lit(0.0)
-            } else {
-                match &entry {
-                    Some(Entry::Formula(fid)) if !values_only => Operand::Formula(
-                        self.moved_formula(*fid, to, spec.transpose && !dest_is_formula),
-                    ),
-                    _ => {
-                        let v = match &entry {
-                            Some(Entry::Const(v)) if !values_only => v.clone(),
-                            _ => value(),
-                        };
-                        match num(&v) {
-                            Some(n) => Operand::Lit(n),
-                            None => return Act::Skip,
-                        }
+        let operand = if blank {
+            Operand::Lit(0.0)
+        } else {
+            match &entry {
+                Some(Entry::Formula(fid)) if !values_only => Operand::Formula(self.moved_formula(
+                    *fid,
+                    to,
+                    (spec.transpose && !dest_is_formula).then_some(src),
+                )),
+                _ => {
+                    let v = match &entry {
+                        Some(Entry::Const(v)) if !values_only => v.clone(),
+                        _ => value(),
+                    };
+                    match num(&v) {
+                        Some(n) => Operand::Lit(n),
+                        None => return Act::Skip,
                     }
                 }
-            };
+            }
+        };
         enum Dest {
             Num(f64),
             Formula(Formula),
