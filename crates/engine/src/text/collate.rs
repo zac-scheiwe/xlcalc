@@ -96,6 +96,8 @@ struct Key {
     x: Vec<u8>,
     s: Vec<u8>,
     slots: usize,
+
+    lead: bool,
 }
 
 impl Key {
@@ -106,6 +108,7 @@ impl Key {
         self.x.clear();
         self.s.clear();
         self.slots = 0;
+        self.lead = false;
     }
 
     fn build(&mut self, s: &str, primary_only: bool) {
@@ -143,6 +146,10 @@ impl Key {
                 );
             }
         }
+
+        if self.p.is_empty() {
+            self.lead = false;
+        }
     }
 
     fn add(&mut self, r: &Rec, primary_only: bool) {
@@ -158,6 +165,8 @@ impl Key {
             self.x.extend_from_slice(r.x);
             self.slots += r.n;
         } else if !primary_only {
+            self.lead |= self.slots == 0 && !r.d.is_empty();
+
             for (v, e) in [(&mut self.d, r.d), (&mut self.w, r.w)] {
                 if let Some(&b) = e.first() {
                     if v.is_empty() {
@@ -204,13 +213,19 @@ pub fn sort_key(s: &str) -> Vec<u8> {
     k.finish()
 }
 
-fn key_parts(s: &str) -> (Vec<u8>, Vec<u8>) {
+fn key_parts(s: &str) -> (Vec<u8>, Vec<u8>, bool) {
     let mut k = Key::default();
     k.build(s, false);
     let full = k.finish();
 
     let cut = full.len() - 1 - k.s.len() - 1;
-    (full[..cut].to_vec(), k.s.clone())
+    (full[..cut].to_vec(), k.s.clone(), k.lead)
+}
+
+fn primaries(s: &str) -> Vec<u8> {
+    let mut k = Key::default();
+    k.build(s, true);
+    k.p
 }
 
 fn case_levels(s: &str) -> Vec<u8> {
@@ -233,9 +248,15 @@ fn case_levels(s: &str) -> Vec<u8> {
 }
 
 pub fn compare_match_case(a: &str, b: &str) -> Ordering {
-    let (pa, sa) = key_parts(a);
-    let (pb, sb) = key_parts(b);
-    pa.cmp(&pb)
+    let (pa, sa, la) = key_parts(a);
+    let (pb, sb, lb) = key_parts(b);
+    let (ppa, ppb) = (primaries(a), primaries(b));
+    let lead = if ppa == ppb {
+        la.cmp(&lb)
+    } else {
+        Ordering::Equal
+    };
+    lead.then_with(|| pa.cmp(&pb))
         .then_with(|| case_levels(a).cmp(&case_levels(b)))
         .then_with(|| sa.cmp(&sb))
 }
@@ -243,7 +264,9 @@ pub fn compare_match_case(a: &str, b: &str) -> Ordering {
 pub fn key_bytes(s: &str) -> Vec<u8> {
     let mut k = Key::default();
     k.build(s, false);
-    k.finish()
+    let mut bytes = k.finish();
+    bytes.push(u8::from(k.lead));
+    bytes
 }
 
 pub fn trailing_ignorable(s: &str) -> usize {
@@ -269,7 +292,12 @@ pub fn compare(a: &str, b: &str) -> Ordering {
         }
         ka.build(a, false);
         kb.build(b, false);
-        ka.finish().cmp(&kb.finish())
+        let lead = if ka.p == kb.p {
+            ka.lead.cmp(&kb.lead)
+        } else {
+            Ordering::Equal
+        };
+        lead.then_with(|| ka.finish().cmp(&kb.finish()))
     })
 }
 
@@ -533,5 +561,51 @@ mod tests {
         let long_a = "a".repeat(300) + "-" + &"b".repeat(300);
         let long_b = "a".repeat(300) + &"b".repeat(300) + "-";
         assert_eq!(compare(&long_a, &long_b), os_compare(&long_a, &long_b));
+    }
+
+    #[test]
+    fn leading_marks_rank_above() {
+        let alpha = [
+            'a', 'n', '\u{2bb}', '\u{2bc}', '\u{2bd}', '\u{301}', '\u{300}', '\u{149}',
+        ];
+        let mut all: Vec<String> = vec![String::new()];
+        let mut frontier = all.clone();
+        for _ in 0..4 {
+            let mut next = Vec::new();
+            for s in &frontier {
+                for c in alpha {
+                    next.push(format!("{s}{c}"));
+                }
+            }
+            all.extend(next.iter().cloned());
+            frontier = next;
+        }
+
+        let stacked = |s: &str| {
+            let mut run = 0;
+            s.replace('\u{149}', "n\u{2bc}").chars().any(|c| {
+                run = if "n\u{2bb}\u{2bc}\u{2bd}\u{301}\u{300}".contains(c) && c != 'n' {
+                    run + 1
+                } else {
+                    0
+                };
+                run > 1
+            })
+        };
+        let flat: Vec<&String> = all.iter().filter(|s| !stacked(s)).collect();
+        let mut bad = Vec::new();
+        for (i, a) in flat.iter().enumerate() {
+            for b in flat.iter().skip(i % 3).step_by(3) {
+                if compare(a, b) != os_compare(a, b) {
+                    bad.push((a.to_string(), b.to_string()));
+                }
+            }
+        }
+        assert!(
+            bad.is_empty(),
+            "{} of the pairs differ, e.g. {:?}",
+            bad.len(),
+            &bad[..bad.len().min(8)]
+        );
     }
 }

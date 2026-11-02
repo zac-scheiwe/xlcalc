@@ -1,0 +1,163 @@
+{
+ "sheets": [
+  "Host",
+  "Aa",
+  "Bb",
+  "Cc",
+  "Dd"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!A1",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=SUM('Aa':Bb!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=SUM(Aa:Bb!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=SUM('Aa:Bb'!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=SUM(Aa:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=SUM('Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=SUM(Bb:Dd!A1)"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Aa",
+   "name": "A a"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Bb",
+   "name": "B b"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "A a",
+   "name": "Aa"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "B b",
+   "name": "Bb"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Cc",
+   "name": "C'c"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A6"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=SUM('Aa':'C''c'!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=SUM(Aa:'C''c'!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=SUM('Aa':C'c!A1)"
+  },
+  {
+   "op": "read",
+   "range": "Host!A8:A10"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Bb",
+   "after": "Dd"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A10"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Aa",
+   "before": "Bb",
+   "name": "Z z"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A10"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Dd"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A10"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Bb"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A10"
+  },
+  {
+   "op": "sheets"
+  }
+ ]
+}

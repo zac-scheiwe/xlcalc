@@ -1,5 +1,5 @@
 use super::atp::{self, R};
-use super::xlmath;
+use super::TRIG_LIMIT;
 use crate::eval::{EvalCtx, Operand};
 use crate::functions::args::{check_array_args, num, val, Grid};
 use crate::value::{Value, XlError};
@@ -44,8 +44,8 @@ pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             return Err(XlError::NUM);
         }
         let total: f64 = terms.iter().sum();
-        let num = ln_gamma(total + 1.0).exp();
-        if !num.is_finite() || total > 170.0 {
+
+        if total > 170.0 {
             return Err(XlError::NUM);
         }
 
@@ -67,27 +67,6 @@ pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         Ok(if l < 0.0 { x87::div(1.0, p) } else { p })
     })();
     Operand::Val(atp::out(r))
-}
-
-fn ln_gamma(x: f64) -> f64 {
-    const G: [f64; 9] = [
-        0.999_999_999_999_809_9,
-        676.520_368_121_885_1,
-        -1_259.139_216_722_402_8,
-        771.323_428_777_653_1,
-        -176.615_029_162_140_6,
-        12.507_343_278_686_905,
-        -0.138_571_095_265_720_12,
-        9.984_369_578_019_572e-6,
-        1.505_632_735_149_311_6e-7,
-    ];
-    let x = x - 1.0;
-    let mut a = G[0];
-    let t = x + 7.5;
-    for (i, g) in G.iter().enumerate().skip(1) {
-        a += g / (x + i as f64);
-    }
-    0.5 * (2.0 * std::f64::consts::PI).ln() + (x + 0.5) * t.ln() - t + a.ln()
 }
 
 pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -235,7 +214,7 @@ pub fn permutationa(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn trig_arg(ctx: &EvalCtx, a: &[Value]) -> R<f64> {
     let x = num(ctx, &a[0])?;
-    if x.abs() >= xlmath::TRIG_LIMIT {
+    if x.abs() >= TRIG_LIMIT {
         return Err(XlError::NUM);
     }
     Ok(x)
@@ -287,9 +266,12 @@ pub fn acot(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if x == 0.0 {
             std::f64::consts::FRAC_PI_2
         } else if x > 0.0 {
-            xlmath::atan(crate::x87::div(1.0, x))
+            crate::x87::atan(crate::x87::div(1.0, x))
         } else {
-            std::f64::consts::PI + xlmath::atan(crate::x87::div(1.0, x))
+            crate::x87::add(
+                std::f64::consts::PI,
+                crate::x87::atan(crate::x87::div(1.0, x)),
+            )
         }
     }))
 }

@@ -1,6 +1,7 @@
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::value::Value;
+use crate::workbook::Command;
 use crate::workbook::{CalcMode, EditError, Entry, Workbook};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -152,18 +153,20 @@ impl Workbook {
             .collect()
     }
 
-    fn subtotal_guard(&self, sheet: SheetId, rect: Rect) -> Result<(), EditError> {
+    fn subtotal_guard(&self, rect: Rect) -> Result<(), EditError> {
         crate::structure::range_too_large(&rect)?;
-        if self.filter_mode(sheet) {
-            return Err(EditError::OutOfScope("Subtotal in filter mode"));
-        }
-        if self.merge_intersects(sheet, &rect) {
-            return Err(EditError::OutOfScope("Subtotal over merged cells"));
-        }
         Ok(())
     }
 
     pub fn remove_subtotal(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Result<RecalcReport, EditError> {
+        self.command(Command::Subtotal, |wb| wb.remove_subtotal_run(sheet, rect))
+    }
+
+    fn remove_subtotal_run(
         &mut self,
         sheet: SheetId,
         rect: Rect,
@@ -174,9 +177,12 @@ impl Workbook {
         } else {
             rect
         };
-        self.subtotal_guard(sheet, rect)?;
+        self.subtotal_guard(rect)?;
+        self.note_cell_format(CellAddr::new(sheet, rect.r0, rect.c0));
 
-        self.set_subtotal_levels(sheet, rect.r0, rect.r1, None);
+        if !self.filter_mode(sheet) {
+            self.set_subtotal_levels(sheet, rect.r0, rect.r1, None);
+        }
         let rows = self.subtotal_rows(sheet, rect);
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
@@ -193,6 +199,13 @@ impl Workbook {
         }
         self.settings.mode = mode;
         res?;
+
+        if mode == CalcMode::Manual {
+            return Ok(calc::finish_report(report));
+        }
+        if mode == CalcMode::Automatic {
+            self.dirty_rows_edited(sheet);
+        }
         let r = calc::recalc(self);
         report.evaluations += r.evaluations;
         report.circular = r.circular;
@@ -206,6 +219,15 @@ impl Workbook {
         rect: Rect,
         spec: &SubtotalSpec,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::Subtotal, |wb| wb.subtotal_run(sheet, rect, spec))
+    }
+
+    fn subtotal_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &SubtotalSpec,
+    ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         let autosel = rect.is_cell();
         let mut rect = if autosel {
@@ -213,12 +235,7 @@ impl Workbook {
         } else {
             rect
         };
-        self.subtotal_guard(sheet, rect)?;
-        if !spec.replace {
-            return Err(EditError::OutOfScope(
-                "Subtotal without replacing the current subtotals",
-            ));
-        }
+        self.subtotal_guard(rect)?;
         let cols = rect.cols();
         if spec.group < 1
             || spec.group > cols
@@ -226,9 +243,6 @@ impl Workbook {
             || spec.totals.iter().any(|&t| t < 1 || t > cols)
         {
             return Err(generic_error());
-        }
-        if spec.totals.contains(&spec.group) {
-            return Err(EditError::OutOfScope("Subtotal totalling the group column"));
         }
         for (_, b) in self.array_blocks(sheet) {
             if b.intersects(&rect) {
@@ -253,20 +267,48 @@ impl Workbook {
         }
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
+
+        let pending = calc::pending_formulas(self);
         self.settings.mode = CalcMode::Manual;
         let r = self.subtotal_rows_apply(sheet, &mut rect, spec, autosel, &mut report);
         self.settings.mode = mode;
         let fresh = r?;
 
         let r = if mode == CalcMode::Manual {
-            calc::recalc_only(self, &fresh)
+            let mut r = calc::recalc_only(self, &fresh);
+            let more = calc::recalc_pending(self, &pending);
+            r.evaluations += more.evaluations;
+            r.changed.extend(more.changed);
+            self.calc.entered.clear();
+            self.calc.entered_groups.clear();
+            r
         } else {
+            self.dirty_rows_edited(sheet);
             calc::recalc(self)
         };
         report.evaluations += r.evaluations;
         report.circular = r.circular;
         report.changed.extend(r.changed);
         Ok(calc::finish_report(report))
+    }
+
+    fn dirty_rows_edited(&mut self, sheet: SheetId) {
+        let ids: Vec<crate::workbook::FormulaId> = self
+            .formula_ids()
+            .filter(|&f| {
+                let c = self.formula(f);
+                c.addr.sheet == sheet
+                    || c.precedents.iter().any(|p| match p {
+                        crate::graph::Prec::Cell(s, ..) | crate::graph::Prec::Range(s, _) => {
+                            *s == sheet
+                        }
+                        crate::graph::Prec::Name(_) => false,
+                    })
+            })
+            .collect();
+        for f in ids {
+            calc::mark_dirty(self, f);
+        }
     }
 
     fn subtotal_rows_apply(
@@ -283,8 +325,19 @@ impl Workbook {
         let (list_r0, mut first) = self.subtotal_header(sheet, *rect, autosel);
         rect.r0 = list_r0;
 
-        self.set_subtotal_levels(sheet, rect.r0, rect.r1, None);
-        let old = self.subtotal_rows(sheet, *rect);
+        self.note_cell_format(CellAddr::new(sheet, rect.r0, rect.c0));
+
+        let outline = !self.filter_mode(sheet);
+        if outline {
+            self.set_subtotal_levels(sheet, rect.r0, rect.r1, None);
+        }
+        let mut old = self.subtotal_rows(sheet, *rect);
+
+        let existing = if spec.replace {
+            Vec::new()
+        } else {
+            std::mem::take(&mut old)
+        };
         for &r in old.iter().rev() {
             let rep = self.delete_rows(sheet, r, 1)?;
             report.changed.extend(rep.changed);
@@ -294,16 +347,27 @@ impl Workbook {
         if rect.rows() == 1 {
             return Err(generic_error());
         }
-        let c0 = rect.c0;
+        let mut c0 = rect.c0;
         let last = rect.r1;
         if first > last {
             return Ok(Vec::new());
         }
+
+        let lcol = c0;
+        if spec.totals.contains(&spec.group) {
+            let rep = self.insert_cols(sheet, c0, 1)?;
+            report.changed.extend(rep.changed);
+            rect.c0 += 1;
+            rect.c1 += 1;
+            c0 += 1;
+        }
         let gcol = c0 + spec.group - 1;
         let key = |wb: &Workbook, r: u32| -> String {
-            wb.display_text(CellAddr::new(sheet, r, gcol))
-                .trim()
-                .to_lowercase()
+            let mut at = CellAddr::new(sheet, r, gcol);
+            if let Some(m) = wb.merge_at(at).filter(|_| wb.merged_hidden(at)) {
+                at = CellAddr::new(sheet, m.r0, m.c0);
+            }
+            wb.display_text(at).trim().to_lowercase()
         };
 
         struct Run {
@@ -311,15 +375,22 @@ impl Workbook {
             b: u32,
             label: String,
         }
+
+        let fm = self.filter_mode(sheet);
+        let all_hidden =
+            |wb: &Workbook, a: u32, b: u32| fm && (a..=b).all(|r| wb.row_hidden(sheet, r));
         let mut runs: Vec<Run> = Vec::new();
         let mut cur: Option<(u32, u32, String)> = None;
         for r in first..=last {
+            if existing.contains(&r) {
+                continue;
+            }
             let k = key(self, r);
             match &mut cur {
                 Some((_, b, ck)) if *ck == k => *b = r,
                 _ => {
                     if let Some((a, b, ck)) = cur.take() {
-                        if !ck.is_empty() {
+                        if !ck.is_empty() && !all_hidden(self, a, b) {
                             let label = self.display_text(CellAddr::new(sheet, a, gcol));
                             runs.push(Run { a, b, label });
                         }
@@ -329,7 +400,7 @@ impl Workbook {
             }
         }
         if let Some((a, b, ck)) = cur.take() {
-            if !ck.is_empty() {
+            if !ck.is_empty() && !all_hidden(self, a, b) {
                 let label = self.display_text(CellAddr::new(sheet, a, gcol));
                 runs.push(Run { a, b, label });
             }
@@ -364,7 +435,7 @@ impl Workbook {
 
         let mut added = 0;
         for (&p, &n) in at.iter() {
-            let rep = self.insert_rows(sheet, p + added, n)?;
+            let rep = self.insert_rows_raw(sheet, p + added, n)?;
             report.changed.extend(rep.changed);
             added += n;
         }
@@ -383,8 +454,17 @@ impl Workbook {
                        a: u32,
                        b: u32|
          -> Result<(), EditError> {
-            let g = CellAddr::new(sheet, row, gcol);
+            let g = CellAddr::new(sheet, row, if lcol < c0 { lcol } else { gcol });
+
+            let hold = wb.merge_at(g).filter(|_| wb.merged_hidden(g));
+            if let Some(m) = hold {
+                wb.suspend_merges(sheet, &[m], true);
+            }
             wb.set_value(g, Value::from(label));
+            if let Some(m) = hold {
+                wb.suspend_merges(sheet, &[m], false);
+            }
+            wb.subtotal_label_format(g);
             report.changed.push(g);
             for &t in &spec.totals {
                 let col = c0 + t - 1;
@@ -395,7 +475,15 @@ impl Workbook {
                     a + 1,
                     b + 1
                 );
-                let rep = wb.set_formula(addr, &text)?;
+                let hold = wb.merge_at(addr).filter(|_| wb.merged_hidden(addr));
+                if let Some(m) = hold {
+                    wb.suspend_merges(sheet, &[m], true);
+                }
+                let rep = wb.set_formula(addr, &text);
+                if let Some(m) = hold {
+                    wb.suspend_merges(sheet, &[m], false);
+                }
+                let rep = rep?;
                 report.changed.extend(rep.changed);
                 report.changed.push(addr);
                 fresh.push(addr);
@@ -419,13 +507,24 @@ impl Workbook {
         } else {
             first + below_shift(first)
         };
-        put(self, grand, &format!("Grand {name}"), fa, fb)?;
+        let data_end = (first..=last)
+            .rev()
+            .find(|r| !existing.contains(r))
+            .map_or(fb, fin);
+
+        put(self, grand, &format!("Grand {name}"), fa, data_end)?;
 
         let lo = run_rows.iter().copied().chain([fa]).min().unwrap();
         let hi = run_rows.iter().copied().chain([fb]).max().unwrap();
-        self.set_subtotal_levels(sheet, lo, hi, Some(2));
-        for r in run_rows {
-            self.set_subtotal_levels(sheet, r, r, Some(1));
+        if outline {
+            self.set_subtotal_levels(sheet, lo, hi, Some(2));
+            for r in run_rows {
+                self.set_subtotal_levels(sheet, r, r, Some(1));
+            }
+        } else {
+            let above = self.row_level(sheet, grand.saturating_sub(1));
+            let lv = (above > 2).then(|| (above - 2) as u8);
+            self.set_subtotal_levels(sheet, grand, grand, lv);
         }
         Ok(fresh)
     }

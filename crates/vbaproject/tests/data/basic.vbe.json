@@ -1,0 +1,41 @@
+{
+    "workbookCodeName":  "ThisWorkbook",
+    "sheets":  [
+                   {
+                       "name":  "Sheet1",
+                       "codeName":  "Sheet1"
+                   }
+               ],
+    "modules":  [
+                    {
+                        "name":  "ThisWorkbook",
+                        "type":  100,
+                        "lines":  5,
+                        "text":  "Option Explicit\r\n\u0027 document module code\r\nPrivate Sub Workbook_Open()\r\nEnd Sub\r\n"
+                    },
+                    {
+                        "name":  "Sheet1",
+                        "type":  100,
+                        "lines":  5,
+                        "text":  "Option Explicit\r\nPublic Function SheetFn() As String\r\n    SheetFn = \"sheet\"\r\nEnd Function\r\n"
+                    },
+                    {
+                        "name":  "Module1",
+                        "type":  1,
+                        "lines":  10,
+                        "text":  "Option Explicit\r\n\r\nPublic Function Add2(ByVal a As Double, ByVal b As Double) As Double\r\n    Add2 = a + b\r\nEnd Function\r\n\r\nPrivate Sub Helper()\r\n    \u0027 nothing\r\nEnd Sub\r\n"
+                    },
+                    {
+                        "name":  "EmptyModule",
+                        "type":  1,
+                        "lines":  0,
+                        "text":  ""
+                    },
+                    {
+                        "name":  "ClassA",
+                        "type":  2,
+                        "lines":  11,
+                        "text":  "Option Explicit\r\nPrivate mX As Long\r\n\r\nPublic Property Get X() As Long\r\n    X = mX\r\nEnd Property\r\n\r\nPublic Property Let X(ByVal v As Long)\r\n    mX = v\r\nEnd Property\r\n"
+                    }
+                ]
+}

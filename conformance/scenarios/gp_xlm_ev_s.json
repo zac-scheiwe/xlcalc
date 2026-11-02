@@ -1,0 +1,492 @@
+{
+ "sheets": [
+  "Host",
+  "Aa"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "77"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B1",
+   "input": "12.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "hello"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B3",
+   "input": "=B1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B4",
+   "input": "=\"x\"&B2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B5",
+   "input": "1.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B6",
+   "input": "2*3"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B7",
+   "input": "TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B8",
+   "input": "=1/0"
+  },
+  {
+   "op": "format",
+   "range": "Host!B1",
+   "fmt": "#,##0.00"
+  },
+  {
+   "op": "format",
+   "range": "Host!B5",
+   "fmt": "0%"
+  },
+  {
+   "op": "format",
+   "range": "Host!B7",
+   "fmt": "@"
+  },
+  {
+   "op": "name",
+   "name": "e_01",
+   "refers_to": "=EVALUATE(INDIRECT(\"R6C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "e_02",
+   "refers_to": "=EVALUATE(INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "e_03",
+   "refers_to": "=EVALUATE(INDIRECT(\"R2C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "e_04",
+   "refers_to": "=EVALUATE(\"\")"
+  },
+  {
+   "op": "name",
+   "name": "e_05",
+   "refers_to": "=EVALUATE(1)"
+  },
+  {
+   "op": "name",
+   "name": "e_06",
+   "refers_to": "=EVALUATE(TRUE)"
+  },
+  {
+   "op": "name",
+   "name": "e_07",
+   "refers_to": "=EVALUATE(\"=1+1\")"
+  },
+  {
+   "op": "name",
+   "name": "e_08",
+   "refers_to": "=EVALUATE(\"B1\")"
+  },
+  {
+   "op": "name",
+   "name": "e_09",
+   "refers_to": "=EVALUATE(\"R1C2\")"
+  },
+  {
+   "op": "name",
+   "name": "e_10",
+   "refers_to": "=EVALUATE(\"$B$1:$B$3\")"
+  },
+  {
+   "op": "name",
+   "name": "e_11",
+   "refers_to": "=EVALUATE(\"SUM(B1:B3)\")"
+  },
+  {
+   "op": "name",
+   "name": "e_12",
+   "refers_to": "=EVALUATE(\"NOW()>0\")"
+  },
+  {
+   "op": "name",
+   "name": "e_13",
+   "refers_to": "=EVALUATE(\"e_01\")"
+  },
+  {
+   "op": "name",
+   "name": "e_14",
+   "refers_to": "=EVALUATE(\"1+1;2\")"
+  },
+  {
+   "op": "name",
+   "name": "e_15",
+   "refers_to": "=EVALUATE(\"A1:A2\")"
+  },
+  {
+   "op": "name",
+   "name": "e_16",
+   "refers_to": "=EVALUATE(\"INDIRECT(\"\"B1\"\")\")"
+  },
+  {
+   "op": "name",
+   "name": "e_17",
+   "refers_to": "=EVALUATE(\"EVALUATE(\"\"1+1\"\")\")"
+  },
+  {
+   "op": "name",
+   "name": "e_18",
+   "refers_to": "=EVALUATE(\"TRUE\")"
+  },
+  {
+   "op": "name",
+   "name": "e_19",
+   "refers_to": "=EVALUATE(\"\"\"s\"\"&1\")"
+  },
+  {
+   "op": "name",
+   "name": "e_20",
+   "refers_to": "=EVALUATE(\"1/0\")"
+  },
+  {
+   "op": "name",
+   "name": "e_21",
+   "refers_to": "=EVALUATE(\"Aa!A1\")"
+  },
+  {
+   "op": "name",
+   "name": "e_22",
+   "refers_to": "=EVALUATE(\"ROW()\")"
+  },
+  {
+   "op": "name",
+   "name": "e_23",
+   "refers_to": "=EVALUATE(INDIRECT(\"rc[1]\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "e_24",
+   "refers_to": "=EVALUATE(\"COLUMN()\")"
+  },
+  {
+   "op": "name",
+   "name": "e_25",
+   "refers_to": "=EVALUATE(\"{1,2,3}\")"
+  },
+  {
+   "op": "name",
+   "name": "e_26",
+   "refers_to": "=EVALUATE(\"SEQUENCE(2)\")"
+  },
+  {
+   "op": "name",
+   "name": "e_27",
+   "refers_to": "=EVALUATE(\" 1 + 2 \")"
+  },
+  {
+   "op": "name",
+   "name": "e_28",
+   "refers_to": "=EVALUATE(\"1+1\")*2"
+  },
+  {
+   "op": "name",
+   "name": "e_29",
+   "refers_to": "=EVALUATE(\"LET(a,1,a+1)\")"
+  },
+  {
+   "op": "name",
+   "name": "e_30",
+   "refers_to": "=EVALUATE(\"B\"&ROW())"
+  },
+  {
+   "op": "name",
+   "name": "e_31",
+   "refers_to": "=EVALUATE(\"B\"&ROW()&\"+1\")"
+  },
+  {
+   "op": "name",
+   "name": "e_32",
+   "refers_to": "=EVALUATE(\"RAND()\")>=0"
+  },
+  {
+   "op": "name",
+   "name": "e_33",
+   "refers_to": "=EVALUATE(\"CELL(\"\"address\"\",B1)\")"
+  },
+  {
+   "op": "name",
+   "name": "e_34",
+   "refers_to": "=EVALUATE(\"TODAY()\")>0"
+  },
+  {
+   "op": "name",
+   "name": "e_35",
+   "refers_to": "=EVALUATE(\"EVALUATE\")"
+  },
+  {
+   "op": "name",
+   "name": "e_36",
+   "refers_to": "=EVALUATE(\"2^\")"
+  },
+  {
+   "op": "name",
+   "name": "e_37",
+   "refers_to": "=EVALUATE(\"Nope(1)\")"
+  },
+  {
+   "op": "name",
+   "name": "e_38",
+   "refers_to": "=EVALUATE(\"B1:B3\")"
+  },
+  {
+   "op": "name",
+   "name": "e_39",
+   "refers_to": "=SUM(EVALUATE(\"B1:B3\"))"
+  },
+  {
+   "op": "name",
+   "name": "e_40",
+   "refers_to": "=EVALUATE(\"1,2\")"
+  },
+  {
+   "op": "name",
+   "name": "e_41",
+   "refers_to": "=EVALUATE(1+1)"
+  },
+  {
+   "op": "name",
+   "name": "e_42",
+   "refers_to": "=EVALUATE(B1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=e_01"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=e_02"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=e_03"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=e_04"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=e_05"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=e_06"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=e_07"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=e_08"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=e_09"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=e_10"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A11",
+   "input": "=e_11"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A12",
+   "input": "=e_12"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A13",
+   "input": "=e_13"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A14",
+   "input": "=e_14"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A15",
+   "input": "=e_15"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A16",
+   "input": "=e_16"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A17",
+   "input": "=e_17"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A18",
+   "input": "=e_18"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A19",
+   "input": "=e_19"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A20",
+   "input": "=e_20"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A21",
+   "input": "=e_21"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A22",
+   "input": "=e_22"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A23",
+   "input": "=e_23"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A24",
+   "input": "=e_24"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A25",
+   "input": "=e_25"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A26",
+   "input": "=e_26"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A27",
+   "input": "=e_27"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A28",
+   "input": "=e_28"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A29",
+   "input": "=e_29"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A30",
+   "input": "=e_30"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A31",
+   "input": "=e_31"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A32",
+   "input": "=e_32"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A33",
+   "input": "=e_33"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A34",
+   "input": "=e_34"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A35",
+   "input": "=e_35"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A36",
+   "input": "=e_36"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A37",
+   "input": "=e_37"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A38",
+   "input": "=e_38"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A39",
+   "input": "=e_39"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A40",
+   "input": "=e_40"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A41",
+   "input": "=e_41"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A42",
+   "input": "=e_42"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A42"
+  }
+ ]
+}

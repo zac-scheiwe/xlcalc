@@ -176,7 +176,7 @@ fn actual_year_length_ymd(s: Ymd, e: Ymd, leap1900: bool) -> f64 {
     } else {
         let years = (e.y - s.y + 1) as f64;
         let days: i64 = (s.y..=e.y).map(|y| if leap(y) { 366 } else { 365 }).sum();
-        days as f64 / years
+        crate::x87::div(days as f64, years)
     }
 }
 
@@ -222,30 +222,33 @@ fn yearfrac_ymd(a: i64, ya: (Ymd, bool), b: i64, yb: (Ymd, bool), basis: i32) ->
                 d1 = 30;
             }
             let (bs, be) = (back(s, sf), back(e, ef));
-            d360(
+            let n = d360(
                 d1 - (s.d - bs.d) as i64,
                 s.m,
                 bs.y,
                 d2 - (e.d - be.d) as i64,
                 e.m,
                 be.y,
-            ) as f64
-                / 360.0
+            ) as f64;
+            crate::x87::div(n, 360.0)
         }
-        1 => (b - a) as f64 / actual_year_length_ymd(back(s, sf), back(e, ef), sf || ef),
-        2 => (b - a) as f64 / 360.0,
-        3 => (b - a) as f64 / 365.0,
+        1 => crate::x87::div(
+            (b - a) as f64,
+            actual_year_length_ymd(back(s, sf), back(e, ef), sf || ef),
+        ),
+        2 => crate::x87::div((b - a) as f64, 360.0),
+        3 => crate::x87::div((b - a) as f64, 365.0),
         _ => {
             let (bs, be) = (back(s, sf), back(e, ef));
-            d360(
+            let n = d360(
                 (s.d as i64).min(30) - (s.d - bs.d) as i64,
                 s.m,
                 bs.y,
                 (e.d as i64).min(30) - (e.d - be.d) as i64,
                 e.m,
                 be.y,
-            ) as f64
-                / 360.0
+            ) as f64;
+            crate::x87::div(n, 360.0)
         }
     })
 }

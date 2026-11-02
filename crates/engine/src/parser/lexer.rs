@@ -63,17 +63,43 @@ pub struct Lexer<'a> {
     chars: Vec<char>,
     i: usize,
     after_sheet: bool,
-    _src: &'a str,
+
+    parens: Vec<bool>,
+
+    after_colon: bool,
+
+    sheet_exists: &'a dyn Fn(&str) -> bool,
 }
 
 impl<'a> Lexer<'a> {
-    pub fn new(src: &'a str) -> Self {
+    pub fn new(src: &str, sheet_exists: &'a dyn Fn(&str) -> bool) -> Self {
         Lexer {
             chars: src.chars().collect(),
             i: 0,
             after_sheet: false,
-            _src: src,
+            parens: Vec::new(),
+            after_colon: false,
+            sheet_exists,
         }
+    }
+
+    fn span_ok(&self, a: &str, b: &str, after: usize) -> bool {
+        let digit = a.starts_with(|c: char| c.is_ascii_digit());
+        (digit || ((self.sheet_exists)(a) && (self.sheet_exists)(b)))
+            && !self.after_colon
+            && self.parens.last() != Some(&false)
+            && self.ref_follows(after)
+    }
+
+    fn ref_follows(&self, at: usize) -> bool {
+        let word: String = self.chars[at.min(self.chars.len())..]
+            .iter()
+            .take_while(|&&c| is_ident_char(c))
+            .collect();
+        let next = self.chars.get(at + word.chars().count()).copied();
+        crate::address::parse_a1_cell(&word).is_some()
+            || (next == Some(':')
+                && (looks_like_ref_part(&word) || crate::address::letters_to_col(&word).is_some()))
     }
 
     fn peek(&self, k: usize) -> Option<char> {
@@ -117,6 +143,12 @@ impl<'a> Lexer<'a> {
                 });
                 return Ok(out);
             };
+
+            self.after_colon = out.len() >= 2
+                && matches!(out[out.len() - 1].tok, Tok::Op(":"))
+                && matches!(&out[out.len() - 2].tok, Tok::Ident(w)
+                    if crate::address::letters_to_col(w.trim_start_matches('$')).is_some()
+                        && w.bytes().all(|b| b.is_ascii_alphabetic() || b == b'$'));
             let after_operand = out.last().is_some_and(|t: &Token| {
                 matches!(
                     t.tok,
@@ -178,6 +210,23 @@ impl<'a> Lexer<'a> {
                     None => return Err(self.err(format!("unexpected character '{c}'"))),
                 }
             };
+            match tok {
+                Tok::Op("(") => {
+                    let call = !space
+                        && matches!(
+                            out.last(),
+                            Some(Token {
+                                tok: Tok::Ident(_),
+                                ..
+                            })
+                        );
+                    self.parens.push(call);
+                }
+                Tok::Op(")") => {
+                    self.parens.pop();
+                }
+                _ => {}
+            }
             out.push(Token {
                 tok,
                 pos,
@@ -211,7 +260,11 @@ impl<'a> Lexer<'a> {
             if m == 0 || self.peek(n + 1 + m) != Some('!') {
                 return Ok(None);
             }
-            (take(self, 0, n), Some(take(self, n + 1, m)), n + 1 + m)
+            let (a, b) = (take(self, 0, n), take(self, n + 1, m));
+            if !self.span_ok(&a, &b, self.i + n + m + 2) {
+                return Ok(None);
+            }
+            (a, Some(b), n + 1 + m)
         } else {
             return Ok(None);
         };
@@ -360,11 +413,14 @@ impl<'a> Lexer<'a> {
             let save = self.i;
             self.i += 1;
             let second = self.read_ident();
-            if self.peek(0) == Some('!') {
+            if self.peek(0) == Some('!') && self.span_ok(&s, &second, self.i + 1) {
                 self.i += 1;
                 return Ok(Tok::Sheet(SheetSpec::Range(s, second)));
             }
             self.i = save;
+        }
+        if self.peek(0) == Some(':') {
+            return Ok(Tok::Ident(format!("\u{1}{s}")));
         }
         if self.peek(0) != Some('!') {
             return Err(self.err("expected '!' after quoted sheet name"));
@@ -378,8 +434,12 @@ impl<'a> Lexer<'a> {
                 book: book.to_string(),
                 sheet: Some(sheet.to_string()),
             }
-        } else if let Some((a, b)) = s.split_once(':') {
-            SheetSpec::Range(a.to_string(), b.to_string())
+        } else if let Some((a, b)) = s.rsplit_once(':') {
+            if self.parens.last() == Some(&false) {
+                SheetSpec::Range(a.to_string(), format!("[{b}]{b}"))
+            } else {
+                SheetSpec::Range(a.to_string(), b.to_string())
+            }
         } else {
             SheetSpec::Single(s)
         };
@@ -546,7 +606,7 @@ impl<'a> Lexer<'a> {
                 self.i += 1;
                 if self.peek(0).is_some_and(is_ident_start) {
                     let second = self.read_ident();
-                    if self.peek(0) == Some('!') {
+                    if self.peek(0) == Some('!') && self.span_ok(&name, &second, self.i + 1) {
                         self.i += 1;
                         return Ok(Tok::Sheet(SheetSpec::Range(name, second)));
                     }

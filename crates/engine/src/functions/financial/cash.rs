@@ -1,8 +1,9 @@
 use super::atp::{self, Arg};
-use super::xmath;
 use crate::eval::{EvalCtx, Operand};
 use crate::functions::args::{collect_numbers, num, opval, Grid, R, SUM_POLICY};
 use crate::value::{Value, XlError};
+use crate::x87;
+use crate::xmath;
 
 fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
@@ -88,8 +89,21 @@ fn irr_secant(values: &[f64], guess: f64) -> R<Option<f64>> {
         return Err(XlError::DIV0);
     }
     let Some(w) = w else { return Ok(None) };
+
+    if x87::sub(w, 1e-7) <= -1.0 {
+        return Err(XlError::NUM);
+    }
     let r = x87::sub(x87::div(1.0, x87::add(w, 1.0)), 1.0);
     Ok(r.is_finite().then_some(r))
+}
+
+pub(super) fn fn_iter_start(x0: f64) -> R<f64> {
+    let s = crate::x87::add(x0, 1.0);
+    let b = s.to_bits();
+    if b >> 48 == 0 || !s.is_finite() || (b as i64) <= 0 {
+        return Err(XlError::VALUE);
+    }
+    Ok(x0)
 }
 
 pub(super) fn fn_iter(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
@@ -135,7 +149,7 @@ pub(super) fn fn_iter(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
 }
 
 fn irr_of(values: &[f64], guess: Option<f64>) -> R<f64> {
-    if !values.iter().any(|&v| v > 0.0) || !values.iter().any(|&v| v < 0.0) {
+    if values.is_empty() {
         return Err(XlError::NUM);
     }
     let restarts = [0.1, -0.09090909090909091, 2.0];
@@ -161,10 +175,12 @@ pub fn irr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
             Some(op) => Some(scalar_num(ctx, op, 0.0)?),
         };
-        if guess.is_some_and(|g| g <= -1.0) {
-            return Err(XlError::VALUE);
+        if let Some(g) = guess {
+            fn_iter_start(crate::x87::div(g, crate::x87::sub(-1.0, g)))?;
         }
-        irr_of(&values, guess).map(Value::num)
+
+        let lead = values.iter().take_while(|v| v.to_bits() >> 48 == 0).count();
+        irr_of(&values[lead..], guess).map(Value::num)
     })())
 }
 
@@ -202,11 +218,7 @@ pub fn mirr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let ratio = x87::div(fv, -neg);
         let y = x87::div(1.0, n - 1.0);
 
-        let x = if ratio > 0.0 && y.fract() != 0.0 {
-            x87::exp(x87::mul(x87::ln(ratio), y))
-        } else {
-            xmath::pow(ratio, y)
-        };
+        let x = crate::xmath::pow(ratio, y);
         finite(x87::sub(x, 1.0)).map(Value::num)
     })())
 }
@@ -297,10 +309,11 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
 }
 
 fn xnpv_of(rate: f64, v: &[f64], d: &[f64]) -> f64 {
-    let b = 1.0 + rate;
+    let b = x87::add(1.0, rate);
     let mut acc = 0.0;
     for (x, t) in v.iter().zip(d) {
-        acc += x / xmath::pow(b, (t - d[0]) / 365.0);
+        let e = x87::div(x87::sub(*t, d[0]), 365.0);
+        acc = x87::add(acc, x87::div(*x, xmath::pow(b, e)));
     }
     acc
 }
@@ -319,29 +332,34 @@ pub fn xnpv(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
     let sign = if v[0] < 0.0 { 1.0 } else { -1.0 };
     let h = |x: f64| -> R<f64> {
-        let b = 1.0 + x;
+        let b = x87::add(1.0, x);
         if b <= 0.0 {
             return Err(XlError::NUM);
         }
+
         let mut acc = 0.0;
-        for (a, t) in v.iter().zip(d) {
-            acc += a / xmath::pow(b, (t - d[0]) / 365.0);
+        for (a, t) in v.iter().zip(d).skip(1) {
+            let e = x87::div(x87::sub(*t, d[0]), 365.0);
+            acc = x87::add(acc, x87::div(*a, xmath::pow(b, e)));
         }
-        finite(acc * sign)
+        acc = x87::add(v[0], acc);
+        finite(x87::mul(acc, sign))
     };
     let g = if guess == 0.0 { 1e-5 } else { guess };
     let h0 = h(0.0)?;
+
+    let cap = 98usize;
+    let mut iters = 0usize;
     let (mut lo, mut hi);
     let up = h0 > 0.0;
     if up {
         lo = 0.0;
         hi = g;
-        let mut n = 0;
         while h(hi)? > 0.0 {
             lo = hi;
             hi *= 2.0;
-            n += 1;
-            if n > 2000 {
+            iters += 1;
+            if iters > cap {
                 return Err(XlError::NUM);
             }
         }
@@ -359,7 +377,11 @@ fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
         lo = g;
         hi = 0.0;
     }
-    for _ in 0..2000 {
+    loop {
+        iters += 1;
+        if iters > cap {
+            return Err(XlError::NUM);
+        }
         let mid = hi - (hi - lo) / 2.0;
         let hm = h(mid)?;
 
@@ -373,7 +395,6 @@ fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
             hi = mid;
         }
     }
-    Err(XlError::NUM)
 }
 
 pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {

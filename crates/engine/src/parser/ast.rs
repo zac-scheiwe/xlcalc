@@ -116,7 +116,7 @@ pub enum ArrayItem {
     Error(XlError),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub enum Expr {
     Number(f64),
     Text(String),
@@ -201,6 +201,197 @@ impl Expr {
                 after: after.to_string(),
                 expr: Box::new(e),
             },
+        }
+    }
+}
+
+impl Clone for Expr {
+    fn clone(&self) -> Expr {
+        crate::deep(|| self.clone_inner())
+    }
+}
+
+impl Expr {
+    fn clone_inner(&self) -> Expr {
+        match self {
+            Expr::Number(n) => Expr::Number(*n),
+            Expr::Text(s) => Expr::Text(s.clone()),
+            Expr::Bool(b) => Expr::Bool(*b),
+            Expr::Error(e) => Expr::Error(*e),
+            Expr::Array(a) => Expr::Array(a.clone()),
+            Expr::Ref { sheet, kind } => Expr::Ref {
+                sheet: sheet.clone(),
+                kind: *kind,
+            },
+            Expr::Name { sheet, name } => Expr::Name {
+                sheet: sheet.clone(),
+                name: name.clone(),
+            },
+            Expr::StructRef { table, spec } => Expr::StructRef {
+                table: table.clone(),
+                spec: spec.clone(),
+            },
+            Expr::Func { name, args } => Expr::Func {
+                name: name.clone(),
+                args: args.clone(),
+            },
+            Expr::Call { callee, args } => Expr::Call {
+                callee: callee.clone(),
+                args: args.clone(),
+            },
+            Expr::Unary { op, expr } => Expr::Unary {
+                op: *op,
+                expr: expr.clone(),
+            },
+            Expr::Percent(x) => Expr::Percent(x.clone()),
+            Expr::Spill(x) => Expr::Spill(x.clone()),
+            Expr::Field { expr, field } => Expr::Field {
+                expr: expr.clone(),
+                field: field.clone(),
+            },
+            Expr::Binary { op, left, right } => Expr::Binary {
+                op: *op,
+                left: left.clone(),
+                right: right.clone(),
+            },
+            Expr::Paren(x) => Expr::Paren(x.clone()),
+            Expr::Missing => Expr::Missing,
+            Expr::Ws {
+                before,
+                after,
+                expr,
+            } => Expr::Ws {
+                before: before.clone(),
+                after: after.clone(),
+                expr: expr.clone(),
+            },
+        }
+    }
+}
+
+impl PartialEq for Expr {
+    fn eq(&self, other: &Expr) -> bool {
+        crate::deep(|| self.eq_inner(other))
+    }
+}
+
+impl Expr {
+    fn eq_inner(&self, other: &Expr) -> bool {
+        match (self, other) {
+            (Expr::Number(a), Expr::Number(b)) => a == b,
+            (Expr::Text(a), Expr::Text(b)) => a == b,
+            (Expr::Bool(a), Expr::Bool(b)) => a == b,
+            (Expr::Error(a), Expr::Error(b)) => a == b,
+            (Expr::Array(a), Expr::Array(b)) => a == b,
+            (
+                Expr::Ref {
+                    sheet: s1,
+                    kind: k1,
+                },
+                Expr::Ref {
+                    sheet: s2,
+                    kind: k2,
+                },
+            ) => s1 == s2 && k1 == k2,
+            (
+                Expr::Name {
+                    sheet: s1,
+                    name: n1,
+                },
+                Expr::Name {
+                    sheet: s2,
+                    name: n2,
+                },
+            ) => s1 == s2 && n1 == n2,
+            (
+                Expr::StructRef {
+                    table: t1,
+                    spec: s1,
+                },
+                Expr::StructRef {
+                    table: t2,
+                    spec: s2,
+                },
+            ) => t1 == t2 && s1 == s2,
+            (Expr::Func { name: n1, args: a1 }, Expr::Func { name: n2, args: a2 }) => {
+                n1 == n2 && a1 == a2
+            }
+            (
+                Expr::Call {
+                    callee: c1,
+                    args: a1,
+                },
+                Expr::Call {
+                    callee: c2,
+                    args: a2,
+                },
+            ) => c1 == c2 && a1 == a2,
+            (Expr::Unary { op: o1, expr: x1 }, Expr::Unary { op: o2, expr: x2 }) => {
+                o1 == o2 && x1 == x2
+            }
+            (Expr::Percent(a), Expr::Percent(b))
+            | (Expr::Spill(a), Expr::Spill(b))
+            | (Expr::Paren(a), Expr::Paren(b)) => a == b,
+            (
+                Expr::Field {
+                    expr: x1,
+                    field: f1,
+                },
+                Expr::Field {
+                    expr: x2,
+                    field: f2,
+                },
+            ) => x1 == x2 && f1 == f2,
+            (
+                Expr::Binary {
+                    op: o1,
+                    left: l1,
+                    right: r1,
+                },
+                Expr::Binary {
+                    op: o2,
+                    left: l2,
+                    right: r2,
+                },
+            ) => o1 == o2 && l1 == l2 && r1 == r2,
+            (Expr::Missing, Expr::Missing) => true,
+            (
+                Expr::Ws {
+                    before: b1,
+                    after: a1,
+                    expr: x1,
+                },
+                Expr::Ws {
+                    before: b2,
+                    after: a2,
+                    expr: x2,
+                },
+            ) => b1 == b2 && a1 == a2 && x1 == x2,
+            _ => false,
+        }
+    }
+}
+
+impl Expr {
+    pub fn drop_deep(self) {
+        let mut todo = vec![self];
+        while let Some(e) = todo.pop() {
+            match e {
+                Expr::Func { args, .. } => todo.extend(args),
+                Expr::Call { callee, args } => {
+                    todo.push(*callee);
+                    todo.extend(args);
+                }
+                Expr::Unary { expr, .. } | Expr::Field { expr, .. } | Expr::Ws { expr, .. } => {
+                    todo.push(*expr)
+                }
+                Expr::Percent(x) | Expr::Spill(x) | Expr::Paren(x) => todo.push(*x),
+                Expr::Binary { left, right, .. } => {
+                    todo.push(*left);
+                    todo.push(*right);
+                }
+                _ => {}
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::locale::DateOrder;
 use crate::value::Value;
+use crate::workbook::Command;
 use crate::workbook::Op;
 use crate::workbook::{CalcMode, EditError, Entry, Workbook};
 
@@ -269,6 +270,17 @@ impl Workbook {
         rect: Rect,
         spec: &TtcSpec,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::TextToColumns, |wb| {
+            wb.text_to_columns_run(sheet, rect, spec)
+        })
+    }
+
+    fn text_to_columns_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &TtcSpec,
+    ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         crate::structure::range_too_large(&rect)?;
         if rect.cols() != 1 {
@@ -286,9 +298,8 @@ impl Workbook {
             .dest
             .filter(|d| !(d.sheet == sheet && d.row == rect.r0 && d.col == rect.c0))
             .unwrap_or(CellAddr::new(sheet, rect.r0, rect.c0));
-        if dest.sheet != sheet {
-            return Err(EditError::OutOfScope("TextToColumns into another sheet"));
-        }
+
+        let dest = CellAddr::new(sheet, dest.row, dest.col);
         if dest.sheet == sheet
             && rect.contains(dest.row, dest.col)
             && (dest.row, dest.col) != (rect.r0, rect.c0)
@@ -326,9 +337,33 @@ impl Workbook {
             }
             fi = kept;
             if fi.is_empty() {
-                return Err(EditError::OutOfScope(
-                    "TextToColumns fixed width without break positions",
-                ));
+                let texts: Vec<Vec<char>> = (rect.r0..=rect.r1)
+                    .map(|r| {
+                        let addr = CellAddr::new(sheet, r, rect.c0);
+                        match self.sheet(sheet).and_then(|s| s.cells.get(r, rect.c0)) {
+                            Some(Entry::Const(Value::Text(t))) => t.chars().collect(),
+                            Some(Entry::Const(v)) => self
+                                .const_edit_text(addr, v)
+                                .unwrap_or_default()
+                                .chars()
+                                .collect(),
+                            Some(Entry::Formula(_)) => self
+                                .legacy_formula_text(addr)
+                                .unwrap_or_default()
+                                .chars()
+                                .collect(),
+                            None => Vec::new(),
+                        }
+                    })
+                    .collect();
+                let width = texts.iter().map(Vec::len).max().unwrap_or(0);
+                let blank = |i: usize| texts.iter().all(|l| l.get(i).is_none_or(|&c| c == ' '));
+                fi.push((0, 1));
+                for i in 1..width {
+                    if blank(i - 1) && !blank(i) {
+                        fi.push((i as u32, 1));
+                    }
+                }
             }
             breaks = fi;
         }
@@ -395,12 +430,6 @@ impl Workbook {
             dest.row + rows.len() as u32 - 1,
             dest.col + width - 1,
         );
-        if self.filter_mode(sheet) || self.filter_mode(dest.sheet) {
-            return Err(EditError::OutOfScope("TextToColumns in filter mode"));
-        }
-        if self.merge_intersects(sheet, &rect) || self.merge_intersects(dest.sheet, &area) {
-            return Err(EditError::OutOfScope("TextToColumns over merged cells"));
-        }
         for (s, a) in [(sheet, rect), (dest.sheet, area)] {
             if !self.sheet(s).unwrap().spills.intersecting(&a).is_empty() {
                 return Err(crate::cse::part_of_array());
@@ -409,6 +438,16 @@ impl Workbook {
                 if blk.intersects(&a) {
                     return Err(crate::cse::part_of_array());
                 }
+            }
+        }
+
+        for (s, a) in [(sheet, rect), (dest.sheet, area)] {
+            if self
+                .data_tables
+                .iter()
+                .any(|t| t.sheet == s && t.interior().intersects(&a))
+            {
+                return Err(EditError::Compile(crate::datatable::PART_ERROR.into()));
             }
         }
 
@@ -423,6 +462,24 @@ impl Workbook {
         self.settings.mode = CalcMode::Manual;
         let normal = self.locale.clone();
         let mut res = Ok(());
+
+        let held: Vec<Rect> = self
+            .merges(dest.sheet)
+            .into_iter()
+            .filter(|m| m.intersects(&area))
+            .collect();
+        self.suspend_merges(dest.sheet, &held, true);
+        let pieces: Vec<(u32, u32)> = rows
+            .iter()
+            .enumerate()
+            .flat_map(|(i, row)| {
+                row.iter()
+                    .enumerate()
+                    .filter(|(_, p)| !p.0.is_empty())
+                    .map(move |(j, _)| (dest.row + i as u32, dest.col + j as u32))
+            })
+            .collect();
+        self.ttc_block = Some((dest.sheet, area, pieces));
         self.with_op(Op::ReplaceEntry, true, |wb| {
             wb.with_op(Op::TextToColumns, true, |wb| {
                 'rows: for (i, row) in rows.iter().enumerate() {
@@ -494,19 +551,29 @@ impl Workbook {
                 }
             })
         });
+        self.suspend_merges(dest.sheet, &held, false);
         self.locale = normal;
         self.settings.mode = mode;
+        self.ttc_block = None;
         res?;
 
-        if self.tables.iter().any(|t| {
-            t.sheet == dest.sheet
-                && before_tables
-                    .iter()
-                    .any(|(n, r)| *n == t.name && *r != t.rect)
-        }) {
-            return Err(EditError::OutOfScope(
-                "TextToColumns extending an adjacent table",
-            ));
+        let grown: Vec<(usize, u32)> = self
+            .tables
+            .iter()
+            .enumerate()
+            .filter(|(_, t)| t.sheet == dest.sheet)
+            .filter_map(|(ti, t)| {
+                let before = before_tables.iter().find(|(n, _)| *n == t.name)?.1;
+                Some((ti, before.c1 + 1..=t.rect.c1))
+            })
+            .flat_map(|(ti, cols)| cols.map(move |c| (ti, c)))
+            .collect();
+        for (ti, c) in grown {
+            let (d0, _) = self.tables[ti].data_rows();
+            let a = CellAddr::new(dest.sheet, d0, c);
+            if self.formula_at(a).is_some() {
+                self.calc_fill_column(ti, a);
+            }
         }
 
         while let Some(ti) = self

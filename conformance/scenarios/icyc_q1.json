@@ -1,0 +1,1 @@
+{"fresh_excel":true,"steps":[{"op":"om_put","path":"MultiThreadedCalculation","prop":"Enabled","value":false},{"op":"set","cell":"Sheet1!E3","input":"=D4:E5*2"},{"op":"read","range":"Sheet1!A1:F9"},{"op":"set","cell":"Sheet1!B1","input":"=E4+7"},{"op":"read","range":"Sheet1!A1:F9"}]}

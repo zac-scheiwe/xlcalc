@@ -1,6 +1,7 @@
 use crate::address::CellAddr;
 use crate::calc;
 use crate::value::Value;
+use crate::workbook::Command;
 use crate::workbook::{EditError, Entry, Workbook};
 use crate::x87;
 
@@ -42,6 +43,17 @@ impl Seek<'_> {
 
 impl Workbook {
     pub fn goal_seek(
+        &mut self,
+        target: CellAddr,
+        goal: f64,
+        changing: CellAddr,
+    ) -> Result<bool, EditError> {
+        self.command(Command::GoalSeek, |wb| {
+            wb.goal_seek_run(target, goal, changing)
+        })
+    }
+
+    fn goal_seek_run(
         &mut self,
         target: CellAddr,
         goal: f64,

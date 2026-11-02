@@ -123,7 +123,7 @@ fn gather_ref(
         let skip_hidden = match hide {
             Hide::No => false,
             Hide::Always => true,
-            Hide::IfFiltered => wb.filter_mode(area.sheet),
+            Hide::IfFiltered => wb.filter_mode_for_subtotal(area.sheet),
         };
         let sheet_id = area.sheet;
         ctx.visit_area_lazy(

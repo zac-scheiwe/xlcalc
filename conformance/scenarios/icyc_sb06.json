@@ -1,0 +1,85 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=SEQUENCE(1,2)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=E1:E2*2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=SUM(B1:B3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=SEQUENCE(1,1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=SEQUENCE(1,2)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=COUNT(B1:B3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F6"
+  }
+ ]
+}

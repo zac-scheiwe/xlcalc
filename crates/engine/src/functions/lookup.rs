@@ -154,6 +154,7 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             }
         }
         Operand::Val(v) => {
+            let scalar_src = !matches!(v, Value::Array(_) | Value::Error(_));
             let arr = match v {
                 Value::Array(a) => a.clone(),
                 Value::Error(e) => return Operand::err(*e),
@@ -172,7 +173,9 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     let n = (r1 - r0 + 1, c1 - c0 + 1);
                     let get = |r: u32, c: u32| arr.get(r0 + r, c0 + c).clone();
                     Operand::Val(if slice {
-                        array_always(n.0, n.1, get)
+                        let mut a = Array::from_fn(n.0, n.1, get);
+                        a.scalar_slice = scalar_src;
+                        a.into_value()
                     } else {
                         array_or_scalar(n.0, n.1, get)
                     })
@@ -700,8 +703,7 @@ fn vhlookup_scalar(ctx: &mut EvalCtx, ops: &[Operand], vertical: bool) -> Operan
 }
 
 fn choose(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
-    let i = ctx.eval(&args[0]);
-    let i = ctx.deref(i);
+    let i = ctx.eval_selector(&args[0]);
     let n = args.len() - 1;
     let pick = |ctx: &EvalCtx, v: &Value| -> R<usize> {
         let k = ctx.to_number(v)?.trunc();
@@ -931,6 +933,9 @@ fn parse_r1c1(s: &str, host_row: u32, host_col: u32) -> Option<Rect> {
 const INDIRECT_BLANKS: [char; 2] = [' ', '\n'];
 
 fn indirect(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    if ctx.in_evaluate {
+        return Operand::err(XlError::REF);
+    }
     let first = match &ops[0] {
         Operand::Ref(_) => Operand::Val(ctx.deref(ops[0].clone())),
         o => o.clone(),
@@ -1004,7 +1009,10 @@ fn indirect_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 return Operand::err(XlError::REF);
             };
             match ctx.wb.sheet_by_name(&name) {
-                Some(sh) => (sh.id, s[i + 1..].trim_start_matches(INDIRECT_BLANKS)),
+                Some(sh) if sh.kind != crate::workbook::SheetKind::Chart => {
+                    (sh.id, s[i + 1..].trim_start_matches(INDIRECT_BLANKS))
+                }
+                Some(_) => return Operand::err(XlError::REF),
                 None => return Operand::err(XlError::REF),
             }
         }

@@ -70,14 +70,18 @@ fn select3(cond: &Array, t: &Value, f: &Value) -> Value {
 }
 
 fn if_fn(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
-    let c = ctx.eval(&args[0]);
-    let c = ctx.deref(c);
+    let c = ctx.eval_selector(&args[0]);
     match c {
         Value::Array(a) => {
             let any_true = a.data.iter().any(|v| coerce::to_bool(v) == Ok(true));
             let any_false = a.data.iter().any(|v| coerce::to_bool(v) == Ok(false));
             let t = if any_true {
-                branch(ctx, args, 1, Value::Bool(false))
+                let o = branch(ctx, args, 1, Value::Bool(false));
+
+                if matches!(&o, Operand::Ref(r) if r.is_span()) {
+                    return Operand::err(XlError::VALUE);
+                }
+                o
             } else {
                 let o = branch(ctx, args, 1, Value::Blank);
                 match ctx.deref(o) {
@@ -89,7 +93,12 @@ fn if_fn(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
             };
             let t = ctx.deref(t);
             let f = if any_false {
-                branch(ctx, args, 2, Value::Bool(false))
+                let o = branch(ctx, args, 2, Value::Bool(false));
+
+                if matches!(&o, Operand::Ref(r) if r.is_span()) {
+                    return Operand::err(XlError::VALUE);
+                }
+                o
             } else {
                 let o = branch(ctx, args, 2, Value::Blank);
                 match ctx.deref(o) {
@@ -248,6 +257,14 @@ fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Op
             Operand::Val(alt)
         }
         Value::Array(a) => {
+            if ctx.in_array_block()
+                && catches(XlError::SPILL)
+                && a.data
+                    .iter()
+                    .any(|x| matches!(x, Value::Error(XlError::SPILL)))
+            {
+                ctx.observed.spill_masked = true;
+            }
             let alt = branch(ctx, args, 1, Value::Number(0.0));
             let alt = ctx.deref(alt);
             let alt_get = |r: u32, c: u32| match &alt {

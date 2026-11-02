@@ -1,9 +1,5 @@
 use std::f64::consts::{FRAC_PI_2, PI};
 
-pub fn atan(x: f64) -> f64 {
-    x.atan2(1.0)
-}
-
 pub fn atan2(y: f64, x: f64) -> f64 {
     use crate::x87;
 

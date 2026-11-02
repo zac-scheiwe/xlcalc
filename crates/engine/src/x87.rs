@@ -1,16 +1,51 @@
 use crate::functions::statdist::dd::DD;
 
+const NATIVE: bool = cfg!(all(target_arch = "x86_64", not(feature = "x87-emulate")));
+
+const TRIG_MAX: f64 = 134217728.0;
+
+#[cfg(target_arch = "x86_64")]
+#[path = "x87/native.rs"]
+mod native;
+
+#[cfg(not(target_arch = "x86_64"))]
+mod native {
+    pub fn none(_: f64) -> f64 {
+        unreachable!("the x87 instructions need x86_64")
+    }
+    pub use none as atan_abs;
+    pub use none as cos_abs;
+    pub use none as exp;
+    pub use none as ln;
+    pub use none as log10;
+    pub use none as sin_abs;
+    pub use none as tan_abs;
+}
+
 fn round2(neg: bool, n: u128, mut e: i32, sticky: bool) -> Option<f64> {
     if n == 0 {
         return Some(if neg { -0.0 } else { 0.0 });
     }
     let q = round_to(n, &mut e, sticky, 64);
+    let sign = (neg as u64) << 63;
+    if e + 63 < -1022 {
+        let shift = (-1074 - e) as u32;
+        let m = if shift >= 66 {
+            0
+        } else {
+            let drop = q & ((1u128 << shift) - 1);
+            let half = 1u128 << (shift - 1);
+            let m = q >> shift;
+            m + (drop > half || (drop == half && m & 1 == 1)) as u128
+        };
+        return Some(f64::from_bits(sign | m as u64));
+    }
     let q = round_to(q, &mut e, false, 53);
     let biased = e + 52 + 1023;
     if !(1..=2046).contains(&biased) {
         return None;
     }
-    let bits = ((neg as u64) << 63) | ((biased as u64) << 52) | ((q as u64) & ((1u64 << 52) - 1));
+    let bits = sign | ((biased as u64) << 52) | ((q as u64) & ((1u64 << 52) - 1));
     Some(f64::from_bits(bits))
 }
 
@@ -38,8 +73,13 @@ fn round_to(n: u128, e: &mut i32, sticky: bool, width: u32) -> u128 {
 fn parts(x: f64) -> Option<(bool, u128, i32)> {
     let bits = x.to_bits();
     let e = ((bits >> 52) & 0x7ff) as i32;
-    if e == 0 || e == 0x7ff {
+    if e == 0x7ff || bits << 1 == 0 {
         return None;
+    }
+    if e == 0 {
+        let m = bits & ((1u64 << 52) - 1);
+        let shift = m.leading_zeros() as i32 - 11;
+        return Some((bits >> 63 == 1, (m << shift) as u128, -1074 - shift));
     }
     Some((
         bits >> 63 == 1,
@@ -181,7 +221,19 @@ fn round64_dd(v: DD) -> DD {
 
 pub fn atan(x: f64) -> f64 {
     let a = x.abs();
-    if a == 0.0 || !a.is_finite() || parts(a).is_none() {
+
+    if a < f64::MIN_POSITIVE {
+        return x;
+    }
+    if NATIVE && a.is_finite() {
+        return native::atan_abs(a).copysign(x);
+    }
+    atan_emu(x)
+}
+
+fn atan_emu(x: f64) -> f64 {
+    let a = x.abs();
+    if !(f64::MIN_POSITIVE..=f64::MAX).contains(&a) {
         return x.atan();
     }
     let r = if a < 1.0 {
@@ -246,15 +298,15 @@ fn sqrt64(v: DD) -> DD {
     round64_dd(s)
 }
 
-fn scale(v: DD, n: i32) -> Option<DD> {
-    let (n1, n2) = (n / 2, n - n / 2);
-    let (s1, s2) = (2f64.powi(n1), 2f64.powi(n2));
-    let r = DD(v.0 * s1 * s2, v.1 * s1 * s2);
-    (r.0.abs() >= f64::MIN_POSITIVE && r.0.is_finite()).then_some(r)
+pub fn exp(x: f64) -> f64 {
+    if NATIVE && x.is_finite() {
+        return native::exp(x);
+    }
+    exp_emu(x)
 }
 
-pub fn exp(x: f64) -> f64 {
-    if x == 0.0 || !x.is_finite() || x.abs() > 710.0 {
+fn exp_emu(x: f64) -> f64 {
+    if x == 0.0 || !(-750.0..=710.0).contains(&x) {
         return x.exp();
     }
     let t = round64_dd(round64_dd(LOG2E_DD).mul_f(x));
@@ -271,9 +323,8 @@ pub fn exp(x: f64) -> f64 {
         h = round64_dd(DD::new(1.0).div(h));
     }
 
-    round_dd(h)
-        .and_then(|r| scale(DD::new(r), n as i32))
-        .map(|r| r.0)
+    dd_int(h)
+        .and_then(|(neg, m, e, sticky)| round2(neg, m, e + n as i32, sticky))
         .unwrap_or(x.exp())
 }
 
@@ -309,6 +360,13 @@ fn yl2x(x: f64, c: DD) -> f64 {
 }
 
 pub fn ln(x: f64) -> f64 {
+    if NATIVE && x > 0.0 && x.is_finite() {
+        return native::ln(x);
+    }
+    ln_emu(x)
+}
+
+fn ln_emu(x: f64) -> f64 {
     if x == 1.0 {
         return 0.0;
     }
@@ -324,6 +382,13 @@ pub fn ln(x: f64) -> f64 {
 }
 
 pub fn log10(x: f64) -> f64 {
+    if NATIVE && x > 0.0 && x.is_finite() {
+        return native::log10(x);
+    }
+    log10_emu(x)
+}
+
+fn log10_emu(x: f64) -> f64 {
     if x == 1.0 {
         return 0.0;
     }
@@ -366,6 +431,21 @@ fn sin_cos(x: f64, cos: bool) -> f64 {
     if a <= f64::from_bits(0x3E4F_FFFF_FFFF_FFFF) {
         return if cos { 1.0 } else { x };
     }
+    if NATIVE && a < TRIG_MAX {
+        return if cos {
+            native::cos_abs(a)
+        } else {
+            flip(native::sin_abs(a), x)
+        };
+    }
+    sin_cos_emu(x, cos)
+}
+
+fn sin_cos_emu(x: f64, cos: bool) -> f64 {
+    let a = x.abs();
+    if a <= f64::from_bits(0x3E4F_FFFF_FFFF_FFFF) {
+        return if cos { 1.0 } else { x };
+    }
     let (ca, cb, q) = trig_core(a);
     let a2 = round64_dd(ca.mul(ca));
     let b2 = round64_dd(cb.mul(cb));
@@ -384,6 +464,14 @@ fn sin_cos(x: f64, cos: bool) -> f64 {
     }
 }
 
+fn flip(v: f64, x: f64) -> f64 {
+    if x.is_sign_negative() {
+        -v
+    } else {
+        v
+    }
+}
+
 pub fn sin(x: f64) -> f64 {
     sin_cos(x, false)
 }
@@ -394,7 +482,15 @@ pub fn cos(x: f64) -> f64 {
 
 pub fn tan(x: f64) -> f64 {
     let a = x.abs();
-    if a == 0.0 || parts(a).is_none() {
+    if NATIVE && a < TRIG_MAX {
+        return flip(native::tan_abs(a), x);
+    }
+    tan_emu(x)
+}
+
+fn tan_emu(x: f64) -> f64 {
+    let a = x.abs();
+    if !(f64::MIN_POSITIVE..=f64::MAX).contains(&a) {
         return x.tan();
     }
     let (ca, cb, q) = trig_core(a);
@@ -491,6 +587,100 @@ mod tests {
         assert_eq!(sqrt(0.9999999999999999), 1.0);
         assert_eq!(sqrt(4.0), 2.0);
         assert_eq!(sqrt(2.0), 2f64.sqrt());
+    }
+
+    #[test]
+    fn sin_cos_of_pi() {
+        let b = |x: f64| x.to_bits();
+        assert_eq!(b(sin(std::f64::consts::PI)), 0x3CA1A80000000000);
+        assert_eq!(cos(std::f64::consts::PI), -1.0);
+    }
+
+    #[test]
+    fn subnormals_as_hardware() {
+        let b = |x: f64| x.to_bits();
+        assert_eq!(b(exp(-711.5296988064689)), 0x0000b27b4e8ea40f);
+        assert_eq!(b(exp(-710.2668257538389)), 0x000277089331d2d3);
+        assert_eq!(b(exp(-745.1)), 1);
+        assert_eq!(exp(-745.2), 0.0);
+        let x = f64::from_bits(0x000e7eeb2194d1b9);
+        assert_eq!(b(ln(x)), 0xc08623f61134afe6);
+        let x = f64::from_bits(0x000df8a14c5dac1f);
+        assert_eq!(b(sqrt(x)), 0x1ffde7080fa310a2);
+    }
+
+    #[test]
+    fn ln_fyl2x_rounding() {
+        let r = ln(174347.1506034721).to_bits();
+        if NATIVE {
+            assert!(r == 0x4028233a3d600375 || r == 0x4028233a3d600376);
+        } else {
+            assert_eq!(r, 0x4028233a3d600376);
+        }
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    fn rand_dbl(state: &mut u64, lo: i32, hi: i32) -> f64 {
+        let mut next = || {
+            *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+            let mut z = *state;
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+            z ^ (z >> 31)
+        };
+        let e = lo + (next() % ((hi - lo + 1) as u64)) as i32;
+        f64::from_bits((((e + 1023) as u64) << 52) | (next() & ((1u64 << 52) - 1)))
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn arith_is_native() {
+        let mut st = 1u64;
+        for _ in 0..200_000 {
+            let a = rand_dbl(&mut st, -60, 60);
+            let b = rand_dbl(&mut st, -60, 60);
+            let b = if st & 1 == 0 { -b } else { b };
+            assert_eq!(add(a, b).to_bits(), native::arith(b'+', a, b).to_bits());
+            assert_eq!(mul(a, b).to_bits(), native::arith(b'*', a, b).to_bits());
+            assert_eq!(div(a, b).to_bits(), native::arith(b'/', a, b).to_bits());
+            assert_eq!(sqrt(a).to_bits(), native::arith(b'q', a, 0.0).to_bits());
+        }
+    }
+
+    #[cfg(target_arch = "x86_64")]
+    #[test]
+    fn native_agrees_with_emulation() {
+        fn cw_sw() -> (u16, u16) {
+            let (mut cw, mut sw) = (0u16, 0u16);
+
+            unsafe {
+                std::arch::asm!("fnstcw word ptr [{c}]", "fnstsw word ptr [{s}]",
+                    c = in(reg) &mut cw, s = in(reg) &mut sw, options(nostack));
+            }
+            (cw, sw)
+        }
+        let before = cw_sw();
+        let mut st = 7u64;
+        let mut diff = 0u32;
+        let n = 100_000;
+        for _ in 0..n {
+            let x = rand_dbl(&mut st, -20, 20);
+            let pairs = [
+                (native::ln(x), ln_emu(x)),
+                (native::log10(x), log10_emu(x)),
+                (native::exp(x.min(700.0)), exp_emu(x.min(700.0))),
+                (native::atan_abs(x), atan_emu(x)),
+                (flip(native::sin_abs(x), x), sin_cos_emu(x, false)),
+                (native::cos_abs(x), sin_cos_emu(x, true)),
+                (native::tan_abs(x), tan_emu(x)),
+            ];
+            for (h, e) in pairs {
+                assert!((h - e).abs() <= e.abs() * 2.3e-16, "{x:e}: {h:e} vs {e:e}");
+                diff += (h != e) as u32;
+            }
+        }
+        assert!(diff < 7 * n / 1000, "{diff}");
+        assert_eq!(cw_sw(), before);
     }
 
     #[test]

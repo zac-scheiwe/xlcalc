@@ -1,3 +1,233 @@
+use super::{lazy, volatile, FnDef};
+use crate::address::CellAddr;
+use crate::eval::{EvalCtx, Operand};
+use crate::formula::Node;
+use crate::value::{Value, XlError};
+
+pub const NAME_ONLY: &[&str] = &["GET.CELL", "EVALUATE"];
+
+pub const DEFS: &[FnDef] = &[
+    volatile(lazy("GET.CELL", 1, 2, get_cell)),
+    volatile(lazy("EVALUATE", 1, 1, evaluate)),
+];
+
+fn get_cell(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
+    let tv = ctx.eval(&args[0]);
+    let tv = ctx.deref(tv);
+    let target = match args.get(1).map_or(Operand::Missing, |n| ctx.eval(n)) {
+        Operand::Missing => {
+            let s = ctx.wb.active_sheet();
+            let (r, c) = ctx.wb.active_cell_of(s);
+            CellAddr::new(s, r, c)
+        }
+        Operand::Ref(r) => match r.areas().first() {
+            Some(a) => CellAddr::new(a.sheet, a.rect.r0, a.rect.c0),
+            None => return Operand::err(XlError::VALUE),
+        },
+        Operand::Val(Value::Error(e)) => return Operand::err(e),
+        _ => return Operand::err(XlError::VALUE),
+    };
+
+    if let Value::Array(a) = &tv {
+        let data = a
+            .data
+            .iter()
+            .map(|e| get_cell_type(ctx, e, target))
+            .collect();
+        return Operand::Val(Value::Array(std::sync::Arc::new(crate::value::Array::new(
+            a.rows, a.cols, data,
+        ))));
+    }
+    Operand::Val(get_cell_type(ctx, &tv, target))
+}
+
+fn get_cell_type(ctx: &mut EvalCtx, tv: &Value, target: CellAddr) -> Value {
+    let t = match tv {
+        Value::Error(e) => return Value::Error(*e),
+        v => match ctx.to_number(v) {
+            Ok(n) => n.trunc(),
+            Err(e) => return Value::Error(e),
+        },
+    };
+    let wb = ctx.wb;
+
+    let v = if matches!(t as i64, 1..=3) {
+        Value::Blank
+    } else {
+        ctx.cell_value(target.sheet, target.row, target.col)
+    };
+    let text_of = |v: &Value| -> String {
+        match v {
+            Value::Number(n) => crate::number::format_general(*n),
+            Value::Text(s) => s.to_string(),
+            Value::Bool(b) => if *b { "TRUE" } else { "FALSE" }.into(),
+            Value::Error(e) => e.to_string(),
+            _ => String::new(),
+        }
+    };
+    match t as i64 {
+        1 if target.sheet == ctx.host.sheet => Value::from(format!(
+            "${}${}",
+            crate::address::col_to_letters(target.col),
+            target.row + 1
+        )),
+        1 => Value::from(format!(
+            "[Book1]{}!${}${}",
+            wb.sheet(target.sheet).map_or("", |s| s.name.as_str()),
+            crate::address::col_to_letters(target.col),
+            target.row + 1
+        )),
+        2 => Value::Number(f64::from(target.row) + 1.0),
+        3 => Value::Number(f64::from(target.col) + 1.0),
+        4 => Value::Number(match v {
+            Value::Text(_) => 2.0,
+            Value::Bool(_) => 4.0,
+            Value::Error(_) => 16.0,
+            _ => 1.0,
+        }),
+        5 => match v {
+            Value::Blank => Value::Number(0.0),
+            v => v,
+        },
+        6 | 41 => Value::from(match wb.formula_text(target) {
+            Some(f) => f,
+            None => text_of(&v),
+        }),
+        7 => Value::from(wb.number_format(target)),
+        48 => Value::Bool(wb.formula_text(target).is_some()),
+
+        49 => Value::Bool(wb.array_at(target).is_some()),
+        53 => Value::from(wb.display_text(target)),
+        52 => Value::from(match (&v, wb.apostrophe.get(&target)) {
+            (Value::Text(t), Some(a)) if a == t => "'",
+            _ => "",
+        }),
+
+        16 => Value::Array(std::sync::Arc::new(crate::value::Array::new(
+            1,
+            2,
+            vec![
+                Value::Number(wb.column_width(target.sheet, target.col)),
+                Value::Bool(wb.cell_width(target.sheet, target.col).1),
+            ],
+        ))),
+        17 => Value::Number(wb.row_height(target.sheet, target.row)),
+        k => match appearance(wb, target, k) {
+            Some(v) => v,
+
+            None if (1..=66).contains(&k) => Value::Error(XlError::NA),
+            None => Value::Error(XlError::VALUE),
+        },
+    }
+}
+
+fn appearance(wb: &crate::workbook::Workbook, at: CellAddr, t: i64) -> Option<Value> {
+    use crate::style::{CellColor, Edge, Pattern, Underline};
+    let s = wb.cell_style(at);
+    let theme = &wb.style_table().theme;
+
+    let index = |c: CellColor| match c {
+        CellColor::Auto => 0.0,
+        c => f64::from(crate::style::nearest_color_index(theme.rgb(c, 0))),
+    };
+    let num = |n: f64| Some(Value::Number(n));
+
+    let line = |e: Edge| num(f64::from(s.borders.edge(e).line as u8));
+    let font = &s.font;
+    let solid = s.fill.pattern == Pattern::Solid;
+    match t {
+        8 => num(f64::from(s.alignment.horizontal as u8) + 1.0),
+        9 => line(Edge::Left),
+        10 => line(Edge::Right),
+        11 => line(Edge::Top),
+        12 => line(Edge::Bottom),
+        13 => num(f64::from(s.fill.pattern as u8)),
+        14 => Some(Value::Bool(s.locked)),
+        15 => Some(Value::Bool(s.formula_hidden)),
+        18 => Some(Value::from(font.name.to_string())),
+        19 => num(f64::from(font.size_twips) / 20.0),
+        20 => Some(Value::Bool(font.bold)),
+        21 => Some(Value::Bool(font.italic)),
+        22 => Some(Value::Bool(font.underline == Underline::Single)),
+        23 => Some(Value::Bool(font.strikethrough)),
+        24 => num(index(font.color)),
+
+        25 | 26 => Some(Value::Bool(false)),
+
+        27 => num(0.0),
+        28 => num(f64::from(wb.row_level(at.sheet, at.row))),
+        29 => num(1.0),
+        30 => Some(Value::Bool(
+            at.row > 0 && wb.row_level(at.sheet, at.row - 1) > wb.row_level(at.sheet, at.row),
+        )),
+        31 => Some(Value::Bool(false)),
+        33 => Some(Value::Bool(s.alignment.wrap)),
+        34..=37 => num(0.0),
+        38 => num(index(if solid {
+            s.fill.color
+        } else {
+            s.fill.pattern_color
+        })),
+        39 => num(if solid { 0.0 } else { index(s.fill.color) }),
+        40 => Some(Value::from(s.named.to_string())),
+        50 => num(f64::from(s.alignment.vertical as u8) + 1.0),
+        51 => num(match s.alignment.rotation {
+            0 => 0.0,
+            255 => 1.0,
+            90 => 2.0,
+            180 => 3.0,
+            _ => 4.0,
+        }),
+        57 => Some(Value::Bool(font.superscript)),
+        58 => Some(Value::from(
+            match (font.bold, font.italic) {
+                (false, false) => "Regular",
+                (true, false) => "Bold",
+                (false, true) => "Italic",
+                (true, true) => "Bold Italic",
+            }
+            .to_string(),
+        )),
+        59 => num(f64::from(font.underline as u8) + 1.0),
+        60 => Some(Value::Bool(font.subscript)),
+        63 if s.fill.pattern == Pattern::None => num(0.0),
+        63 => num(index(s.fill.color)),
+        64 => num(index(s.fill.pattern_color)),
+        _ => None,
+    }
+}
+
+fn evaluate(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
+    let v = ctx.eval(&args[0]);
+    let v = ctx.deref(v);
+    let text = match v {
+        Value::Text(t) => t,
+        Value::Blank => return Operand::err(XlError::VALUE),
+        Value::Array(_) => return Operand::err(XlError::VALUE),
+        other => return Operand::Val(other),
+    };
+    let host = ctx.host;
+
+    let wb = ctx.wb;
+    let exists = |name: &str| wb.sheet_by_name(name).is_some();
+
+    if crate::parser::reads_as_r1c1(text.trim()) {
+        return Operand::err(XlError::VALUE);
+    }
+    let Ok(ast) = crate::parser::parse_with(&text, &exists) else {
+        return Operand::err(XlError::VALUE);
+    };
+    let Ok((f, _)) = wb.compile_expr_normalized(&ast, host) else {
+        return Operand::err(XlError::VALUE);
+    };
+    let env = std::mem::take(&mut ctx.env);
+    let was = std::mem::replace(&mut ctx.in_evaluate, true);
+    let out = ctx.eval(&f.root);
+    ctx.in_evaluate = was;
+    ctx.env = env;
+    out
+}
+
 pub const XLM_ONLY: &[&str] = &[
     "CALL",
     "ANCHORARRAY",

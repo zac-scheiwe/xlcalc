@@ -1,3 +1,4 @@
+use super::{notice, Command, Notice};
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId};
@@ -5,7 +6,9 @@ use crate::calc::RecalcReport;
 use crate::formula::{self, Formula, Node, SheetRef};
 use crate::formula_print::print_node;
 use crate::text;
-use crate::workbook::{tables::Table, EditError, Entry, FormulaId, NameDef, Sheet, Workbook};
+use crate::workbook::{
+    tables::Table, EditError, Entry, FormulaId, NameDef, Sheet, SheetState, Workbook,
+};
 
 const DEAD: SheetId = SheetId(0);
 
@@ -239,6 +242,13 @@ impl Workbook {
     }
 
     pub fn rename_sheet(&mut self, id: SheetId, new: &str) -> Result<RecalcReport, EditError> {
+        self.command(Command::RenameSheet, |wb| {
+            wb.note_sheet(Notice::SheetMoved(id));
+            wb.rename_sheet_run(id, new)
+        })
+    }
+
+    fn rename_sheet_run(&mut self, id: SheetId, new: &str) -> Result<RecalcReport, EditError> {
         let pos = self.sheet_position(id).ok_or(EditError::NoSuchSheet)?;
 
         let new = new.split(' ').next().unwrap_or("");
@@ -264,6 +274,14 @@ impl Workbook {
         Ok(self.after_edit(vec![]))
     }
 
+    fn dirty_all(&mut self, ids: &[FormulaId]) {
+        for &fid in ids {
+            if self.formulas.get(fid as usize).is_some_and(|f| f.is_some()) {
+                crate::calc::mark_dirty(self, fid);
+            }
+        }
+    }
+
     fn release_stale_copies(&mut self) {
         for fid in std::mem::take(&mut self.calc.stale_copy) {
             if self.formulas.get(fid as usize).is_some_and(|f| f.is_some()) {
@@ -273,6 +291,13 @@ impl Workbook {
     }
 
     pub fn delete_sheet(&mut self, id: SheetId) -> Result<RecalcReport, EditError> {
+        self.command(Command::DeleteSheet, |wb| {
+            notice::note_deleting(wb, id);
+            wb.delete_sheet_run(id)
+        })
+    }
+
+    fn delete_sheet_run(&mut self, id: SheetId) -> Result<RecalcReport, EditError> {
         self.release_stale_copies();
         let pos = self.sheet_position(id).ok_or(EditError::NoSuchSheet)?;
         if self.sheets.len() <= 1 {
@@ -280,10 +305,21 @@ impl Workbook {
                 "a workbook must contain at least one visible worksheet".into(),
             ));
         }
-        if self.session.active == id {
-            let next = self
+        if self.sheets[pos].state == SheetState::Visible
+            && self
                 .sheets
-                .get(pos + 1)
+                .iter()
+                .all(|s| s.id == id || s.state != SheetState::Visible)
+        {
+            return Err(EditError::NoVisibleSheet);
+        }
+        if self.session.active == id {
+            let shown = |s: &&Sheet| s.state == SheetState::Visible;
+            let next = self.sheets[pos + 1..]
+                .iter()
+                .find(shown)
+                .or_else(|| self.sheets[..pos].iter().rev().find(shown))
+                .or_else(|| self.sheets.get(pos + 1))
                 .or_else(|| self.sheets.get(pos.wrapping_sub(1)));
             if let Some(s) = next {
                 self.session.active = s.id;
@@ -327,6 +363,7 @@ impl Workbook {
         };
         self.tables.retain(|t| t.sheet != id);
         self.drop_sheet_data_tables(id);
+        self.drop_sheet_scenarios(id);
         let scoped: Vec<String> = self
             .names
             .iter()
@@ -337,11 +374,13 @@ impl Workbook {
             self.names.remove(&key, Some(id));
         }
         self.sheets.remove(pos);
+        self.track_drop_sheet(id);
         if self.calc.circular_ref.is_some_and(|a| a.sheet == id) {
             self.calc.circular_ref = None;
         }
         self.apply_plan(plan);
         self.reprint_names();
+        self.calc.chain_by_birth = true;
         Ok(self.relink_and_recalc())
     }
 
@@ -350,12 +389,24 @@ impl Workbook {
         id: SheetId,
         before: Option<SheetId>,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::MoveSheet, |wb| {
+            wb.note_sheet(Notice::SheetMoved(id));
+            wb.move_sheet_run(id, before)
+        })
+    }
+
+    fn move_sheet_run(
+        &mut self,
+        id: SheetId,
+        before: Option<SheetId>,
+    ) -> Result<RecalcReport, EditError> {
         let from = self.sheet_position(id).ok_or(EditError::NoSuchSheet)?;
         self.session.active = id;
 
         let next = self.sheets.get(from + 1).map(|s| s.id);
+
         if before == Some(id) || before == next {
-            return Ok(RecalcReport::default());
+            return Ok(self.recalc_point());
         }
         self.release_stale_copies();
         let old = self.positions();
@@ -371,6 +422,31 @@ impl Workbook {
         new.insert(to, id);
         let mut cross = |sr: &SheetRef| span_after_move(sr, &old, &new, id);
         let plan = self.rewrite_all(&mut |n| remap_sheet(n, &mut cross));
+
+        let mut listed: rustc_hash::FxHashSet<FormulaId> =
+            plan.formulas.iter().map(|(f, ..)| *f).collect();
+        let ids: Vec<FormulaId> = self.formula_ids().collect();
+        let by_position = ["SHEET", "SHEETS"].map(crate::functions::lookup);
+        for f in ids {
+            let mut span = false;
+            crate::structure::map_refs(&self.formula(f).formula.root, &mut |sr, _| {
+                span |= matches!(sr, SheetRef::Span(..));
+                None
+            });
+
+            crate::formula::walk(&self.formula(f).formula.root, &mut |n| {
+                span |= matches!(n, crate::formula::Node::Func { id, .. } if by_position.contains(&Some(*id)));
+            });
+
+            let c = self.formula(f);
+            let named = c.precedents.iter().any(|p| {
+                matches!(p, crate::graph::Prec::Name(k) if self.names.lookup(k, c.addr.sheet).is_some())
+            });
+            if span || named {
+                listed.insert(f);
+            }
+        }
+        let snapshot = self.formula_snapshot();
         let sheet = self.sheets.remove(from);
         let to = match before {
             Some(b) => self
@@ -382,6 +458,12 @@ impl Workbook {
         };
         self.sheets.insert(to, sheet);
         self.apply_plan(plan);
+        self.calc.relink_scope = Some(crate::structure::DirtyScope {
+            listed: true,
+            moved: listed,
+            ..crate::structure::DirtyScope::new(id, snapshot)
+        });
+        self.calc.chain_by_birth = true;
         Ok(self.relink_and_recalc())
     }
 
@@ -437,13 +519,47 @@ impl Workbook {
     }
 
     pub(crate) fn copy_table_name(&self, base: &str) -> String {
+        let up = base.to_ascii_uppercase();
+        let reserved = {
+            let t = up.trim_end_matches('_');
+            matches!(t, "R" | "C" | "RC")
+        };
+        let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+        let r1c1 = {
+            let (r, rest) = match up.strip_prefix('R') {
+                Some(rest) => {
+                    let k = rest
+                        .find(|c: char| !c.is_ascii_digit())
+                        .unwrap_or(rest.len());
+                    (Some(rest[..k].to_string()), &rest[k..])
+                }
+                None => (None, up.as_str()),
+            };
+            let (c, tail) = match rest.strip_prefix('C') {
+                Some(rest) => {
+                    let k = rest
+                        .find(|c: char| !c.is_ascii_digit())
+                        .unwrap_or(rest.len());
+                    (Some(rest[..k].to_string()), &rest[k..])
+                }
+                None => (None, rest),
+            };
+            tail.is_empty()
+                && (r.is_some() || c.is_some())
+                && (r.as_deref().is_some_and(digits) || c.as_deref().is_some_and(digits))
+        };
+        let cell = !r1c1 && crate::address::parse_a1_cell(base).is_some();
+        let stem = if r1c1 {
+            format!("_{base}")
+        } else if reserved || cell {
+            format!("{base}_")
+        } else {
+            base.to_string()
+        };
+        let sep = if stem.chars().count() < 4 { "_" } else { "" };
         let mut n = self.tables_made + 2;
         loop {
-            let name = if base.ends_with(|c: char| c.is_ascii_digit()) {
-                format!("{base}{n}")
-            } else {
-                format!("{base}_{n}")
-            };
+            let name = format!("{stem}{sep}{n}");
             if self.table_by_name(&name).is_none() {
                 return name;
             }
@@ -452,6 +568,14 @@ impl Workbook {
     }
 
     pub fn copy_sheet(
+        &mut self,
+        src: SheetId,
+        before: Option<SheetId>,
+    ) -> Result<SheetId, EditError> {
+        self.command(Command::CopySheet, |wb| wb.copy_sheet_run(src, before))
+    }
+
+    fn copy_sheet_run(
         &mut self,
         src: SheetId,
         before: Option<SheetId>,
@@ -467,7 +591,7 @@ impl Workbook {
         let new = SheetId(self.next_sheet);
         self.next_sheet += 1;
         self.session.active = new;
-        if let Some(&sel) = self.session.selection.get(&src) {
+        if let Some(sel) = self.session.selection.get(&src).cloned() {
             self.session.selection.insert(new, sel);
         }
 
@@ -483,6 +607,7 @@ impl Workbook {
             let nn = self.copy_table_name(&t.name);
             table_names.push((t.name.clone(), nn.clone()));
             let mut copy = t.clone();
+            copy.rename_in_snapshots(&t.name, &nn);
             copy.name = nn;
             copy.sheet = new;
             self.tables_made += 1;
@@ -490,6 +615,7 @@ impl Workbook {
         }
 
         self.copy_sheet_data_tables(src, new);
+        self.copy_sheet_scenarios(src, new);
         let mut redirect = |sr: &SheetRef| match sr {
             SheetRef::Sheet(s) if *s == src => Some(SheetRef::Sheet(new)),
             SheetRef::Span(a, b) if *a == src || *b == src => Some(SheetRef::Sheet(DEAD)),
@@ -515,6 +641,8 @@ impl Workbook {
             Sheet {
                 id: new,
                 name,
+                state: SheetState::Visible,
+                kind: Default::default(),
                 cells: Default::default(),
                 spills: Default::default(),
                 dirty: Default::default(),
@@ -762,6 +890,7 @@ impl Workbook {
                 formula::map_node(&def.formula.root, &mut for_copy)
             };
 
+            let mut stale: Vec<crate::value::Text> = Vec::new();
             let root = if as_is.contains(&k) {
                 root
             } else {
@@ -772,6 +901,9 @@ impl Workbook {
                         sheet: None,
                     } => {
                         let sheet = if gets_copy(key) {
+                            if copied_globals.contains(key) && !stale.contains(key) {
+                                stale.push(key.clone());
+                            }
                             SheetRef::Sheet(new)
                         } else if self.names.get(key, None).is_some() && !known.contains(key) {
                             SheetRef::Sheet(DEAD)
@@ -797,6 +929,7 @@ impl Workbook {
                     volatile: def.formula.volatile,
                 }),
             });
+            self.names.mark_copy_stale(new, k, stale);
         }
 
         self.names.rebind(new);
@@ -842,7 +975,46 @@ impl Workbook {
                 c.text = text;
             }
         }
-        self.relink_and_recalc();
+
+        let auto = self.settings.mode == crate::CalcMode::Automatic;
+        let copied: Vec<FormulaId> = self
+            .formula_ids()
+            .filter(|&f| self.formula(f).addr.sheet == new)
+            .collect();
+        if auto {
+            let cycles: rustc_hash::FxHashSet<(u32, u32)> = self
+                .calc
+                .circular
+                .iter()
+                .map(|&f| self.formula(f).addr)
+                .filter(|a| a.sheet == src)
+                .map(|a| (a.row, a.col))
+                .collect();
+            self.calc.relink_scope = Some(crate::structure::DirtyScope {
+                except: true,
+                moved: copied
+                    .iter()
+                    .copied()
+                    .filter(|&f| {
+                        let a = self.formula(f).addr;
+                        cycles.contains(&(a.row, a.col))
+                    })
+                    .collect(),
+                ..crate::structure::DirtyScope::new(new, Default::default())
+            });
+        }
+        self.calc.chain_by_birth = true;
+        self.silently(|wb| {
+            wb.relink_and_recalc();
+            if has_tables && auto {
+                wb.dirty_all(&copied);
+                wb.notify_cell_change(new);
+            }
+        });
+        if auto {
+            self.dirty_all(&copied);
+        }
+        self.recalc_point();
         for (from, to) in stale {
             if let (Some(a), Some(b)) = (self.formula_at(from), self.formula_at(to)) {
                 let v = self.formula(a).value.clone();

@@ -1,26 +1,21 @@
 use super::desc::pairs;
-use super::dist::{chisq_upper, f_upper, t_2t, t_inv_two_tailed};
+use super::dist::{chisq_upper, t_inv_two_tailed};
 use super::special::norm_cdf;
 use super::*;
 use crate::x87;
 
 fn sample_var(v: &[f64]) -> (f64, f64) {
-    let m = mean(v);
-    let mut ss = 0.0;
-    for &x in v {
-        ss += (x - m) * (x - m);
-    }
-    (m, ss / (v.len() as f64 - 1.0))
-}
-
-fn xl_sample_var(v: &[f64]) -> f64 {
     let sum = v.iter().fold(0.0, |s, &x| x87::add(s, x));
     let m = x87::div(sum, v.len() as f64);
     let ss = v.iter().fold(0.0, |s, &x| {
         let d = x87::sub(x, m);
         x87::add(s, x87::mul(d, d))
     });
-    x87::div(ss, v.len() as f64 - 1.0)
+    (m, x87::div(ss, v.len() as f64 - 1.0))
+}
+
+fn xl_sample_var(v: &[f64]) -> f64 {
+    sample_var(v).1
 }
 
 pub fn confidence_norm(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -138,30 +133,39 @@ pub fn t_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
             }
             let (m1, v1) = sample_var(&x);
             let (m2, v2) = sample_var(&y);
+
             if kind == 2.0 {
                 let df = n1 + n2 - 2.0;
-                let sp2 = ((n1 - 1.0) * v1 + (n2 - 1.0) * v2) / df;
-                let se = (sp2 * (1.0 / n1 + 1.0 / n2)).sqrt();
+                let ss = x87::add(x87::mul(n1 - 1.0, v1), x87::mul(n2 - 1.0, v2));
+                let sp2 = x87::div(ss, df);
+                let inv = x87::add(x87::div(1.0, n1), x87::div(1.0, n2));
+                let se = x87::sqrt(x87::mul(sp2, inv));
                 if se == 0.0 {
                     return Err(XlError::DIV0);
                 }
-                ((m1 - m2) / se, df)
+                (x87::div(x87::sub(m1, m2), se), df)
             } else {
-                let a = v1 / n1;
-                let b = v2 / n2;
-                if a + b == 0.0 {
+                let a = x87::div(v1, n1);
+                let b = x87::div(v2, n2);
+                let s = x87::add(a, b);
+                if s == 0.0 {
                     return Err(XlError::DIV0);
                 }
-                let df = (a + b) * (a + b) / (a * a / (n1 - 1.0) + b * b / (n2 - 1.0));
-                ((m1 - m2) / (a + b).sqrt(), df)
+                let den = x87::add(
+                    x87::div(x87::mul(a, a), n1 - 1.0),
+                    x87::div(x87::mul(b, b), n2 - 1.0),
+                );
+                let df = x87::div(x87::mul(s, s), den);
+                (x87::div(x87::sub(m1, m2), x87::sqrt(s)), df)
             }
         };
 
         let t2 = x87::mul(t, t);
         let bx = x87::div(df, x87::add(t2, df));
-        let p = match super::ibeta::xl_ibeta(bx, x87::add(1.0, -bx), x87::div(df, 2.0), 0.5) {
-            Some((w, _)) if t != 0.0 => w,
-            _ => t_2t(t.abs(), df),
+        let p = if t == 0.0 {
+            1.0
+        } else {
+            super::ibeta::xl_ibeta(bx, x87::add(1.0, -bx), x87::div(df, 2.0), 0.5).0
         };
         Ok(if tails == 2.0 { p } else { x87::div(p, 2.0) })
     })())
@@ -190,10 +194,7 @@ pub fn f_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         let t = x87::mul(dn, f);
         let s = x87::add(t, dd);
         let (bx, by) = (x87::div(dd, s), x87::div(t, s));
-        let w = match super::ibeta::xl_ibeta(bx, by, x87::div(dd, 2.0), x87::div(dn, 2.0)) {
-            Some((w, _)) => w,
-            None => f_upper(f, dn, dd),
-        };
+        let w = super::ibeta::xl_ibeta(bx, by, x87::div(dd, 2.0), x87::div(dn, 2.0)).0;
         let p = x87::mul(w, 2.0);
         Ok(if p > 1.0 { x87::sub(2.0, p) } else { p })
     })())
@@ -222,7 +223,9 @@ pub fn chisq_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
                 if *e == 0.0 {
                     return Err(XlError::DIV0);
                 }
-                chi += (a - e) * (a - e) / e;
+
+                let d = x87::sub(*a, *e);
+                chi = x87::add(chi, x87::div(x87::mul(d, d), *e));
             }
         }
         let df = if rows > 1 && cols > 1 {

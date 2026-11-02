@@ -1,26 +1,33 @@
-use std::sync::Arc;
-
 use rustc_hash::FxHashMap;
 
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
+use crate::cellfmt::Sty;
 use crate::workbook::Workbook;
 
-type Line = (u64, Arc<str>);
+type Line = (u64, Sty);
 
 const CELL_LIMIT: u64 = 1 << 20;
 
 impl Workbook {
-    fn fmt_at(&self, a: CellAddr) -> Option<Arc<str>> {
+    fn fmt_at(&self, a: CellAddr) -> Option<Sty> {
         self.cellfmt.get(a).cloned()
+    }
+
+    fn put_style(&mut self, a: CellAddr, f: Option<Sty>) {
+        let s = match f {
+            Some(f) => (*f).clone(),
+            None => (**self.cellfmt.base()).clone(),
+        };
+        self.store_style(a, s);
     }
 
     pub(crate) fn fmt_copy_pairs(&mut self, pairs: &[(CellAddr, CellAddr)]) {
         if !self.cellfmt.any() {
             return;
         }
-        let snap: Vec<Option<Arc<str>>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
+        let snap: Vec<Option<Sty>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
         for ((_, to), f) in pairs.iter().zip(snap) {
-            self.store_format(*to, f.as_deref().unwrap_or("General"));
+            self.put_style(*to, f);
         }
     }
 
@@ -28,15 +35,39 @@ impl Workbook {
         if !self.cellfmt.any() {
             return;
         }
-        let snap: Vec<Option<Arc<str>>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
+        let snap: Vec<Option<Sty>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
+        self.fmt_put_pairs(pairs, snap);
+    }
+
+    pub(crate) fn fmt_sort_pairs(&mut self, pairs: &[(CellAddr, CellAddr)]) {
+        if !self.cellfmt.any() {
+            return;
+        }
+        let snap: Vec<Option<Sty>> = pairs
+            .iter()
+            .map(|(f, t)| {
+                let src = self.cellfmt.style(*f);
+                let kept = &self.cellfmt.style(*t).borders;
+                if src.borders == *kept {
+                    return self.fmt_at(*f);
+                }
+                let mut s = (**src).clone();
+                s.borders = kept.clone();
+                Some(self.cellfmt.intern(s))
+            })
+            .collect();
+        self.fmt_put_pairs(pairs, snap);
+    }
+
+    fn fmt_put_pairs(&mut self, pairs: &[(CellAddr, CellAddr)], snap: Vec<Option<Sty>>) {
         for ((_, to), f) in pairs.iter().zip(snap) {
             let key = (to.sheet, to.row, to.col);
             let line = self.cellfmt.line(*to).cloned();
             match f {
-                Some(f) if line.as_deref() != Some(&*f) && !f.eq_ignore_ascii_case("general") => {
+                Some(f) if line.as_deref() != Some(&*f) && *f != **self.cellfmt.base() => {
                     self.cellfmt.map.insert(key, f);
                 }
-                f => self.store_format(*to, f.as_deref().unwrap_or("General")),
+                f => self.put_style(*to, f),
             }
         }
     }
@@ -67,12 +98,12 @@ impl Workbook {
                 ));
             }
         }
-        let snap: Vec<Option<Arc<str>>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
+        let snap: Vec<Option<Sty>> = pairs.iter().map(|(f, _)| self.fmt_at(*f)).collect();
         for (f, _) in &pairs {
             self.cellfmt.map.remove(&(f.sheet, f.row, f.col));
         }
         for ((_, to), f) in pairs.iter().zip(snap) {
-            self.store_format(*to, f.as_deref().unwrap_or("General"));
+            self.put_style(*to, f);
         }
     }
 
@@ -128,7 +159,7 @@ impl Workbook {
         let snap_lines: Vec<Option<Line>> =
             (0..n).map(|i| lines.get(&(ss, a0 + i)).cloned()).collect();
         let key = |k: &(SheetId, u32, u32)| if cols { k.2 } else { k.1 };
-        let snap_cells: Vec<((SheetId, u32, u32), Arc<str>)> = f
+        let snap_cells: Vec<((SheetId, u32, u32), Sty)> = f
             .map
             .iter()
             .filter(|(k, _)| k.0 == ss && (a0..=a1).contains(&key(k)))
@@ -255,9 +286,14 @@ impl Workbook {
                         .filter(|(k, _)| k.0 == sheet && along(k) == at - 1)
                         .map(|(k, v)| (*k, v.clone()))
                         .collect();
+                    let above: Vec<_> = above
+                        .into_iter()
+                        .map(|(k, v)| (k, f.borderless(v)))
+                        .collect();
                     let line = (if rows { &f.rows } else { &f.cols })
                         .get(&(sheet, at - 1))
-                        .cloned();
+                        .cloned()
+                        .map(|(seq, v)| (seq, f.borderless(v)));
                     for j in 0..count.min(max - at) {
                         for (k, v) in &above {
                             f.map.insert(place(k, at + j), v.clone());
@@ -319,17 +355,18 @@ impl Workbook {
             (last.max(at) + count).min(max - 1)
         };
 
-        let mut snap: FxHashMap<(u32, u32), Option<Arc<str>>> = FxHashMap::default();
+        let mut snap: FxHashMap<(u32, u32), Option<Sty>> = FxHashMap::default();
         for i in at..=end {
             for x in l0..=l1 {
                 snap.insert((i, x), self.fmt_at(cell(i, x)));
             }
         }
-        let above: Vec<Option<Arc<str>>> = (l0..=l1)
+        let above: Vec<Option<Sty>> = (l0..=l1)
             .map(|x| {
                 (insert && at > 0)
                     .then(|| self.fmt_at(cell(at - 1, x)))
                     .flatten()
+                    .map(|v| self.cellfmt.borderless(v))
             })
             .collect();
 
@@ -355,14 +392,14 @@ impl Workbook {
             let Some(t) = target else { continue };
             for x in l0..=l1 {
                 let f = snap[&(i, x)].clone();
-                self.store_format(cell(t, x), f.as_deref().unwrap_or("General"));
+                self.put_style(cell(t, x), f);
             }
         }
         if insert {
             for j in 0..count.min(max - at) {
                 for (k, x) in (l0..=l1).enumerate() {
                     let f = above[k].clone();
-                    self.store_format(cell(at + j, x), f.as_deref().unwrap_or("General"));
+                    self.put_style(cell(at + j, x), f);
                 }
             }
         }

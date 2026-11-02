@@ -4,7 +4,6 @@ mod cash;
 mod days;
 mod dep;
 mod tvm;
-mod xmath;
 
 use super::{args, scalar, FnDef, MANY};
 use crate::eval::{EvalCtx, Operand};

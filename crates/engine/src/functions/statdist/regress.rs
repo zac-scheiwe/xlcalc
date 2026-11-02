@@ -118,10 +118,36 @@ struct Fit {
 
 const COLLINEAR_EPS: f64 = 4.547473508864641e-13;
 
+mod mp {
+    use crate::x87;
+    fn z(v: f64) -> f64 {
+        if v.is_finite() {
+            v
+        } else {
+            0.0
+        }
+    }
+    pub fn add(a: f64, b: f64) -> f64 {
+        z(x87::add(a, b))
+    }
+    pub fn sub(a: f64, b: f64) -> f64 {
+        z(x87::sub(a, b))
+    }
+    pub fn mul(a: f64, b: f64) -> f64 {
+        z(x87::mul(a, b))
+    }
+    pub fn div(a: f64, b: f64) -> f64 {
+        if b.abs() < f64::MIN_POSITIVE {
+            return 0.0;
+        }
+        z(x87::div(a, b))
+    }
+}
+
 fn dot87(a: &[f64], b: &[f64]) -> f64 {
     let mut s = 0.0;
     for (&x, &y) in a.iter().zip(b) {
-        s = x87::add(s, x87::mul(x, y));
+        s = mp::add(s, mp::mul(x, y));
     }
     s
 }
@@ -133,9 +159,9 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
     let mean = |v: &[f64]| {
         let mut s = 0.0;
         for &t in v {
-            s = x87::add(s, t);
+            s = mp::add(s, t);
         }
-        x87::div(s, nf)
+        mp::div(s, nf)
     };
     let xbar: Vec<f64> = d.x.iter().map(|c| mean(c)).collect();
     let ybar = mean(&d.y);
@@ -145,7 +171,7 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
             .zip(&xbar)
             .map(|(c, &m)| {
                 let m = if constant { m } else { 0.0 };
-                c.iter().map(|&t| x87::sub(t, m)).collect()
+                c.iter().map(|&t| mp::sub(t, m)).collect()
             })
             .collect();
     let mut orig: Vec<f64> = cols.iter().map(|c| dot87(c, c)).collect();
@@ -154,7 +180,7 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         orig.push(nf);
     }
     let yc = if constant { ybar } else { 0.0 };
-    let mut qty: Vec<f64> = d.y.iter().map(|&t| x87::sub(t, yc)).collect();
+    let mut qty: Vec<f64> = d.y.iter().map(|&t| mp::sub(t, yc)).collect();
     let ss_total = dot87(&qty, &qty);
     let mut down = orig.clone();
 
@@ -169,12 +195,12 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         } else {
             let mut best = kk;
             for p in kk + 1..ncols {
-                if x87::sub(down[perm[p]], down[perm[best]]) > 0.0 {
+                if mp::sub(down[perm[p]], down[perm[best]]) > 0.0 {
                     best = p;
                 }
             }
             let j = perm[best];
-            if down[j] < x87::mul(orig[j], COLLINEAR_EPS) {
+            if down[j] < mp::mul(orig[j], COLLINEAR_EPS) {
                 break;
             }
             best
@@ -187,24 +213,28 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         let norm = x87::sqrt(sk);
         let a = piv[kk];
         let rest: Vec<usize> = perm[kk + 1..].to_vec();
+        let vk = if a > 0.0 {
+            mp::add(a, norm)
+        } else {
+            mp::sub(a, norm)
+        };
+        let vtv = mp::add(mp::mul(vk, vk), sk1);
+
+        if vtv < mp::mul(COLLINEAR_EPS, orig[pj]) {
+            break;
+        }
         if norm == 0.0 {
             rdiag.push(0.0);
         } else {
-            let vk = if a > 0.0 {
-                x87::add(a, norm)
-            } else {
-                x87::sub(a, norm)
-            };
             rdiag.push(if a > 0.0 { -norm } else { norm });
-            let vtv = x87::add(x87::mul(vk, vk), sk1);
             let v: Vec<f64> = std::iter::once(vk)
                 .chain(piv[kk + 1..].iter().copied())
                 .collect();
             let reflect = |c: &mut [f64]| {
                 let s = dot87(&v, &c[kk..]);
-                let f = x87::div(x87::mul(2.0, s), vtv);
+                let f = mp::div(mp::mul(2.0, s), vtv);
                 for (t, &vi) in c[kk..].iter_mut().zip(&v) {
-                    *t = x87::sub(*t, x87::mul(f, vi));
+                    *t = mp::sub(*t, mp::mul(f, vi));
                 }
             };
             for &j in &rest {
@@ -214,7 +244,7 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         }
         for &j in &rest {
             let r = cols[j][kk];
-            down[j] = x87::sub(down[j], x87::mul(r, r));
+            down[j] = mp::sub(down[j], mp::mul(r, r));
         }
         steps += 1;
     }
@@ -232,13 +262,13 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
     for i in (0..r).rev() {
         let mut s = 0.0;
         for jj in (i + 1..r).rev() {
-            s = x87::add(s, x87::mul(rr(i, jj), beta[jj]));
+            s = mp::add(s, mp::mul(rr(i, jj), beta[jj]));
         }
-        let t = x87::sub(qty[i], s);
+        let t = mp::sub(qty[i], s);
         beta[i] = if rdiag[i] == 0.0 {
             0.0
         } else {
-            x87::div(t, rdiag[i])
+            mp::div(t, rdiag[i])
         };
     }
 
@@ -250,18 +280,14 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
     }
     let mut ss_resid = 0.0;
     for &t in &qty[r.min(n)..] {
-        ss_resid = x87::add(ss_resid, x87::mul(t, t));
+        ss_resid = mp::add(ss_resid, mp::mul(t, t));
     }
-    let ss_reg = x87::sub(ss_total, ss_resid);
+    let ss_reg = mp::sub(ss_total, ss_resid);
     let p = r;
     let off = usize::from(constant);
     let df = nf - p as f64;
     let df_reg = (p - off.min(p)) as f64;
-    let ms_resid = if df > 0.0 {
-        x87::div(ss_resid, df)
-    } else {
-        0.0
-    };
+    let ms_resid = if df > 0.0 { mp::div(ss_resid, df) } else { 0.0 };
 
     let mut rinv = vec![vec![0.0; r]; r];
     for i in (0..r).rev() {
@@ -269,12 +295,12 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         for (c, cell) in head[i].iter_mut().enumerate() {
             let mut s = if i == c { 1.0 } else { 0.0 };
             for (off, row) in below.iter().enumerate() {
-                s = x87::sub(s, x87::mul(rr(i, i + 1 + off), row[c]));
+                s = mp::sub(s, mp::mul(rr(i, i + 1 + off), row[c]));
             }
             *cell = if rdiag[i] == 0.0 {
                 0.0
             } else {
-                x87::div(s, rdiag[i])
+                mp::div(s, rdiag[i])
             };
         }
     }
@@ -284,9 +310,9 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
         }
         let mut s = 0.0;
         for (&p, &q) in rinv[a].iter().zip(&rinv[b]) {
-            s = x87::add(s, x87::mul(p, q));
+            s = mp::add(s, mp::mul(p, q));
         }
-        x87::div(x87::mul(s, ss_resid), df)
+        mp::div(mp::mul(s, ss_resid), df)
     };
     let cov_cols = |a: usize, b: usize| match (at[a], at[b]) {
         (Some(i), Some(j)) => cov(i, j),
@@ -296,21 +322,21 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
     let (b, se_b) = if constant {
         let mut b = ybar;
         for j in 0..k {
-            b = x87::sub(b, x87::mul(xbar[j], coef[j]));
+            b = mp::sub(b, mp::mul(xbar[j], coef[j]));
         }
         let o = k;
         let mut v = cov_cols(o, o);
         for (j, &xj) in xbar.iter().enumerate().take(k) {
-            v = x87::add(v, x87::mul(x87::mul(xj, xj), cov_cols(j, j)));
+            v = mp::add(v, mp::mul(mp::mul(xj, xj), cov_cols(j, j)));
         }
         for j in 0..k {
             for l in j + 1..k {
-                let t = x87::mul(x87::mul(2.0 * xbar[j], xbar[l]), cov_cols(j, l));
-                v = x87::add(v, t);
+                let t = mp::mul(mp::mul(2.0 * xbar[j], xbar[l]), cov_cols(j, l));
+                v = mp::add(v, t);
             }
         }
         for (j, &xj) in xbar.iter().enumerate().take(k) {
-            v = x87::add(v, x87::mul(-2.0 * xj, cov_cols(o, j)));
+            v = mp::add(v, mp::mul(-2.0 * xj, cov_cols(o, j)));
         }
         (b, Some(x87::sqrt(v)))
     } else {
@@ -319,10 +345,10 @@ fn fit(d: &Design, constant: bool) -> R<Fit> {
     let r2 = if ss_total == 0.0 {
         1.0
     } else {
-        x87::div(ss_reg, ss_total)
+        mp::div(ss_reg, ss_total)
     };
     let f = if df > 0.0 && ss_resid > 0.0 {
-        x87::div(x87::div(ss_reg, df_reg), ms_resid)
+        mp::div(mp::div(ss_reg, df_reg), ms_resid)
     } else {
         f64::NAN
     };

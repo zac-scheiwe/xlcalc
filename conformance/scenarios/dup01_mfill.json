@@ -1,0 +1,610 @@
+{
+  "sheets": [
+    "m1",
+    "m2",
+    "m3",
+    "m4",
+    "m5",
+    "m6",
+    "m7",
+    "m8"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "m1!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m1!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m1!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m1!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m1!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m1!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m1!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m1!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m1!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m1!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m1!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m1!A1:C5",
+      "name": "Tm1"
+    },
+    {
+      "op": "set",
+      "cell": "m1!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m1!B2",
+      "input": "=COUNT(A1:C5)"
+    },
+    {
+      "op": "read",
+      "range": "m1!A1:D7"
+    },
+    {
+      "op": "mode",
+      "value": "manual"
+    },
+    {
+      "op": "set",
+      "cell": "m2!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m2!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m2!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m2!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m2!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m2!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m2!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m2!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m2!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m2!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m2!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m2!A1:C5",
+      "name": "Tm2"
+    },
+    {
+      "op": "set",
+      "cell": "m2!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m2!B2",
+      "input": "=COUNT(A1:C5)"
+    },
+    {
+      "op": "read",
+      "range": "m2!A1:D7"
+    },
+    {
+      "op": "set",
+      "cell": "m3!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m3!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m3!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m3!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m3!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m3!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m3!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m3!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m3!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m3!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m3!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m3!A1:C5",
+      "name": "Tm3"
+    },
+    {
+      "op": "set",
+      "cell": "m3!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m3!B2",
+      "input": "=SUM(B$2:B$5)+1"
+    },
+    {
+      "op": "read",
+      "range": "m3!A1:D7"
+    },
+    {
+      "op": "set",
+      "cell": "m4!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m4!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m4!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m4!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m4!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m4!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m4!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m4!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m4!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m4!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m4!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m4!A1:C5",
+      "name": "Tm4"
+    },
+    {
+      "op": "set",
+      "cell": "m4!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m4!B2",
+      "input": "=COUNT(A1:D7)"
+    },
+    {
+      "op": "read",
+      "range": "m4!A1:D7"
+    },
+    {
+      "op": "set",
+      "cell": "m5!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m5!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m5!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m5!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m5!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m5!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m5!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m5!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m5!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m5!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m5!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m5!A1:C5",
+      "name": "Tm5"
+    },
+    {
+      "op": "set",
+      "cell": "m5!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m5!B2",
+      "input": "=SUM(A1:B5)"
+    },
+    {
+      "op": "read",
+      "range": "m5!A1:D7"
+    },
+    {
+      "op": "set",
+      "cell": "m6!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m6!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m6!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m6!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m6!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m6!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m6!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m6!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m6!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m6!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m6!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m6!A1:C5",
+      "name": "Tm6"
+    },
+    {
+      "op": "set",
+      "cell": "m6!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m6!B4",
+      "input": "=SUM(B$2:B$5)+1"
+    },
+    {
+      "op": "read",
+      "range": "m6!A1:D7"
+    },
+    {
+      "op": "set",
+      "cell": "m7!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m7!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m7!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m7!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m7!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m7!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m7!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m7!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m7!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m7!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m7!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m7!A1:C5",
+      "name": "Tm7"
+    },
+    {
+      "op": "set",
+      "cell": "m7!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m7!B3",
+      "input": "=SUM(B$2:B$5)+A4"
+    },
+    {
+      "op": "read",
+      "range": "m7!A1:D7"
+    },
+    {
+      "op": "set",
+      "cell": "m8!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "m8!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "m8!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "m8!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "m8!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "m8!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "m8!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "m8!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "m8!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "m8!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "m8!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "m8!A1:C5",
+      "name": "Tm8"
+    },
+    {
+      "op": "set",
+      "cell": "m8!D7",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "m8!B4",
+      "input": "=A4*2"
+    },
+    {
+      "op": "read",
+      "range": "m8!A1:D7"
+    }
+  ]
+}

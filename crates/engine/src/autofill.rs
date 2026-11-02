@@ -1,3 +1,4 @@
+use crate::workbook::{notice, Command};
 use crate::x87;
 use std::sync::Arc;
 
@@ -556,6 +557,7 @@ enum Act {
     FormatOnly(usize),
 }
 
+#[derive(Clone)]
 struct Ctx {
     ty: FillType,
     sign: i64,
@@ -708,7 +710,7 @@ fn group_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> 
                     _ => 0.0,
                 })
                 .collect();
-            numeric_value(ctx, slots, &ys, k, p, false)
+            numeric_value(ctx, slots, &ys, k, p, false, false)
         }
         Kind::Time(_) => {
             if matches!(ty, FillType::Linear | FillType::Growth) {
@@ -730,11 +732,17 @@ fn group_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> 
                 }
                 return None;
             }
-            if ys.iter().all(|v| v.abs() < 1.0) {
-                numeric_value(ctx, slots, &ys, k, p, true)
+
+            let all_small = ys.iter().all(|v| v.abs() < 1.0);
+            if ys.windows(2).all(|w| (w[1] - w[0]).abs() < 1.0) {
+                numeric_value(ctx, slots, &ys, k, p, all_small, !all_small)
             } else {
-                let fr: Vec<f64> = ys.iter().map(|v| v - v.floor()).collect();
-                match numeric_value(ctx, slots, &fr, k, p, false)? {
+                let mut fr: Vec<f64> = ys.iter().map(|v| v - v.floor()).collect();
+                if fr.iter().all(|f| (f - fr[0]).abs() < TOD_STEP) {
+                    let f0 = fr[0];
+                    fr.fill(f0);
+                }
+                match numeric_value(ctx, slots, &fr, k, p, false, false)? {
                     Value::Number(n) => Some(Value::Number(round15(ys[0] - fr[0] + n))),
                     v => Some(v),
                 }
@@ -754,6 +762,7 @@ fn numeric_value(
     k: usize,
     p: i64,
     time: bool,
+    strict: bool,
 ) -> Option<Value> {
     let fin = |v: f64| round15(if time && v < 0.0 { v - v.floor() } else { v });
     let m = slots.len();
@@ -799,10 +808,14 @@ fn numeric_value(
     if time && !linear_in(&xs, ys) {
         return None;
     }
-    if linear_in(&xs, ys) {
-        let dx = xs[m - 1] - xs[0];
-        let slope = (ys[m - 1] - ys[0]) / dx;
 
+    let slope = (ys[1] - ys[0]) / (xs[1] - xs[0]);
+    let exact = if strict {
+        (0..m).all(|j| (ys[j] - ys[0] - slope * (xs[j] - xs[0])).abs() < TOD_STEP)
+    } else {
+        linear_in(&xs, ys)
+    };
+    if exact {
         let t = round15(x87::mul(slope, x - xs[0]));
         return Some(Value::Number(fin(x87::add(ys[0], t))));
     }
@@ -941,8 +954,37 @@ fn list_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
         }
         let c = coords(slots);
         let xs: Vec<i64> = c.xs.iter().map(|&x| x as i64).collect();
-        let step = find_step(&xs, &w, 5)?;
         let x_new = xs[k] + c.period as i64 * p;
+
+        if l == 7 {
+            let t = xs[xs.len() - 1];
+            let (sx, si, sn): (Vec<i64>, Vec<i64>, i64) = if ctx.sign < 0 {
+                (
+                    xs.iter().rev().map(|&x| t - x).collect(),
+                    idxs.iter().rev().copied().collect(),
+                    t - x_new,
+                )
+            } else {
+                (xs.clone(), idxs.clone(), x_new)
+            };
+            let mut pos = vec![si[0]];
+            for j in 1..si.len() {
+                pos.push(pos[j - 1] + mod_floor(si[j] - si[j - 1], 7));
+            }
+            let dx = sx[sx.len() - 1] - sx[0];
+            let dp = pos[pos.len() - 1] - pos[0];
+            if dp > 0 && dp % dx == 0 {
+                let step = dp / dx;
+                if (0..sx.len()).all(|j| pos[j] - pos[0] == step * (sx[j] - sx[0])) {
+                    let sys = ctx.sys;
+                    let d0 = (100..107)
+                        .find(|&d| (weekday_from_serial(sys, d) as i64 + 6) % 7 == si[0])?;
+                    let r = add_weekdays_fast(sys, d0, step * (sn - sx[0]));
+                    return Some(out((weekday_from_serial(sys, r) as i64 + 6) % 7));
+                }
+            }
+        }
+        let step = find_step(&xs, &w, 5)?;
         return Some(out(widx(w[0] + step * x_new)));
     }
     if m == 1 {
@@ -1247,8 +1289,14 @@ fn interior_gap_inexact(items: &[Kind]) -> bool {
 
 fn plan_line(ctx: &Ctx, items: &[Kind], count: usize) -> Vec<Act> {
     let len = items.len();
+    plan_terms(ctx, items, len + count).split_off(len)
+}
+
+fn plan_terms(ctx: &Ctx, items: &[Kind], total: usize) -> Vec<Act> {
+    let len = items.len();
     let ty = ctx.ty;
-    let all = |f: &dyn Fn(usize) -> Act| (0..count).map(|j| f((len + j) % len)).collect::<Vec<_>>();
+    let count = total;
+    let all = |f: &dyn Fn(usize) -> Act| (0..count).map(|j| f(j % len)).collect::<Vec<_>>();
     match ty {
         FillType::Copy => return all(&Act::Copy),
         FillType::Formats => return all(&Act::FormatOnly),
@@ -1278,26 +1326,40 @@ fn plan_line(ctx: &Ctx, items: &[Kind], count: usize) -> Vec<Act> {
             let zero = growth && ys.iter().any(|&y| y <= 0.0);
             let t = len as f64;
             let (fx, fy, _) = sheet_frame(ctx.sign, &xs, &ys, 0.0, t);
+
+            let shift = fx.iter().copied().fold(f64::INFINITY, f64::min) - 1.0;
+            let fx: Vec<f64> = fx.iter().map(|x| x - shift).collect();
             let f = fit(&fx, &fy);
             let g = if growth && !zero {
                 Some(growth_fit(&fx, &fy))
             } else {
                 None
             };
-            return (0..count)
-                .map(|j| {
-                    let x = (len + j + 1) as f64;
-                    let x = if ctx.sign < 0 { t + 1.0 - x } else { x };
-                    let v = if zero {
-                        0.0
-                    } else if let Some(g) = &g {
-                        round15(g.at(x))
-                    } else {
-                        round15(f.at(x))
-                    };
-                    Act::Set((len + j) % len, Value::Number(v))
-                })
-                .collect();
+
+            let (first, last) = (nums[0].0, nums[nums.len() - 1].0);
+            let mut pos = (first + 1) as f64;
+            let mut acts = Vec::with_capacity(count);
+            for j in 0..count {
+                let slot = j % len;
+                if matches!(items[slot], Kind::Blank) && (slot < first || slot > last) {
+                    acts.push(Act::Copy(slot));
+                    continue;
+                }
+                if j < len {
+                    pos = (slot + 1) as f64;
+                }
+                let x = if ctx.sign < 0 { t + 1.0 - pos } else { pos } - shift;
+                pos += 1.0;
+                let v = if zero {
+                    0.0
+                } else if let Some(g) = &g {
+                    round15(g.at(x))
+                } else {
+                    round15(f.at(x))
+                };
+                acts.push(Act::Set(slot, Value::Number(v)));
+            }
+            return acts;
         }
     }
 
@@ -1338,10 +1400,12 @@ fn plan_line(ctx: &Ctx, items: &[Kind], count: usize) -> Vec<Act> {
         groups[g].push(s);
     }
     (0..count)
-        .map(|j| {
-            let q = len + j;
+        .map(|q| {
             let (s, p) = (q % len, (q / len) as i64);
             match group_of[s] {
+                Some(_) if p == 0 && !matches!(items[s], Kind::Num(..) | Kind::Time(_)) => {
+                    Act::Copy(s)
+                }
                 Some((g, k)) => match group_value(ctx, items, &groups[g], k, p) {
                     Some(v) => Act::Set(s, v),
                     None => Act::Copy(s),
@@ -1398,7 +1462,24 @@ impl Workbook {
         dst: Rect,
         ty: FillType,
     ) -> Result<RecalcReport, EditError> {
-        self.autofill_body(sheet, src, dst, ty)
+        self.command(Command::Fill, |wb| {
+            wb.note_changed(sheet, &notice::fill_rest(src, dst));
+            wb.autofill_run(sheet, src, dst, ty)
+        })
+    }
+
+    fn autofill_run(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        dst: Rect,
+        ty: FillType,
+    ) -> Result<RecalcReport, EditError> {
+        let r = self.autofill_body(sheet, src, dst, ty);
+        if r.is_ok() {
+            self.view_touch_row_pub(sheet, dst.r1);
+        }
+        r
     }
 
     fn autofill_body(
@@ -1408,16 +1489,19 @@ impl Workbook {
         dst: Rect,
         ty: FillType,
     ) -> Result<RecalcReport, EditError> {
-        if self.merge_intersects(sheet, &src) || self.merge_intersects(sheet, &dst) {
-            return Err(EditError::OutOfScope("AutoFill over merged cells"));
-        }
         let r = self.autofill_inner(sheet, src, dst, ty);
 
         let both_ways = crate::cse::inside(&src, &dst)
             && ((dst.c0 == src.c0 && dst.c1 == src.c1 && dst.r0 < src.r0 && dst.r1 > src.r1)
                 || (dst.r0 == src.r0 && dst.r1 == src.r1 && dst.c0 < src.c0 && dst.c1 > src.c1));
         if both_ways && ty == FillType::Formats && r.is_err() {
-            return Ok(RecalcReport::default());
+            return Ok(self.recalc_point());
+        }
+
+        let unrelated =
+            (dst.c0 != src.c0 || dst.c1 != src.c1) && (dst.r0 != src.r0 || dst.r1 != src.r1);
+        if r.is_err() && !unrelated && self.sheet(sheet).is_some() {
+            self.recalc_point();
         }
         r
     }
@@ -1476,22 +1560,292 @@ impl Workbook {
         self.settings.mode = CalcMode::Manual;
         let mut report = RecalcReport::default();
         let mut failed = None;
-        self.with_op(Op::NoAutoExpand, true, |this| {
-            for (from, to) in jobs {
-                match this.copy_range(sheet, from, to) {
-                    Ok(r) => report.changed.extend(r.changed),
-                    Err(e) => {
-                        failed = Some(e);
-                        break;
+        let pairs: Vec<(CellAddr, CellAddr)> = jobs
+            .iter()
+            .flat_map(|&(from, to)| self.share_pairs(sheet, from, &[to]))
+            .collect();
+        self.with_shares(&pairs, false, |wb| {
+            wb.with_op(Op::NoAutoExpand, true, |this| {
+                for (from, to) in jobs {
+                    match this.copy_range(sheet, from, to) {
+                        Ok(r) => {
+                            report.add_sheets(&r);
+                            report.changed.extend(r.changed)
+                        }
+                        Err(e) => {
+                            failed = Some(e);
+                            break;
+                        }
                     }
                 }
-            }
+            })
         });
         self.settings.mode = mode;
         if mode == CalcMode::Automatic {
             let r = calc::recalc(self);
             report.evaluations = r.evaluations;
             report.circular = r.circular;
+            report.add_sheets(&r);
+            report.changed.extend(r.changed);
+        }
+        match failed {
+            Some(e) => Err(e),
+            None => Ok(calc::finish_report(report)),
+        }
+    }
+
+    fn autofill_diag(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        dst: Rect,
+        ty: FillType,
+    ) -> Result<RecalcReport, EditError> {
+        let bad = || EditError::Compile("cannot fill that range".into());
+        let (up, down) = (src.r0 - dst.r0, dst.r1 - src.r1);
+        let (left, right) = (src.c0 - dst.c0, dst.c1 - src.c1);
+        if (up > 0) == (down > 0) || (left > 0) == (right > 0) {
+            return Err(bad());
+        }
+        crate::structure::range_too_large(&dst)?;
+        let corner = Rect::new(
+            if down > 0 { src.r1 + 1 } else { dst.r0 },
+            if right > 0 { src.c1 + 1 } else { dst.c0 },
+            if down > 0 { dst.r1 } else { src.r0 - 1 },
+            if right > 0 { dst.c1 } else { src.c0 - 1 },
+        );
+        let merge_err = || {
+            EditError::Compile("To do this, all the merged cells need to be the same size.".into())
+        };
+        if self.merge_intersects(sheet, &corner) {
+            return Err(merge_err());
+        }
+
+        let src_merges: Vec<Rect> = self
+            .merges(sheet)
+            .into_iter()
+            .filter(|m| m.intersects(&src))
+            .collect();
+        if let Some(first) = src_merges.first() {
+            let area: u64 = src_merges
+                .iter()
+                .map(|m| m.rows() as u64 * m.cols() as u64)
+                .sum();
+            if src_merges
+                .iter()
+                .any(|m| m.rows() != first.rows() || m.cols() != first.cols())
+                || area != src.rows() as u64 * src.cols() as u64
+                || !corner.rows().is_multiple_of(src.rows())
+            {
+                return Err(merge_err());
+            }
+        }
+
+        if self
+            .array_blocks(sheet)
+            .iter()
+            .any(|(_, b)| !b.is_cell() && b.intersects(&corner) && !crate::cse::inside(b, &corner))
+        {
+            return Err(EditError::Compile(
+                "You can't change part of an array.".into(),
+            ));
+        }
+        self.data_tables_overwritten(sheet, corner)?;
+        if matches!(ty, FillType::Default | FillType::Copy | FillType::Series)
+            && self
+                .array_blocks(sheet)
+                .iter()
+                .any(|(_, b)| !b.is_cell() && b.intersects(&src))
+            && self
+                .array_blocks(sheet)
+                .iter()
+                .all(|(_, b)| !b.intersects(&src) || crate::cse::inside(b, &src))
+        {
+            return self.autofill_diag_arrays(sheet, src, corner);
+        }
+        self.remove_arrays_in(sheet, corner);
+        let (h, w) = (src.rows(), src.cols());
+        let (rows, cols) = (corner.rows(), corner.cols());
+        let numeric_at = |l: u32, s: u32| -> bool {
+            matches!(
+                self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)),
+                Kind::Num(..) | Kind::Date { .. } | Kind::Time(_)
+            )
+        };
+        let shared: Vec<bool> = (0..h)
+            .map(|s| (0..w).filter(|&l| numeric_at(l, s)).count() > 1)
+            .collect();
+        let ctx = Ctx {
+            ty,
+            sign: 1,
+            len: h as usize,
+            shared,
+            nlines: w as usize,
+            sys: self.settings.date_system,
+        };
+        let periods = ((rows - 1) / h + (cols - 1) / w + 1) as usize;
+
+        let lone = matches!(ty, FillType::Series | FillType::Linear | FillType::Growth);
+        let plans: Vec<Vec<Vec<Act>>> = (0..w)
+            .map(|l| {
+                let items: Vec<Kind> = (0..h)
+                    .map(|s| self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)))
+                    .collect();
+                if !lone {
+                    let acts = plan_terms(&ctx, &items, periods * h as usize);
+                    return (0..h as usize)
+                        .map(|s| {
+                            (0..periods)
+                                .map(|p| acts[p * h as usize + s].clone())
+                                .collect()
+                        })
+                        .collect();
+                }
+                (0..h as usize)
+                    .map(|s| {
+                        if w > 1 {
+                            return vec![Act::Copy(0); periods];
+                        }
+                        let one = Ctx {
+                            len: 1,
+                            nlines: 1,
+                            shared: vec![false],
+                            ..ctx.clone()
+                        };
+                        plan_terms(&one, &items[s..=s], periods)
+                    })
+                    .collect()
+            })
+            .collect();
+
+        let mut jobs: Vec<(&Act, CellAddr, CellAddr)> = Vec::new();
+        for i in 0..rows {
+            for j in 0..cols {
+                let (l, s) = (j % w, i % h);
+                let act = &plans[l as usize][s as usize][(i / h + j / w) as usize];
+                jobs.push((
+                    act,
+                    CellAddr::new(sheet, src.r0 + s, src.c0 + l),
+                    CellAddr::new(sheet, corner.r0 + i, corner.c0 + j),
+                ));
+            }
+        }
+        let mode = self.settings.mode;
+        self.settings.mode = CalcMode::Manual;
+        let mut report = RecalcReport::default();
+        let mut failed = None;
+        let pairs: Vec<(CellAddr, CellAddr)> = jobs
+            .iter()
+            .filter(|(act, _, _)| !matches!(act, Act::FormatOnly(_)))
+            .map(|&(_, from, to)| (from, to))
+            .collect();
+        self.with_shares(&pairs, true, |wb| {
+            wb.with_op(Op::NoAutoExpand, true, |this| {
+                for (act, from, to) in &jobs {
+                    let (from, to) = (Rect::cell(from.row, from.col), *to);
+                    match act {
+                        Act::FormatOnly(_) => this.fmt_copy_block(sheet, from, to),
+                        Act::Copy(_) | Act::Set(..) => {
+                            let old_fmt = (ty == FillType::Values).then(|| {
+                                (
+                                    this.number_format(to).to_string(),
+                                    this.cell_style(to).clone(),
+                                )
+                            });
+                            match this.copy_range_with(sheet, from, to, true) {
+                                Ok(r) => {
+                                    report.add_sheets(&r);
+                                    report.changed.extend(r.changed)
+                                }
+                                Err(e) => {
+                                    failed = Some(e);
+                                    break;
+                                }
+                            }
+                            if let Act::Set(_, v) = act {
+                                this.set_value_exact(to, v.clone());
+                            }
+                            if let Some((f, style)) = old_fmt {
+                                this.store_style(to, style);
+                                this.set_number_format(sheet, Rect::cell(to.row, to.col), &f);
+                            }
+                        }
+                    }
+                }
+            })
+        });
+        if failed.is_none() && ty != FillType::Values {
+            for m in &src_merges {
+                for (_, from, to) in &jobs {
+                    if (from.row, from.col) == (m.r0, m.c0) {
+                        let (r, c) = (to.row, to.col);
+                        self.put_merge(sheet, Rect::new(r, c, r + m.rows() - 1, c + m.cols() - 1));
+                    }
+                }
+            }
+        }
+        self.settings.mode = mode;
+        if mode == CalcMode::Automatic {
+            let r = calc::recalc(self);
+            report.evaluations = r.evaluations;
+            report.circular = r.circular;
+            report.add_sheets(&r);
+            report.changed.extend(r.changed);
+        }
+        match failed {
+            Some(e) => Err(e),
+            None => Ok(calc::finish_report(report)),
+        }
+    }
+
+    fn autofill_diag_arrays(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        corner: Rect,
+    ) -> Result<RecalcReport, EditError> {
+        self.remove_arrays_in(sheet, corner);
+        let (h, w) = (src.rows(), src.cols());
+        let mut jobs: Vec<(Rect, CellAddr)> = Vec::new();
+        for ti in 0..corner.rows().div_ceil(h) {
+            for tj in 0..corner.cols().div_ceil(w) {
+                let (rh, cw) = (h.min(corner.rows() - ti * h), w.min(corner.cols() - tj * w));
+                jobs.push((
+                    Rect::new(src.r0, src.c0, src.r0 + rh - 1, src.c0 + cw - 1),
+                    CellAddr::new(sheet, corner.r0 + ti * h, corner.c0 + tj * w),
+                ));
+            }
+        }
+        let mode = self.settings.mode;
+        self.settings.mode = CalcMode::Manual;
+        let mut report = RecalcReport::default();
+        let mut failed = None;
+        let pairs: Vec<(CellAddr, CellAddr)> = jobs
+            .iter()
+            .flat_map(|&(from, to)| self.share_pairs(sheet, from, &[to]))
+            .collect();
+        self.with_shares(&pairs, false, |wb| {
+            wb.with_op(Op::NoAutoExpand, true, |this| {
+                for (from, to) in jobs {
+                    match this.copy_range(sheet, from, to) {
+                        Ok(r) => {
+                            report.add_sheets(&r);
+                            report.changed.extend(r.changed)
+                        }
+                        Err(e) => {
+                            failed = Some(e);
+                            break;
+                        }
+                    }
+                }
+            })
+        });
+        self.settings.mode = mode;
+        if mode == CalcMode::Automatic {
+            let r = calc::recalc(self);
+            report.evaluations = r.evaluations;
+            report.circular = r.circular;
+            report.add_sheets(&r);
             report.changed.extend(r.changed);
         }
         match failed {
@@ -1509,13 +1863,35 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         let bad = || EditError::Compile("cannot fill that range".into());
+
+        let both_ways = |wb: &mut Self| {
+            if crate::cse::inside(&src, &dst) && !matches!(ty, FillType::Values | FillType::Formats)
+            {
+                let next = if dst.c0 == src.c0 && dst.c1 == src.c1 {
+                    Rect::new(src.r1 + 1, src.c0, src.r1 + 1, src.c1)
+                } else {
+                    Rect::new(src.r0, src.c1 + 1, src.r1, src.c1 + 1)
+                };
+                let out: Vec<Rect> = wb
+                    .merges(sheet)
+                    .into_iter()
+                    .filter(|m| m.intersects(&next))
+                    .collect();
+                let mode = std::mem::replace(&mut wb.settings.mode, CalcMode::Manual);
+                for m in out {
+                    wb.unmerge_cells(sheet, m);
+                }
+                wb.settings.mode = mode;
+            }
+            bad()
+        };
         let dir = if dst.c0 == src.c0 && dst.c1 == src.c1 {
             if dst.r0 == src.r0 && dst.r1 > src.r1 {
                 Dir::Down
             } else if dst.r1 == src.r1 && dst.r0 < src.r0 {
                 Dir::Up
             } else {
-                return Err(bad());
+                return Err(both_ways(self));
             }
         } else if dst.r0 == src.r0 && dst.r1 == src.r1 {
             if dst.c0 == src.c0 && dst.c1 > src.c1 {
@@ -1523,8 +1899,10 @@ impl Workbook {
             } else if dst.c1 == src.c1 && dst.c0 < src.c0 {
                 Dir::Left
             } else {
-                return Err(bad());
+                return Err(both_ways(self));
             }
+        } else if crate::cse::inside(&src, &dst) {
+            return self.autofill_diag(sheet, src, dst, ty);
         } else {
             return Err(bad());
         };
@@ -1540,6 +1918,53 @@ impl Workbook {
             Dir::Right => Rect::new(dst.r0, src.c1 + 1, dst.r1, dst.c1),
             Dir::Left => Rect::new(dst.r0, dst.c0, dst.r1, src.c0 - 1),
         };
+
+        if self.merge_intersects(sheet, &dest_part) {
+            return Err(EditError::Compile(
+                "To do this, all the merged cells need to be the same size.".into(),
+            ));
+        }
+        let sideways = self
+            .merges(sheet)
+            .iter()
+            .any(|m| m.intersects(&src) && !crate::cse::inside(m, &src));
+        let sideways = sideways || self.op_on(Op::SeriesAutofill);
+        if sideways && count % len != 0 && !self.op_on(Op::SeriesAutofill) {
+            return Err(EditError::Compile(
+                "To do this, all the merged cells need to be the same size.".into(),
+            ));
+        }
+        if !sideways {
+            self.guard_merges_rect(sheet, dst)?;
+        }
+
+        let src_merges: Vec<Rect> = if sideways {
+            Vec::new()
+        } else {
+            let ms: Vec<Rect> = self
+                .merges(sheet)
+                .into_iter()
+                .filter(|m| m.intersects(&src))
+                .collect();
+            if let Some(first) = ms.first() {
+                let (h, w) = (first.rows(), first.cols());
+                let area: u64 = ms.iter().map(|m| m.rows() as u64 * m.cols() as u64).sum();
+                if ms.iter().any(|m| m.rows() != h || m.cols() != w)
+                    || area != src.rows() as u64 * src.cols() as u64
+                {
+                    return Err(EditError::Compile(
+                        "To do this, all the merged cells need to be the same size.".into(),
+                    ));
+                }
+            }
+            ms
+        };
+
+        if !src_merges.is_empty() && count % len != 0 {
+            return Err(EditError::Compile(
+                "To do this, all the merged cells need to be the same size.".into(),
+            ));
+        }
         self.guard_arrays_rect(sheet, dest_part)?;
         self.data_tables_overwritten(sheet, dest_part)?;
         if matches!(ty, FillType::Default | FillType::Copy | FillType::Series)
@@ -1603,45 +2028,87 @@ impl Workbook {
         self.settings.mode = CalcMode::Manual;
         let mut report = RecalcReport::default();
         let mut failed = None;
+        let pairs: Vec<(CellAddr, CellAddr)> = plans
+            .iter()
+            .enumerate()
+            .flat_map(|(l, plan)| {
+                plan.iter()
+                    .enumerate()
+                    .filter_map(move |(j, act)| match act {
+                        Act::Copy(s) | Act::Set(s, _) => {
+                            let (sr, sc) = at(l as u32, *s as u32);
+                            let (dr, dc) = at(l as u32, len + j as u32);
+                            Some((CellAddr::new(sheet, sr, sc), CellAddr::new(sheet, dr, dc)))
+                        }
+                        Act::FormatOnly(_) => None,
+                    })
+            })
+            .collect();
 
-        self.with_op(Op::NoAutoExpand, true, |this| {
-            'outer: for (l, plan) in plans.iter().enumerate() {
-                for (j, act) in plan.iter().enumerate() {
-                    let (slot, _) = match act {
-                        Act::Copy(s) | Act::FormatOnly(s) | Act::Set(s, _) => (*s as u32, ()),
-                    };
-                    let (sr, sc) = at(l as u32, slot);
-                    let (dr, dc) = at(l as u32, len + j as u32);
-                    let to = CellAddr::new(sheet, dr, dc);
-                    let from = Rect::cell(sr, sc);
-                    match act {
-                        Act::FormatOnly(_) => this.fmt_copy_block(sheet, from, to),
-                        Act::Copy(_) | Act::Set(..) => {
-                            let old_fmt = (ty == FillType::Values)
-                                .then(|| this.number_format(to).to_string());
-                            match this.copy_range_with(sheet, from, to, true) {
-                                Ok(r) => report.changed.extend(r.changed),
-                                Err(e) => {
-                                    failed = Some(e);
-                                    break 'outer;
+        self.with_shares(&pairs, true, |wb| {
+            wb.with_op(Op::NoAutoExpand, true, |this| {
+                'outer: for (l, plan) in plans.iter().enumerate() {
+                    for (j, act) in plan.iter().enumerate() {
+                        let (slot, _) = match act {
+                            Act::Copy(s) | Act::FormatOnly(s) | Act::Set(s, _) => (*s as u32, ()),
+                        };
+                        let (sr, sc) = at(l as u32, slot);
+                        let (dr, dc) = at(l as u32, len + j as u32);
+                        let to = CellAddr::new(sheet, dr, dc);
+                        let from = Rect::cell(sr, sc);
+                        match act {
+                            Act::FormatOnly(_) => this.fmt_copy_block(sheet, from, to),
+                            Act::Copy(_) | Act::Set(..) => {
+                                let old_fmt = (ty == FillType::Values).then(|| {
+                                    (
+                                        this.number_format(to).to_string(),
+                                        this.cell_style(to).clone(),
+                                    )
+                                });
+                                match this.copy_range_with(sheet, from, to, true) {
+                                    Ok(r) => {
+                                        report.add_sheets(&r);
+                                        report.changed.extend(r.changed)
+                                    }
+                                    Err(e) => {
+                                        failed = Some(e);
+                                        break 'outer;
+                                    }
                                 }
-                            }
-                            if let Act::Set(_, v) = act {
-                                this.set_value_exact(to, v.clone());
-                            }
-                            if let Some(f) = old_fmt {
-                                this.set_number_format(sheet, Rect::cell(dr, dc), &f);
+                                if let Act::Set(_, v) = act {
+                                    this.set_value_exact(to, v.clone());
+                                }
+                                if let Some((f, style)) = old_fmt {
+                                    this.store_style(to, style);
+                                    this.set_number_format(sheet, Rect::cell(dr, dc), &f);
+                                }
                             }
                         }
                     }
                 }
-            }
+            })
         });
+
+        if failed.is_none() && ty != FillType::Values {
+            for k in 1..=count / len {
+                let d = k * len;
+                for m in &src_merges {
+                    let t = match dir {
+                        Dir::Down => Rect::new(m.r0 + d, m.c0, m.r1 + d, m.c1),
+                        Dir::Up => Rect::new(m.r0 - d, m.c0, m.r1 - d, m.c1),
+                        Dir::Right => Rect::new(m.r0, m.c0 + d, m.r1, m.c1 + d),
+                        Dir::Left => Rect::new(m.r0, m.c0 - d, m.r1, m.c1 - d),
+                    };
+                    self.put_merge(sheet, t);
+                }
+            }
+        }
         self.settings.mode = mode;
         if mode == CalcMode::Automatic {
             let r = calc::recalc(self);
             report.evaluations = r.evaluations;
             report.circular = r.circular;
+            report.add_sheets(&r);
             report.changed.extend(r.changed);
         }
         let _ = Arc::new(0);

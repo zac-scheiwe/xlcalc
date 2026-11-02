@@ -1,0 +1,458 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "typel",
+      "cell": "Sheet1!A1",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A2",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A1:A2",
+      "to": "Sheet1!A1:C5",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:H11",
+      "id": "d_a"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A13",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A14",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A13:A14",
+      "to": "Sheet1!A13:B17",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A13:H23",
+      "id": "d_b"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A25",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A26",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A25:A26",
+      "to": "Sheet1!A25:C27",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A25:H35",
+      "id": "d_c"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A37",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A38",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A37:A38",
+      "to": "Sheet1!A37:D44",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A37:H47",
+      "id": "d_d"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A49",
+      "input": "5"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A49:A49",
+      "to": "Sheet1!A49:C51",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A49:H59",
+      "id": "d_e"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A61",
+      "input": "10"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A62",
+      "input": "20"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A63",
+      "input": "30"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A61:A63",
+      "to": "Sheet1!A61:C66",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A61:H71",
+      "id": "d_f"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A73",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B73",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A73:B73",
+      "to": "Sheet1!A73:E75",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A73:H83",
+      "id": "d_g"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A85",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B85",
+      "input": "2"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A86",
+      "input": "3"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B86",
+      "input": "4"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A85:B86",
+      "to": "Sheet1!A85:E89",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A85:H95",
+      "id": "d_h"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C101",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C102",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!C101:C102",
+      "to": "Sheet1!A97:C102",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A97:H107",
+      "id": "d_i"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A113",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A114",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A113:A114",
+      "to": "Sheet1!A109:C114",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A109:H119",
+      "id": "d_j"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C121",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!C122",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!C121:C122",
+      "to": "Sheet1!A121:C125",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A121:H131",
+      "id": "d_k"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B135",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!B136",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!B135:B136",
+      "to": "Sheet1!A133:D138",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A133:H143",
+      "id": "d_l"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A145",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A146",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A145:A146",
+      "to": "Sheet1!A145:C149",
+      "type": "copy"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A145:H155",
+      "id": "d_m"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A157",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A158",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A157:A158",
+      "to": "Sheet1!A157:C161",
+      "type": "series"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A157:H167",
+      "id": "d_n"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A169",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A170",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A169:A170",
+      "to": "Sheet1!A169:C173",
+      "type": "formats"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A169:H179",
+      "id": "d_o"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A181",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A182",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A181:A182",
+      "to": "Sheet1!A181:C185",
+      "type": "values"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A181:H191",
+      "id": "d_p"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A193",
+      "input": "a1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A194",
+      "input": "a2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A193:A194",
+      "to": "Sheet1!A193:C197",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A193:H203",
+      "id": "d_q"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A205",
+      "input": "x"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A206",
+      "input": "y"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A205:A206",
+      "to": "Sheet1!A205:C209",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A205:H215",
+      "id": "d_r"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A217",
+      "input": "=ROW()"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A218",
+      "input": "=A1+1"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A217:A218",
+      "to": "Sheet1!A217:C221",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A217:H227",
+      "id": "d_s"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A229",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A230",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A229:A230",
+      "to": "Sheet1!A229:C232",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A229:H239",
+      "id": "d_t"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A241",
+      "input": "1"
+    },
+    {
+      "op": "typel",
+      "cell": "Sheet1!A242",
+      "input": "2"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!A241:A242",
+      "to": "Sheet1!A241:C249",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A241:H251",
+      "id": "d_u"
+    }
+  ]
+}

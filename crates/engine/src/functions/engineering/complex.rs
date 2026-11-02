@@ -1,5 +1,5 @@
 use super::atp::{self, R};
-use super::xlmath;
+use super::TRIG_LIMIT;
 use crate::coerce::parse_number_text;
 use crate::eval::{EvalCtx, Operand};
 use crate::functions::args::val;
@@ -26,22 +26,24 @@ impl C {
     }
 
     pub fn mul(self, o: C) -> C {
+        use crate::x87::{add, mul, sub};
         C::new(
-            self.re * o.re - self.im * o.im,
-            self.re * o.im + self.im * o.re,
+            sub(mul(self.re, o.re), mul(self.im, o.im)),
+            add(mul(self.re, o.im), mul(self.im, o.re)),
         )
     }
 
     pub fn div(self, o: C) -> C {
+        use crate::x87::{add, div, mul, sub};
         let (a, b, c, d) = (self.re, self.im, o.re, o.im);
         if c.abs() >= d.abs() {
-            let r = d / c;
-            let den = c + d * r;
-            C::new((a + b * r) / den, (b - a * r) / den)
+            let r = div(d, c);
+            let den = add(c, mul(d, r));
+            C::new(div(add(a, mul(b, r)), den), div(sub(b, mul(a, r)), den))
         } else {
-            let r = c / d;
-            let den = c * r + d;
-            C::new((a * r + b) / den, (b * r - a) / den)
+            let r = div(c, d);
+            let den = add(mul(c, r), d);
+            C::new(div(add(mul(a, r), b), den), div(sub(mul(b, r), a), den))
         }
     }
 
@@ -57,8 +59,8 @@ impl C {
     }
 
     pub fn modulus(self) -> f64 {
-        let sq = |v: f64| crate::number::flush_subnormal(v * v);
-        crate::number::flush_subnormal(sq(self.re) + sq(self.im)).sqrt()
+        use crate::x87::{add, mul, sqrt};
+        sqrt(add(mul(self.re, self.re), mul(self.im, self.im)))
     }
 
     pub fn arg(self) -> f64 {
@@ -337,7 +339,7 @@ pub fn power(z: C, n: f64) -> R<C> {
 
     let t = crate::x87::mul(n, z.arg());
     let mul = crate::x87::mul;
-    Ok(C::new(mul(x87_cos(t)?, r), mul(x87_sin(t)?, r)))
+    Ok(C::new(mul(trig_cos(t)?, r), mul(trig_sin(t)?, r)))
 }
 
 pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
@@ -354,7 +356,7 @@ pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
                 acc = Some(match acc {
                     None => z,
                     Some(a) if product => a.mul(z),
-                    Some(a) => C::new(a.re + z.re, a.im + z.im),
+                    Some(a) => C::new(crate::x87::add(a.re, z.re), crate::x87::add(a.im, z.im)),
                 });
                 Ok(())
             })?;
@@ -369,32 +371,24 @@ pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
 }
 
 fn trig_sin(x: f64) -> R<f64> {
-    if x.abs() >= xlmath::TRIG_LIMIT {
+    if x.abs() >= TRIG_LIMIT {
         return Err(XlError::NUM);
     }
-    Ok(xlmath::sin(x))
+    Ok(crate::x87::sin(x))
 }
 
 fn trig_cos(x: f64) -> R<f64> {
-    if x.abs() >= xlmath::TRIG_LIMIT {
+    if x.abs() >= TRIG_LIMIT {
         return Err(XlError::NUM);
     }
-    Ok(xlmath::cos(x))
-}
-
-fn x87_sin(x: f64) -> R<f64> {
-    trig_sin(x).map(|_| crate::x87::sin(x))
-}
-
-fn x87_cos(x: f64) -> R<f64> {
-    trig_cos(x).map(|_| crate::x87::cos(x))
+    Ok(crate::x87::cos(x))
 }
 
 fn scale(m: f64, f: f64) -> f64 {
     if m == 0.0 {
         0.0
     } else {
-        m * f
+        crate::x87::mul(m, f)
     }
 }
 
@@ -402,9 +396,11 @@ pub fn imsqrt(z: C) -> R<C> {
     if z.is_zero() {
         return Ok(z);
     }
-    let r = z.modulus().sqrt();
-    let t = z.arg() / 2.0;
-    Ok(C::new(r * trig_cos(t)?, r * trig_sin(t)?))
+
+    use crate::x87::{div, mul, sqrt};
+    let r = sqrt(z.modulus());
+    let t = div(z.arg(), 2.0);
+    Ok(C::new(mul(trig_cos(t)?, r), mul(trig_sin(t)?, r)))
 }
 
 fn exp_clamped(x: f64) -> f64 {
@@ -413,7 +409,7 @@ fn exp_clamped(x: f64) -> f64 {
     } else if x < -709.0 {
         0.0
     } else {
-        let e = x.exp();
+        let e = crate::x87::exp(x);
         if e.is_finite() {
             e
         } else {
@@ -439,7 +435,7 @@ pub fn imln(z: C) -> R<C> {
     } else {
         z.modulus()
     };
-    Ok(C::new(m.ln(), z.arg()))
+    Ok(C::new(crate::x87::ln(m), z.arg()))
 }
 
 fn imlog_k(z: C, k: f64) -> R<C> {
@@ -456,7 +452,7 @@ pub fn imlog2(z: C) -> R<C> {
 }
 
 fn sin_cos_e(z: C) -> R<(f64, f64, f64, f64)> {
-    let (s, c) = (x87_sin(z.re)?, x87_cos(z.re)?);
+    let (s, c) = (trig_sin(z.re)?, trig_cos(z.re)?);
     let e = crate::x87::exp(z.im);
     let ie = crate::x87::div(1.0, e);
     Ok((s, c, crate::x87::add(ie, e), crate::x87::sub(e, ie)))
@@ -493,7 +489,7 @@ fn sinh_cosh(z: C, cosh: bool) -> R<C> {
         let r = f.div(v, 2.0);
         return mp_done(&f, C::new(r, 0.0));
     }
-    let (s, c) = (x87_sin(y).map_err(num)?, x87_cos(y).map_err(num)?);
+    let (s, c) = (trig_sin(y).map_err(num)?, trig_cos(y).map_err(num)?);
     if x > 709.0 || x < -708.0 {
         let ax = x.abs();
         let mut big = |t: f64| -> R<f64> {
@@ -533,12 +529,15 @@ pub fn imcosh(z: C) -> R<C> {
 
 fn tan_cot(z: C, cot: bool) -> Option<R<C>> {
     if z.im == 0.0 {
-        let t = xlmath::tan(z.re);
-        return Some(Ok(C::new(if cot { 1.0 / t } else { t }, 0.0)));
+        let t = crate::x87::tan(z.re);
+        return Some(Ok(C::new(
+            if cot { crate::x87::div(1.0, t) } else { t },
+            0.0,
+        )));
     }
 
     use crate::x87::{add, div, mul, sub};
-    let (s, c) = (x87_sin(z.re).ok()?, x87_cos(z.re).ok()?);
+    let (s, c) = (trig_sin(z.re).ok()?, trig_cos(z.re).ok()?);
     let b = mul(z.im, 2.0);
     let mut f = MpFlag::default();
     let sh2 = -sinh2n(&mut f, b);
@@ -555,20 +554,13 @@ pub fn imtan(z: C) -> R<C> {
     if hyp_band(z.im) != 0 {
         return Ok(C::new(0.0, 1f64.copysign(z.im)));
     }
-    if z.re.abs() < xlmath::TRIG_LIMIT {
+
+    if z.re.abs() < TRIG_LIMIT {
         if let Some(w) = tan_cot(z, false) {
             return w;
         }
     }
-    let (a, b) = (2.0 * z.re, 2.0 * z.im);
-    if b.abs() > 700.0 {
-        return Ok(C::new(
-            2.0 * trig_sin(a)? * (-b.abs()).exp(),
-            1f64.copysign(b),
-        ));
-    }
-    let d = trig_cos(a)? + b.cosh();
-    Ok(C::new(trig_sin(a)? / d, b.sinh() / d))
+    Err(XlError::NUM)
 }
 
 fn recip(z: C) -> R<C> {
@@ -643,7 +635,7 @@ fn sec_csc(z: C, csc: bool) -> R<C> {
     let mut f = MpFlag::default();
     let num = |_| XlError::NUM;
     if y == 0.0 {
-        let t = if csc { x87_sin(x) } else { x87_cos(x) }.map_err(num)?;
+        let t = if csc { trig_sin(x) } else { trig_cos(x) }.map_err(num)?;
         let r = f.div(1.0, t);
         return mp_done(&f, C::new(r, 0.0));
     }
@@ -651,7 +643,7 @@ fn sec_csc(z: C, csc: bool) -> R<C> {
     if band == 2 {
         return Ok(C::new(0.0, 0.0));
     }
-    let (s, c) = (x87_sin(x).map_err(num)?, x87_cos(x).map_err(num)?);
+    let (s, c) = (trig_sin(x).map_err(num)?, trig_cos(x).map_err(num)?);
 
     let (m1, m2) = if csc {
         (f.mul(s, 2.0), f.mul(c, 2.0))
@@ -688,7 +680,7 @@ pub fn imcot(z: C) -> R<C> {
     if hyp_band(z.im) != 0 {
         return Ok(C::new(0.0, -1f64.copysign(z.im)));
     }
-    if z.re.abs() < xlmath::TRIG_LIMIT {
+    if z.re.abs() < TRIG_LIMIT {
         match tan_cot(z, true) {
             Some(Ok(w)) if w.finite() => return Ok(w),
             _ => {}
@@ -718,20 +710,20 @@ fn sech_csch(z: C, csch: bool) -> R<C> {
         1 => {
             let sh = sinh2n(&mut f, x);
             let ch = cosh2(&mut f, x);
-            let c2 = f.mul(x87_cos(y).map_err(num)?, 2.0);
+            let c2 = f.mul(trig_cos(y).map_err(num)?, 2.0);
             let re = f.div(c2, if csch { sh } else { ch });
-            let s2 = f.mul(x87_sin(y).map_err(num)?, 2.0);
+            let s2 = f.mul(trig_sin(y).map_err(num)?, 2.0);
             let im = f.div(s2, if csch { ch } else { sh });
             mp_done(&f, C::new(re, im))
         }
         _ => {
             let sh = sinh2n(&mut f, -x);
             let ch = cosh2(&mut f, -x);
-            let c2 = f.mul(x87_cos(y).map_err(num)?, 2.0);
+            let c2 = f.mul(trig_cos(y).map_err(num)?, 2.0);
             let (re_n, im_n, d);
             if csch {
                 re_n = f.mul(c2, sh);
-                let s2 = f.mul(x87_sin(y).map_err(num)?, -2.0);
+                let s2 = f.mul(trig_sin(y).map_err(num)?, -2.0);
                 im_n = f.mul(s2, ch);
                 let ss = f.mul(s2, s2);
                 let a = f.mul(sh, sh);
@@ -739,7 +731,7 @@ fn sech_csch(z: C, csch: bool) -> R<C> {
             } else {
                 re_n = f.mul(c2, ch);
                 let cc = f.mul(c2, c2);
-                let s2 = f.mul(x87_sin(y).map_err(num)?, -2.0);
+                let s2 = f.mul(trig_sin(y).map_err(num)?, -2.0);
                 im_n = f.mul(s2, sh);
                 let a = f.mul(sh, sh);
                 d = f.add(a, cc);

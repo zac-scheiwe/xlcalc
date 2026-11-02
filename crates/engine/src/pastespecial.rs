@@ -1,3 +1,4 @@
+use crate::workbook::{notice, Command};
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
@@ -286,7 +287,27 @@ impl Workbook {
         dst: Rect,
         spec: &PasteSpecial,
     ) -> Result<RecalcReport, EditError> {
-        self.paste_special_body(src_sheet, src, dst_sheet, dst, spec)
+        self.command(Command::PasteSpecial, |wb| {
+            wb.note_changed(dst_sheet, &[notice::paste_area(src, dst)]);
+            wb.paste_special_run(src_sheet, src, dst_sheet, dst, spec)
+        })
+    }
+
+    fn paste_special_run(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        spec: &PasteSpecial,
+    ) -> Result<RecalcReport, EditError> {
+        self.session.fill_selected.remove(&dst_sheet);
+        let r = self.paste_special_body(src_sheet, src, dst_sheet, dst, spec);
+        if r.is_ok() {
+            self.view_clipboard_op(dst_sheet, dst.r0, dst.c0);
+            self.view_touch_paste(dst_sheet, src, dst);
+        }
+        r
     }
 
     fn paste_special_body(
@@ -297,20 +318,9 @@ impl Workbook {
         dst: Rect,
         spec: &PasteSpecial,
     ) -> Result<RecalcReport, EditError> {
-        self.guard_filtered(src_sheet, src, true, true)?;
-        let reach = Rect::new(
-            dst.r0,
-            dst.c0,
-            dst.r1.max(dst.r0.saturating_add(src.rows() - 1)),
-            dst.c1.max(dst.c0.saturating_add(src.cols() - 1)),
-        );
-        self.guard_filtered(dst_sheet, reach, true, true)?;
-        if self.merge_intersects(src_sheet, &src) || self.merge_intersects(dst_sheet, &reach) {
-            return Err(EditError::OutOfScope("paste special over merged cells"));
-        }
         let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst_sheet, dst);
         let r = self.with_paste_block((dst_sheet, dst), |this| {
-            this.paste_special_one(src_sheet, src, dst_sheet, dst, spec)
+            this.paste_special_raw(src_sheet, src, dst_sheet, dst, spec)
         });
         if r.is_ok()
             && matches!(
@@ -335,7 +345,41 @@ impl Workbook {
             self.restore_totals(src_sheet, src, None);
             self.restore_totals(dst_sheet, dst, Some(dst));
         }
+
+        if r.is_ok() {
+            self.notify_cell_change(dst_sheet);
+        }
         r
+    }
+
+    pub(crate) fn paste_special_raw(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        spec: &PasteSpecial,
+    ) -> Result<RecalcReport, EditError> {
+        if !spec.transpose {
+            if let Some(Ok((steps, _, _))) = self.view_copy_plan(src_sheet, src, dst_sheet, dst) {
+                if steps.len() > 1 || steps[0].0 != src {
+                    let mut report = RecalcReport::default();
+                    for (run, to) in steps {
+                        let d = Rect::new(
+                            to.row,
+                            to.col,
+                            to.row + run.rows() - 1,
+                            to.col + run.cols() - 1,
+                        );
+                        let r = self.paste_special_one(src_sheet, run, dst_sheet, d, spec)?;
+                        report.changed.extend(r.changed);
+                        report.evaluations += r.evaluations;
+                    }
+                    return Ok(report);
+                }
+            }
+        }
+        self.paste_special_one(src_sheet, src, dst_sheet, dst, spec)
     }
 
     pub(crate) fn paste_special_one(
@@ -349,7 +393,55 @@ impl Workbook {
         if matches!(spec.what, PasteWhat::All | PasteWhat::Formulas) {
             self.names_follow(src_sheet, src, dst_sheet, true);
         }
-        self.paste_special_impl(src_sheet, src, dst_sheet, dst, spec)
+        let r = self.paste_special_impl(src_sheet, src, dst_sheet, dst, spec);
+        if r.is_ok()
+            && matches!(spec.what, PasteWhat::All | PasteWhat::Formats)
+            && (spec.op == PasteOp::None || spec.what == PasteWhat::Formats)
+            && !spec.skip_blanks
+        {
+            self.paste_merges(src_sheet, src, dst_sheet, dst, spec.transpose);
+        }
+        r
+    }
+
+    fn paste_merges(&mut self, ss: SheetId, src: Rect, ds: SheetId, dst: Rect, transpose: bool) {
+        let ms: Vec<Rect> = self
+            .merges(ss)
+            .into_iter()
+            .filter(|m| src.contains(m.r0, m.c0))
+            .map(|m| Rect::new(m.r0, m.c0, m.r1.min(src.r1), m.c1.min(src.c1)))
+            .filter(|m| !m.is_cell())
+            .collect();
+        if ms.is_empty() {
+            return;
+        }
+        let (lr, lc) = if transpose {
+            (src.cols(), src.rows())
+        } else {
+            (src.rows(), src.cols())
+        };
+        let ok_r = dst.rows().is_multiple_of(lr) || dst.rows() == 1;
+        let ok_c = dst.cols().is_multiple_of(lc) || dst.cols() == 1;
+        let (reps_r, reps_c) = if ok_r && ok_c {
+            ((dst.rows() / lr).max(1), (dst.cols() / lc).max(1))
+        } else {
+            (1, 1)
+        };
+        for rr in 0..reps_r {
+            for rc in 0..reps_c {
+                let (br, bc) = (dst.r0 + rr * lr, dst.c0 + rc * lc);
+                for m in &ms {
+                    let (i0, j0, i1, j1) =
+                        (m.r0 - src.r0, m.c0 - src.c0, m.r1 - src.r0, m.c1 - src.c0);
+                    let r = if transpose {
+                        Rect::new(br + j0, bc + i0, br + j1, bc + i1)
+                    } else {
+                        Rect::new(br + i0, bc + j0, br + i1, bc + j1)
+                    };
+                    self.put_merge(ds, r);
+                }
+            }
+        }
     }
 
     fn paste_special_impl(
@@ -367,6 +459,38 @@ impl Workbook {
         } else {
             (src.rows(), src.cols())
         };
+
+        let mut dst = dst;
+        let mut keep_merge_one = false;
+        let mut dst_merge: Option<Rect> = None;
+        if spec.what != PasteWhat::Values && dst.is_cell() {
+            dst_merge = self
+                .merges(dst_sheet)
+                .into_iter()
+                .find(|m| m.contains(dst.r0, dst.c0));
+        }
+        if let Some(m) = dst_merge {
+            if spec.what == PasteWhat::All && lr == 1 && lc == 1 {
+                keep_merge_one = true;
+                dst = Rect::new(m.r0, m.c0, m.r0, m.c0);
+            } else if spec.what == PasteWhat::Formats {
+                dst = m;
+            } else {
+                let dim = |s: u32, l: u32| {
+                    if s < l {
+                        Some(l)
+                    } else if s.is_multiple_of(l) {
+                        Some(s)
+                    } else {
+                        None
+                    }
+                };
+                let (Some(pr), Some(pc)) = (dim(m.rows(), lr), dim(m.cols(), lc)) else {
+                    return Err(crate::merge::merged_cell());
+                };
+                dst = Rect::new(m.r0, m.c0, m.r0 + pr - 1, m.c0 + pc - 1);
+            }
+        }
 
         let ok_r = dst.rows().is_multiple_of(lr) || dst.rows() == 1;
         let ok_c = dst.cols().is_multiple_of(lc) || dst.cols() == 1;
@@ -468,7 +592,14 @@ impl Workbook {
             }
         }
         let orig_tables: Vec<Rect> = self.tables.iter().map(|t| t.rect).collect();
+        let (unmerge, suspend) =
+            self.guard_paste_merges(dst_sheet, target, dst, keep_merge_one, spec)?;
         let arrays = self.paste_special_arrays(src_sheet, src, dst_sheet, target, spec)?;
+        for m in unmerge {
+            self.remove_merge(dst_sheet, m);
+        }
+
+        self.suspend_merges(dst_sheet, &suspend, true);
         let mut plan: Vec<(CellAddr, Act)> = Vec::new();
         let mut fmt_pairs: Vec<(CellAddr, CellAddr)> = Vec::new();
         for rr in 0..reps_r {
@@ -488,6 +619,7 @@ impl Workbook {
                         let skipped = spec.skip_blanks && self.src_blank(from);
                         if spec.what != PasteWhat::Values
                             && spec.what != PasteWhat::Formulas
+                            && !keep_merge_one
                             && !skipped
                         {
                             fmt_pairs.push((from, to));
@@ -554,11 +686,26 @@ impl Workbook {
         {
             self.fmt_copy_pairs(&fmt_pairs);
         }
+
+        if spec.what == PasteWhat::Formats {
+            let over: Vec<crate::workbook::FormulaId> = self
+                .formula_ids()
+                .filter(|&f| {
+                    let a = self.formula(f).addr;
+                    a.sheet == dst_sheet && target.contains(a.row, a.col)
+                })
+                .collect();
+            for f in over {
+                calc::mark_dirty(self, f);
+            }
+        }
+        self.suspend_merges(dst_sheet, &suspend, false);
         self.settings.mode = mode;
         if mode == CalcMode::Automatic {
             let r = calc::recalc(self);
             report.evaluations = r.evaluations;
             report.circular = r.circular;
+            report.add_sheets(&r);
             report.changed.extend(r.changed);
         }
 

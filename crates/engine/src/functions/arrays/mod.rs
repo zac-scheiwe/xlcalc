@@ -336,7 +336,7 @@ fn normalize_formula(sheet_name: impl Fn(&str) -> Option<String>, text: &str) ->
     use crate::parser::ast::SheetSpec;
     use crate::parser::lexer::{Lexer, Tok};
     let body = text.strip_prefix('=').unwrap_or(text);
-    let Ok(tokens) = Lexer::new(body).tokenize() else {
+    let Ok(tokens) = Lexer::new(body, &|_| true).tokenize() else {
         return text.to_string();
     };
     let chars: Vec<char> = body.chars().collect();

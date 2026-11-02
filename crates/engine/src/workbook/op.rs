@@ -6,6 +6,8 @@ use super::Workbook;
 pub(crate) enum Op {
     NoAutoExpand,
 
+    SeriesAutofill,
+
     DeferPasteRecalc,
 
     HoldIter,

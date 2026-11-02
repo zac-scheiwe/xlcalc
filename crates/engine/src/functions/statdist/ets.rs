@@ -998,7 +998,7 @@ fn train(y0: &[f64], seasonality: usize) -> Model {
             let mut j = p;
             while j + 2 * m < k {
                 cnt += 1;
-                sum = sub(add(sum, y[j - 1 + m / 2]), t[j]);
+                sum = sub(add(sum, y[j + m / 2 - 1]), t[j]);
                 j += m;
             }
             let avg = if cnt > 0 { div(sum, cnt as f64) } else { 0.0 };

@@ -1,0 +1,222 @@
+{
+ "check_format": true,
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "typel",
+   "cell": "Sheet1!A1",
+   "input": "١.٢٣٤٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A2",
+   "input": "١.٢٣٤٥٦٧٨٩٠١"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A3",
+   "input": "١.٢٣٤٥٦٧٨٩٠١٢٣٤٥٦"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A4",
+   "input": "١.٢٣٤٥٦٧٨٩٠١٢٣٤٥٦٧٨٩٠١"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A5",
+   "input": "١.٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A6",
+   "input": "5.١00"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A7",
+   "input": "፩٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A8",
+   "input": "٥፪"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A9",
+   "input": "١/١/٢٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A10",
+   "input": "٣١ Dec ٩٩"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A11",
+   "input": "١ Jan ٢٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A12",
+   "input": "Jan ٢٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A13",
+   "input": "١٢:٣٠ ٣١/٣/٢٠٢٤"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A14",
+   "input": "٣/٣١"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A15",
+   "input": "٣١/٣"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A16",
+   "input": "٢٠٢٤/٣/٣١"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A17",
+   "input": "٣/٣١/٢٠٢٤"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A18",
+   "input": "١/١/١٩٠٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A19",
+   "input": "١/١/١٨٩٩"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A20",
+   "input": "١/١/٢٠٢٤ ١:٣٠:٤٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A21",
+   "input": "١/١/٢٠٢٤ ١:٣٠ PM"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A22",
+   "input": "١ Jan ٢٠٢٠ ١:٣٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A23",
+   "input": "٣١ Dec ٩٩٩٩"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A24",
+   "input": "١.٥%"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A25",
+   "input": "٠.٠٠١%"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A26",
+   "input": "١,٠٠٠.٥%"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A27",
+   "input": "$١,٠٠٠"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A28",
+   "input": "$١.٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A29",
+   "input": "-$١"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A30",
+   "input": "١,٠٠٠e2"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A31",
+   "input": "١.٥e٣"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A32",
+   "input": "٠٠.٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A33",
+   "input": "-.٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A34",
+   "input": "+٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A35",
+   "input": "+٥.٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A36",
+   "input": "- ٥"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A37",
+   "input": "٥-"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A38",
+   "input": "(٥.٥)"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A39",
+   "input": "(١,٠٠٠)"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A40",
+   "input": "(١,٠٠٠.٥)"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A41",
+   "input": "١,٠٠٠,"
+  },
+  {
+   "op": "typel",
+   "cell": "Sheet1!A42",
+   "input": "١ ٠٠٠"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A42"
+  }
+ ]
+}

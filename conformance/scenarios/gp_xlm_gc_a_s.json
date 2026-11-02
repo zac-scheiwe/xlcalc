@@ -1,0 +1,167 @@
+{
+ "sheets": [
+  "Host",
+  "Aa"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Host!B1",
+   "input": "12.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "hello"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B3",
+   "input": "=B1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B4",
+   "input": "=\"x\"&B2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B5",
+   "input": "1.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B6",
+   "input": "2*3"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B7",
+   "input": "TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B8",
+   "input": "=1/0"
+  },
+  {
+   "op": "format",
+   "range": "Host!B1",
+   "fmt": "#,##0.00"
+  },
+  {
+   "op": "format",
+   "range": "Host!B5",
+   "fmt": "0%"
+  },
+  {
+   "op": "format",
+   "range": "Host!B7",
+   "fmt": "@"
+  },
+  {
+   "op": "name",
+   "name": "xg_1",
+   "refers_to": "=GET.CELL(1,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_2",
+   "refers_to": "=GET.CELL(2,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_3",
+   "refers_to": "=GET.CELL(3,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_4",
+   "refers_to": "=GET.CELL(4,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_5",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_6",
+   "refers_to": "=GET.CELL(6,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_7",
+   "refers_to": "=GET.CELL(7,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_41",
+   "refers_to": "=GET.CELL(41,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_48",
+   "refers_to": "=GET.CELL(48,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_53",
+   "refers_to": "=GET.CELL(53,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=xg_1"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=xg_2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=xg_3"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=xg_4"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=xg_5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=xg_6"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=xg_7"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=xg_41"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=xg_48"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=xg_53"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A10"
+  }
+ ]
+}

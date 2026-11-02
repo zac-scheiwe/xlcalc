@@ -1,0 +1,1776 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2"
+  ],
+  "steps": [
+    {
+      "op": "om_put",
+      "path": "",
+      "prop": "DisplayAlerts",
+      "value": false
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('B1')",
+      "prop": "Value2",
+      "value": 5
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(2).Range('B1')",
+      "prop": "Value2",
+      "value": 6
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets",
+      "call": "Add",
+      "args": [
+        {
+          "missing": true
+        },
+        {
+          "missing": true
+        },
+        1,
+        -4109
+      ]
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Type"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Type"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets('Chart1')",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets('Chart1')",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Next"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Previous"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets",
+      "call": "Add",
+      "args": [
+        {
+          "missing": true
+        },
+        {
+          "missing": true
+        },
+        2,
+        -4109
+      ]
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Charts",
+      "call": "Add"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Worksheets",
+      "call": "Add"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Worksheets",
+      "call": "Add",
+      "args": [
+        {
+          "missing": true
+        },
+        {
+          "missing": true
+        },
+        1,
+        -4167
+      ]
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets('Sheet2')",
+      "call": "Activate"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D1')",
+      "prop": "Formula2Local",
+      "value": "=SHEETS()"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D1')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D1')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D2')",
+      "prop": "Formula2Local",
+      "value": "=SHEET(Sheet2!B1)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D2')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D2')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D3')",
+      "prop": "Formula2Local",
+      "value": "=SHEET(\"Chart1\")"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D3')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D3')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D4')",
+      "prop": "Formula2Local",
+      "value": "=SHEET(Chart1!A1)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D4')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D4')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D5')",
+      "prop": "Formula2Local",
+      "value": "=Chart1!A1"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D5')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D5')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D6')",
+      "prop": "Formula2Local",
+      "value": "=INDIRECT(\"Chart1!A1\")"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D6')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D6')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D7')",
+      "prop": "Formula2Local",
+      "value": "=ISREF(INDIRECT(\"Chart1!A1\"))"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D7')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D7')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D8')",
+      "prop": "Formula2Local",
+      "value": "=SUM(Sheet1:Sheet2!B1)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D8')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D8')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D9')",
+      "prop": "Formula2Local",
+      "value": "=SHEETS(Sheet1:Sheet2)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D9')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D9')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D10')",
+      "prop": "Formula2Local",
+      "value": "=ROW(Chart1!A1)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D10')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D10')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D11')",
+      "prop": "Formula2Local",
+      "value": "=COUNT(Chart1!A1:B2)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D11')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D11')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D12')",
+      "prop": "Formula2Local",
+      "value": "=SHEET()"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D12')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D12')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D13')",
+      "prop": "Formula2Local",
+      "value": "=CELL(\"address\",Chart1!A1)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D13')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D13')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D14')",
+      "prop": "Formula2Local",
+      "value": "=SHEET(\"Chart2\")"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D14')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D14')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D15')",
+      "prop": "Formula2Local",
+      "value": "=SHEET(\"Nope\")"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D15')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D15')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets('Chart1')",
+      "call": "Move",
+      "args": [
+        {
+          "missing": true
+        },
+        {
+          "path": "ActiveWorkbook.Sheets('Sheet1')"
+        }
+      ]
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E1')",
+      "prop": "Formula2Local",
+      "value": "=SUM(Sheet1:Sheet2!B1)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E1')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E1')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E2')",
+      "prop": "Formula2Local",
+      "value": "=SHEETS(Sheet1:Sheet2)"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E2')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Sheets('Chart1')",
+      "prop": "Name",
+      "value": "Renamed"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D3')",
+      "prop": "Formula2Local"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('D3')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Sheets('Renamed')",
+      "prop": "Name",
+      "value": "Sheet2"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Sheets('Renamed')",
+      "prop": "Name",
+      "value": "chart2"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets('Renamed')",
+      "call": "Activate"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.ActiveChart",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets('Renamed')",
+      "call": "Delete"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_put",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E3')",
+      "prop": "Formula2Local",
+      "value": "=SHEETS()"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1).Range('E3')",
+      "prop": "Value2"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Sheets",
+      "call": "Add",
+      "args": [
+        {
+          "missing": true
+        },
+        {
+          "missing": true
+        },
+        1,
+        -4109
+      ]
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Charts(1)",
+      "call": "Delete"
+    },
+    {
+      "op": "om",
+      "path": "ActiveWorkbook.Charts",
+      "call": "Add"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts",
+      "prop": "Count"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveSheet",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(1)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(2)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(3)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(4)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Sheets(5)",
+      "prop": "Visible"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(1)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(2)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Worksheets(3)",
+      "prop": "Index"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Name"
+    },
+    {
+      "op": "om_get",
+      "path": "ActiveWorkbook.Charts(3)",
+      "prop": "Index"
+    }
+  ],
+  "fresh_excel": true
+}

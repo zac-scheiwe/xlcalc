@@ -64,10 +64,13 @@ pub fn cmp_numbers(a: f64, b: f64) -> Ordering {
     if a == b {
         return Ordering::Equal;
     }
-    let scale = a.abs().max(b.abs());
-    if (a - b).abs() <= scale * 1e-13 && round15(a) == round15(b) {
-        return Ordering::Equal;
-    }
+    let exp = |x: f64| ((x.to_bits() >> 52) & 0x7ff) as u32;
+    let near = ((exp(b) + 2) & 0x7ff).wrapping_sub(exp(a)) < 5;
+    let (a, b) = if near {
+        (round15(a), round15(b))
+    } else {
+        (a, b)
+    };
     a.partial_cmp(&b).unwrap_or(Ordering::Equal)
 }
 

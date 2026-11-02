@@ -1,0 +1,272 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "clear",
+   "range": "Sheet1!B5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!C4:C6",
+   "input": "=A1:A3+5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "=D4*2+C4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!A4:A5",
+   "input": "=E2:E3*2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "clear",
+   "range": "Sheet1!D6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "=B5*2+C2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "=COUNT(A4:A6)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "=INDEX(B3:C6,1)*3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!D4:D6",
+   "input": "=C2:C4*2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "=NA()"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=SUM(D2:D5)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=SUMPRODUCT(C4:C6)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "=COUNT(A4:B5)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=A3*2+E4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!C5:C6",
+   "input": "=B2:B3*2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!D4:D5",
+   "input": "=IF(C4:C5>2,C4:C5,-1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=COUNT(A3:C4)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!D5:D6",
+   "input": "=E3:E4+2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=SUM(B2:B3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=C6*2+C5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!C4:C6",
+   "input": "=A2:A4*2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SUMPRODUCT(B2:D4)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "=D1*2+E6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E6"
+  }
+ ]
+}

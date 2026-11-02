@@ -1,0 +1,84 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!A4:C5",
+   "input": "=A1:C2*10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:G8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=B4"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:G8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=A5+1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:G8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:G8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "0"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:G8"
+  }
+ ]
+}

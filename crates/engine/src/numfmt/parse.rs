@@ -1,3 +1,4 @@
+use super::dbnum::Db;
 use super::{Cmp, Color, NumberFormat};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -37,7 +38,7 @@ pub(crate) enum Tok {
 
     LitDigit(char),
 
-    Space,
+    Space(char),
 
     Fill(char),
     Ph(Ph),
@@ -62,7 +63,8 @@ pub(crate) enum Tok {
         lcid: Option<u32>,
         tag: Option<String>,
     },
-    Ignore,
+
+    DbNum(u8),
 
     Calendar(u8),
 }
@@ -97,7 +99,7 @@ pub(crate) enum DateTok {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Item {
     Lit(String),
-    Space,
+    Space(char),
     Fill(char),
     Int(Ph),
     Point,
@@ -198,6 +200,8 @@ pub(crate) struct Section {
     pub body: Body,
 
     pub digit_sys: Option<u8>,
+
+    pub db: Option<Db>,
 }
 
 fn number_prefix(s: &str) -> f64 {
@@ -335,7 +339,7 @@ fn parse_bracket(s: &str) -> Option<Tok> {
     }
     if let Some(n) = lower.strip_prefix("dbnum") {
         if matches!(n, "1" | "2" | "3" | "4") {
-            return Some(Tok::Ignore);
+            return Some(Tok::DbNum(n.as_bytes()[0] - b'0'));
         }
     }
     None
@@ -374,8 +378,7 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
                 i += 2;
             }
             '_' => {
-                cs.get(i + 1)?;
-                cur.push(Tok::Space);
+                cur.push(Tok::Space(*cs.get(i + 1)?));
                 i += 2;
             }
             '*' => {
@@ -517,7 +520,7 @@ fn literal_item(t: &Tok) -> Option<Item> {
         Tok::Lit(s) => Item::Lit(s.clone()),
         Tok::Colon => Item::Lit(":".into()),
         Tok::LitDigit(c) => Item::Lit(c.to_string()),
-        Tok::Space => Item::Space,
+        Tok::Space(c) => Item::Space(*c),
         Tok::Fill(c) => Item::Fill(*c),
         _ => return None,
     })
@@ -694,7 +697,7 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     let lit_between = |t: &Tok| {
         matches!(
             t,
-            Tok::Lit(_) | Tok::Space | Tok::Fill(_) | Tok::LitDigit(_)
+            Tok::Lit(_) | Tok::Space(_) | Tok::Fill(_) | Tok::LitDigit(_)
         )
     };
     let implicit = point.is_some_and(|p| {
@@ -956,7 +959,7 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
             Tok::Comma if i > 0 && matches!(toks[i - 1], Tok::Comma) => {}
             Tok::Comma => items.push(Item::Lit(",".into())),
             Tok::Slash => items.push(Item::Lit("/".into())),
-            Tok::Lit(_) | Tok::Space | Tok::Fill(_) | Tok::Colon => items.push(literal_item(t)?),
+            Tok::Lit(_) | Tok::Space(_) | Tok::Fill(_) | Tok::Colon => items.push(literal_item(t)?),
             _ => return None,
         }
         i += 1;
@@ -1074,9 +1077,17 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
             2 => DateTok::LeftM(n),
             _ => DateTok::LeftS(n),
         };
-        let preceded = items[..e]
-            .iter()
-            .any(|it| matches!(it, Item::Date(d) if !matches!(d, DateTok::SubSec(_))));
+        let preceded = items[..e].iter().any(|it| {
+            matches!(it, Item::Date(d) if !matches!(d, DateTok::SubSec(_) | DateTok::General(_)))
+        });
+
+        if !preceded {
+            for it in &mut items[..e] {
+                if let Item::Date(DateTok::General(serial)) = it {
+                    *serial = true;
+                }
+            }
+        }
         let larger_after = items[e + 1..]
             .iter()
             .any(|it| matches!(it, Item::Date(d) if clock_rank(d).is_some_and(|r| r > rank)));
@@ -1163,12 +1174,13 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
 fn compile_section(raw: Vec<Tok>) -> Option<Section> {
     let (mut color, mut cond, mut lcid, mut tag) = (None, None, None, None);
     let mut calendar: Option<u8> = None;
+    let mut dbnum: Option<u8> = None;
     let mut seen_locale = false;
 
     let implicit_general = !raw.is_empty()
         && raw
             .iter()
-            .all(|t| matches!(t, Tok::Color(_) | Tok::Cond(..) | Tok::Ignore));
+            .all(|t| matches!(t, Tok::Color(_) | Tok::Cond(..) | Tok::DbNum(_)));
     let mut toks = Vec::with_capacity(raw.len());
     for t in raw {
         match t {
@@ -1203,7 +1215,11 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
                     toks.push(Tok::Lit(currency));
                 }
             }
-            Tok::Ignore => {}
+            Tok::DbNum(n) => {
+                if dbnum.replace(n).is_some() {
+                    return None;
+                }
+            }
 
             Tok::Calendar(c) => {
                 if toks.iter().any(|t| !matches!(t, Tok::Calendar(_))) {
@@ -1220,6 +1236,10 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
     let hijri = calendar == Some(2);
 
     let digit_sys = lcid.map(|l| (l >> 24) as u8);
+    let db = match (dbnum, lcid) {
+        (Some(n), Some(l)) if l >> 24 == 0 => Db::new(n, l & 0xFFFF),
+        _ => None,
+    };
     let sys = match (lcid.map(|l| l & 0xFFFF), tag.as_deref()) {
         (Some(0xF800), _) | (_, Some("x-sysdate")) => Some(("dddd, d mmmm yyyy", None)),
         (Some(0xF400), _) | (_, Some("x-systime")) => Some(("h:mm:ss AM/PM", Some(0x0409))),
@@ -1282,6 +1302,9 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
     } else if has_date {
         compile_date(&toks, lcid, hijri)?
     } else if has_general {
+        if toks.iter().filter(|t| matches!(t, Tok::General)).count() > 1 {
+            return None;
+        }
         if has_digits || has(&|t| matches!(t, Tok::Exp(_) | Tok::Slash)) {
             return None;
         }
@@ -1329,6 +1352,7 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
         color,
         body,
         digit_sys,
+        db,
     })
 }
 

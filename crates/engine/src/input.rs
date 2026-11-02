@@ -110,3 +110,25 @@ pub(crate) fn auto_close_call(body: &str) -> std::borrow::Cow<'_, str> {
     }
     format!("{body})").into()
 }
+
+pub fn is_overflow_scientific(s: &str, env: &ParseEnv) -> bool {
+    let dec = env.locale.decimal_sep;
+    let Some(epos) = s.find(['e', 'E']) else {
+        return false;
+    };
+    let thousands = env.locale.thousands_sep;
+    let mant: String = s[..epos].chars().filter(|&c| c != thousands).collect();
+    let (m, e) = (mant.as_str(), s[epos + 1..].trim_start_matches(['+', '-']));
+    let digits = |t: &str| !t.is_empty() && t.chars().all(|c| c.is_ascii_digit());
+    let mant_ok = match m.split_once(dec) {
+        Some((a, b)) => (digits(a) || a.is_empty()) && (digits(b) || b.is_empty()) && m.len() > 1,
+        None => digits(m),
+    };
+
+    let grouped = s[..epos].contains(thousands);
+    let overflows = || {
+        let t = format!("{}e{}", m.replace(dec, "."), &s[epos + 1..]);
+        t.parse::<f64>().is_ok_and(f64::is_infinite)
+    };
+    mant_ok && digits(e) && (!grouped || overflows()) && parse_number_text(s, *env).is_none()
+}

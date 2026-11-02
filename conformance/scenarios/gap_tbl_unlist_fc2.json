@@ -1,0 +1,169 @@
+{
+ "sheets": [
+  "S1",
+  "S2"
+ ],
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "S1!B4",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C4",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D3",
+   "input": "c"
+  },
+  {
+   "op": "table",
+   "range": "S1!B3:D6",
+   "name": "Tbl"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D4",
+   "input": "=[@a]+[@b]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B3",
+   "input": "=Tbl[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C3",
+   "input": "=Tbl[[#Totals],[b]]+1"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D3",
+   "input": "=ABS(Tbl[[#Totals],[c]])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B4",
+   "input": "=IF(TRUE,Tbl[[#Totals],[a]],0)"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C4",
+   "input": "=SUM(Tbl[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D4",
+   "input": "=Tbl[[#Headers],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B5",
+   "input": "=Tbl[[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C5",
+   "input": "=Tbl[[#Totals],[a]:[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D5",
+   "input": "=Tbl[#Totals]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B6",
+   "input": "=Tbl[@a]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C6",
+   "input": "=INDEX(Tbl[[#Totals],[a]],1)"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D6",
+   "input": "=-Tbl[[#Totals],[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B7",
+   "input": "=Tbl[[#Totals],[a]]&\"x\""
+  },
+  {
+   "op": "set",
+   "cell": "S2!C7",
+   "input": "=N(Tbl[[#Totals],[a]])"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:F8"
+  },
+  {
+   "op": "table_unlist",
+   "name": "Tbl"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:F8"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:F8"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:F8"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B4",
+   "input": "100"
+  },
+  {
+   "op": "read",
+   "range": "S2!A1:F8"
+  }
+ ]
+}

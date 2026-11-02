@@ -1,0 +1,7 @@
+Private Sub Worksheet_Calculate()
+    On Error GoTo EH
+    CsLog.LogLine "C " & Me.Name
+    Exit Sub
+EH:
+    CsLog.LogLine "Sheet.Calculate error " & Err.Number
+End Sub

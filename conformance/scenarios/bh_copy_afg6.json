@@ -1,0 +1,30 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2",
+    "Sheet3"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!E5",
+      "input": "=D5+1"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!E5",
+      "to": "Sheet1!E4:E5",
+      "type": "default"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!E4",
+      "to": "Sheet1!A4:E4",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A4:E5"
+    }
+  ]
+}

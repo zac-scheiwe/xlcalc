@@ -3,11 +3,96 @@ use crate::{CellAddr, RecalcReport, Rect, SheetId, Value, Workbook};
 pub const VALUES_SEP: char = crate::view::VALUES_SEP;
 
 pub fn recalc(wb: &mut Workbook) -> RecalcReport {
-    crate::calc::recalc(wb)
+    wb.command(crate::Command::Calculate, crate::calc::recalc)
+}
+
+pub fn seed_value(wb: &mut Workbook, addr: CellAddr, v: Value) -> bool {
+    match wb.formula_at(addr) {
+        Some(fid) => {
+            wb.formula_mut(fid).value = v;
+            true
+        }
+        None => false,
+    }
+}
+
+pub fn restore_saved_value(wb: &mut Workbook, addr: CellAddr, v: Value) -> bool {
+    match wb.formula_at(addr) {
+        Some(fid) if !wb.formula(fid).value.is_array() && !v.is_array() => {
+            wb.formula_mut(fid).value = v;
+            true
+        }
+        _ => false,
+    }
+}
+
+pub fn open_like_excel(
+    wb: &mut Workbook,
+    saved: &[(CellAddr, Value)],
+    blank: &[CellAddr],
+    recalc: &[CellAddr],
+) {
+    wb.command(crate::Command::Calculate, |wb| {
+        let volatile: Vec<crate::workbook::FormulaId> = wb
+            .calc
+            .volatile
+            .iter()
+            .chain(&wb.calc.host_volatile)
+            .copied()
+            .collect();
+        for fid in volatile {
+            crate::calc::mark_dirty(wb, fid);
+        }
+        for &addr in recalc {
+            if let Some(fid) = wb.formula_at(addr) {
+                crate::calc::mark_dirty(wb, fid);
+            }
+        }
+        let names: Vec<String> = wb
+            .names
+            .iter()
+            .filter(|d| d.formula.volatile)
+            .map(|d| d.name.to_uppercase())
+            .collect();
+        let mut users = Vec::new();
+        for key in names {
+            users.clear();
+            wb.graph.dependents_of_name(&key, &mut users);
+            for fid in users.clone() {
+                crate::calc::mark_dirty(wb, fid);
+            }
+        }
+        let calculated: rustc_hash::FxHashSet<crate::workbook::FormulaId> =
+            wb.formula_ids().filter(|&f| wb.formula(f).dirty).collect();
+        let items = saved
+            .iter()
+            .map(|(a, v)| (*a, v.clone()))
+            .chain(blank.iter().map(|a| (*a, Value::from(""))));
+        for (addr, v) in items {
+            if let Some(fid) = wb.formula_at(addr) {
+                if !calculated.contains(&fid) && !wb.formula(fid).value.is_array() && !v.is_array()
+                {
+                    wb.formula_mut(fid).value = v;
+                }
+            }
+        }
+        crate::calc::recalc_with(wb, true)
+    });
+}
+
+pub fn host_volatile_cells(wb: &Workbook) -> Vec<CellAddr> {
+    let mut cells: Vec<CellAddr> = wb
+        .calc
+        .host_volatile
+        .iter()
+        .map(|&f| wb.formula(f).addr)
+        .collect();
+    cells.sort_unstable();
+    cells
 }
 
 pub fn ops_idle(wb: &Workbook) -> bool {
-    wb.ops_idle()
+    wb.ops_idle() && wb.notes.idle()
 }
 
 pub fn set_fixed_now(wb: &mut Workbook, now: Option<f64>) {

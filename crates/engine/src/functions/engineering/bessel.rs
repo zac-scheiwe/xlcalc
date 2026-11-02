@@ -1,15 +1,15 @@
 use super::atp::{self, R};
-use super::xlmath;
+use super::TRIG_LIMIT;
 use crate::eval::{EvalCtx, Operand};
 use crate::functions::args::val;
 use crate::value::{Value, XlError};
 use crate::x87::{add, div, exp, ln, mul, sqrt, sub};
 
 fn trig(x: f64) -> R<(f64, f64)> {
-    if x.abs() >= xlmath::TRIG_LIMIT {
+    if x.abs() >= TRIG_LIMIT {
         return Err(XlError::NUM);
     }
-    Ok((xlmath::sin(x), xlmath::cos(x)))
+    Ok((crate::x87::sin(x), crate::x87::cos(x)))
 }
 
 fn horner(y: f64, c: &[f64]) -> f64 {
@@ -565,7 +565,7 @@ pub fn bessel(ctx: &mut EvalCtx, ops: &[Operand], kind: Kind) -> Operand {
             let n = n as i32;
             let r = match kind {
                 Kind::J => {
-                    if x.abs() >= xlmath::TRIG_LIMIT {
+                    if x.abs() >= TRIG_LIMIT {
                         return Err(XlError::NUM);
                     }
                     bessj(n, x)?

@@ -1,3 +1,4 @@
+use super::locales_more;
 use crate::locale::{DAY_NAMES, MONTH_NAMES};
 
 pub struct DateNames {
@@ -377,6 +378,23 @@ pub fn names_for(lcid: Option<u32>) -> &'static DateNames {
         0x0439 => &LC_0439,
         0x0C07 => &LC_0C07,
         0x2C0A => &LC_2C0A,
+        0x0424 => &locales_more::LC_0424,
+        0x0425 => &locales_more::LC_0425,
+        0x0426 => &locales_more::LC_0426,
+        0x0427 => &locales_more::LC_0427,
+        0x0429 => &locales_more::LC_0429,
+        0x042B => &locales_more::LC_042B,
+        0x043E => &locales_more::LC_043E,
+        0x0441 => &locales_more::LC_0441,
+        0x044D => &locales_more::LC_044D,
+        0x0452 => &locales_more::LC_0452,
+        0x0456 => &locales_more::LC_0456,
+        0x0465 => &locales_more::LC_0465,
+        0x0468 => &locales_more::LC_0468,
+        0x046D => &locales_more::LC_046D,
+        0x047E => &locales_more::LC_047E,
+        0x0480 => &locales_more::LC_0480,
+        0x048C => &locales_more::LC_048C,
         _ => &EN_NZ,
     }
 }

@@ -1,0 +1,730 @@
+{
+  "steps": [
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,1)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,1)",
+      "prop": "Value2",
+      "value": "1"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(1)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(1)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,2)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,2)",
+      "prop": "Value2",
+      "value": "11111111111"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(2)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(2)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,3)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,3)",
+      "prop": "Value2",
+      "value": "111111111111"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(3)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(3)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,4)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,4)",
+      "prop": "Value2",
+      "value": "MMMMMMMM"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(4)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(4)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,5)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,5)",
+      "prop": "Value2",
+      "value": "MMMMMMMMM"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(5)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(5)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,6)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,6)",
+      "prop": "Value2",
+      "value": "123,456,789.00"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(6)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(6)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,7)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,7)",
+      "prop": "Value2",
+      "value": "18/05/1903 13:37"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(7)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(7)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,8)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,8)",
+      "prop": "Value2",
+      "value": "MMMMMMMMMM123457"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(8)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(8)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,9)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,9)",
+      "prop": "Value2",
+      "value": "abcdefghijklmnopqrstuvwxyz"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(9)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(9)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,10)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,10)",
+      "prop": "Value2",
+      "value": "The quick brown fox jumps over the lazy dog"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(10)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(10)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,11)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,11)",
+      "prop": "Value2",
+      "value": "WWWWWWWWWWWWWWWWWWWW"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(11)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(11)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,12)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,12)",
+      "prop": "Value2",
+      "value": "iiiiiiiiiiiiiiiiiiiiiiiiiiiiii"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(12)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(12)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,13)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,13)",
+      "prop": "Value2",
+      "value": "1111111111111111111111111111111111111111"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(13)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(13)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,14)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,14)",
+      "prop": "Value2",
+      "value": "MMMMMMMMMMMMMMMMMMMMMMMM"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(14)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(14)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,15)",
+      "prop": "NumberFormat",
+      "value": "@"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,15)",
+      "prop": "Value2",
+      "value": "111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(15)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(15)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,16)",
+      "prop": "Value2",
+      "value": 1234567.891
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(16)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,16)",
+      "prop": "NumberFormat",
+      "value": "General"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(16)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(16)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,16)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,17)",
+      "prop": "Value2",
+      "value": -0.000123456789
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(17)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,17)",
+      "prop": "NumberFormat",
+      "value": "General"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(17)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(17)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,17)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,18)",
+      "prop": "Value2",
+      "value": 1234567.891
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(18)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,18)",
+      "prop": "NumberFormat",
+      "value": "#,##0.00"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(18)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(18)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,18)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,19)",
+      "prop": "Value2",
+      "value": 44000
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(19)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,19)",
+      "prop": "NumberFormat",
+      "value": "mmmm d, yyyy"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(19)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(19)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,19)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,20)",
+      "prop": "Value2",
+      "value": 1234.5
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(20)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,20)",
+      "prop": "NumberFormat",
+      "value": "_(* #,##0.00_);_(* (#,##0.00);_(* \"-\"??_);_(@_)"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(20)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(20)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,20)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,21)",
+      "prop": "Value2",
+      "value": 1234.5
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(21)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,21)",
+      "prop": "NumberFormat",
+      "value": "0.00 * "
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(21)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(21)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,21)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,22)",
+      "prop": "Value2",
+      "value": 5
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(22)",
+      "prop": "ColumnWidth",
+      "value": 2
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,22)",
+      "prop": "NumberFormat",
+      "value": "\"a long literal prefix here \"0"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(22)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(22)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,22)",
+      "prop": "Text"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,23)",
+      "prop": "Value2",
+      "value": true
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(23)",
+      "prop": "ColumnWidth",
+      "value": 1
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(23)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(23)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,24)",
+      "prop": "Formula",
+      "value": "=REPT(\"ab\",20)"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(2,24)",
+      "prop": "Value2",
+      "value": "short"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(24)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(24)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Columns(25)",
+      "prop": "ColumnWidth",
+      "value": 20
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(25)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(25)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,26)",
+      "prop": "Value2",
+      "value": "x"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,27)",
+      "prop": "Value2",
+      "value": "a fairly long text"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Cells(1,26)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Range(Worksheets('Sheet1').Cells(1,26),Worksheets('Sheet1').Cells(1,27)).Columns",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(26)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(27)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,28)",
+      "prop": "Value2",
+      "value": "long text in row one only"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(5,28)",
+      "prop": "Value2",
+      "value": "hi"
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Range(Worksheets('Sheet1').Cells(5,28),Worksheets('Sheet1').Cells(6,28)).Columns",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(28)",
+      "prop": "ColumnWidth"
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,29)",
+      "prop": "Value2",
+      "value": 44000
+    },
+    {
+      "op": "om",
+      "path": "Worksheets('Sheet1').Columns(29)",
+      "call": "AutoFit",
+      "flags": 1
+    },
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Cells(1,29)",
+      "prop": "NumberFormat",
+      "value": "mmmm d, yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Columns(29)",
+      "prop": "ColumnWidth"
+    }
+  ]
+}

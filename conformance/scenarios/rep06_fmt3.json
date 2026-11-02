@@ -1,0 +1,173 @@
+{
+  "sheets": [
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5"
+  ],
+  "check_all_formats": true,
+  "steps": [
+    {
+      "op": "set",
+      "cell": "h1!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "h1!B2",
+      "input": "1e3"
+    },
+    {
+      "op": "set",
+      "cell": "h2!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "h2!B2",
+      "input": "1e3"
+    },
+    {
+      "op": "set",
+      "cell": "h2!B3",
+      "input": "1e3"
+    },
+    {
+      "op": "format",
+      "range": "h3!B2:B3",
+      "fmt": "0.00E+00"
+    },
+    {
+      "op": "set",
+      "cell": "h3!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "h3!B2",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "h3!B3",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "h4!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "h4!B2",
+      "input": "1e3"
+    },
+    {
+      "op": "set",
+      "cell": "h5!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "h5!B2",
+      "input": "1e3"
+    },
+    {
+      "op": "set",
+      "cell": "h5!B2",
+      "input": "1000"
+    },
+    {
+      "op": "sort",
+      "range": "h2!B2:B4",
+      "keys": [
+        {
+          "key": 1,
+          "order": "desc"
+        }
+      ]
+    },
+    {
+      "op": "sort",
+      "range": "h3!B2:B4",
+      "keys": [
+        {
+          "key": 1,
+          "order": "desc"
+        }
+      ]
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "h4",
+      "at": 1,
+      "count": 1
+    },
+    {
+      "op": "replace",
+      "range": "h1!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "replace",
+      "range": "h2!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "replace",
+      "range": "h3!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "replace",
+      "range": "h4!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "replace",
+      "range": "h5!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "read",
+      "range": "h1!A1:B5"
+    },
+    {
+      "op": "read",
+      "range": "h2!A1:B5"
+    },
+    {
+      "op": "read",
+      "range": "h3!A1:B5"
+    },
+    {
+      "op": "read",
+      "range": "h4!A1:B5"
+    },
+    {
+      "op": "read",
+      "range": "h5!A1:B5"
+    }
+  ]
+}

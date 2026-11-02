@@ -55,21 +55,22 @@ pub fn unary(ctx: &EvalCtx, op: UnaryOp, v: Value) -> Value {
 
 pub fn percent(ctx: &EvalCtx, v: Value) -> Value {
     map1(v, |x| match ctx.to_number(x) {
-        Ok(n) => Value::num(n / 100.0),
+        Ok(n) => Value::num(crate::x87::div(n, 100.0)),
         Err(e) => Value::Error(e),
     })
 }
 
 fn arith(op: BinOp, a: f64, b: f64) -> Value {
+    use crate::x87;
     let r = match op {
-        BinOp::Add => a + b,
-        BinOp::Sub => a - b,
-        BinOp::Mul => number::flush_subnormal(a * b),
+        BinOp::Add => x87::add(a, b),
+        BinOp::Sub => x87::sub(a, b),
+        BinOp::Mul => number::flush_subnormal(x87::mul(a, b)),
         BinOp::Div => {
             if b == 0.0 {
                 return Value::Error(XlError::DIV0);
             }
-            number::flush_subnormal(a / b)
+            number::flush_subnormal(x87::div(a, b))
         }
         BinOp::Pow => return power(a, b),
         _ => unreachable!(),

@@ -1,0 +1,366 @@
+{
+  "sheets": [
+    "i1",
+    "i2",
+    "i3",
+    "i4"
+  ],
+  "steps": [
+    {
+      "op": "mode",
+      "value": "manual"
+    },
+    {
+      "op": "set",
+      "cell": "i1!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "i1!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "i1!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "i1!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "i1!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "i1!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "i1!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "i1!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "i1!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "i1!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "i1!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "i1!A1:C5",
+      "name": "Ti1"
+    },
+    {
+      "op": "set",
+      "cell": "i1!B2",
+      "input": "=COUNT(A1:C5)"
+    },
+    {
+      "op": "read",
+      "range": "i1!A1:D8"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "i1",
+      "at": 3,
+      "count": 1
+    },
+    {
+      "op": "read",
+      "range": "i1!A1:D8"
+    },
+    {
+      "op": "calc"
+    },
+    {
+      "op": "read",
+      "range": "i1!A1:D8"
+    },
+    {
+      "op": "set",
+      "cell": "i2!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "i2!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "i2!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "i2!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "i2!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "i2!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "i2!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "i2!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "i2!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "i2!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "i2!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "i2!A1:C5",
+      "name": "Ti2"
+    },
+    {
+      "op": "set",
+      "cell": "i2!B2",
+      "input": "=A2*2"
+    },
+    {
+      "op": "read",
+      "range": "i2!A1:D8"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "i2",
+      "at": 3,
+      "count": 1
+    },
+    {
+      "op": "read",
+      "range": "i2!A1:D8"
+    },
+    {
+      "op": "calc"
+    },
+    {
+      "op": "read",
+      "range": "i2!A1:D8"
+    },
+    {
+      "op": "set",
+      "cell": "i3!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "i3!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "i3!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "i3!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "i3!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "i3!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "i3!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "i3!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "i3!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "i3!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "i3!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "i3!A1:C5",
+      "name": "Ti3"
+    },
+    {
+      "op": "set",
+      "cell": "i3!B2",
+      "input": "=SUM(A$2:A$5)"
+    },
+    {
+      "op": "read",
+      "range": "i3!A1:D8"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "i3",
+      "at": 4,
+      "count": 1
+    },
+    {
+      "op": "read",
+      "range": "i3!A1:D8"
+    },
+    {
+      "op": "set",
+      "cell": "i3!A4",
+      "input": "7"
+    },
+    {
+      "op": "read",
+      "range": "i3!A1:D8"
+    },
+    {
+      "op": "calc"
+    },
+    {
+      "op": "read",
+      "range": "i3!A1:D8"
+    },
+    {
+      "op": "set",
+      "cell": "i4!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "i4!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "i4!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "i4!A2",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "i4!C2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "i4!A3",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "i4!C3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "i4!A4",
+      "input": "40"
+    },
+    {
+      "op": "set",
+      "cell": "i4!C4",
+      "input": "x4"
+    },
+    {
+      "op": "set",
+      "cell": "i4!A5",
+      "input": "50"
+    },
+    {
+      "op": "set",
+      "cell": "i4!C5",
+      "input": "x5"
+    },
+    {
+      "op": "table",
+      "range": "i4!A1:C5",
+      "name": "Ti4"
+    },
+    {
+      "op": "set",
+      "cell": "i4!B2",
+      "input": "=COUNT(A1:C5)"
+    },
+    {
+      "op": "read",
+      "range": "i4!A1:D8"
+    },
+    {
+      "op": "set",
+      "cell": "i4!A6",
+      "input": "1"
+    },
+    {
+      "op": "read",
+      "range": "i4!A1:D8"
+    },
+    {
+      "op": "calc"
+    },
+    {
+      "op": "read",
+      "range": "i4!A1:D8"
+    }
+  ]
+}

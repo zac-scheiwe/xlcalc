@@ -1,0 +1,205 @@
+{
+ "sheets": [
+  "Host",
+  "Aa"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Host!B1",
+   "input": "12.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "hello"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B3",
+   "input": "=B1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B4",
+   "input": "=\"x\"&B2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B5",
+   "input": "1.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B6",
+   "input": "2*3"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B7",
+   "input": "TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B8",
+   "input": "=1/0"
+  },
+  {
+   "op": "format",
+   "range": "Host!B1",
+   "fmt": "#,##0.00"
+  },
+  {
+   "op": "format",
+   "range": "Host!B5",
+   "fmt": "0%"
+  },
+  {
+   "op": "format",
+   "range": "Host!B7",
+   "fmt": "@"
+  },
+  {
+   "op": "name",
+   "name": "xd_5",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xd_53",
+   "refers_to": "=GET.CELL(53,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xd_7",
+   "refers_to": "=GET.CELL(7,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xd_6",
+   "refers_to": "=GET.CELL(6,INDIRECT(\"R3C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xd_ev",
+   "refers_to": "=EVALUATE(INDIRECT(\"R6C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xd_rel",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"rc[1]\",FALSE))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=xd_5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=xd_53"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=xd_7"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=xd_6"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=xd_ev"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=xd_rel"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=xd_5+1"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A8"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B1",
+   "input": "99"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A8"
+  },
+  {
+   "op": "format",
+   "range": "Host!B1",
+   "fmt": "0.0"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A8"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A8"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B6",
+   "input": "4*4"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A8"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "7"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A8"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Host",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A9"
+  },
+  {
+   "op": "mode",
+   "value": "manual"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "123"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A9"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A9"
+  }
+ ]
+}

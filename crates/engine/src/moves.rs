@@ -1,3 +1,4 @@
+use crate::workbook::{notice, Command};
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
@@ -421,13 +422,70 @@ pub(crate) struct PasteInfo {
 }
 
 impl Workbook {
+    fn cut_column_readers(
+        &self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        moved: &rustc_hash::FxHashMap<FormulaId, CellAddr>,
+    ) -> Vec<FormulaId> {
+        let mut read: Vec<Rect> = Vec::new();
+        for fid in self.formula_ids() {
+            let f = self.formula(fid);
+            if f.addr.sheet != src_sheet
+                || moved.contains_key(&fid)
+                || f.addr.col < src.c0
+                || f.addr.col > src.c1
+            {
+                continue;
+            }
+            for p in &f.precedents {
+                match p {
+                    crate::graph::Prec::Cell(s, r, c) if *s == dst_sheet => {
+                        read.push(Rect::new(*r, *c, *r, *c))
+                    }
+                    crate::graph::Prec::Range(s, x) if *s == dst_sheet => read.push(*x),
+                    _ => {}
+                }
+            }
+        }
+        if read.is_empty() {
+            return Vec::new();
+        }
+        self.formula_ids()
+            .filter(|&g| {
+                let a = self.formula(g).addr;
+                a.sheet == dst_sheet && read.iter().any(|x| x.contains(a.row, a.col))
+            })
+            .collect()
+    }
+
     pub fn move_range(
         &mut self,
         src_sheet: SheetId,
         src: Rect,
         dst: CellAddr,
     ) -> Result<RecalcReport, EditError> {
-        self.move_range_body(src_sheet, src, dst)
+        self.command(Command::Cut, |wb| {
+            notice::note_cut(wb, src_sheet, src, dst);
+            wb.move_range_run(src_sheet, src, dst)
+        })
+    }
+
+    fn move_range_run(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+    ) -> Result<RecalcReport, EditError> {
+        let r = self.move_range_body(src_sheet, src, dst);
+        if r.is_ok() {
+            self.notify_list_select(dst.sheet, dst.row, dst.col);
+            self.view_clipboard_op(dst.sheet, dst.row, dst.col);
+            self.view_touch_row_pub(src_sheet, src.r1);
+            self.view_touch_row_pub(dst.sheet, dst.row.saturating_add(src.rows() - 1));
+        }
+        r
     }
 
     fn move_range_body(
@@ -443,10 +501,20 @@ impl Workbook {
             dst.col.saturating_add(src.cols() - 1),
         );
         let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst.sheet, d);
+
+        let ending = self.calc_columns_covered(src_sheet, src);
         let r = self.move_range_raw(src_sheet, src, dst);
+        self.select_paste(dst.sheet, dst.row, dst.col);
+        if r.is_ok() {
+            self.end_calc_columns(&ending);
+        }
         if pending {
             self.restore_totals(src_sheet, src, Some(d));
             self.restore_totals(dst.sheet, d, Some(d));
+        }
+
+        if r.is_ok() {
+            self.notify_cell_changes(&[src_sheet, dst.sheet]);
         }
         r
     }
@@ -477,11 +545,9 @@ impl Workbook {
         if mv.ss == mv.ds && mv.dr == 0 && mv.dc == 0 {
             return Ok(RecalcReport::default());
         }
-        let dest = mv.dest();
-        if self.merge_intersects(src_sheet, &src) || self.merge_intersects(dst.sheet, &dest) {
-            return Err(EditError::OutOfScope("cut over merged cells"));
-        }
         self.names_follow(src_sheet, src, dst.sheet, false);
+        self.track_move(&mv);
+        let dest = mv.dest();
 
         let mut dt_moving: Vec<usize> = Vec::new();
         for (i, t) in self.data_tables.iter().enumerate() {
@@ -491,6 +557,14 @@ impl Workbook {
                     continue;
                 }
                 if !inside(&t.rect, &src) {
+                    let doomed: Vec<Rect> = self
+                        .merges(dst.sheet)
+                        .into_iter()
+                        .filter(|m| m.intersects(&dest))
+                        .collect();
+                    for m in doomed {
+                        self.remove_merge(dst.sheet, m);
+                    }
                     return Err(EditError::Compile(crate::datatable::PART_ERROR.into()));
                 }
                 dt_moving.push(i);
@@ -508,6 +582,7 @@ impl Workbook {
             dt_doomed.push(i);
         }
         self.guard_arrays_move(src_sheet, src, dst.sheet, dest)?;
+        self.move_merges(src_sheet, src, dst.sheet, dest)?;
         self.calc.spilling = self
             .sheets
             .iter()
@@ -527,6 +602,45 @@ impl Workbook {
                 .collect(),
             None => Vec::new(),
         };
+        let snapshot = self.formula_snapshot();
+
+        let spills: Vec<(SheetId, Rect)> = self
+            .formula_ids()
+            .filter_map(|f| {
+                let c = self.formula(f);
+                let (s, r, col) = (c.addr.sheet, c.addr.row, c.addr.col);
+                c.spill
+                    .filter(|_| {
+                        (s == src_sheet && src.contains(r, col))
+                            || (s == dst.sheet && dest.contains(r, col))
+                    })
+                    .map(|x| (s, x))
+            })
+            .collect();
+
+        let circ_dst = self
+            .calc
+            .circular
+            .iter()
+            .any(|&f| self.formula(f).addr.sheet == dst.sheet);
+        let cut_anchors: Vec<(FormulaId, Rect)> = self
+            .formula_ids()
+            .filter_map(|f| {
+                let c = self.formula(f);
+                (c.addr.sheet == src_sheet && src.contains(c.addr.row, c.addr.col))
+                    .then_some(c.spill.map(|r| (f, r)))
+                    .flatten()
+            })
+            .collect();
+        for (f, old) in cut_anchors {
+            if src_sheet == dst.sheet && crate::cse::inside(&old, &src) {
+                continue;
+            }
+            if let Some(sh) = self.sheet_mut(dst.sheet) {
+                let last = sh.cells.sticky_bounds().map_or(0, |b| b.r1).max(dest.r1);
+                sh.spills.note_cut_anchor(f, last, circ_dst);
+            }
+        }
 
         let moving: Vec<(u32, u32, Entry)> = {
             let sh = self.sheet_mut(src_sheet).unwrap();
@@ -678,6 +792,24 @@ impl Workbook {
             None,
             self.sheet_count() == 1,
         );
+        let mut reenter: Vec<(CellAddr, FormulaId)> =
+            new_addr.iter().map(|(f, a)| (*a, *f)).collect();
+        reenter.sort_by_key(|(a, _)| (a.sheet.0, a.row, a.col));
+        let reenter: Vec<FormulaId> = reenter.into_iter().map(|(_, f)| f).collect();
+        self.chain_reenter(&reenter);
+        let mut always: rustc_hash::FxHashSet<FormulaId> = new_addr.keys().copied().collect();
+        if dst.sheet != src_sheet {
+            always.extend(self.cut_column_readers(src_sheet, src, dst.sheet, &new_addr));
+        }
+        self.calc.relink_scope = Some(crate::structure::DirtyScope {
+            rects: [(src_sheet, src), (dst.sheet, dest)]
+                .into_iter()
+                .chain(spills)
+                .collect(),
+            moved: always,
+            dest: (dst.sheet != src_sheet).then_some(dst.sheet),
+            ..crate::structure::DirtyScope::new(src_sheet, snapshot)
+        });
         let mut report = self.relink_and_recalc();
         if self.settings.mode == crate::workbook::CalcMode::Manual {
             for fid in moved_blocked {
@@ -699,51 +831,8 @@ impl Workbook {
         }
         if !headers.is_empty() {
             headers.sort_by_key(|a| (a.sheet.0, a.row, a.col));
-            let cut_headers = headers.clone();
-            for a in headers {
-                let pasted = (a.sheet == dst.sheet && dest.contains(a.row, a.col))
-                    || self.tables.iter().any(|t| {
-                        t.totals
-                            && t.sheet == a.sheet
-                            && t.header_row() == Some(a.row)
-                            && (t.rect.c0..=t.rect.c1).contains(&a.col)
-                    });
-                if pasted && matches!(self.value(a), crate::value::Value::Blank) {
-                    let next = self.tables.iter().find_map(|t| {
-                        (t.sheet == a.sheet
-                            && t.header_row() == Some(a.row)
-                            && t.rect.c0 < a.col
-                            && a.col <= t.rect.c1)
-                            .then(|| {
-                                let i = (a.col - t.rect.c0) as usize;
-                                let others: Vec<String> = t
-                                    .columns
-                                    .iter()
-                                    .enumerate()
-                                    .filter(|(j, _)| *j != i)
-                                    .map(|(_, c)| c.clone())
-                                    .collect();
-                                crate::workbook::tables::next_header_name(
-                                    &t.columns[i - 1],
-                                    &others,
-                                )
-                            })
-                            .flatten()
-                    });
-                    if let Some(n) = next {
-                        self.sheet_mut(a.sheet).unwrap().cells.set(
-                            a.row,
-                            a.col,
-                            crate::workbook::Entry::Const(crate::value::Value::from(n.as_str())),
-                        );
-                        crate::calc::cell_changed(self, a);
-                    }
-                }
-                self.header_edited_in_cut(a);
-            }
-
             let mut done = Vec::new();
-            for a in cut_headers {
+            for a in headers {
                 if let Some(ti) = self.tables.iter().position(|t| {
                     t.sheet == a.sheet
                         && t.header_row() == Some(a.row)
@@ -751,7 +840,8 @@ impl Workbook {
                 }) {
                     if !done.contains(&ti) {
                         done.push(ti);
-                        self.resync_table_headers(ti, None);
+                        let d = (self.tables[ti].sheet == dst.sheet).then_some(dest);
+                        self.resync_headers_after_cut(ti, d);
                     }
                 }
             }
@@ -836,13 +926,44 @@ impl Workbook {
 
     pub(crate) fn table_selected(&self, ti: usize) -> bool {
         let t = &self.tables[ti];
-        let (r, c) = self
-            .session
-            .selection
-            .get(&t.sheet)
-            .copied()
-            .unwrap_or((0, 0));
-        t.sheet == self.session.active && t.rect.contains(r, c)
+        let cell = if t.sheet == self.session.active {
+            Some(
+                self.session
+                    .selection
+                    .get(&t.sheet)
+                    .map_or((0, 0), |s| s.active),
+            )
+        } else {
+            self.session.fill_selected.get(&t.sheet).copied()
+        };
+        cell.is_some_and(|(r, c)| t.rect.contains(r, c))
+    }
+
+    pub(crate) fn notify_list_select(&mut self, sheet: SheetId, row: u32, col: u32) {
+        for t in self.tables.iter_mut().filter(|t| t.sheet == sheet) {
+            t.list_sel = t.rect.contains(row, col);
+        }
+    }
+
+    pub(crate) fn notify_list_insert(&mut self, sheet: SheetId, area: Rect) {
+        let (ar, ac) = self.active_cell_of(sheet);
+        for t in self.tables.iter_mut().filter(|t| t.sheet == sheet) {
+            t.list_sel = t.rect.intersects(&area) && t.rect.contains(ar, ac);
+        }
+    }
+
+    pub(crate) fn notify_list_area(&mut self, sheet: SheetId, area: Rect) {
+        for t in self.tables.iter_mut().filter(|t| t.sheet == sheet) {
+            t.list_sel = t.rect.intersects(&area);
+        }
+    }
+
+    pub(crate) fn select_paste(&mut self, sheet: SheetId, row: u32, col: u32) {
+        if sheet != self.session.active {
+            if let Some(p) = self.session.fill_selected.get_mut(&sheet) {
+                *p = (row, col);
+            }
+        }
     }
 
     pub(crate) fn first_busy_row(&self, sheet: SheetId, area: Rect) -> Option<u32> {
@@ -1080,7 +1201,11 @@ impl Workbook {
         let sheet = self.tables[ti].sheet;
         let name = self.tables[ti].name.clone();
         self.tables[ti].rect = rect;
+        if rows && rect.r1 > old.r1 {
+            self.tables[ti].list_sel = true;
+        }
         if rows {
+            let snapshot = self.formula_snapshot();
             let _ = self.grow_exact_refs(ti, old, rect.r1 - old.r1, header_too);
 
             let mut filled: Vec<CellAddr> = Vec::new();
@@ -1133,11 +1258,43 @@ impl Workbook {
                     }
                 }
             }
+
+            let spared = if self.sbr_in_command(crate::workbook::notice::Command::TableResize) {
+                let c0 = self.tables[ti].rect.c0;
+                let mut fresh: Vec<u16> = Vec::new();
+                for a in &filled {
+                    let k = 5 * (a.col - c0 + 1) as u16;
+                    fresh.extend([k, k + 1, 0, 1]);
+                }
+                self.sbr_grow_spared(ti, &fresh)
+            } else {
+                Default::default()
+            };
+            let key = crate::workbook::tables::table_dep_key(&name);
+            crate::calc::name_changed_sparing(self, &key, &spared);
+            crate::calc::name_changed_sparing(self, &name.to_uppercase(), &spared);
+            let new_rows = Rect::new(old.r1 + 1, rect.c0, rect.r1, rect.c1);
+            let rects: Vec<(SheetId, Rect)> = self
+                .sheet(sheet)
+                .map(|sh| {
+                    sh.cells
+                        .iter_rect(new_rows)
+                        .map(|(r, c, _)| (sheet, Rect::new(r, c, r, c)))
+                        .collect()
+                })
+                .unwrap_or_default();
+            self.calc.relink_scope = Some(crate::structure::DirtyScope {
+                rects,
+                spared,
+                keep_chain: true,
+                ..crate::structure::DirtyScope::new(sheet, snapshot)
+            });
             let mut report = self.relink_and_recalc();
 
             if self.settings.mode != crate::workbook::CalcMode::Automatic && !filled.is_empty() {
                 let r = crate::calc::recalc_only(self, &filled);
                 report.evaluations += r.evaluations;
+                report.add_sheets(&r);
                 report.changed.extend(r.changed);
             }
             return report;
@@ -1166,6 +1323,7 @@ impl Workbook {
                 self.table_calc_fill(a);
             }
         }
+        self.extend_col_formats(ti);
         self.table_changed(&name)
     }
 }

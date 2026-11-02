@@ -1,0 +1,15 @@
+[package]
+name = "xlcalc-om"
+description = "Excel's object model over the xlcalc engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+xlcalc.workspace = true
+xlcalc-variant = { path = "../variant" }
+xlcalc-xlsx = { path = "../xlsx" }
+xlcalc-vba = { path = "../vba" }
+stacker = "0.1"
+xlcalc-vbaproject = { path = "../vbaproject" }

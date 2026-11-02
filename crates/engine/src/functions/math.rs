@@ -112,7 +112,7 @@ pub const DEFS: &[FnDef] = &[
             }
         })
     }),
-    scalar("ATAN", 1, 1, |c, a| m1(c, a, crate::xmath::atan)),
+    scalar("ATAN", 1, 1, |c, a| m1(c, a, crate::x87::atan)),
     scalar("ATAN2", 2, 2, atan2),
     scalar("SINH", 1, 1, |c, a| m1(c, a, crate::xmath::sinh)),
     scalar("COSH", 1, 1, |c, a| m1(c, a, crate::xmath::cosh)),
@@ -507,7 +507,7 @@ fn ceiling(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if x > 0.0 && s < 0.0 {
             return Err(XlError::NUM);
         }
-        let q = x / s;
+        let q = crate::x87::div(x, s);
         let r = round_decimal(q, 0, RoundMode::Up);
 
         let r = if x < 0.0 && s > 0.0 {
@@ -515,7 +515,7 @@ fn ceiling(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         } else {
             r
         };
-        Ok(Value::num(r * s))
+        Ok(Value::num(crate::x87::mul(r, s)))
     })())
 }
 
@@ -532,13 +532,13 @@ fn floor(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if x > 0.0 && s < 0.0 {
             return Err(XlError::NUM);
         }
-        let q = x / s;
+        let q = crate::x87::div(x, s);
         let r = if x < 0.0 && s > 0.0 {
             round_decimal(q, 0, RoundMode::Up)
         } else {
             round_decimal(q, 0, RoundMode::Down)
         };
-        Ok(Value::num(r * s))
+        Ok(Value::num(crate::x87::mul(r, s)))
     })())
 }
 
@@ -591,13 +591,13 @@ fn ceiling_math(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if s == 0.0 || x == 0.0 {
             return Ok(Value::Number(0.0));
         }
-        let q = x / s;
+        let q = crate::x87::div(x, s);
         let r = if x < 0.0 && mode != 0.0 {
             round_decimal(q, 0, RoundMode::Up)
         } else {
             ceil_tol(q)
         };
-        Ok(Value::num(r * s))
+        Ok(Value::num(crate::x87::mul(r, s)))
     })())
 }
 
@@ -609,13 +609,13 @@ fn floor_math(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if s == 0.0 || x == 0.0 {
             return Ok(Value::Number(0.0));
         }
-        let q = x / s;
+        let q = crate::x87::div(x, s);
         let r = if x < 0.0 && mode != 0.0 {
             round_decimal(q, 0, RoundMode::Down)
         } else {
             floor_tol(q)
         };
-        Ok(Value::num(r * s))
+        Ok(Value::num(crate::x87::mul(r, s)))
     })())
 }
 
@@ -626,9 +626,9 @@ fn precise(ctx: &mut EvalCtx, a: &[Value], up: bool) -> Value {
         if s == 0.0 || x == 0.0 {
             return Ok(Value::Number(0.0));
         }
-        let q = x / s;
+        let q = crate::x87::div(x, s);
         let r = if up { ceil_tol(q) } else { floor_tol(q) };
-        Ok(Value::num(r * s))
+        Ok(Value::num(crate::x87::mul(r, s)))
     })())
 }
 
@@ -714,7 +714,7 @@ fn fact(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let mut acc = 1.0f64;
         let mut i = n;
         while i >= 2.0 {
-            acc *= i;
+            acc = crate::x87::mul(acc, i);
             if !acc.is_finite() {
                 return Err(XlError::NUM);
             }
@@ -735,7 +735,7 @@ fn fact_double(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             let mut acc = 1.0f64;
             let mut i = n;
             while i > 1.0 {
-                acc *= i;
+                acc = crate::x87::mul(acc, i);
                 if !acc.is_finite() {
                     return Err(XlError::NUM);
                 }
@@ -789,7 +789,7 @@ fn permut(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let mut acc = 1.0f64;
         let mut i = k - 1.0;
         while i >= 0.0 {
-            acc *= n - i;
+            acc = crate::x87::mul(acc, n - i);
             i -= 1.0;
         }
         Ok(Value::num(acc))

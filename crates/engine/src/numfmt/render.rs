@@ -1,4 +1,5 @@
 use super::calendars;
+use super::dbnum::Db;
 use super::decimal::{uint_digits, Dec};
 use super::general::{format_general_width, TEXT_GENERAL_WIDTH};
 use super::locales::names_for;
@@ -152,10 +153,11 @@ pub(super) fn render_number(
     loc: &Locale,
     ds: DateSystem,
 ) -> Result<Rendered, XlError> {
-    let mut r = render_number_plain(f, x, loc, ds)?;
-
     let tag = f.sections.iter().find_map(|s| s.digit_sys);
-    let cjk_date = tag.is_some_and(|n| n >= 0x1B) && f.is_date();
+    let tag_db = tag.filter(|_| f.is_date()).and_then(Db::from_digit_tag);
+    let mut r = render_number_plain(f, x, loc, ds, tag_db)?;
+
+    let cjk_date = tag_db.is_some();
     if let (true, false, Some(d)) = (f.numeric > 0, cjk_date, tag.and_then(digit_system)) {
         r.text = r
             .text
@@ -178,10 +180,11 @@ fn render_number_plain(
     x: f64,
     loc: &Locale,
     ds: DateSystem,
+    tag_db: Option<Db>,
 ) -> Result<Rendered, XlError> {
     let (idx, auto_minus) = choose(f, x)?;
     let Some(idx) = idx else {
-        let g = format_general_width(x.abs(), TEXT_GENERAL_WIDTH);
+        let g = general_or_mark(x.abs());
         let text = if auto_minus && x < 0.0 {
             format!("-{g}")
         } else {
@@ -190,9 +193,11 @@ fn render_number_plain(
         return Ok(Rendered { text, color: None });
     };
     let sec: &Section = &f.sections[idx];
-    let (text, zero) = render_body(&sec.body, x.abs(), x < 0.0, loc, ds)?;
+    let (text, zero) = render_body(&sec.body, x.abs(), x < 0.0, loc, ds, sec.db.or(tag_db))?;
+
+    let auto_minus = auto_minus && !(ds == DateSystem::Vba && matches!(sec.body, Body::Date(_)));
     if auto_minus && x < 0.0 && zero {
-        return render_number_plain(f, -x, loc, ds);
+        return render_number_plain(f, -x, loc, ds, tag_db);
     }
     let text = if auto_minus && x < 0.0 && !zero {
         format!("-{text}")
@@ -259,8 +264,43 @@ fn push_literal(out: &mut String, it: &Item) {
             s.chars()
                 .map(|c| if c.is_ascii_digit() { shield(c) } else { c }),
         ),
-        Item::Space => out.push(' '),
+        Item::Space(c) if cell_mode() => {
+            out.push(SPACE_MARK);
+            out.push(*c);
+        }
+        Item::Space(_) => out.push(' '),
+        Item::Fill(c) if cell_mode() => {
+            out.push(FILL_MARK);
+            out.push(*c);
+        }
         _ => {}
+    }
+}
+
+pub(crate) const SPACE_MARK: char = '\u{E010}';
+pub(crate) const FILL_MARK: char = '\u{E011}';
+pub(crate) const GENERAL_MARK: char = '\u{E012}';
+
+thread_local! {
+    static CELL_MODE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+fn cell_mode() -> bool {
+    CELL_MODE.with(std::cell::Cell::get)
+}
+
+pub(super) fn with_cell_marks<R>(f: impl FnOnce() -> R) -> R {
+    CELL_MODE.with(|c| c.set(true));
+    let r = f();
+    CELL_MODE.with(|c| c.set(false));
+    r
+}
+
+fn general_or_mark(a: f64) -> String {
+    if cell_mode() {
+        GENERAL_MARK.to_string()
+    } else {
+        format_general_width(a, TEXT_GENERAL_WIDTH)
     }
 }
 
@@ -270,7 +310,9 @@ fn render_body(
     negative: bool,
     loc: &Locale,
     ds: DateSystem,
+    db: Option<Db>,
 ) -> Result<(String, bool), XlError> {
+    let digits = |(s, z): (String, bool)| (db.map_or(s.clone(), |d| d.positional(&s)), z);
     Ok(match body {
         Body::Literal(items) | Body::Text(items) => {
             let mut out = String::new();
@@ -283,20 +325,29 @@ fn render_body(
             let mut out = String::new();
             for it in items {
                 match it {
-                    Item::General => out.push_str(&format_general_width(a, TEXT_GENERAL_WIDTH)),
+                    Item::General => {
+                        let g = general_or_mark(a);
+                        out.push_str(&db.map_or(g.clone(), |d| d.words(a)));
+                    }
                     other => push_literal(&mut out, other),
                 }
             }
             (out, false)
         }
-        Body::Number(l) => render_fixed(l, a, loc),
-        Body::Sci(l) => (render_sci(l, a, loc), a == 0.0),
-        Body::Frac(l) => render_frac(l, a, loc)?,
+        Body::Number(l) => digits(render_fixed(l, a, loc)),
+        Body::Sci(l) => digits((render_sci(l, a, loc), a == 0.0)),
+        Body::Frac(l) => digits(render_frac(l, a, loc)?),
         Body::Date(l) => {
             if negative && !l.signed && ds == DateSystem::D1900 {
                 return Err(XlError::VALUE);
             }
-            render_date(l, a, ds, loc)?
+
+            let a = if ds == DateSystem::Vba && negative {
+                -a.floor() + (a - a.floor())
+            } else {
+                a
+            };
+            render_date(l, a, ds, loc, db)?
         }
     })
 }
@@ -939,6 +990,7 @@ fn render_date(
     x: f64,
     ds: DateSystem,
     loc: &Locale,
+    db: Option<Db>,
 ) -> Result<(String, bool), XlError> {
     let scale = 10i64.pow(l.subsec as u32);
     let per_day = 86_400 * scale;
@@ -987,7 +1039,7 @@ fn render_date(
     };
 
     let traced = (l.elapsed && x >= 0.0).then(|| set_num_cascade(x, l.subsec));
-    if l.needs_date && day as f64 > ds.max_serial() {
+    if l.needs_date && (day as f64 > ds.max_serial() || ds == DateSystem::Vba && day < -657_434) {
         return Err(XlError::VALUE);
     }
 
@@ -1073,6 +1125,17 @@ fn render_date(
 
     let stale = || set_num_cascade(x.abs(), l.subsec).stale;
     let left = |unit: u8| elapsed_head(x87::add(stale(), half_unit(l.subsec)), unit);
+    let fld = |s: String| db.map_or(s.clone(), |d| d.field(&s));
+    let pos = |s: String| db.map_or(s.clone(), |d| d.positional(&s));
+    let spell = |s: String| {
+        db.map_or(s.clone(), |d| {
+            if s.len() > 1 && s.starts_with('0') {
+                d.positional(&s)
+            } else {
+                d.words_int(&s)
+            }
+        })
+    };
     let mut out = String::new();
     for it in &l.items {
         let Item::Date(t) = it else {
@@ -1083,15 +1146,15 @@ fn render_date(
             DateTok::Year(_) if era_years => out.push_str(&format!("{:02}", era_year)),
             DateTok::Year(n) => {
                 if n <= 2 {
-                    out.push_str(&format!("{:02}", y.rem_euclid(100)));
+                    out.push_str(&fld(format!("{:02}", y.rem_euclid(100))));
                 } else {
-                    out.push_str(&y.to_string());
+                    out.push_str(&pos(y.to_string()));
                 }
             }
             DateTok::Month(n) => {
                 let m = (mo as usize).min(12) - 1;
                 match n {
-                    1 | 2 => out.push_str(&num(mo as i64, n)),
+                    1 | 2 => out.push_str(&fld(num(mo as i64, n))),
                     _ if cal_names.is_some() => out.push_str(calendars::month_name(
                         cal_names.unwrap(),
                         hebrew_leap,
@@ -1108,7 +1171,7 @@ fn render_date(
             DateTok::Day(n) => {
                 let wd = datetime::weekday_from_serial(ds, day) as usize;
                 match n {
-                    1 | 2 => out.push_str(&num(dd as i64, n)),
+                    1 | 2 => out.push_str(&fld(num(dd as i64, n))),
                     3 if cal_names.is_some() => out.push_str(cal_names.unwrap().days_abbr[wd]),
                     _ if cal_names.is_some() => out.push_str(cal_names.unwrap().days[wd]),
                     _ if l.hijri => out.push_str(HIJRI_DAYS[wd]),
@@ -1116,28 +1179,32 @@ fn render_date(
                     _ => out.push_str(names.days[wd]),
                 }
             }
-            DateTok::Hour(n) => out.push_str(&num(h24, n)),
-            DateTok::Hour12(n) => out.push_str(&num(hour12, n)),
-            DateTok::Minute(n) => out.push_str(&num(mi, n)),
-            DateTok::Second(n) => out.push_str(&num(s, n)),
+            DateTok::Hour(n) => out.push_str(&fld(num(h24, n))),
+            DateTok::Hour12(n) => out.push_str(&fld(num(hour12, n))),
+            DateTok::Minute(n) => out.push_str(&fld(num(mi, n))),
+            DateTok::Second(n) => out.push_str(&fld(num(s, n))),
             DateTok::SubSec(n) => {
                 let digits = format!("{:0w$}", sub, w = l.subsec as usize);
                 out.push(loc.decimal_sep);
-                out.push_str(&digits[..n as usize]);
+                out.push_str(&pos(digits[..n as usize].to_string()));
             }
             DateTok::ElapsedH(n) => {
-                out.push_str(&head_text(head(1, total_secs / 3600), n as usize))
+                out.push_str(&spell(head_text(head(1, total_secs / 3600), n as usize)))
             }
-            DateTok::ElapsedM(n) => out.push_str(&head_text(head(2, total_secs / 60), n as usize)),
-            DateTok::ElapsedS(n) => out.push_str(&head_text(head(3, total_secs), n as usize)),
-            DateTok::LeftH(n) => out.push_str(&head_text(left(1), n as usize)),
-            DateTok::LeftM(n) => out.push_str(&head_text(left(2), n as usize)),
-            DateTok::LeftS(n) => out.push_str(&head_text(left(3), n as usize)),
+            DateTok::ElapsedM(n) => {
+                out.push_str(&spell(head_text(head(2, total_secs / 60), n as usize)))
+            }
+            DateTok::ElapsedS(n) => {
+                out.push_str(&spell(head_text(head(3, total_secs), n as usize)))
+            }
+            DateTok::LeftH(n) => out.push_str(&spell(head_text(left(1), n as usize))),
+            DateTok::LeftM(n) => out.push_str(&spell(head_text(left(2), n as usize))),
+            DateTok::LeftS(n) => out.push_str(&spell(head_text(left(3), n as usize))),
             DateTok::General(serial) => {
                 let v = if serial { x } else { stale() };
-                out.push_str(&super::general::format_general_width(
-                    v,
-                    super::general::TEXT_GENERAL_WIDTH,
+                out.push_str(&db.map_or_else(
+                    || super::general::format_general_width(v, super::general::TEXT_GENERAL_WIDTH),
+                    |d| d.words(v),
                 ));
             }
             DateTok::AmPm => out.push_str(if h24 < 12 { names.am } else { names.pm }),

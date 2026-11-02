@@ -282,6 +282,8 @@ pub struct Array {
     pub data: Vec<Value>,
 
     pub lam_blank: bool,
+
+    pub scalar_slice: bool,
 }
 
 impl Array {
@@ -293,6 +295,7 @@ impl Array {
             cols,
             data,
             lam_blank: false,
+            scalar_slice: false,
         }
     }
 

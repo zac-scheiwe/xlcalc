@@ -1,0 +1,1 @@
+{"fresh_excel":true,"steps":[{"op":"setv","cell":"Sheet1!A9","value":{"t":"n","v":5}},{"op":"set","cell":"Sheet1!E3","input":"=D4:E5*2"},{"op":"read","range":"Sheet1!A1:F9"},{"op":"set","cell":"Sheet1!B1","input":"=A9*2+E4"},{"op":"read","range":"Sheet1!A1:F9"},{"op":"setv","cell":"Sheet1!A9","value":{"t":"n","v":6}},{"op":"read","range":"Sheet1!A1:F9"}]}

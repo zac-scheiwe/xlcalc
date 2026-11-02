@@ -375,7 +375,7 @@ fn convert_value(x: f64, from: &Parsed, to: &Parsed) -> R<f64> {
         }
         let mut r = temperature(x, a, b);
         if to.dec != 0 && matches!(a, Temp::C | Temp::F | Temp::K | Temp::Rank) {
-            r /= pow10(to.dec);
+            r = x87::div(r, pow10(to.dec));
         }
         r
     } else {
@@ -396,10 +396,10 @@ fn convert_value(x: f64, from: &Parsed, to: &Parsed) -> R<f64> {
                 r = x87::div(r, pow10(to.dec));
             }
         } else if from.dec != to.dec {
-            r *= pow10(from.dec - to.dec);
+            r = x87::mul(r, pow10(from.dec - to.dec));
         }
         if from.bin != to.bin {
-            r *= 2f64.powi(from.bin - to.bin);
+            r = x87::mul(r, 2f64.powi(from.bin - to.bin));
         }
         r
     };

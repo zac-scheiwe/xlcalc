@@ -1,7 +1,9 @@
 use serde_json::Value as J;
-use xlcalc::testing::sheet_name_text;
-use xlcalc::{SheetId, Workbook};
+use xlcalc::Workbook;
+use xlcalc_om::flags;
+use xlcalc_variant::Variant;
 
+use super::omsteps::{self, Arg, OmSession};
 use super::{Outcome, Tally};
 
 pub fn norm_book(s: &str) -> String {
@@ -23,19 +25,6 @@ pub fn norm_book(s: &str) -> String {
     out
 }
 
-fn id(wb: &Workbook, name: &str) -> Option<SheetId> {
-    wb.sheet_by_name(name).map(|s| s.id)
-}
-
-fn before_of(wb: &Workbook, step: &J) -> Option<Option<SheetId>> {
-    if let Some(b) = step["before"].as_str() {
-        return id(wb, b).map(Some);
-    }
-    let a = id(wb, step["after"].as_str()?)?;
-    let p = wb.sheet_position(a)?;
-    Some((p + 1 < wb.sheet_count()).then(|| wb.sheet_at(p + 1).id))
-}
-
 fn verdict(tally: &mut Tally, ok: bool, what: impl FnOnce() -> String) {
     tally.add(if ok { Outcome::Exact } else { Outcome::Wrong }, what);
 }
@@ -46,59 +35,75 @@ fn strings(v: &J, f: impl Fn(&J) -> String) -> Vec<String> {
         .unwrap_or_default()
 }
 
-pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut Tally) -> bool {
-    let excel_err = !rec["error"].is_null();
+pub fn run(
+    om: &mut Option<OmSession>,
+    wb: &mut Workbook,
+    op: &str,
+    step: &J,
+    rec: &J,
+    n: usize,
+    tally: &mut Tally,
+) -> bool {
+    let sheet_path = |name: &str| format!("Worksheets({})", omsteps::quote(name));
     match op {
         "rename_sheet" | "delete_sheet" | "move_sheet" | "copy_sheet" => {
-            let Some(sid) = id(wb, step["sheet"].as_str().unwrap()) else {
-                verdict(tally, false, || format!("step {n}: no sheet for {op}"));
-                return true;
-            };
+            let path = sheet_path(step["sheet"].as_str().unwrap());
             let mut err: Option<String> = None;
+
+            let place: Vec<Arg> = match step["before"].as_str() {
+                Some(b) => vec![Arg::Path(sheet_path(b))],
+                None => vec![
+                    Arg::Missing,
+                    Arg::Path(sheet_path(step["after"].as_str().unwrap_or(""))),
+                ],
+            };
             match op {
                 "rename_sheet" => {
-                    err = wb
-                        .rename_sheet(sid, step["name"].as_str().unwrap())
-                        .err()
-                        .map(|e| e.to_string());
+                    let name = Variant::Bstr(step["name"].as_str().unwrap().to_string());
+                    err = omsteps::call(om, wb, &path, "Name", flags::PUT, &[name]).err();
                 }
                 "delete_sheet" => {
-                    err = wb.delete_sheet(sid).err().map(|e| e.to_string());
+                    err = omsteps::call(om, wb, &path, "Delete", flags::METHOD, &[]).err();
                 }
-                "move_sheet" => match before_of(wb, step) {
-                    Some(b) => err = wb.move_sheet(sid, b).err().map(|e| e.to_string()),
-                    None => err = Some("no target sheet".into()),
-                },
-                _ => match before_of(wb, step) {
-                    Some(b) => match wb.copy_sheet(sid, b) {
-                        Ok(new) => {
-                            let auto = wb.sheet(new).unwrap().name.clone();
-                            let want = rec["new_name"].as_str().unwrap_or("");
-                            verdict(tally, auto == want, || {
-                                format!("step {n}: copy named {auto:?}, Excel {want:?}")
-                            });
-                            if let Some(nm) = step["name"].as_str() {
-                                err = wb.rename_sheet(new, nm).err().map(|e| e.to_string());
-                            }
+                "move_sheet" => {
+                    err = omsteps::call_args(om, wb, &path, "Move", flags::METHOD, &place).err();
+                }
+                _ => match omsteps::call_args(om, wb, &path, "Copy", flags::METHOD, &place) {
+                    Ok(_) => {
+                        let auto =
+                            match omsteps::call(om, wb, "ActiveSheet", "Name", flags::GET, &[]) {
+                                Ok(Variant::Bstr(s)) => s,
+                                _ => String::new(),
+                            };
+                        let want = rec["new_name"].as_str().unwrap_or("");
+                        verdict(tally, auto == want, || {
+                            format!("step {n}: copy named {auto:?}, Excel {want:?}")
+                        });
+                        if let Some(nm) = step["name"].as_str() {
+                            let name = Variant::Bstr(nm.to_string());
+                            err = omsteps::call(om, wb, "ActiveSheet", "Name", flags::PUT, &[name])
+                                .err();
                         }
-                        Err(e) => err = Some(e.to_string()),
-                    },
-                    None => err = Some("no target sheet".into()),
+                    }
+                    Err(e) => err = Some(e),
                 },
             }
-            if let Some(w) = err.as_deref().and_then(super::oos_what) {
-                tally.pending_oos = Some(w);
-                return true;
-            }
-            verdict(tally, err.is_some() == excel_err, || {
-                format!(
-                    "step {n}: {op} {} — Excel error {:?}, engine {err:?}",
-                    step["sheet"], rec["error"]
-                )
-            });
+            omsteps::verdict(tally, op, rec, n, err);
         }
         "sheets" => {
-            let got: Vec<String> = wb.sheets().map(|s| s.name.clone()).collect();
+            let count = match omsteps::call(om, wb, "Worksheets", "Count", flags::GET, &[]) {
+                Ok(Variant::I4(c)) => c,
+                _ => 0,
+            };
+            let got: Vec<String> = (1..=count)
+                .map(|i| {
+                    let path = format!("Worksheets({i})");
+                    match omsteps::call(om, wb, &path, "Name", flags::GET, &[]) {
+                        Ok(Variant::Bstr(s)) => s,
+                        _ => String::new(),
+                    }
+                })
+                .collect();
             let want = strings(&rec["sheets"], |x| x.as_str().unwrap_or("").to_string());
             verdict(tally, got == want, || {
                 format!("step {n}: sheets expected {want:?}, got {got:?}")
@@ -113,26 +118,32 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
                     wb.active_cell()
                 );
             }
-            let mut got: Vec<String> = wb
-                .names()
-                .iter()
-                .map(|d| {
-                    let nm = match d.scope {
-                        Some(s) => {
-                            format!("{}!{}", sheet_name_text(&wb.sheet(s).unwrap().name), d.name)
-                        }
-                        None => d.name.clone(),
+
+            let count = match omsteps::call(om, wb, "Names", "Count", flags::GET, &[]) {
+                Ok(Variant::I4(c)) => c,
+                _ => 0,
+            };
+            let mut got: Vec<String> = (1..=count)
+                .map(|i| {
+                    let path = format!("Names.Item({i})");
+                    let mut text = |member: &str| match omsteps::call(
+                        om,
+                        wb,
+                        &path,
+                        member,
+                        flags::GET,
+                        &[],
+                    ) {
+                        Ok(Variant::Bstr(s)) => s,
+                        _ => String::new(),
                     };
-                    format!("{nm} {}", norm_book(&format!("={}", wb.name_refers_to(d))))
+                    let (name, refers) = (text("Name"), text("RefersTo"));
+                    format!("{name} {}", norm_book(&refers))
                 })
                 .collect();
             got.sort();
             let mut want = strings(&rec["names"], |x| {
-                if x["name"].as_str().is_some_and(|s| {
-                    s.starts_with("_xlpm.")
-                        || s.starts_with("_xlop.")
-                        || (s.starts_with("_xlfn.") && x["visible"] == false)
-                }) {
+                if x["name"].as_str().is_some_and(|s| s.starts_with("_xlop.")) {
                     return String::new();
                 }
                 format!(
@@ -147,64 +158,6 @@ pub fn run(wb: &mut Workbook, op: &str, step: &J, rec: &J, n: usize, tally: &mut
                 let extra: Vec<_> = got.iter().filter(|g| !want.contains(g)).collect();
                 let missing: Vec<_> = want.iter().filter(|w| !got.contains(w)).collect();
                 format!("step {n}: names differ: engine only {extra:?}, Excel only {missing:?}")
-            });
-        }
-        "tables" => {
-            let rich = rec["tables"]
-                .as_array()
-                .is_some_and(|a| a.iter().any(|x| x["headers"].is_boolean()));
-            let mut got: Vec<String> = wb
-                .tables()
-                .iter()
-                .map(|t| {
-                    let extra = if rich {
-                        format!(
-                            " h={} t={} cols={}",
-                            u8::from(t.headers),
-                            u8::from(t.totals),
-                            t.columns.join("|")
-                        )
-                    } else {
-                        String::new()
-                    };
-                    format!(
-                        "{} {} {}{}",
-                        t.name,
-                        wb.sheet(t.sheet).unwrap().name,
-                        t.rect.a1(),
-                        extra
-                    )
-                })
-                .collect();
-            got.sort();
-            let mut want = strings(&rec["tables"], |x| {
-                let extra = match (x["headers"].as_bool(), x["totals"].as_bool()) {
-                    (Some(h), Some(t)) => format!(
-                        " h={} t={} cols={}",
-                        u8::from(h),
-                        u8::from(t),
-                        x["columns"]
-                            .as_array()
-                            .map(|a| a
-                                .iter()
-                                .filter_map(|c| c.as_str())
-                                .collect::<Vec<_>>()
-                                .join("|"))
-                            .unwrap_or_default()
-                    ),
-                    _ => String::new(),
-                };
-                format!(
-                    "{} {} {}{}",
-                    x["name"].as_str().unwrap(),
-                    x["sheet"].as_str().unwrap(),
-                    x["range"].as_str().unwrap(),
-                    extra
-                )
-            });
-            want.sort();
-            verdict(tally, got == want, || {
-                format!("step {n}: tables expected {want:?}, got {got:?}")
             });
         }
         _ => return false,

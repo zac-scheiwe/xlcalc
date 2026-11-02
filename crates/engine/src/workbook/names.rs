@@ -32,6 +32,10 @@ pub struct Names {
     deleted_scoped: rustc_hash::FxHashSet<(SheetId, Text)>,
 
     global_bound: FxHashMap<(SheetId, Text), Vec<Text>>,
+
+    copy_stale: FxHashMap<(SheetId, Text), Vec<Text>>,
+
+    hidden: std::collections::BTreeMap<String, String>,
 }
 
 impl Names {
@@ -97,9 +101,24 @@ impl Names {
             .is_some_and(|v| v.iter().any(|k| &**k == key))
     }
 
+    pub(crate) fn mark_copy_stale(&mut self, scope: SheetId, name: Text, keys: Vec<Text>) {
+        if keys.is_empty() {
+            self.copy_stale.remove(&(scope, name));
+        } else {
+            self.copy_stale.insert((scope, name), keys);
+        }
+    }
+
+    pub(crate) fn is_copy_stale(&self, scope: SheetId, name: &str, key: &str) -> bool {
+        self.copy_stale
+            .get(&(scope, Text::from(name)))
+            .is_some_and(|v| v.iter().any(|k| &**k == key))
+    }
+
     pub fn remove(&mut self, key: &str, scope: Option<SheetId>) -> Option<NameDef> {
         if let Some(s) = scope {
             self.global_bound.remove(&(s, Text::from(key)));
+            self.copy_stale.remove(&(s, Text::from(key)));
         }
         self.map.remove(&(scope, Text::from(key)))
     }
@@ -118,5 +137,23 @@ impl Names {
 
     pub fn iter(&self) -> impl Iterator<Item = &NameDef> {
         self.map.values()
+    }
+
+    pub(crate) fn note_hidden(&mut self, name: &str) {
+        self.hidden
+            .entry(name.to_uppercase())
+            .or_insert_with(|| name.to_string());
+    }
+
+    pub fn hidden(&self) -> impl Iterator<Item = &str> {
+        self.hidden.values().map(String::as_str)
+    }
+
+    pub fn hidden_get(&self, key: &str) -> Option<&str> {
+        self.hidden.get(key).map(String::as_str)
+    }
+
+    pub fn delete_hidden(&mut self, key: &str) -> bool {
+        self.hidden.remove(key).is_some()
     }
 }

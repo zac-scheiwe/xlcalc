@@ -614,7 +614,7 @@ pub fn standardize(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if s <= 0.0 {
             return Err(XlError::NUM);
         }
-        Ok((x - m) / s)
+        Ok(x87::div(x87::sub(x, m), s))
     })())
 }
 
@@ -624,18 +624,23 @@ pub fn fisher(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if x <= -1.0 || x >= 1.0 {
             return Err(XlError::NUM);
         }
-        Ok(0.5 * ((1.0 + x) / (1.0 - x)).ln())
+
+        Ok(x87::div(
+            x87::ln(x87::div(x87::add(1.0, x), x87::sub(1.0, x))),
+            2.0,
+        ))
     })())
 }
 
 pub fn fisherinv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
         let y = num(ctx, &a[0])?;
-        let e = (2.0 * y).exp();
+
+        let e = x87::exp(x87::mul(y, 2.0));
         if e.is_infinite() {
             return Ok(1.0);
         }
-        Ok((e - 1.0) / (e + 1.0))
+        Ok(x87::div(x87::sub(e, 1.0), x87::add(e, 1.0)))
     })())
 }
 
@@ -670,9 +675,9 @@ pub fn prob(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
             if !(0.0..=1.0).contains(&p) {
                 return Err(XlError::NUM);
             }
-            total += p;
+            total = x87::add(total, p);
             if x >= lower && x <= upper {
-                acc += p;
+                acc = x87::add(acc, p);
             }
         }
         if counted == 0 {

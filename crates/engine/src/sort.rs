@@ -1,3 +1,4 @@
+use crate::workbook::Command;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -228,7 +229,98 @@ impl Workbook {
         (lines, u32::from(spec.header && !spec.by_columns))
     }
 
+    fn outline_sort_level(
+        &self,
+        sheet: SheetId,
+        r0: u32,
+        r1: u32,
+    ) -> Result<Option<(u32, u32, u32)>, EditError> {
+        let lv = |r: u32| self.row_level(sheet, r) - 1;
+
+        let (mut low, mut at_low, mut differs) = (lv(r0), 1u32, false);
+        for r in r0 + 1..=r1 {
+            if low == 0 && at_low > 1 {
+                break;
+            }
+            let l = lv(r);
+            if l < low {
+                low = l;
+                at_low = 1;
+                differs = true;
+            } else if l == low {
+                at_low += 1;
+            } else {
+                differs = true;
+            }
+        }
+        if !differs {
+            return Ok(None);
+        }
+
+        let mut last = r1;
+        while last > r0 && lv(last) > low {
+            last -= 1;
+        }
+
+        if last > r0 && at_low == 1 && lv(last - 1) == low + 1 {
+            last -= 1;
+            low += 1;
+        }
+        for r in r0 + 1..=last {
+            if lv(r - 1) > low && lv(r) <= low && self.row_hidden(sheet, r) {
+                return Err(EditError::Compile(
+                    "Sorry, we can't sort because this list is filtered and grouped".into(),
+                ));
+            }
+        }
+        Ok(Some((r0, last, low)))
+    }
+
+    fn outline_order(
+        &self,
+        sheet: SheetId,
+        base: u32,
+        sorted: &[u32],
+        first: u32,
+        last: u32,
+        top: u32,
+    ) -> Vec<u32> {
+        let (fl, ll) = (first - base, last - base);
+        let mut rank = vec![0usize; sorted.len()];
+        for (i, &s) in sorted.iter().enumerate() {
+            rank[s as usize] = i;
+        }
+        let lv = |j: u32| self.row_level(sheet, base + j) - 1;
+        let fixed = |j: u32| lv(j) <= top && self.row_hidden(sheet, base + j);
+        let mut blocks: Vec<(usize, Vec<u32>)> = Vec::new();
+        let mut pending: Vec<u32> = Vec::new();
+        let mut slots: Vec<u32> = Vec::new();
+        for j in fl..=ll {
+            if fixed(j) {
+                continue;
+            }
+            slots.push(j);
+            pending.push(j);
+            if lv(j) <= top {
+                blocks.push((rank[j as usize], std::mem::take(&mut pending)));
+            }
+        }
+        if let Some(&k) = pending.last() {
+            blocks.push((rank[k as usize], pending));
+        }
+        blocks.sort_by_key(|b| b.0);
+        let mut order: Vec<u32> = (0..sorted.len() as u32).collect();
+        for (slot, src) in slots.into_iter().zip(blocks.into_iter().flat_map(|b| b.1)) {
+            order[slot as usize] = src;
+        }
+        order
+    }
+
     pub fn sort_table(&mut self, name: &str, spec: &SortSpec) -> Result<RecalcReport, EditError> {
+        self.command(Command::Sort, |wb| wb.sort_table_run(name, spec))
+    }
+
+    fn sort_table_run(&mut self, name: &str, spec: &SortSpec) -> Result<RecalcReport, EditError> {
         let ti = self.table_position(name)?;
         let t = &self.tables[ti];
         let (sheet, mut rect) = (t.sheet, t.rect);
@@ -254,7 +346,42 @@ impl Workbook {
         rect: Rect,
         spec: &SortSpec,
     ) -> Result<RecalcReport, EditError> {
-        self.guard_filtered(sheet, rect, !spec.by_columns, spec.by_columns)?;
+        self.command(Command::Sort, |wb| {
+            let touch = wb.sort_touch_row(sheet, rect);
+            let r = wb.sort_range_run(sheet, rect, spec);
+            if r.is_ok() {
+                if let Some(t) = touch {
+                    wb.view_touch_row_pub(sheet, t);
+                }
+            }
+            r
+        })
+    }
+
+    fn sort_touch_row(&self, sheet: SheetId, rect: Rect) -> Option<u32> {
+        let sh = self.sheet(sheet)?;
+        let top = rect.r1.min(self.view_used_r1(sheet)?);
+        let last = (rect.r0..=top)
+            .rev()
+            .find(|&r| (rect.c0..=rect.c1).any(|c| sh.cells.get(r, c).is_some()))?;
+        let vis = (rect.r0..=last)
+            .rev()
+            .find(|&r| !self.row_hidden(sheet, r))?;
+        Some(vis + 1)
+    }
+
+    fn sort_range_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &SortSpec,
+    ) -> Result<RecalcReport, EditError> {
+        if let Some(sh) = self.sheet_mut(sheet) {
+            sh.spills.note_rows(sh.cells.sticky_bounds().map(|b| b.r1));
+            sh.spills.relayout();
+            let ids = sh.spills.active_ids();
+            crate::calc::snapshot_holes(self, sheet, &ids);
+        }
 
         if self
             .data_tables
@@ -263,10 +390,28 @@ impl Workbook {
         {
             return Err(EditError::Compile(crate::datatable::PART_ERROR.into()));
         }
+
+        self.note_cell_format(CellAddr::new(sheet, rect.r0, rect.c0));
         if self.tables.iter().any(|t| t.sheet == sheet && t.totals) {
             self.snap_totals_before_sort(sheet, rect);
         }
-        self.sort_range_impl(sheet, rect, spec)
+        let r = self.sort_range_impl(sheet, rect, spec);
+
+        if r.is_ok() {
+            let (dr, dc) = match (spec.header, spec.by_columns) {
+                (true, false) => (1, 0),
+                (true, true) => (0, 1),
+                _ => (0, 0),
+            };
+            if sheet != self.session.active {
+                self.session
+                    .fill_selected
+                    .insert(sheet, (rect.r0 + dr, rect.c0 + dc));
+            }
+
+            self.notify_list_select(sheet, rect.r0 + dr, rect.c0 + dc);
+        }
+        r
     }
 
     fn sort_range_impl(
@@ -283,9 +428,15 @@ impl Workbook {
             ));
         }
         crate::structure::range_too_large(&rect)?;
-        if self.merge_intersects(sheet, &rect) {
-            return Err(EditError::OutOfScope("sort over merged cells"));
+
+        if self
+            .merges(sheet)
+            .iter()
+            .any(|m| crate::cse::inside(&rect, m))
+        {
+            return Ok(RecalcReport::default());
         }
+        self.guard_merges_sort(sheet, rect)?;
         let width = if spec.by_columns {
             rect.rows()
         } else {
@@ -296,10 +447,6 @@ impl Workbook {
         }
         let (_, skip) = Self::sort_lines(rect, spec);
         let mut order = self.sort_order(sheet, rect, spec);
-        if !spec.by_columns && !order.is_empty() {
-            let r0 = rect.r0 + skip;
-            self.outline_sort_guard(sheet, r0, r0 + order.len() as u32 - 1)?;
-        }
 
         let hidden_line = |line: u32| {
             if spec.by_columns {
@@ -308,7 +455,25 @@ impl Workbook {
                 self.row_hidden(sheet, rect.r0 + line)
             }
         };
-        if (0..order.len() as u32).any(|j| hidden_line(skip + j)) {
+        let outline = if spec.by_columns || order.is_empty() {
+            None
+        } else {
+            self.outline_sort_level(
+                sheet,
+                rect.r0 + skip,
+                rect.r0 + skip + order.len() as u32 - 1,
+            )?
+        };
+        let mut row_moves: Vec<(u32, u32)> = Vec::new();
+        if let Some((first, last, top)) = outline {
+            order = self.outline_order(sheet, rect.r0 + skip, &order, first, last, top);
+            row_moves = order
+                .iter()
+                .enumerate()
+                .filter(|&(j, &s)| j as u32 != s)
+                .map(|(j, &s)| (rect.r0 + skip + s, rect.r0 + skip + j as u32))
+                .collect();
+        } else if (0..order.len() as u32).any(|j| hidden_line(skip + j)) {
             let mut vis = order
                 .iter()
                 .copied()
@@ -389,9 +554,22 @@ impl Workbook {
                 }
             }
         }
-        self.fmt_move_pairs(&fmt_pairs);
+        self.fmt_sort_pairs(&fmt_pairs);
+        self.view_sorted(sheet, rect);
+        if !row_moves.is_empty() {
+            self.view_move_rows(sheet, &row_moves);
+        }
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
+
+        let used = self
+            .sheet(sheet)
+            .unwrap()
+            .cells
+            .sticky_bounds()
+            .and_then(|u| u.intersection(&rect))
+            .map_or(0, |i| i.rows() as u64 * i.cols() as u64);
+        let any_cells = used >= 2;
         self.settings.mode = CalcMode::Manual;
         for (to, what) in plan {
             match what {
@@ -411,8 +589,8 @@ impl Workbook {
             report.changed.push(to);
         }
         self.settings.mode = mode;
-        if mode == CalcMode::Automatic {
-            let r = calc::recalc(self);
+        if any_cells {
+            let r = self.recalc_point();
             report.evaluations = r.evaluations;
             report.circular = r.circular;
             report.changed.extend(r.changed);

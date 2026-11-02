@@ -53,9 +53,20 @@ pub fn parse_number_text_arith(s: &str, env: ParseEnv) -> Option<ParsedNumber> {
 
 fn parse_number_text_with(s: &str, env: ParseEnv, keep_lead: bool) -> Option<ParsedNumber> {
     if !s.is_ascii() {
-        let n = normalize_digits(s);
-        if n != s {
-            return parse_number_text_with(&n, env, keep_lead);
+        let (n, system) = normalize_digits(s);
+        if let Some((nn, lcid)) = system {
+            let mut p = parse_number_text_with(&n, env, keep_lead)?;
+            let ethiopic = nn == ETHIOPIC_NN;
+            if ethiopic
+                && matches!(
+                    p.kind,
+                    NumberKind::Date | NumberKind::DateTime | NumberKind::Time { .. }
+                )
+            {
+                return None;
+            }
+            p.format = native_digit_format(&p, &n, nn, lcid, env);
+            return Some(p);
         }
     }
     let t = s.trim_matches(' ');
@@ -71,21 +82,124 @@ fn parse_number_text_with(s: &str, env: ParseEnv, keep_lead: bool) -> Option<Par
     parse_date_time(t, env)
 }
 
-const DIGIT_ZEROS: [u32; 17] = [
-    0x660, 0x6F0, 0x966, 0x9E6, 0xA66, 0xAE6, 0xB66, 0xBE6, 0xC66, 0xCE6, 0xD66, 0xE50, 0xED0,
-    0xF20, 0x1040, 0x17E0, 0x1810,
+const DIGIT_SYSTEMS: [(u32, u32, u32); 17] = [
+    (0x660, 0x2, 0x401),
+    (0x6F0, 0x3, 0x401),
+    (0x966, 0x4, 0x439),
+    (0x9E6, 0x5, 0x445),
+    (0xA66, 0x6, 0x446),
+    (0xAE6, 0x7, 0x447),
+    (0xB66, 0x8, 0x448),
+    (0xBE6, 0x9, 0x449),
+    (0xC66, 0xA, 0x44A),
+    (0xCE6, 0xB, 0x44B),
+    (0xD66, 0xC, 0x44C),
+    (0xE50, 0xD, 0x41E),
+    (0xED0, 0xE, 0x454),
+    (0xF20, 0xF, 0x451),
+    (0x1040, 0x10, 0x455),
+    (0x17E0, 0x12, 0x453),
+    (0x1810, 0x13, 0x450),
 ];
 
-fn normalize_digits(s: &str) -> String {
-    s.chars()
+const ETHIOPIC_ONE: u32 = 0x1369;
+const ETHIOPIC_NN: u32 = 0x11;
+const ETHIOPIC_LCID: u32 = 0x45E;
+
+fn normalize_digits(s: &str) -> (String, Option<(u32, u32)>) {
+    let mut system = None;
+    let n = s
+        .chars()
         .map(|c| {
             let u = c as u32;
-            match DIGIT_ZEROS.iter().find(|&&z| (z..z + 10).contains(&u)) {
-                Some(z) => char::from(b'0' + (u - z) as u8),
-                None => c,
+            if let Some(&(z, nn, lcid)) = DIGIT_SYSTEMS
+                .iter()
+                .find(|&&(z, ..)| (z..z + 10).contains(&u))
+            {
+                system = Some((nn, lcid));
+                char::from(b'0' + (u - z) as u8)
+            } else if (ETHIOPIC_ONE..ETHIOPIC_ONE + 9).contains(&u) {
+                system = Some((ETHIOPIC_NN, ETHIOPIC_LCID));
+                char::from(b'1' + (u - ETHIOPIC_ONE) as u8)
+            } else {
+                c
             }
         })
-        .collect()
+        .collect();
+    (n, system)
+}
+
+fn native_digit_format(
+    p: &ParsedNumber,
+    text: &str,
+    nn: u32,
+    lcid: u32,
+    env: ParseEnv,
+) -> Option<String> {
+    let tag = format!("[$-{:X}]", (nn << 24) | lcid);
+    let base = p
+        .format
+        .clone()
+        .or_else(|| crate::input::auto_format(&p.kind, &env));
+    if base
+        .as_deref()
+        .is_some_and(|f| f == "0.00E+00" || f.starts_with("# ?"))
+    {
+        return p.format.clone();
+    }
+    let loc = env.locale;
+    match p.kind {
+        NumberKind::Plain => {
+            let dec = text
+                .split_once(loc.decimal_sep)
+                .map_or(0, |(_, r)| r.bytes().take_while(u8::is_ascii_digit).count());
+            let hashes = "#".repeat(dec.min(14));
+            Some(format!("{tag}0{}{hashes}", if dec > 0 { "." } else { "" }))
+        }
+        NumberKind::Percent => Some(format!("{tag}0.00%")),
+        NumberKind::Thousands => base.map(|f| format!("{tag}{f}")),
+        NumberKind::Currency => {
+            let c = format!("[${}-{:X}]", loc.currency, (nn << 24) | lcid);
+            Some(format!("{c} #,##0.00_);[Red]({c}#,##0.00)"))
+        }
+        NumberKind::Scientific => p.format.clone(),
+        NumberKind::Time { .. } => base.map(|f| format!("[$-{:X}]{f}", nn << 24)),
+        NumberKind::Date => base.map(|f| format!("[$-{:X}]{}", nn << 24, widen_date_format(&f))),
+        NumberKind::DateTime => Some(format!("[$-{:X}]m/d/yyyy h:mm", nn << 24)),
+    }
+}
+
+fn widen_date_format(f: &str) -> String {
+    let b: Vec<char> = f.chars().collect();
+    let mut out = String::new();
+    let mut i = 0;
+    while i < b.len() {
+        let c = b[i];
+        let run = b[i..].iter().take_while(|&&x| x == c).count();
+        let n = match (c, run) {
+            ('d' | 'm', 1) => 2,
+            ('y', 2) => 4,
+            _ => run,
+        };
+        out.extend(std::iter::repeat_n(c, n));
+        i += run;
+    }
+    out
+}
+
+fn paren_percent(inner: &str, loc: &Locale) -> Option<ParsedNumber> {
+    let p = parse_plain(inner, loc)?;
+    if matches!(p.kind, NumberKind::Currency | NumberKind::Percent) {
+        return None;
+    }
+    let mut q = ParsedNumber::new(number::normalize(p.value / 100.0), NumberKind::Percent);
+    q.format = match p.format.as_deref() {
+        Some("0.00E+00") => p.format,
+        Some(f) if f.starts_with("# ?") => Some("0.00%".to_string()),
+        _ if inner.contains(loc.decimal_sep) => Some("0.00%".to_string()),
+        _ => Some("0%".to_string()),
+    };
+    Some(q)
 }
 
 fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
@@ -99,19 +213,20 @@ fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
         negative = true;
         s = inner.trim_matches(' ');
     }
-    let mut percent = false;
 
     if !paren {
+        let wrapped = |x: &str| x.starts_with('(') && x.ends_with(')');
         if let Some(inner) = s.strip_suffix('%').map(|x| x.trim_end_matches(' ')) {
-            if inner.starts_with('(') && inner.ends_with(')') {
-                let p = parse_plain(inner, loc)?;
-                return Some(ParsedNumber::new(
-                    number::normalize(p.value / 100.0),
-                    NumberKind::Percent,
-                ));
+            if wrapped(inner) {
+                return paren_percent(inner, loc);
+            }
+        } else if let Some(inner) = s.strip_prefix('%').map(|x| x.trim_start_matches(' ')) {
+            if wrapped(inner) {
+                return paren_percent(inner, loc);
             }
         }
     }
+    let mut percent = false;
     if let Some(rest) = s.strip_suffix('%') {
         percent = true;
         s = rest.trim_end_matches(' ');

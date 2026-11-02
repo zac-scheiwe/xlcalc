@@ -1,0 +1,15 @@
+Public Function SheetFn(ByVal a As Variant) As Variant
+    On Error GoTo EH
+    SheetFn = "sheet:" & Me.Name & ":" & a
+    Exit Function
+EH:
+    SheetFn = "err " & Err.Number
+End Function
+
+Private Function SheetPriv() As Variant
+    On Error GoTo EH
+    SheetPriv = "priv:" & Me.Name
+    Exit Function
+EH:
+    SheetPriv = "err " & Err.Number
+End Function

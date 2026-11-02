@@ -1,0 +1,342 @@
+{
+ "sheets": [
+  "Host",
+  "Aa"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "77"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B1",
+   "input": "12.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "hello"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B3",
+   "input": "=B1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B4",
+   "input": "=\"x\"&B2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B5",
+   "input": "1.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B6",
+   "input": "2*3"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B7",
+   "input": "TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B8",
+   "input": "=1/0"
+  },
+  {
+   "op": "format",
+   "range": "Host!B1",
+   "fmt": "#,##0.00"
+  },
+  {
+   "op": "format",
+   "range": "Host!B5",
+   "fmt": "0%"
+  },
+  {
+   "op": "format",
+   "range": "Host!B7",
+   "fmt": "@"
+  },
+  {
+   "op": "name",
+   "name": "y_01",
+   "refers_to": "=GET.CELL(0,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_02",
+   "refers_to": "=GET.CELL(67,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_03",
+   "refers_to": "=GET.CELL(-1,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_04",
+   "refers_to": "=GET.CELL(5,\"x\")"
+  },
+  {
+   "op": "name",
+   "name": "y_05",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R1C2:R3C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_06",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R99C99\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_07",
+   "refers_to": "=GET.CELL(5.9,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_08",
+   "refers_to": "=GET.CELL(\"5\",INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_09",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"Aa!R1C1\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_10",
+   "refers_to": "=GET.CELL(2,INDIRECT(\"Aa!R1C1\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_11",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"rc[1]\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_12",
+   "refers_to": "=GET.CELL(5)"
+  },
+  {
+   "op": "name",
+   "name": "y_13",
+   "refers_to": "=GET.CELL(TRUE,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_14",
+   "refers_to": "=GET.CELL(5,#REF!)"
+  },
+  {
+   "op": "name",
+   "name": "y_15",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R1C2\",FALSE))+1"
+  },
+  {
+   "op": "name",
+   "name": "y_16",
+   "refers_to": "=ISNUMBER(GET.CELL(5,INDIRECT(\"R1C2\",FALSE)))"
+  },
+  {
+   "op": "name",
+   "name": "y_18",
+   "refers_to": "=GET.CELL(2,INDIRECT(\"R1C2:R3C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_19",
+   "refers_to": "=GET.CELL(4,INDIRECT(\"R1C2:R3C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_20",
+   "refers_to": "=GET.CELL({5,6},INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_21",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R1C2:R3C3\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_22",
+   "refers_to": "=GET.CELL(53,INDIRECT(\"rc[1]\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_23",
+   "refers_to": "=GET.CELL(3,INDIRECT(\"rc\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_24",
+   "refers_to": "=GET.CELL(3,INDIRECT(\"r[1]c[2]\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_25",
+   "refers_to": "=GET.CELL(2,INDIRECT(\"R[-1]C\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_26",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"B\"&ROW(),TRUE))"
+  },
+  {
+   "op": "name",
+   "name": "y_27",
+   "refers_to": "=GET.CELL(5,INDIRECT(\"R1C2\",FALSE):INDIRECT(\"R2C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "y_28",
+   "refers_to": "=GET.CELL(7,INDIRECT(\"R2C1\",FALSE))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=y_01"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=y_02"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=y_03"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=y_04"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=y_05"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=y_06"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=y_07"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=y_08"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=y_09"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=y_10"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A11",
+   "input": "=y_11"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A12",
+   "input": "=y_12"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A13",
+   "input": "=y_13"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A14",
+   "input": "=y_14"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A15",
+   "input": "=y_15"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A16",
+   "input": "=y_16"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A17",
+   "input": "=y_18"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A18",
+   "input": "=y_19"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A19",
+   "input": "=y_20"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A20",
+   "input": "=y_21"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A21",
+   "input": "=y_22"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A22",
+   "input": "=y_23"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A23",
+   "input": "=y_24"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A24",
+   "input": "=y_25"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A25",
+   "input": "=y_26"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A26",
+   "input": "=y_27"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A27",
+   "input": "=y_28"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A27"
+  }
+ ]
+}

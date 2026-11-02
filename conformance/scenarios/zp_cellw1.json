@@ -1,0 +1,27 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "at": 2,
+      "count": 1,
+      "op": "hide_cols",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!E1",
+      "input": "=CELL(\"width\",B1)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!E3",
+      "input": "=CELL(\"width\",C1)"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!E1:F3"
+    }
+  ]
+}

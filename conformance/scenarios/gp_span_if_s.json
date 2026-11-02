@@ -1,0 +1,194 @@
+{
+ "sheets": [
+  "Host",
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B1",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B2",
+   "input": "1000"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B1",
+   "input": "200"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B2",
+   "input": "2000"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A2",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B1",
+   "input": "300"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B2",
+   "input": "3000"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=SUM(IF(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=SUM(IF(TRUE,Aa:Cc!A1:B2))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=SUM(IF(FALSE,1,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=SUM(CHOOSE(1,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=SUM(IFERROR(Aa:Cc!A1,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=SUM(INDEX(Aa:Cc!A1:B2,1,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=SUM(OFFSET(Aa:Cc!A1,0,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=SUM(IFS(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=SUM(SWITCH(1,1,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=SUM(LET(x,1,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A11",
+   "input": "=SUM(N(IF(TRUE,Aa:Cc!A1)))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A12",
+   "input": "=ROWS(IF(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A13",
+   "input": "=ISREF(IF(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A14",
+   "input": "=SUM(IF(TRUE,Aa!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A15",
+   "input": "=SUM(IF(TRUE,Aa!A1:B2))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A16",
+   "input": "=COUNT(IF(TRUE,Aa:Cc!A1:B2))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A17",
+   "input": "=SUM(IF(1,Aa:Cc!A1:B2,0))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A18",
+   "input": "=IF(TRUE,Aa:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A19",
+   "input": "=AND(IF(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A20",
+   "input": "=SUM(Aa:Cc!A1)+SUM(IF(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A21",
+   "input": "=SUM(--IF(TRUE,Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A22",
+   "input": "=SUM(IF({TRUE},Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A23",
+   "input": "=SUM(IF(TRUE,Aa:Cc!A1,Bb:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A24",
+   "input": "=SUM(IF(FALSE,Aa:Cc!A1,Bb:Cc!A1))"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A24"
+  }
+ ]
+}

@@ -14,6 +14,38 @@ pub fn format_general_width(x: f64, width: usize) -> String {
     }
 }
 
+pub fn format_general_cell(x: f64, chars: usize) -> Option<String> {
+    if x == 0.0 || !x.is_finite() {
+        return (chars >= 1).then(|| "0".to_string());
+    }
+    let neg = x < 0.0;
+    let w = chars
+        .saturating_sub(usize::from(neg))
+        .min(TEXT_GENERAL_WIDTH) as i32;
+    if w == 0 {
+        return None;
+    }
+    let d = Dec::from_f64(x.abs());
+    let sci = (w >= 5)
+        .then(|| scientific(&d, w))
+        .filter(|s| s.len() as i32 <= w);
+    let body = match (fixed(&d, w), sci) {
+        (Some((s, exact)), Some(sci)) if !exact && d.exp < 0 => {
+            let exp_len = if d.exp.abs() >= 99 { 3 } else { 2 };
+            if w - 1 + d.exp >= w - 3 - exp_len {
+                s
+            } else {
+                sci
+            }
+        }
+        (Some((s, _)), _) => s,
+        (None, Some(sci)) => sci,
+        (None, None) if d.exp < 0 && w < 5 => "0".to_string(),
+        (None, None) => return None,
+    };
+    Some(if neg { format!("-{body}") } else { body })
+}
+
 fn fixed(d: &Dec, w: i32) -> Option<(String, bool)> {
     let (r, nd) = if d.exp >= 0 {
         let int_len = d.exp + 1;

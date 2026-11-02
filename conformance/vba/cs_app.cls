@@ -1,0 +1,20 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1
+END
+Attribute VB_Name = "CsApp"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = False
+Attribute VB_Exposed = False
+Option Explicit
+
+Public WithEvents App As Application
+
+Private Sub App_AfterCalculate()
+    On Error GoTo EH
+    CsLog.LogLine "A"
+    Exit Sub
+EH:
+    CsLog.LogLine "App.AfterCalculate error " & Err.Number
+End Sub

@@ -1,0 +1,178 @@
+{
+  "sheets": [
+    "f1"
+  ],
+  "check_all_formats": true,
+  "steps": [
+    {
+      "op": "format",
+      "range": "f1!A1:A6",
+      "fmt": "0.00E+00"
+    },
+    {
+      "op": "format",
+      "range": "f1!C1:C6",
+      "fmt": "0.00%"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A1",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B1",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C1",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A2",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B2",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C2",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A3",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B3",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C3",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A4",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B4",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C4",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A5",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B5",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C5",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A6",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B6",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C6",
+      "input": "1000"
+    },
+    {
+      "op": "replace",
+      "range": "f1!A1:C1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "rows"
+    },
+    {
+      "op": "replace",
+      "range": "f1!A2:C2",
+      "what": "1000",
+      "with": "12:30",
+      "lookat": "whole",
+      "matchcase": false,
+      "order": "rows"
+    },
+    {
+      "op": "replace",
+      "range": "f1!A3:C3",
+      "what": "1000",
+      "with": "12:3000",
+      "lookat": "whole",
+      "matchcase": false,
+      "order": "rows"
+    },
+    {
+      "op": "replace",
+      "range": "f1!A4:C4",
+      "what": "1000",
+      "with": "25:00",
+      "lookat": "whole",
+      "matchcase": false,
+      "order": "rows"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A5",
+      "input": "12:3000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B5",
+      "input": "12:3000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C5",
+      "input": "12:3000"
+    },
+    {
+      "op": "set",
+      "cell": "f1!A6",
+      "input": "25:00"
+    },
+    {
+      "op": "set",
+      "cell": "f1!B6",
+      "input": "25:00"
+    },
+    {
+      "op": "set",
+      "cell": "f1!C6",
+      "input": "25:00"
+    },
+    {
+      "op": "read",
+      "range": "f1!A1:C6"
+    }
+  ]
+}

@@ -88,7 +88,13 @@ fn reorder(a: &Array, by_col: bool, order: &[u32]) -> Value {
 
 pub fn sort(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let mut ops = ops.to_vec();
-    if let Some(r) = lift_flags(ctx, &ops, &[3], sort_one, true) {
+    if let Some(r) = lift_flags(
+        ctx,
+        &ops,
+        &[3],
+        sort_one,
+        Some(Value::Error(XlError::VALUE)),
+    ) {
         return r;
     }
 
@@ -162,7 +168,7 @@ fn lift_flags(
     ops: &[Operand],
     at: &[usize],
     f: fn(&mut EvalCtx, &[Operand]) -> Operand,
-    first_ok: bool,
+    first_ok: Option<Value>,
 ) -> Option<Operand> {
     let mut grids: Vec<(usize, Arc<Array>)> = Vec::new();
     for &i in at {
@@ -204,10 +210,10 @@ fn lift_flags(
                 Operand::Val(v) => v,
                 other => ctx.deref(other),
             };
-            if first_ok {
+            if let Some(later) = &first_ok {
                 data.push(match res {
                     Value::Error(e) => Value::Error(e),
-                    _ if done => Value::Error(XlError::VALUE),
+                    _ if done => later.clone(),
                     Value::Array(a) => {
                         done = true;
                         a.data.first().cloned().unwrap_or(Value::Blank)
@@ -244,7 +250,17 @@ fn lift_flags(
 
 pub fn sortby(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let orders: Vec<usize> = (2..ops.len()).step_by(2).collect();
-    if let Some(r) = lift_flags(ctx, ops, &orders, sortby_one, false) {
+
+    let multi_key = ops.len() > 3
+        && Src::from_operand_3d(&ops[1])
+            .and_then(|k| k.to_array(ctx))
+            .is_ok_and(|k| k.len() > 1);
+    let later = if multi_key {
+        Value::Error(XlError::VALUE)
+    } else {
+        Value::Blank
+    };
+    if let Some(r) = lift_flags(ctx, ops, &orders, sortby_one, Some(later)) {
         return r;
     }
     sortby_one(ctx, ops)
@@ -365,7 +381,7 @@ pub fn unique(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let g = g.clone();
         return unique_refs(ctx, &g, ops);
     }
-    if let Some(r) = lift_flags(ctx, ops, &[1, 2], unique_one, false) {
+    if let Some(r) = lift_flags(ctx, ops, &[1, 2], unique_one, None) {
         return r;
     }
 

@@ -1,10 +1,11 @@
 use super::atp::{self, Arg};
 use super::days;
-use super::xmath;
 use crate::eval::EvalCtx;
 use crate::functions::args::{boolean, num, opt_num, sfix, val, R};
 use crate::functions::math::{round_decimal, RoundMode};
 use crate::value::{Value, XlError};
+use crate::x87;
+use crate::xmath;
 
 fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
@@ -20,7 +21,8 @@ pub fn sln(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if life == 0.0 {
             return Err(XlError::DIV0);
         }
-        finite((cost - salvage) / life).map(Value::num)
+
+        finite(x87::div(x87::sub(cost, salvage), life)).map(Value::num)
     })())
 }
 
@@ -35,7 +37,10 @@ pub fn syd(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if salvage < 0.0 || life <= 0.0 || per <= 0.0 || per > life {
             return Err(XlError::NUM);
         }
-        finite((cost - salvage) * (life + 1.0 - per) * 2.0 / (life * (life + 1.0))).map(Value::num)
+
+        let l1 = x87::add(life, 1.0);
+        let num = x87::mul(x87::sub(cost, salvage), x87::sub(l1, per));
+        finite(x87::div(num, x87::div(x87::mul(life, l1), 2.0))).map(Value::num)
     })())
 }
 
@@ -324,14 +329,14 @@ fn amor_yearfrac(sys: crate::datetime::DateSystem, p: i64, f: i64, basis: i32) -
     } else {
         366.0
     };
-    Ok(n / diy)
+    Ok(x87::div(n, diy))
 }
 
 pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
         let m = amor_args(ctx, a)?;
         let sys = atp::date_system(ctx);
-        let life = 1.0 / m.rate;
+        let life = x87::div(1.0, m.rate);
         if life <= 2.0 {
             return Err(XlError::NUM);
         }
@@ -342,7 +347,7 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         } else {
             1.5
         };
-        let rate = m.rate * coef;
+        let rate = x87::mul(m.rate, coef);
         let yf = amor_yearfrac(sys, m.purchased, m.first, m.basis)?;
 
         let mut n = life.ceil();
@@ -350,13 +355,13 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             n -= 1.0;
         }
         let halves = n - 2.0 >= 1.0;
-        let d0 = yf * rate * m.cost;
+        let d0 = x87::mul(x87::mul(yf, rate), m.cost);
 
-        let d0 = round0(round0(d0).min(m.cost - m.salvage));
+        let d0 = round0(round0(d0).min(x87::sub(m.cost, m.salvage)));
         if m.period == 0.0 {
             return Ok(d0);
         }
-        let mut book = m.cost - d0;
+        let mut book = x87::sub(m.cost, d0);
         let mut half = 0.0;
         let mut d = 0.0;
         let mut k = 1.0;
@@ -364,16 +369,16 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             d = if book < m.salvage {
                 0.0
             } else if halves && k == n - 2.0 {
-                half = book * 0.5;
+                half = x87::mul(book, 0.5);
                 half
             } else if halves && k == n - 1.0 {
                 half
             } else if halves && k >= n {
                 0.0
             } else {
-                rate * book
+                x87::mul(rate, book)
             };
-            book -= d;
+            book = x87::sub(book, d);
             k += 1.0;
         }
         Ok(round0(d))
@@ -389,20 +394,21 @@ pub fn amorlinc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             ..m
         };
         let sys = atp::date_system(ctx);
-        let one = m.cost * m.rate;
-        let delta = m.cost - m.salvage;
+
+        let one = x87::mul(m.cost, m.rate);
+        let delta = x87::sub(m.cost, m.salvage);
         let yf = amor_yearfrac(sys, m.purchased, m.first, m.basis)?;
-        let r0 = yf * m.rate * m.cost;
-        let full = ((m.cost - m.salvage - r0) / one).trunc();
+        let r0 = x87::mul(x87::mul(yf, m.rate), m.cost);
+        let full = x87::div(x87::sub(delta, r0), one).trunc();
         let r = if m.period == 0.0 {
             r0.min(delta)
         } else if m.period <= full {
             one
         } else if m.period == full + 1.0 {
-            let mut b = delta - r0;
+            let mut b = x87::sub(delta, r0);
             let mut i = 0.0;
             while i < full {
-                b -= one;
+                b = x87::sub(b, one);
                 i += 1.0;
             }
             b
@@ -426,14 +432,15 @@ fn dollar(ctx: &mut EvalCtx, a: &[Arg], to_decimal: bool) -> Value {
         let sign = if x < 0.0 { -1.0 } else { 1.0 };
         let ax = x.abs();
         let int = ax.trunc();
-        let f = ax - int;
+
+        let f = x87::sub(ax, int);
         let scale = xmath::pow(10.0, frac.log10().ceil());
         let r = if to_decimal {
-            f * scale / frac
+            x87::div(x87::mul(f, scale), frac)
         } else {
-            f * frac / scale
+            x87::div(x87::mul(f, frac), scale)
         };
-        finite(sign * (int + r))
+        finite(sign * x87::add(int, r))
     })())
 }
 

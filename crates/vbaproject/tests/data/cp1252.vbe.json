@@ -1,0 +1,35 @@
+{
+    "workbookCodeName":  "ThisWorkbook",
+    "sheets":  [
+                   {
+                       "name":  "Sheet1",
+                       "codeName":  "Sheet1"
+                   }
+               ],
+    "modules":  [
+                    {
+                        "name":  "ThisWorkbook",
+                        "type":  100,
+                        "lines":  0,
+                        "text":  ""
+                    },
+                    {
+                        "name":  "Sheet1",
+                        "type":  100,
+                        "lines":  0,
+                        "text":  ""
+                    },
+                    {
+                        "name":  "Text1252",
+                        "type":  1,
+                        "lines":  5,
+                        "text":  "\u0027 café naéve über Straße ÿ € “” – … ™ °\r\nFunction Greeting() As String\r\n    Greeting = \"café € “quoted” – … ™ 5° (nbsp)\"\r\nEnd Function\r\n"
+                    },
+                    {
+                        "name":  "Modéü",
+                        "type":  1,
+                        "lines":  4,
+                        "text":  "\u0027 module name has non-ASCII characters\r\nSub S()\r\nEnd Sub\r\n"
+                    }
+                ]
+}

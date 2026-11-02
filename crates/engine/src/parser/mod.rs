@@ -26,6 +26,10 @@ impl fmt::Display for ParseError {
 impl std::error::Error for ParseError {}
 
 pub fn parse(src: &str) -> Result<Expr, ParseError> {
+    parse_with(src, &|_| true)
+}
+
+pub fn parse_with(src: &str, sheet_exists: &dyn Fn(&str) -> bool) -> Result<Expr, ParseError> {
     let body = src.strip_prefix('=').unwrap_or(src);
     if src.encode_utf16().count() > MAX_FORMULA_CHARS {
         return Err(ParseError {
@@ -33,7 +37,7 @@ pub fn parse(src: &str) -> Result<Expr, ParseError> {
             message: "formula is too long".into(),
         });
     }
-    let tokens = Lexer::new(body).tokenize()?;
+    let tokens = Lexer::new(body, sheet_exists).tokenize()?;
     let mut p = Parser {
         toks: tokens,
         i: 0,
@@ -430,7 +434,10 @@ impl Parser {
     fn intersection(&mut self) -> Result<Expr, ParseError> {
         let mut left = self.range()?;
         while self.cur().space_before && Self::starts_operand(&self.cur().tok) {
-            let ws = self.cur().ws.clone();
+            let mut ws = self.cur().ws.clone();
+            if ws.contains('\n') {
+                ws = linebreak_operator(&ws).ok_or_else(|| self.err("unexpected blank"))?;
+            }
             left = left.with_ws("", &ws);
             let right = self.range()?;
             left = Expr::Binary {
@@ -448,8 +455,18 @@ impl Parser {
             let demoted = matches!(left, Expr::Field { .. });
             left = demote_field(left);
             self.names_mode |= demoted;
-            self.bump();
-            let mut right = self.postfix()?;
+
+            let keep_ws = matches!(left.unwrap_ws(), Expr::Name { .. });
+            let (ws_before, ws_after) = if keep_ws {
+                let b = self.cur().ws.clone();
+                self.bump();
+                (b, self.cur().ws.clone())
+            } else {
+                self.bump();
+                (String::new(), String::new())
+            };
+            left = left.with_ws("", &ws_before);
+            let mut right = self.postfix()?.with_ws(&ws_after, "");
             if demoted {
                 right = cell_to_name(right);
             }
@@ -675,6 +692,9 @@ impl Parser {
         match t.tok {
             Tok::Ident(name) => self.after_ident(Some(spec), name),
             Tok::Number { raw, .. } => {
+                if self.names_mode {
+                    return Err(self.err("expected a name after sheet name"));
+                }
                 let r0 = row_part(&raw)
                     .ok_or_else(|| self.err("expected a reference after sheet name"))?;
                 let r1 = self
@@ -725,6 +745,9 @@ impl Parser {
             let (mut n, mut dotted) = (1, None);
             while matches!(self.peek_tok(2 * n - 2), Tok::Op(":")) {
                 let Tok::Ident(x) = self.peek_tok(2 * n - 1) else {
+                    if matches!(self.peek_tok(2 * n - 1), Tok::Sheet(_)) {
+                        n += 1;
+                    }
                     break;
                 };
                 if split_fields(x).is_some() {
@@ -739,6 +762,12 @@ impl Parser {
             }
         }
         if self.names_mode {
+            if name.contains('$')
+                || (sheet.is_some()
+                    && matches!(name.to_ascii_uppercase().as_str(), "TRUE" | "FALSE"))
+            {
+                return Err(self.err(format!("invalid name '{name}'")));
+            }
             if let Some((base, _)) = split_fields(&name) {
                 if r1c1_axis(base).is_some() {
                     return Err(self.err(format!("invalid name '{name}'")));
@@ -898,7 +927,9 @@ impl Parser {
         }
         let t = self.bump();
         let item = match t.tok {
-            Tok::Number { value, .. } => ArrayItem::Number(if neg { -value } else { value }),
+            Tok::Number { value, .. } => {
+                ArrayItem::Number(crate::number::normalize(if neg { -value } else { value }))
+            }
             Tok::Str(s) if !neg => ArrayItem::Text(s),
             Tok::Error(e) if !neg => ArrayItem::Error(e),
             Tok::Ident(s) if !neg && s.eq_ignore_ascii_case("TRUE") => ArrayItem::Bool(true),
@@ -1073,6 +1104,19 @@ pub fn is_valid_name(name: &str) -> bool {
         }
     }
     true
+}
+
+fn linebreak_operator(ws: &str) -> Option<String> {
+    if ws.chars().any(|c| c != ' ' && c != '\n') {
+        return None;
+    }
+    let breaks = ws.matches('\n').count();
+    let tail = ws.len() - ws.rfind('\n')? - 1;
+    Some(format!(
+        "{}{}",
+        "\n".repeat(breaks),
+        " ".repeat((tail + 255) % 256 + 1)
+    ))
 }
 
 #[cfg(test)]

@@ -4,7 +4,6 @@ mod dist;
 mod ets;
 mod ets_seas;
 pub(crate) use dist::{xl_expm1, xl_log1p};
-mod hp;
 mod htest;
 mod ibeta;
 mod invnorm;
@@ -223,16 +222,4 @@ fn numbers_only(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
         }
     }
     Ok(out)
-}
-
-fn sum(v: &[f64]) -> f64 {
-    let mut s = 0.0;
-    for &x in v {
-        s += x;
-    }
-    s
-}
-
-fn mean(v: &[f64]) -> f64 {
-    sum(v) / v.len() as f64
 }

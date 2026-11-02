@@ -1,0 +1,89 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "cell": "Sheet1!A1",
+      "input": "k",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A2",
+      "input": "1",
+      "op": "set"
+    },
+    {
+      "cell": "Sheet1!A6",
+      "input": "2",
+      "op": "set"
+    },
+    {
+      "op": "group_rows",
+      "sheet": "Sheet1",
+      "at": 2,
+      "count": 3
+    },
+    {
+      "op": "group_rows",
+      "sheet": "Sheet1",
+      "at": 8,
+      "count": 2
+    },
+    {
+      "op": "hide_rows",
+      "sheet": "Sheet1",
+      "at": 3,
+      "count": 1
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "Sheet1",
+      "at": 5,
+      "count": 1
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "Sheet1",
+      "at": 2,
+      "count": 1
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "Sheet1",
+      "at": 11,
+      "count": 2
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "Sheet1",
+      "at": 5,
+      "count": 1
+    },
+    {
+      "op": "rowstate",
+      "rows": 14,
+      "sheet": "Sheet1"
+    }
+  ]
+}

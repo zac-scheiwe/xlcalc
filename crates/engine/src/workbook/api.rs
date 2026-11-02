@@ -1,3 +1,4 @@
+use super::Command;
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::number::format_general;
@@ -6,6 +7,37 @@ use crate::value::Value;
 use crate::workbook::{CalcMode, Workbook};
 
 impl Workbook {
+    pub fn formula_text_r1c1(&self, addr: CellAddr) -> Option<String> {
+        let (fid, host) = match self.formula_at(addr) {
+            Some(f) => (f, addr),
+            None => {
+                let (f, _) = self.array_at(addr)?;
+                (f, self.formula(f).addr)
+            }
+        };
+        Some(format!(
+            "={}",
+            crate::formula_print::print_node_r1c1(self, &self.formula(fid).formula.root, host)
+        ))
+    }
+
+    pub fn name_refers_to_r1c1(&self, def: &crate::NameDef) -> String {
+        let (r, c) = self.active_cell();
+        let host = CellAddr::new(def.scope.unwrap_or(SheetId(0)), r, c);
+        crate::formula_print::print_node_r1c1(self, &def.formula.root, host)
+    }
+
+    pub fn with_input_locale<R>(
+        &mut self,
+        locale: &crate::locale::Locale,
+        f: impl FnOnce(&mut Workbook) -> R,
+    ) -> R {
+        let own = self.input_locale.replace(locale.clone());
+        let r = f(self);
+        self.input_locale = own;
+        r
+    }
+
     pub fn display_text(&self, addr: CellAddr) -> String {
         let v = self.value(addr);
         match &v {
@@ -44,6 +76,14 @@ impl Workbook {
         }
     }
 
+    pub(crate) fn ever_used(&self, sheet: SheetId) -> Option<Rect> {
+        let cells = self.sheet(sheet)?.cells.sticky_bounds();
+        match (cells, self.cellfmt.sticky.get(&sheet)) {
+            (Some(a), Some(b)) => Some(a.union_bounds(b)),
+            (a, b) => a.or(b.copied()),
+        }
+    }
+
     pub fn addr(&self, sheet: SheetId, a1: &str) -> Option<CellAddr> {
         crate::parse_cell_ref(self, &a1.replace('$', ""), sheet)
     }
@@ -53,6 +93,14 @@ impl Workbook {
     }
 
     pub fn delete_name_active(
+        &mut self,
+        name: &str,
+        scope: Option<SheetId>,
+    ) -> Option<RecalcReport> {
+        self.command(Command::Name, |wb| wb.delete_name_active_run(name, scope))
+    }
+
+    fn delete_name_active_run(
         &mut self,
         name: &str,
         scope: Option<SheetId>,
@@ -73,6 +121,10 @@ impl Workbook {
     }
 
     pub fn delete_name(&mut self, name: &str, scope: Option<SheetId>) -> Option<RecalcReport> {
+        self.command(Command::Name, |wb| wb.delete_name_run(name, scope))
+    }
+
+    fn delete_name_run(&mut self, name: &str, scope: Option<SheetId>) -> Option<RecalcReport> {
         let key = name.to_uppercase();
         self.names.delete(&key, scope)?;
         calc::name_changed(self, &key);

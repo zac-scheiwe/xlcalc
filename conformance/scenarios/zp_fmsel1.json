@@ -1,0 +1,101 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "k"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "n"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A4",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D1",
+      "input": "=SUBTOTAL(9,B2:B4)"
+    },
+    {
+      "op": "table",
+      "name": "Tb",
+      "range": "Sheet1!A1:B4"
+    },
+    {
+      "op": "autofilter",
+      "table": "Tb",
+      "field": 1,
+      "criteria1": "a"
+    },
+    {
+      "op": "rowstate",
+      "rows": 6,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "paste_special",
+      "from": "Sheet1!B2",
+      "to": "Sheet1!E10",
+      "paste": "formats"
+    },
+    {
+      "op": "rowstate",
+      "rows": 6,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:H6"
+    },
+    {
+      "op": "autofilter_reapply",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "autofilter_clear",
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "rowstate",
+      "rows": 6,
+      "sheet": "Sheet1"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:H6"
+    }
+  ]
+}

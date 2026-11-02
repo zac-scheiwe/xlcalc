@@ -65,6 +65,15 @@ pub fn call_value(ctx: &mut EvalCtx, f: Value, args: &[Node]) -> Operand {
 
 pub fn call_named(ctx: &mut EvalCtx, key: &str, args: &[Node]) -> Operand {
     if ctx.wb.names.lookup(key, ctx.host.sheet).is_none() {
+        if let Some(host) = ctx.wb.function_host.as_deref() {
+            if let Some(sig) = host.signature(key) {
+                if ctx.wb.bookkeeping() {
+                    return Operand::err(XlError::NA);
+                }
+                return crate::host::call(ctx, host, &sig, key, args);
+            }
+        }
+
         let _ = eval_args(ctx, args);
         return Operand::err(XlError::NAME);
     }

@@ -222,11 +222,20 @@ pub struct Formula {
 pub trait SheetResolver {
     fn sheet_id(&self, name: &str) -> Option<SheetId>;
 
+    fn is_chart_sheet(&self, _id: SheetId) -> bool {
+        false
+    }
+
     fn table(&self, name: Option<&str>) -> Option<(String, Vec<String>)>;
 
     fn name_exists(&self, _name: &str) -> bool {
         false
     }
+}
+
+thread_local! {
+
+    pub static NAME_CONTEXT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
 pub struct CompileCtx<'a> {
@@ -311,14 +320,24 @@ impl<'a> Compiler<'a> {
         match spec {
             None => SheetRef::Current,
             Some(SheetSpec::Single(n)) => match self.cx.sheets.sheet_id(n) {
-                Some(id) => SheetRef::Sheet(id),
-                None => SheetRef::Missing(n.as_str().into()),
+                Some(id) if !self.cx.sheets.is_chart_sheet(id) => SheetRef::Sheet(id),
+                _ => SheetRef::Missing(n.as_str().into()),
             },
             Some(SheetSpec::Range(a, b)) => {
+                let spelled = b
+                    .strip_prefix('[')
+                    .and_then(|r| r.split_once(']'))
+                    .filter(|(y, y2)| y == y2)
+                    .map(|(y, _)| y);
+                let forced = spelled.is_some();
+                let b = spelled.unwrap_or(b.as_str());
                 match (self.cx.sheets.sheet_id(a), self.cx.sheets.sheet_id(b)) {
+                    (Some(_), Some(_)) if forced => {
+                        SheetRef::Missing(format!("{a}:[{b}]{b}").into())
+                    }
                     (Some(x), Some(y)) if x == y => SheetRef::Sheet(x),
                     (Some(x), Some(y)) => SheetRef::Span(x, y),
-                    _ => SheetRef::Missing(format!("{a}:{b}").into()),
+                    _ => SheetRef::Missing(format!("{a}:[{b}]{b}").into()),
                 }
             }
             Some(SheetSpec::External { book, .. }) => SheetRef::External(book.as_str().into()),
@@ -661,6 +680,16 @@ impl<'a> Compiler<'a> {
                     .ok_or_else(|| CompileError(format!("table '{tname}' has no column '{c}'")))
             };
             parsed.cols = Some((canon(a)?, canon(b)?));
+
+            let (ca, cb) = parsed.cols.as_ref().unwrap();
+            if [ca, cb]
+                .iter()
+                .any(|c| c.chars().any(|ch| ch == '@' || ch < ' '))
+            {
+                return Err(CompileError(format!(
+                    "table '{tname}' column name cannot be referenced"
+                )));
+            }
         }
         Ok(Node::StructRef {
             table: tname.as_str().into(),
@@ -814,6 +843,20 @@ impl<'a> Compiler<'a> {
             return Err(CompileError("That function isn't valid".into()));
         }
         let stripped_up = strip_prefixes(name).to_uppercase();
+
+        if functions::xlm::NAME_ONLY.contains(&&*stripped_up) {
+            if !NAME_CONTEXT.get() {
+                return Err(CompileError("That function isn't valid".into()));
+            }
+
+            if args.iter().any(|a| matches!(a, Expr::Ref { .. }))
+                || (stripped_up == "GET.CELL" && matches!(args.get(1), Some(Expr::Text(_))))
+            {
+                return Err(CompileError(
+                    "There's an error in the formula you entered.".into(),
+                ));
+            }
+        }
         if functions::lookup(&stripped_up).is_none()
             && functions::xlm::XLM_ONLY.contains(&&*stripped_up)
         {
@@ -1011,5 +1054,40 @@ fn walk_inner<'n>(node: &'n Node, f: &mut dyn FnMut(&'n Node)) {
         | Node::Unsupported { .. }
         | Node::DeadRef(_)
         | Node::StructRef { .. } => {}
+    }
+}
+
+impl Drop for Node {
+    fn drop(&mut self) {
+        fn take_children(n: &mut Node, todo: &mut Vec<Node>) {
+            fn take(todo: &mut Vec<Node>, x: &mut Node) {
+                todo.push(std::mem::replace(x, Node::Missing));
+            }
+            match n {
+                Node::Unary(_, x) | Node::Percent(x) | Node::Spill(x) | Node::Paren(x) => {
+                    take(todo, x)
+                }
+                Node::Binary(_, a, b) => {
+                    take(todo, a);
+                    take(todo, b);
+                }
+                Node::Func { args, .. } | Node::NamedCall { args, .. } => todo.append(args),
+                Node::Call { callee, args } => {
+                    take(todo, callee);
+                    todo.append(args);
+                }
+                Node::Let { values, body, .. } => {
+                    todo.append(values);
+                    take(todo, body);
+                }
+                Node::Ws { node, .. } => take(todo, node),
+                _ => {}
+            }
+        }
+        let mut todo: Vec<Node> = Vec::new();
+        take_children(self, &mut todo);
+        while let Some(mut n) = todo.pop() {
+            take_children(&mut n, &mut todo);
+        }
     }
 }

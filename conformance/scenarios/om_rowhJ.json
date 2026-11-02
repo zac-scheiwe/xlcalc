@@ -1,0 +1,406 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A1')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A2')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A3')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A4')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A5')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A6')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A8')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A9')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A10')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "=REPT(\"abcd \",B5)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "10"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A5')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "=REPT(\"abcd \",B7)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "10"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A6')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "=REPT(\"abcd \",B11)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B11",
+   "input": "10"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A11')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A1')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A2')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A3')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A4')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A5')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A6')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A8')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A9')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A10')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A11')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A1').EntireColumn",
+   "prop": "ColumnWidth",
+   "value": 40
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A1')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A2')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A3')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A4')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A5')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A6')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A8')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A9')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A10')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A11')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "5"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A1')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "text"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A2')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "abcd abcd abcd abcd abcd abcd abcd abcd abcd abcd"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A3')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B4').Font",
+   "prop": "Bold",
+   "value": true
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A4')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "2"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A5')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "1"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A5')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "2"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A6')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "1"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A6')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A8')",
+   "prop": "WrapText",
+   "value": false
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A8')",
+   "prop": "WrapText",
+   "value": true
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A8')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A9:B9')",
+   "prop": "HorizontalAlignment",
+   "value": -4152
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A9')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A10').EntireRow",
+   "prop": "Hidden",
+   "value": true
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A10').EntireRow",
+   "prop": "Hidden",
+   "value": false
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A10')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B11",
+   "input": "2"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A11')",
+   "prop": "RowHeight"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "=REPT(\"abcd \",B11)"
+  },
+  {
+   "op": "om_get",
+   "path": "Range('Sheet1!A11')",
+   "prop": "RowHeight"
+  }
+ ]
+}

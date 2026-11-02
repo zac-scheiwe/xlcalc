@@ -1,3 +1,4 @@
+use crate::workbook::Command;
 use std::sync::{Arc, OnceLock};
 
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
@@ -141,6 +142,19 @@ impl Workbook {
         row_input: Option<CellAddr>,
         col_input: Option<CellAddr>,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::DataTable, |wb| {
+            wb.note_changed(sheet, &[rect]);
+            wb.add_data_table_run(sheet, rect, row_input, col_input)
+        })
+    }
+
+    fn add_data_table_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        row_input: Option<CellAddr>,
+        col_input: Option<CellAddr>,
+    ) -> Result<RecalcReport, EditError> {
         if self.sheet(sheet).is_none() {
             return Err(EditError::NoSuchSheet);
         }
@@ -173,7 +187,10 @@ impl Workbook {
             return Err(crate::cse::part_of_array());
         }
         if self.merge_intersects(sheet, &int) {
-            return Err(EditError::OutOfScope("data table over merged cells"));
+            return Err(EditError::Compile(
+                "This selection isn't valid. Make sure the copy and paste areas don't overlap                  unless they are the same size and shape."
+                    .into(),
+            ));
         }
 
         let mut doomed = Vec::new();
@@ -279,6 +296,10 @@ impl Workbook {
     }
 
     pub fn set_semiautomatic(&mut self) -> RecalcReport {
+        self.command(Command::Setting, |wb| wb.set_semiautomatic_run())
+    }
+
+    fn set_semiautomatic_run(&mut self) -> RecalcReport {
         self.settings.mode = CalcMode::Automatic;
         self.settings.except_tables = true;
         calc::recalc(self)
@@ -420,6 +441,7 @@ fn compute(wb: &mut Workbook, t: &DataTable, report: &mut RecalcReport) {
         calc::rect_changed(wb, t.sheet, int);
         let r = calc::recalc_cells(wb);
         report.evaluations += r.evaluations;
+        report.add_sheets(&r);
         report.changed.extend(r.changed);
         return;
     }
@@ -468,6 +490,7 @@ fn compute(wb: &mut Workbook, t: &DataTable, report: &mut RecalcReport) {
     }
     let absorb = |report: &mut RecalcReport, r: RecalcReport| {
         report.evaluations += r.evaluations;
+        report.add_sheets(&r);
         report.changed.extend(r.changed);
     };
     for (subs, writes) in units {

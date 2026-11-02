@@ -1,0 +1,9 @@
+[package]
+name = "xlcalc-vbaproject"
+description = "Reads the VBA project (vbaProject.bin) of an .xlsm: MS-CFB container and MS-OVBA modules"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]

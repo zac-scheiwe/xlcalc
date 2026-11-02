@@ -1,0 +1,186 @@
+{
+ "sheets": [
+  "Host",
+  "Aa",
+  "Bb",
+  "Cc",
+  "Dd"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!A1",
+   "input": "4"
+  },
+  {
+   "op": "name",
+   "name": "Foo",
+   "refers_to": "=Bb!$A$1"
+  },
+  {
+   "op": "name",
+   "name": "Foo",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Cc"
+  },
+  {
+   "op": "name",
+   "name": "Foo",
+   "refers_to": "=Dd!$A$1",
+   "scope": "Dd"
+  },
+  {
+   "op": "name",
+   "name": "Baz",
+   "refers_to": "=Dd!$A$1+1",
+   "scope": "Dd"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=Cc!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=Dd!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=Dd!Baz"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=SUM(Dd!Baz,Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=Aa!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=Cc!Baz"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B1",
+   "input": "=Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!B1",
+   "input": "=Foo"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A7"
+  },
+  {
+   "op": "read",
+   "range": "Cc!B1:B1"
+  },
+  {
+   "op": "read",
+   "range": "Dd!B1:B1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Dd"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A7"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Cc"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A7"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "name",
+   "name": "Baz",
+   "refers_to": "=Aa!$A$1"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A7"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=Dd!Baz"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=Cc!Foo"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A9"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Aa",
+   "name": "Dd"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A9"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Dd",
+   "name": "Cc"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A9"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

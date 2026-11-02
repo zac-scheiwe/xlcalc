@@ -1,0 +1,273 @@
+use crate::typelib::InvokeKind::*;
+use crate::typelib::Ty::*;
+use crate::typelib::{d, h, m, p, DefaultValue, Enumeration, Guid, Interface, Member};
+
+pub static INTERFACES: &[Interface] = &[
+    Interface {
+        name: "_CodeModule",
+        iid: Guid::parse("0002e16e-0000-0000-c000-000000000046"),
+        dual: true,
+        hidden: true,
+        members: M_CODEMODULE,
+    },
+    Interface {
+        name: "_VBComponent",
+        iid: Guid::parse("eee00921-e393-11d1-bb03-00c04fb6c4a6"),
+        dual: true,
+        hidden: false,
+        members: M_VBCOMPONENT,
+    },
+    Interface {
+        name: "_VBComponents",
+        iid: Guid::parse("eee0091c-e393-11d1-bb03-00c04fb6c4a6"),
+        dual: true,
+        hidden: false,
+        members: M_VBCOMPONENTS,
+    },
+    Interface {
+        name: "_VBProject",
+        iid: Guid::parse("eee00915-e393-11d1-bb03-00c04fb6c4a6"),
+        dual: true,
+        hidden: true,
+        members: M_VBPROJECT,
+    },
+];
+
+pub static ENUMERATIONS: &[Enumeration] = &[
+    Enumeration {
+        name: "vbext_ComponentType",
+        constants: &[
+            ("vbext_ct_StdModule", 1),
+            ("vbext_ct_ClassModule", 2),
+            ("vbext_ct_MSForm", 3),
+            ("vbext_ct_ActiveXDesigner", 11),
+            ("vbext_ct_Document", 100),
+        ],
+    },
+    Enumeration {
+        name: "vbext_ProcKind",
+        constants: &[
+            ("vbext_pk_Proc", 0),
+            ("vbext_pk_Let", 1),
+            ("vbext_pk_Set", 2),
+            ("vbext_pk_Get", 3),
+        ],
+    },
+    Enumeration {
+        name: "vbext_ProjectProtection",
+        constants: &[("vbext_pp_none", 0), ("vbext_pp_locked", 1)],
+    },
+    Enumeration {
+        name: "vbext_ProjectType",
+        constants: &[("vbext_pt_HostProject", 100), ("vbext_pt_StandAlone", 101)],
+    },
+    Enumeration {
+        name: "vbext_VBAMode",
+        constants: &[
+            ("vbext_vm_Run", 0),
+            ("vbext_vm_Break", 1),
+            ("vbext_vm_Design", 2),
+        ],
+    },
+];
+
+static M_CODEMODULE: &[Member] = &[
+    m(
+        "AddFromFile",
+        0x60020005,
+        Func,
+        Void,
+        &[p("FileName", Bstr)],
+    ),
+    m(
+        "AddFromString",
+        0x60020004,
+        Func,
+        Void,
+        &[p("String", Bstr)],
+    ),
+    m("CodePane", 0x60020012, Get, Object("CodePane"), &[]),
+    m("CountOfDeclarationLines", 0x6002000f, Get, I4, &[]),
+    m("CountOfLines", 0x60020007, Get, I4, &[]),
+    m(
+        "CreateEventProc",
+        0x60020010,
+        Func,
+        I4,
+        &[p("EventName", Bstr), p("ObjectName", Bstr)],
+    ),
+    m(
+        "DeleteLines",
+        0x60020009,
+        Func,
+        Void,
+        &[p("StartLine", I4), d("Count", I4, DefaultValue::I4(1))],
+    ),
+    m(
+        "Find",
+        0x60020011,
+        Func,
+        Bool,
+        &[
+            p("Target", Bstr),
+            p("StartLine", ByRef(&I4)),
+            p("StartColumn", ByRef(&I4)),
+            p("EndLine", ByRef(&I4)),
+            p("EndColumn", ByRef(&I4)),
+            d("WholeWord", Bool, DefaultValue::Bool(false)),
+            d("MatchCase", Bool, DefaultValue::Bool(false)),
+            d("PatternSearch", Bool, DefaultValue::Bool(false)),
+        ],
+    ),
+    m(
+        "InsertLines",
+        0x60020008,
+        Func,
+        Void,
+        &[p("Line", I4), p("String", Bstr)],
+    ),
+    m(
+        "Lines",
+        0x60020006,
+        Get,
+        Bstr,
+        &[p("StartLine", I4), p("Count", I4)],
+    ),
+    h("Name", 0x0, Get, Bstr, &[]),
+    h("Name", 0x0, Put, Void, &[p("", Bstr)]),
+    m("Parent", 0x60020000, Get, Object("VBComponent"), &[]),
+    m(
+        "ProcBodyLine",
+        0x6002000d,
+        Get,
+        I4,
+        &[p("ProcName", Bstr), p("ProcKind", Enum("vbext_ProcKind"))],
+    ),
+    m(
+        "ProcCountLines",
+        0x6002000c,
+        Get,
+        I4,
+        &[p("ProcName", Bstr), p("ProcKind", Enum("vbext_ProcKind"))],
+    ),
+    m(
+        "ProcOfLine",
+        0x6002000e,
+        Get,
+        Bstr,
+        &[p("Line", I4), p("ProcKind", ByRef(&Enum("vbext_ProcKind")))],
+    ),
+    m(
+        "ProcStartLine",
+        0x6002000b,
+        Get,
+        I4,
+        &[p("ProcName", Bstr), p("ProcKind", Enum("vbext_ProcKind"))],
+    ),
+    m(
+        "ReplaceLine",
+        0x6002000a,
+        Func,
+        Void,
+        &[p("Line", I4), p("String", Bstr)],
+    ),
+    m("VBE", 0x60020001, Get, Object("VBE"), &[]),
+];
+
+static M_VBCOMPONENT: &[Member] = &[
+    m("Activate", 0x3c, Func, Void, &[]),
+    m("CodeModule", 0x32, Get, Object("CodeModule"), &[]),
+    m("Collection", 0x36, Get, Object("VBComponents"), &[]),
+    m("Designer", 0x31, Get, Dispatch, &[]),
+    m("DesignerID", 0x40, Get, Bstr, &[]),
+    m("DesignerWindow", 0x39, Func, Object("Window"), &[]),
+    m("Export", 0x34, Func, Void, &[p("FileName", Bstr)]),
+    m("HasOpenDesigner", 0x37, Get, Bool, &[]),
+    m("Name", 0x30, Get, Bstr, &[]),
+    m("Name", 0x30, Put, Void, &[p("", Bstr)]),
+    m("Properties", 0x38, Get, Object("Properties"), &[]),
+    m("Saved", 0xa, Get, Bool, &[]),
+    m("Type", 0x33, Get, Enum("vbext_ComponentType"), &[]),
+    m("VBE", 0x35, Get, Object("VBE"), &[]),
+];
+
+static M_VBCOMPONENTS: &[Member] = &[
+    m("_NewEnum", -4, Func, Unknown, &[]),
+    m(
+        "Add",
+        0xc,
+        Func,
+        Object("VBComponent"),
+        &[p("ComponentType", Enum("vbext_ComponentType"))],
+    ),
+    m(
+        "AddCustom",
+        0x19,
+        Func,
+        Object("VBComponent"),
+        &[p("ProgId", Bstr)],
+    ),
+    h(
+        "AddMTDesigner",
+        0x1a,
+        Func,
+        Object("VBComponent"),
+        &[d("index", I4, DefaultValue::I4(0))],
+    ),
+    m("Count", 0xa, Get, I4, &[]),
+    m(
+        "Import",
+        0xd,
+        Func,
+        Object("VBComponent"),
+        &[p("FileName", Bstr)],
+    ),
+    m(
+        "Item",
+        0x0,
+        Func,
+        Object("VBComponent"),
+        &[p("index", Variant)],
+    ),
+    m("Parent", 0x2, Get, Object("VBProject"), &[]),
+    m(
+        "Remove",
+        0xb,
+        Func,
+        Void,
+        &[p("VBComponent", Object("VBComponent"))],
+    ),
+    m("VBE", 0x14, Get, Object("VBE"), &[]),
+];
+
+static M_VBPROJECT: &[Member] = &[
+    h("Application", 0x1, Get, Object("Application"), &[]),
+    m("BuildFileName", 0x8e, Get, Bstr, &[]),
+    m("BuildFileName", 0x8e, Put, Void, &[p("", Bstr)]),
+    m("Collection", 0x7b, Get, Object("VBProjects"), &[]),
+    m("Description", 0x76, Get, Bstr, &[]),
+    m("Description", 0x76, Put, Void, &[p("", Bstr)]),
+    m("FileName", 0x8d, Get, Bstr, &[]),
+    m("HelpContextID", 0x75, Get, I4, &[]),
+    m("HelpContextID", 0x75, Put, Void, &[p("", I4)]),
+    m("HelpFile", 0x74, Get, Bstr, &[]),
+    m("HelpFile", 0x74, Put, Void, &[p("", Bstr)]),
+    m("MakeCompiledFile", 0x8b, Func, Void, &[]),
+    m("Mode", 0x77, Get, Enum("vbext_VBAMode"), &[]),
+    m("Name", 0x79, Get, Bstr, &[]),
+    m("Name", 0x79, Put, Void, &[p("", Bstr)]),
+    h("Parent", 0x2, Get, Object("Application"), &[]),
+    m(
+        "Protection",
+        0x83,
+        Get,
+        Enum("vbext_ProjectProtection"),
+        &[],
+    ),
+    m("References", 0x78, Get, Object("References"), &[]),
+    m("SaveAs", 0x8a, Func, Void, &[p("FileName", Bstr)]),
+    m("Saved", 0x85, Get, Bool, &[]),
+    m("Type", 0x8c, Get, Enum("vbext_ProjectType"), &[]),
+    m("VBComponents", 0x87, Get, Object("VBComponents"), &[]),
+    m("VBE", 0x7a, Get, Object("VBE"), &[]),
+];

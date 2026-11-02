@@ -44,7 +44,7 @@ fn shapes(n: usize) -> Vec<(&'static str, String)> {
 #[test]
 fn deep_formulas_do_not_overflow_the_stack() {
     on_small_stack(|| {
-        for n in [50usize, 255, 500, 1000, 2000, 3000, 4000, 20000] {
+        for n in [50usize, 255, 500, 1000, 2000, 3000, 4000, 5000, 8000, 20000] {
             for (_name, text) in shapes(n) {
                 let mut wb = Workbook::new();
                 let s = wb.sheet_at(0).id;

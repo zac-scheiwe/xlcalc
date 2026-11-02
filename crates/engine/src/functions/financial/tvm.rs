@@ -1,10 +1,10 @@
 use super::atp::{self, Arg};
-use super::xmath;
 use crate::eval::EvalCtx;
 use crate::functions::args::{num, opt_num, val, R};
 use crate::functions::statdist::{xl_expm1, xl_log1p};
 use crate::value::{Value, XlError};
 use crate::x87;
+use crate::xmath;
 
 fn finite(x: f64) -> R<f64> {
     if x.is_finite() {
@@ -149,17 +149,19 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if r <= -1.0 {
             return Err(XlError::NUM);
         }
-        let pt = if t { pmt * (1.0 + r) } else { pmt };
-        let x = (pt - fv * r) / (pt + pv * r);
+
+        let r1 = x87::add(1.0, r);
+        let pt = if t { x87::mul(pmt, r1) } else { pmt };
+        let x = x87::div(x87::sub(pt, x87::mul(fv, r)), x87::add(pt, x87::mul(pv, r)));
         if x <= 0.0 || !x.is_finite() {
             return Err(XlError::NUM);
         }
 
-        let l = xmath::ln(1.0 + r);
+        let l = x87::ln(r1);
         if l == 0.0 {
             return Err(XlError::DIV0);
         }
-        finite(xmath::ln(x) / l).map(Value::num)
+        finite(x87::div(x87::ln(x), l)).map(Value::num)
     })())
 }
 
@@ -226,7 +228,7 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             let (g, ann) = annuity(r, n, t);
             x87::sub(-x87::add(x87::mul(pmt, ann), x87::mul(pv, g)), fv)
         };
-        let r = super::cash::fn_iter(guess, f).ok_or(XlError::NUM)?;
+        let r = super::cash::fn_iter(super::cash::fn_iter_start(guess)?, f).ok_or(XlError::NUM)?;
         if r <= -1.0 + RATE_NEAR_M1 {
             return Err(XlError::NUM);
         }
@@ -378,7 +380,11 @@ pub fn nominal(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if eff <= 0.0 || p < 1.0 {
             return Err(XlError::NUM);
         }
-        finite((xmath::pow(1.0 + eff, 1.0 / p) - 1.0) * p)
+
+        finite(x87::mul(
+            x87::sub(xmath::pow(x87::add(1.0, eff), x87::div(1.0, p)), 1.0),
+            p,
+        ))
     })())
 }
 

@@ -117,6 +117,13 @@ impl DepGraph {
         }
     }
 
+    pub fn name_keys(&self) -> impl Iterator<Item = &Text> {
+        self.names
+            .iter()
+            .filter(|(_, s)| !s.is_empty())
+            .map(|(k, _)| k)
+    }
+
     pub fn dependents_of_name(&self, key: &str, out: &mut Vec<FormulaId>) {
         if let Some(set) = self.names.get(key) {
             out.extend(set.iter().copied());

@@ -1,0 +1,7 @@
+Public Function WbFn(ByVal a As Variant) As Variant
+    On Error GoTo EH
+    WbFn = "wb:" & a
+    Exit Function
+EH:
+    WbFn = "err " & Err.Number
+End Function

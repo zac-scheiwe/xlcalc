@@ -1,0 +1,89 @@
+{
+  "sheets": [
+    "g1",
+    "g2"
+  ],
+  "check_all_formats": true,
+  "steps": [
+    {
+      "op": "format",
+      "range": "g1!B2:B3",
+      "fmt": "0.00E+00"
+    },
+    {
+      "op": "set",
+      "cell": "g1!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "g1!B2",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "g1!B3",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "g1!C3",
+      "input": "=B3*2"
+    },
+    {
+      "op": "format",
+      "range": "g2!B2:B3",
+      "fmt": "0.00E+00"
+    },
+    {
+      "op": "set",
+      "cell": "g2!A1",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "g2!B2",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "g2!B3",
+      "input": "1000"
+    },
+    {
+      "op": "set",
+      "cell": "g2!C3",
+      "input": "=B3*2"
+    },
+    {
+      "op": "replace",
+      "range": "g1!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "read",
+      "range": "g1!A1:C3"
+    },
+    {
+      "op": "mode",
+      "value": "manual"
+    },
+    {
+      "op": "replace",
+      "range": "g2!A1",
+      "what": "10",
+      "with": "12:30",
+      "lookat": "part",
+      "matchcase": false,
+      "order": "cols"
+    },
+    {
+      "op": "read",
+      "range": "g2!A1:C3"
+    }
+  ]
+}

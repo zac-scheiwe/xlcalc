@@ -1,0 +1,273 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "k"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "n"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A4",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A5",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A6",
+      "input": "x"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B6",
+      "input": "6"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A7",
+      "input": "y"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B7",
+      "input": "7"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!H2",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!I2",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!K2",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!L2",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!H3",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!I3",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!K3",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!L3",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!H4",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!I4",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!K4",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!L4",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!H5",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!I5",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!K5",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!L5",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!H6",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!I6",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!K6",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!L6",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!H7",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!I7",
+      "input": "q"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!K7",
+      "input": "p"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!L7",
+      "input": "q"
+    },
+    {
+      "name": "Tb",
+      "op": "table",
+      "range": "Sheet1!A1:B5"
+    },
+    {
+      "op": "autofilter",
+      "table": "Tb",
+      "field": 1,
+      "criteria1": "zz"
+    },
+    {
+      "op": "rowstate",
+      "sheet": "Sheet1",
+      "rows": 12
+    },
+    {
+      "op": "copy",
+      "from": "Sheet1!A2:B7",
+      "to": "Sheet1!H2:I7"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:L8"
+    },
+    {
+      "op": "hide_cols",
+      "sheet": "Sheet1",
+      "at": 1,
+      "count": 1
+    },
+    {
+      "op": "hide_cols",
+      "sheet": "Sheet1",
+      "at": 11,
+      "count": 1
+    },
+    {
+      "op": "copy",
+      "from": "Sheet1!A2:B7",
+      "to": "Sheet1!K2:L7"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:L8"
+    },
+    {
+      "op": "rowstate",
+      "sheet": "Sheet1",
+      "rows": 12
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B7",
+      "input": ""
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!N7",
+      "input": "p"
+    },
+    {
+      "op": "hide_cols",
+      "sheet": "Sheet1",
+      "at": 14,
+      "count": 1
+    },
+    {
+      "op": "copy",
+      "from": "Sheet1!A2:B7",
+      "to": "Sheet1!N2:O7"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:O8"
+    }
+  ]
+}

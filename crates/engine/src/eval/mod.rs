@@ -178,6 +178,18 @@ pub struct Observed {
     pub read_own: bool,
 
     pub abandoned: bool,
+
+    pub partial: bool,
+
+    pub active_cse: Option<FormulaId>,
+
+    pub read_spill: bool,
+
+    pub spill_masked: bool,
+
+    pub host_volatile: Option<bool>,
+
+    pub needs_serial: bool,
 }
 
 pub struct EvalCtx<'a> {
@@ -203,6 +215,14 @@ pub struct EvalCtx<'a> {
     pub(crate) circ_live: u32,
 
     pub(crate) circ_args: bool,
+
+    pub(crate) allow_partial: bool,
+
+    pub(crate) forced_partial: bool,
+
+    pub(crate) in_evaluate: bool,
+
+    pub(crate) circ_sources: Vec<FormulaId>,
 
     pub(crate) circ_lifted: bool,
 
@@ -237,6 +257,8 @@ pub struct EvalCtx<'a> {
     pub(crate) at_call: Option<u32>,
 
     pub(crate) vchain: bool,
+
+    pub(crate) parallel: bool,
 }
 
 impl<'a> EvalCtx<'a> {
@@ -259,6 +281,10 @@ impl<'a> EvalCtx<'a> {
             pend_fid: None,
             circ_live: 0,
             circ_args: false,
+            allow_partial: false,
+            forced_partial: false,
+            in_evaluate: false,
+            circ_sources: Vec::new(),
             circ_lifted: false,
             own: None,
             name_scope: None,
@@ -276,6 +302,7 @@ impl<'a> EvalCtx<'a> {
             at_call: None,
             vchain: true,
             cse_lifted: false,
+            parallel: false,
         }
     }
 
@@ -322,6 +349,10 @@ impl<'a> EvalCtx<'a> {
         self.interrupt.is_some()
     }
 
+    pub(crate) fn read_mode(&self) -> ReadMode {
+        self.mode
+    }
+
     pub fn parse_env(&self) -> ParseEnv<'a> {
         ParseEnv {
             locale: &self.wb.locale,
@@ -359,7 +390,11 @@ impl<'a> EvalCtx<'a> {
         let f = self.wb.formula(fid);
         if self.own == Some(fid) {
             self.observed.read_own = true;
-            return f.value_at(row, col);
+
+            return match f.value_at(row, col) {
+                Value::Error(XlError::CIRC) => self.placeholder(fid, false),
+                v => v,
+            };
         }
         if f.dirty {
             match self.mode {
@@ -367,7 +402,37 @@ impl<'a> EvalCtx<'a> {
 
                 ReadMode::Iterative => {}
                 ReadMode::Calc => {
+                    let pass = self.wb.calc.pass;
+                    if let Some(p) = f.partial.as_deref().filter(|p| p.pass == pass) {
+                        let cols = f.array.map_or(1, |a| a.1);
+                        let i = ((row - f.addr.row) * cols + (col - f.addr.col)) as usize;
+                        if !p.mask.get(i).copied().unwrap_or(true) {
+                            return f.value_at(row, col);
+                        }
+                        if f.circular_pass != pass
+                            && (f.active || !crate::calc::partial_retry(self.wb, fid))
+                        {
+                            if self.defer_cycles {
+                                self.circ_sources.push(fid);
+                                return self.placeholder(fid, false);
+                            }
+                            if self.interrupt.is_none() {
+                                self.interrupt = Some(Interrupt::Cycle(fid));
+                            }
+                            return f.value_at(row, col);
+                        }
+                    }
+                    if self.forced_partial && f.on_stack && !f.active {
+                        self.circ_sources.push(fid);
+                        return self.placeholder(fid, false);
+                    }
                     if f.active {
+                        if f.array.is_some() && self.allow_partial && !self.forced_partial {
+                            self.observed.active_cse.get_or_insert(fid);
+                        }
+                        if self.defer_cycles {
+                            self.circ_sources.push(fid);
+                        }
                         if self.defer_cycles {
                             return self.placeholder(fid, false);
                         } else if self.interrupt.is_none() {
@@ -387,6 +452,9 @@ impl<'a> EvalCtx<'a> {
                     }
                 }
             }
+        }
+        if f.spill_src {
+            self.observed.read_spill = true;
         }
         f.value_at(row, col)
     }
@@ -410,7 +478,7 @@ impl<'a> EvalCtx<'a> {
             Some(Entry::Const(v)) => v.clone(),
             Some(Entry::Formula(fid)) => self.formula_value(*fid, row, col),
             None => match sh.spills.owner_of(row, col) {
-                Some(fid) => self.formula_value(fid, row, col),
+                Some(fid) => self.spill_value(fid, row, col),
                 None => Value::Blank,
             },
         }
@@ -480,7 +548,7 @@ impl<'a> EvalCtx<'a> {
                     continue;
                 }
                 for c in sr.c0.max(rect.c0)..=sr.c1.min(rect.c1) {
-                    if !(r == sr.r0 && c == sr.c0) {
+                    if !(r == sr.r0 && c == sr.c0) && !sh.spills.is_hole(*fid, r, c) {
                         cols.push((c, Some(*fid)));
                     }
                 }
@@ -491,7 +559,7 @@ impl<'a> EvalCtx<'a> {
                     continue;
                 }
                 let v = match owner {
-                    Some(fid) => self.formula_value(fid, r, c),
+                    Some(fid) => self.spill_value(fid, r, c),
                     None => match sh.cells.get(r, c) {
                         Some(Entry::Const(v)) => v.clone(),
                         Some(Entry::Formula(fid)) => self.formula_value(*fid, r, c),
@@ -502,6 +570,19 @@ impl<'a> EvalCtx<'a> {
                     return;
                 }
             }
+        }
+    }
+
+    fn spill_value(&mut self, fid: FormulaId, row: u32, col: u32) -> Value {
+        let src = self
+            .wb
+            .sheet(self.wb.formula(fid).addr.sheet)
+            .and_then(|sh| sh.spills.source(fid, row, col));
+        match src {
+            Some(crate::workbook::spill::SpillSource::Zero) => Value::Number(0.0),
+            Some(crate::workbook::spill::SpillSource::Value(v)) => v,
+            Some(crate::workbook::spill::SpillSource::At(r, c)) => self.formula_value(fid, r, c),
+            None => self.formula_value(fid, row, col),
         }
     }
 
@@ -573,6 +654,64 @@ impl<'a> EvalCtx<'a> {
         }
     }
 
+    pub(crate) fn eval_selector(&mut self, node: &Node) -> Value {
+        fn lifts_ref(node: &Node, root: bool) -> bool {
+            match node {
+                Node::Ref(..) | Node::Name { .. } => !root,
+                Node::Unary(_, x) | Node::Percent(x) => lifts_ref(x, false),
+                Node::Paren(x) => lifts_ref(x, root),
+                Node::Binary(_, a, b) => lifts_ref(a, false) || lifts_ref(b, false),
+                Node::Func { id, args } => {
+                    let name = crate::functions::def(*id).name;
+                    crate::legacy_classes::legacy_array_args(name).is_some_and(|cl| {
+                        let n = cl.len() / 4;
+                        args.iter().enumerate().any(|(i, a)| {
+                            cl.as_bytes()[4 * i.min(n - 1)] == b'1' && lifts_ref(a, false)
+                        })
+                    })
+                }
+                _ => false,
+            }
+        }
+        let o = self.eval(node);
+        let v = self.deref(o);
+        match v {
+            Value::Array(a)
+                if a.data
+                    .iter()
+                    .any(|x| matches!(x, Value::Error(XlError::SPILL)))
+                    && self.in_array_block()
+                    && (!self.wb.settings.multi_threaded
+                        || self
+                            .wb
+                            .formula_at(self.host)
+                            .is_some_and(|f| self.member_calc(f))
+                            && lifts_ref(node, true)) =>
+            {
+                self.observed.spill_masked = true;
+                let data = a
+                    .data
+                    .iter()
+                    .map(|x| match x {
+                        Value::Error(XlError::SPILL) => Value::Error(XlError::VALUE),
+                        x => x.clone(),
+                    })
+                    .collect();
+                Array::new(a.rows, a.cols, data).into_value()
+            }
+            v => v,
+        }
+    }
+
+    fn member_calc(&self, fid: FormulaId) -> bool {
+        let f = self.wb.formula(fid);
+        f.spill_kept
+            || f.member_retry
+            || f.partial
+                .as_deref()
+                .is_some_and(|p| p.pass == self.wb.calc.pass)
+    }
+
     pub(crate) fn in_array_block(&self) -> bool {
         self.wb
             .formula_at(self.host)
@@ -624,6 +763,27 @@ impl<'a> EvalCtx<'a> {
             return Operand::err(XlError::CALC);
         }
         stacker::maybe_grow(64 * 1024, 2 * 1024 * 1024, || self.eval_inner(node))
+    }
+
+    fn eval_operand(&mut self, node: &Node) -> Operand {
+        if let (
+            Node::Name {
+                key,
+                sheet: Some(_),
+                ..
+            },
+            Some(Some(scope)),
+            Some(name),
+        ) = (node.unwrap_ws(), self.name_scope, self.name_key.as_ref())
+        {
+            if self.wb.names.is_copy_stale(scope, name, key) {
+                self.arr_direct = false;
+                self.name_first = false;
+                self.name_keep = false;
+                return Operand::err(XlError::VALUE);
+            }
+        }
+        self.eval(node)
     }
 
     fn eval_inner(&mut self, node: &Node) -> Operand {
@@ -701,7 +861,7 @@ impl<'a> EvalCtx<'a> {
             }
             Node::Unary(op, x) => {
                 let saved = std::mem::replace(&mut self.dyn_reduce, false);
-                let v = self.eval(x);
+                let v = self.eval_operand(x);
                 self.dyn_reduce = saved;
 
                 if *op == UnaryOp::Plus && self.fn_depth > 0 {
@@ -722,7 +882,7 @@ impl<'a> EvalCtx<'a> {
             }
             Node::Percent(x) => {
                 let saved = std::mem::replace(&mut self.dyn_reduce, false);
-                let v = self.eval(x);
+                let v = self.eval_operand(x);
                 self.dyn_reduce = saved;
                 let v = self.deref(v);
                 Operand::Val(ops::percent(self, v))
@@ -750,12 +910,12 @@ impl<'a> EvalCtx<'a> {
                 }
                 _ => {
                     let saved = std::mem::replace(&mut self.dyn_reduce, false);
-                    let l = self.eval(a);
+                    let l = self.eval_operand(a);
                     self.dyn_reduce = saved;
                     let l = self.cse_value_grid(l, self.vchain);
                     let l = self.deref(l);
                     let saved = std::mem::replace(&mut self.dyn_reduce, false);
-                    let r = self.eval(b);
+                    let r = self.eval_operand(b);
                     self.dyn_reduce = saved;
                     let r = self.cse_value_grid(r, self.vchain);
                     let r = self.deref(r);
@@ -873,7 +1033,15 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
             None => true,
         };
         if used {
-            ctx.circ_used();
+            let partial = ctx.allow_partial
+                && ctx.pend_fid.is_none()
+                && ctx.interrupt.is_none()
+                && block.is_some_and(|(r, c)| r * c > 1);
+            if partial {
+                ctx.observed.partial = true;
+            } else {
+                ctx.circ_used();
+            }
         }
     }
     if ctx.observed.abandoned {

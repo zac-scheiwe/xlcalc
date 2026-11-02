@@ -1,0 +1,113 @@
+{
+ "sheets": [
+  "Host",
+  "Aa",
+  "Bb",
+  "Cc",
+  "Dd"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Dd!A1",
+   "input": "4"
+  },
+  {
+   "op": "name",
+   "name": "Foo",
+   "refers_to": "=Cc!$A$1",
+   "scope": "Cc"
+  },
+  {
+   "op": "name",
+   "name": "Gg",
+   "refers_to": "=Cc!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=Cc!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=Gg"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=Cc!Gg"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Cc",
+   "before": "Dd"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Cc"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Cc (2)",
+   "name": "Cc"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Cc"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=Cc!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=Gg"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A5"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

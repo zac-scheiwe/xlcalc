@@ -1,0 +1,127 @@
+Private Sub Workbook_Open()
+    On Error GoTo EH
+    EvLog.Enter "Book", "Open"
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.Open", Err.Number
+End Sub
+
+Private Sub Workbook_Activate()
+    On Error GoTo EH
+    EvLog.Enter "Book", "Activate"
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.Activate", Err.Number
+End Sub
+
+Private Sub Workbook_Deactivate()
+    On Error GoTo EH
+    EvLog.Enter "Book", "Deactivate"
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.Deactivate", Err.Number
+End Sub
+
+Private Sub Workbook_BeforeClose(Cancel As Boolean)
+    On Error GoTo EH
+    Cancel = EvLog.CancelClose
+    ThisWorkbook.Saved = True
+    EvLog.Enter "Book", "BeforeClose", Nothing, Nothing, "Cancel=" & Cancel
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.BeforeClose", Err.Number
+End Sub
+
+Private Sub Workbook_BeforeSave(ByVal SaveAsUI As Boolean, Cancel As Boolean)
+    On Error GoTo EH
+    Cancel = EvLog.CancelSave
+    EvLog.Enter "Book", "BeforeSave", Nothing, Nothing, "SaveAsUI=" & SaveAsUI & " Cancel=" & Cancel
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.BeforeSave", Err.Number
+End Sub
+
+Private Sub Workbook_AfterSave(ByVal Success As Boolean)
+    On Error GoTo EH
+    EvLog.Enter "Book", "AfterSave", Nothing, Nothing, "Success=" & Success
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.AfterSave", Err.Number
+End Sub
+
+Private Sub Workbook_NewSheet(ByVal Sh As Object)
+    On Error GoTo EH
+    EvLog.Enter "Book", "NewSheet", Sh
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.NewSheet", Err.Number
+End Sub
+
+Private Sub Workbook_SheetActivate(ByVal Sh As Object)
+    On Error GoTo EH
+    EvLog.Enter "Book", "SheetActivate", Sh
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.SheetActivate", Err.Number
+End Sub
+
+Private Sub Workbook_SheetDeactivate(ByVal Sh As Object)
+    On Error GoTo EH
+    EvLog.Enter "Book", "SheetDeactivate", Sh
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.SheetDeactivate", Err.Number
+End Sub
+
+Private Sub Workbook_SheetBeforeDelete(ByVal Sh As Object)
+    On Error GoTo EH
+    EvLog.Enter "Book", "SheetBeforeDelete", Sh
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.SheetBeforeDelete", Err.Number
+End Sub
+
+Private Sub Workbook_SheetCalculate(ByVal Sh As Object)
+    On Error GoTo EH
+    EvLog.Enter "Book", "SheetCalculate", Sh
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.SheetCalculate", Err.Number
+End Sub
+
+Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    On Error GoTo EH
+    EvLog.Enter "Book", "SheetChange", Sh, Target
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.SheetChange", Err.Number
+End Sub
+
+Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Range)
+    On Error GoTo EH
+    EvLog.Enter "Book", "SheetSelectionChange", Sh, Target
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Book.SheetSelectionChange", Err.Number
+End Sub
+
+Public Function WbFn(ByVal a As Variant) As Variant
+    On Error GoTo EH
+    WbFn = "wb:" & a
+    Exit Function
+EH:
+    WbFn = "err " & Err.Number
+End Function

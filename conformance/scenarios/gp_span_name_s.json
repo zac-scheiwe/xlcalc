@@ -1,0 +1,190 @@
+{
+ "sheets": [
+  "Host",
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B1",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B2",
+   "input": "1000"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B1",
+   "input": "200"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B2",
+   "input": "2000"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A2",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B1",
+   "input": "300"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B2",
+   "input": "3000"
+  },
+  {
+   "op": "name",
+   "name": "Foo",
+   "refers_to": "=Aa!$A$1:$A$2"
+  },
+  {
+   "op": "name",
+   "name": "Foo",
+   "refers_to": "=Bb!$B$1",
+   "scope": "Bb"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=(SUM(Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=1+(SUM(Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=SUM((1),Aa:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=SUM(IF(1,(1),Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=SUM(Aa:Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=Aa:Cc!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=Aa:Bb!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=Aa:Cc!Bar"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=Aa:Cc!Foo+1"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=SUM(Aa!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A11",
+   "input": "=SUM(Bb!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A12",
+   "input": "=SUM(Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A13",
+   "input": "=SUM(Host!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A14",
+   "input": "=SUM(Bb:Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A15",
+   "input": "=SUM(Aa:Aa!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A16",
+   "input": "=SUM(Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A17",
+   "input": "=SUM(Bb:Cc!Foo.x)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A18",
+   "input": "=ISREF(Aa:Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A19",
+   "input": "=ROWS(Aa:Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A20",
+   "input": "=SUM(B2:Aa:Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A21",
+   "input": "=SUM(Cc!Foo,Aa:Cc!Foo)"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A21"
+  }
+ ]
+}

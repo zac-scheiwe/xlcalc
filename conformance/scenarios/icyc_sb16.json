@@ -1,0 +1,67 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=E2&\"a\""
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "array",
+   "range": "Sheet1!D1:D3",
+   "input": "=IF(B1:B3>2,1/0,-1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=D1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  }
+ ]
+}

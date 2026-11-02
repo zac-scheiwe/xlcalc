@@ -1,0 +1,6 @@
+Private Sub Worksheet_Calculate()
+    On Error GoTo EH
+    CpProbe.Ev "Calc " & Me.Name
+    Exit Sub
+EH:
+End Sub

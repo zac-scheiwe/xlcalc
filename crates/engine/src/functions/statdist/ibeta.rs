@@ -18,37 +18,51 @@ enum Tail {
 const LN_0_7: f64 = f64::from_bits(0xBFD6_D3C3_24E1_3F4F);
 const LN_0_9: f64 = f64::from_bits(0xBFBA_F8E8_210A_415D);
 
-pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
+const TINY_SHAPE: f64 = 4.930380657631324e-32;
+
+pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> (f64, f64) {
     if x <= 0.0 || x.is_nan() {
-        return Some((0.0, 1.0));
+        return (0.0, 1.0);
     }
     if x >= 1.0 || x.is_nan() {
-        return Some((1.0, 0.0));
+        return (1.0, 0.0);
     }
     let pair = |w: f64| (w, flip(w));
     let apb = x87::add(a, b);
+
+    if a < TINY_SHAPE && b < TINY_SHAPE {
+        return (x87::div(b, apb), x87::div(a, apb));
+    }
     if a == 0.5 && b == 0.5 {
-        let s = x87::sqrt(x);
-        let t = x87::sub(1.0, s);
-        let v = x87::mul(x87::sub(2.0, t), t);
-        let r = x87::atan(x87::div(s, x87::sqrt(v)));
-        return Some(pair(x87::div(x87::mul(r, 2.0), std::f64::consts::PI)));
+        let arcsine = |x: f64| {
+            let s = x87::sqrt(x);
+            let t = x87::sub(1.0, s);
+            let v = x87::mul(x87::sub(2.0, t), t);
+            let r = x87::atan(x87::div(s, x87::sqrt(v)));
+            x87::div(x87::mul(r, 2.0), std::f64::consts::PI)
+        };
+
+        if x >= 0.9 {
+            let w1 = arcsine(x87::sub(1.0, x));
+            return (flip(w1), w1);
+        }
+        return pair(arcsine(x));
     }
 
     if b == 1.0 {
         if x > 0.9 {
             let w1 = -xl_expm1(x87::mul(x87::ln(x), a));
-            return Some((flip(w1), w1));
+            return (flip(w1), w1);
         }
-        return Some(pair(xl_pow(x, a)));
+        return pair(xl_pow(x, a));
     }
     if a == 1.0 {
         if x < 0.1 {
-            return Some(pair(-xl_expm1(x87::mul(xl_log1p(-x), b))));
+            return pair(-xl_expm1(x87::mul(xl_log1p(-x), b)));
         }
 
         let w1 = xl_pow(x87::sub(1.0, x), b);
-        return Some((flip(w1), w1));
+        return (flip(w1), w1);
     }
     let (tail, swap) = if a.min(b) <= 1.0 {
         let swap = x > 0.5;
@@ -56,24 +70,24 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
 
         let t = if a0.max(b0) > 1.0 {
             if b0 <= 1.0 {
-                Tail::Lower(bpser(a0, b0, x0)?)
+                Tail::Lower(bpser(a0, b0, x0))
             } else if x0 >= 0.3 {
-                Tail::Upper(bpser(b0, a0, y0)?)
+                Tail::Upper(bpser(b0, a0, y0))
             } else if x0 < 0.1 && x87::mul(x87::ln(x87::mul(b0, x0)), a0) <= LN_0_7 {
-                Tail::Lower(bpser(a0, b0, x0)?)
+                Tail::Lower(bpser(a0, b0, x0))
             } else if b0 > 15.0 {
-                Tail::Upper(bgrat(b0, a0, y0, x0, 0.0)?)
+                Tail::Upper(bgrat(b0, a0, y0, x0, 0.0))
             } else {
                 let w1 = bup(b0, a0, y0, x0, 20);
-                Tail::Upper(bgrat(x87::add(b0, 20.0), a0, y0, x0, w1)?)
+                Tail::Upper(bgrat(x87::add(b0, 20.0), a0, y0, x0, w1))
             }
         } else if a0 >= 0.2f64.min(b0) || x87::mul(x87::ln(x0), a0) <= LN_0_9 {
-            Tail::Lower(bpser(a0, b0, x0)?)
+            Tail::Lower(bpser(a0, b0, x0))
         } else if x0 >= 0.3 {
-            Tail::Upper(bpser(b0, a0, y0)?)
+            Tail::Upper(bpser(b0, a0, y0))
         } else {
             let w1 = bup(b0, a0, y0, x0, 20);
-            Tail::Upper(bgrat(x87::add(b0, 20.0), a0, y0, x0, w1)?)
+            Tail::Upper(bgrat(x87::add(b0, 20.0), a0, y0, x0, w1))
         };
         (t, swap)
     } else {
@@ -86,7 +100,7 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
         let (a0, b0, x0, y0) = if swap { (b, a, y, x) } else { (a, b, x, y) };
         let t = if b0 < 40.0 {
             if x87::mul(b0, x0) <= 0.7 {
-                Tail::Lower(bpser(a0, b0, x0)?)
+                Tail::Lower(bpser(a0, b0, x0))
             } else {
                 let mut n = b0.trunc();
                 let mut b1 = x87::add(-n, b0);
@@ -96,12 +110,12 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
                 }
                 let w = bup(b1, a0, y0, x0, n as usize);
                 if x0 <= 0.7 {
-                    Tail::Lower(x87::add(bpser(a0, b1, x0)?, w))
+                    Tail::Lower(x87::add(bpser(a0, b1, x0), w))
                 } else if a0 <= 15.0 {
                     let w = x87::add(w, bup(a0, b1, x0, y0, 20));
-                    Tail::Lower(bgrat(x87::add(a0, 20.0), b1, x0, y0, w)?)
+                    Tail::Lower(bgrat(x87::add(a0, 20.0), b1, x0, y0, w))
                 } else {
-                    Tail::Lower(bgrat(a0, b1, x0, y0, w)?)
+                    Tail::Lower(bgrat(a0, b1, x0, y0, w))
                 }
             }
         } else {
@@ -109,7 +123,7 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
             if m > 10000.0 && lambda.abs() <= x87::mul(m, 0.03) {
                 Tail::Lower(basym(a0, b0, lambda.abs()))
             } else {
-                Tail::Lower(bfrac(a0, b0, x0, y0)?)
+                Tail::Lower(bfrac(a0, b0, x0, y0))
             }
         };
         (t, swap)
@@ -118,25 +132,31 @@ pub(super) fn xl_ibeta(x: f64, y: f64, a: f64, b: f64) -> Option<(f64, f64)> {
         Tail::Lower(w) => (w, flip(w)),
         Tail::Upper(w1) => (flip(w1), w1),
     };
-    Some(if swap { (w1, w) } else { (w, w1) })
+    if swap {
+        (w1, w)
+    } else {
+        (w, w1)
+    }
 }
 
-fn bpser(a: f64, b: f64, x: f64) -> Option<f64> {
+fn bpser(a: f64, b: f64, x: f64) -> f64 {
     let mut sum = x87::div(1.0, a);
     let (mut c, mut n) = (1.0, 1.0);
+    let mut more = true;
     for _ in 0..1_000_000 {
+        if n > 2.0 && !more {
+            let mut s = XlLogSum::new(-lbeta_xl(a, b));
+            s.add(x87::mul(x87::ln(x), a));
+            return x87::mul(x87::exp(s.err), x87::mul(x87::exp(s.s), sum));
+        }
         let f = x87::add(x87::add(-x87::div(b, n), 0.5), 0.5);
         c = x87::mul(x87::mul(f, x), c);
         sum = x87::add(x87::div(c, x87::add(a, n)), sum);
         let tol = x87::mul(sum, EPS10);
+        more = c.abs().to_bits() >= tol.abs().to_bits();
         n = x87::add(n, 1.0);
-        if c.abs().partial_cmp(&tol) != Some(std::cmp::Ordering::Greater) {
-            let mut s = XlLogSum::new(-lbeta_xl(a, b));
-            s.add(x87::mul(x87::ln(x), a));
-            return Some(x87::mul(x87::exp(s.err), x87::mul(x87::exp(s.s), sum)));
-        }
     }
-    None
+    f64::NAN
 }
 
 fn bup(a: f64, b: f64, x: f64, y: f64, n: usize) -> f64 {
@@ -180,7 +200,7 @@ fn bup(a: f64, b: f64, x: f64, y: f64, n: usize) -> f64 {
     x87::mul(w0, w)
 }
 
-fn bgrat(a: f64, b: f64, x: f64, y: f64, w: f64) -> Option<f64> {
+fn bgrat(a: f64, b: f64, x: f64, y: f64, w: f64) -> f64 {
     let nu = x87::add(a, x87::mul(x87::sub(b, 1.0), 0.5));
     let ln_nu = x87::ln(nu);
     let c = bgrat_terms(b, x, y);
@@ -200,9 +220,9 @@ fn bgrat(a: f64, b: f64, x: f64, y: f64, w: f64) -> Option<f64> {
     let q = if b == 0.5 {
         erfc(x87::sqrt(z))
     } else {
-        xl_igamma(b, z)?.1
+        xl_igamma(b, z).map_or(f64::NAN, |v| v.1)
     };
-    Some(x87::add(w, x87::add(x87::mul(u, sum), q)))
+    x87::add(w, x87::add(x87::mul(u, sum), q))
 }
 
 const BGRAT_E: [&[f64]; 9] = [
@@ -447,7 +467,7 @@ fn pdf_xy(x: f64, y: f64, a: f64, b: f64) -> f64 {
     }
 }
 
-fn bfrac(a: f64, b: f64, x: f64, y: f64) -> Option<f64> {
+fn bfrac(a: f64, b: f64, x: f64, y: f64) -> f64 {
     let apb = x87::add(a, b);
 
     let lambda = x87::sub(a, x87::mul(apb, x));
@@ -460,13 +480,19 @@ fn bfrac(a: f64, b: f64, x: f64, y: f64) -> Option<f64> {
     let mut n = 0.0;
     for _ in 0..100_000 {
         d = x87::add(x87::mul(alpha, d), beta);
+        if d.to_bits() == 0 {
+            d = 1e-30;
+        }
         cc = x87::add(x87::div(alpha, cc), beta);
+        if cc.to_bits() == 0 {
+            cc = 1e-30;
+        }
         d = x87::div(1.0, d);
         let delta = x87::mul(cc, d);
         n = x87::add(n, 1.0);
         f = x87::mul(f, delta);
         if x87::sub(delta, 1.0).abs() <= EPS10 {
-            return Some(x87::mul(brc, f));
+            return x87::mul(brc, f);
         }
         let an1 = x87::add(a, n);
         let a2n = x87::add(an1, n);
@@ -482,5 +508,17 @@ fn bfrac(a: f64, b: f64, x: f64, y: f64) -> Option<f64> {
         let e2 = x87::div(an1, x87::add(a2n, 1.0));
         beta = x87::add(x87::mul(e2, u), beta1);
     }
-    None
+    f64::NAN
+}
+
+pub(super) fn ibeta(a: f64, b: f64, x: f64) -> f64 {
+    crate::number::flush_subnormal(xl_ibeta(x, x87::sub(1.0, x), a, b).0)
+}
+
+pub(super) fn ibeta_xy(a: f64, b: f64, x: f64, y: f64) -> (f64, f64) {
+    let (p, q) = xl_ibeta(x, y, a, b);
+    (
+        crate::number::flush_subnormal(p),
+        crate::number::flush_subnormal(q),
+    )
 }

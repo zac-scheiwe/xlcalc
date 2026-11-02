@@ -1,4 +1,9 @@
 #[inline]
+pub(crate) fn command_stack<R>(f: impl FnOnce() -> R) -> R {
+    stacker::maybe_grow(4 * 1024 * 1024, 64 * 1024 * 1024, f)
+}
+
+#[inline]
 pub(crate) fn deep<R>(f: impl FnOnce() -> R) -> R {
     stacker::maybe_grow(64 * 1024, 1024 * 1024, f)
 }
@@ -8,12 +13,18 @@ pub(crate) mod autofill;
 pub(crate) mod calc;
 pub(crate) mod cellfmt;
 pub(crate) mod coerce;
+pub(crate) mod colwidth;
+mod colwidth_data;
+pub mod crt;
 pub(crate) mod cse;
 pub(crate) mod datatable;
 pub(crate) mod datetime;
+pub(crate) mod deadref;
 pub(crate) mod dedup;
 pub(crate) mod editcell;
 pub(crate) mod eval;
+pub mod f80;
+pub(crate) mod fileform;
 pub(crate) mod fillseries;
 mod fmtmove;
 pub(crate) mod formula;
@@ -21,6 +32,7 @@ pub(crate) mod formula_print;
 pub(crate) mod functions;
 pub(crate) mod goalseek;
 pub(crate) mod graph;
+pub(crate) mod host;
 pub(crate) mod input;
 pub(crate) mod legacy;
 mod legacy_classes;
@@ -29,11 +41,16 @@ pub(crate) mod merge;
 pub(crate) mod moves;
 pub(crate) mod number;
 pub(crate) mod numfmt;
-pub(crate) mod parser;
+pub mod parser;
 pub(crate) mod pastespecial;
 pub(crate) mod replace;
+pub(crate) mod rowheight;
+mod rowheight_data;
+pub mod scenarios;
+pub(crate) mod share;
 pub(crate) mod sort;
 pub(crate) mod structure;
+pub mod style;
 pub(crate) mod subtotal;
 pub(crate) mod text;
 pub(crate) mod ttc;
@@ -49,12 +66,19 @@ pub mod testing;
 pub use address::{col_to_letters, letters_to_col, CellAddr, Rect, SheetId};
 pub use autofill::FillType;
 pub use calc::RecalcReport;
+pub use cellfmt::format_code_as_read;
+pub use colwidth::{
+    file_width_to_px, px_to_file_width, px_to_width, width_to_px, STANDARD_PX as STANDARD_COLUMN_PX,
+};
 pub use datatable::DataTable;
 pub use datetime::DateSystem;
 pub use dedup::DedupSpec;
 pub use eval::lambda::LambdaValue;
+pub use eval::Area;
+pub use fileform::{file_prefix, FileFormula, FileFormulaKind};
 pub use fillseries::{DateUnit, SeriesSpec, SeriesType};
 pub use functions::names as function_names;
+pub use host::{Arg, CallContext, FunctionHost, ParamKind, ReadView, RuntimeError, Signature};
 pub use locale::{DateOrder, Locale};
 pub use number::format_general;
 pub use numfmt::{Color, NumberFormat, Rendered};
@@ -68,8 +92,28 @@ pub use value::{Array, Value, XlError};
 pub use view::FilterSpec;
 pub use workbook::tables::Table;
 pub use workbook::{
-    CalcMode, EditError, Entry, FormulaCell, FormulaId, NameDef, Names, Settings, Sheet, Workbook,
+    paste_area, CalcMode, Command, EditError, Entry, FormulaCell, FormulaId, NameDef, Names,
+    Notice, Outcome, Selection, Settings, Sheet, SheetKind, SheetState, TrackId, Workbook,
 };
+
+#[derive(Clone, Copy, Debug)]
+pub struct FunctionInfo {
+    pub min_args: u8,
+    pub max_args: u8,
+    pub volatile: bool,
+
+    pub params: &'static str,
+}
+
+pub fn function_info(upper_name: &str) -> Option<FunctionInfo> {
+    let def = functions::def(functions::lookup(upper_name)?);
+    Some(FunctionInfo {
+        min_args: def.min_args,
+        max_args: def.max_args,
+        volatile: def.volatile,
+        params: def.params,
+    })
+}
 
 pub fn parse_cell_ref(wb: &Workbook, text: &str, default_sheet: SheetId) -> Option<CellAddr> {
     let (sheet, cell) = match text.rfind('!') {
@@ -81,6 +125,10 @@ pub fn parse_cell_ref(wb: &Workbook, text: &str, default_sheet: SheetId) -> Opti
     };
     let (row, col, _, _) = address::parse_a1_cell(cell.trim())?;
     Some(CellAddr::new(sheet, row, col))
+}
+
+pub fn round_worksheet(x: f64, digits: i32) -> f64 {
+    functions::math::round_decimal(x, digits, functions::math::RoundMode::HalfAway)
 }
 
 pub fn parse_range_ref(

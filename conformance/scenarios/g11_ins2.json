@@ -1,0 +1,156 @@
+{
+  "sheets": [
+    "v5",
+    "v7"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "v5!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "v5!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "v5!A2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "v5!B2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "v5!A3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "v5!B3",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "v5!A4",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "v5!B4",
+      "input": "6"
+    },
+    {
+      "op": "table",
+      "range": "v5!A1:B4",
+      "name": "Tv5"
+    },
+    {
+      "op": "set",
+      "cell": "v5!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "v5!C2",
+      "input": "=SUM(A$2:A$4)"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "v5",
+      "at": 2,
+      "count": 1
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "v5",
+      "at": 2,
+      "count": 1
+    },
+    {
+      "op": "read_text",
+      "range": "v5!C1:C9"
+    },
+    {
+      "op": "set",
+      "cell": "v7!A1",
+      "input": "a"
+    },
+    {
+      "op": "set",
+      "cell": "v7!B1",
+      "input": "b"
+    },
+    {
+      "op": "set",
+      "cell": "v7!A2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "v7!B2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "v7!A3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "v7!B3",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "v7!A4",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "v7!B4",
+      "input": "6"
+    },
+    {
+      "op": "table",
+      "range": "v7!A1:B4",
+      "name": "Tv7"
+    },
+    {
+      "op": "set",
+      "cell": "v7!C1",
+      "input": "c"
+    },
+    {
+      "op": "set",
+      "cell": "v7!C2",
+      "input": "=SUM(A$2:A$4)"
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "v7",
+      "at": 3,
+      "count": 1
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "v7",
+      "at": 2,
+      "count": 1
+    },
+    {
+      "op": "insert_rows",
+      "sheet": "v7",
+      "at": 2,
+      "count": 1
+    },
+    {
+      "op": "read_text",
+      "range": "v7!C1:C9"
+    }
+  ]
+}

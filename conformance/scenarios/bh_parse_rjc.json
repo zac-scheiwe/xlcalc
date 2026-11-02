@@ -1,0 +1,38 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2",
+    "Sheet3"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!A1",
+      "input": "=zed+\"abc"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A2",
+      "input": "=ZED+QUX(1)+1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "=FORMULATEXT(A2)"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!A3",
+      "input": "=FOO+B+1"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "=FORMULATEXT(A3)"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!A1:B3"
+    }
+  ]
+}

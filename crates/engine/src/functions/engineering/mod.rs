@@ -4,7 +4,8 @@ mod bessel;
 mod complex;
 mod convert;
 mod extra;
-pub(crate) mod xlmath;
+
+pub(crate) const TRIG_LIMIT: f64 = 134_217_728.0;
 
 use super::{args, scalar, FnDef, MANY};
 use base::Radix;

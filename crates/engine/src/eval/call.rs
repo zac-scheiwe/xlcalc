@@ -220,7 +220,10 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
         Imp::Lazy(f) => {
             let out = f(ctx, args);
 
-            if matches!(def.name, "IF" | "IFS" | "CHOOSE" | "SWITCH") && span_multi(&out) {
+            if matches!(def.name, "IF" | "IFS" | "CHOOSE" | "SWITCH")
+                && span_multi(&out)
+                && !(ctx.dyn_reduce && matches!(def.name, "IF" | "CHOOSE"))
+            {
                 return Operand::err(XlError::VALUE);
             }
             out
@@ -938,6 +941,13 @@ pub fn call_lifted(
     let Some((rows, cols)) = shape else {
         return body(ctx, &ops);
     };
+
+    if matches!(def.name, "RANK" | "RANK.EQ" | "RANK.AVG")
+        && lifted == [1]
+        && matches!(&ops[1], Operand::Val(Value::Array(a)) if a.scalar_slice)
+    {
+        return Operand::Val(Array::filled(1, 1, Value::Error(XlError::VALUE)).into_value());
+    }
 
     if def.name == "INDEX" && ctx.name_ref_root == Some(ctx.fn_depth) && cse_block(ctx).is_none() {
         for &i in &lifted {

@@ -22,8 +22,6 @@ fn two_prod(a: f64, b: f64) -> DD {
 
 pub const LN2: DD = DD(std::f64::consts::LN_2, 2.3190468138462996e-17);
 
-pub const LN_SQRT_2PI: DD = DD(0.9189385332046728, -3.8782941580672414e-17);
-
 impl DD {
     #[inline]
     pub fn new(x: f64) -> DD {
@@ -45,21 +43,6 @@ impl DD {
     pub fn add_f(self, o: f64) -> DD {
         let s = two_sum(self.0, o);
         quick_two_sum(s.0, s.1 + self.1)
-    }
-
-    pub fn round64(self) -> DD {
-        let h = self.0;
-        if h == 0.0 || !h.is_finite() || self.1 == 0.0 {
-            return self;
-        }
-        let e = ((h.abs().to_bits() >> 52) & 0x7ff) as i32;
-        if e < 64 {
-            return self;
-        }
-
-        let ulp = f64::from_bits(((e - 63) as u64) << 52);
-        let q = (self.1 / ulp).round_ties_even() * ulp;
-        quick_two_sum(h, q)
     }
 
     pub fn neg(self) -> DD {
@@ -88,10 +71,6 @@ impl DD {
         let r = r.sub(o.mul_f(q2));
         let q3 = r.0 / o.0;
         quick_two_sum(q1, q2).add_f(q3)
-    }
-
-    pub fn recip(self) -> DD {
-        DD::new(1.0).div(self)
     }
 
     pub fn exp(self) -> DD {

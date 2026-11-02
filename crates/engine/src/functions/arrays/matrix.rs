@@ -130,7 +130,7 @@ pub fn mdeterm(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         };
         let mut d = 1.0;
         for i in 0..n {
-            d *= m[i * n + i];
+            d = x87::mul(d, m[i * n + i]);
         }
         if swaps % 2 == 1 {
             d = -d;
@@ -202,7 +202,7 @@ pub fn mmult(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             for j in 0..bc {
                 let mut s = 0.0;
                 for k in 0..ac {
-                    s += a[i * ac + k] * b[k * bc + j];
+                    s = x87::add(s, x87::mul(a[i * ac + k], b[k * bc + j]));
                 }
                 data.push(Value::num(s));
             }

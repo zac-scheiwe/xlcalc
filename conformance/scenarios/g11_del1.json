@@ -1,0 +1,790 @@
+{
+  "sheets": [
+    "d1",
+    "d2",
+    "d3",
+    "d4",
+    "d5",
+    "d6",
+    "d7"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "d1!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d1!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d1!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d1!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d1!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d1!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d1!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d1!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d1!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d1!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d1!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d1!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d1!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d1!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d1!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d1!A1:C5",
+      "name": "Td1"
+    },
+    {
+      "op": "set",
+      "cell": "d1!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d1!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d1",
+      "at": 2,
+      "count": 4
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d1!A3",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d1!A1:D6"
+    },
+    {
+      "op": "set",
+      "cell": "d2!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d2!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d2!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d2!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d2!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d2!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d2!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d2!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d2!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d2!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d2!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d2!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d2!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d2!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d2!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d2!A1:C5",
+      "name": "Td2"
+    },
+    {
+      "op": "set",
+      "cell": "d2!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d2!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d2",
+      "at": 2,
+      "count": 3
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d2!A4",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d2!A1:D6"
+    },
+    {
+      "op": "set",
+      "cell": "d3!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d3!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d3!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d3!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d3!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d3!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d3!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d3!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d3!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d3!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d3!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d3!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d3!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d3!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d3!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d3!A1:C5",
+      "name": "Td3"
+    },
+    {
+      "op": "set",
+      "cell": "d3!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d3!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d3",
+      "at": 2,
+      "count": 4
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d3!A2",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d3!A1:D6"
+    },
+    {
+      "op": "set",
+      "cell": "d4!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d4!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d4!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d4!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d4!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d4!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d4!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d4!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d4!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d4!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d4!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d4!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d4!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d4!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d4!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d4!A1:C5",
+      "name": "Td4"
+    },
+    {
+      "op": "set",
+      "cell": "d4!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d4!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d4",
+      "at": 3,
+      "count": 3
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d4!A3",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d4!A1:D6"
+    },
+    {
+      "op": "set",
+      "cell": "d5!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d5!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d5!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d5!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d5!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d5!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d5!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d5!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d5!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d5!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d5!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d5!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d5!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d5!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d5!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d5!A1:C5",
+      "name": "Td5"
+    },
+    {
+      "op": "set",
+      "cell": "d5!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d5!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d5",
+      "at": 2,
+      "count": 4
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d5!A4",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d5!A1:D6"
+    },
+    {
+      "op": "set",
+      "cell": "d6!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d6!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d6!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d6!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d6!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d6!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d6!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d6!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d6!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d6!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d6!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d6!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d6!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d6!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d6!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d6!A1:C5",
+      "name": "Td6"
+    },
+    {
+      "op": "set",
+      "cell": "d6!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d6!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d6",
+      "at": 2,
+      "count": 2
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d6!A3",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d6!A1:D6"
+    },
+    {
+      "op": "set",
+      "cell": "d7!A1",
+      "input": "K"
+    },
+    {
+      "op": "set",
+      "cell": "d7!B1",
+      "input": "A"
+    },
+    {
+      "op": "set",
+      "cell": "d7!C1",
+      "input": "B"
+    },
+    {
+      "op": "set",
+      "cell": "d7!A2",
+      "input": "k0"
+    },
+    {
+      "op": "set",
+      "cell": "d7!B2",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "d7!C2",
+      "input": "10"
+    },
+    {
+      "op": "set",
+      "cell": "d7!A3",
+      "input": "k1"
+    },
+    {
+      "op": "set",
+      "cell": "d7!B3",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "d7!C3",
+      "input": "20"
+    },
+    {
+      "op": "set",
+      "cell": "d7!A4",
+      "input": "k2"
+    },
+    {
+      "op": "set",
+      "cell": "d7!B4",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "d7!C4",
+      "input": "30"
+    },
+    {
+      "op": "set",
+      "cell": "d7!A5",
+      "input": "k3"
+    },
+    {
+      "op": "set",
+      "cell": "d7!B5",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "d7!C5",
+      "input": "40"
+    },
+    {
+      "op": "table",
+      "range": "d7!A1:C5",
+      "name": "Td7"
+    },
+    {
+      "op": "set",
+      "cell": "d7!D1",
+      "input": "C"
+    },
+    {
+      "op": "set",
+      "cell": "d7!D2",
+      "input": "=[@A]*2+[@B]"
+    },
+    {
+      "op": "delete_rows",
+      "sheet": "d7",
+      "at": 2,
+      "count": 4
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "set",
+      "cell": "d7!A6",
+      "input": "new"
+    },
+    {
+      "op": "tables"
+    },
+    {
+      "op": "read_text",
+      "range": "d7!A1:D6"
+    }
+  ]
+}

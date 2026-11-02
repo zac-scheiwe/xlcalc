@@ -1,0 +1,6 @@
+{"sheets":["Sheet1"],"steps":[
+{"op":"set","cell":"Sheet1!A1","input":"5"},{"op":"set","cell":"Sheet1!A2","input":"6"},{"op":"set","cell":"Sheet1!B1","input":"7"},{"op":"set","cell":"Sheet1!J5","input":"3"},{"op":"set","cell":"Sheet1!K5","input":"4"},{"op":"set","cell":"Sheet1!J6","input":"1"},{"op":"set","cell":"Sheet1!K6","input":"2"},{"op":"format","range":"Sheet1!A1","fmt":"0.00"},
+{"op":"merge","range":"Sheet1!J5:K5"},
+{"op":"paste_special","from":"Sheet1!A1:A2","to":"Sheet1!J5","paste":"all","operation":"none"},
+{"op":"read","range":"Sheet1!H4:M8"}
+]}

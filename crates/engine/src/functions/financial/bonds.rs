@@ -110,7 +110,8 @@ pub fn accrintm(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             return Err(XlError::NUM);
         }
         let yf = days::yearfrac_core(b.sys, issue, settle, b.basis)?;
-        finite(par * rate * yf)
+
+        finite(x87::mul(x87::mul(par, rate), yf))
     })())
 }
 
@@ -132,7 +133,9 @@ pub fn disc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if pr <= 0.0 || redemption <= 0.0 {
             return Err(XlError::NUM);
         }
-        finite((1.0 - pr / redemption) * (b.year(s, m) / b.days(s, m)))
+
+        let q = x87::sub(1.0, x87::div(pr, redemption));
+        finite(x87::mul(q, x87::div(b.year(s, m), b.days(s, m))))
     })())
 }
 
@@ -172,7 +175,12 @@ pub fn pricedisc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if discount <= 0.0 || redemption <= 0.0 {
             return Err(XlError::NUM);
         }
-        finite(redemption - discount * redemption * b.days(s, m) / b.year(s, m))
+
+        let t = x87::div(
+            x87::mul(x87::mul(discount, redemption), b.days(s, m)),
+            b.year(s, m),
+        );
+        finite(x87::sub(redemption, t))
     })())
 }
 
@@ -210,8 +218,13 @@ pub fn pricemat(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let by = b.year(issue, s);
         let dim = b.days(issue, m);
         let ai = b.days(issue, s);
-        let dsm = dim - ai;
-        finite((100.0 + dim / by * rate * 100.0) / (1.0 + dsm / by * yld) - ai / by * rate * 100.0)
+
+        use crate::x87::{add, div, mul, sub};
+        let dsm = sub(dim, ai);
+        let num = add(mul(mul(div(dim, by), rate), 100.0), 100.0);
+        let den = add(mul(div(dsm, by), yld), 1.0);
+        let acc = mul(mul(div(ai, by), rate), 100.0);
+        finite(sub(div(num, den), acc))
     })())
 }
 
@@ -224,10 +237,12 @@ pub fn yieldmat(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let by = b.year(issue, s);
         let dim = b.days(issue, m);
         let ai = b.days(issue, s);
-        let dsm = dim - ai;
-        let t2 = pr / 100.0 + ai / by * rate;
-        let t1 = (1.0 + dim / by * rate) - t2;
-        finite(t1 / t2 * (by / dsm))
+
+        use crate::x87::{add, div, mul, sub};
+        let dsm = sub(dim, ai);
+        let t2 = add(div(pr, 100.0), mul(div(ai, by), rate));
+        let t1 = sub(add(mul(div(dim, by), rate), 1.0), t2);
+        finite(mul(div(t1, t2), div(by, dsm)))
     })())
 }
 
@@ -247,7 +262,11 @@ pub fn tbillprice(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if discount <= 0.0 {
             return Err(XlError::NUM);
         }
-        let p = 100.0 * (1.0 - discount * dsm / 360.0);
+
+        let p = x87::mul(
+            100.0,
+            x87::sub(1.0, x87::div(x87::mul(discount, dsm), 360.0)),
+        );
         if p <= 0.0 {
             return Err(XlError::NUM);
         }
@@ -261,7 +280,11 @@ pub fn tbillyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if pr <= 0.0 {
             return Err(XlError::NUM);
         }
-        finite((100.0 - pr) / pr * (360.0 / dsm))
+
+        finite(x87::mul(
+            x87::div(x87::sub(100.0, pr), pr),
+            x87::div(360.0, dsm),
+        ))
     })())
 }
 
@@ -271,12 +294,18 @@ pub fn tbilleq(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if discount <= 0.0 {
             return Err(XlError::NUM);
         }
-        let price = 100.0 * (1.0 - discount * dsm / 360.0);
+        let price = x87::mul(
+            100.0,
+            x87::sub(1.0, x87::div(x87::mul(discount, dsm), 360.0)),
+        );
         if price <= 0.0 {
             return Err(XlError::NUM);
         }
         if dsm <= 182.0 {
-            return finite(365.0 * discount / (360.0 - discount * dsm));
+            return finite(x87::div(
+                x87::mul(365.0, discount),
+                x87::sub(360.0, x87::mul(discount, dsm)),
+            ));
         }
 
         use crate::x87::{add, div, mul, sub};
@@ -340,7 +369,7 @@ fn bond(ctx: &EvalCtx, settle: i64, mat: i64, freq: f64, a: &[Arg], bi: usize) -
     })
 }
 
-fn price_core(bd: &Bond, rate: f64, yld: f64, redemption: f64) -> f64 {
+fn price_core(bd: &Bond, rate: f64, yld: f64, redemption: f64) -> R<f64> {
     use crate::x87::{add, div, mul, sub};
     let f = bd.freq as f64;
     let n = bd.n();
@@ -351,11 +380,12 @@ fn price_core(bd: &Bond, rate: f64, yld: f64, redemption: f64) -> f64 {
         let num = add(coupon, redemption);
         let den = add(mul(div(dsc, e), div(yld, f)), 1.0);
         let accrued = mul(coupon, div(a_, e));
-        return sub(div(num, den), accrued);
+        return Ok(sub(div(num, den), accrued));
     }
     let base = add(1.0, div(yld, f));
     let x = div(dsc, e);
-    let red = div(redemption, xmath::pow(base, add(sub(n, 1.0), x)));
+
+    let red = div(redemption, finite(xmath::pow(base, add(sub(n, 1.0), x)))?);
     let mut acc = 0.0;
     let mut k = 1.0;
     while k <= n {
@@ -364,7 +394,7 @@ fn price_core(bd: &Bond, rate: f64, yld: f64, redemption: f64) -> f64 {
         k += 1.0;
     }
     let accrued = mul(mul(div(rate, f), div(a_, e)), 100.0);
-    sub(add(acc, red), accrued)
+    Ok(sub(add(acc, red), accrued))
 }
 
 pub fn price(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
@@ -380,7 +410,7 @@ pub fn price(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if rate < 0.0 || yld < 0.0 || redemption <= 0.0 {
             return Err(XlError::NUM);
         }
-        finite(price_core(&bd, rate, yld, redemption))
+        finite(price_core(&bd, rate, yld, redemption)?)
     })())
 }
 
@@ -440,20 +470,10 @@ fn yield_deriv(y: f64, f: f64, dsc: f64, e: f64, n: f64, rate: f64, redemption: 
 }
 
 fn yield_iterate(
-    y: f64,
-    pr: f64,
-    price: impl FnMut(f64) -> R<f64>,
-    deriv: impl Fn(f64) -> f64,
-) -> R<f64> {
-    yield_iterate_ex(y, pr, price, deriv, false)
-}
-
-fn yield_iterate_ex(
     mut y: f64,
     pr: f64,
     mut price: impl FnMut(f64) -> R<f64>,
     deriv: impl Fn(f64) -> f64,
-    oddf: bool,
 ) -> R<f64> {
     use crate::x87::{add, div, sub};
     for count in 1..=100 {
@@ -463,17 +483,14 @@ fn yield_iterate_ex(
             return Err(XlError::NUM);
         }
         if step.abs() < 1e-10 {
-            if oddf && count == 100 {
+            if count == 100 {
                 return Err(XlError::NUM);
             }
             return finite(y);
         }
         y = add(y, step);
     }
-    if oddf {
-        return finite(y);
-    }
-    Err(XlError::NUM)
+    finite(y)
 }
 
 fn yield_newton(bd: &Bond, rate: f64, pr: f64, redemption: f64) -> R<f64> {
@@ -484,35 +501,42 @@ fn yield_newton(bd: &Bond, rate: f64, pr: f64, redemption: f64) -> R<f64> {
     let n = bd.n();
     let (e, a_) = (bd.e(), bd.a());
     let dsc = sub(e, a_);
-    let price = |y: f64| -> R<f64> { Ok(price_core(bd, rate, y, redemption)) };
+    let price = |y: f64| price_core(bd, rate, y, redemption);
     let deriv = |y: f64| yield_deriv(y, f, dsc, e, n, rate, redemption);
     yield_iterate(yield_start(rate, nn, pr), pr, price, deriv)
 }
 
-fn duration_core(bd: &Bond, coupon: f64, yld: f64) -> f64 {
+fn duration_core(bd: &Bond, coupon: f64, yld: f64) -> R<f64> {
+    use crate::x87::{add, div, mul, sub};
     let f = bd.freq as f64;
     let dbc = bd.a();
     let e = bd.e();
     let n = bd.n();
-    let dsc = e - dbc;
-    let x1 = dsc / e;
-    let x2 = x1 + n - 1.0;
-    let x3 = yld / f + 1.0;
+    let dsc = sub(e, dbc);
+    let x1 = div(dsc, e);
+    let x2 = sub(add(x1, n), 1.0);
+    let x3 = add(div(yld, f), 1.0);
     let x4 = xmath::pow(x3, x2);
-    let term1 = x2 * 100.0 / x4;
-    let term3 = 100.0 / x4;
+    if x4.is_infinite() {
+        return Err(XlError::NUM);
+    }
+    let term1 = div(mul(x2, 100.0), x4);
+    let term3 = div(100.0, x4);
     let mut term2 = 0.0;
     let mut term4 = 0.0;
     let mut k = 1.0;
     while k <= n {
-        let x5 = k - 1.0 + x1;
+        let x5 = add(sub(k, 1.0), x1);
         let x6 = xmath::pow(x3, x5);
-        let x7 = (100.0 * coupon / f) / x6;
-        term2 += x7 * x5;
-        term4 += x7;
+        if x6.is_infinite() {
+            return Err(XlError::NUM);
+        }
+        let x7 = div(div(mul(100.0, coupon), f), x6);
+        term2 = add(term2, mul(x7, x5));
+        term4 = add(term4, x7);
         k += 1.0;
     }
-    ((term1 + term2) / (term3 + term4)) / f
+    Ok(div(div(add(term1, term2), add(term3, term4)), f))
 }
 
 fn dur(ctx: &mut EvalCtx, a: &[Arg], modified: bool) -> Value {
@@ -526,9 +550,12 @@ fn dur(ctx: &mut EvalCtx, a: &[Arg], modified: bool) -> Value {
         if coupon < 0.0 || yld < 0.0 {
             return Err(XlError::NUM);
         }
-        let d = duration_core(&bd, coupon, yld);
+        let d = duration_core(&bd, coupon, yld)?;
         finite(if modified {
-            d / (1.0 + yld / bd.freq as f64)
+            crate::x87::div(
+                d,
+                crate::x87::add(1.0, crate::x87::div(yld, bd.freq as f64)),
+            )
         } else {
             d
         })
@@ -823,7 +850,7 @@ pub fn oddfyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let nn = days::yield_years(o.b.sys, o.b.basis, o.settle, o.mat);
         let price = |y: f64| oddfprice_core(&o, rate, y, redemption);
         let deriv = |y: f64| yield_deriv(y, f, fl.dsc, fl.e, fl.n, rate, redemption);
-        yield_iterate_ex(yield_start(rate, nn, pr), pr, price, deriv, true)
+        yield_iterate(yield_start(rate, nn, pr), pr, price, deriv)
     })())
 }
 

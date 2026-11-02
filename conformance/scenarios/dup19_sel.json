@@ -1,0 +1,104 @@
+{
+  "sheets": [
+    "s1"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "s1!A1",
+      "input": "h1"
+    },
+    {
+      "op": "set",
+      "cell": "s1!B1",
+      "input": "h2"
+    },
+    {
+      "op": "set",
+      "cell": "s1!A2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "s1!B2",
+      "input": "x2"
+    },
+    {
+      "op": "set",
+      "cell": "s1!A3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "s1!B3",
+      "input": "x3"
+    },
+    {
+      "op": "set",
+      "cell": "s1!A4",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "s1!B4",
+      "input": "x4"
+    },
+    {
+      "op": "selinfo"
+    },
+    {
+      "op": "table",
+      "range": "s1!A1:B4",
+      "name": "T1"
+    },
+    {
+      "op": "selinfo"
+    },
+    {
+      "op": "copy",
+      "from": "s1!A2:B2",
+      "to": "s1!D10"
+    },
+    {
+      "op": "selinfo"
+    },
+    {
+      "op": "copy",
+      "from": "s1!A2",
+      "to": "s1!A3"
+    },
+    {
+      "op": "selinfo"
+    },
+    {
+      "op": "sort",
+      "range": "s1!A1:B4",
+      "keys": [
+        {
+          "key": 1,
+          "order": "desc"
+        }
+      ],
+      "header": true
+    },
+    {
+      "op": "selinfo"
+    },
+    {
+      "op": "cut",
+      "from": "s1!D10",
+      "to": "s1!F12"
+    },
+    {
+      "op": "selinfo"
+    },
+    {
+      "op": "copy",
+      "from": "s1!A2:B2",
+      "to": "s1!A5"
+    },
+    {
+      "op": "selinfo"
+    }
+  ]
+}

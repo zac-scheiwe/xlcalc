@@ -1,0 +1,30 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2",
+    "Sheet3"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Sheet1!XFB5",
+      "input": "=XFC5+1"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!XFB5",
+      "to": "Sheet1!XFB1:XFB5",
+      "type": "default"
+    },
+    {
+      "op": "autofill",
+      "from": "Sheet1!XFB1:XFB4",
+      "to": "Sheet1!XFB1:XFD4",
+      "type": "default"
+    },
+    {
+      "op": "read",
+      "range": "Sheet1!XFA1:XFD5"
+    }
+  ]
+}

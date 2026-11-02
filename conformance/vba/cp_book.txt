@@ -1,0 +1,6 @@
+Private Sub Workbook_SheetCalculate(ByVal Sh As Object)
+    On Error GoTo EH
+    CpProbe.Ev "SheetCalc " & Sh.Name
+    Exit Sub
+EH:
+End Sub

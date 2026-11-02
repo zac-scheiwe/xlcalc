@@ -9,7 +9,7 @@
 > F1 =SUM(C1#)
   1 evaluation in <t>: F1=10
 > A1 15
-  3 evaluations in <t>: A1=15, A3=35, C1=1 (spills C1:D3), F1=21
+  3 evaluations in <t>: A1=15, C1=1 (spills C1:D3), F1=21, A3=35
 > show A1:F4
                   A            B            C            D            E            F 
      1           15                         1            2                        21 
@@ -50,13 +50,13 @@
   Orders!C2: =[@Qty]*2 = 10 (number)
   precedents: table Sales, Orders!B2
 > insert rows 1
-  4 evaluations in <t>: C2=1 (spills C2:D4)
+  3 evaluations in <t>: C2=1 (spills C2:D4)
 > A4
   A4: =A2+A3 = 35 (number)
   format 0.00: shown as 35.00
   precedents: Sheet1!A2, Sheet1!A3
 > delete cols B
-  4 evaluations in <t>: B2=1 (spills B2:C4)
+  3 evaluations in <t>: B2=1 (spills B2:C4)
 > name tax =0.15
   0 evaluations in <t>
 > name

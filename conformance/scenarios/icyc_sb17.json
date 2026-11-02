@@ -1,0 +1,49 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=E2&\"a\""
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=B1*1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=D1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=B1*1+0"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H6"
+  }
+ ]
+}

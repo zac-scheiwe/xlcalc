@@ -1,0 +1,279 @@
+{
+ "sheets": [
+  "Host",
+  "Aa",
+  "Bb",
+  "Cc"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Aa!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!A2",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B1",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Aa!B2",
+   "input": "1000"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B1",
+   "input": "200"
+  },
+  {
+   "op": "set",
+   "cell": "Bb!B2",
+   "input": "2000"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!A2",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B1",
+   "input": "300"
+  },
+  {
+   "op": "set",
+   "cell": "Cc!B2",
+   "input": "3000"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=SUM('Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=SUM(('Aa':Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=SUM(((Aa:Cc!A1)))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=SUM((Aa:Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=('Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=SUM(1,'Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=SUM(1,('Aa':Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=SUM(1+'Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=SUM(-'Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=SUM(+('Aa':Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A11",
+   "input": "=SUM({1}+('Aa':Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A12",
+   "input": "=SUM(B2:'Aa':Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A13",
+   "input": "=SUM(IF(TRUE,'Aa':Cc!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A14",
+   "input": "=SUM(IF(TRUE,('Aa':Cc!A1)))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A15",
+   "input": "=SUM(('Aa':Cc!A1:B2))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A16",
+   "input": "=SUM(('Aa:Cc'!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A17",
+   "input": "=SUM((Aa:'Cc'!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A18",
+   "input": "=SUM(('Aa'!A1:B2))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A19",
+   "input": "=SUM(Aa:Cc!A1,1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A20",
+   "input": "=SUM(Aa:Cc!A1 Bb!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A21",
+   "input": "=SUM(('Aa':Cc!A1 Bb!A1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A22",
+   "input": "=SUM(Aa:Bb:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A23",
+   "input": "=SUM(Aa:Bb:Cc!A1:B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A24",
+   "input": "=SUM(Bb:Cc:Aa!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A25",
+   "input": "=SUM(A:Bb:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A26",
+   "input": "=SUM(Aa:B:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A27",
+   "input": "=SUM(B2:Aa:Cc!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A28",
+   "input": "=SUM(Aa:Cc!A1:Bb!B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A29",
+   "input": "=SUM(Aa:Bb)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A30",
+   "input": "=SUM(Aa:Bb:Cc)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A31",
+   "input": "=SUM(Aa:Bb:B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A32",
+   "input": "=Aa:Cc!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A33",
+   "input": "=Aa:Cc!Foo.x"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A34",
+   "input": "=SUM(Aa:Cc!Foo)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A35",
+   "input": "=SUM(Aa:Cc!Cc)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A36",
+   "input": "=SUM(Aa:Cc!Aa)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A37",
+   "input": "=SUM(Aa:Cc!Host)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A38",
+   "input": "=SUM(Aa:Cc!TRUE)"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A39",
+   "input": "=SUM(Aa:Cc!SUM(1))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A40",
+   "input": "=Aa!Foo"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A41",
+   "input": "=SUM(Aa:Cc!Foo[1])"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A41"
+  }
+ ]
+}

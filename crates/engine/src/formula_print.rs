@@ -7,10 +7,51 @@ use crate::parser::print::{sheet_name_text, text_literal};
 use crate::value::Value;
 use crate::workbook::Workbook;
 
+thread_local! {
+
+    static R1C1: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
 pub fn print_node(wb: &Workbook, node: &Node, host: CellAddr) -> String {
     let mut s = String::new();
     write(wb, node, host, &mut s);
     s
+}
+
+pub fn print_node_r1c1(wb: &Workbook, node: &Node, host: CellAddr) -> String {
+    R1C1.with(|f| f.set(true));
+    let s = print_node(wb, node, host);
+    R1C1.with(|f| f.set(false));
+    s
+}
+
+fn axis_r1c1(rc: Rc, letter: char, host: u32, max: u32) -> Option<String> {
+    rc.resolve(host, max, false)?;
+    Some(match (rc.abs, rc.v) {
+        (true, v) => format!("{letter}{}", v + 1),
+        (false, 0) => letter.to_string(),
+        (false, v) => format!("{letter}[{v}]"),
+    })
+}
+
+fn cref_text_r1c1(cref: &CRef, host: CellAddr) -> Option<String> {
+    let row = |rc| axis_r1c1(rc, 'R', host.row, MAX_ROWS);
+    let col = |rc| axis_r1c1(rc, 'C', host.col, MAX_COLS);
+    let whole = |a: Rc, b: Rc, max: u32| a.abs && b.abs && a.v == 0 && b.v == max as i32 - 1;
+    Some(match *cref {
+        CRef::Cell { row: r, col: c } => format!("{}{}", row(r)?, col(c)?),
+        CRef::Area { r0, c0, r1, c1 } => {
+            if whole(c0, c1, MAX_COLS) {
+                format!("{}:{}", row(r0)?, row(r1)?)
+            } else if whole(r0, r1, MAX_ROWS) {
+                format!("{}:{}", col(c0)?, col(c1)?)
+            } else {
+                format!("{}{}:{}{}", row(r0)?, col(c0)?, row(r1)?, col(c1)?)
+            }
+        }
+        CRef::Cols { c0, c1 } => format!("{}:{}", col(c0)?, col(c1)?),
+        CRef::Rows { r0, r1 } => format!("{}:{}", row(r0)?, row(r1)?),
+    })
 }
 
 fn literal(v: &Value) -> String {
@@ -107,6 +148,8 @@ fn sheet_prefix(wb: &Workbook, sheet: &SheetRef) -> String {
             }
             _ => "#REF!".into(),
         },
+
+        SheetRef::Missing(n) if n.contains(":[") => format!("'{}'!", n.replace('\x27', "''")),
         SheetRef::Missing(n) => format!("{}!", sheet_name_text(n)),
         SheetRef::External(b) => format!("[{b}]!"),
     }
@@ -151,7 +194,11 @@ fn write(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
 fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
     match node {
         Node::Lit(v) => s.push_str(&literal(v)),
-        Node::Ref(sheet, cref) => match cref_text(cref, host) {
+        Node::Ref(sheet, cref) => match if R1C1.with(|f| f.get()) {
+            cref_text_r1c1(cref, host)
+        } else {
+            cref_text(cref, host)
+        } {
             Some(t) => {
                 s.push_str(&sheet_prefix(wb, sheet));
                 s.push_str(&t);
@@ -188,7 +235,12 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                         .placeholder(&display.to_uppercase())
                         .map_or(&**display, |p| &**p);
 
-                    if crate::address::parse_a1_cell(t).is_some() {
+                    let odd = |c: char| {
+                        c.is_ascii()
+                            && !c.is_ascii_alphanumeric()
+                            && !matches!(c, '_' | '.' | '\\' | '?' | '$')
+                    };
+                    if crate::address::parse_a1_cell(t).is_some() || t.chars().any(odd) {
                         s.push('\'');
                         s.push_str(t);
                         s.push('\'');

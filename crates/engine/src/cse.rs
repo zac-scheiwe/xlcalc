@@ -1,3 +1,4 @@
+use crate::workbook::Command;
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId};
@@ -69,7 +70,13 @@ impl Workbook {
 
     pub fn current_array(&self, addr: CellAddr) -> Option<Rect> {
         if let Some(t) = self.data_tables.iter().find(|t| t.contains_interior(addr)) {
-            return Some(t.rect);
+            let sheet = t.sheet;
+            let all = self
+                .merges(sheet)
+                .into_iter()
+                .filter(|m| m.intersects(&t.rect))
+                .fold(t.rect, |a, m| a.union_bounds(&m));
+            return Some(all);
         }
         let (_, b) = self.array_at(addr)?;
         if b.is_cell() {
@@ -124,8 +131,27 @@ impl Workbook {
         rect: Rect,
         text: &str,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::ArrayEntry, |wb| {
+            wb.note_changed(sheet, &[rect]);
+            wb.set_array_formula_run(sheet, rect, text)
+        })
+    }
+
+    fn set_array_formula_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        text: &str,
+    ) -> Result<RecalcReport, EditError> {
         if self.sheet(sheet).is_none() {
             return Err(EditError::NoSuchSheet);
+        }
+
+        if let Ok((f, _)) = self.compile_normalized(
+            text.strip_prefix('=').unwrap_or(text),
+            CellAddr::new(sheet, rect.r0, rect.c0),
+        ) {
+            self.note_hidden_in(&f.root, Some(CellAddr::new(sheet, rect.r0, rect.c0)));
         }
 
         let rect = if rect.is_cell() {
@@ -233,11 +259,57 @@ impl Workbook {
     }
 
     pub fn clear_range(&mut self, sheet: SheetId, rect: Rect) -> Result<RecalcReport, EditError> {
-        self.guard_filtered(sheet, rect, true, true)?;
+        self.command(Command::ClearContents, |wb| {
+            wb.note_changed(sheet, &[rect]);
+            wb.clear_range_run(sheet, rect)
+        })
+    }
+
+    fn clear_range_run(&mut self, sheet: SheetId, rect: Rect) -> Result<RecalcReport, EditError> {
+        if let Some(sh) = self.sheet_mut(sheet) {
+            sh.spills.touch();
+        }
         let pending = self.totals_pending(sheet, rect);
-        let r = self.clear_range_raw(sheet, rect);
+        let ending = self.calc_columns_covered(sheet, rect);
+
+        let r = match self.view_visible_runs(sheet, rect) {
+            Some(runs) => {
+                let mut report = RecalcReport::default();
+                let mut res = Ok(());
+                for run in runs {
+                    match self.clear_range_raw(sheet, run) {
+                        Ok(x) => {
+                            report.changed.extend(x.changed);
+                            report.evaluations += x.evaluations;
+                        }
+                        Err(e) => {
+                            res = Err(e);
+                            break;
+                        }
+                    }
+                }
+                res.map(|()| report)
+            }
+            None => self.clear_range_raw(sheet, rect),
+        };
+        if r.is_ok() {
+            self.end_calc_columns(&ending);
+        }
         if pending {
             self.restore_totals(sheet, rect, Some(rect));
+        }
+        if r.is_ok() {
+            self.notify_cell_change(sheet);
+        }
+
+        if let Ok(rep) = &r {
+            let alive = rep
+                .changed
+                .iter()
+                .any(|&a| a.sheet == sheet && self.formula_at(a).is_some());
+            if !alive {
+                self.notes.forget_calculated(sheet);
+            }
         }
         r
     }
@@ -271,19 +343,32 @@ impl Workbook {
             }
             if !edited.is_empty() {
                 let r = self.after_edit(edited);
+                report.add_sheets(&r);
                 report.changed.extend(r.changed);
                 report.evaluations += r.evaluations;
             }
             return Ok(report);
         }
         let n = visit.len();
-        for (i, (r, c)) in visit.into_iter().enumerate() {
-            let r = self.with_op(Op::HoldIter, i + 1 < n, |this| {
-                this.clear(CellAddr::new(sheet, r, c))
-            });
-            report.changed.extend(r.changed);
-            report.evaluations += r.evaluations;
-        }
+        self.one_pass(|wb| {
+            for (i, (r, c)) in visit.into_iter().enumerate() {
+                let a = CellAddr::new(sheet, r, c);
+
+                if i + 1 < n
+                    && wb.formula_at(a).is_none()
+                    && matches!(wb.value(a), crate::value::Value::Blank)
+                {
+                    if wb.ever_used(sheet).is_some_and(|u| u.contains(r, c)) {
+                        calc::cell_changed(wb, a);
+                    }
+                    continue;
+                }
+                let r = wb.with_op(Op::HoldIter, i + 1 < n, |this| this.clear(a));
+                report.add_sheets(&r);
+                report.changed.extend(r.changed);
+                report.evaluations += r.evaluations;
+            }
+        });
         Ok(report)
     }
 
@@ -496,72 +581,91 @@ impl Workbook {
     }
 }
 
+pub(crate) fn fit_circ(value: Value, rows: u32, cols: u32) -> Value {
+    let (vr, vc) = match &value {
+        Value::Array(a) => (a.rows, a.cols),
+        _ => (1, 1),
+    };
+    let all_circ = match &value {
+        Value::Array(a) => a
+            .data
+            .iter()
+            .all(|v| matches!(v, Value::Error(crate::value::XlError::CIRC))),
+        v => matches!(v, Value::Error(crate::value::XlError::CIRC)),
+    };
+    let fitted = fit(value, rows, cols);
+    match fitted {
+        Value::Array(a) if all_circ => {
+            let data = a
+                .data
+                .iter()
+                .enumerate()
+                .map(|(i, v)| {
+                    let (r, c) = (i as u32 / cols, i as u32 % cols);
+                    if (vr > 1 && r >= vr) || (vc > 1 && c >= vc) {
+                        Value::Error(crate::value::XlError::CIRC)
+                    } else {
+                        v.clone()
+                    }
+                })
+                .collect();
+            Array::new(rows, cols, data).into_value()
+        }
+        v => v,
+    }
+}
+
 pub(crate) fn settle_array(
     wb: &mut Workbook,
     fid: FormulaId,
-    first: Value,
     report: &mut RecalcReport,
-) -> Option<Value> {
+) -> Option<(Value, Vec<FormulaId>, Option<bool>)> {
     let (rows, cols) = wb.formula(fid).array?;
+    if reads_own_cell(wb, fid) {
+        return None;
+    }
     let (saved, saved_spill) = {
         let f = wb.formula(fid);
         (f.value.clone(), f.spill)
     };
     let block = wb.array_block(fid);
+    let mut prev = fit(Value::Error(crate::value::XlError::CIRC), rows, cols);
     let mut out = None;
-    if reads_own_cell(wb, fid) {
-        let f = wb.formula_mut(fid);
-        f.value = saved;
-        f.spill = saved_spill;
-        return None;
-    }
-
-    for seed in [fit(first, rows, cols), fit(Value::Number(1.0), rows, cols)] {
-        let mut prev = seed;
-        let mut res = None;
-        for _ in 0..rows * cols + 1 {
-            {
-                let f = wb.formula_mut(fid);
-                f.value = prev.clone();
-                f.spill = block.filter(|b| !b.is_cell());
-            }
-            let (v, interrupt) = {
-                let f = wb.formula(fid);
-                let formula = f.formula.clone();
-                let mut ctx = crate::eval::EvalCtx::new(wb, f.addr);
-                ctx.own = Some(fid);
-                let v = crate::eval::eval_formula(&mut ctx, &formula.root);
-                (v, ctx.interrupt)
-            };
-            report.evaluations += 1;
-            if interrupt.is_some() {
-                break;
-            }
-            let next = fit(v.clone(), rows, cols);
-            if next.same_as(&prev) {
-                res = Some((v, next));
-                break;
-            }
-            prev = next;
+    for _ in 0..rows * cols + 1 {
+        {
+            let f = wb.formula_mut(fid);
+            f.value = prev.clone();
+            f.spill = block.filter(|b| !b.is_cell());
         }
-        match (&out, res) {
-            (_, None) => {
-                out = None;
-                break;
-            }
-            (None, Some(r)) => out = Some(r),
-            (Some((_, a)), Some((_, b))) => {
-                if !a.same_as(&b) {
-                    out = None;
-                    break;
-                }
-            }
+        let (v, interrupt, sources, host_volatile) = {
+            let f = wb.formula(fid);
+            let formula = f.formula.clone();
+            let mut ctx = crate::eval::EvalCtx::new(wb, f.addr);
+            ctx.own = Some(fid);
+            ctx.allow_partial = true;
+            let v = crate::eval::eval_formula(&mut ctx, &formula.root);
+            (
+                v,
+                ctx.interrupt,
+                ctx.circ_sources,
+                ctx.observed.host_volatile,
+            )
+        };
+        report.evaluated(wb.formula(fid).addr.sheet);
+        if interrupt.is_some() {
+            break;
         }
+        let next = fit_circ(v, rows, cols);
+        if next.same_as(&prev) {
+            out = Some((next, sources, host_volatile));
+            break;
+        }
+        prev = next;
     }
     let f = wb.formula_mut(fid);
     f.value = saved;
     f.spill = saved_spill;
-    out.map(|(v, _)| v)
+    out
 }
 
 pub(crate) type ArrayPaste = Vec<(CellAddr, Arc<crate::formula::Formula>, (u32, u32))>;

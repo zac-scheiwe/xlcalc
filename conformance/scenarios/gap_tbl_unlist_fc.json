@@ -1,0 +1,321 @@
+{
+ "sheets": [
+  "S1",
+  "S2"
+ ],
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "S1!B4",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C4",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D3",
+   "input": "c"
+  },
+  {
+   "op": "table",
+   "range": "S1!B3:D6",
+   "name": "Tbl"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G3",
+   "input": "=Tbl[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G4",
+   "input": "=Tbl[[#Totals],[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G5",
+   "input": "=Tbl[[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G6",
+   "input": "=SUM(Tbl[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G7",
+   "input": "=Tbl[#Totals]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G8",
+   "input": "=Tbl[[#Totals],[a]:[b]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G9",
+   "input": "=Tbl[@c]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G10",
+   "input": "=Tbl[@[a]:[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G11",
+   "input": "=Tbl[[#This Row],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G12",
+   "input": "=ROWS(Tbl[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G13",
+   "input": "=Tbl[[#Totals],[a]]+1"
+  },
+  {
+   "op": "set",
+   "cell": "S1!G14",
+   "input": "=ROWS(Tbl[@c])"
+  },
+  {
+   "op": "set",
+   "cell": "S1!I4",
+   "input": "=Tbl[@c]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!J4",
+   "input": "=Tbl[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!K4",
+   "input": "=Tbl[@[a]:[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S1!L4",
+   "input": "=Tbl[[#This Row],[b]]"
+  },
+  {
+   "op": "read",
+   "range": "S1!G3:L16"
+  },
+  {
+   "op": "table_unlist",
+   "name": "Tbl"
+  },
+  {
+   "op": "read",
+   "range": "S1!G3:L16"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "S1!G3:L16"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "S1!G3:L16"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B4",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C4",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D3",
+   "input": "c"
+  },
+  {
+   "op": "table",
+   "range": "S2!B3:D6",
+   "name": "Tab_2"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G3",
+   "input": "=Tab_2[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G4",
+   "input": "=Tab_2[[#Totals],[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G5",
+   "input": "=Tab_2[[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G6",
+   "input": "=SUM(Tab_2[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G7",
+   "input": "=Tab_2[#Totals]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G8",
+   "input": "=Tab_2[[#Totals],[a]:[b]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G9",
+   "input": "=Tab_2[@c]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G10",
+   "input": "=Tab_2[@[a]:[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G11",
+   "input": "=Tab_2[[#This Row],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G12",
+   "input": "=ROWS(Tab_2[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G13",
+   "input": "=Tab_2[[#Totals],[a]]+1"
+  },
+  {
+   "op": "set",
+   "cell": "S2!G14",
+   "input": "=ROWS(Tab_2[@c])"
+  },
+  {
+   "op": "set",
+   "cell": "S2!I4",
+   "input": "=Tab_2[@c]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!J4",
+   "input": "=Tab_2[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!K4",
+   "input": "=Tab_2[@[a]:[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "S2!L4",
+   "input": "=Tab_2[[#This Row],[b]]"
+  },
+  {
+   "op": "read",
+   "range": "S2!G3:L16"
+  },
+  {
+   "op": "table_unlist",
+   "name": "Tab_2"
+  },
+  {
+   "op": "read",
+   "range": "S2!G3:L16"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "S2!G3:L16"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "S2!G3:L16"
+  }
+ ]
+}

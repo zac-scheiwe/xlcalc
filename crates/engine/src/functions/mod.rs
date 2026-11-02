@@ -251,6 +251,7 @@ static REGISTRY: LazyLock<Registry> = LazyLock::new(|| {
         math::DEFS,
         stats::DEFS,
         logical::DEFS,
+        xlm::DEFS,
         info::DEFS,
         text::DEFS,
         lookup::DEFS,

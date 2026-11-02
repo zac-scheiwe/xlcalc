@@ -1,0 +1,627 @@
+{
+ "sheets": [
+  "Host",
+  "Aa"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Host!B1",
+   "input": "12.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B2",
+   "input": "hello"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B3",
+   "input": "=B1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B4",
+   "input": "=\"x\"&B2"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B5",
+   "input": "1.5"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B6",
+   "input": "2*3"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B7",
+   "input": "TRUE"
+  },
+  {
+   "op": "set",
+   "cell": "Host!B8",
+   "input": "=1/0"
+  },
+  {
+   "op": "format",
+   "range": "Host!B1",
+   "fmt": "#,##0.00"
+  },
+  {
+   "op": "format",
+   "range": "Host!B5",
+   "fmt": "0%"
+  },
+  {
+   "op": "format",
+   "range": "Host!B7",
+   "fmt": "@"
+  },
+  {
+   "op": "name",
+   "name": "xg_8",
+   "refers_to": "=GET.CELL(8,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_9",
+   "refers_to": "=GET.CELL(9,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_10",
+   "refers_to": "=GET.CELL(10,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_11",
+   "refers_to": "=GET.CELL(11,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_12",
+   "refers_to": "=GET.CELL(12,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_13",
+   "refers_to": "=GET.CELL(13,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_14",
+   "refers_to": "=GET.CELL(14,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_15",
+   "refers_to": "=GET.CELL(15,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_16",
+   "refers_to": "=GET.CELL(16,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_17",
+   "refers_to": "=GET.CELL(17,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_18",
+   "refers_to": "=GET.CELL(18,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_19",
+   "refers_to": "=GET.CELL(19,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_20",
+   "refers_to": "=GET.CELL(20,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_21",
+   "refers_to": "=GET.CELL(21,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_22",
+   "refers_to": "=GET.CELL(22,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_23",
+   "refers_to": "=GET.CELL(23,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_24",
+   "refers_to": "=GET.CELL(24,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_25",
+   "refers_to": "=GET.CELL(25,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_26",
+   "refers_to": "=GET.CELL(26,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_27",
+   "refers_to": "=GET.CELL(27,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_28",
+   "refers_to": "=GET.CELL(28,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_29",
+   "refers_to": "=GET.CELL(29,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_30",
+   "refers_to": "=GET.CELL(30,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_31",
+   "refers_to": "=GET.CELL(31,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_32",
+   "refers_to": "=GET.CELL(32,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_33",
+   "refers_to": "=GET.CELL(33,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_34",
+   "refers_to": "=GET.CELL(34,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_35",
+   "refers_to": "=GET.CELL(35,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_36",
+   "refers_to": "=GET.CELL(36,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_37",
+   "refers_to": "=GET.CELL(37,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_38",
+   "refers_to": "=GET.CELL(38,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_39",
+   "refers_to": "=GET.CELL(39,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_40",
+   "refers_to": "=GET.CELL(40,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_42",
+   "refers_to": "=GET.CELL(42,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_43",
+   "refers_to": "=GET.CELL(43,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_44",
+   "refers_to": "=GET.CELL(44,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_45",
+   "refers_to": "=GET.CELL(45,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_46",
+   "refers_to": "=GET.CELL(46,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_47",
+   "refers_to": "=GET.CELL(47,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_49",
+   "refers_to": "=GET.CELL(49,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_50",
+   "refers_to": "=GET.CELL(50,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_51",
+   "refers_to": "=GET.CELL(51,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_52",
+   "refers_to": "=GET.CELL(52,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_54",
+   "refers_to": "=GET.CELL(54,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_55",
+   "refers_to": "=GET.CELL(55,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_56",
+   "refers_to": "=GET.CELL(56,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_57",
+   "refers_to": "=GET.CELL(57,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_58",
+   "refers_to": "=GET.CELL(58,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_59",
+   "refers_to": "=GET.CELL(59,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_60",
+   "refers_to": "=GET.CELL(60,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_61",
+   "refers_to": "=GET.CELL(61,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_62",
+   "refers_to": "=GET.CELL(62,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_63",
+   "refers_to": "=GET.CELL(63,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_64",
+   "refers_to": "=GET.CELL(64,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_65",
+   "refers_to": "=GET.CELL(65,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "name",
+   "name": "xg_66",
+   "refers_to": "=GET.CELL(66,INDIRECT(\"R1C2\",FALSE))"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A1",
+   "input": "=xg_8"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A2",
+   "input": "=xg_9"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A3",
+   "input": "=xg_10"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A4",
+   "input": "=xg_11"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A5",
+   "input": "=xg_12"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A6",
+   "input": "=xg_13"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A7",
+   "input": "=xg_14"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A8",
+   "input": "=xg_15"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A9",
+   "input": "=xg_16"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A10",
+   "input": "=xg_17"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A11",
+   "input": "=xg_18"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A12",
+   "input": "=xg_19"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A13",
+   "input": "=xg_20"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A14",
+   "input": "=xg_21"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A15",
+   "input": "=xg_22"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A16",
+   "input": "=xg_23"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A17",
+   "input": "=xg_24"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A18",
+   "input": "=xg_25"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A19",
+   "input": "=xg_26"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A20",
+   "input": "=xg_27"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A21",
+   "input": "=xg_28"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A22",
+   "input": "=xg_29"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A23",
+   "input": "=xg_30"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A24",
+   "input": "=xg_31"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A25",
+   "input": "=xg_32"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A26",
+   "input": "=xg_33"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A27",
+   "input": "=xg_34"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A28",
+   "input": "=xg_35"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A29",
+   "input": "=xg_36"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A30",
+   "input": "=xg_37"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A31",
+   "input": "=xg_38"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A32",
+   "input": "=xg_39"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A33",
+   "input": "=xg_40"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A34",
+   "input": "=xg_42"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A35",
+   "input": "=xg_43"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A36",
+   "input": "=xg_44"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A37",
+   "input": "=xg_45"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A38",
+   "input": "=xg_46"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A39",
+   "input": "=xg_47"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A40",
+   "input": "=xg_49"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A41",
+   "input": "=xg_50"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A42",
+   "input": "=xg_51"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A43",
+   "input": "=xg_52"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A44",
+   "input": "=xg_54"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A45",
+   "input": "=xg_55"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A46",
+   "input": "=xg_56"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A47",
+   "input": "=xg_57"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A48",
+   "input": "=xg_58"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A49",
+   "input": "=xg_59"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A50",
+   "input": "=xg_60"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A51",
+   "input": "=xg_61"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A52",
+   "input": "=xg_62"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A53",
+   "input": "=xg_63"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A54",
+   "input": "=xg_64"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A55",
+   "input": "=xg_65"
+  },
+  {
+   "op": "set",
+   "cell": "Host!A56",
+   "input": "=xg_66"
+  },
+  {
+   "op": "read",
+   "range": "Host!A1:A56"
+  }
+ ]
+}

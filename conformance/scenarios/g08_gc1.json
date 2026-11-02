@@ -1,0 +1,349 @@
+{
+  "sheets": [
+    "Host"
+  ],
+  "steps": [
+    {
+      "op": "set",
+      "cell": "Host!B1",
+      "input": "1"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B2",
+      "input": "2"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B3",
+      "input": "3"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B4",
+      "input": "4"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B5",
+      "input": "5"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B6",
+      "input": "6"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B7",
+      "input": "7"
+    },
+    {
+      "op": "set",
+      "cell": "Host!B8",
+      "input": "8"
+    },
+    {
+      "op": "name",
+      "name": "xa_27",
+      "refers_to": "=GET.CELL(27,INDIRECT(\"R1C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xa_28",
+      "refers_to": "=GET.CELL(28,INDIRECT(\"R1C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xa_29",
+      "refers_to": "=GET.CELL(29,INDIRECT(\"R1C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xa_30",
+      "refers_to": "=GET.CELL(30,INDIRECT(\"R1C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xa_31",
+      "refers_to": "=GET.CELL(31,INDIRECT(\"R1C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xb_27",
+      "refers_to": "=GET.CELL(27,INDIRECT(\"R2C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xb_28",
+      "refers_to": "=GET.CELL(28,INDIRECT(\"R2C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xb_29",
+      "refers_to": "=GET.CELL(29,INDIRECT(\"R2C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xb_30",
+      "refers_to": "=GET.CELL(30,INDIRECT(\"R2C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xb_31",
+      "refers_to": "=GET.CELL(31,INDIRECT(\"R2C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xc_27",
+      "refers_to": "=GET.CELL(27,INDIRECT(\"R3C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xc_28",
+      "refers_to": "=GET.CELL(28,INDIRECT(\"R3C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xc_29",
+      "refers_to": "=GET.CELL(29,INDIRECT(\"R3C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xc_30",
+      "refers_to": "=GET.CELL(30,INDIRECT(\"R3C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xc_31",
+      "refers_to": "=GET.CELL(31,INDIRECT(\"R3C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xd_27",
+      "refers_to": "=GET.CELL(27,INDIRECT(\"R6C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xd_28",
+      "refers_to": "=GET.CELL(28,INDIRECT(\"R6C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xd_29",
+      "refers_to": "=GET.CELL(29,INDIRECT(\"R6C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xd_30",
+      "refers_to": "=GET.CELL(30,INDIRECT(\"R6C2\",FALSE))"
+    },
+    {
+      "op": "name",
+      "name": "xd_31",
+      "refers_to": "=GET.CELL(31,INDIRECT(\"R6C2\",FALSE))"
+    },
+    {
+      "op": "set",
+      "cell": "Host!D1",
+      "input": "=xa_27"
+    },
+    {
+      "op": "set",
+      "cell": "Host!D2",
+      "input": "=xa_28"
+    },
+    {
+      "op": "set",
+      "cell": "Host!D3",
+      "input": "=xa_29"
+    },
+    {
+      "op": "set",
+      "cell": "Host!D4",
+      "input": "=xa_30"
+    },
+    {
+      "op": "set",
+      "cell": "Host!D5",
+      "input": "=xa_31"
+    },
+    {
+      "op": "set",
+      "cell": "Host!E1",
+      "input": "=xb_27"
+    },
+    {
+      "op": "set",
+      "cell": "Host!E2",
+      "input": "=xb_28"
+    },
+    {
+      "op": "set",
+      "cell": "Host!E3",
+      "input": "=xb_29"
+    },
+    {
+      "op": "set",
+      "cell": "Host!E4",
+      "input": "=xb_30"
+    },
+    {
+      "op": "set",
+      "cell": "Host!E5",
+      "input": "=xb_31"
+    },
+    {
+      "op": "set",
+      "cell": "Host!F1",
+      "input": "=xc_27"
+    },
+    {
+      "op": "set",
+      "cell": "Host!F2",
+      "input": "=xc_28"
+    },
+    {
+      "op": "set",
+      "cell": "Host!F3",
+      "input": "=xc_29"
+    },
+    {
+      "op": "set",
+      "cell": "Host!F4",
+      "input": "=xc_30"
+    },
+    {
+      "op": "set",
+      "cell": "Host!F5",
+      "input": "=xc_31"
+    },
+    {
+      "op": "set",
+      "cell": "Host!G1",
+      "input": "=xd_27"
+    },
+    {
+      "op": "set",
+      "cell": "Host!G2",
+      "input": "=xd_28"
+    },
+    {
+      "op": "set",
+      "cell": "Host!G3",
+      "input": "=xd_29"
+    },
+    {
+      "op": "set",
+      "cell": "Host!G4",
+      "input": "=xd_30"
+    },
+    {
+      "op": "set",
+      "cell": "Host!G5",
+      "input": "=xd_31"
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "group_rows",
+      "sheet": "Host",
+      "at": 2,
+      "count": 4
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "set",
+      "cell": "Host!I1",
+      "input": "1"
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "group_rows",
+      "sheet": "Host",
+      "at": 3,
+      "count": 2
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "set",
+      "cell": "Host!I1",
+      "input": "2"
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "outline_show",
+      "sheet": "Host",
+      "level": 2
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "set",
+      "cell": "Host!I1",
+      "input": "3"
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "outline_show",
+      "sheet": "Host",
+      "level": 1
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "set",
+      "cell": "Host!I1",
+      "input": "4"
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "ungroup_rows",
+      "sheet": "Host",
+      "at": 3,
+      "count": 2
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "set",
+      "cell": "Host!I1",
+      "input": "5"
+    },
+    {
+      "op": "read",
+      "range": "Host!D1:G5"
+    },
+    {
+      "op": "rowstate",
+      "sheet": "Host",
+      "rows": 10
+    }
+  ]
+}

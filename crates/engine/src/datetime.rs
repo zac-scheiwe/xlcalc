@@ -8,12 +8,14 @@ pub enum DateSystem {
     D1900,
 
     D1904,
+
+    Vba,
 }
 
 impl DateSystem {
     pub fn max_serial(self) -> f64 {
         match self {
-            DateSystem::D1900 => MAX_SERIAL_1900,
+            DateSystem::D1900 | DateSystem::Vba => MAX_SERIAL_1900,
             DateSystem::D1904 => MAX_SERIAL_1904,
         }
     }
@@ -49,6 +51,7 @@ pub fn serial_from_ymd(sys: DateSystem, y: i64, m: i64, d: i64) -> i64 {
     let days = days_from_civil(y, m, d);
     match sys {
         DateSystem::D1904 => days - DAYS_1904_01_01,
+        DateSystem::Vba => days - DAYS_1899_12_30,
         DateSystem::D1900 => {
             let s = days - DAYS_1899_12_30;
             if s <= 60 {
@@ -63,6 +66,7 @@ pub fn serial_from_ymd(sys: DateSystem, y: i64, m: i64, d: i64) -> i64 {
 pub fn ymd_from_serial(sys: DateSystem, serial: i64) -> (i64, u32, u32) {
     match sys {
         DateSystem::D1904 => civil_from_days(serial + DAYS_1904_01_01),
+        DateSystem::Vba => civil_from_days(serial + DAYS_1899_12_30),
         DateSystem::D1900 => match serial {
             0 => (1900, 1, 0),
             60 => (1900, 2, 29),
@@ -74,7 +78,7 @@ pub fn ymd_from_serial(sys: DateSystem, serial: i64) -> (i64, u32, u32) {
 
 pub fn weekday_from_serial(sys: DateSystem, serial: i64) -> u32 {
     let base = match sys {
-        DateSystem::D1900 => 6,
+        DateSystem::D1900 | DateSystem::Vba => 6,
         DateSystem::D1904 => 5,
     };
     (serial + base).rem_euclid(7) as u32

@@ -2,15 +2,18 @@ mod calendars;
 mod calendars_cn;
 mod calendars_he;
 mod codelen;
+mod dbnum;
 pub(crate) mod decimal;
 mod displayed;
 pub(crate) use displayed::EditClass;
 mod general;
 mod locales;
+mod locales_more;
 mod parse;
 mod render;
 
-pub use general::{format_general_width, TEXT_GENERAL_WIDTH};
+pub use general::{format_general_cell, format_general_width, TEXT_GENERAL_WIDTH};
+pub(crate) use render::{FILL_MARK, GENERAL_MARK, SPACE_MARK};
 
 use crate::datetime::DateSystem;
 use crate::locale::Locale;
@@ -117,6 +120,19 @@ impl NumberFormat {
 
     pub fn format_number(&self, x: f64, loc: &Locale, ds: DateSystem) -> Result<Rendered, XlError> {
         render::render_number(self, x, loc, ds)
+    }
+
+    pub(crate) fn format_cell_number(
+        &self,
+        x: f64,
+        loc: &Locale,
+        ds: DateSystem,
+    ) -> Result<Rendered, XlError> {
+        render::with_cell_marks(|| render::render_number(self, x, loc, ds))
+    }
+
+    pub fn format_vba(&self, x: f64, loc: &Locale) -> Result<Rendered, XlError> {
+        render::render_number(self, x, loc, DateSystem::Vba)
     }
 
     pub fn format_text(&self, s: &str, loc: &Locale) -> Result<Rendered, XlError> {

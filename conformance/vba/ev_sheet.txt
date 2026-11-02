@@ -1,0 +1,70 @@
+Private Sub Worksheet_Activate()
+    On Error GoTo EH
+    EvLog.Enter "Sheet", "Activate", Me
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Sheet.Activate", Err.Number
+End Sub
+
+Private Sub Worksheet_Deactivate()
+    On Error GoTo EH
+    EvLog.Enter "Sheet", "Deactivate", Me
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Sheet.Deactivate", Err.Number
+End Sub
+
+Private Sub Worksheet_Calculate()
+    On Error GoTo EH
+    EvLog.Enter "Sheet", "Calculate", Me
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Sheet.Calculate", Err.Number
+End Sub
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    On Error GoTo EH
+    EvLog.Enter "Sheet", "Change", Me, Target
+    EvLog.OnChange Me, Target
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Sheet.Change", Err.Number
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    On Error GoTo EH
+    EvLog.Enter "Sheet", "SelectionChange", Me, Target
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Sheet.SelectionChange", Err.Number
+End Sub
+
+Private Sub Worksheet_BeforeDelete()
+    On Error GoTo EH
+    EvLog.Enter "Sheet", "BeforeDelete", Me
+    EvLog.Leave
+    Exit Sub
+EH:
+    EvLog.Fail "Sheet.BeforeDelete", Err.Number
+End Sub
+
+Public Function SheetFn(ByVal a As Variant) As Variant
+    On Error GoTo EH
+    SheetFn = "sheet:" & Me.Name & ":" & a
+    Exit Function
+EH:
+    SheetFn = "err " & Err.Number
+End Function
+
+Private Function SheetPriv() As Variant
+    On Error GoTo EH
+    SheetPriv = "priv:" & Me.Name
+    Exit Function
+EH:
+    SheetPriv = "err " & Err.Number
+End Function

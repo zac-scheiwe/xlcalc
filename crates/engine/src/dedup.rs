@@ -1,3 +1,4 @@
+use crate::workbook::Command;
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId};
@@ -182,6 +183,37 @@ impl Workbook {
         rect: Rect,
         spec: &DedupSpec,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::RemoveDuplicates, |wb| {
+            wb.remove_duplicates_run(sheet, rect, spec)
+        })
+    }
+
+    fn dedup_merge_guard(
+        &self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &DedupSpec,
+        keys: &[u32],
+    ) -> Result<(), EditError> {
+        let data = Rect::new(rect.r0 + u32::from(spec.header), rect.c0, rect.r1, rect.c1);
+        if data.r0 >= data.r1 {
+            return Ok(());
+        }
+        for m in self.merges(sheet) {
+            let spanned = keys.iter().filter(|&&c| m.c0 <= c && c <= m.c1).count();
+            if m.intersects(&data) && spanned > 1 {
+                return Err(generic_error());
+            }
+        }
+        self.guard_merges_sort(sheet, data)
+    }
+
+    fn remove_duplicates_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &DedupSpec,
+    ) -> Result<RecalcReport, EditError> {
         self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         crate::structure::range_too_large(&rect)?;
         if spec.columns.len() as u32 > rect.cols()
@@ -232,12 +264,6 @@ impl Workbook {
             return Err(generic_error());
         };
         let area = Rect::new(rect.r0, rect.c0, eff.r1, eff.c1.max(rect.c0));
-        if self.filter_mode(sheet) {
-            return Err(EditError::OutOfScope("RemoveDuplicates in filter mode"));
-        }
-        if self.merge_intersects(sheet, &area) {
-            return Err(EditError::OutOfScope("RemoveDuplicates over merged cells"));
-        }
         if !self
             .sheet(sheet)
             .unwrap()
@@ -252,10 +278,11 @@ impl Workbook {
                 return Err(crate::cse::part_of_array());
             }
         }
+        let keys: Vec<u32> = spec.columns.iter().map(|&c| rect.c0 + c - 1).collect();
+        self.dedup_merge_guard(sheet, rect, spec, &keys)?;
         if spec.columns.is_empty() {
             return Ok(RecalcReport::default());
         }
-        let keys: Vec<u32> = spec.columns.iter().map(|&c| rect.c0 + c - 1).collect();
         if keys.iter().any(|&c| c > eff.c1) {
             return Err(generic_error());
         }
@@ -265,6 +292,8 @@ impl Workbook {
         if first > last {
             return Ok(RecalcReport::default());
         }
+
+        self.note_changed(sheet, &[Rect::new(first, rect.c0, rect.r1, rect.c1)]);
 
         let sh = self.sheet(sheet).unwrap();
         let mut end = last;
@@ -387,6 +416,22 @@ impl Workbook {
                 plan.push((CellAddr::new(sheet, r, c), Ok(Value::Blank)));
             }
         }
+
+        let moved: Vec<u32> = (0..kept.len())
+            .filter(|&j| kept[j] != rows[j])
+            .map(|j| rows[j])
+            .collect();
+        let doomed: Vec<Rect> = self
+            .merges(sheet)
+            .into_iter()
+            .filter(|m| {
+                let cols = c0 <= m.c0 && m.c0 <= c1;
+                cols && (moved.contains(&m.r0) || vacated.iter().any(|&r| m.r0 <= r && r <= m.r1))
+            })
+            .collect();
+        for m in doomed {
+            self.remove_merge(sheet, m);
+        }
         self.fmt_move_pairs(&fmt_pairs);
         for &r in vacated {
             for c in c0..=c1 {
@@ -414,15 +459,20 @@ impl Workbook {
             }
             report.changed.push(to);
         }
+        let table_end = table.map(|ti| self.tables[ti].rect.r1);
 
         let mut table_name = None;
         let mut refs_changed = false;
+        let mut refused = None;
         if let Some(ti) = table {
             let name = self.tables[ti].name.clone();
             if self.tables[ti].totals {
                 let t = &self.tables[ti];
                 let shrunk = Rect::new(t.rect.r0, t.rect.c0, t.rect.r1 - 1 - removed, t.rect.c1);
-                let _ = self.resize_table(&name, shrunk);
+
+                if let Err(e) = self.resize_table(&name, shrunk) {
+                    refused = Some(e);
+                }
             } else {
                 let old = self.tables[ti].rect;
                 self.tables[ti].rect.r1 -= removed;
@@ -430,20 +480,29 @@ impl Workbook {
             }
             table_name = Some(name);
         }
+
+        let lost = table_end.map(|e| (e - removed + 1, e));
+        self.view_dedup_refilter(sheet, area, lost);
         self.settings.mode = mode;
+        if let Some(e) = refused {
+            return Err(e);
+        }
         if refs_changed {
             let r = self.relink_and_recalc();
             report.evaluations += r.evaluations;
+            report.add_sheets(&r);
             report.changed.extend(r.changed);
         }
         if let Some(name) = table_name {
             let r = self.table_changed(&name);
             report.evaluations += r.evaluations;
+            report.add_sheets(&r);
             report.changed.extend(r.changed);
         } else if mode == CalcMode::Automatic {
             let r = calc::recalc(self);
             report.evaluations += r.evaluations;
             report.circular = r.circular;
+            report.add_sheets(&r);
             report.changed.extend(r.changed);
         }
         Ok(calc::finish_report(report))

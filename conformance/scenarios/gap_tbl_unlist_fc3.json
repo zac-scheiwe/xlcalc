@@ -1,0 +1,358 @@
+{
+ "sheets": [
+  "S1",
+  "S2",
+  "T"
+ ],
+ "check_all_formats": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "T!A1",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B4",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C4",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S1!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S1!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S1!D3",
+   "input": "c"
+  },
+  {
+   "op": "table",
+   "range": "S1!B3:D6",
+   "name": "Tx"
+  },
+  {
+   "op": "set",
+   "cell": "T!B3",
+   "input": "=Tx[[#Headers],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!C3",
+   "input": "=Tx[[#Headers],[b]]+1"
+  },
+  {
+   "op": "set",
+   "cell": "T!D3",
+   "input": "=Tx[@a]+1"
+  },
+  {
+   "op": "set",
+   "cell": "T!B4",
+   "input": "=Tx[@b]"
+  },
+  {
+   "op": "set",
+   "cell": "T!C4",
+   "input": "=-Tx[@b]"
+  },
+  {
+   "op": "set",
+   "cell": "T!D4",
+   "input": "=SUM(Tx[@b])"
+  },
+  {
+   "op": "set",
+   "cell": "T!B5",
+   "input": "=Tx[[#Totals],[a]]*2"
+  },
+  {
+   "op": "set",
+   "cell": "T!C5",
+   "input": "=Tx[[#Data],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!D5",
+   "input": "=Tx[[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!B6",
+   "input": "=Tx[[#All],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!C6",
+   "input": "=Tx[[#This Row],[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!D6",
+   "input": "=Tx[[#Totals],[c]]&\"\""
+  },
+  {
+   "op": "set",
+   "cell": "T!B7",
+   "input": "=MAX(Tx[[#Totals],[b]],1)"
+  },
+  {
+   "op": "set",
+   "cell": "T!C7",
+   "input": "=IF(Tx[[#Totals],[a]]=\"\",1,2)"
+  },
+  {
+   "op": "set",
+   "cell": "T!E1",
+   "input": "=Tx[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!E2",
+   "input": "=ISNUMBER(Tx[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "T!E3",
+   "input": "=Tx[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!E4",
+   "input": "=Tx[[#Totals],[b]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!F1",
+   "input": "=Tx[[#Totals],[a]]+Tx[[#Totals],[b]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!F2",
+   "input": "=SUMPRODUCT(Tx[[#Totals],[a]])"
+  },
+  {
+   "op": "read",
+   "range": "T!A1:F9"
+  },
+  {
+   "op": "table_unlist",
+   "name": "Tx"
+  },
+  {
+   "op": "read",
+   "range": "T!A1:F9"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "T!A1:F9"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B4",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C4",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B5",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "S2!B3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "S2!C3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "S2!D3",
+   "input": "c"
+  },
+  {
+   "op": "table",
+   "range": "S2!B3:D6",
+   "name": "Ty"
+  },
+  {
+   "op": "table_headers",
+   "name": "Ty",
+   "value": false
+  },
+  {
+   "op": "set",
+   "cell": "T!B3",
+   "input": "=Ty[[#Headers],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!C3",
+   "input": "=Ty[[#Headers],[b]]+1"
+  },
+  {
+   "op": "set",
+   "cell": "T!D3",
+   "input": "=Ty[@a]+1"
+  },
+  {
+   "op": "set",
+   "cell": "T!B4",
+   "input": "=Ty[@b]"
+  },
+  {
+   "op": "set",
+   "cell": "T!C4",
+   "input": "=-Ty[@b]"
+  },
+  {
+   "op": "set",
+   "cell": "T!D4",
+   "input": "=SUM(Ty[@b])"
+  },
+  {
+   "op": "set",
+   "cell": "T!B5",
+   "input": "=Ty[[#Totals],[a]]*2"
+  },
+  {
+   "op": "set",
+   "cell": "T!C5",
+   "input": "=Ty[[#Data],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!D5",
+   "input": "=Ty[[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!B6",
+   "input": "=Ty[[#All],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!C6",
+   "input": "=Ty[[#This Row],[c]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!D6",
+   "input": "=Ty[[#Totals],[c]]&\"\""
+  },
+  {
+   "op": "set",
+   "cell": "T!B7",
+   "input": "=MAX(Ty[[#Totals],[b]],1)"
+  },
+  {
+   "op": "set",
+   "cell": "T!C7",
+   "input": "=IF(Ty[[#Totals],[a]]=\"\",1,2)"
+  },
+  {
+   "op": "set",
+   "cell": "T!E1",
+   "input": "=Ty[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!E2",
+   "input": "=ISNUMBER(Ty[[#Totals],[a]])"
+  },
+  {
+   "op": "set",
+   "cell": "T!E3",
+   "input": "=Ty[[#Totals],[a]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!E4",
+   "input": "=Ty[[#Totals],[b]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!F1",
+   "input": "=Ty[[#Totals],[a]]+Ty[[#Totals],[b]]"
+  },
+  {
+   "op": "set",
+   "cell": "T!F2",
+   "input": "=SUMPRODUCT(Ty[[#Totals],[a]])"
+  },
+  {
+   "op": "read",
+   "range": "T!A1:F9"
+  },
+  {
+   "op": "table_unlist",
+   "name": "Ty"
+  },
+  {
+   "op": "read",
+   "range": "T!A1:F9"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "T!A1:F9"
+  }
+ ]
+}

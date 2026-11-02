@@ -1,6 +1,7 @@
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::value::Value;
+use crate::workbook::Command;
 use crate::workbook::Op;
 use crate::workbook::{EditError, Entry, Workbook};
 
@@ -98,6 +99,17 @@ impl Workbook {
         rect: Rect,
         spec: &ReplaceSpec,
     ) -> Result<RecalcReport, EditError> {
+        self.command(Command::Replace, |wb| {
+            wb.replace_range_run(sheet, rect, spec)
+        })
+    }
+
+    fn replace_range_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &ReplaceSpec,
+    ) -> Result<RecalcReport, EditError> {
         let sh = self.sheet(sheet).ok_or(EditError::NoSuchSheet)?;
         crate::structure::range_too_large(&rect)?;
         let scope = if rect.is_cell() {
@@ -113,12 +125,16 @@ impl Workbook {
             cells.rotate_left(start);
         }
         let mut report = RecalcReport::default();
+
+        let mut changed: Vec<Rect> = Vec::new();
         self.with_op(Op::ReplaceEntry, true, |wb| {
             for (r, c) in cells {
                 let addr = CellAddr::new(sheet, r, c);
                 match wb.replace_cell(addr, spec) {
                     Ok(Some(rep)) => {
+                        changed.push(Rect::new(r, c, r, c));
                         report.evaluations += rep.evaluations;
+                        report.add_sheets(&rep);
                         report.changed.extend(rep.changed);
                         if rep.circular.is_some() {
                             report.circular = rep.circular;
@@ -129,6 +145,11 @@ impl Workbook {
                 }
             }
         });
+        self.note_changed(sheet, &changed);
+
+        if changed.is_empty() {
+            report = self.recalc_point();
+        }
         Ok(calc::finish_report(report))
     }
 
@@ -193,6 +214,7 @@ impl Workbook {
                             for c in block.c0..=block.c1 {
                                 let x =
                                     self.set_legacy_entry(CellAddr::new(addr.sheet, r, c), &new)?;
+                                rep.add_sheets(&x);
                                 rep.changed.extend(x.changed);
                                 rep.evaluations += x.evaluations;
                             }

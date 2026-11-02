@@ -4,6 +4,7 @@ use crate::functions;
 use crate::input::{self, Entered};
 use crate::parser::ast::{BinOp, Expr, RefKind, UnaryOp};
 use crate::parser::{parse, print::print};
+use crate::workbook::{notice, Command};
 use crate::workbook::{EditError, Workbook};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -393,10 +394,13 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
                 _ => false,
             });
 
+            let is_match = |e: &Expr| {
+                matches!(e.unwrap_ws(), Expr::Func { name, .. }
+                    if name.eq_ignore_ascii_case("MATCH"))
+            };
             let literal = |e: &Expr| match e.unwrap_ws() {
                 Expr::Number(n) => *n != 0.0,
-                f @ Expr::Func { .. } => !array_capable(f),
-                _ => false,
+                _ => is_match(e),
             };
             let ranged = first.is_some_and(|f| {
                 is_multi_ref(f)
@@ -407,7 +411,7 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
                 || args
                     .iter()
                     .skip(1)
-                    .any(|a| zero_or_missing(a) || has_arr(a))
+                    .any(|a| zero_or_missing(a) || (!is_match(a) && has_arr(a)))
         }
         "OFFSET" => {
             let one = |a: &Expr| matches!(a.unwrap_ws(), Expr::Number(n) if *n == 1.0);
@@ -887,11 +891,50 @@ fn rewrite_at_inner(e: Expr, quiet: bool) -> Expr {
     }
 }
 
+fn strip_known_prefixes(e: Expr) -> Expr {
+    let go = |x: Box<Expr>| Box::new(strip_known_prefixes(*x));
+    match e {
+        Expr::Func { name, args } => {
+            let bare = crate::formula::strip_prefixes(&name);
+            let u = bare.to_uppercase();
+            let known = matches!(u.as_str(), "LET" | "LAMBDA") || functions::lookup(&u).is_some();
+            Expr::Func {
+                name: if known { bare.to_string() } else { name },
+                args: args.into_iter().map(strip_known_prefixes).collect(),
+            }
+        }
+        Expr::Unary { op, expr } => Expr::Unary { op, expr: go(expr) },
+        Expr::Ws {
+            before,
+            after,
+            expr,
+        } => Expr::Ws {
+            before,
+            after,
+            expr: go(expr),
+        },
+        Expr::Paren(x) => Expr::Paren(go(x)),
+        Expr::Percent(x) => Expr::Percent(go(x)),
+        Expr::Spill(x) => Expr::Spill(go(x)),
+        Expr::Binary { op, left, right } => Expr::Binary {
+            op,
+            left: go(left),
+            right: go(right),
+        },
+        Expr::Call { callee, args } => Expr::Call {
+            callee: go(callee),
+            args: args.into_iter().map(strip_known_prefixes).collect(),
+        },
+        e => e,
+    }
+}
+
 pub(crate) fn legacy_to_dynamic_in(wb: &Workbook, text: &str) -> String {
     let text = input::auto_close_call(text);
     let Ok(e) = parse(&text) else {
         return format!("={text}");
     };
+    let e = strip_known_prefixes(e);
     let mut known: Vec<String> = wb.names.iter().map(|n| n.name.to_uppercase()).collect();
     bound_names(&e, &mut known);
     KNOWN_NAMES.with(|k| *k.borrow_mut() = Some(known));
@@ -900,8 +943,39 @@ pub(crate) fn legacy_to_dynamic_in(wb: &Workbook, text: &str) -> String {
     out
 }
 
+pub(crate) fn legacy_reads_back(wb: &Workbook, legacy: &str, shown: &str) -> bool {
+    let Some(body) = legacy.strip_prefix('=') else {
+        return false;
+    };
+    MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
+    let da = legacy_to_dynamic_in(wb, body);
+    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    da == shown
+}
+
+pub(crate) fn legacy_entry_is_scalar(wb: &Workbook, shown: &str, host: CellAddr) -> bool {
+    let Some(body) = shown.strip_prefix('=') else {
+        return false;
+    };
+    LEGACY_ENTRY.with(|l| l.set(true));
+    let r = scalar_entry_expr(wb, body, host).is_some();
+    LEGACY_ENTRY.with(|l| l.set(false));
+    r
+}
+
 impl Workbook {
     pub fn set_legacy_input(
+        &mut self,
+        addr: CellAddr,
+        input: &str,
+    ) -> Result<RecalcReport, EditError> {
+        self.command(Command::Entry, |wb| {
+            wb.note_changed(addr.sheet, &[notice::cell(addr)]);
+            wb.set_legacy_input_run(addr, input)
+        })
+    }
+
+    fn set_legacy_input_run(
         &mut self,
         addr: CellAddr,
         input: &str,

@@ -183,7 +183,11 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         _ => return Operand::err(XlError::VALUE),
     };
     let (sheet, row, col) = match ops.get(1) {
-        None | Some(Operand::Missing) => (ctx.host.sheet, ctx.host.row, ctx.host.col),
+        None | Some(Operand::Missing) => {
+            let s = ctx.wb.active_sheet();
+            let (r, c) = ctx.wb.active_cell_of(s);
+            (s, r, c)
+        }
         Some(Operand::Ref(r)) => {
             let a = r.areas()[0];
             (a.sheet, a.rect.r0, a.rect.c0)
@@ -253,18 +257,29 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             _ => "v",
         }),
 
-        "prefix" => Value::from(match value() {
-            Value::Text(_)
-                if ctx
-                    .wb
-                    .formula_at(crate::address::CellAddr::new(sheet, row, col))
-                    .is_none() =>
-            {
-                "'"
-            }
-            _ => "",
-        }),
-        "protect" => Value::Number(1.0),
+        "prefix" => {
+            let at = crate::address::CellAddr::new(sheet, row, col);
+            Value::from(match value() {
+                Value::Text(_) if ctx.wb.formula_at(at).is_none() => {
+                    use crate::style::HAlign;
+                    match ctx.wb.cell_style(at).alignment.horizontal {
+                        HAlign::Right => "\"",
+                        HAlign::Center | HAlign::CenterAcrossSelection => "^",
+                        HAlign::Fill => "\\",
+                        _ => "'",
+                    }
+                }
+                _ => "",
+            })
+        }
+        "protect" => {
+            let at = crate::address::CellAddr::new(sheet, row, col);
+            Value::Number(if ctx.wb.cell_style(at).locked {
+                1.0
+            } else {
+                0.0
+            })
+        }
         "color" | "parentheses" => {
             let i = cell_format_info(
                 ctx.wb
@@ -282,14 +297,18 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         )),
         "filename" => Value::from(""),
 
-        "width" => array_or_scalar(1, 2, |_, c| match c {
-            0 => Value::Number(8.0),
-            _ => Value::Bool(true),
-        }),
-        "sheet" => match ctx.wb.sheet_position(sheet) {
-            Some(p) => Value::Number(p as f64 + 1.0),
-            None => return Operand::err(XlError::REF),
-        },
+        "width" => {
+            let (w, standard) = ctx.wb.cell_width(sheet, col);
+            array_or_scalar(1, 2, |_, c| {
+                if c == 0 {
+                    Value::Number(w)
+                } else {
+                    Value::Bool(standard)
+                }
+            })
+        }
+
+        "sheet" => Value::Number(1.0),
         "coord" => Value::from(format!(
             "$A:${}${}",
             crate::address::col_to_letters(col),
@@ -489,7 +508,7 @@ fn strip_section(sec: &str) -> (String, bool, bool) {
 }
 
 fn date_code(l: &str) -> &'static str {
-    let l = l.replace("am/pm", "p").replace("a/p", "");
+    let l = l.replace("am/pm", "p").replace("a/p", "").replace("/p", "");
     let mut toks: Vec<(char, usize)> = Vec::new();
     for c in l.chars() {
         if matches!(c, 'd' | 'm' | 'y' | 'h' | 's' | 'p') {

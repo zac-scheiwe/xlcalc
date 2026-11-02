@@ -74,6 +74,29 @@ fn cycle_basic() {
 }
 
 #[test]
+fn cycle_through_block_completes_in_one_pass() {
+    let mut t = T::new();
+    for (a1, input) in [
+        ("G1", "0"),
+        ("H1", "=G1*10-5"),
+        ("A1", "=H1+0"),
+        ("A2", "5"),
+    ] {
+        t.set(a1, input);
+    }
+    let s = t.wb.sheet_at(0).id;
+    let (sheet, rect) = xlcalc::parse_range_ref(&t.wb, "B1:B2", s).unwrap();
+    t.wb.set_array_formula(sheet, rect, "=IF(A1:A2>2,1,0)")
+        .unwrap();
+    assert_eq!((t.num("B1"), t.num("B2")), (0.0, 1.0));
+    t.set("G1", "=B2");
+    assert_eq!(t.num("G1"), 1.0);
+    assert_eq!(t.num("H1"), 5.0);
+    assert_eq!(t.num("A1"), 5.0);
+    assert_eq!(t.num("B1"), 1.0);
+}
+
+#[test]
 fn cycle_prior_value() {
     let mut t = T::new();
     t.set("A1", "10");
