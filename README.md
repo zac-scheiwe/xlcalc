@@ -1,6 +1,6 @@
 ## xlcalc
 
-Calculations bit-for-bit identical to Excel 2024 for Windows (64-bit).
+Calculations bit-for-bit identical to Excel 2024 for Windows (64-bit). Includes VBA, an Excel object model, pivot tables, charts, Solver, .xll add-ins and xls/xlsx/xlsb/xlsm/CSV files.
 
 ### Install
 
