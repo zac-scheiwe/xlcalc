@@ -71,14 +71,12 @@ fn enter(wb: &mut Workbook, addr: CellAddr, field: &str) {
         || wb.set_input(addr, field).is_err()
     {
         wb.set_value(addr, Value::from(field));
-    } else if matches!(wb.value(addr), Value::Text(_))
-        && field.contains(['e', 'E'])
-        && field.trim().parse::<f64>().is_ok_and(f64::is_infinite)
-    {
+    } else if matches!(wb.value(addr), Value::Text(_)) && field.contains(['e', 'E']) {
+        let big = field.trim().parse::<f64>().is_ok_and(f64::is_infinite);
         wb.set_number_format(
             addr.sheet,
             Rect::new(addr.row, addr.col, addr.row, addr.col),
-            "0.00E+00",
+            if big { "0.00E+00" } else { "General" },
         );
     }
 }

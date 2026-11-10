@@ -1,0 +1,6 @@
+set B1 =E4+1
+set2 E3 =D4:E5*2
+set G1 =H1+1
+set H1 =G1+1
+clear E4
+const Z9 1

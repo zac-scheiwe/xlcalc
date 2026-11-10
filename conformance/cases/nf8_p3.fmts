@@ -1,0 +1,55 @@
+# AM/PM and a/p case, elapsed + AM/PM validity
+0.25|h:mm AM/PM
+0.75|h:mm AM/PM
+0.25|h:mm:ss AM/PM
+0.75|h:mm:ss AM/PM
+0.25|hh:mm AM/PM
+0.25|h:mm  AM/PM
+0.25|h:mm am/pm
+0.25|h:mm:ss am/pm
+0.25|h:mm Am/Pm
+0.25|h:mm aM/pM
+0.25|h am/pm
+0.25|h AM/PM
+0.75|h AM/PM
+0.25|[$-409]h:mm AM/PM
+0.25|h:mm AM/PM;@
+0.25|h:mm AM/PM;h:mm
+0.25|m/d/yyyy h:mm AM/PM
+0.25|h:mm:ss.0 AM/PM
+0.25|h:mm:ss.00 am/pm
+0.25|mm:ss AM/PM
+0.25|AM/PM
+0.75|AM/PM
+0.25|am/pm
+0.25|A/P
+0.75|A/P
+0.25|a/p
+0.75|a/p
+0.25|a/P
+0.25|A/p
+0.25|h a/p
+0.25|h:mm a/p
+0.75|h:mm A/P
+0.25|h:mm:ss a/p
+0.25|a/p h
+0.25|a/p h:mm
+0.25|d a/p h
+0.25|[h]:mm AM/PM
+0.25|[h] AM/PM
+0.25|[mm] AM/PM
+0.25|[s] AM/PM
+0.25|[h]:mm a/p
+0.25|AM/PM [h]
+0.25|AM/PM [h]:mm
+0.25|h [h] AM/PM
+0.25|d/m/yy [h] AM/PM
+0.25|[h]:mm:ss AM/PM
+0.25|[hh]:mm AM/PM
+0.25|[m] AM/PM
+0.25|[mm]:ss AM/PM
+0.25|AM/PM [mm]
+0.25|"x"[h]:mm AM/PM
+0.25|[h]:mm "AM/PM"
+0.25|[h]:mm\ AM/PM
+0.25|[h]:mm 0.0 AM/PM

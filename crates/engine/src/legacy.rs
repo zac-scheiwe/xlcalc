@@ -2,7 +2,7 @@ use crate::address::CellAddr;
 use crate::calc::RecalcReport;
 use crate::functions;
 use crate::input::{self, Entered};
-use crate::parser::ast::{BinOp, Expr, RefKind, UnaryOp};
+use crate::parser::ast::{BinOp, Expr, RefKind, SheetSpec, UnaryOp};
 use crate::parser::{parse, print::print};
 use crate::workbook::{notice, Command};
 use crate::workbook::{EditError, Workbook};
@@ -209,14 +209,98 @@ fn bound_names(e: &Expr, out: &mut Vec<String>) {
     })
 }
 
+fn is_span3d(e: &Expr) -> bool {
+    matches!(e, Expr::Ref { sheet: Some(SheetSpec::Range(a, b)), .. } if !a.eq_ignore_ascii_case(b))
+}
+
+enum StructKind {
+    Single,
+
+    Column(String),
+
+    Multi,
+}
+
+fn struct_kind(spec: &str) -> StructKind {
+    let spec = spec.trim();
+
+    let items: Vec<&str> = if spec.starts_with('[') {
+        spec.split(',').map(str::trim).collect()
+    } else {
+        vec![spec]
+    };
+    let inner = |s: &str| -> String {
+        let s = s.trim();
+        s.strip_prefix('[')
+            .and_then(|x| x.strip_suffix(']'))
+            .unwrap_or(s)
+            .to_string()
+    };
+    if let Some(rest) = spec.strip_prefix('@') {
+        let rest = rest.trim();
+        return if rest.is_empty() || rest.contains("]:[") || rest.contains("]:") {
+            StructKind::Multi
+        } else {
+            StructKind::Single
+        };
+    }
+    let mut cols = Vec::new();
+    let mut line = false;
+    for it in &items {
+        let name = inner(it);
+        let low = name.to_lowercase();
+        if matches!(low.as_str(), "#headers" | "#totals" | "#this row") {
+            line = true;
+        } else if low.starts_with('#') {
+            return StructKind::Multi;
+        } else {
+            cols.push(it.to_string());
+        }
+    }
+    let one_column = cols.len() == 1 && !cols[0].contains("]:[") && !inner(&cols[0]).contains(':');
+    match (line, one_column, cols.len()) {
+        (true, true, _) => StructKind::Single,
+        (false, true, 1) if items.len() == 1 => StructKind::Column(inner(&cols[0])),
+        _ => StructKind::Multi,
+    }
+}
+
+fn is_single_cell(e: &Expr) -> bool {
+    match e.unwrap_ws() {
+        Expr::StructRef { spec, .. } => matches!(struct_kind(spec), StructKind::Single),
+
+        x @ Expr::Name { .. } => is_scalar_name(x),
+        x => {
+            matches!(
+                x,
+                Expr::Ref {
+                    kind: RefKind::Cell { .. },
+                    ..
+                }
+            ) && !is_span3d(x)
+        }
+    }
+}
+
+fn is_undefined_name(e: &Expr) -> bool {
+    matches!(e.unwrap_ws(), Expr::Name { sheet: None, name } if undefined_name(name))
+}
+
 fn is_multi_ref(e: &Expr) -> bool {
     match e {
+        Expr::StructRef { spec, .. } => !matches!(struct_kind(spec), StructKind::Single),
         Expr::Name { name, .. } => {
             let up = name.to_uppercase();
             MULTI_NAMES.with(|m| m.borrow().contains(&up))
         }
 
-        Expr::Ref { kind, .. } => !matches!(kind, RefKind::Cell { .. }),
+        Expr::Ref { kind, .. } => !matches!(kind, RefKind::Cell { .. }) || is_span3d(e),
+
+        Expr::Binary {
+            op: BinOp::Intersect,
+            left,
+            right,
+        } => !is_single_cell(left) && !is_single_cell(right),
         Expr::Binary {
             op: BinOp::Range, ..
         } => true,
@@ -255,6 +339,11 @@ fn takes_ref(e: &Expr) -> bool {
     }
 }
 
+fn is_host_call(e: &Expr) -> bool {
+    matches!(e.unwrap_ws(), Expr::Func { name, .. }
+        if crate::functions::lookup(&name.to_uppercase()).is_none())
+}
+
 fn ref_call(name: &str) -> bool {
     name.eq_ignore_ascii_case("OFFSET") || name.eq_ignore_ascii_case("INDIRECT")
 }
@@ -276,6 +365,31 @@ fn index_of_ref(e: &Expr) -> bool {
         }
         _ => false,
     })
+}
+
+fn walk_ws(before: String, after: String, expr: Expr, ctx: Ctx) -> Expr {
+    let typed = matches!(
+        expr,
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            ..
+        }
+    );
+    match walk(expr, ctx) {
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr: inner,
+        } if !typed => at(Expr::Ws {
+            before,
+            after,
+            expr: inner,
+        }),
+        walked => Expr::Ws {
+            before,
+            after,
+            expr: Box::new(walked),
+        },
+    }
 }
 
 fn at(e: Expr) -> Expr {
@@ -313,6 +427,10 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
             Expr::Func { name, .. } if functions::lookup(name).is_none() => true,
             x => array_capable(x),
         });
+    }
+
+    if name == "LAMBDA" {
+        return false;
     }
     if functions::lookup(name).is_none() && undefined_name(name) {
         return true;
@@ -357,6 +475,8 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
             !(nonzero >= 2 || (zero && is_range_name(&args[0])))
         }
 
+        "INDEX" if args.first().is_some_and(|a| is_span3d(a.unwrap_ws())) => true,
+
         "INDEX"
             if args.first().is_some_and(|a| {
                 is_scalar_name(a)
@@ -366,8 +486,18 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
                             kind: RefKind::Cell { .. },
                             ..
                         }
-                    )
+                    ) && !is_span3d(a.unwrap_ws())
             }) && !args[1..].iter().any(has_arr) =>
+        {
+            false
+        }
+
+        "INDEX"
+            if args.first().is_some_and(is_host_call)
+                && args.len() > 1
+                && args[1..]
+                    .iter()
+                    .all(|a| matches!(a.unwrap_ws(), Expr::Number(n) if *n != 0.0)) =>
         {
             false
         }
@@ -418,6 +548,7 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
 
             let sized = args.len() == 5 && args[3..].iter().all(one);
             args.iter().skip(1).take(2).any(has_arr)
+                || args.first().is_some_and(is_host_call)
                 || args.iter().skip(3).take(2).any(|a| !one(a))
                 || args
                     .first()
@@ -455,6 +586,22 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
     }
 }
 
+fn walk_root(e: Expr) -> Expr {
+    if matches!(
+        e.unwrap_ws(),
+        Expr::Binary {
+            op: BinOp::Intersect,
+            left,
+            right,
+        } if is_single_cell(left) || is_single_cell(right)
+    ) {
+        let undefined = matches!(e.unwrap_ws(), Expr::Binary { left, right, .. }
+            if is_undefined_name(left) || is_undefined_name(right));
+        return if undefined { at(e) } else { e };
+    }
+    walk(e, Ctx::Value)
+}
+
 fn walk(e: Expr, ctx: Ctx) -> Expr {
     crate::deep(|| walk_inner(e, ctx))
 }
@@ -478,11 +625,7 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
                 before,
                 after,
                 expr,
-            } => Expr::Ws {
-                before,
-                after,
-                expr: Box::new(walk(*expr, ctx)),
-            },
+            } => walk_ws(before, after, *expr, ctx),
             Expr::Paren(x) => Expr::Paren(Box::new(walk(*x, ctx))),
             Expr::Binary { op, left, right } => Expr::Binary {
                 op,
@@ -501,12 +644,44 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
             before,
             after,
             expr,
-        } => Expr::Ws {
-            before,
-            after,
-            expr: Box::new(walk(*expr, ctx)),
-        },
+        } => walk_ws(before, after, *expr, ctx),
         Expr::Paren(x) => Expr::Paren(Box::new(walk(*x, ctx))),
+        Expr::StructRef { table, spec } if ctx == Ctx::Value => match struct_kind(&spec) {
+            StructKind::Single => Expr::StructRef { table, spec },
+
+            StructKind::Column(name) => {
+                let simple =
+                    !name.is_empty() && name.chars().all(|c| c.is_alphanumeric() || c == '_');
+                Expr::StructRef {
+                    table,
+                    spec: if simple {
+                        format!("@{name}")
+                    } else {
+                        format!("@[{name}]")
+                    },
+                }
+            }
+            StructKind::Multi => at(Expr::StructRef { table, spec }),
+        },
+
+        Expr::Binary {
+            op: BinOp::Intersect,
+            left,
+            right,
+        } if matches!(
+            right.unwrap_ws(),
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                ..
+            }
+        ) && ctx == Ctx::Value =>
+        {
+            Expr::Binary {
+                op: BinOp::Intersect,
+                left,
+                right: Box::new(walk(*right, Ctx::Value)),
+            }
+        }
         e if is_multi_ref(&e) => {
             if ctx == Ctx::Value {
                 at(e)
@@ -755,7 +930,7 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
 
         out.push(if matches!(last.unwrap_ws(), Expr::Name { .. }) {
             last
-        } else if in_agg() && matches!(last.unwrap_ws(), Expr::Func { .. }) {
+        } else if in_agg() && matches!(last.unwrap_ws(), Expr::Func { .. } | Expr::Ref { .. }) {
             walk(last, Ctx::Ref)
         } else {
             walk(last, Ctx::Value)
@@ -808,7 +983,11 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
         Some(p) => p,
         None => {
             let Some(id) = functions::lookup(name) else {
-                return args;
+                if functions::xlm::XLM_ONLY.contains(&name) {
+                    return args;
+                }
+
+                return args.into_iter().map(|a| walk_agg(a, Ctx::Ref)).collect();
             };
             let def = functions::def(id);
             if matches!(def.imp, functions::Imp::Lazy(_)) {
@@ -938,9 +1117,70 @@ pub(crate) fn legacy_to_dynamic_in(wb: &Workbook, text: &str) -> String {
     let mut known: Vec<String> = wb.names.iter().map(|n| n.name.to_uppercase()).collect();
     bound_names(&e, &mut known);
     KNOWN_NAMES.with(|k| *k.borrow_mut() = Some(known));
-    let out = format!("={}", print(&walk(e, Ctx::Value)));
+    let out = format!("={}", print(&walk_root(e)));
     KNOWN_NAMES.with(|k| *k.borrow_mut() = None);
     out
+}
+
+fn mark_quoted_names(t: &str) -> String {
+    let b: Vec<char> = t.chars().collect();
+    let mut out = String::new();
+    let (mut i, mut in_str) = (0, false);
+    while i < b.len() {
+        if b[i] == '"' {
+            in_str = !in_str;
+        }
+        if !in_str && b[i] == '\'' {
+            if let Some(len) = b[i + 1..].iter().position(|&c| c == '\'') {
+                let w: String = b[i + 1..i + 1 + len].iter().collect();
+                let after = b.get(i + len + 2);
+                if crate::parser::r1c1::forced_name(&w)
+                    && !matches!(after, Some('!' | ':'))
+                    && !(i > 0 && matches!(b[i - 1], '!' | ':'))
+                {
+                    out.push('\u{1}');
+                    out.push_str(&w);
+                    i += len + 2;
+                    continue;
+                }
+            }
+        }
+        out.push(b[i]);
+        i += 1;
+    }
+    out
+}
+
+fn marks_to_quotes(t: &str) -> String {
+    let mut out = String::new();
+    let mut word = false;
+    for c in t.chars() {
+        if c == '\u{1}' {
+            out.push('\'');
+            word = true;
+        } else if word && !(c.is_alphanumeric() || matches!(c, '_' | '.' | '\\' | '?')) {
+            out.push('\'');
+            out.push(c);
+            word = false;
+        } else {
+            out.push(c);
+        }
+    }
+    if word {
+        out.push('\'');
+    }
+    out
+}
+
+fn legacy_loses_marks(wb: &Workbook, legacy: &str, shown: &str) -> bool {
+    let Some(body) = legacy.strip_prefix('=') else {
+        return false;
+    };
+    MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
+    let da = legacy_to_dynamic_in(wb, &mark_quoted_names(body));
+    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    let marks = |t: &str| t.matches('@').count();
+    marks(&da) < marks(shown)
 }
 
 pub(crate) fn legacy_reads_back(wb: &Workbook, legacy: &str, shown: &str) -> bool {
@@ -981,7 +1221,16 @@ impl Workbook {
         input: &str,
     ) -> Result<RecalcReport, EditError> {
         match input::interpret(input, &self.input_env()) {
+            Entered::Formula(text)
+                if text.starts_with('=') || text.trim_matches(' ').is_empty() =>
+            {
+                Err(EditError::Parse(crate::parser::ParseError {
+                    pos: 0,
+                    message: "empty or doubled equals sign".into(),
+                }))
+            }
             Entered::Formula(text) => {
+                let text = crate::parser::r1c1::rewrite(&text, addr.row, addr.col).unwrap_or(text);
                 let multi = multi_names(self);
                 MULTI_NAMES.with(|m| *m.borrow_mut() = multi);
                 let da = legacy_to_dynamic_in(self, &text);
@@ -1002,17 +1251,91 @@ impl Workbook {
             return Some(t);
         }
 
-        if t.contains("@#REF!")
+        if t.replace("@#REF!:", "")
+            .replace("@#REF!#", "")
+            .contains("@#REF!")
             || t.contains("@INDEX(#REF!")
             || t.contains("@OFFSET(#REF!")
             || (t.contains("@CHOOSE(") && t.contains(",#REF!,#REF!)"))
         {
             return Some(t);
         }
-        match parse(&t) {
-            Ok(e) => Some(format!("={}", print(&strip_at_keep_cell(e)))),
+        match parse(&mark_quoted_names(&t)) {
+            Ok(e) => {
+                KEPT_AT.with(|k| k.set(false));
+                let out = marks_to_quotes(&format!("={}", print(&strip_at_keep_cell(e))));
+
+                if KEPT_AT.with(|k| k.replace(false))
+                    || (out != t && legacy_loses_marks(self, &out, &t))
+                {
+                    Some(t)
+                } else {
+                    Some(out)
+                }
+            }
             Err(_) => Some(t),
         }
+    }
+
+    pub fn legacy_formula_text_r1c1(&self, addr: CellAddr) -> Option<String> {
+        let r1c1 = self.formula_text_r1c1(addr)?;
+        let shown = self.formula_text(addr)?;
+        let legacy = self.legacy_formula_text(addr)?;
+
+        let marks = |t: &str| -> Vec<usize> {
+            let (mut quote, mut out) = (None::<char>, Vec::new());
+            for (i, c) in t.char_indices() {
+                match (quote, c) {
+                    (Some(q), c) if c == q => quote = None,
+                    (Some(_), _) => {}
+                    (None, '"' | '\'') => quote = Some(c),
+                    (None, '@') => out.push(i),
+                    _ => {}
+                }
+            }
+            out
+        };
+        let (ms, ml, mr) = (marks(&shown), marks(&legacy), marks(&r1c1));
+        if ms.len() != mr.len() || ml.len() > ms.len() {
+            return Some(r1c1);
+        }
+
+        let (sb, lb) = (shown.as_bytes(), legacy.as_bytes());
+        let (mut i, mut j, mut k) = (0, 0, 0);
+        let mut drop = Vec::new();
+        while i < sb.len() {
+            if ms.get(k) == Some(&i) {
+                if j < lb.len() && lb[j] == b'@' && ml.contains(&j) {
+                    j += 1;
+                } else {
+                    drop.push(mr[k]);
+                }
+                k += 1;
+                i += 1;
+            } else if j < lb.len() && sb[i] == lb[j] {
+                i += 1;
+                j += 1;
+            } else {
+                return Some(r1c1);
+            }
+        }
+        let mut out = r1c1;
+        for at in drop.into_iter().rev() {
+            out.remove(at);
+        }
+        Some(out)
+    }
+}
+
+fn contains_implicit(e: &Expr) -> bool {
+    match e {
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            ..
+        } => true,
+        Expr::Binary { left, right, .. } => contains_implicit(left) || contains_implicit(right),
+        Expr::Ws { expr, .. } => contains_implicit(expr),
+        _ => false,
     }
 }
 
@@ -1027,8 +1350,37 @@ fn strip_at_keep_cell(e: Expr) -> Expr {
                 kind: RefKind::Cell { .. },
                 ..
             }
-        ) =>
+        ) && !is_span3d(expr.unwrap_ws()) =>
         {
+            KEPT_AT.with(|k| k.set(true));
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                expr,
+            }
+        }
+
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            expr,
+        } if matches!(
+            expr.unwrap_ws(),
+            Expr::Number(_) | Expr::Text(_) | Expr::Bool(_) | Expr::Error(_)
+        ) || matches!(
+            expr.unwrap_ws(),
+            Expr::Unary {
+                op: UnaryOp::Implicit,
+                ..
+            }
+        ) || matches!(expr.unwrap_ws(), Expr::Unary { op: UnaryOp::Neg | UnaryOp::Plus, expr: x }
+                if matches!(x.unwrap_ws(), Expr::Number(_) | Expr::Unary { op: UnaryOp::Implicit, .. }))
+            || matches!(expr.unwrap_ws(), Expr::Paren(x) if !array_capable(x) && !is_multi_ref(x))
+            || matches!(expr.unwrap_ws(), Expr::Func { name, args }
+                if !returns_array(name, args)
+                    && functions::lookup(&name.to_uppercase()).is_some()
+                    && args.iter().all(|a| matches!(a.unwrap_ws(),
+                        Expr::Number(_) | Expr::Text(_) | Expr::Bool(_) | Expr::Error(_) | Expr::Missing))) =>
+        {
+            KEPT_AT.with(|k| k.set(true));
             Expr::Unary {
                 op: UnaryOp::Implicit,
                 expr,
@@ -1042,15 +1394,26 @@ fn strip_at_keep_cell(e: Expr) -> Expr {
                 .into_iter()
                 .enumerate()
                 .map(|(i, a)| {
-                    let q = classes.is_some_and(|b| !b.is_empty() && b[i.min(b.len() - 1)] == b'Q');
+                    let class =
+                        classes.and_then(|b| b.get(i.min(b.len().saturating_sub(1))).copied());
+
+                    let q = class == Some(b'Q') || matches!(class, Some(b'R' | b'A'));
                     match a {
                         Expr::Unary {
                             op: UnaryOp::Implicit,
                             expr,
-                        } if q => Expr::Unary {
-                            op: UnaryOp::Implicit,
-                            expr: Box::new(strip_at_keep_cell(*expr)),
-                        },
+                        } if q
+                            && (class == Some(b'Q')
+                                || !matches!(
+                                    expr.unwrap_ws(),
+                                    Expr::Func { .. } | Expr::Call { .. }
+                                )) =>
+                        {
+                            Expr::Unary {
+                                op: UnaryOp::Implicit,
+                                expr: Box::new(strip_at_keep_cell(*expr)),
+                            }
+                        }
                         a => strip_at_keep_cell(a),
                     }
                 })
@@ -1074,7 +1437,30 @@ fn strip_at_keep_cell(e: Expr) -> Expr {
             after,
             expr: Box::new(strip_at_keep_cell(*expr)),
         },
+
+        Expr::Paren(x)
+            if matches!(
+                &*x,
+                Expr::Binary {
+                    op: BinOp::Union,
+                    ..
+                }
+            ) && contains_implicit(&x) =>
+        {
+            KEPT_AT.with(|k| k.set(true));
+            Expr::Paren(x)
+        }
         Expr::Paren(x) => Expr::Paren(Box::new(strip_at_keep_cell(*x))),
+
+        e @ Expr::Binary {
+            op: BinOp::Intersect,
+            ..
+        } if matches!(&e, Expr::Binary { right, .. }
+            if matches!(right.unwrap_ws(), Expr::Unary { op: UnaryOp::Implicit, .. })) =>
+        {
+            KEPT_AT.with(|k| k.set(true));
+            e
+        }
         Expr::Percent(x) => Expr::Percent(Box::new(strip_at_keep_cell(*x))),
         Expr::Spill(x) => Expr::Spill(Box::new(strip_at_keep_cell(*x))),
         Expr::Binary { op, left, right } => Expr::Binary {
@@ -1088,10 +1474,12 @@ fn strip_at_keep_cell(e: Expr) -> Expr {
 
 pub(crate) fn legacy_quiet_expr(text: &str) -> Option<Expr> {
     let e = parse(text.trim_start_matches('=')).ok()?;
-    Some(rewrite_at(walk(e, Ctx::Value), true))
+    Some(rewrite_at(walk_root(e), true))
 }
 
 thread_local! {
+
+    static KEPT_AT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
     static UNDEFINED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 

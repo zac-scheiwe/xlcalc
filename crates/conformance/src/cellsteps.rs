@@ -422,7 +422,16 @@ fn read(
     } = *cx;
     let range = step["range"].as_str().unwrap();
     let cells: Vec<&J> = rec["cells"].as_array().into_iter().flatten().collect();
-    let (s, _) = parse_range_ref(wb, range, default_sheet).unwrap();
+    let Some((s, _)) = parse_range_ref(wb, range, default_sheet) else {
+        verdict(
+            tally,
+            "read",
+            n,
+            rec,
+            Some(format!("no such sheet in {range}")),
+        );
+        return;
+    };
     let (sheet, _) = split_ref(range, default);
     for c in &cells {
         let a1 = c["cell"].as_str().unwrap();

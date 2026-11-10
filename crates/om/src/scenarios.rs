@@ -302,6 +302,42 @@ impl Application<'_> {
     }
 }
 
+impl Application<'_> {
+    pub(crate) fn ole_objects_member(
+        &mut self,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        use InvokeKind::*;
+        match (m.name, m.kind) {
+            ("Count", Get) => Ok(Variant::I4(0)),
+            ("Application", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
+            ("Creator", Get) => Ok(Variant::I4(0x5843_454C)),
+            ("Add", Func) => Err(OmError::app_defined_with("Cannot insert object.")),
+            ("_NewEnum", Get) => Ok(self.alloc_enumerator(Vec::new())),
+            ("ShapeRange", Get) => Err(OmError::exception(0x8007_000E_u32 as i32, None)),
+            ("SourceName", _) => Err(OmError::app_defined()),
+            ("Border", Get) => Ok(self.alloc(Object::Stub("Border"))),
+            ("Interior", Get) => Ok(self.alloc(Object::Stub("Interior"))),
+
+            ("Shadow", Put)
+                if matches!(
+                    a.put,
+                    Some(Variant::Bool(true) | Variant::I4(1..) | Variant::I4(..=-1))
+                ) =>
+            {
+                Ok(Variant::Empty)
+            }
+            (name, Put | PutRef) => Err(OmError::app_defined_with(&format!(
+                "Unable to set the {name} property of the OLEObjects class"
+            ))),
+            (name, _) => Err(OmError::app_defined_with(&format!(
+                "Unable to get the {name} property of the OLEObjects class"
+            ))),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

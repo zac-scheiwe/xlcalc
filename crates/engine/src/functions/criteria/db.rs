@@ -31,9 +31,15 @@ pub enum DKind {
 
 pub fn dfunc(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> Operand {
     if let Some(Operand::Val(Value::Array(a))) = ops.get(2) {
-        return Operand::Val(
-            Array::filled(a.rows, a.cols, Value::Error(XlError::VALUE)).into_value(),
-        );
+        let data = a
+            .data
+            .iter()
+            .map(|v| match v {
+                Value::Error(e) => Value::Error(*e),
+                _ => Value::Error(XlError::VALUE),
+            })
+            .collect();
+        return Operand::Val(Array::new(a.rows, a.cols, data).into_value());
     }
 
     let mut ops = ops.to_vec();
@@ -181,6 +187,26 @@ fn run(ctx: &mut EvalCtx, ops: &[Operand], kind: DKind) -> R<Value> {
         .map(|&k| records.get(k, col as u32).unwrap_or(&blank))
         .collect();
     aggregate(kind, &vals)
+}
+
+pub(crate) fn matching_records(ctx: &mut EvalCtx, db: &Area, crit: &Area) -> R<Vec<bool>> {
+    let ncols = db.rect.cols();
+    let headers: Vec<Value> = (0..ncols)
+        .map(|c| ctx.cell_value(db.sheet, db.rect.r0, db.rect.c0 + c))
+        .collect();
+    let rows = conditions(ctx, crit, db, &headers)?;
+    let nrec = db.rect.rows().saturating_sub(1);
+    let records = Window::new(
+        ctx,
+        db.sheet,
+        db.rect.r0 + 1,
+        db.rect.c0,
+        nrec.max(1),
+        ncols,
+    )?;
+    Ok((0..nrec)
+        .map(|k| record_matches(ctx, &rows, &records, db, k))
+        .collect())
 }
 
 fn aggregate(kind: DKind, vals: &[&Value]) -> R<Value> {
@@ -338,7 +364,7 @@ fn row_relative(c: &CRef) -> bool {
 
 fn targets_db(sheet: &SheetRef, _host: CellAddr, db: &Area) -> bool {
     match sheet {
-        SheetRef::Current => true,
+        SheetRef::Current | SheetRef::Own => true,
         SheetRef::Sheet(id) => *id == db.sheet,
         _ => false,
     }

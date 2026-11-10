@@ -1,0 +1,28 @@
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    On Error Resume Next
+    R10Log = R10Log & "[S1chg:" & Target.Address(False, False) & ":" & Target.Areas.Count & ":" & Target.Cells.CountLarge & "]"
+    R10Hook "chg", Target
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    On Error Resume Next
+    R10Log = R10Log & "[S1sel:" & Target.Address(False, False) & ":" & Target.Areas.Count & "]"
+End Sub
+
+Private Sub Worksheet_Calculate()
+    On Error Resume Next
+    R10Log = R10Log & "[S1calc]"
+    If R10Mode = 7 Then On Error Resume Next: Err.Raise 6: R10Log = R10Log & "(e" & Err.Number & ")"
+End Sub
+
+Private Sub Worksheet_Activate()
+    On Error Resume Next
+    R10Log = R10Log & "[S1act]"
+End Sub
+
+Private Sub Worksheet_Deactivate()
+    On Error Resume Next
+    R10Log = R10Log & "[S1deact]"
+End Sub

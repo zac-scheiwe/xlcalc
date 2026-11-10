@@ -6,8 +6,54 @@ pub const ENC: u64 = 2;
 
 pub fn load_golden(path: &Path) -> J {
     let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
-    let v: J = serde_json::from_str(&text).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
-    expand_golden(&v).unwrap_or_else(|e| panic!("{}: {e}", path.display()))
+    load_golden_text(path, &text)
+}
+
+pub fn load_golden_text(path: &Path, text: &str) -> J {
+    let v: J = serde_json::from_str(text).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+    let mut g = expand_golden(&v).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+
+    let (native, fwd) = (root_str(), root_fwd());
+    map_strings(&mut g, &|s| {
+        if s.contains("<<XLCALC_ROOT") {
+            s.replace(ROOT_TOKEN_FWD, &fwd).replace(ROOT_TOKEN, &native)
+        } else {
+            s.to_string()
+        }
+    });
+    g
+}
+
+const ROOT_TOKEN: &str = "<<XLCALC_ROOT>>";
+const ROOT_TOKEN_FWD: &str = "<<XLCALC_ROOT/>>";
+
+fn root_str() -> String {
+    crate::root().to_string_lossy().into_owned()
+}
+
+fn root_fwd() -> String {
+    root_str().replace('\\', "/")
+}
+
+fn map_strings(v: &mut J, f: &dyn Fn(&str) -> String) {
+    match v {
+        J::String(s) => {
+            let n = f(s);
+            if n != *s {
+                *s = n;
+            }
+        }
+        J::Array(a) => a.iter_mut().for_each(|x| map_strings(x, f)),
+        J::Object(m) => m.values_mut().for_each(|x| map_strings(x, f)),
+        _ => {}
+    }
+}
+
+pub fn tokenize_root(g: &mut J) {
+    let (native, fwd) = (root_str(), root_fwd());
+    map_strings(g, &|s| {
+        s.replace(&native, ROOT_TOKEN).replace(&fwd, ROOT_TOKEN_FWD)
+    });
 }
 
 pub fn compact_golden(g: &J) -> J {

@@ -1,0 +1,1758 @@
+{
+ "check_all_formats": true,
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A:B')",
+   "prop": "ColumnWidth",
+   "value": 60
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1e999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1e-999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "1e1000000000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "1e-1000000000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "1e1999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "1e-1999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "1e2147483646"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "1e-2147483646"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "1e2147483648"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "1e-2147483648"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "1e2147483649"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "1e-2147483649"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A13",
+   "input": "1e3000000000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A14",
+   "input": "1e-3000000000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A15",
+   "input": "1e4294967295"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A16",
+   "input": "1e-4294967295"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A17",
+   "input": "1e4294967296"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A18",
+   "input": "1e-4294967296"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A19",
+   "input": "1e4294967297"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A20",
+   "input": "1e-4294967297"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A21",
+   "input": "1e5000000000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A22",
+   "input": "1e-5000000000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A23",
+   "input": "1e9999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A24",
+   "input": "1e-9999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A25",
+   "input": "1e99999999999999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A26",
+   "input": "1e-99999999999999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A27",
+   "input": "1e32767"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A28",
+   "input": "1e32768"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A29",
+   "input": "1e65535"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A30",
+   "input": "1e65536"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A31",
+   "input": "1e-32768"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A32",
+   "input": "1e-32769"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A33",
+   "input": "1e-65536"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A34",
+   "input": "1e-65537"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A35",
+   "input": "1e309"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A36",
+   "input": "1e308"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A37",
+   "input": "1e-307"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A38",
+   "input": "1e-308"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A39",
+   "input": "1e-309"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A40",
+   "input": "1e-310"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A41",
+   "input": "1e-323"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A42",
+   "input": "1e-324"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A43",
+   "input": "1e-325"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A44",
+   "input": "1e999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A45",
+   "input": "1e1000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A46",
+   "input": "1e-1000"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A47",
+   "input": "0e99999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A48",
+   "input": "0e-99999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A49",
+   "input": "0.0e99999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A50",
+   "input": "0e9999999999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A51",
+   "input": "00e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A52",
+   "input": "0.00000e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A53",
+   "input": "1E+400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A54",
+   "input": "1E-400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A55",
+   "input": "1e+0400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A56",
+   "input": "£1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A57",
+   "input": "1e400£"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A58",
+   "input": "¥1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A59",
+   "input": "1e400¥"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A60",
+   "input": "€1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A61",
+   "input": "1e400€"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A62",
+   "input": "$1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A63",
+   "input": "1e400$"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A64",
+   "input": "kr1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A65",
+   "input": "1e400kr"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A66",
+   "input": "R$1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A67",
+   "input": "1e400R$"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A68",
+   "input": "Rs1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A69",
+   "input": "1e400Rs"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A70",
+   "input": "₹1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A71",
+   "input": "1e400₹"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A72",
+   "input": "₩1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A73",
+   "input": "1e400₩"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A74",
+   "input": "¢1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A75",
+   "input": "1e400¢"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A76",
+   "input": "€ 1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A77",
+   "input": "1e400€ "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A78",
+   "input": "£ 1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A79",
+   "input": "1e400£ "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A80",
+   "input": "$ 1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A81",
+   "input": "1e400$ "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A82",
+   "input": "EUR1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A83",
+   "input": "1e400EUR"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A84",
+   "input": "NZ$1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A85",
+   "input": "1e400NZ$"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A86",
+   "input": "A$1e400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A87",
+   "input": "1e400A$"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A87"
+  }
+ ]
+}

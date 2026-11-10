@@ -1,0 +1,914 @@
+{
+ "check_all_formats": true,
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A:B')",
+   "prop": "ColumnWidth",
+   "value": 60
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "NumberFormat",
+   "value": "General"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "9 feb 2024"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "5\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "34:64"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "6:29 a.m."
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "4.8.49"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "18/1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "NumberFormat",
+   "value": "m/d/yyyy"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "20-9-31"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "9.1.9999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "Sept 15"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "7:51 pm"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "NumberFormat",
+   "value": "#,##0"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "23/10/1899"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "23/5/31 22:32"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A13",
+   "input": "8-feb"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A14",
+   "input": "'1/2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A15",
+   "input": "£1e3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "NumberFormat",
+   "value": "0.00"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A16",
+   "input": "#VALUE!"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "NumberFormat",
+   "value": "$#,##0.00"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A17",
+   "input": "16-MARCH"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A18",
+   "input": "feb 2, 1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A19",
+   "input": "7:34 A"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A20",
+   "input": "5%"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "NumberFormat",
+   "value": "[h]:mm:ss"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A21",
+   "input": "1E+5"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "NumberFormat",
+   "value": "@"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A22",
+   "input": "13:08:11.9758"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "NumberFormat",
+   "value": "m/d/yyyy"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A23",
+   "input": "$ 12,34,567"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A24",
+   "input": "MARCH 17, 9999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "NumberFormat",
+   "value": "mmm-yy"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A25",
+   "input": "23 may 1899"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "NumberFormat",
+   "value": "$#,##0.00"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A26",
+   "input": "25:57"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A27",
+   "input": "$ -5"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "NumberFormat",
+   "value": "[h]:mm:ss"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A28",
+   "input": "may-0"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A29",
+   "input": "feb 28"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A30",
+   "input": "13:56"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A31",
+   "input": "4:46 AM"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A32",
+   "input": "4.8.9999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "NumberFormat",
+   "value": "# ?/?"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A33",
+   "input": "24-Dec."
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "NumberFormat",
+   "value": "0%"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A34",
+   "input": "16-9-1904"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "NumberFormat",
+   "value": "@"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A35",
+   "input": "20-10-9999"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "NumberFormat",
+   "value": "h:mm"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A36",
+   "input": "kr1,234.5"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "NumberFormat",
+   "value": "0.00"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A37",
+   "input": "$ .5"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A38",
+   "input": "2/12"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A39",
+   "input": "{1,2}"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A40",
+   "input": "#REF!"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "NumberFormat"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Value"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A40"
+  }
+ ]
+}

@@ -80,6 +80,31 @@ impl Rect {
         r >= self.r0 && r <= self.r1 && c >= self.c0 && c <= self.c1
     }
 
+    pub fn contains_rect(&self, o: &Rect) -> bool {
+        o.r0 >= self.r0 && o.r1 <= self.r1 && o.c0 >= self.c0 && o.c1 <= self.c1
+    }
+
+    pub fn subtract(&self, hole: &Rect) -> Vec<Rect> {
+        if !self.intersects(hole) {
+            return vec![*self];
+        }
+        let mut out = Vec::new();
+        if hole.r0 > self.r0 {
+            out.push(Rect::new(self.r0, self.c0, hole.r0 - 1, self.c1));
+        }
+        if hole.r1 < self.r1 {
+            out.push(Rect::new(hole.r1 + 1, self.c0, self.r1, self.c1));
+        }
+        let (m0, m1) = (self.r0.max(hole.r0), self.r1.min(hole.r1));
+        if hole.c0 > self.c0 {
+            out.push(Rect::new(m0, self.c0, m1, hole.c0 - 1));
+        }
+        if hole.c1 < self.c1 {
+            out.push(Rect::new(m0, hole.c1 + 1, m1, self.c1));
+        }
+        out
+    }
+
     pub fn intersects(&self, o: &Rect) -> bool {
         self.r0 <= o.r1 && o.r0 <= self.r1 && self.c0 <= o.c1 && o.c0 <= self.c1
     }

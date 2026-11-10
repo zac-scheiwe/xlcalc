@@ -1,6 +1,7 @@
+use super::casetable;
 use super::util::{
-    convert, from_hr, from_units, is_null, long, long_or, long_value, null_error, opt, text,
-    text_out, units, R,
+    bytes_of, convert, from_bytes, from_hr, from_units, is_null, long, long_or, long_value,
+    null_error, opt, split_odd, text, text_out, text_out_null, units, R,
 };
 use super::RtContext;
 use crate::VbaError;
@@ -19,41 +20,36 @@ macro_rules! strict {
     };
 }
 
-fn map_char(c: char, upper: bool) -> char {
-    fn one(mut it: impl Iterator<Item = char>) -> Option<char> {
-        let first = it.next()?;
-        it.next().is_none().then_some(first)
-    }
-    let (to, back) = if upper {
-        (one(c.to_uppercase()), one_lower as fn(char) -> Option<char>)
+pub(crate) fn map_unit(u: u16, upper: bool) -> u16 {
+    let table: &[(u16, u16)] = if upper {
+        &casetable::UPPER
     } else {
-        (
-            one(c.to_lowercase()).filter(|_| c != '\u{1E9E}'),
-            one_upper as fn(char) -> Option<char>,
-        )
+        &casetable::LOWER
     };
-    match to {
-        Some(m) if m != c && back(m).is_none_or(|b| b == c) => m,
-        _ => c,
-    }
+    table
+        .binary_search_by_key(&u, |&(k, _)| k)
+        .map_or(u, |i| table[i].1)
 }
 
-fn one_lower(c: char) -> Option<char> {
-    let mut it = c.to_lowercase();
-    let first = it.next()?;
-    it.next().is_none().then_some(first)
+pub(super) fn map_str(s: &str, upper: bool) -> String {
+    s.chars().map(|c| map_char(c, upper)).collect()
 }
 
-fn one_upper(c: char) -> Option<char> {
-    let mut it = c.to_uppercase();
-    let first = it.next()?;
-    it.next().is_none().then_some(first)
-}
-
-fn map_unit(u: u16, upper: bool) -> u16 {
-    match char::from_u32(u32::from(u)) {
-        Some(c) => u16::try_from(u32::from(map_char(c, upper))).unwrap_or(u),
-        None => u,
+fn map_char(c: char, upper: bool) -> char {
+    match u16::try_from(u32::from(c)) {
+        Ok(u) => char::from_u32(u32::from(map_unit(u, upper))).unwrap_or(c),
+        Err(_) => {
+            let table: &[(u32, u32)] = if upper {
+                &casetable::UPPER_ASTRAL
+            } else {
+                &casetable::LOWER_ASTRAL
+            };
+            table
+                .binary_search_by_key(&u32::from(c), |&(k, _)| k)
+                .ok()
+                .and_then(|i| char::from_u32(table[i].1))
+                .unwrap_or(c)
+        }
     }
 }
 
@@ -185,12 +181,7 @@ strict!(right_d, right_impl);
 strict!(mid_d, mid_impl);
 
 pub(super) fn instr(ctx: &RtContext, a: &[Variant]) -> R {
-    let has_start = a.len() == 4
-        || a.len() == 3
-            && match &a[0] {
-                Variant::Bstr(s) => s.trim().parse::<f64>().is_ok(),
-                _ => true,
-            };
+    let has_start = a.len() >= 3;
     let (start, rest) = if has_start {
         (long(ctx, &a[0])?, &a[1..])
     } else {
@@ -290,7 +281,8 @@ fn case(ctx: &RtContext, a: &[Variant], upper: bool) -> R {
     if is_null(&a[0]) {
         return Ok(Variant::Null);
     }
-    let t: String = text(ctx, &a[0])?
+    let t: String = split_odd(&text(ctx, &a[0])?)
+        .0
         .chars()
         .map(|c| map_char(c, upper))
         .collect();
@@ -321,6 +313,7 @@ fn trimmed(ctx: &RtContext, a: &[Variant], left: bool, right: bool) -> R {
         return Ok(Variant::Null);
     }
     let s = text(ctx, &a[0])?;
+    let s = split_odd(&s).0.to_string();
     let space = |c: char| c == ' ' || c == '\u{3000}';
     let s = if left {
         s.trim_start_matches(space)
@@ -450,7 +443,7 @@ const CP1252: [u16; 32] = [
     0x2122, 0x0161, 0x203A, 0x0153, 0, 0x017E, 0x0178,
 ];
 
-fn ansi_unit(n: u16) -> u16 {
+pub(super) fn ansi_unit(n: u16) -> u16 {
     match n {
         0x80..=0x9F => match CP1252[usize::from(n) - 0x80] {
             0 => n,
@@ -460,27 +453,123 @@ fn ansi_unit(n: u16) -> u16 {
     }
 }
 
-const LATIN_A: &str = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiJjJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZzs";
-
 pub(super) fn asc(ctx: &RtContext, a: &[Variant]) -> R {
     let u = *units(&text(ctx, &a[0])?).first().ok_or(VbaError::new(5))?;
-    let code = if u < 0x80 || (0xA0..0x100).contains(&u) {
+    Ok(Variant::I2(ansi_code(u) as i16))
+}
+
+pub(super) fn ansi_code(u: u16) -> u16 {
+    if u < 0x80 || (0xA0..0x100).contains(&u) || matches!(u, 0x81 | 0x8D | 0x8F | 0x90 | 0x9D) {
         u
-    } else if let Some(i) = (0..32u16).find(|&i| CP1252[usize::from(i)] == u) {
-        0x80 + i
-    } else if matches!(u, 0x81 | 0x8D | 0x8F | 0x90 | 0x9D) {
-        u
-    } else if (0x100..0x180).contains(&u) {
-        LATIN_A
-            .chars()
-            .nth(usize::from(u - 0x100))
-            .map_or(63, |c| c as u16)
-    } else if u == 0x3B1 {
-        u16::from(b'a')
+    } else if u >= 0x100 {
+        casetable::ASC_FIT
+            .binary_search_by_key(&u, |&(k, _)| k)
+            .map_or(u16::from(b'?'), |i| casetable::ASC_FIT[i].1)
     } else {
         u16::from(b'?')
+    }
+}
+
+pub fn ansi_bytes(s: &str) -> Vec<u8> {
+    s.encode_utf16().map(|u| ansi_code(u) as u8).collect()
+}
+
+pub(super) fn ascb(ctx: &RtContext, a: &[Variant]) -> R {
+    if is_null(&a[0]) {
+        return Err(null_error());
+    }
+    let b = *bytes_of(&text(ctx, &a[0])?)
+        .first()
+        .ok_or(VbaError::new(5))?;
+    Ok(Variant::Ui1(b))
+}
+
+pub(super) fn chrb(ctx: &RtContext, a: &[Variant]) -> R {
+    let n = long(ctx, &a[0])?;
+    if !(0..=255).contains(&n) {
+        return Err(VbaError::new(6));
+    }
+    text_out(from_bytes(&[n as u8]))
+}
+
+fn byte_slice(ctx: &RtContext, a: &[Variant], from: i32, count: Option<i32>) -> R {
+    let b = bytes_of(&text(ctx, &a[0])?);
+    let _ = ctx;
+    let lo = (from as usize - 1).min(b.len());
+    let hi = count.map_or(b.len(), |c| (lo + c as usize).min(b.len()));
+    text_out(from_bytes(&b[lo..hi]))
+}
+
+pub(super) fn midb(ctx: &RtContext, a: &[Variant]) -> R {
+    if is_null(&a[0]) {
+        return Ok(Variant::Null);
+    }
+    let start = long(ctx, &a[1])?;
+    let count = match opt(a, 2) {
+        Some(v) => Some(long(ctx, v)?),
+        None => None,
     };
-    Ok(Variant::I2(code as i16))
+    if start < 1 || start == i32::MAX || count.is_some_and(|c| !(0..i32::MAX).contains(&c)) {
+        return Err(VbaError::new(5));
+    }
+    byte_slice(ctx, a, start, count)
+}
+
+pub(super) fn leftb(ctx: &RtContext, a: &[Variant]) -> R {
+    if is_null(&a[0]) {
+        return Ok(Variant::Null);
+    }
+    let n = long(ctx, &a[1])?;
+    if !(0..i32::MAX).contains(&n) {
+        return Err(VbaError::new(5));
+    }
+    byte_slice(ctx, a, 1, Some(n))
+}
+
+pub(super) fn rightb(ctx: &RtContext, a: &[Variant]) -> R {
+    if is_null(&a[0]) {
+        return Ok(Variant::Null);
+    }
+    let n = long(ctx, &a[1])?;
+    if !(0..i32::MAX).contains(&n) {
+        return Err(VbaError::new(5));
+    }
+    let len = bytes_of(&text(ctx, &a[0])?).len() as i64;
+    byte_slice(ctx, a, (len - i64::from(n)).max(0) as i32 + 1, None)
+}
+
+pub(super) fn instrb(ctx: &RtContext, a: &[Variant]) -> R {
+    let has_start = a.len() >= 3;
+    let (start, rest) = if has_start {
+        (long(ctx, &a[0])?, &a[1..])
+    } else {
+        (1, a)
+    };
+    if start < 1 || start == i32::MAX {
+        return Err(VbaError::new(5));
+    }
+    text_compare(ctx, rest, 2, false)?;
+    if is_null(&rest[0]) || is_null(&rest[1]) {
+        return Ok(Variant::Null);
+    }
+    let (hay, needle) = (
+        bytes_of(&text(ctx, &rest[0])?),
+        bytes_of(&text(ctx, &rest[1])?),
+    );
+    let from = start as usize - 1;
+    if hay.is_empty() {
+        return long_value(0);
+    }
+    if needle.is_empty() {
+        return long_value(start.into());
+    }
+    if from > hay.len() {
+        return long_value(0);
+    }
+    let found = (from..hay.len())
+        .find(|&i| hay[i..].starts_with(&needle))
+        .map_or(0, |i| i as i64 + 1);
+    long_value(found)
 }
 
 pub(super) fn ascw(ctx: &RtContext, a: &[Variant]) -> R {
@@ -541,7 +630,8 @@ pub(super) fn join(ctx: &RtContext, a: &[Variant]) -> R {
     let Variant::Array(arr) = &a[0] else {
         return Err(VbaError::new(13));
     };
-    if arr.bounds.len() != 1 {
+
+    if arr.bounds.len() != 1 || !matches!(arr.elem, VarType::Variant | VarType::Bstr) {
         return Err(VbaError::new(5));
     }
     let delim = match opt(a, 1) {
@@ -554,4 +644,136 @@ pub(super) fn join(ctx: &RtContext, a: &[Variant]) -> R {
         return Ok(Variant::BstrNull);
     }
     text_out(parts.join(&delim))
+}
+
+pub(super) fn lenb(ctx: &RtContext, a: &[Variant]) -> R {
+    if is_null(&a[0]) {
+        return Ok(Variant::Null);
+    }
+    long_value(bytes_of(&text(ctx, &a[0])?).len() as i64)
+}
+
+pub(super) fn filter(ctx: &RtContext, a: &[Variant]) -> R {
+    let Variant::Array(src) = &a[0] else {
+        return Err(VbaError::new(13));
+    };
+    if src.bounds.len() != 1 {
+        return Err(VbaError::new(5));
+    }
+    if is_null(&a[1]) {
+        return Err(null_error());
+    }
+    let needle = units(&text(ctx, &a[1])?);
+    let include = match opt(a, 2) {
+        Some(v) => match convert(ctx, v, VarType::Bool)? {
+            Variant::Bool(b) => b,
+            _ => true,
+        },
+        None => true,
+    };
+    let fold = text_compare(ctx, a, 3, false)?;
+    let mut out = Vec::new();
+    for v in &src.data {
+        let s = text(ctx, v)?;
+        let hit = needle.is_empty() || find(&units(&s), &needle, 0, fold).is_some();
+        if hit == include {
+            out.push(Variant::Bstr(s));
+        }
+    }
+    Ok(Variant::Array(Box::new(SafeArray {
+        elem: VarType::Bstr,
+        bounds: vec![(0, out.len() as u32)],
+        data: out,
+    })))
+}
+
+fn strconv_unit(u: u16, upper: bool) -> u16 {
+    map_unit(ansi_unit(ansi_code(u)), upper)
+}
+
+pub(super) fn strconv(ctx: &RtContext, a: &[Variant]) -> R {
+    let mode = long(ctx, &a[1])?;
+    if let Some(l) = opt(a, 2) {
+        if !(0..=0xFFFF).contains(&long(ctx, l)?) {
+            return Err(VbaError::new(5));
+        }
+    }
+    if is_null(&a[0]) {
+        return Ok(Variant::Null);
+    }
+
+    if matches!(&a[0], Variant::Array(arr) if arr.elem == VarType::Ui1 && arr.data.is_empty()) {
+        return Err(VbaError::new(7));
+    }
+    let s = match &a[0] {
+        Variant::Array(arr) if arr.elem == VarType::Ui1 => crate::rt::from_bytes(
+            &arr.data
+                .iter()
+                .map(|b| if let Variant::Ui1(b) = b { *b } else { 0 })
+                .collect::<Vec<_>>(),
+        ),
+        v => text(ctx, v)?,
+    };
+
+    let turkish = matches!(opt(a, 2), Some(l) if long(ctx, l)? == 1055);
+    let conv = |u: u16, upper: bool| {
+        if turkish && matches!(u, 0x11E | 0x11F | 0x130 | 0x131 | 0x15E | 0x15F) {
+            map_unit(u, upper)
+        } else if turkish && (0x370..0x400).contains(&u) {
+            u16::from(b'?')
+        } else {
+            strconv_unit(u, upper)
+        }
+    };
+    match mode {
+        0 => text_out_null(s.split('\0').next().unwrap_or_default().to_string()),
+        1 | 2 => text_out_null(from_units(
+            &units(&s)
+                .iter()
+                .map(|&u| conv(u, mode == 1))
+                .collect::<Vec<_>>(),
+        )),
+        3 => {
+            let mut start = true;
+            let mut out = Vec::new();
+            for u in units(&s) {
+                out.push(conv(u, start));
+                start = matches!(u, 0 | 9..=13 | 0x20 | 0x2000..=0x2006 | 0x2008..=0x200A | 0x3000);
+            }
+            text_out_null(from_units(&out))
+        }
+        64 => text_out(from_units(
+            &bytes_of(&s)
+                .iter()
+                .map(|&b| ansi_unit(u16::from(b)))
+                .collect::<Vec<_>>(),
+        )),
+        128 => text_out(from_bytes(
+            &units(&s)
+                .iter()
+                .map(|&u| ansi_code(u) as u8)
+                .collect::<Vec<_>>(),
+        )),
+        _ => Err(VbaError::new(5)),
+    }
+}
+
+pub(super) fn mid_assign(ctx: &RtContext, a: &[Variant]) -> R {
+    let (target, repl) = (units(&text(ctx, &a[0])?), units(&text(ctx, &a[3])?));
+    let start = long(ctx, &a[1])?;
+    let len = match opt(a, 2) {
+        Some(v) => long(ctx, v)?,
+        None => i32::MAX,
+    };
+    if start < 1 || len < 0 {
+        return Err(VbaError::new(5));
+    }
+    let from = start as usize - 1;
+    if from >= target.len() {
+        return Err(VbaError::new(5));
+    }
+    let n = (len as usize).min(repl.len()).min(target.len() - from);
+    let mut out = target;
+    out[from..from + n].copy_from_slice(&repl[..n]);
+    Ok(Variant::Bstr(from_units(&out)))
 }

@@ -1,0 +1,27 @@
+set Z9 =1+1
+set A1 =B1+1
+set B1 =A1+1
+set Y9 =3
+set Y8 =3
+set Y7 =3
+new
+set Z9 =1+1
+set A1 =B1+1
+set B1 =C1+1
+set C1 =A1+1
+set Y9 =3
+set Y8 =3
+set Y7 =3
+new
+set Z9 =1+1
+set B1 =A1+1
+set A1 =B1+1
+set Y9 =3
+set Y8 =3
+new
+set Z9 =1+1
+set A1 =B1+1
+set X1 =1+1
+set B1 =A1+X1
+set Y9 =3
+set Y8 =3

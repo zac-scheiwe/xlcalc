@@ -146,9 +146,13 @@ impl<'a> Lexer<'a> {
 
             self.after_colon = out.len() >= 2
                 && matches!(out[out.len() - 1].tok, Tok::Op(":"))
-                && matches!(&out[out.len() - 2].tok, Tok::Ident(w)
+                && (matches!(&out[out.len() - 2].tok, Tok::Ident(w)
                     if crate::address::letters_to_col(w.trim_start_matches('$')).is_some()
-                        && w.bytes().all(|b| b.is_ascii_alphabetic() || b == b'$'));
+                        && w.bytes().all(|b| b.is_ascii_alphabetic() || b == b'$'))
+                    || (out.len() >= 3
+                        && matches!(&out[out.len() - 2].tok, Tok::Number { raw, .. }
+                            if raw.bytes().all(|b| b.is_ascii_digit()))
+                        && matches!(out[out.len() - 3].tok, Tok::Sheet(_))));
             let after_operand = out.last().is_some_and(|t: &Token| {
                 matches!(
                     t.tok,
@@ -178,6 +182,13 @@ impl<'a> Lexer<'a> {
                 || (c == '.' && self.peek(1).is_some_and(|d| d.is_ascii_digit()))
             {
                 self.number()?
+            } else if c == '!'
+                && self
+                    .peek(1)
+                    .is_some_and(|d| is_ident_start(d) || d.is_ascii_digit())
+            {
+                self.i += 1;
+                Tok::Sheet(SheetSpec::Single(String::new()))
             } else if c == '\u{1}' {
                 self.i += 1;
                 Tok::Ident(format!("\u{1}{}", self.read_ident()))
@@ -284,7 +295,8 @@ impl<'a> Lexer<'a> {
                         | Tok::Op("%")
                 )
             };
-            if let Some(last) = out.last() {
+
+            if let Some(last) = out.last().filter(|_| second.is_none()) {
                 if matches!(last.tok, Tok::Op("-") | Tok::Op("+"))
                     && !(out.len() >= 2 && operand(&out[out.len() - 2]))
                 {
@@ -426,14 +438,16 @@ impl<'a> Lexer<'a> {
             return Err(self.err("expected '!' after quoted sheet name"));
         }
         self.i += 1;
-        let spec = if let Some(rest) = s.strip_prefix('[') {
+        let spec = if let Some((dir, rest)) = s.split_once('[').filter(|(d, _)| !d.contains('!')) {
             let (book, sheet) = rest
                 .split_once(']')
                 .ok_or_else(|| self.err("bad external reference"))?;
             SheetSpec::External {
-                book: book.to_string(),
+                book: format!("{dir}{book}"),
                 sheet: Some(sheet.to_string()),
             }
+        } else if s.contains(['\\', '/']) {
+            SheetSpec::Single(s)
         } else if let Some((a, b)) = s.rsplit_once(':') {
             if self.parens.last() == Some(&false) {
                 SheetSpec::Range(a.to_string(), format!("[{b}]{b}"))
@@ -490,6 +504,19 @@ impl<'a> Lexer<'a> {
                     self.i += 1;
                 } else {
                     break;
+                }
+            }
+            if !name.is_empty()
+                && self.peek(0) == Some(':')
+                && self.peek(1).is_some_and(is_ident_start)
+            {
+                let at = self.i;
+                self.i += 1;
+                let second = self.read_ident();
+                if self.peek(0) == Some('!') {
+                    name = format!("{name}:{second}");
+                } else {
+                    self.i = at;
                 }
             }
             if self.peek(0) == Some('!') {

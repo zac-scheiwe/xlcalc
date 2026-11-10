@@ -125,14 +125,18 @@ fn cmp_ignore_case(a: &str, b: &str) -> Ordering {
 }
 
 pub fn interface(name: &str) -> Option<&'static Interface> {
-    [INTERFACES, crate::vbide_members::INTERFACES]
-        .into_iter()
-        .find_map(|table| {
-            let i = table
-                .binary_search_by(|t| cmp_ignore_case(t.name, name))
-                .ok()?;
-            Some(&table[i])
-        })
+    [
+        INTERFACES,
+        crate::vbide_members::INTERFACES,
+        crate::office_members::INTERFACES,
+    ]
+    .into_iter()
+    .find_map(|table| {
+        let i = table
+            .binary_search_by(|t| cmp_ignore_case(t.name, name))
+            .ok()?;
+        Some(&table[i])
+    })
 }
 
 pub fn enumeration(name: &str) -> Option<&'static Enumeration> {
@@ -241,7 +245,7 @@ mod tests {
         assert_eq!(params().count(), 8_902);
         assert_eq!(params().filter(|p| p.opt != Opt::Required).count(), 4_266);
         let defaults = params().filter(|p| matches!(p.opt, Opt::Default(_)));
-        assert_eq!(defaults.count(), 190);
+        assert_eq!(defaults.count(), 187);
         assert_eq!(ENUMERATIONS.len(), 283);
         let constants: usize = ENUMERATIONS.iter().map(|e| e.constants.len()).sum();
         assert_eq!(constants, 2_333);

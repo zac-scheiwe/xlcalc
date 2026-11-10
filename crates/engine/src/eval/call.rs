@@ -223,6 +223,7 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             if matches!(def.name, "IF" | "IFS" | "CHOOSE" | "SWITCH")
                 && span_multi(&out)
                 && !(ctx.dyn_reduce && matches!(def.name, "IF" | "CHOOSE"))
+                && ctx.at_call != Some(ctx.fn_depth)
             {
                 return Operand::err(XlError::VALUE);
             }
@@ -500,6 +501,9 @@ fn args_tail(
     if let Some(r) = span_reject(def.name, &ops) {
         return r;
     }
+    if let Some(e) = closed_reject(ctx, def.name, &ops) {
+        return Operand::err(e);
+    }
     if let Some(r) = lambda_array_arg(ctx, def.name, &ops) {
         return r;
     }
@@ -602,6 +606,10 @@ fn lambda_array_arg(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<Op
 
 fn ghost_ref_call(ctx: &mut EvalCtx, name: &str, args: &[Node]) -> Option<Operand> {
     let at = if name == "CELL" { 1 } else { 0 };
+
+    if name == "ISREF" && args.first().is_some_and(ghost_ref_node) {
+        return Some(Operand::Val(Value::Bool(true)));
+    }
     let Some(Node::Ref(crate::formula::SheetRef::Missing(_), cref)) = args.get(at) else {
         return None;
     };
@@ -624,12 +632,31 @@ fn ghost_ref_call(ctx: &mut EvalCtx, name: &str, args: &[Node]) -> Option<Operan
                 Array::new(r, c, data).into_value()
             }
         }
+        "ROWS" => Value::Number(rect.rows() as f64),
+        "COLUMNS" => Value::Number(rect.cols() as f64),
         "AREAS" => Value::Number(1.0),
         "OFFSET" => Value::Error(XlError::VALUE),
         "CELL" => Value::Error(XlError::NA),
         _ => return None,
     };
     Some(Operand::Val(v))
+}
+
+fn ghost_ref_node(n: &Node) -> bool {
+    match n.unwrap_ws() {
+        Node::Ref(crate::formula::SheetRef::Missing(_), _) => true,
+        Node::Binary(crate::parser::ast::BinOp::Range, a, b) => {
+            ghost_ref_node(a) && ghost_ref_node(b)
+        }
+        Node::Paren(x) => ghost_ref_node(x),
+        Node::Func { id, args } => match crate::functions::def(*id).name {
+            "INDEX" => args.first().is_some_and(ghost_ref_node),
+            "IF" => args.get(1).is_some_and(ghost_ref_node),
+            "CHOOSE" => args.get(1).is_some_and(ghost_ref_node),
+            _ => false,
+        },
+        _ => false,
+    }
 }
 
 fn span_multi(op: &Operand) -> bool {
@@ -1067,4 +1094,21 @@ fn lead_error(ctx: &EvalCtx, def: &FnDef, ops: &[Operand]) -> Option<XlError> {
         }
     }
     None
+}
+
+fn closed_reject(ctx: &EvalCtx, name: &str, ops: &[Operand]) -> Option<XlError> {
+    let closed = |o: &Operand| match o {
+        Operand::Ref(r) => r.areas().iter().any(|a| ctx.wb.ext_closed(a.sheet)),
+        _ => false,
+    };
+    if !ops.iter().any(closed) {
+        return None;
+    }
+    match name {
+        "SUMIF" | "COUNTIF" | "SUMIFS" | "COUNTIFS" | "AVERAGEIF" | "AVERAGEIFS" | "MAXIFS"
+        | "MINIFS" | "OFFSET" | "DGET" | "DSUM" | "DCOUNT" | "DCOUNTA" | "DAVERAGE" | "DMAX"
+        | "DMIN" | "DPRODUCT" | "DSTDEV" | "DSTDEVP" | "DVAR" | "DVARP" => Some(XlError::VALUE),
+        "CELL" | "ISFORMULA" | "FORMULATEXT" | "SHEET" => Some(XlError::NA),
+        _ => None,
+    }
 }

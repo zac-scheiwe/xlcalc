@@ -11,7 +11,7 @@ pub(crate) struct AddressStyle {
     pub relative_to: (u32, u32),
 }
 
-fn quote_sheet(name: &str) -> String {
+pub(crate) fn quote_sheet(name: &str) -> String {
     let plain = name
         .chars()
         .all(|c| c.is_alphanumeric() || c == '_' || c == '.')

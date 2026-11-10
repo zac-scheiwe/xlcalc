@@ -1,0 +1,160 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3",
+  "Sheet4"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!B1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!A1",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!A2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!B1",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet4!A1",
+   "input": "1000"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet4!A2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet4!B1",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=SUM(Sheet1:Sheet3!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "=SUM(Sheet1:Sheet3!A1:B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D3",
+   "input": "=COUNT(Sheet2:Sheet4!A1:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D4",
+   "input": "=FORMULATEXT(D1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D5",
+   "input": "=SUM(Sheet2:Sheet2!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D6",
+   "input": "=SUM(Sheet1:Sheet4!A:A)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet2",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet4",
+   "before": "Sheet2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet4",
+   "before": "Sheet1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet3",
+   "name": "Zed"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Zed"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Sheet2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!D1:D6"
+  },
+  {
+   "op": "sheets"
+  }
+ ]
+}

@@ -1,0 +1,5415 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet 2"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A:C')",
+   "prop": "ColumnWidth",
+   "value": 40
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Formula",
+   "value": "=!_x\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Formula",
+   "value": "= -\t#VALUE!\t+\tFALSE( 1:1 )  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Formula",
+   "value": "=!{1,2,3}%"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Formula",
+   "value": "= - CELL( \"a\" )\t< {\"a\",1} "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Formula",
+   "value": "=\tTbl[@Col]*  Tbl[@]  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Formula",
+   "value": "==\tTbl[[#This Row],[Col]] ^  (FOO)\n=\n+1 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Formula",
+   "value": "=@ { 1 , 2 }  -\t00 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Formula",
+   "value": "=-\t+1^\nna(1.5e2) "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Formula",
+   "value": "= \t1:1\n&\t_xlfn.foo\n>CELL()\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Formula",
+   "value": "=-\n1,000\n=\t{}  +"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Formula",
+   "value": "=!#NUM!\n> IV1  #"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Formula",
+   "value": "=\t0.1234567890123456789 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Formula",
+   "value": "=  FOO *  1.e2  <=  (1:1)  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Formula",
+   "value": "=  LAMBDA(1000)  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Formula",
+   "value": "= \nSUM(1e400) <>\nTRUE( \"a\" \"b\" ) <N( B2:A1 )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Formula",
+   "value": "= FOO"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Formula",
+   "value": "=\tx.y<#EXTERNAL!\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Formula",
+   "value": "=!\n5%% &#EXTERNAL!\t> (1E3)\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Formula",
+   "value": "=  LET(1.5e2,1e0)\n*  INDEX( Foo )\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Formula",
+   "value": "==\t+1>=1:1 *\n#CALC!  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Formula",
+   "value": "=-  {1;2;3}  /\n(1e-3)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Formula",
+   "value": "=-Sum()   "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Formula",
+   "value": "=!\n#EXTERNAL!"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Formula",
+   "value": "=+\n1e400\t^1e15"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Formula",
+   "value": "=\tTbl[]"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Formula",
+   "value": "=@ r1c1 <= \"\"\t=\nq  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Formula",
+   "value": "= {1,2,3}+  {1 ,2}\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Formula",
+   "value": "=  (1e+3)  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Formula",
+   "value": "==\t{TRUE,#N/A} < \\n &FOO\t+"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Formula",
+   "value": "=@  12345678901234567890 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Formula",
+   "value": "=+ {1;2;3}\n>\nsheet1!a1 + Sum(0.1234567890123456789)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Formula",
+   "value": "=-\t(_x) -\n{1;2;3}\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Formula",
+   "value": "= \"é\"  ("
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Formula",
+   "value": "=  0.50  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Formula",
+   "value": "= -\n#NUM!  =\n\"a\" ^(\"a\" \"b\")\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Formula",
+   "value": "=--\n(1)\t& TRUE1<=\t.5  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Formula",
+   "value": "= C\t>\t\"\" <>\"\"\"\"  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Formula",
+   "value": "=-- #n/a\t<=\t#UNKNOWN!  <\nété #"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Formula",
+   "value": "= -  \"\"\"\" ^  q  *\tA:A\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Formula",
+   "value": "=@ \"a\"&\"b\"\t/\n--1\t>=  pi(FOO)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Formula",
+   "value": "= -FOO >(FOO) "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(41,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Formula",
+   "value": "=@\t\"é\"\t*\n(00)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(42,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Formula",
+   "value": "=@C =\n1e0\n<>\n01\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(43,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Formula",
+   "value": "=  x.y\n/  Sum  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(44,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Formula",
+   "value": "=\n{1 ,2}\t- INDEX(1e15)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(45,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Formula",
+   "value": "==  \"\"\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(46,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Formula",
+   "value": "=@\n{1,2,3;4,5,6}\n&r1c1\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(47,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Formula",
+   "value": "=@  (1e+3)\t= 1  <=\n1,000\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(48,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Formula",
+   "value": "=@  \"1\"\n<=\n#ref\n+\tXLOOKUP(1.e2)\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(49,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Formula",
+   "value": "= -  1000 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(50,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Formula",
+   "value": "=+ Tbl[[#This Row],[Col]]\n+  _xlpm.p\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(51,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Formula",
+   "value": "=+ (Foo)  <> (1e)^\nTbl[@]\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(52,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Formula",
+   "value": "=\t1.5e2\n>= C  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(53,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Formula",
+   "value": "== #n/a  +"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(54,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Formula",
+   "value": "==\n1.5e2  <=\nc1\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(55,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Formula",
+   "value": "==\t\"1\"  >  #CALC!\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(56,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Formula",
+   "value": "=\nLAMBDA(\"a\",1e-400) - (a1) >  (1e+) ()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(57,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Formula",
+   "value": "=--  A1x - FOO/\t{1 ,2}"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(58,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Formula",
+   "value": "=\n00"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(59,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Formula",
+   "value": "=!\t{1,{2}}  -\n\"\" = (1/2)\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(60,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Formula",
+   "value": "=   (1_000)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(61,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Formula",
+   "value": "=+  (a1)/1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(62,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Formula",
+   "value": "=@\n\\n\t* 1\t%"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(63,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Formula",
+   "value": "=@  \"\"\t<=  1.\n+\n\"a\"  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(64,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Formula",
+   "value": "= --1 >=  #BUSY!\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(65,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Formula",
+   "value": "=+ #REF!\n> {}\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(66,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Formula",
+   "value": "=={ 1 , 2 }\t< Sheet2!A1:B2>=  'Sheet1'!A1 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(67,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Formula",
+   "value": "= sum( foo )\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(68,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Formula",
+   "value": "= 0.50\t<= OFFSET(A:C)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(69,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Formula",
+   "value": "=-Foo\t+  {A1} "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(70,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Formula",
+   "value": "=  C1 <\n#n/a  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(71,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Formula",
+   "value": "=!\t1:1\t<\nA1048576"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(72,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Formula",
+   "value": "= {}\n&SEQUENCE(A1,0.50)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(73,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Formula",
+   "value": "=-  r1\n<1e-400 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(74,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Formula",
+   "value": "=-  r1c1  <>\t{A1}\t-\n1e-3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(75,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Formula",
+   "value": "=+ {1,2;3}  =  ($A$1)  <\n\"a\" "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(76,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Formula",
+   "value": "=! $A:$A\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(77,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Formula",
+   "value": "=0x10/  A1#\n<Tbl[] "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(78,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Formula",
+   "value": "==\t5 %\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(79,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Formula",
+   "value": "=  (_x) =\t{ 1 , 2 } "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(80,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Formula",
+   "value": "=  INDEX( \"\" )\n<>FALSE( a1 )&\t1e0  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(81,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Formula",
+   "value": "=\nSheet1:Sheet2!A1\n>=  Tbl[@Col]\n<  'Sheet1'!A1\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(82,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Formula",
+   "value": "=@\nAB12  *\n(a1) < été"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(83,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Formula",
+   "value": "= -\n5 %\t=  1e3+\tAB12  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(84,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Formula",
+   "value": "= -\t{}\t-\t{1,2;3,4}\t()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(85,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Formula",
+   "value": "=- x1  <  T( \"\" ) "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(86,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Formula",
+   "value": "=@\tA$1 / #N/A"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(87,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "Formula",
+   "value": "=\t\"a\"=\n1_000 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(88,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "Formula",
+   "value": "=Tbl[]\t<=_xlfn.foo  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(89,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "Formula",
+   "value": "= R<=\t_xlfn.foo\n<>\tA01\t "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(90,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "Formula",
+   "value": "=  1e\t>=\nTRUE1\n/\n{1 ,2}+"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(91,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "Formula",
+   "value": "=+Tbl[#All]\t^#BLOCKED!  ^ if(1e-3)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(92,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "Formula",
+   "value": "=\tC\t>=  TRUE1 <>  (1e-400)  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(93,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "Formula",
+   "value": "=!\t1e16"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(94,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "Formula",
+   "value": "= {-1,+2}\t<>  1:1 >=  #DIV/0!\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(95,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "Formula",
+   "value": "=! Sheet1!A1\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(96,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "Formula",
+   "value": "= -  LAMBDA(\"\",01)\n/#CALC!  ^\n$1:$1+"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(97,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "Formula",
+   "value": "=  \"a\"  #"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(98,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "Formula",
+   "value": "=- e1&1:1\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(99,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "Formula",
+   "value": "= - Tbl[[#Headers],[Col]]  ^A1:B2& A1x"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(100,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "Formula",
+   "value": "==\tTRUE(1e16,a.b.c)\n*1e400 / TEXT(01,123456789012345678)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(101,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "Formula",
+   "value": "=@{1;2;3}\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(102,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "Formula",
+   "value": "==\n1e16\t<= \"\"\n* (Foo)  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(103,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "Formula",
+   "value": "= _xlfn.XLOOKUP(1e+3,$A$1)  <=\n0x10"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(104,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "Formula",
+   "value": "=\t1e0\t+\tTEXT( $A$1 )-\t1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(105,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "Formula",
+   "value": "=\nA:C\n^\n{1,2,3;4,5,6}\t>= #VALUE!\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(106,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "Formula",
+   "value": "={}  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(107,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "Formula",
+   "value": "=\n_xlfn.SUM(5%,1e15)\t>= 1e15&5%\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(108,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "Formula",
+   "value": "=-+1 = T(1E3,1e-400) "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(109,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "Formula",
+   "value": "=--  (A1:B2) =\tTRUE()  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(110,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "Formula",
+   "value": "=\"1\"\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(111,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "Formula",
+   "value": "= 00  +\tna( 1e400 )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(112,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "Formula",
+   "value": "=@ \"é\" ()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(113,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "Formula",
+   "value": "=@\n1e "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(114,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "Formula",
+   "value": "== Tbl[Col]\n "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(115,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "Formula",
+   "value": "=\n5%%<(1.)\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(116,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "Formula",
+   "value": "=  (0.1234567890123456789)\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(117,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "Formula",
+   "value": "==  Tbl[[Col]:[Col2]]\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(118,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "Formula",
+   "value": "== T(\"a\" \"b\",1e0)  *  a.b.c\n+"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(119,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "Formula",
+   "value": "=  C  =  (1) "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(120,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "Formula",
+   "value": "=  A0\n> Sheet2!A1:B2 "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(121,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "Formula",
+   "value": "=--\t#DIV/0!*1,000\t= \"\"\"\"\n)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(122,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "Formula",
+   "value": "=  #FIELD!  >= #GETTING_DATA "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(123,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "Formula",
+   "value": "=+$A$1 >=\t1e15\n>{1,2,3;4,5,6}\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(124,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "Formula",
+   "value": "=  \"a\"\"b\" "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(125,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "Formula",
+   "value": "=! #BLOCKED!\n=#FIELD!\n*\nfoo"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(126,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "Formula",
+   "value": "=@\tTbl[Col] ^\"\"\"\"\n/\t_xlfn.foo\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(127,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "Formula",
+   "value": "= \"\"\"\"<>(00)\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(128,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "Formula",
+   "value": "=- A$1=\t#NUM!\n< A1:A1\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(129,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "Formula",
+   "value": "=-\nR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(130,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "Formula",
+   "value": "= TRUE1>\nZZ1\t-\tA0  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(131,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "Formula",
+   "value": "=--C=  {1,2,3;4,5,6} "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(132,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "Formula",
+   "value": "=+{}\t<$A$1\n<R1C1  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(133,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "Formula",
+   "value": "=  XFE1<\t{ 1 , 2 }\n+ {1,2;3} ()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(134,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "Formula",
+   "value": "=\t{ 1 , 2 }\t&  name_1  +#CALC!\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(135,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "Formula",
+   "value": "=!Tbl[[Col]:[Col2]] ^\t1:1  <  #NULL!"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(136,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "Formula",
+   "value": "=\n\\n\n-\n{1,2;3}  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(137,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "Formula",
+   "value": "=\t{1,2,3;4,5,6}+"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(138,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "Formula",
+   "value": "=\n1e+\t* #VALUE!\n#"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(139,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "Formula",
+   "value": "=+\t#REF!  <>  {\"a\",1}+\t1.5e2  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(140,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "Formula",
+   "value": "= A1048577 )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(141,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "Formula",
+   "value": "=--  #CONNECT!\n"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(142,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "Formula",
+   "value": "= -#NUM! <=\nSum\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(143,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "Formula",
+   "value": "=\t1E3\n<=\nT( 0.50 ) "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(144,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "Formula",
+   "value": "=!\nr1c1\t>\n($A$1)\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(145,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "Formula",
+   "value": "= -\nSum\t>\nC  %"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(146,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "Formula",
+   "value": "=--  #BLOCKED!\t/\t{A1} "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(147,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "Formula",
+   "value": "={1,2,3;4,5,6}^\n1e16\t+"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(148,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "Formula",
+   "value": "=!#DIV/0!  -\"a\"&\"b\"\t"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(149,1)",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "Formula",
+   "value": "= A0  "
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "Formula2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "HasFormula"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "Text"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(150,1)",
+   "prop": "Value2"
+  }
+ ]
+}

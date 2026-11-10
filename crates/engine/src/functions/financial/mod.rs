@@ -11,13 +11,13 @@ use crate::eval::{EvalCtx, Operand};
 macro_rules! atp_fn {
     ($name:literal, $min:expr, $max:expr, $f:path) => {{
         fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-            atp::call(ctx, ops, &[], true, $f)
+            atp::call_ex(ctx, ops, &[], true, true, $f)
         }
         args($name, $min, $max, "R", wrapper)
     }};
     ($name:literal, $min:expr, $max:expr, $f:path, [$($arr:expr),*]) => {{
         fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-            atp::call(ctx, ops, &[$($arr),*], true, $f)
+            atp::call_ex(ctx, ops, &[$($arr),*], true, true, $f)
         }
         args($name, $min, $max, "R", wrapper)
     }};

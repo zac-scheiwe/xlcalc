@@ -378,7 +378,7 @@ fn apply_cell(wb: &Workbook, sheet: SheetId, list: &mut [Ctl], idx: usize, v: &V
     }
 }
 
-fn num_arg(v: &Variant, lcid: u32) -> Result<f64, OmError> {
+pub(crate) fn num_arg(v: &Variant, lcid: u32) -> Result<f64, OmError> {
     if let Variant::Bool(b) = v {
         return Ok(if *b { 1.0 } else { 0.0 });
     }
@@ -388,18 +388,18 @@ fn num_arg(v: &Variant, lcid: u32) -> Result<f64, OmError> {
     }
 }
 
-fn put_num(a: &Args) -> Result<f64, OmError> {
+pub(crate) fn put_num(a: &Args) -> Result<f64, OmError> {
     num_arg(a.put.as_ref().unwrap_or(&Variant::Empty), a.lcid)
 }
 
-fn arg_num(a: &Args, i: usize) -> Result<f64, OmError> {
+pub(crate) fn arg_num(a: &Args, i: usize) -> Result<f64, OmError> {
     match a.get(i) {
         Some(v) => num_arg(v, a.lcid),
         None => Err(OmError::app_defined()),
     }
 }
 
-fn put_text(a: &Args) -> Result<String, OmError> {
+pub(crate) fn put_text(a: &Args) -> Result<String, OmError> {
     Ok(match a.put.as_ref() {
         Some(Variant::Bstr(s)) => s.clone(),
         Some(v) => match change_type(v, VarType::Bstr, crate::conv::variant_locale(a.lcid), 0) {
@@ -504,7 +504,7 @@ impl Application<'_> {
         }
     }
 
-    fn collection_items(
+    pub(crate) fn collection_items(
         &mut self,
         b: BookId,
         s: SheetId,

@@ -280,6 +280,11 @@ impl Workbook {
         self.merges.areas.extend(add);
     }
 
+    pub(crate) fn import_merges(&mut self, other: &Workbook, from: SheetId, to: SheetId) {
+        let add: Vec<_> = other.merges(from).into_iter().map(|m| (to, m)).collect();
+        self.merges.areas.extend(add);
+    }
+
     pub(crate) fn unmerge_for_table(&mut self, sheet: SheetId, rect: Rect) {
         self.merges
             .areas
@@ -583,7 +588,7 @@ impl Workbook {
         ds: SheetId,
         dr: Rect,
     ) -> Result<RecalcReport, EditError> {
-        if let Some(plan) = self.view_copy_plan(ss, src, ds, dr) {
+        if let Some(plan) = self.view_copy_plan(ss, src, ds, dr, false, false) {
             let (steps, whole, from_filtered) = plan?;
             self.guard_merges_rect(ds, whole)?;
             self.guard_arrays_rect(ds, whole)?;
@@ -630,6 +635,20 @@ impl Workbook {
                 dr.r0 + nr * src.rows() - 1,
                 dr.c0 + nc * src.cols() - 1,
             );
+
+            let tile_is_src = |a0: u32, s0: u32, l: u32, reps: u32| {
+                s0 >= a0 && (s0 - a0).is_multiple_of(l) && (s0 - a0) / l < reps
+            };
+            if ss == ds
+                && whole.intersects(&src)
+                && !(tile_is_src(dr.r0, src.r0, src.rows(), nr)
+                    && tile_is_src(dr.c0, src.c0, src.cols(), nc))
+            {
+                return Err(EditError::Compile(
+                    "This selection isn't valid. Make sure the copy and paste areas don't overlap unless they are the same size and shape."
+                        .into(),
+                ));
+            }
             self.guard_merges_rect(ds, whole)?;
             self.guard_arrays_rect(ds, whole)?;
             if ss == ds && whole.intersects(&src) {
@@ -673,6 +692,12 @@ impl Workbook {
     pub(crate) fn remove_merge(&mut self, sheet: SheetId, r: Rect) {
         self.merges.areas.retain(|(s, x)| !(*s == sheet && *x == r));
         calc::rect_changed(self, sheet, r);
+    }
+
+    pub fn import_merge(&mut self, sheet: SheetId, r: Rect) {
+        if r.r0 != r.r1 || r.c0 != r.c1 {
+            self.put_merge(sheet, r);
+        }
     }
 
     pub(crate) fn put_merge(&mut self, sheet: SheetId, r: Rect) {

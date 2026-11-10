@@ -19,17 +19,152 @@ pub(crate) struct TableEnt {
 
     pub names: [String; 2],
     pub columns: Vec<String>,
+
+    pub sheet: u32,
+
+    pub area: Option<TableArea>,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct TableArea {
+    pub sheet: u32,
+    pub r0: u32,
+    pub c0: u32,
+    pub r1: u32,
+    pub header: bool,
+    pub totals: bool,
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct ExtBookEnt {
+    pub sheets: Vec<String>,
+    pub names: Vec<String>,
 }
 
 #[derive(Default)]
 pub(crate) struct State {
     pub xti: Vec<(u32, i32, i32)>,
     pub names: Vec<NameEnt>,
+
+    pub ext: Vec<ExtBookEnt>,
+
+    pub legacy: bool,
+
+    pub row: u32,
+
+    pub addins: Vec<String>,
 }
+
+pub(crate) const ADDIN_BOOK: u32 = u32::MAX;
+
+const LAST_LEGACY_FUNC: u16 = 367;
+
+const ADD_IN_FUNCTIONS: &[&str] = &[
+    "ACCRINT",
+    "ACCRINTM",
+    "AMORDEGRC",
+    "AMORLINC",
+    "BESSELI",
+    "BESSELJ",
+    "BESSELK",
+    "BESSELY",
+    "BIN2DEC",
+    "BIN2HEX",
+    "BIN2OCT",
+    "COMPLEX",
+    "CONVERT",
+    "COUPDAYBS",
+    "COUPDAYS",
+    "COUPDAYSNC",
+    "COUPNCD",
+    "COUPNUM",
+    "COUPPCD",
+    "CUMIPMT",
+    "CUMPRINC",
+    "DEC2BIN",
+    "DEC2HEX",
+    "DEC2OCT",
+    "DELTA",
+    "DISC",
+    "DOLLARDE",
+    "DOLLARFR",
+    "DURATION",
+    "EDATE",
+    "EFFECT",
+    "EOMONTH",
+    "ERF",
+    "ERFC",
+    "FACTDOUBLE",
+    "FVSCHEDULE",
+    "GCD",
+    "GESTEP",
+    "HEX2BIN",
+    "HEX2DEC",
+    "HEX2OCT",
+    "IMABS",
+    "IMAGINARY",
+    "IMARGUMENT",
+    "IMCONJUGATE",
+    "IMCOS",
+    "IMDIV",
+    "IMEXP",
+    "IMLN",
+    "IMLOG10",
+    "IMLOG2",
+    "IMPOWER",
+    "IMPRODUCT",
+    "IMREAL",
+    "IMSIN",
+    "IMSQRT",
+    "IMSUB",
+    "IMSUM",
+    "INTRATE",
+    "ISEVEN",
+    "ISODD",
+    "LCM",
+    "MDURATION",
+    "MROUND",
+    "MULTINOMIAL",
+    "NETWORKDAYS",
+    "NOMINAL",
+    "OCT2BIN",
+    "OCT2DEC",
+    "OCT2HEX",
+    "ODDFPRICE",
+    "ODDFYIELD",
+    "ODDLPRICE",
+    "ODDLYIELD",
+    "PRICE",
+    "PRICEDISC",
+    "PRICEMAT",
+    "QUOTIENT",
+    "RANDBETWEEN",
+    "RECEIVED",
+    "SERIESSUM",
+    "SQRTPI",
+    "TBILLEQ",
+    "TBILLPRICE",
+    "TBILLYIELD",
+    "WEEKNUM",
+    "WORKDAY",
+    "XIRR",
+    "XNPV",
+    "YEARFRAC",
+    "YIELD",
+    "YIELDDISC",
+    "YIELDMAT",
+    "IMSINH",
+    "IMCOSH",
+    "IMTAN",
+];
 
 impl State {
     fn xti_index(&mut self, first: i32, last: i32) -> u16 {
-        let key = (0, first, last);
+        self.xti_book(0, first, last)
+    }
+
+    fn xti_book(&mut self, book: u32, first: i32, last: i32) -> u16 {
+        let key = (book, first, last);
         match self.xti.iter().position(|x| *x == key) {
             Some(i) => i as u16,
             None => {
@@ -47,6 +182,25 @@ impl State {
             name: name.to_string(),
             scope: None,
             flags: 0x0002_000B,
+            rgce: vec![0x1C, 0x1D],
+            rgcb: Vec::new(),
+        });
+        self.names.len() as u32
+    }
+
+    fn param_name(&mut self, name: &str) -> u32 {
+        let full = format!("_xlpm.{}", name.strip_prefix("_xlpm.").unwrap_or(name));
+        if let Some(i) = self
+            .names
+            .iter()
+            .position(|n| n.name.eq_ignore_ascii_case(&full))
+        {
+            return i as u32 + 1;
+        }
+        self.names.push(NameEnt {
+            name: full,
+            scope: None,
+            flags: 0x0002_0019,
             rgce: vec![0x1C, 0x1D],
             rgcb: Vec::new(),
         });
@@ -107,7 +261,7 @@ fn func_ids() -> &'static HashMap<&'static str, u16> {
     })
 }
 
-fn error_code(e: &str) -> Option<u8> {
+pub(crate) fn error_code(e: &str) -> Option<u8> {
     Some(match e {
         "#NULL!" => 0x00,
         "#DIV/0!" => 0x07,
@@ -140,6 +294,8 @@ struct Enc<'a> {
     out: Vec<u8>,
     ex: Vec<u8>,
     volatile: bool,
+
+    lets: Vec<String>,
 }
 
 pub(crate) fn encode(
@@ -159,6 +315,7 @@ pub(crate) fn encode(
         out: Vec::new(),
         ex: Vec::new(),
         volatile: false,
+        lets: Vec::new(),
     };
     e.emit(&expr, top)?;
     let mut rgce = Vec::new();
@@ -202,6 +359,17 @@ impl Enc<'_> {
             .ok_or_else(|| format!("unknown sheet {name}"))
     }
 
+    fn ext_book(&self, book: &str) -> Result<(u32, ExtBookEnt), String> {
+        let n: usize = book
+            .parse()
+            .map_err(|_| "reference into another workbook".to_string())?;
+        let ent = n
+            .checked_sub(1)
+            .and_then(|i| self.st.ext.get(i))
+            .ok_or("no such linked workbook")?;
+        Ok((n as u32, ent.clone()))
+    }
+
     fn ixti(&mut self, spec: &SheetSpec) -> Result<u16, String> {
         match spec {
             SheetSpec::Single(s) => {
@@ -212,7 +380,30 @@ impl Enc<'_> {
                 let (i, j) = (self.sheet_index(a)?, self.sheet_index(b)?);
                 Ok(self.st.xti_index(i.min(j), i.max(j)))
             }
-            SheetSpec::External { .. } => Err("reference into another workbook".into()),
+            SheetSpec::External { book, sheet } => {
+                let (n, ent) = self.ext_book(book)?;
+                match sheet {
+                    Some(s) => {
+                        let find = |name: &str| {
+                            ent.sheets
+                                .iter()
+                                .position(|x| x.eq_ignore_ascii_case(name))
+                                .map(|i| i as i32)
+                                .ok_or_else(|| format!("unknown sheet {name} in linked workbook"))
+                        };
+
+                        let (i, j) = match s.split_once(':') {
+                            Some((a, b)) => (find(a)?, find(b)?),
+                            None => {
+                                let i = find(s)?;
+                                (i, i)
+                            }
+                        };
+                        Ok(self.st.xti_book(n, i.min(j), i.max(j)))
+                    }
+                    None => Ok(self.st.xti_book(n, -2, -2)),
+                }
+            }
         }
     }
 
@@ -236,10 +427,11 @@ impl Enc<'_> {
     }
 
     fn emit(&mut self, e: &Expr, cls: Cls) -> Result<(), String> {
-        let child = if cls == Cls::Arr {
-            Cls::Arr
-        } else {
-            Cls::Value
+        let child = match cls {
+            Cls::Arr => Cls::Arr,
+
+            Cls::Ref if self.st.legacy => Cls::Ref,
+            _ => Cls::Value,
         };
         match e {
             Expr::Number(n) => {
@@ -270,7 +462,7 @@ impl Enc<'_> {
             Expr::Array(rows) => self.array(rows, cls)?,
             Expr::Ref { sheet, kind } => self.reference(sheet.as_ref(), kind, cls)?,
             Expr::Name { sheet, name } => self.name(sheet.as_ref(), name, cls)?,
-            Expr::StructRef { table, spec } => self.struct_ref(table.as_deref(), spec)?,
+            Expr::StructRef { table, spec } => self.struct_ref(table.as_deref(), spec, cls)?,
             Expr::Func { name, args } => self.func(name, args, cls)?,
             Expr::Unary { op, expr } => {
                 let tok = match op {
@@ -303,7 +495,15 @@ impl Enc<'_> {
             Expr::Ws { expr, .. } => self.emit(expr, cls)?,
             Expr::Spill(_) => return Err("spill reference operator".into()),
             Expr::Field { .. } => return Err("data type field".into()),
-            Expr::Call { .. } => return Err("call of a computed function".into()),
+            Expr::Call { callee, args } => {
+                self.emit(callee, Cls::Value)?;
+                for a in args {
+                    self.emit(a, Cls::Value)?;
+                }
+                self.out.push(0x02 | Cls::Value.bits());
+                self.out.push((args.len() + 1) as u8);
+                self.out.extend(0x00FFu16.to_le_bytes());
+            }
         }
         Ok(())
     }
@@ -392,6 +592,11 @@ impl Enc<'_> {
 
     fn name(&mut self, sheet: Option<&SheetSpec>, name: &str, cls: Cls) -> Result<(), String> {
         match sheet {
+            None if self.lets.iter().any(|l| l.eq_ignore_ascii_case(name)) => {
+                let idx = self.st.param_name(name);
+                self.out.push(0x03 | cls.bits());
+                self.out.extend(idx.to_le_bytes());
+            }
             None => {
                 let idx = self
                     .cur
@@ -416,12 +621,26 @@ impl Enc<'_> {
                 self.out.extend(ix.to_le_bytes());
                 self.out.extend(idx.to_le_bytes());
             }
+            Some(SheetSpec::External { book, sheet: None }) => {
+                let (n, ent) = self.ext_book(book)?;
+                let idx = ent
+                    .names
+                    .iter()
+                    .position(|x| x.eq_ignore_ascii_case(name))
+                    .ok_or_else(|| format!("name {name} is not cached in the linked workbook"))?
+                    as u32
+                    + 1;
+                let ix = self.st.xti_book(n, -2, -2);
+                self.out.push(0x19 | cls.bits());
+                self.out.extend(ix.to_le_bytes());
+                self.out.extend(idx.to_le_bytes());
+            }
             Some(_) => return Err("name of another workbook".into()),
         }
         Ok(())
     }
 
-    fn struct_ref(&mut self, table: Option<&str>, spec: &str) -> Result<(), String> {
+    fn struct_ref(&mut self, table: Option<&str>, spec: &str, cls: Cls) -> Result<(), String> {
         let tname = table.ok_or("structured reference without a table name")?;
         let t = self
             .tables
@@ -477,6 +696,65 @@ impl Enc<'_> {
         }
         let first = cols.first().copied().unwrap_or(0);
         let last = cols.last().copied().unwrap_or(0);
+        if self.st.legacy {
+            let a = t
+                .area
+                .ok_or("structured reference without a table location")?;
+            let (c0, c1) = if cols.is_empty() {
+                (a.c0, a.c0 + t.columns.len().max(1) as u32 - 1)
+            } else {
+                (
+                    a.c0 + u32::from(first.min(last)),
+                    a.c0 + u32::from(first.max(last)),
+                )
+            };
+            let hdr = u32::from(a.header);
+            let (mut r0, mut r1) = (a.r0 + hdr, a.r1 - u32::from(a.totals));
+            if this_row {
+                (r0, r1) = (self.st.row, self.st.row);
+            } else if rows & 1 != 0 {
+                (r0, r1) = (a.r0, a.r1);
+            } else if rows & 2 != 0 && rows & 4 == 0 && rows & 8 == 0 {
+                (r0, r1) = (a.r0, a.r0);
+            } else if rows & 8 != 0 && rows & 4 == 0 {
+                (r0, r1) = (a.r1, a.r1);
+            } else if rows & 2 != 0 {
+                r0 = a.r0;
+            } else if rows & 8 != 0 {
+                r1 = a.r1;
+            }
+
+            if self.cur == Some(a.sheet) {
+                if (r0, c0) == (r1, c1) {
+                    self.out.push(0x04 | cls.bits());
+                    self.out.extend(r0.to_le_bytes());
+                    self.out.extend(word(true, true, c0).to_le_bytes());
+                } else {
+                    self.out.push(0x05 | cls.bits());
+                    self.out.extend(r0.to_le_bytes());
+                    self.out.extend(r1.to_le_bytes());
+                    self.out.extend(word(true, true, c0).to_le_bytes());
+                    self.out.extend(word(true, true, c1).to_le_bytes());
+                }
+                return Ok(());
+            }
+            let ix = self.st.xti_index(a.sheet as i32, a.sheet as i32);
+            let rel_row = this_row;
+            if (r0, c0) == (r1, c1) {
+                self.out.push(0x1A | cls.bits());
+                self.out.extend(ix.to_le_bytes());
+                self.out.extend(r0.to_le_bytes());
+                self.out.extend(word(false, rel_row, c0).to_le_bytes());
+            } else {
+                self.out.push(0x1B | cls.bits());
+                self.out.extend(ix.to_le_bytes());
+                self.out.extend(r0.to_le_bytes());
+                self.out.extend(r1.to_le_bytes());
+                self.out.extend(word(false, rel_row, c0).to_le_bytes());
+                self.out.extend(word(false, rel_row, c1).to_le_bytes());
+            }
+            return Ok(());
+        }
         let n_cols: u16 = match (cols.len(), range) {
             (0, _) => 0,
             (1, _) => 1,
@@ -489,11 +767,103 @@ impl Enc<'_> {
         if this_row {
             flags |= 0x0200;
         }
-        self.out.extend([0x18, 0x19, 0, 0]);
+        let sheet = t.sheet as i32;
+        let ix = self.st.xti_index(sheet, sheet);
+        self.out.extend([0x18, 0x19]);
+        self.out.extend(ix.to_le_bytes());
         self.out.extend(flags.to_le_bytes());
         self.out.extend(t.id.to_le_bytes());
         self.out.extend(first.to_le_bytes());
         self.out.extend(last.to_le_bytes());
+        Ok(())
+    }
+
+    fn legacy_call(
+        &mut self,
+        upper: &str,
+        args: &[Expr],
+        cls: Cls,
+        param: &dyn Fn(usize) -> Cls,
+    ) -> Result<(), String> {
+        if ADD_IN_FUNCTIONS.contains(&upper) {
+            let ix = self.st.xti_book(ADDIN_BOOK, -2, -2);
+            let n = match self.st.addins.iter().position(|a| a == upper) {
+                Some(i) => i + 1,
+                None => {
+                    self.st.addins.push(upper.to_string());
+                    self.st.addins.len()
+                }
+            };
+            self.out.push(0x19 | Cls::Ref.bits());
+            self.out.extend(ix.to_le_bytes());
+            self.out.extend((n as u32).to_le_bytes());
+        } else {
+            let idx = self.st.future_name(&format!("_xlfn.{upper}"));
+            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.extend(idx.to_le_bytes());
+        }
+        for (i, a) in args.iter().enumerate() {
+            self.emit(a, param(i))?;
+        }
+        self.out.push(0x02 | cls.bits());
+        self.out.push((args.len() + 1) as u8);
+        self.out.extend(0x00FFu16.to_le_bytes());
+        Ok(())
+    }
+
+    fn let_call(&mut self, args: &[Expr], cls: Cls) -> Result<(), String> {
+        if args.len() < 3 || args.len().is_multiple_of(2) {
+            return Err("LET needs name/value pairs and a result".into());
+        }
+        let depth = self.lets.len();
+        let idx = self.st.future_name("_xlfn.LET");
+        self.out.push(0x03 | Cls::Ref.bits());
+        self.out.extend(idx.to_le_bytes());
+        for pair in args[..args.len() - 1].chunks(2) {
+            let Expr::Name { sheet: None, name } = &pair[0] else {
+                return Err("LET variable is not a name".into());
+            };
+            let ix = self.st.param_name(name);
+            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.extend(ix.to_le_bytes());
+            self.emit(&pair[1], Cls::Value)?;
+            self.lets.push(name.clone());
+        }
+        self.emit(&args[args.len() - 1], Cls::Value)?;
+        self.lets.truncate(depth);
+        self.out.push(0x02 | cls.bits());
+        self.out.push((args.len() + 1) as u8);
+        self.out.extend(0x00FFu16.to_le_bytes());
+        Ok(())
+    }
+
+    fn lambda_call(&mut self, args: &[Expr], cls: Cls) -> Result<(), String> {
+        if args.is_empty() {
+            return Err("LAMBDA needs a body".into());
+        }
+        let depth = self.lets.len();
+        let idx = self.st.future_name("_xlfn.LAMBDA");
+        self.out.push(0x03 | Cls::Ref.bits());
+        self.out.extend(idx.to_le_bytes());
+        for p in &args[..args.len() - 1] {
+            let Expr::Name { sheet: None, name } = p else {
+                return Err("LAMBDA parameter is not a name".into());
+            };
+            let ix = self.st.param_name(name);
+            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.extend(ix.to_le_bytes());
+            self.lets.push(name.clone());
+        }
+        let body = if cls == Cls::Arr {
+            Cls::Arr
+        } else {
+            Cls::Value
+        };
+        self.emit(&args[args.len() - 1], body)?;
+        self.lets.truncate(depth);
+        self.out.push(0x02 | Cls::Value.bits());
+        self.out.push((args.len() + 1) as u8);
+        self.out.extend(0x00FFu16.to_le_bytes());
         Ok(())
     }
 
@@ -502,11 +872,37 @@ impl Enc<'_> {
         let future = lower.starts_with("_xlfn.") || lower.starts_with("_xlws.");
         let bare = if future { &name[6..] } else { name };
         let upper = bare.to_ascii_uppercase();
-        if matches!(upper.as_str(), "LET" | "LAMBDA") {
+
+        if self.st.legacy && matches!(upper.as_str(), "LAMBDA" | "LET") {
+            let (out, ex) = (std::mem::take(&mut self.out), std::mem::take(&mut self.ex));
+            let _ = if upper == "LET" {
+                self.let_call(args, cls)
+            } else {
+                self.lambda_call(args, cls)
+            };
+            (self.out, self.ex) = (out, ex);
+            self.st.future_name(&format!("_xlfn.{upper}"));
             return Err(format!("{upper} is not encoded"));
         }
+        if upper == "LET" {
+            return self.let_call(args, cls);
+        }
+        if upper == "LAMBDA" {
+            return self.lambda_call(args, cls);
+        }
         let info = xlcalc::function_info(&upper);
+        let legacy = self.st.legacy;
         let param = |i: usize| -> Cls {
+            if legacy {
+                if let Some(l) = xlcalc::argument_class(&upper, i) {
+                    return match l {
+                        b'R' | b'Q' => Cls::Ref,
+                        b'A' => Cls::Arr,
+                        _ if cls == Cls::Arr => Cls::Arr,
+                        _ => Cls::Value,
+                    };
+                }
+            }
             if matches!(upper.as_str(), "IFERROR" | "IFNA") {
                 return Cls::Value;
             }
@@ -529,7 +925,10 @@ impl Enc<'_> {
             self.volatile = true;
         }
         if future {
-            let idx = self.st.future_name(&format!("{}{}", &name[..6], upper));
+            let inner = upper
+                .strip_prefix("_XLWS.")
+                .map_or_else(|| upper.clone(), |rest| format!("_xlws.{rest}"));
+            let idx = self.st.future_name(&format!("{}{}", &name[..6], inner));
             self.out.push(0x03 | Cls::Ref.bits());
             self.out.extend(idx.to_le_bytes());
             for (i, a) in args.iter().enumerate() {
@@ -540,14 +939,31 @@ impl Enc<'_> {
             self.out.extend(0x00FFu16.to_le_bytes());
             return Ok(());
         }
+
+        if self.st.legacy
+            && !func_ids().contains_key(upper.as_str())
+            && self
+                .st
+                .names
+                .iter()
+                .any(|n| n.name.eq_ignore_ascii_case(name))
+        {
+            return Err(format!("LAMBDA is not encoded (call of the name {name})"));
+        }
         let id = *func_ids()
             .get(upper.as_str())
             .ok_or_else(|| format!("function {upper} is not in the function table"))?;
+        if self.st.legacy && id > LAST_LEGACY_FUNC {
+            return self.legacy_call(&upper, args, cls, &param);
+        }
         let n = args.len();
         match upper.as_str() {
             "IF" if (2..=3).contains(&n) => return self.if_fn(args, cls, id),
             "CHOOSE" if n >= 2 => return self.choose(args, cls, id),
             "IFERROR" if n == 2 => {
+                if !self.st.legacy {
+                    self.st.future_name("_xlfn.IFERROR");
+                }
                 self.emit(&args[0], param(0))?;
                 let f = self.sub(&args[1], param(1))?;
                 self.out.extend([0x19, 0x80]);
@@ -579,7 +995,12 @@ impl Enc<'_> {
     }
 
     fn if_fn(&mut self, args: &[Expr], cls: Cls, id: u16) -> Result<(), String> {
-        self.emit(&args[0], Cls::Value)?;
+        let first = if self.st.legacy && cls == Cls::Arr {
+            Cls::Arr
+        } else {
+            Cls::Value
+        };
+        self.emit(&args[0], first)?;
         let t = self.sub(&args[1], cls)?;
         self.out.extend([0x19, 0x02]);
         self.out.extend((t.len() as u16 + 4).to_le_bytes());
@@ -599,7 +1020,12 @@ impl Enc<'_> {
     }
 
     fn choose(&mut self, args: &[Expr], cls: Cls, id: u16) -> Result<(), String> {
-        self.emit(&args[0], Cls::Value)?;
+        let first = if self.st.legacy && cls == Cls::Arr {
+            Cls::Arr
+        } else {
+            Cls::Value
+        };
+        self.emit(&args[0], first)?;
         let picks: Vec<Vec<u8>> = args[1..]
             .iter()
             .map(|a| self.sub(a, cls))
@@ -708,6 +1134,8 @@ mod tests {
             id: 1,
             names: ["Tbl".into(), "Tbl".into()],
             columns: vec!["col".into(), "col2".into()],
+            sheet: 0,
+            area: None,
         }];
         let mut st = State::default();
         let r = encode(&sheets, &tables, &mut st, Some(0), src, Cls::Value).unwrap();

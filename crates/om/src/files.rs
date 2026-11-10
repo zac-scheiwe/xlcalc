@@ -136,6 +136,8 @@ enum Writes {
 
     Xlsb,
 
+    Xls,
+
     Unsupported,
 }
 
@@ -148,7 +150,8 @@ fn format_of(code: i32) -> Option<(&'static str, Writes)> {
         50 => ("xlsb", Writes::Xlsb),
         53 => ("xltm", Writes::Unsupported),
         55 => ("xlam", Writes::Unsupported),
-        56 => ("xls", Writes::Unsupported),
+        56 | 39 => ("xls", Writes::Xls),
+        17 => ("xlt", Writes::Xls),
         _ => {
             let known = crate::typelib::enumeration("XlFileFormat")
                 .is_some_and(|e| e.constants.iter().any(|&(_, v)| v == code));
@@ -213,11 +216,15 @@ pub(crate) fn folder(path: &str) -> String {
 #[derive(PartialEq, Eq)]
 enum Content {
     Xlsb,
+    Xls,
     Xml,
     Text,
 }
 
 fn content_of(bytes: &[u8]) -> Content {
+    if bytes.starts_with(&[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) {
+        return Content::Xls;
+    }
     if !bytes.starts_with(b"PK") {
         return Content::Text;
     }
@@ -242,10 +249,25 @@ impl Application<'_> {
         self.fs = fs;
     }
 
-    pub const AUTOMATION_BOOK_NUMBERS: [u32; 6] = [1, 4, 5, 6, 7, 14];
+    pub const AUTOMATION_BOOK_NUMBERS: [u32; 0] = [];
 
     pub fn reserve_book_numbers(&mut self, numbers: &[u32]) {
         self.reserved_numbers.extend_from_slice(numbers);
+    }
+
+    pub fn set_next_sheet_number(&mut self, book: BookId, n: u32) {
+        if let Ok(b) = self.book_mut(book) {
+            b.next_sheet = n;
+        }
+    }
+
+    pub fn set_sheets_in_new_workbook(&mut self, n: u32) {
+        let key = "0:SheetsInNewWorkbook".to_string();
+        if n == 2 {
+            self.opts.remove(&key);
+        } else {
+            self.opts.insert(key, Variant::R8(f64::from(n)));
+        }
     }
 
     pub(crate) fn next_book_number(&mut self) -> u32 {
@@ -257,11 +279,34 @@ impl Application<'_> {
         n
     }
 
-    fn open_new(&mut self, mut wb: Workbook, name: String, path: String) -> BookId {
+    pub(crate) fn open_new(&mut self, mut wb: Workbook, name: String, path: String) -> BookId {
         if let Some(active) = self.active.and_then(|id| self.engine(id)) {
             share_settings(active, &mut wb);
         }
         self.push_book(wb, name, path)
+    }
+
+    fn new_workbook(&self) -> Workbook {
+        let n = match self.opts.get("0:SheetsInNewWorkbook") {
+            Some(Variant::R8(n)) => *n as u32,
+            _ => 2,
+        };
+        let mut wb = Workbook::new();
+        for i in 2..=n {
+            let _ = wb.add_sheet(&format!("Sheet{i}"));
+        }
+        let first = wb.sheet_at(0).id;
+        let _ = wb.set_active_sheet(first);
+        wb
+    }
+
+    fn plain_workbook(&mut self) -> BookId {
+        let name = format!("Book{}", self.next_book_number());
+        let id = self.open_new(self.new_workbook(), name, String::new());
+        if let Ok(b) = self.book_mut(id) {
+            b.saved = true;
+        }
+        id
     }
 
     pub(crate) fn workbooks_add(&mut self, a: &Args) -> Result<Variant, OmError> {
@@ -269,10 +314,14 @@ impl Application<'_> {
         let id = match a.get(0) {
             None => {
                 let name = format!("Book{}", self.next_book_number());
-                let id = self.open_new(Workbook::new(), name, String::new());
+                let id = self.open_new(self.new_workbook(), name, String::new());
                 self.book_mut(id)?.saved = true;
                 id
             }
+
+            Some(Variant::Bool(true)) => self.plain_workbook(),
+            Some(Variant::Bstr(s)) if s.is_empty() => self.plain_workbook(),
+            Some(Variant::R8(f)) if f.fract() != 0.0 && f.abs() < 1e9 => self.plain_workbook(),
             Some(Variant::Bstr(file)) => {
                 let file = file.clone();
                 let full = self
@@ -301,7 +350,8 @@ impl Application<'_> {
                     put: None,
                     lcid: a.lcid,
                 }
-                .i32(0)?
+                .i32(0)
+                .map_err(|_| failed())?
                 .unwrap_or(0);
                 match n {
                     -4167 => {
@@ -325,6 +375,19 @@ impl Application<'_> {
                         book.next_chart = 2;
                         id
                     }
+                    3 | 4 => {
+                        let c = self.template_counts.entry("\u{0}macro".into()).or_insert(0);
+                        *c += 1;
+                        let name = format!("Macro{c}");
+                        let mut wb = Workbook::empty();
+                        wb.add_macro_sheet_before("Macro1", n == 4, None)
+                            .map_err(|_| failed())?;
+                        let id = self.open_new(wb, name, String::new());
+                        let book = self.book_mut(id)?;
+                        book.saved = true;
+                        book.next_macro = if n == 4 { (1, 2) } else { (2, 1) };
+                        id
+                    }
                     _ => return Err(failed()),
                 }
             }
@@ -344,14 +407,17 @@ impl Application<'_> {
             .iter()
             .find(|b| b.path.eq_ignore_ascii_case(&full))
         {
-            let id = b.id;
-            self.active = Some(id);
+            let (id, hidden) = (b.id, b.is_addin);
+            if !hidden {
+                self.active = Some(id);
+            }
             return Ok(self.alloc(Object::Workbook(id)));
         }
         if a.get(4).is_some() || a.get(5).is_some() {
             return Err(OmError::unsupported("Workbooks.Open with a password"));
         }
         let read_only = a.bool(2)?.unwrap_or(false);
+        let active_before = self.active;
         let local = a.bool(13)?.unwrap_or(false);
         let bytes = self.fs.read(&full).map_err(|_| not_found(&file))?;
         let name = file_name(&full);
@@ -381,13 +447,20 @@ impl Application<'_> {
         } else {
             self.open_bytes(bytes, &name, full, name.clone(), true)?
         };
+        let update = a.i32(1)?;
+
+        if extension(&name).is_some_and(|e| matches!(e.as_str(), "xlam" | "xla")) {
+            self.book_mut(id)?.is_addin = true;
+            self.active = active_before;
+        }
         let b = self.book_mut(id)?;
         b.read_only = read_only;
         b.saved = true;
+        self.update_links_on_open(id, update);
         Ok(self.alloc(Object::Workbook(id)))
     }
 
-    fn open_bytes(
+    pub(crate) fn open_bytes(
         &mut self,
         bytes: Vec<u8>,
         file: &str,
@@ -399,11 +472,14 @@ impl Application<'_> {
         let ext = extension(file).unwrap_or_default();
         if check_extension
             && ((content == Content::Xlsb && ext != "xlsb" && ext != "xls")
+                || (content == Content::Xls
+                    && matches!(ext.as_str(), "xlsx" | "xlsm" | "xlsb" | "xltx" | "xltm"))
                 || (content == Content::Xml && ext == "xlsb"))
         {
             return Err(format_not_valid(file));
         }
         let imp = xlcalc_xlsx::import_bytes(bytes).map_err(|e| OmError::app_defined_with(&e))?;
+        let ext_links = imp.ext_links.clone();
         let mut wb = imp.workbook;
         if let Some(active) = self.active.and_then(|id| self.engine(id)) {
             share_settings(active, &mut wb);
@@ -449,6 +525,7 @@ impl Application<'_> {
         b.warnings = warnings;
         b.file_format = match (content, ext.as_str()) {
             (Content::Xlsb, _) => 50,
+            (Content::Xls, _) => 56,
             (_, "xltx") => 54,
             (_, "xltm") => 53,
             _ if has_project => 52,
@@ -462,6 +539,11 @@ impl Application<'_> {
             }
         }
         b.package = Some(imp.package);
+        let dir = match folder(&self.book(id)?.path) {
+            d if d.is_empty() => d,
+            d => format!("{d}\\"),
+        };
+        self.resolve_file_links(id, &dir, &ext_links);
         Ok(id)
     }
 
@@ -493,10 +575,12 @@ impl Application<'_> {
                         .map_err(|e| OmError::app_defined_with(&e))
                 }
             }
-            Writes::Package(_) | Writes::Xlsb => {
+            Writes::Package(_) | Writes::Xlsb | Writes::Xls => {
                 let kind = match writes {
                     Writes::Package(kind) => kind,
                     _ if self.has_vb_project(b)? => FileKind::Xlsm,
+
+                    _ if self.book(b)?.wb.sheets().any(|s| s.kind.is_macro()) => FileKind::Xlsm,
                     _ => FileKind::Xlsx,
                 };
                 let vba = match kind {
@@ -509,12 +593,19 @@ impl Application<'_> {
                     kind: Some(kind),
                     vba,
                     controls,
+                    dir: xlcalc::split_path(file).0.to_string(),
                     ..SaveOptions::default()
                 };
                 let saved = xlcalc_xlsx::save(&bk.wb, bk.package.as_ref(), &opts)
                     .map_err(|e| OmError::app_defined_with(&e))?;
                 let warnings = saved.warnings;
                 self.book_mut(b)?.warnings.extend(warnings);
+                if writes == Writes::Xls {
+                    let (bytes, more) = xlcalc_xlsx::xlsx_to_xls(&saved.bytes)
+                        .map_err(|e| OmError::app_defined_with(&e))?;
+                    self.book_mut(b)?.warnings.extend(more);
+                    return Ok(bytes);
+                }
                 if writes == Writes::Xlsb {
                     let (bytes, more) = xlcalc_xlsx::xlsx_to_xlsb(&saved.bytes)
                         .map_err(|e| OmError::app_defined_with(&e))?;
@@ -563,6 +654,7 @@ impl Application<'_> {
         }
         let csv = matches!(format_of(format), Some((_, Writes::Csv)));
         let bk = self.book_mut(b)?;
+        bk.wb.set_book_name(&name);
         bk.name = name;
         bk.path = full;
         bk.file_format = format;
@@ -602,9 +694,18 @@ impl Application<'_> {
                 }
             }
         }
+        let had_window = self.window_list().iter().any(|w| w.0 == b);
         self.books.retain(|x| x.id != b);
-        if self.active == Some(b) {
-            self.active = self.books.last().map(|x| x.id);
+        self.wins.retain(|w| w.0 != b);
+        self.cur_win.retain(|w| w.0 != b);
+        if had_window {
+            let top = self.window_list().first().copied();
+            self.active = top.map(|w| w.0);
+            if let Some(w) = top {
+                self.set_current_window(w);
+            }
+        } else if self.active == Some(b) {
+            self.active = self.window_order().first().copied();
         }
         Ok(Variant::Bool(true))
     }

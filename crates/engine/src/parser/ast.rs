@@ -183,6 +183,31 @@ impl Expr {
     }
 
     pub fn with_ws(self, before: &str, after: &str) -> Expr {
+        fn trim_before_lf(s: &str) -> String {
+            if !s.contains('\n') {
+                return s.to_string();
+            }
+            let mut out = String::with_capacity(s.len());
+            let mut pending = String::new();
+            for c in s.chars() {
+                match c {
+                    ' ' => pending.push(c),
+                    '\n' => {
+                        pending.clear();
+                        out.push(c);
+                    }
+                    c => {
+                        out.push_str(&pending);
+                        pending.clear();
+                        out.push(c);
+                    }
+                }
+            }
+            out.push_str(&pending);
+            out
+        }
+        let (before, after) = (trim_before_lf(before), trim_before_lf(after));
+        let (before, after) = (before.as_str(), after.as_str());
         if before.is_empty() && after.is_empty() {
             return self;
         }

@@ -1,0 +1,7274 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "op": "om_put",
+      "path": "Worksheets('Sheet1').Range('A:Z')",
+      "prop": "ColumnWidth",
+      "value": 60
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A1",
+      "fmt": "[h]:d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A1",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B1",
+      "input": "=CELL(\"format\",A1)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C1",
+      "input": "=CELL(\"parentheses\",A1)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D1",
+      "input": "=CELL(\"color\",A1)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(1,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A2",
+      "fmt": "[h] dd-mmm-yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(2,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A2",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(2,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B2",
+      "input": "=CELL(\"format\",A2)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(2,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C2",
+      "input": "=CELL(\"parentheses\",A2)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(2,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D2",
+      "input": "=CELL(\"color\",A2)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(2,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A3",
+      "fmt": "[h]-d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(3,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A3",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(3,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B3",
+      "input": "=CELL(\"format\",A3)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(3,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C3",
+      "input": "=CELL(\"parentheses\",A3)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(3,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D3",
+      "input": "=CELL(\"color\",A3)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(3,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A4",
+      "fmt": "[h]/d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(4,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A4",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(4,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B4",
+      "input": "=CELL(\"format\",A4)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(4,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C4",
+      "input": "=CELL(\"parentheses\",A4)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(4,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D4",
+      "input": "=CELL(\"color\",A4)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(4,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A5",
+      "fmt": "[h]:dd-mmm-yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(5,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A5",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(5,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B5",
+      "input": "=CELL(\"format\",A5)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(5,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C5",
+      "input": "=CELL(\"parentheses\",A5)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(5,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D5",
+      "input": "=CELL(\"color\",A5)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(5,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A6",
+      "fmt": "[s]:d/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(6,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A6",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(6,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B6",
+      "input": "=CELL(\"format\",A6)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(6,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C6",
+      "input": "=CELL(\"parentheses\",A6)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(6,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D6",
+      "input": "=CELL(\"color\",A6)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(6,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A7",
+      "fmt": "[m]:dd-mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(7,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A7",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(7,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B7",
+      "input": "=CELL(\"format\",A7)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(7,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C7",
+      "input": "=CELL(\"parentheses\",A7)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(7,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D7",
+      "input": "=CELL(\"color\",A7)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(7,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A8",
+      "fmt": "[h]d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(8,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A8",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(8,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B8",
+      "input": "=CELL(\"format\",A8)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(8,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C8",
+      "input": "=CELL(\"parentheses\",A8)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(8,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D8",
+      "input": "=CELL(\"color\",A8)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(8,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A9",
+      "fmt": "[h]  d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(9,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A9",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(9,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B9",
+      "input": "=CELL(\"format\",A9)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(9,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C9",
+      "input": "=CELL(\"parentheses\",A9)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(9,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D9",
+      "input": "=CELL(\"color\",A9)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(9,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A10",
+      "fmt": "[h] d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(10,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A10",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(10,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B10",
+      "input": "=CELL(\"format\",A10)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(10,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C10",
+      "input": "=CELL(\"parentheses\",A10)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(10,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D10",
+      "input": "=CELL(\"color\",A10)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(10,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A11",
+      "fmt": "[h]_xd/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(11,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A11",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(11,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B11",
+      "input": "=CELL(\"format\",A11)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(11,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C11",
+      "input": "=CELL(\"parentheses\",A11)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(11,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D11",
+      "input": "=CELL(\"color\",A11)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(11,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A12",
+      "fmt": "[s]_xd/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(12,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A12",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(12,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B12",
+      "input": "=CELL(\"format\",A12)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(12,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C12",
+      "input": "=CELL(\"parentheses\",A12)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(12,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D12",
+      "input": "=CELL(\"color\",A12)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(12,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A13",
+      "fmt": "[s]xd/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(13,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A13",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(13,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B13",
+      "input": "=CELL(\"format\",A13)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(13,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C13",
+      "input": "=CELL(\"parentheses\",A13)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(13,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D13",
+      "input": "=CELL(\"color\",A13)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(13,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A14",
+      "fmt": "x[h]d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(14,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A14",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(14,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B14",
+      "input": "=CELL(\"format\",A14)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(14,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C14",
+      "input": "=CELL(\"parentheses\",A14)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(14,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D14",
+      "input": "=CELL(\"color\",A14)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(14,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A15",
+      "fmt": "\"x\"[h]d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(15,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A15",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(15,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B15",
+      "input": "=CELL(\"format\",A15)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(15,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C15",
+      "input": "=CELL(\"parentheses\",A15)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(15,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D15",
+      "input": "=CELL(\"color\",A15)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(15,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A16",
+      "fmt": "0 [h]d/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(16,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A16",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(16,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B16",
+      "input": "=CELL(\"format\",A16)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(16,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C16",
+      "input": "=CELL(\"parentheses\",A16)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(16,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D16",
+      "input": "=CELL(\"color\",A16)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(16,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A17",
+      "fmt": "[h]:mm d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(17,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A17",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(17,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B17",
+      "input": "=CELL(\"format\",A17)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(17,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C17",
+      "input": "=CELL(\"parentheses\",A17)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(17,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D17",
+      "input": "=CELL(\"color\",A17)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(17,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A18",
+      "fmt": "[h]:mm:ss d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(18,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A18",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(18,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B18",
+      "input": "=CELL(\"format\",A18)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(18,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C18",
+      "input": "=CELL(\"parentheses\",A18)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(18,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D18",
+      "input": "=CELL(\"color\",A18)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(18,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A19",
+      "fmt": "d/m/yy [h]:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(19,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A19",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(19,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B19",
+      "input": "=CELL(\"format\",A19)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(19,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C19",
+      "input": "=CELL(\"parentheses\",A19)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(19,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D19",
+      "input": "=CELL(\"color\",A19)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(19,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A20",
+      "fmt": "d/m/yy[h]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(20,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A20",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(20,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B20",
+      "input": "=CELL(\"format\",A20)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(20,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C20",
+      "input": "=CELL(\"parentheses\",A20)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(20,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D20",
+      "input": "=CELL(\"color\",A20)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(20,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A21",
+      "fmt": "d/m/yy:[h]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(21,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A21",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(21,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B21",
+      "input": "=CELL(\"format\",A21)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(21,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C21",
+      "input": "=CELL(\"parentheses\",A21)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(21,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D21",
+      "input": "=CELL(\"color\",A21)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(21,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A22",
+      "fmt": "[h]:mmm d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(22,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A22",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(22,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B22",
+      "input": "=CELL(\"format\",A22)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(22,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C22",
+      "input": "=CELL(\"parentheses\",A22)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(22,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D22",
+      "input": "=CELL(\"color\",A22)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(22,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A23",
+      "fmt": "[h]:m/d/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(23,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A23",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(23,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B23",
+      "input": "=CELL(\"format\",A23)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(23,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C23",
+      "input": "=CELL(\"parentheses\",A23)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(23,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D23",
+      "input": "=CELL(\"color\",A23)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(23,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A24",
+      "fmt": "[h]:mmm-yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(24,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A24",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(24,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B24",
+      "input": "=CELL(\"format\",A24)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(24,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C24",
+      "input": "=CELL(\"parentheses\",A24)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(24,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D24",
+      "input": "=CELL(\"color\",A24)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(24,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A25",
+      "fmt": "[h]:yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(25,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A25",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(25,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B25",
+      "input": "=CELL(\"format\",A25)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(25,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C25",
+      "input": "=CELL(\"parentheses\",A25)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(25,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D25",
+      "input": "=CELL(\"color\",A25)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(25,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A26",
+      "fmt": "[h]:h:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(26,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A26",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(26,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B26",
+      "input": "=CELL(\"format\",A26)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(26,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C26",
+      "input": "=CELL(\"parentheses\",A26)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(26,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D26",
+      "input": "=CELL(\"color\",A26)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(26,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A27",
+      "fmt": "h:mm [h]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(27,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A27",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(27,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B27",
+      "input": "=CELL(\"format\",A27)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(27,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C27",
+      "input": "=CELL(\"parentheses\",A27)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(27,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D27",
+      "input": "=CELL(\"color\",A27)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(27,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A28",
+      "fmt": "h:mm:ss d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(28,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A28",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(28,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B28",
+      "input": "=CELL(\"format\",A28)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(28,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C28",
+      "input": "=CELL(\"parentheses\",A28)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(28,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D28",
+      "input": "=CELL(\"color\",A28)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(28,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A29",
+      "fmt": "h:mm d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(29,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A29",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(29,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B29",
+      "input": "=CELL(\"format\",A29)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(29,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C29",
+      "input": "=CELL(\"parentheses\",A29)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(29,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D29",
+      "input": "=CELL(\"color\",A29)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(29,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A30",
+      "fmt": "h:mm m/d/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(30,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A30",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(30,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B30",
+      "input": "=CELL(\"format\",A30)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(30,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C30",
+      "input": "=CELL(\"parentheses\",A30)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(30,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D30",
+      "input": "=CELL(\"color\",A30)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(30,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A31",
+      "fmt": "h:mm d-mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(31,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A31",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(31,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B31",
+      "input": "=CELL(\"format\",A31)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(31,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C31",
+      "input": "=CELL(\"parentheses\",A31)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(31,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D31",
+      "input": "=CELL(\"color\",A31)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(31,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A32",
+      "fmt": "h:mm AM/PM d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(32,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A32",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(32,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B32",
+      "input": "=CELL(\"format\",A32)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(32,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C32",
+      "input": "=CELL(\"parentheses\",A32)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(32,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D32",
+      "input": "=CELL(\"color\",A32)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(32,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A33",
+      "fmt": "d/m/yy h:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(33,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A33",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(33,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B33",
+      "input": "=CELL(\"format\",A33)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(33,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C33",
+      "input": "=CELL(\"parentheses\",A33)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(33,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D33",
+      "input": "=CELL(\"color\",A33)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(33,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A34",
+      "fmt": "d/m/yy[$-409]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(34,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A34",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(34,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B34",
+      "input": "=CELL(\"format\",A34)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(34,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C34",
+      "input": "=CELL(\"parentheses\",A34)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(34,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D34",
+      "input": "=CELL(\"color\",A34)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(34,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A35",
+      "fmt": "d[$-409]/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(35,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A35",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(35,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B35",
+      "input": "=CELL(\"format\",A35)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(35,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C35",
+      "input": "=CELL(\"parentheses\",A35)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(35,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D35",
+      "input": "=CELL(\"color\",A35)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(35,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A36",
+      "fmt": "d/m[$-409]/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(36,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A36",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(36,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B36",
+      "input": "=CELL(\"format\",A36)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(36,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C36",
+      "input": "=CELL(\"parentheses\",A36)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(36,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D36",
+      "input": "=CELL(\"color\",A36)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(36,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A37",
+      "fmt": "d/m/yy[$-409]h:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(37,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A37",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(37,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B37",
+      "input": "=CELL(\"format\",A37)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(37,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C37",
+      "input": "=CELL(\"parentheses\",A37)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(37,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D37",
+      "input": "=CELL(\"color\",A37)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(37,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A38",
+      "fmt": "m/d/yy[$-409]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(38,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A38",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(38,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B38",
+      "input": "=CELL(\"format\",A38)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(38,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C38",
+      "input": "=CELL(\"parentheses\",A38)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(38,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D38",
+      "input": "=CELL(\"color\",A38)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(38,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A39",
+      "fmt": "mmm[$-409]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(39,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A39",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(39,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B39",
+      "input": "=CELL(\"format\",A39)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(39,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C39",
+      "input": "=CELL(\"parentheses\",A39)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(39,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D39",
+      "input": "=CELL(\"color\",A39)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(39,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A40",
+      "fmt": "mmm-yy[$-409]"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(40,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A40",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(40,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B40",
+      "input": "=CELL(\"format\",A40)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(40,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C40",
+      "input": "=CELL(\"parentheses\",A40)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(40,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D40",
+      "input": "=CELL(\"color\",A40)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(40,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A41",
+      "fmt": "[Red][$-409]mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(41,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A41",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(41,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B41",
+      "input": "=CELL(\"format\",A41)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(41,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C41",
+      "input": "=CELL(\"parentheses\",A41)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(41,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D41",
+      "input": "=CELL(\"color\",A41)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(41,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A42",
+      "fmt": "[Red][$-409]d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(42,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A42",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(42,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B42",
+      "input": "=CELL(\"format\",A42)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(42,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C42",
+      "input": "=CELL(\"parentheses\",A42)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(42,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D42",
+      "input": "=CELL(\"color\",A42)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(42,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A43",
+      "fmt": "[$-409][Red]mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(43,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A43",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(43,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B43",
+      "input": "=CELL(\"format\",A43)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(43,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C43",
+      "input": "=CELL(\"parentheses\",A43)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(43,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D43",
+      "input": "=CELL(\"color\",A43)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(43,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A44",
+      "fmt": "[$-409]h:mm:ss"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(44,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A44",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(44,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B44",
+      "input": "=CELL(\"format\",A44)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(44,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C44",
+      "input": "=CELL(\"parentheses\",A44)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(44,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D44",
+      "input": "=CELL(\"color\",A44)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(44,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A45",
+      "fmt": "[$-409]d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(45,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A45",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(45,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B45",
+      "input": "=CELL(\"format\",A45)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(45,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C45",
+      "input": "=CELL(\"parentheses\",A45)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(45,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D45",
+      "input": "=CELL(\"color\",A45)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(45,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A46",
+      "fmt": "[$-409]dd"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(46,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A46",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(46,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B46",
+      "input": "=CELL(\"format\",A46)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(46,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C46",
+      "input": "=CELL(\"parentheses\",A46)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(46,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D46",
+      "input": "=CELL(\"color\",A46)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(46,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A47",
+      "fmt": "[$-409]ddd"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(47,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A47",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(47,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B47",
+      "input": "=CELL(\"format\",A47)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(47,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C47",
+      "input": "=CELL(\"parentheses\",A47)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(47,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D47",
+      "input": "=CELL(\"color\",A47)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(47,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A48",
+      "fmt": "[$-409]m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(48,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A48",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(48,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B48",
+      "input": "=CELL(\"format\",A48)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(48,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C48",
+      "input": "=CELL(\"parentheses\",A48)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(48,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D48",
+      "input": "=CELL(\"color\",A48)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(48,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A49",
+      "fmt": "[$-409]mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(49,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A49",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(49,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B49",
+      "input": "=CELL(\"format\",A49)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(49,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C49",
+      "input": "=CELL(\"parentheses\",A49)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(49,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D49",
+      "input": "=CELL(\"color\",A49)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(49,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A50",
+      "fmt": "[$-409]y"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(50,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A50",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(50,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B50",
+      "input": "=CELL(\"format\",A50)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(50,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C50",
+      "input": "=CELL(\"parentheses\",A50)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(50,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D50",
+      "input": "=CELL(\"color\",A50)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(50,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A51",
+      "fmt": "[$-409]mmm d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(51,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A51",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(51,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B51",
+      "input": "=CELL(\"format\",A51)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(51,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C51",
+      "input": "=CELL(\"parentheses\",A51)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(51,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D51",
+      "input": "=CELL(\"color\",A51)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(51,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A52",
+      "fmt": "[$-409]mmmm d, yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(52,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A52",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(52,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B52",
+      "input": "=CELL(\"format\",A52)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(52,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C52",
+      "input": "=CELL(\"parentheses\",A52)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(52,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D52",
+      "input": "=CELL(\"color\",A52)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(52,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A53",
+      "fmt": "[$-409]ddd mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(53,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A53",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(53,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B53",
+      "input": "=CELL(\"format\",A53)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(53,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C53",
+      "input": "=CELL(\"parentheses\",A53)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(53,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D53",
+      "input": "=CELL(\"color\",A53)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(53,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A54",
+      "fmt": "[$-409]ddd d mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(54,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A54",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(54,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B54",
+      "input": "=CELL(\"format\",A54)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(54,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C54",
+      "input": "=CELL(\"parentheses\",A54)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(54,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D54",
+      "input": "=CELL(\"color\",A54)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(54,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A55",
+      "fmt": "[$-409]m/yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(55,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A55",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(55,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B55",
+      "input": "=CELL(\"format\",A55)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(55,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C55",
+      "input": "=CELL(\"parentheses\",A55)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(55,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D55",
+      "input": "=CELL(\"color\",A55)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(55,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A56",
+      "fmt": "[$-409]mm/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(56,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A56",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(56,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B56",
+      "input": "=CELL(\"format\",A56)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(56,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C56",
+      "input": "=CELL(\"parentheses\",A56)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(56,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D56",
+      "input": "=CELL(\"color\",A56)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(56,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A57",
+      "fmt": "[$-409]yy/mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(57,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A57",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(57,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B57",
+      "input": "=CELL(\"format\",A57)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(57,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C57",
+      "input": "=CELL(\"parentheses\",A57)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(57,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D57",
+      "input": "=CELL(\"color\",A57)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(57,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A58",
+      "fmt": "[$-409]mmm yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(58,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A58",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(58,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B58",
+      "input": "=CELL(\"format\",A58)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(58,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C58",
+      "input": "=CELL(\"parentheses\",A58)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(58,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D58",
+      "input": "=CELL(\"color\",A58)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(58,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A59",
+      "fmt": "[$€-407]mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(59,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A59",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(59,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B59",
+      "input": "=CELL(\"format\",A59)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(59,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C59",
+      "input": "=CELL(\"parentheses\",A59)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(59,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D59",
+      "input": "=CELL(\"color\",A59)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(59,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A60",
+      "fmt": "[$€-407]d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(60,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A60",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(60,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B60",
+      "input": "=CELL(\"format\",A60)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(60,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C60",
+      "input": "=CELL(\"parentheses\",A60)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(60,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D60",
+      "input": "=CELL(\"color\",A60)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(60,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A61",
+      "fmt": "[$€-407]m/d/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(61,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A61",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(61,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B61",
+      "input": "=CELL(\"format\",A61)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(61,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C61",
+      "input": "=CELL(\"parentheses\",A61)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(61,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D61",
+      "input": "=CELL(\"color\",A61)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(61,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A62",
+      "fmt": "[$$-409]mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(62,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A62",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(62,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B62",
+      "input": "=CELL(\"format\",A62)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(62,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C62",
+      "input": "=CELL(\"parentheses\",A62)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(62,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D62",
+      "input": "=CELL(\"color\",A62)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(62,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A63",
+      "fmt": "[$-409]e"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(63,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A63",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(63,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B63",
+      "input": "=CELL(\"format\",A63)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(63,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C63",
+      "input": "=CELL(\"parentheses\",A63)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(63,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D63",
+      "input": "=CELL(\"color\",A63)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(63,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A64",
+      "fmt": "[$-409]e mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(64,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A64",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(64,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B64",
+      "input": "=CELL(\"format\",A64)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(64,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C64",
+      "input": "=CELL(\"parentheses\",A64)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(64,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D64",
+      "input": "=CELL(\"color\",A64)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(64,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A65",
+      "fmt": "e mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(65,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A65",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(65,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B65",
+      "input": "=CELL(\"format\",A65)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(65,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C65",
+      "input": "=CELL(\"parentheses\",A65)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(65,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D65",
+      "input": "=CELL(\"color\",A65)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(65,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A66",
+      "fmt": "e d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(66,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A66",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(66,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B66",
+      "input": "=CELL(\"format\",A66)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(66,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C66",
+      "input": "=CELL(\"parentheses\",A66)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(66,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D66",
+      "input": "=CELL(\"color\",A66)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(66,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A67",
+      "fmt": "g d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(67,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A67",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(67,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B67",
+      "input": "=CELL(\"format\",A67)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(67,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C67",
+      "input": "=CELL(\"parentheses\",A67)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(67,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D67",
+      "input": "=CELL(\"color\",A67)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(67,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A68",
+      "fmt": "d/m/yy e"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(68,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A68",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(68,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B68",
+      "input": "=CELL(\"format\",A68)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(68,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C68",
+      "input": "=CELL(\"parentheses\",A68)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(68,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D68",
+      "input": "=CELL(\"color\",A68)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(68,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A69",
+      "fmt": "d/m/yy g"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(69,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A69",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(69,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B69",
+      "input": "=CELL(\"format\",A69)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(69,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C69",
+      "input": "=CELL(\"parentheses\",A69)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(69,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D69",
+      "input": "=CELL(\"color\",A69)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(69,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A70",
+      "fmt": "d/m e"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(70,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A70",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(70,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B70",
+      "input": "=CELL(\"format\",A70)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(70,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C70",
+      "input": "=CELL(\"parentheses\",A70)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(70,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D70",
+      "input": "=CELL(\"color\",A70)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(70,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A71",
+      "fmt": "d/m/yyyy gg"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(71,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A71",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(71,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B71",
+      "input": "=CELL(\"format\",A71)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(71,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C71",
+      "input": "=CELL(\"parentheses\",A71)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(71,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D71",
+      "input": "=CELL(\"color\",A71)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(71,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A72",
+      "fmt": "mmm e"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(72,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A72",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(72,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B72",
+      "input": "=CELL(\"format\",A72)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(72,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C72",
+      "input": "=CELL(\"parentheses\",A72)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(72,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D72",
+      "input": "=CELL(\"color\",A72)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(72,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A73",
+      "fmt": "ggg mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(73,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A73",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(73,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B73",
+      "input": "=CELL(\"format\",A73)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(73,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C73",
+      "input": "=CELL(\"parentheses\",A73)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(73,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D73",
+      "input": "=CELL(\"color\",A73)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(73,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A74",
+      "fmt": "B2d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(74,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A74",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(74,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B74",
+      "input": "=CELL(\"format\",A74)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(74,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C74",
+      "input": "=CELL(\"parentheses\",A74)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(74,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D74",
+      "input": "=CELL(\"color\",A74)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(74,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A75",
+      "fmt": "B1d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(75,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A75",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(75,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B75",
+      "input": "=CELL(\"format\",A75)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(75,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C75",
+      "input": "=CELL(\"parentheses\",A75)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(75,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D75",
+      "input": "=CELL(\"color\",A75)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(75,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A76",
+      "fmt": "B2mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(76,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A76",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(76,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B76",
+      "input": "=CELL(\"format\",A76)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(76,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C76",
+      "input": "=CELL(\"parentheses\",A76)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(76,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D76",
+      "input": "=CELL(\"color\",A76)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(76,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A77",
+      "fmt": "B1m/d/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(77,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A77",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(77,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B77",
+      "input": "=CELL(\"format\",A77)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(77,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C77",
+      "input": "=CELL(\"parentheses\",A77)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(77,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D77",
+      "input": "=CELL(\"color\",A77)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(77,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A78",
+      "fmt": "[$-1030409]d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(78,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A78",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(78,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B78",
+      "input": "=CELL(\"format\",A78)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(78,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C78",
+      "input": "=CELL(\"parentheses\",A78)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(78,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D78",
+      "input": "=CELL(\"color\",A78)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(78,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A79",
+      "fmt": "[$-1030409]mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(79,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A79",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(79,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B79",
+      "input": "=CELL(\"format\",A79)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(79,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C79",
+      "input": "=CELL(\"parentheses\",A79)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(79,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D79",
+      "input": "=CELL(\"color\",A79)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(79,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A80",
+      "fmt": "[$-1030409]m/d/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(80,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A80",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(80,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B80",
+      "input": "=CELL(\"format\",A80)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(80,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C80",
+      "input": "=CELL(\"parentheses\",A80)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(80,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D80",
+      "input": "=CELL(\"color\",A80)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(80,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A81",
+      "fmt": "d/m/yy aaa"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(81,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A81",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(81,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B81",
+      "input": "=CELL(\"format\",A81)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(81,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C81",
+      "input": "=CELL(\"parentheses\",A81)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(81,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D81",
+      "input": "=CELL(\"color\",A81)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(81,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A82",
+      "fmt": "aaa d/m/yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(82,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A82",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(82,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B82",
+      "input": "=CELL(\"format\",A82)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(82,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C82",
+      "input": "=CELL(\"parentheses\",A82)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(82,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D82",
+      "input": "=CELL(\"color\",A82)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(82,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A83",
+      "fmt": "ddd/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(83,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A83",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(83,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B83",
+      "input": "=CELL(\"format\",A83)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(83,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C83",
+      "input": "=CELL(\"parentheses\",A83)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(83,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D83",
+      "input": "=CELL(\"color\",A83)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(83,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A84",
+      "fmt": "mmm ddd"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(84,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A84",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(84,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B84",
+      "input": "=CELL(\"format\",A84)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(84,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C84",
+      "input": "=CELL(\"parentheses\",A84)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(84,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D84",
+      "input": "=CELL(\"color\",A84)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(84,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A85",
+      "fmt": "mmm-yy ddd"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(85,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A85",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(85,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B85",
+      "input": "=CELL(\"format\",A85)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(85,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C85",
+      "input": "=CELL(\"parentheses\",A85)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(85,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D85",
+      "input": "=CELL(\"color\",A85)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(85,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A86",
+      "fmt": "d aaa"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(86,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A86",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(86,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B86",
+      "input": "=CELL(\"format\",A86)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(86,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C86",
+      "input": "=CELL(\"parentheses\",A86)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(86,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D86",
+      "input": "=CELL(\"color\",A86)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(86,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A87",
+      "fmt": "yyyy-mm-dd"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(87,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A87",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(87,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B87",
+      "input": "=CELL(\"format\",A87)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(87,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C87",
+      "input": "=CELL(\"parentheses\",A87)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(87,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D87",
+      "input": "=CELL(\"color\",A87)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(87,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A88",
+      "fmt": "yy-mm-dd"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(88,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A88",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(88,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B88",
+      "input": "=CELL(\"format\",A88)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(88,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C88",
+      "input": "=CELL(\"parentheses\",A88)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(88,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D88",
+      "input": "=CELL(\"color\",A88)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(88,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A89",
+      "fmt": "y/m/d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(89,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A89",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(89,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B89",
+      "input": "=CELL(\"format\",A89)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(89,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C89",
+      "input": "=CELL(\"parentheses\",A89)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(89,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D89",
+      "input": "=CELL(\"color\",A89)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(89,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A90",
+      "fmt": "y-mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(90,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A90",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(90,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B90",
+      "input": "=CELL(\"format\",A90)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(90,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C90",
+      "input": "=CELL(\"parentheses\",A90)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(90,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D90",
+      "input": "=CELL(\"color\",A90)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(90,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A91",
+      "fmt": "y"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(91,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A91",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(91,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B91",
+      "input": "=CELL(\"format\",A91)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(91,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C91",
+      "input": "=CELL(\"parentheses\",A91)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(91,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D91",
+      "input": "=CELL(\"color\",A91)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(91,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A92",
+      "fmt": "m/y"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(92,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A92",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(92,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B92",
+      "input": "=CELL(\"format\",A92)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(92,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C92",
+      "input": "=CELL(\"parentheses\",A92)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(92,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D92",
+      "input": "=CELL(\"color\",A92)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(92,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A93",
+      "fmt": "m-y"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(93,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A93",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(93,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B93",
+      "input": "=CELL(\"format\",A93)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(93,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C93",
+      "input": "=CELL(\"parentheses\",A93)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(93,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D93",
+      "input": "=CELL(\"color\",A93)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(93,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A94",
+      "fmt": "m/yy/d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(94,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A94",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(94,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B94",
+      "input": "=CELL(\"format\",A94)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(94,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C94",
+      "input": "=CELL(\"parentheses\",A94)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(94,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D94",
+      "input": "=CELL(\"color\",A94)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(94,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A95",
+      "fmt": "m/y/d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(95,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A95",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(95,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B95",
+      "input": "=CELL(\"format\",A95)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(95,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C95",
+      "input": "=CELL(\"parentheses\",A95)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(95,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D95",
+      "input": "=CELL(\"color\",A95)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(95,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A96",
+      "fmt": "mmm-d-yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(96,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A96",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(96,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B96",
+      "input": "=CELL(\"format\",A96)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(96,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C96",
+      "input": "=CELL(\"parentheses\",A96)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(96,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D96",
+      "input": "=CELL(\"color\",A96)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(96,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A97",
+      "fmt": "mmm/d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(97,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A97",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(97,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B97",
+      "input": "=CELL(\"format\",A97)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(97,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C97",
+      "input": "=CELL(\"parentheses\",A97)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(97,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D97",
+      "input": "=CELL(\"color\",A97)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(97,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A98",
+      "fmt": "mmmm/d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(98,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A98",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(98,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B98",
+      "input": "=CELL(\"format\",A98)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(98,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C98",
+      "input": "=CELL(\"parentheses\",A98)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(98,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D98",
+      "input": "=CELL(\"color\",A98)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(98,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A99",
+      "fmt": "mmm d, yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(99,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A99",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(99,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B99",
+      "input": "=CELL(\"format\",A99)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(99,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C99",
+      "input": "=CELL(\"parentheses\",A99)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(99,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D99",
+      "input": "=CELL(\"color\",A99)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(99,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A100",
+      "fmt": "mmm dd yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(100,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A100",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(100,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B100",
+      "input": "=CELL(\"format\",A100)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(100,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C100",
+      "input": "=CELL(\"parentheses\",A100)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(100,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D100",
+      "input": "=CELL(\"color\",A100)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(100,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A101",
+      "fmt": "dd.mm.yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(101,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A101",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(101,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B101",
+      "input": "=CELL(\"format\",A101)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(101,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C101",
+      "input": "=CELL(\"parentheses\",A101)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(101,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D101",
+      "input": "=CELL(\"color\",A101)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(101,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A102",
+      "fmt": "d.m.yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(102,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A102",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(102,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B102",
+      "input": "=CELL(\"format\",A102)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(102,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C102",
+      "input": "=CELL(\"parentheses\",A102)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(102,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D102",
+      "input": "=CELL(\"color\",A102)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(102,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A103",
+      "fmt": "d-m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(103,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A103",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(103,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B103",
+      "input": "=CELL(\"format\",A103)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(103,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C103",
+      "input": "=CELL(\"parentheses\",A103)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(103,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D103",
+      "input": "=CELL(\"color\",A103)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(103,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A104",
+      "fmt": "d m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(104,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A104",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(104,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B104",
+      "input": "=CELL(\"format\",A104)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(104,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C104",
+      "input": "=CELL(\"parentheses\",A104)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(104,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D104",
+      "input": "=CELL(\"color\",A104)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(104,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A105",
+      "fmt": "d/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(105,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A105",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(105,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B105",
+      "input": "=CELL(\"format\",A105)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(105,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C105",
+      "input": "=CELL(\"parentheses\",A105)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(105,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D105",
+      "input": "=CELL(\"color\",A105)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(105,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A106",
+      "fmt": "m d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(106,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A106",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(106,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B106",
+      "input": "=CELL(\"format\",A106)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(106,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C106",
+      "input": "=CELL(\"parentheses\",A106)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(106,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D106",
+      "input": "=CELL(\"color\",A106)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(106,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A107",
+      "fmt": "m/d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(107,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A107",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(107,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B107",
+      "input": "=CELL(\"format\",A107)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(107,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C107",
+      "input": "=CELL(\"parentheses\",A107)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(107,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D107",
+      "input": "=CELL(\"color\",A107)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(107,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A108",
+      "fmt": "m/d/yy h:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(108,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A108",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(108,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B108",
+      "input": "=CELL(\"format\",A108)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(108,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C108",
+      "input": "=CELL(\"parentheses\",A108)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(108,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D108",
+      "input": "=CELL(\"color\",A108)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(108,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A109",
+      "fmt": "m/d/yy h:mm AM/PM"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(109,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A109",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(109,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B109",
+      "input": "=CELL(\"format\",A109)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(109,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C109",
+      "input": "=CELL(\"parentheses\",A109)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(109,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D109",
+      "input": "=CELL(\"color\",A109)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(109,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A110",
+      "fmt": "mm:ss"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(110,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A110",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(110,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B110",
+      "input": "=CELL(\"format\",A110)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(110,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C110",
+      "input": "=CELL(\"parentheses\",A110)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(110,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D110",
+      "input": "=CELL(\"color\",A110)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(110,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A111",
+      "fmt": "mm:ss.0"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(111,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A111",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(111,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B111",
+      "input": "=CELL(\"format\",A111)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(111,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C111",
+      "input": "=CELL(\"parentheses\",A111)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(111,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D111",
+      "input": "=CELL(\"color\",A111)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(111,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A112",
+      "fmt": "mm:ss d/m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(112,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A112",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(112,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B112",
+      "input": "=CELL(\"format\",A112)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(112,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C112",
+      "input": "=CELL(\"parentheses\",A112)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(112,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D112",
+      "input": "=CELL(\"color\",A112)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(112,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A113",
+      "fmt": "mm d"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(113,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A113",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(113,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B113",
+      "input": "=CELL(\"format\",A113)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(113,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C113",
+      "input": "=CELL(\"parentheses\",A113)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(113,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D113",
+      "input": "=CELL(\"color\",A113)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(113,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A114",
+      "fmt": "m h"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(114,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A114",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(114,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B114",
+      "input": "=CELL(\"format\",A114)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(114,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C114",
+      "input": "=CELL(\"parentheses\",A114)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(114,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D114",
+      "input": "=CELL(\"color\",A114)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(114,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A115",
+      "fmt": "h m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(115,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A115",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(115,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B115",
+      "input": "=CELL(\"format\",A115)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(115,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C115",
+      "input": "=CELL(\"parentheses\",A115)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(115,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D115",
+      "input": "=CELL(\"color\",A115)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(115,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A116",
+      "fmt": "h mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(116,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A116",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(116,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B116",
+      "input": "=CELL(\"format\",A116)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(116,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C116",
+      "input": "=CELL(\"parentheses\",A116)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(116,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D116",
+      "input": "=CELL(\"color\",A116)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(116,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A117",
+      "fmt": "h:m"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(117,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A117",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(117,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B117",
+      "input": "=CELL(\"format\",A117)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(117,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C117",
+      "input": "=CELL(\"parentheses\",A117)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(117,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D117",
+      "input": "=CELL(\"color\",A117)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(117,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A118",
+      "fmt": "h:m:s"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(118,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A118",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(118,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B118",
+      "input": "=CELL(\"format\",A118)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(118,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C118",
+      "input": "=CELL(\"parentheses\",A118)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(118,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D118",
+      "input": "=CELL(\"color\",A118)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(118,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A119",
+      "fmt": "h:m AM/PM"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(119,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A119",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(119,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B119",
+      "input": "=CELL(\"format\",A119)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(119,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C119",
+      "input": "=CELL(\"parentheses\",A119)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(119,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D119",
+      "input": "=CELL(\"color\",A119)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(119,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A120",
+      "fmt": "h:mm:ss.00"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(120,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A120",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(120,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B120",
+      "input": "=CELL(\"format\",A120)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(120,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C120",
+      "input": "=CELL(\"parentheses\",A120)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(120,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D120",
+      "input": "=CELL(\"color\",A120)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(120,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A121",
+      "fmt": "h:mm:ss.0 AM/PM"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(121,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A121",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(121,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B121",
+      "input": "=CELL(\"format\",A121)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(121,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C121",
+      "input": "=CELL(\"parentheses\",A121)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(121,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D121",
+      "input": "=CELL(\"color\",A121)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(121,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A122",
+      "fmt": "h AM/PM"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(122,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A122",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(122,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B122",
+      "input": "=CELL(\"format\",A122)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(122,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C122",
+      "input": "=CELL(\"parentheses\",A122)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(122,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D122",
+      "input": "=CELL(\"color\",A122)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(122,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A123",
+      "fmt": "h"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(123,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A123",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(123,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B123",
+      "input": "=CELL(\"format\",A123)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(123,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C123",
+      "input": "=CELL(\"parentheses\",A123)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(123,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D123",
+      "input": "=CELL(\"color\",A123)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(123,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A124",
+      "fmt": "hh"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(124,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A124",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(124,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B124",
+      "input": "=CELL(\"format\",A124)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(124,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C124",
+      "input": "=CELL(\"parentheses\",A124)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(124,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D124",
+      "input": "=CELL(\"color\",A124)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(124,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A125",
+      "fmt": "hh:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(125,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A125",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(125,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B125",
+      "input": "=CELL(\"format\",A125)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(125,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C125",
+      "input": "=CELL(\"parentheses\",A125)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(125,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D125",
+      "input": "=CELL(\"color\",A125)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(125,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A126",
+      "fmt": "ss"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(126,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A126",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(126,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B126",
+      "input": "=CELL(\"format\",A126)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(126,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C126",
+      "input": "=CELL(\"parentheses\",A126)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(126,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D126",
+      "input": "=CELL(\"color\",A126)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(126,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A127",
+      "fmt": "mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(127,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A127",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(127,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B127",
+      "input": "=CELL(\"format\",A127)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(127,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C127",
+      "input": "=CELL(\"parentheses\",A127)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(127,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D127",
+      "input": "=CELL(\"color\",A127)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(127,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A128",
+      "fmt": "s.0"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(128,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A128",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(128,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B128",
+      "input": "=CELL(\"format\",A128)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(128,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C128",
+      "input": "=CELL(\"parentheses\",A128)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(128,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D128",
+      "input": "=CELL(\"color\",A128)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(128,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A129",
+      "fmt": "AM/PM"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(129,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A129",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(129,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B129",
+      "input": "=CELL(\"format\",A129)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(129,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C129",
+      "input": "=CELL(\"parentheses\",A129)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(129,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D129",
+      "input": "=CELL(\"color\",A129)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(129,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A130",
+      "fmt": "am/pm h"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(130,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A130",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(130,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B130",
+      "input": "=CELL(\"format\",A130)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(130,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C130",
+      "input": "=CELL(\"parentheses\",A130)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(130,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D130",
+      "input": "=CELL(\"color\",A130)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(130,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A131",
+      "fmt": "A/P h:mm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(131,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A131",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(131,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B131",
+      "input": "=CELL(\"format\",A131)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(131,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C131",
+      "input": "=CELL(\"parentheses\",A131)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(131,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D131",
+      "input": "=CELL(\"color\",A131)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(131,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A132",
+      "fmt": "h:mm A/P"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(132,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A132",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(132,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B132",
+      "input": "=CELL(\"format\",A132)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(132,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C132",
+      "input": "=CELL(\"parentheses\",A132)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(132,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D132",
+      "input": "=CELL(\"color\",A132)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(132,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A133",
+      "fmt": "h:mm:ss A/P"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(133,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A133",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(133,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B133",
+      "input": "=CELL(\"format\",A133)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(133,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C133",
+      "input": "=CELL(\"parentheses\",A133)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(133,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D133",
+      "input": "=CELL(\"color\",A133)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(133,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A134",
+      "fmt": "h:mm AM/PM yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(134,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A134",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(134,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B134",
+      "input": "=CELL(\"format\",A134)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(134,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C134",
+      "input": "=CELL(\"parentheses\",A134)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(134,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D134",
+      "input": "=CELL(\"color\",A134)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(134,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A135",
+      "fmt": "h:mm yyyy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(135,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A135",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(135,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B135",
+      "input": "=CELL(\"format\",A135)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(135,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C135",
+      "input": "=CELL(\"parentheses\",A135)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(135,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D135",
+      "input": "=CELL(\"color\",A135)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(135,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A136",
+      "fmt": "h:mm mmm"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(136,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A136",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(136,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B136",
+      "input": "=CELL(\"format\",A136)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(136,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C136",
+      "input": "=CELL(\"parentheses\",A136)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(136,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D136",
+      "input": "=CELL(\"color\",A136)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(136,4)",
+      "prop": "Text"
+    },
+    {
+      "op": "format",
+      "range": "Sheet1!A137",
+      "fmt": "h:mm mmm-yy"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(137,1)",
+      "prop": "NumberFormat"
+    },
+    {
+      "op": "setv",
+      "cell": "Sheet1!A137",
+      "value": {
+        "t": "n",
+        "v": 3.5
+      }
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(137,1)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!B137",
+      "input": "=CELL(\"format\",A137)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(137,2)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!C137",
+      "input": "=CELL(\"parentheses\",A137)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(137,3)",
+      "prop": "Text"
+    },
+    {
+      "op": "set",
+      "cell": "Sheet1!D137",
+      "input": "=CELL(\"color\",A137)"
+    },
+    {
+      "op": "om_get",
+      "path": "Worksheets('Sheet1').Cells(137,4)",
+      "prop": "Text"
+    }
+  ]
+}

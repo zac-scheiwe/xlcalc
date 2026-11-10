@@ -120,6 +120,62 @@ impl Workbook {
         any
     }
 
+    pub fn rename_name(
+        &mut self,
+        old: &str,
+        scope: Option<SheetId>,
+        new: &str,
+    ) -> Result<RecalcReport, EditError> {
+        self.command(Command::Name, |wb| wb.rename_name_run(old, scope, new))
+    }
+
+    fn rename_name_run(
+        &mut self,
+        old: &str,
+        scope: Option<SheetId>,
+        new: &str,
+    ) -> Result<RecalcReport, EditError> {
+        let (old_key, new_key) = (old.to_uppercase(), new.to_uppercase());
+        let bad = !crate::parser::is_valid_name(new)
+            || scope.is_none() && crate::parser::is_workbook_reserved_name(new);
+        let taken = old_key != new_key && self.names.get(&new_key, scope).is_some();
+        let Some(mut def) = self.names.get(&old_key, scope).cloned() else {
+            return Err(EditError::BadName(old.to_string()));
+        };
+        if bad || taken {
+            return Err(EditError::BadName(new.to_string()));
+        }
+        self.names.delete(&old_key, scope);
+        def.name = new.to_string();
+        self.names.insert(def);
+        let (key_text, display): (crate::value::Text, crate::value::Text) =
+            (new_key.as_str().into(), new.into());
+        self.rewrite_nodes(&mut |n, _| match n {
+            Node::Name { key, sheet, .. }
+                if key.as_ref() == old_key.as_str()
+                    && match (scope, sheet) {
+                        (None, None) => true,
+                        (Some(s), Some(SheetRef::Sheet(x))) => s == *x,
+                        _ => false,
+                    } =>
+            {
+                Some(Node::Name {
+                    key: key_text.clone(),
+                    display: display.clone(),
+                    sheet: sheet.clone(),
+                })
+            }
+            _ => None,
+        });
+        for fid in self.formula_ids().collect::<Vec<_>>() {
+            self.unlink_formula(fid);
+            self.link_formula(fid);
+        }
+        calc::name_changed(self, &old_key);
+        calc::name_changed(self, &new_key);
+        Ok(self.after_edit(vec![]))
+    }
+
     pub fn unlist_table(&mut self, name: &str) -> Result<RecalcReport, EditError> {
         self.command(Command::Table, |wb| wb.unlist_table_run(name))
     }
@@ -287,6 +343,11 @@ impl Workbook {
         }
         let old = self.tables[ti].name.clone();
         self.tables[ti].name = new.to_string();
+        for c in self.slicer_caches.iter_mut().filter(|c| !c.pivot) {
+            if crate::text::eq_ordinal_ci(&c.table, &old) {
+                c.table = new.to_string();
+            }
+        }
 
         self.view_rename_table(sheet, &old, new);
         let new_text: crate::value::Text = new.into();
@@ -305,10 +366,15 @@ impl Workbook {
 
         for fid in self.formula_ids().collect::<Vec<_>>() {
             let circular = self.calc.circular.contains(&fid);
+
+            let host_volatile = self.calc.host_volatile.contains(&fid);
             self.unlink_formula(fid);
             self.link_formula(fid);
             if circular {
                 self.calc.circular.insert(fid);
+            }
+            if host_volatile {
+                self.calc.host_volatile.insert(fid);
             }
         }
         Ok(RecalcReport::default())
@@ -563,7 +629,7 @@ impl Workbook {
                 let mut changed = false;
                 let root = crate::structure::edit_refs(&formula.root, &mut |sr, cref| {
                     let tsheet = match sr {
-                        SheetRef::Current => host.sheet,
+                        SheetRef::Current | SheetRef::Own => host.sheet,
                         SheetRef::Sheet(id) => *id,
                         _ => return crate::structure::RefEdit::Keep,
                     };
@@ -745,7 +811,7 @@ impl Workbook {
                 crate::formula::walk(&f.formula.root, &mut |n| {
                     if let crate::formula::Node::Ref(sr, cref @ CRef::Area { .. }) = n {
                         let s = match sr {
-                            SheetRef::Current => host.sheet,
+                            SheetRef::Current | SheetRef::Own => host.sheet,
                             SheetRef::Sheet(id) => *id,
                             _ => return,
                         };
@@ -776,7 +842,7 @@ impl Workbook {
             let mut changed = false;
             let root = crate::structure::edit_refs(&formula.root, &mut |sr, cref| {
                 let s = match sr {
-                    SheetRef::Current => host.sheet,
+                    SheetRef::Current | SheetRef::Own => host.sheet,
                     SheetRef::Sheet(id) => *id,
                     _ => return crate::structure::RefEdit::Keep,
                 };

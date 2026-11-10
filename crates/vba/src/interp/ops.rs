@@ -17,6 +17,8 @@ pub fn hresult_error(e: HResult) -> VbaError {
         HResult::DISP_E_TYPEMISMATCH => VbaError::new(13),
         HResult::DISP_E_DIVBYZERO => VbaError::new(11),
         HResult::E_OUTOFMEMORY => VbaError::new(7),
+
+        HResult::E_NOTIMPL => VbaError::new(13),
         HResult::E_INVALIDARG => VbaError::new(5),
         _ => VbaError {
             number: 51,
@@ -45,7 +47,7 @@ pub fn var_binary(
         BinOp::Xor => Binary::Xor,
         BinOp::Eqv => Binary::Eqv,
         BinOp::Imp => Binary::Imp,
-        BinOp::Cat => return var::cat(a, b, locale).map_err(hresult_error),
+        BinOp::Cat => return cat(a, b, locale),
         BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge => {
             return compare(op, a, b, text, locale)
         }
@@ -102,6 +104,22 @@ pub fn var_unary(op: UnOp, a: &Variant) -> Result<Variant, VbaError> {
     var::unary(o, a).map_err(hresult_error)
 }
 
-pub fn like(s: &str, pattern: &str, text: bool) -> bool {
+pub fn like(s: &str, pattern: &str, text: bool) -> Result<bool, VbaError> {
     stubs::like(s, pattern, text)
+}
+
+fn cat(a: &Variant, b: &Variant, locale: Locale) -> Result<Variant, VbaError> {
+    if let Variant::Bstr(l) = a {
+        if let (_, Some(_)) = crate::rt::split_odd(l) {
+            let Variant::Bstr(r) =
+                var::cat(&Variant::Bstr(String::new()), b, locale).map_err(hresult_error)?
+            else {
+                return var::cat(a, b, locale).map_err(hresult_error);
+            };
+            let mut bytes = crate::rt::bytes_of(l);
+            bytes.extend(crate::rt::bytes_of(&r));
+            return Ok(Variant::Bstr(crate::rt::from_bytes(&bytes)));
+        }
+    }
+    var::cat(a, b, locale).map_err(hresult_error)
 }

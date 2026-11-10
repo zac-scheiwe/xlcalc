@@ -99,7 +99,7 @@ fn canon(r: Result<Variant, i32>, post: &str) -> String {
         Err(n) => return format!("ERR:{n}"),
     };
     match v {
-        Variant::Bstr(s) => format!("S:{}", esc(&s)),
+        Variant::Bstr(s) => format!("S:{}", esc(&super::host_text(&s))),
         Variant::BstrNull => "SN:".to_string(),
         Variant::I2(n) => format!("I2:{n}"),
         Variant::I4(n) => format!("I4:{n}"),

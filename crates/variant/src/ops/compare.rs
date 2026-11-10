@@ -81,10 +81,29 @@ fn keys(c: char) -> (u32, u32, u32) {
 
 fn text(x: &str, y: &str, flags: u32) -> Ordering {
     let words = |t: &str| {
-        t.chars()
-            .filter(|c| !matches!(c, '-' | '\''))
-            .map(keys)
-            .collect::<Vec<_>>()
+        let mut out = Vec::new();
+        for c in t.chars().filter(|c| !matches!(c, '-' | '\'')) {
+            let letters = match c {
+                '\u{DF}' | '\u{1E9E}' => "ss",
+                '\u{E6}' | '\u{C6}' => "ae",
+                '\u{153}' | '\u{152}' => "oe",
+                '\u{1C4}'..='\u{1C6}' => "d\u{17E}",
+                '\u{1C7}'..='\u{1C9}' => "lj",
+                '\u{1CA}'..='\u{1CC}' => "nj",
+                _ => {
+                    out.push(keys(c));
+                    continue;
+                }
+            };
+
+            let upper = c.is_uppercase();
+            out.extend(
+                letters
+                    .chars()
+                    .map(|l| keys(if upper { l.to_ascii_uppercase() } else { l })),
+            );
+        }
+        out
     };
     let (kx, ky) = (words(x), words(y));
     let level = |f: fn(&(u32, u32, u32)) -> u32| {

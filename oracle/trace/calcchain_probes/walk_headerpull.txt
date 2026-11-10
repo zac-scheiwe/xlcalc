@@ -1,0 +1,42 @@
+=== 1 set C2 =D2+1
+  @ start 0,0 C2:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C2:0
+  | C2
+=== 2 set D2 =C2+1
+  @ start 0,0 D2:f C2:f
+  @ end rerun=0 next=0,0 valid=1 st=7 C2:f D2:f
+  | D2? +S:D2 +S:C2 C2? +U:C2 +U:D2 clear:S
+  @ start 0,0 C2:f D2:f
+  @ end rerun=0 next=0,0 valid=1 st=7 D2:f C2:f
+  | C2? +S:C2 +S:D2 D2? +U:D2 +U:C2 clear:S
+=== 3 set G1 =C2+1
+  @ start 0,0 G1:f D2:f C2:f
+  @ end rerun=0 next=0,0 valid=1 st=7 D2:f C2:f G1:f
+  | G1? +S:G1 +S:C2 C2? +S:D2 D2? +U:D2 +U:C2 +U:G1 clear:S
+  @ start 0,0 D2:f C2:f G1:f
+  @ end rerun=0 next=0,0 valid=1 st=7 C2:f D2:f G1:f
+  | D2? +S:D2 +S:C2 C2? +U:C2 +U:D2 clear:S G1? +U:G1
+=== 4 array A2:A3 =C2:C3+G1
+  @ start 0,0 {A2}:f A2:4 A3:4 C2:f D2:f G1:f
+  @ end rerun=0 next=0,0 valid=1 st=7 D2:f C2:f G1:f {A2}:f A2:4 A3:4
+  | { }? +S:{A2} +S:G1 G1? +S:C2 C2? +S:D2 D2? +U:D2 +U:C2 +U:G1 +U:{A2} clear:S +U:A2 +U:A3
+  @ start 0,0 D2:f C2:f G1:f {A2}:f A2:4 A3:4
+  @ end rerun=0 next=0,0 valid=1 st=7 C2:f D2:f G1:f {A2}:f A2:4 A3:4
+  | D2? +S:D2 +S:C2 C2? +U:C2 +U:D2 clear:S G1? +U:G1 { }? +U:{A2} +U:A2 +U:A3
+=== 5 set F1:G1 =IF(COLUMN()=6,A2,7)
+  @ start 0,0 F1:f G1:f C2:f D2:f {A2}:f A2:4 A3:4
+  @ end rerun=1 next=0,3 valid=1 st=7 G1:0 {A2}:0 A3:0 D2:f C2:f A2:f F1:f
+  | F1? +S:F1 +S:{A2} { }? +S:G1 G1 ^G1 -S:- { } ^? -S:- F1? +S:A2 A2? +S:C2 C2? +S:D2 D2? +U:D2 +U:C2 +U:A2 +U:F1 clear:S
+  @ start 0,3 G1:0 {A2}:0 A3:0 D2:f C2:f A2:f F1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 G1:0 {A2}:0 A3:0 C2:f D2:f A2:f F1:f
+  | D2? +S:D2 +S:C2 C2? +U:C2 +U:D2 clear:S A2? +U:A2 F1? +U:F1
+  @ start 0,3 G1:0 {A2}:0 A3:0 C2:f D2:f A2:f F1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 G1:0 {A2}:0 A3:0 D2:f C2:f A2:f F1:f
+  | C2? +S:C2 +S:D2 D2? +U:D2 +U:C2 clear:S A2? +U:A2 F1? +U:F1
+=== 6 const Z9 1
+  @ start 0,0 G1:0 {A2}:0 A3:0 D2:f C2:f A2:f F1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 G1:0 {A2}:0 A3:0 C2:f D2:f A2:f F1:f
+  | D2? +S:D2 +S:C2 C2? +U:C2 +U:D2 clear:S A2? +U:A2 F1? +U:F1
+  @ start 0,3 G1:0 {A2}:0 A3:0 C2:f D2:f A2:f F1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 G1:0 {A2}:0 A3:0 D2:f C2:f A2:f F1:f
+  | C2? +S:C2 +S:D2 D2? +U:D2 +U:C2 clear:S A2? +U:A2 F1? +U:F1

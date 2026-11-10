@@ -109,11 +109,11 @@ impl Shift {
     }
 }
 
-fn resolve(rc: Rc, host: u32, max: u32) -> Option<u32> {
+pub(crate) fn resolve(rc: Rc, host: u32, max: u32) -> Option<u32> {
     rc.resolve(host, max, false)
 }
 
-fn encode(abs_index: u32, abs: bool, host: u32) -> Rc {
+pub(crate) fn encode(abs_index: u32, abs: bool, host: u32) -> Rc {
     if abs {
         Rc {
             v: abs_index as i32,
@@ -127,7 +127,7 @@ fn encode(abs_index: u32, abs: bool, host: u32) -> Rc {
     }
 }
 
-fn shift_cref(cref: &CRef, old: CellAddr, new: CellAddr, s: &Shift) -> Result<CRef, ()> {
+pub(crate) fn shift_cref(cref: &CRef, old: CellAddr, new: CellAddr, s: &Shift) -> Result<CRef, ()> {
     let (rmax, cmax) = (MAX_ROWS, MAX_COLS);
     let rows = s.axis == Axis::Rows;
     let one = |rc: Rc, along: bool, oh: u32, nh: u32, max: u32| -> Result<Rc, ()> {
@@ -393,7 +393,7 @@ fn edit_refs_at_inner(
     }
 }
 
-fn within_limit(cref: &CRef, host: CellAddr, s: &Shift) -> bool {
+pub(crate) fn within_limit(cref: &CRef, host: CellAddr, s: &Shift) -> bool {
     let Some((l0, l1)) = s.limit else {
         return true;
     };
@@ -476,7 +476,7 @@ impl Shift {
         crate::moves::cref_rect(&to, host)
     }
 
-    fn straddle(&self, cref: &CRef, old: CellAddr, new: CellAddr) -> Option<CRef> {
+    pub(crate) fn straddle(&self, cref: &CRef, old: CellAddr, new: CellAddr) -> Option<CRef> {
         if !self.cells || self.insert {
             return None;
         }
@@ -498,9 +498,9 @@ fn abs_flags(cref: &CRef) -> (Option<bool>, Option<bool>) {
     }
 }
 
-fn targets_sheet(sheet: &SheetRef, host_sheet: SheetId, s: SheetId) -> bool {
+pub(crate) fn targets_sheet(sheet: &SheetRef, host_sheet: SheetId, s: SheetId) -> bool {
     match sheet {
-        SheetRef::Current => host_sheet == s,
+        SheetRef::Current | SheetRef::Own => host_sheet == s,
         SheetRef::Sheet(id) => *id == s,
         _ => false,
     }
@@ -813,7 +813,40 @@ impl Workbook {
                 "Insert method of Range class failed".into(),
             ));
         }
+        if let Some(msg) = self.autofilter_refuses_insert(sheet, rect, down) {
+            return Err(EditError::Compile(msg.into()));
+        }
         self.shift_cells(sheet, rect, down, true)
+    }
+
+    fn autofilter_refuses_insert(
+        &self,
+        sheet: SheetId,
+        r: Rect,
+        down: bool,
+    ) -> Option<&'static str> {
+        const FAILED: &str = "Insert method of Range class failed";
+        const CHANGE: &str = "This will change a filtered range on your worksheet. To complete this task, please remove AutoFilters.";
+        let f = self
+            .views
+            .get(&sheet)?
+            .filters
+            .iter()
+            .find(|f| f.table.is_none())?
+            .rect;
+        if !r.intersects(&f) || (r.c0 <= f.c0 && r.c1 >= f.c1) {
+            return None;
+        }
+        let header = r.r0 <= f.r0;
+        if down {
+            return header.then_some(FAILED);
+        }
+        let full_h = r.r1 >= f.r1;
+        if r.c0 == f.c0 {
+            (!(header && full_h)).then_some(CHANGE)
+        } else {
+            header.then_some(FAILED)
+        }
     }
 
     pub fn delete_cells(
@@ -856,9 +889,18 @@ impl Workbook {
                 vis.extend(rect.r0..=rect.r1);
             }
             let mut report = RecalcReport::default();
+            self.session.rows_over_header = true;
             for &r in vis.iter().rev() {
-                report = self.delete_rows_raw(sheet, r, 1)?;
+                let done = self.delete_rows_raw(sheet, r, 1);
+                match done {
+                    Ok(d) => report = d,
+                    Err(e) => {
+                        self.session.rows_over_header = false;
+                        return Err(e);
+                    }
+                }
             }
+            self.session.rows_over_header = false;
 
             self.view_notify_sel(sheet, rect.r0, rect.c0);
             return Ok(report);
@@ -1055,7 +1097,7 @@ impl Workbook {
                 .filter(|t| t.sheet == s0.sheet && s0.rect_in_band(&t.rect))
             {
                 let (h, last) = (t.rect.r0, t.rect.r1);
-                if t.headers && lo <= h && h < hi && hi <= last {
+                if t.headers && lo <= h && h < hi && hi <= last && !self.session.rows_over_header {
                     return Err(EditError::Compile(
                         "cannot delete the header row of a table".into(),
                     ));
@@ -1132,6 +1174,11 @@ impl Workbook {
             }
         };
 
+        self.cfv_shift(&s);
+        self.drawing_shift(&s);
+        self.spark_shift(&s);
+        self.hl_shift(&s);
+        self.notes_shift(&s);
         if self.shift_merges(&s) {
             let _ = self.recalc_point();
         }
@@ -1638,16 +1685,21 @@ impl Workbook {
         let mut ids: Vec<FormulaId> = self.formula_ids().collect();
 
         let shifted = std::mem::take(&mut self.calc.shifted);
-        let by_birth = std::mem::take(&mut self.calc.chain_by_birth);
         ids.sort_by_key(|&f| {
             let cell = self.formula(f);
-            (
-                !spilling.contains(&f),
-                !shifted.contains(&f),
-                if by_birth { cell.born } else { cell.seq },
-            )
+            (!spilling.contains(&f), !shifted.contains(&f), cell.seq)
         });
+
+        let keep_walk = (std::mem::take(&mut self.calc.keep_walk)
+            || scope.as_ref().is_some_and(|s| s.listed))
+            && self.calc.walk.in_use();
         self.chain_reset(&ids);
+        if keep_walk {
+            let keys: rustc_hash::FxHashMap<FormulaId, i64> =
+                ids.iter().map(|&f| (f, self.formula(f).seq)).collect();
+            let epoch = self.calc.chain_epoch;
+            self.calc.walk.renumber(&keys, epoch);
+        }
         for &fid in &ids {
             let f = self.formula_mut(fid);
             f.dirty = false;
@@ -1661,6 +1713,7 @@ impl Workbook {
                 calc::mark_dirty(self, fid);
             }
         }
+        let mut redirty: Vec<FormulaId> = Vec::new();
 
         self.with_op(Op::DtBlock, true, |this| {
             for fid in ids {
@@ -1670,6 +1723,9 @@ impl Workbook {
                         || circular_before.contains(&fid)
                 }) {
                     calc::mark_dirty(this, fid);
+                    if manual && this.calc.cmd_manual && scope.is_some() {
+                        redirty.push(fid);
+                    }
                 }
             }
         });
@@ -1684,7 +1740,7 @@ impl Workbook {
             }
         }
 
-        let circ = (self.calc.circular_ref, self.calc.circ_iterating);
+        let circ = (self.calc.circular_ref.clone(), self.calc.circ_iterating);
         let report = if manual {
             self.not_a_pass(calc::recalc)
         } else {
@@ -1805,6 +1861,16 @@ impl Workbook {
                 self.calc.dirty_list.push(fid);
             }
         }
+
+        for fid in redirty {
+            if self
+                .formulas
+                .get(fid as usize)
+                .is_some_and(|f| f.as_ref().is_some_and(|f| !f.dirty))
+            {
+                calc::mark_dirty(self, fid);
+            }
+        }
         report
     }
 
@@ -1817,6 +1883,13 @@ impl Workbook {
         self.command(Command::Copy, |wb| {
             wb.note_changed(dst.sheet, &[notice::paste_area(src, notice::cell(dst))]);
             let report = wb.copy_range_run(src_sheet, src, dst)?;
+            let to = Rect::new(
+                dst.row,
+                dst.col,
+                dst.row + src.rows() - 1,
+                dst.col + src.cols() - 1,
+            );
+            wb.cfv_copy(src_sheet, src, dst.sheet, to, false, true);
             wb.notify_list_select(dst.sheet, dst.row, dst.col);
             Ok(report)
         })
@@ -1838,6 +1911,26 @@ impl Workbook {
     }
 
     pub(crate) fn copy_range_with(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+        fill: bool,
+    ) -> Result<RecalcReport, EditError> {
+        let r = self.copy_range_with_cells(src_sheet, src, dst, fill);
+        if fill && r.is_ok() {
+            let to = Rect::new(
+                dst.row,
+                dst.col,
+                dst.row + src.rows() - 1,
+                dst.col + src.cols() - 1,
+            );
+            self.cfv_copy(src_sheet, src, dst.sheet, to, true, true);
+        }
+        r
+    }
+
+    fn copy_range_with_cells(
         &mut self,
         src_sheet: SheetId,
         src: Rect,
@@ -2253,11 +2346,22 @@ impl DirtyScope {
 
     fn dirties(&self, wb: &Workbook, fid: FormulaId) -> bool {
         let f = wb.formula(fid);
+
+        if self.listed
+            && !wb.calc.volatile.contains(&fid)
+            && !wb.calc.host_volatile.contains(&fid)
+            && crate::host::calls_host(wb, &f.formula.root)
+        {
+            return false;
+        }
         if self.moved.contains(&fid) {
             return true;
         }
         if self.except {
-            return f.addr.sheet != self.sheet;
+            if f.addr.sheet == self.sheet {
+                return wb.reads_volatile_cell(fid);
+            }
+            return !crate::host::calls_host(wb, &f.formula.root);
         }
         let unchanged = self
             .before

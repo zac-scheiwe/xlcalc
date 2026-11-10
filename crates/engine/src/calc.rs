@@ -37,8 +37,27 @@ impl RecalcReport {
 pub fn mark_dirty(wb: &mut Workbook, fid: FormulaId) {
     let mut work = vec![fid];
     let mut deps = Vec::new();
+    let mut seen_blocks = FxHashSet::default();
     while let Some(f) = work.pop() {
         let cell = wb.formula(f);
+
+        if cell.dirty
+            && wb.calc.walk.tracking()
+            && crate::walk::partly_clean(wb, f)
+            && seen_blocks.insert(f)
+        {
+            let (addr, spill) = (cell.addr, cell.spill);
+            wb.calc.walk.dirtied.push(f);
+            deps.clear();
+            match spill {
+                Some(rect) => wb.graph.dependents_of_rect(addr.sheet, &rect, &mut deps),
+                None => wb
+                    .graph
+                    .dependents_of_cell(addr.sheet, addr.row, addr.col, &mut deps),
+            }
+            work.extend(deps.iter().copied());
+            continue;
+        }
         if cell.dirty {
             let (retry, kept) = (cell.member_retry, cell.spill_kept && cell.array.is_some());
             if retry {
@@ -191,6 +210,7 @@ fn name_changed_scoped(
 pub fn recalc_only(wb: &mut Workbook, cells: &[CellAddr]) -> RecalcReport {
     let mut report = RecalcReport::default();
     wb.calc.pass += 1;
+    wb.calc.walk.invalidate();
     for &a in cells {
         if let Some(fid) = wb.formula_at(a) {
             if wb.formula(fid).dirty {
@@ -242,6 +262,7 @@ pub(crate) fn pending_formulas(wb: &Workbook) -> Vec<FormulaId> {
 pub(crate) fn recalc_pending(wb: &mut Workbook, fids: &[FormulaId]) -> RecalcReport {
     let mut report = RecalcReport::default();
     wb.calc.pass += 1;
+    wb.calc.walk.invalidate();
     for &g in fids {
         if wb.formulas.get(g as usize).is_some_and(|f| f.is_some()) {
             wb.set_dirty(g, true);
@@ -258,6 +279,12 @@ pub fn recalc(wb: &mut Workbook) -> RecalcReport {
 }
 
 pub fn recalc_with(wb: &mut Workbook, tables: bool) -> RecalcReport {
+    let report = recalc_with_inner(wb, tables);
+    wb.xlm_apply_pending();
+    report
+}
+
+fn recalc_with_inner(wb: &mut Workbook, tables: bool) -> RecalcReport {
     wb.one_pass(|wb| {
         let mut report = recalc_cells(wb);
         if tables && wb.data_tables.iter().any(|t| t.dirty) {
@@ -295,6 +322,47 @@ pub(crate) fn note_sheet_rows(wb: &mut Workbook) {
     }
 }
 
+fn names_missing_sheet(
+    wb: &Workbook,
+    root: &crate::formula::Node,
+    host: SheetId,
+    depth: u8,
+) -> bool {
+    let mut dead = false;
+    let mut keys: Vec<crate::value::Text> = Vec::new();
+    crate::formula::walk(root, &mut |n| match n {
+        crate::formula::Node::DeadRef(_) => dead = true,
+        crate::formula::Node::Name { key, .. } => keys.push(key.clone()),
+        _ => {}
+    });
+    crate::structure::map_refs(root, &mut |sr, _| {
+        dead |= match sr {
+            crate::formula::SheetRef::Missing(_) => true,
+            crate::formula::SheetRef::Sheet(id) => wb.sheet(*id).is_none(),
+            _ => false,
+        };
+        None
+    });
+    if !dead && depth < 3 {
+        for k in keys {
+            if let Some(def) = wb.names.lookup(&k, host) {
+                dead |= names_missing_sheet(wb, &def.formula.root, host, depth + 1);
+            }
+        }
+    }
+    dead
+}
+
+pub(crate) fn dead_host_formulas(wb: &Workbook) -> Vec<FormulaId> {
+    wb.formula_ids()
+        .filter(|&f| {
+            let c = wb.formula(f);
+            crate::host::calls_host(wb, &c.formula.root)
+                && names_missing_sheet(wb, &c.formula.root, c.addr.sheet, 0)
+        })
+        .collect()
+}
+
 pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
     note_sheet_rows(wb);
     wb.calc.entered.clear();
@@ -302,18 +370,30 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
     let mut report = RecalcReport::default();
     wb.calc.pass += 1;
     wb.calc.now = wb.calc.fixed_now.unwrap_or_else(current_serial);
-    wb.calc.circular_ref = None;
+    wb.calc.circular_ref.clear();
     wb.calc.partials.clear();
     wb.calc.waited.clear();
     wb.calc.unseen.clear_late();
     wb.calc.circ_iterating = wb.settings.iteration;
-    let volatile: Vec<FormulaId> = wb
-        .calc
-        .volatile
-        .iter()
-        .chain(&wb.calc.host_volatile)
-        .copied()
-        .collect();
+    if wb.settings.force_full || wb.settings.force_full_seen {
+        let all: Vec<FormulaId> = wb.formula_ids().collect();
+        for fid in all {
+            mark_dirty(wb, fid);
+        }
+    }
+    if std::mem::take(&mut wb.calc.dead_pending) {
+        for fid in dead_host_formulas(wb) {
+            mark_dirty(wb, fid);
+        }
+    }
+    let mut volatile: Vec<FormulaId> = Vec::new();
+    if !wb.calc.skip_volatile {
+        volatile.extend(wb.calc.volatile.iter().copied());
+
+        if !wb.calc.skip_host_volatile {
+            volatile.extend(wb.calc.host_volatile.iter().copied());
+        }
+    }
     for fid in volatile {
         mark_dirty(wb, fid);
     }
@@ -321,7 +401,7 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
     let volatile_names: Vec<String> = wb
         .names
         .iter()
-        .filter(|d| d.formula.volatile)
+        .filter(|d| d.formula.volatile && !wb.calc.skip_volatile)
         .map(|d| d.name.to_uppercase())
         .collect();
     let mut users = Vec::new();
@@ -332,6 +412,15 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
             mark_dirty(wb, fid);
         }
     }
+
+    if crate::walk::active(wb) {
+        crate::walk::recalc(wb, &mut report);
+        wb.calc.dirty_list.clear();
+        report.circular = wb.calc.circular_ref.first().copied();
+        wb.note_pass(&report.sheets);
+        return finish_report(report);
+    }
+    wb.calc.walk.invalidate();
 
     let circular: Vec<FormulaId> = wb.calc.circular.drain().collect();
     for &fid in &circular {
@@ -423,12 +512,12 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
             iterate(wb, members, &mut report);
         }
     }
-    report.circular = wb.calc.circular_ref;
+    report.circular = wb.calc.circular_ref.first().copied();
     wb.note_pass(&report.sheets);
     finish_report(report)
 }
 
-fn note_host_volatile(wb: &mut Workbook, fid: FormulaId, volatile: Option<bool>) {
+pub(crate) fn note_host_volatile(wb: &mut Workbook, fid: FormulaId, volatile: Option<bool>) {
     if volatile == Some(true) {
         wb.calc.host_volatile.insert(fid);
     } else if !wb.calc.host_volatile.is_empty() {
@@ -936,9 +1025,7 @@ fn abandon_circular(wb: &mut Workbook, stack: &mut Vec<(FormulaId, bool)>) {
         }
     }
 
-    if wb.calc.circular_ref.is_none() {
-        wb.calc.circular_ref = Some(wb.formula(f).addr);
-    }
+    note_circular(wb, f);
 }
 
 const PARTIAL_TRIES: u8 = 16;
@@ -1032,9 +1119,7 @@ fn store_partial(
     if tries >= PARTIAL_TRIES || !partial_waits(wb, fid) {
         wb.formula_mut(fid).circular_pass = pass;
         wb.calc.circular.insert(fid);
-        if wb.calc.circular_ref.is_none() {
-            wb.calc.circular_ref = Some(wb.formula(fid).addr);
-        }
+        note_circular(wb, fid);
     } else {
         wb.calc.dirty_list.push(fid);
         wb.calc.partials.push(fid);
@@ -1229,7 +1314,12 @@ fn iterate(wb: &mut Workbook, mut members: Vec<FormulaId>, report: &mut RecalcRe
     }
 }
 
-fn store_result(wb: &mut Workbook, fid: FormulaId, value: Value, report: &mut RecalcReport) {
+pub(crate) fn store_result(
+    wb: &mut Workbook,
+    fid: FormulaId,
+    value: Value,
+    report: &mut RecalcReport,
+) {
     let (addr, old_spill) = {
         let f = wb.formula(fid);
         (f.addr, f.spill)
@@ -1321,6 +1411,10 @@ fn store_result(wb: &mut Workbook, fid: FormulaId, value: Value, report: &mut Re
     if changed {
         report.changed.push(addr);
 
+        if wb.calc.walk.running {
+            return;
+        }
+
         let mut area: Option<Rect> = None;
         for r in [old_spill, new_spill].into_iter().flatten() {
             area = Some(area.map_or(r, |a| a.union_bounds(&r)));
@@ -1396,5 +1490,12 @@ fn value_change(old: &Value, new: &Value) -> f64 {
             .map(|x| value_change(x, n))
             .fold(0.0, f64::max),
         _ => 0.0,
+    }
+}
+
+pub(crate) fn note_circular(wb: &mut Workbook, fid: FormulaId) {
+    let addr = wb.formula(fid).addr;
+    if !wb.calc.circular_ref.iter().any(|c| c.sheet == addr.sheet) {
+        wb.calc.circular_ref.push(addr);
     }
 }

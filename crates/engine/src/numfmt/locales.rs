@@ -151,6 +151,15 @@ pub static ES: DateNames = DateNames {
     pm: "PM",
 };
 
+pub static ES_A: DateNames = DateNames {
+    months: ES_MONTHS,
+    months_abbr: ES_MONTHS_ABBR,
+    days: ES_DAYS,
+    days_abbr: ["do.", "lu.", "ma.", "mi.", "ju.", "vi.", "sá."],
+    am: "a. m.",
+    pm: "p. m.",
+};
+
 pub static ES_MX: DateNames = DateNames {
     months: ES_MONTHS,
     months_abbr: ES_MONTHS_ABBR,
@@ -343,13 +352,21 @@ pub static ZH: DateNames = DateNames {
 
 pub fn names_for(lcid: Option<u32>) -> &'static DateNames {
     let Some(id) = lcid else { return &EN_NZ };
-    match id & 0xFFFF {
+    let id = match id & 0xFFFF {
+        0x0004 => 0x0804,
+        n @ (0x03 | 0x05 | 0x06 | 0x08 | 0x0B | 0x0D..=0x0F | 0x12 | 0x14 | 0x15 | 0x17..=0x7F) => {
+            0x0400 | n
+        }
+        n => n,
+    };
+    match id {
         0x1409 | 0x1809 | 0x1C09 | 0x2009 | 0x4809 => &EN_NZ,
         0x0009 | 0x0409 | 0x0809 | 0x0C09 | 0x1009 | 0x4009 | 0x4409 => &EN,
         0x0007 | 0x0407 | 0x1007 | 0x1407 => &DE,
         0x0807 => &DE_CH,
         0x000C | 0x040C | 0x080C | 0x0C0C | 0x100C | 0x140C | 0x180C => &FR,
-        0x000A | 0x040A | 0x0C0A => &ES,
+        0x000A => &ES_A,
+        0x040A | 0x0C0A => &ES,
         0x080A => &ES_MX,
         0x0010 | 0x0410 | 0x0810 => &IT,
         0x0016 | 0x0416 | 0x0816 => &PT,

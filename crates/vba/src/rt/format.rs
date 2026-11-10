@@ -120,8 +120,14 @@ fn vba_code(code: &str, dated: bool) -> String {
                         lit(&mut out, c);
                     }
                     out.push(chars[i + 1]);
-                    if chars.get(i + 2) != Some(&'0') {
-                        out.push('0');
+
+                    match chars.get(i + 2) {
+                        Some('0') => {}
+                        Some('#') => {
+                            out.push('0');
+                            i += 1;
+                        }
+                        _ => out.push('0'),
                     }
                     i += 2;
                     continue;
@@ -257,9 +263,9 @@ fn text_format(section: &str, s: &str) -> String {
         out.extend(used[slots..].iter());
     }
     if upper && !lower {
-        out.to_uppercase()
+        super::strings::map_str(&out, true)
     } else if lower && !upper {
-        out.to_lowercase()
+        super::strings::map_str(&out, false)
     } else {
         out
     }
@@ -368,6 +374,9 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
         }
         let lc = lower[i];
         if !c.is_alphabetic() {
+            if c == '/' {
+                out.push('\\');
+            }
             out.push(c);
             i += 1;
             continue;
@@ -526,12 +535,12 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
 }
 
 #[derive(Clone, Copy)]
-struct Week {
-    first: i64,
-    rule: i64,
+pub(super) struct Week {
+    pub(super) first: i64,
+    pub(super) rule: i64,
 }
 
-fn week_of_year(p: &Parts, wk: Week) -> i64 {
+pub(super) fn week_of_year(p: &Parts, wk: Week) -> i64 {
     let off = (p.weekday - wk.first - (p.yday - 1)).rem_euclid(7);
     let lead = (p.yday - 1 + off) / 7;
     let starts_week_one = match wk.rule {
@@ -622,7 +631,7 @@ fn fill_sections(code: &str) -> String {
 
 fn zero_by_rounding(code: &str, x: f64) -> f64 {
     let secs = sections(code);
-    if secs.len() < 3 || x == 0.0 {
+    if secs.len() < 2 || x == 0.0 {
         return x;
     }
     let first = &secs[0];
@@ -688,9 +697,63 @@ fn wide_scientific(ctx: &RtContext, code: &str, x: f64) -> Option<Result<String,
     Some(Ok(format!("{text}{marker}{sgn}{exp}{suffix}")))
 }
 
+fn drop_decimal_commas(code: &str) -> String {
+    if code.contains('"') || code.contains('\\') {
+        return code.to_string();
+    }
+    let mut out = String::new();
+    let mut after_point = false;
+    for c in code.chars() {
+        match c {
+            '.' => after_point = true,
+            ';' => after_point = false,
+            ',' if after_point => continue,
+            _ => {}
+        }
+        out.push(c);
+    }
+    out
+}
+
+fn sci_fraction_zeros(code: &str, x: f64) -> String {
+    let (Some(point), Some(e)) = (code.find('.'), code.find(['E', 'e'])) else {
+        return code.to_string();
+    };
+    if !(100.0..1000.0).contains(&x.abs())
+        || code.contains(['"', ';', '\\'])
+        || e < point
+        || !matches!(code[e + 1..].chars().next(), Some('+' | '-'))
+    {
+        return code.to_string();
+    }
+    let mut seen_zero = false;
+    let frac: String = code[point..e]
+        .chars()
+        .map(|c| {
+            seen_zero |= c == '0';
+            if c == '#' && seen_zero {
+                '0'
+            } else {
+                c
+            }
+        })
+        .collect();
+    format!("{}{frac}{}", &code[..point], &code[e..])
+}
+
 fn render(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, VbaError> {
     let dated = has_date_field(code);
-    let plain = fill_sections(&vba_code(code, dated));
+    let mut plain = fill_sections(&vba_code(code, dated));
+
+    if sections(&plain).len() > 3 {
+        plain = sections(&plain)[..3].join(";");
+    }
+    if dated && x == 0.0 {
+        plain = sections(&plain).swap_remove(0);
+    }
+    if !dated {
+        plain = sci_fraction_zeros(&plain, x);
+    }
     if plain.is_empty() && !code.is_empty() {
         return Ok(String::new());
     }
@@ -712,6 +775,11 @@ fn render(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, VbaEr
         x.abs()
     } else {
         x
+    };
+    let out = if dated {
+        out
+    } else {
+        drop_decimal_commas(&out)
     };
     let nf = NumberFormat::parse(&out).map_err(|_| VbaError::new(5))?;
     let text = nf
@@ -788,7 +856,8 @@ fn format_impl(ctx: &RtContext, a: &[Variant]) -> R {
     } else {
         a[0].clone()
     };
-    let is_date = matches!(value, Variant::Date(_));
+    let is_date = matches!(value, Variant::Date(_))
+        || matches!(&value, Variant::Bstr(s) if fmt.is_empty() && !s.is_empty() && double(ctx, &value).is_err() && dates::parse_date(ctx, s).is_some());
 
     let text_marks = {
         let secs = sections(&fmt);
@@ -818,12 +887,24 @@ fn format_impl(ctx: &RtContext, a: &[Variant]) -> R {
                 Err(_) => dates::parse_date(ctx, s),
             }
         }
+
+        Variant::Bstr(s) if fmt.is_empty() && !s.is_empty() && double(ctx, &value).is_err() => {
+            dates::parse_date(ctx, s)
+        }
         Variant::Bstr(_) => None,
         Variant::Empty => None,
         Variant::Bool(b) => Some(if *b { -1.0 } else { 0.0 }),
         Variant::Date(x) => Some(*x),
         Variant::Error(_) | Variant::Array(_) => return Err(VbaError::new(13)),
-        v => Some(double(ctx, v)?),
+        v => {
+            let x = double(ctx, v)?;
+
+            Some(if matches!(v, Variant::R4(_)) {
+                format!("{x:.6e}").parse().unwrap_or(x)
+            } else {
+                x
+            })
+        }
     };
     let number = if text_marks && !fmt.is_empty() && !matches!(value, Variant::Bstr(_)) {
         None
@@ -873,10 +954,97 @@ fn format_impl(ctx: &RtContext, a: &[Variant]) -> R {
             Some(Named::GeneralDate) => render(ctx, wk, &general_date_code(ctx, x), x)?,
             Some(Named::Words(y, n)) => words(x, y, n),
             Some(Named::Code(c)) => render(ctx, wk, &c, x)?,
-            None => render(ctx, wk, &fmt, x)?,
+            None => match decimal_plain(ctx, &fmt, &value) {
+                Some(s) => s,
+                None => render(ctx, wk, &fmt, x)?,
+            },
         }
     };
     text_out(out)
+}
+
+fn decimal_plain(ctx: &RtContext, code: &str, value: &Variant) -> Option<String> {
+    if !matches!(value, Variant::Decimal(_) | Variant::Cy(_))
+        || !code.chars().all(|c| matches!(c, '0' | '#' | '.' | ','))
+        || matches!(value, Variant::Cy(_)) && (code.ends_with(['.', ',']) || code.contains(",."))
+        || code.matches('.').count() > 1
+        || !code.contains(['0', '#'])
+    {
+        return None;
+    }
+    let (int_code, frac_code) = code.split_once('.').unwrap_or((code, ""));
+    let want = frac_code.chars().filter(|c| matches!(c, '0' | '#')).count();
+    let min_frac = frac_code.matches('0').count();
+    let min_int = int_code.matches('0').count();
+    let group = int_code.contains(',');
+    let t = text(ctx, value).ok()?;
+    let (neg, t) = match t.strip_prefix('-') {
+        Some(r) => (true, r.to_string()),
+        None => (false, t),
+    };
+    let (ip, fp) = t.split_once('.').unwrap_or((&t, ""));
+    let mut digits: Vec<u8> = ip
+        .bytes()
+        .chain(fp.bytes().take(want))
+        .map(|b| b - b'0')
+        .collect();
+    if fp.as_bytes().get(want).is_some_and(|&b| b >= b'5') {
+        let mut i = digits.len();
+        loop {
+            if i == 0 {
+                digits.insert(0, 1);
+                break;
+            }
+            i -= 1;
+            if digits[i] == 9 {
+                digits[i] = 0;
+            } else {
+                digits[i] += 1;
+                break;
+            }
+        }
+    }
+    let split = digits.len() - fp.len().min(want);
+    let digit_text = |d: &[u8]| -> String { d.iter().map(|d| char::from(b'0' + d)).collect() };
+    let int_trimmed = digit_text(&digits[..split])
+        .trim_start_matches('0')
+        .to_string();
+    let mut int = format!(
+        "{}{int_trimmed}",
+        "0".repeat(min_int.saturating_sub(int_trimmed.len()))
+    );
+    let mut frac = digit_text(&digits[split..]);
+    while frac.len() < want {
+        frac.push('0');
+    }
+    while frac.len() > min_frac && frac.ends_with('0') {
+        frac.pop();
+    }
+    if group {
+        let n = int.len();
+        int = int
+            .chars()
+            .enumerate()
+            .map(|(i, c)| {
+                if i > 0 && (n - i) % 3 == 0 {
+                    format!(",{c}")
+                } else {
+                    c.to_string()
+                }
+            })
+            .collect();
+    }
+    let body = if frac.is_empty() {
+        int
+    } else {
+        format!("{int}.{frac}")
+    };
+    let zero = !body.bytes().any(|b| (b'1'..=b'9').contains(&b));
+    Some(if neg && !zero {
+        format!("-{body}")
+    } else {
+        body
+    })
 }
 
 pub(super) fn format(ctx: &RtContext, a: &[Variant]) -> R {
@@ -885,4 +1053,105 @@ pub(super) fn format(ctx: &RtContext, a: &[Variant]) -> R {
 
 pub(super) fn format_d(ctx: &RtContext, a: &[Variant]) -> R {
     format_impl(ctx, a)
+}
+
+fn number_code(
+    ctx: &RtContext,
+    a: &[Variant],
+    prefix: &str,
+    suffix: &str,
+    group_default: bool,
+) -> Result<String, VbaError> {
+    let digits = long_or(ctx, a, 1, -1)?;
+    let flag = |i: usize, default: bool| -> Result<bool, VbaError> {
+        match long_or(ctx, a, i, -2)? {
+            -2 => Ok(default),
+            0 => Ok(false),
+            -1 => Ok(true),
+            _ => Err(VbaError::new(5)),
+        }
+    };
+    let lead = flag(2, true)?;
+    let parens = flag(3, false)?;
+    let group = flag(4, group_default)?;
+    if digits < -1 {
+        return Err(VbaError::new(5));
+    }
+
+    let point = digits >= 256 && digits % 256 == 0;
+    let digits = if digits == -1 {
+        2
+    } else {
+        (digits % 256) as usize
+    };
+    let int = match (group, lead) {
+        (true, true) => "#,##0",
+        (true, false) => "#,###",
+        (false, true) => "0",
+        (false, false) => "#",
+    };
+    let frac = if point {
+        ".".to_string()
+    } else if digits == 0 {
+        String::new()
+    } else {
+        format!(".{}", "0".repeat(digits))
+    };
+    let body = format!("{prefix}{int}{frac}{suffix}");
+    Ok(if parens {
+        format!("{body};({body})")
+    } else {
+        format!("{body};-{body}")
+    })
+}
+
+fn formatted(ctx: &RtContext, a: &[Variant], code: String) -> R {
+    if is_null(&a[0]) || matches!(a[0], Variant::Empty) {
+        return Ok(Variant::BstrNull);
+    }
+    if matches!(&a[0], Variant::Bstr(s) if s.is_empty()) {
+        return Err(VbaError::new(13));
+    }
+    if let Variant::Bstr(_) = &a[0] {
+        double(ctx, &a[0])?;
+    }
+    format_impl(ctx, &[a[0].clone(), Variant::Bstr(code)])
+}
+
+pub(super) fn format_number(ctx: &RtContext, a: &[Variant]) -> R {
+    let code = number_code(ctx, a, "", "", true)?;
+    formatted(ctx, a, code)
+}
+
+pub(super) fn format_percent(ctx: &RtContext, a: &[Variant]) -> R {
+    let code = number_code(ctx, a, "", "%", true)?;
+    formatted(ctx, a, code)
+}
+
+pub(super) fn format_currency(ctx: &RtContext, a: &[Variant]) -> R {
+    let code = number_code(ctx, a, "$", "", true)?;
+    formatted(ctx, a, code)
+}
+
+pub(super) fn format_date_time(ctx: &RtContext, a: &[Variant]) -> R {
+    let name = match long_or(ctx, a, 1, 0)? {
+        0 => "General Date",
+        1 => "Long Date",
+        2 => "Short Date",
+        3 => "Long Time",
+        4 => "Short Time",
+        _ => return Err(VbaError::new(5)),
+    };
+    if is_null(&a[0]) {
+        return Ok(Variant::BstrNull);
+    }
+    if matches!(&a[0], Variant::Bstr(s) if s.is_empty()) {
+        return Err(VbaError::new(13));
+    }
+    let value = match &a[0] {
+        Variant::Empty => Variant::Date(0.0),
+        v @ Variant::Bstr(_) => Variant::Date(dates::to_date(ctx, v)?),
+        v => v.clone(),
+    };
+    format_impl(ctx, &[value, Variant::Bstr(name.to_string())])
 }

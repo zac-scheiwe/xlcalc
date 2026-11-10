@@ -1,0 +1,8 @@
+set C2 =Z1+1
+set B3 =Z1+1
+set A1 =COUNT(B2:C3)
+const Z1 5
+set A1 =SUM(B2:C3)
+const Z1 6
+set A1 =C3:C3+B2:C2
+const Z1 7

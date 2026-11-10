@@ -7,6 +7,10 @@ use xlcalc_variant::{Decimal, HResult, ObjectId, SafeArray, VarType, Variant};
 
 use super::{Outcome, Tally};
 
+thread_local! {
+    static SHEETS_IN_NEW: std::cell::Cell<u32> = const { std::cell::Cell::new(1) };
+}
+
 pub struct OmSession {
     pub(crate) app: Application<'static>,
     pub(crate) book: BookId,
@@ -227,11 +231,11 @@ fn split_segments(path: &str) -> Vec<String> {
                 quoted = !quoted;
                 cur.push(c);
             }
-            '(' if !quoted => {
+            '(' | '[' if !quoted => {
                 depth += 1;
                 cur.push(c);
             }
-            ')' if !quoted => {
+            ')' | ']' if !quoted => {
                 depth -= 1;
                 cur.push(c);
             }
@@ -248,6 +252,10 @@ fn parse_segment(seg: &str) -> Option<(String, Vec<Variant>)> {
         return Some((seg.to_string(), Vec::new()));
     };
     let body = seg[open..].strip_prefix('(')?.strip_suffix(')')?;
+    Some((seg[..open].to_string(), parse_args(body)?))
+}
+
+fn parse_args(body: &str) -> Option<Vec<Variant>> {
     let mut args = Vec::new();
     let chars: Vec<char> = body.chars().collect();
     let mut i = 0;
@@ -280,6 +288,16 @@ fn parse_segment(seg: &str) -> Option<(String, Vec<Variant>)> {
                 }
             }
             args.push(Variant::Bstr(s));
+        } else if chars[i] == '[' {
+            let close = body.rfind(']').filter(|_| chars.last() == Some(&']'))?;
+            let inner: String = chars[i + 1..close.min(chars.len())].iter().collect();
+            let items = parse_args(&inner)?;
+            args.push(Variant::Array(Box::new(SafeArray {
+                elem: VarType::Variant,
+                bounds: vec![(0, items.len() as u32)],
+                data: items,
+            })));
+            i = chars.len();
         } else {
             while i < chars.len() && chars[i] != ',' {
                 i += 1;
@@ -307,19 +325,24 @@ fn parse_segment(seg: &str) -> Option<(String, Vec<Variant>)> {
             Some(_) => return None,
         }
     }
-    Some((seg[..open].to_string(), args))
+    Some(args)
 }
 
 impl OmSession {
+    pub fn set_sheets_in_new(n: u32) {
+        SHEETS_IN_NEW.with(|c| c.set(n));
+    }
+
     pub fn new(wb: &mut Workbook) -> OmSession {
-        OmSession::with_numbers(wb, &[])
+        OmSession::with_numbers(wb, &[], false)
     }
 
     pub fn fresh(wb: &mut Workbook) -> OmSession {
-        OmSession::with_numbers(wb, &Application::AUTOMATION_BOOK_NUMBERS)
+        OmSession::with_numbers(wb, &Application::AUTOMATION_BOOK_NUMBERS, true)
     }
 
-    fn with_numbers(wb: &mut Workbook, reserved: &[u32]) -> OmSession {
+    fn with_numbers(wb: &mut Workbook, reserved: &[u32], fresh: bool) -> OmSession {
+        let sheets = wb.sheet_count() as u32;
         let mut app = Application::new();
         let out = super::filesteps::new_out_dir();
         app.set_file_system(Box::new(super::filesteps::OutFs::new(out.clone())));
@@ -327,6 +350,12 @@ impl OmSession {
         app.set_host(Box::new(RunnerHost));
         let book = app.add_workbook(std::mem::replace(wb, Workbook::empty()));
         app.swap_engine(book, wb);
+
+        if fresh && sheets >= 2 {
+            app.set_next_sheet_number(book, sheets + 2);
+        }
+
+        app.set_sheets_in_new_workbook(SHEETS_IN_NEW.with(std::cell::Cell::get));
 
         for name in ["DisplayAlerts", "ScreenUpdating", "EnableEvents"] {
             let _ = app.invoke(app.handle(), name, Call::PUT, &[Variant::Bool(false)], &[]);
@@ -510,8 +539,20 @@ impl OmSession {
         n: usize,
         tally: &mut Tally,
     ) -> bool {
-        if !matches!(op, "om" | "om_get" | "om_put" | "om_hold" | "om_enum") {
+        if !matches!(
+            op,
+            "om" | "om_get" | "om_put" | "om_hold" | "om_enum" | "om_release"
+        ) {
             return false;
+        }
+        if op == "om_release" {
+            self.app.swap_engine(self.book, wb);
+            if let Some(id) = step["name"].as_str().and_then(|n| self.held.remove(n)) {
+                self.app.release(id);
+            }
+            self.app.swap_engine(self.book, wb);
+            tally.add(Outcome::Exact, String::new);
+            return true;
         }
         self.app.swap_engine(self.book, wb);
         let outcome = self.step(op, step, rec);
@@ -681,6 +722,15 @@ impl OmSession {
             };
         }
         let expected = decode(want, self).map_err(|_| "unreadable recorded result".to_string())?;
+
+        let stripped;
+        let got = match got {
+            Variant::Bstr(s) if rec["op"] == "run" => {
+                stripped = Variant::Bstr(xlcalc_vba::rt::host_text(s));
+                &stripped
+            }
+            g => g,
+        };
         if *got == expected {
             Ok(())
         } else {

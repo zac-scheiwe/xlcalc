@@ -1,0 +1,465 @@
+{
+"sheets": [
+"Loan",
+"Sched"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Loan!A1",
+"input": "Loan amount"
+},
+{
+"op": "set",
+"cell": "Loan!B1",
+"input": "$450,000"
+},
+{
+"op": "set",
+"cell": "Loan!A2",
+"input": "Annual rate"
+},
+{
+"op": "set",
+"cell": "Loan!B2",
+"input": "6.25%"
+},
+{
+"op": "set",
+"cell": "Loan!A3",
+"input": "Years"
+},
+{
+"op": "set",
+"cell": "Loan!B3",
+"input": "30"
+},
+{
+"op": "set",
+"cell": "Loan!A4",
+"input": "Extra / month"
+},
+{
+"op": "set",
+"cell": "Loan!B4",
+"input": "$200"
+},
+{
+"op": "set",
+"cell": "Loan!A5",
+"input": "Start"
+},
+{
+"op": "set",
+"cell": "Loan!B5",
+"input": "1/2/2026"
+},
+{
+"op": "set",
+"cell": "Loan!A6",
+"input": "Monthly payment"
+},
+{
+"op": "set",
+"cell": "Loan!B6",
+"input": "=-PMT(B2/12,B3*12,B1)"
+},
+{
+"op": "set",
+"cell": "Loan!A7",
+"input": "Total interest (no extra)"
+},
+{
+"op": "set",
+"cell": "Loan!B7",
+"input": "=-CUMIPMT(B2/12,B3*12,B1,1,B3*12,0)"
+},
+{
+"op": "set",
+"cell": "Loan!A8",
+"input": "Payoff months"
+},
+{
+"op": "set",
+"cell": "Loan!B8",
+"input": "=IFERROR(NPER(B2/12,-(B6+B4),B1),\"n/a\")"
+},
+{
+"op": "set",
+"cell": "Loan!A9",
+"input": "Payoff date"
+},
+{
+"op": "set",
+"cell": "Loan!B9",
+"input": "=EDATE(B5,ROUNDUP(B8,0))"
+},
+{
+"op": "set",
+"cell": "Loan!A10",
+"input": "Eff. rate"
+},
+{
+"op": "set",
+"cell": "Loan!B10",
+"input": "=EFFECT(B2,12)"
+},
+{
+"op": "set",
+"cell": "Loan!A11",
+"input": "Payment w/ extra"
+},
+{
+"op": "set",
+"cell": "Loan!B11",
+"input": "=B6+B4"
+},
+{
+"op": "set",
+"cell": "Loan!A12",
+"input": "Rate per period"
+},
+{
+"op": "set",
+"cell": "Loan!B12",
+"input": "=B2/12"
+},
+{
+"op": "set",
+"cell": "Loan!A13",
+"input": "Pay yrs"
+},
+{
+"op": "set",
+"cell": "Loan!B13",
+"input": "=B8/12"
+},
+{
+"op": "read",
+"range": "Loan!A1:B13"
+},
+{
+"op": "format",
+"range": "Loan!B1",
+"fmt": "$#,##0.00"
+},
+{
+"op": "format",
+"range": "Loan!B4",
+"fmt": "$#,##0"
+},
+{
+"op": "format",
+"range": "Loan!B6:B7",
+"fmt": "$#,##0.00"
+},
+{
+"op": "format",
+"range": "Loan!B2",
+"fmt": "0.00%"
+},
+{
+"op": "format",
+"range": "Loan!B5",
+"fmt": "d mmm yyyy"
+},
+{
+"op": "format",
+"range": "Loan!B9",
+"fmt": "mmm-yy"
+},
+{
+"op": "read",
+"range": "Loan!A1:B13"
+},
+{
+"op": "set",
+"cell": "Sched!A1",
+"input": "No"
+},
+{
+"op": "set",
+"cell": "Sched!B1",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "Sched!C1",
+"input": "Opening"
+},
+{
+"op": "set",
+"cell": "Sched!D1",
+"input": "Payment"
+},
+{
+"op": "set",
+"cell": "Sched!E1",
+"input": "Interest"
+},
+{
+"op": "set",
+"cell": "Sched!F1",
+"input": "Principal"
+},
+{
+"op": "set",
+"cell": "Sched!G1",
+"input": "Closing"
+},
+{
+"op": "set",
+"cell": "Sched!A2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sched!B2",
+"input": "=EDATE(Loan!$B$5,A2-1)"
+},
+{
+"op": "set",
+"cell": "Sched!C2",
+"input": "=Loan!$B$1"
+},
+{
+"op": "set",
+"cell": "Sched!D2",
+"input": "=IF(C2<=0,0,MIN(C2+E2,Loan!$B$11))"
+},
+{
+"op": "set",
+"cell": "Sched!E2",
+"input": "=ROUND(C2*Loan!$B$12,2)"
+},
+{
+"op": "set",
+"cell": "Sched!F2",
+"input": "=D2-E2"
+},
+{
+"op": "set",
+"cell": "Sched!G2",
+"input": "=C2-F2"
+},
+{
+"op": "set",
+"cell": "Sched!A3",
+"input": "=A2+1"
+},
+{
+"op": "set",
+"cell": "Sched!B3",
+"input": "=EDATE(Loan!$B$5,A3-1)"
+},
+{
+"op": "set",
+"cell": "Sched!C3",
+"input": "=G2"
+},
+{
+"op": "set",
+"cell": "Sched!D3",
+"input": "=IF(C3<=0,0,MIN(C3+E3,Loan!$B$11))"
+},
+{
+"op": "set",
+"cell": "Sched!E3",
+"input": "=ROUND(C3*Loan!$B$12,2)"
+},
+{
+"op": "set",
+"cell": "Sched!F3",
+"input": "=D3-E3"
+},
+{
+"op": "set",
+"cell": "Sched!G3",
+"input": "=C3-F3"
+},
+{
+"op": "format",
+"range": "Sched!B2:B3",
+"fmt": "mmm-yy"
+},
+{
+"op": "format",
+"range": "Sched!C2:G3",
+"fmt": "#,##0.00"
+},
+{
+"op": "autofill",
+"from": "Sched!A3:G3",
+"to": "Sched!A3:G14",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sched!A1:G14"
+},
+{
+"op": "set",
+"cell": "Sched!I1",
+"input": "Total int"
+},
+{
+"op": "set",
+"cell": "Sched!I2",
+"input": "=SUM(E2:E14)"
+},
+{
+"op": "set",
+"cell": "Sched!J2",
+"input": "=SUMIFS(E:E,B:B,\">=\"&DATE(2026,6,1),B:B,\"<\"&DATE(2027,1,1))"
+},
+{
+"op": "set",
+"cell": "Sched!K2",
+"input": "=IFERROR(INDEX(B:B,MATCH(0,G2:G14,0)+1),\"not yet\")"
+},
+{
+"op": "set",
+"cell": "Sched!K3",
+"input": "=XLOOKUP(TRUE,G2:G14<5000,B2:B14)"
+},
+{
+"op": "set",
+"cell": "Sched!K4",
+"input": "=MINIFS(G2:G14,B2:B14,\">\"&DATE(2026,8,1))"
+},
+{
+"op": "set",
+"cell": "Sched!K5",
+"input": "=TEXT(B6,\"mmmm yyyy\")&\" - \"&TEXT(G6,\"$#,##0\")"
+},
+{
+"op": "set",
+"cell": "Sched!K6",
+"input": "=SUMPRODUCT((MONTH(B2:B14)=3)*E2:E14)"
+},
+{
+"op": "set",
+"cell": "Sched!K7",
+"input": "=YEARFRAC(B2,B14)"
+},
+{
+"op": "set",
+"cell": "Sched!K8",
+"input": "=DATEDIF(B2,B14,\"m\")"
+},
+{
+"op": "set",
+"cell": "Sched!K9",
+"input": "=IPMT(Loan!B2/12,A5,360,Loan!B1)"
+},
+{
+"op": "set",
+"cell": "Sched!K10",
+"input": "=PPMT(Loan!B2/12,A5,360,Loan!B1)"
+},
+{
+"op": "set",
+"cell": "Sched!K11",
+"input": "=-CUMPRINC(Loan!B2/12,360,Loan!B1,1,12,0)"
+},
+{
+"op": "set",
+"cell": "Sched!K12",
+"input": "=ISPMT(Loan!B2/12,A5,360,Loan!B1)"
+},
+{
+"op": "set",
+"cell": "Sched!K13",
+"input": "=FV(Loan!B2/12,12,Loan!B6,-Loan!B1)"
+},
+{
+"op": "read",
+"range": "Sched!I1:K13"
+},
+{
+"op": "set",
+"cell": "Loan!B4",
+"input": "350"
+},
+{
+"op": "set",
+"cell": "Loan!B2",
+"input": "5.9%"
+},
+{
+"op": "read",
+"range": "Loan!A1:B13"
+},
+{
+"op": "read",
+"range": "Sched!A1:K14"
+},
+{
+"op": "calc"
+},
+{
+"op": "read",
+"range": "Sched!I1:K13"
+},
+{
+"op": "insert_rows",
+"sheet": "Sched",
+"at": 6,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sched!A5:G9"
+},
+{
+"op": "read",
+"range": "Sched!I1:K13"
+},
+{
+"op": "copy",
+"from": "Sched!A5:G5",
+"to": "Sched!A6:G6"
+},
+{
+"op": "read",
+"range": "Sched!A5:G9"
+},
+{
+"op": "read",
+"range": "Sched!I1:K13"
+},
+{
+"op": "delete_rows",
+"sheet": "Sched",
+"at": 8,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sched!A5:G9"
+},
+{
+"op": "read",
+"range": "Sched!I1:K13"
+},
+{
+"op": "copy_sheet",
+"sheet": "Sched",
+"name": "Sched2",
+"after": "Sched"
+},
+{
+"op": "set",
+"cell": "Loan!B3",
+"input": "15"
+},
+{
+"op": "read",
+"range": "Sched2!A1:K14"
+},
+{
+"op": "read",
+"range": "Loan!A1:B13"
+}
+]
+}

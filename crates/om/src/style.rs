@@ -18,6 +18,10 @@ use crate::typelib::{InvokeKind, Member};
 pub(crate) enum StyleOwner {
     Range(RangeRef),
     Named(BookId, Arc<str>),
+
+    Display(RangeRef),
+
+    Cond(BookId, SheetId, u32),
 }
 
 const NONE: i32 = -4142;
@@ -34,6 +38,22 @@ fn color_variant(rgb: u32) -> Variant {
 
 fn invalid_arg() -> OmError {
     OmError::exception(HResult::E_INVALIDARG.0, None)
+}
+
+fn tint_arg(a: &Args) -> Result<f64, OmError> {
+    let t = match a.put {
+        Some(Variant::R8(x)) => x,
+        Some(Variant::R4(x)) => f64::from(x),
+        Some(Variant::I4(x)) => f64::from(x),
+        Some(Variant::I2(x)) => f64::from(x),
+        Some(Variant::Ui1(x)) => f64::from(x),
+        _ => return Err(invalid_arg()),
+    };
+    if (-1.0..=1.0).contains(&t) {
+        Ok(t)
+    } else {
+        Err(invalid_arg())
+    }
 }
 
 fn i4(n: i32) -> Variant {
@@ -143,7 +163,7 @@ fn rotation_from(n: i32) -> Option<u8> {
         -4128 => 0,
         -4171 => 90,
         -4170 => 180,
-        -4166 => 255,
+        -4166 | 255 => 255,
         0..=90 => n as u8,
         -90..=-1 => (90 - n) as u8,
         _ => return None,
@@ -246,6 +266,15 @@ fn side_of(s: &Style, side: Side) -> Border {
         Side::Edge(e) => s.borders.edge(e),
         Side::DiagonalDown if s.borders.diagonal_down => s.borders.diagonal,
         Side::DiagonalUp if s.borders.diagonal_up => s.borders.diagonal,
+
+        Side::DiagonalDown | Side::DiagonalUp
+            if !s.borders.diagonal_down && !s.borders.diagonal_up =>
+        {
+            Border {
+                line: s.borders.diagonal.line,
+                color: CellColor::Auto,
+            }
+        }
         _ => Border::default(),
     }
 }
@@ -372,6 +401,8 @@ fn format_prop(get: &dyn Fn(Field) -> Variant, prop: &str) -> Option<Variant> {
         "ShrinkToFit" => get(&|s| Variant::Bool(s.alignment.shrink)),
         "IndentLevel" => get(&|s| i4(i32::from(s.alignment.indent))),
         "Orientation" => get(&|s| i4(orientation_const(s.alignment.rotation))),
+        "AddIndent" => get(&|s| Variant::Bool(s.alignment.add_indent)),
+        "ReadingOrder" => get(&|s| i4(-5002 - i32::from(s.alignment.reading_order))),
         "Locked" => get(&|s| Variant::Bool(s.locked)),
         "FormulaHidden" => get(&|s| Variant::Bool(s.formula_hidden)),
         _ => return None,
@@ -385,15 +416,17 @@ fn format_put(prop: &str, v: &Args, app: &Application) -> Result<Option<StyleEdi
         "HorizontalAlignment" => {
             let i = H_ALIGN
                 .iter()
-                .position(|&c| c == n().unwrap_or(0))
+                .position(|&c| c == enum_arg(v, n().unwrap_or(0)))
                 .ok_or_else(OmError::app_defined)?;
             let h = HAlign::ALL[i];
             Box::new(move |s: &mut Style| s.alignment.horizontal = h)
         }
         "VerticalAlignment" => {
+            let x = enum_arg(v, n().unwrap_or(0));
             let i = V_ALIGN
                 .iter()
-                .position(|&c| c == n().unwrap_or(0))
+                .position(|&c| c == x)
+                .or_else(|| usize::try_from(x - 1).ok().filter(|&i| i < V_ALIGN.len()))
                 .ok_or_else(OmError::app_defined)?;
             let va = VAlign::ALL[i];
             Box::new(move |s: &mut Style| s.alignment.vertical = va)
@@ -415,7 +448,10 @@ fn format_put(prop: &str, v: &Args, app: &Application) -> Result<Option<StyleEdi
             Box::new(move |s: &mut Style| s.formula_hidden = x)
         }
         "IndentLevel" => {
-            let x = n()?;
+            let x = match &v.put {
+                Some(Variant::Null | Variant::Empty) => 0,
+                _ => enum_arg(v, n()?),
+            };
             let x = u8::try_from(x)
                 .ok()
                 .filter(|&x| x <= 250)
@@ -433,18 +469,44 @@ fn format_put(prop: &str, v: &Args, app: &Application) -> Result<Option<StyleEdi
                 }
             })
         }
+        "AddIndent" => {
+            let x = b()?;
+            Box::new(move |s: &mut Style| s.alignment.add_indent = x)
+        }
+        "ReadingOrder" => {
+            let r = match enum_arg(v, n()?) {
+                -5002 | 1 => 0u8,
+                -5003 | 2 => 1,
+                -5004 | 3 => 2,
+                _ => return Err(OmError::app_defined()),
+            };
+            Box::new(move |s: &mut Style| s.alignment.reading_order = r)
+        }
         "Orientation" => {
-            let r = rotation_from(n()?).ok_or_else(OmError::app_defined)?;
+            let x = match &v.put {
+                Some(Variant::Null | Variant::Empty) => 0,
+                _ => enum_arg(v, n()?),
+            };
+            let r = rotation_from(x).ok_or_else(OmError::app_defined)?;
             Box::new(move |s: &mut Style| s.alignment.rotation = r)
         }
         _ => return Ok(None),
     }))
 }
 
+fn enum_arg(v: &Args, n: i32) -> i32 {
+    match v.put {
+        Some(Variant::Bool(x)) => i32::from(x),
+        Some(Variant::R8(f)) if f.abs() < 2e9 => f as i32,
+        Some(Variant::R4(f)) if f.abs() < 2e9 => f64::from(f) as i32,
+        _ => n,
+    }
+}
+
 type StyleEdit = Box<dyn Fn(&mut Style)>;
 
 fn bgr_arg(app: &Application, a: &Args) -> Result<u32, OmError> {
-    let x = app.put_f64(a)?;
+    let x = app.put_f64(a)?.round_ties_even();
     if !(0.0..=16_777_215.0).contains(&x) {
         return Err(OmError::app_defined());
     }
@@ -453,16 +515,46 @@ fn bgr_arg(app: &Application, a: &Args) -> Result<u32, OmError> {
 
 fn font_put(app: &Application, prop: &str, a: &Args, theme: &Theme) -> Result<StyleEdit, OmError> {
     let n = || app.put_i32(a);
-    let b = || app.put_bool(a);
+
+    let flag = || match a.put {
+        Some(Variant::Bstr(_)) => Err(OmError::unable_to_set(prop, "Font")),
+        _ => app.put_bool(a),
+    };
     Ok(match prop {
         "Name" => {
-            let name: Arc<str> = Arc::from(app.put_string(a)?);
+            let text = match &a.put {
+                Some(Variant::Bool(x)) => (if *x { "TRUE" } else { "FALSE" }).to_string(),
+                None | Some(Variant::Empty | Variant::Null) => {
+                    return Ok(Box::new(|_: &mut Style| {}))
+                }
+                Some(v @ (Variant::I2(_) | Variant::I4(_) | Variant::R4(_) | Variant::R8(_))) => {
+                    match xlcalc_variant::change_type(
+                        v,
+                        xlcalc_variant::VarType::Bstr,
+                        crate::conv::variant_locale(a.lcid),
+                        0,
+                    ) {
+                        Ok(Variant::Bstr(t)) => t,
+                        _ => return Err(OmError::type_mismatch()),
+                    }
+                }
+                _ => app.put_string(a)?,
+            };
+            let name: Arc<str> = Arc::from(text);
             Box::new(move |s: &mut Style| {
                 s.font.name = name.clone();
                 s.font.scheme = FontScheme::None;
             })
         }
         "Size" => {
+            match a.put {
+                Some(Variant::Bstr(_) | Variant::Empty | Variant::Null) | None => {
+                    return Err(OmError::unable_to_set(prop, "Font"))
+                }
+
+                Some(Variant::Bool(_)) => return Ok(Box::new(|_: &mut Style| {})),
+                _ => {}
+            }
             let x = app.put_f64(a)?;
             if !(1.0..=409.0).contains(&x) {
                 return Err(OmError::app_defined());
@@ -472,19 +564,19 @@ fn font_put(app: &Application, prop: &str, a: &Args, theme: &Theme) -> Result<St
             Box::new(move |s: &mut Style| s.font.size_twips = t)
         }
         "Bold" => {
-            let x = b()?;
+            let x = flag()?;
             Box::new(move |s: &mut Style| s.font.bold = x)
         }
         "Italic" => {
-            let x = b()?;
+            let x = flag()?;
             Box::new(move |s: &mut Style| s.font.italic = x)
         }
         "Strikethrough" => {
-            let x = b()?;
+            let x = flag()?;
             Box::new(move |s: &mut Style| s.font.strikethrough = x)
         }
         "Superscript" => {
-            let x = b()?;
+            let x = flag()?;
             Box::new(move |s: &mut Style| {
                 s.font.superscript = x;
                 if x {
@@ -493,7 +585,7 @@ fn font_put(app: &Application, prop: &str, a: &Args, theme: &Theme) -> Result<St
             })
         }
         "Subscript" => {
-            let x = b()?;
+            let x = flag()?;
             Box::new(move |s: &mut Style| {
                 s.font.subscript = x;
                 if x {
@@ -502,7 +594,15 @@ fn font_put(app: &Application, prop: &str, a: &Args, theme: &Theme) -> Result<St
             })
         }
         "Underline" => {
-            let u = underline_from(n()?).ok_or_else(OmError::app_defined)?;
+            let u = match &a.put {
+                Some(Variant::Bool(true)) => Underline::Single,
+                Some(Variant::Bool(false)) => Underline::None,
+                Some(Variant::Bstr(_) | Variant::Empty | Variant::Null) | None => {
+                    return Err(OmError::unable_to_set(prop, "Font"))
+                }
+                Some(Variant::R8(x)) => underline_from(x.trunc() as i32).unwrap_or(Underline::None),
+                _ => underline_from(n()?).unwrap_or(Underline::None),
+            };
             Box::new(move |s: &mut Style| s.font.underline = u)
         }
         "FontStyle" => {
@@ -518,15 +618,25 @@ fn font_put(app: &Application, prop: &str, a: &Args, theme: &Theme) -> Result<St
             Box::new(move |s: &mut Style| s.font.color = c)
         }
         "ColorIndex" => {
-            let c = color_from_index(n()?)?;
+            let c = match &a.put {
+                Some(Variant::Bool(_)) => return Ok(Box::new(|_: &mut Style| {})),
+                None | Some(Variant::Empty | Variant::Null) => CellColor::Auto,
+                _ => color_from_index(n()?)?,
+            };
             Box::new(move |s: &mut Style| s.font.color = c)
         }
         "ThemeColor" => {
+            if matches!(
+                a.put,
+                None | Some(Variant::Bool(_) | Variant::Empty | Variant::Null)
+            ) {
+                return Err(OmError::bad_index());
+            }
             let c = theme_color(n()?, 0.0)?;
             Box::new(move |s: &mut Style| s.font.color = c)
         }
         "TintAndShade" => {
-            let t = app.put_f64(a)?;
+            let t = tint_arg(a)?;
             Box::new(move |s: &mut Style| s.font.color = with_tint(s.font.color, t))
         }
         "ThemeFont" => {
@@ -570,15 +680,37 @@ fn interior_put(app: &Application, prop: &str, a: &Args) -> Result<StyleEdit, Om
             s.fill.pattern_color = c;
         })
     };
+
+    let ignored = matches!(a.put, Some(Variant::Bool(_)));
+    let nothing = matches!(a.put, None | Some(Variant::Empty | Variant::Null));
+    let noop = || -> StyleEdit { Box::new(|_: &mut Style| {}) };
+    if ignored
+        && matches!(
+            prop,
+            "Color" | "PatternColor" | "ThemeColor" | "PatternThemeColor"
+        )
+    {
+        return Ok(noop());
+    }
+    if nothing && matches!(prop, "ThemeColor" | "PatternThemeColor") {
+        return Err(OmError::bad_index());
+    }
+    if ignored && prop == "ColorIndex" {
+        return Ok(colour(CellColor::Auto));
+    }
+    if ignored && prop == "PatternColorIndex" {
+        return Ok(pattern_colour(CellColor::Auto));
+    }
     Ok(match prop {
         "Color" => colour(CellColor::Rgb(bgr_arg(app, a)?)),
+        "ColorIndex" if nothing => Box::new(|s: &mut Style| s.fill = Fill::default()),
         "ColorIndex" => match n()? {
             NONE => Box::new(|s: &mut Style| s.fill = Fill::default()),
             i => colour(color_from_index(i)?),
         },
         "ThemeColor" => colour(theme_color(n()?, 0.0)?),
         "TintAndShade" => {
-            let t = app.put_f64(a)?;
+            let t = tint_arg(a)?;
             Box::new(move |s: &mut Style| s.fill.color = with_tint(s.fill.color, t))
         }
         "Pattern" => match n()? {
@@ -600,6 +732,7 @@ fn interior_put(app: &Application, prop: &str, a: &Args) -> Result<StyleEdit, Om
             let c = CellColor::Rgb(bgr_arg(app, a)?);
             pattern_colour(c)
         }
+        "PatternColorIndex" if nothing => Box::new(|s: &mut Style| s.fill = Fill::default()),
         "PatternColorIndex" => {
             let c = color_from_index(n()?)?;
             pattern_colour(c)
@@ -609,7 +742,7 @@ fn interior_put(app: &Application, prop: &str, a: &Args) -> Result<StyleEdit, Om
             pattern_colour(c)
         }
         "PatternTintAndShade" => {
-            let t = app.put_f64(a)?;
+            let t = tint_arg(a)?;
             Box::new(move |s: &mut Style| {
                 solidify(s);
                 s.fill.pattern_color = with_tint(s.fill.pattern_color, t)
@@ -619,13 +752,28 @@ fn interior_put(app: &Application, prop: &str, a: &Args) -> Result<StyleEdit, Om
     })
 }
 
+fn border_int(app: &Application, a: &Args, prop: &str) -> Result<Option<i32>, OmError> {
+    let line = matches!(prop, "LineStyle" | "Weight");
+    match &a.put {
+        Some(Variant::Bstr(_)) if line => Err(OmError::unable_to_set(prop, "Border")),
+        Some(Variant::Bool(_)) if prop == "ThemeColor" => Err(OmError::bad_index()),
+        Some(Variant::Bool(_)) => Ok(None),
+        None | Some(Variant::Empty | Variant::Null) => match prop {
+            "LineStyle" => Ok(Some(NONE)),
+            "ColorIndex" => Ok(Some(AUTOMATIC)),
+            "Weight" => Err(OmError::unable_to_set(prop, "Border")),
+            _ => Err(OmError::bad_index()),
+        },
+        Some(Variant::R8(x)) if line => Ok(Some(x.trunc() as i32)),
+        _ => app.put_i32(a).map(Some),
+    }
+}
+
 fn border_put(
     app: &Application,
     prop: &str,
     a: &Args,
 ) -> Result<Box<dyn Fn(Border) -> Border>, OmError> {
-    let n = || app.put_i32(a);
-
     let colour = |c: CellColor| -> Box<dyn Fn(Border) -> Border> {
         Box::new(move |b: Border| Border {
             line: if b.line == BorderLine::None {
@@ -638,7 +786,9 @@ fn border_put(
     };
     Ok(match prop {
         "LineStyle" => {
-            let style = n()?;
+            let Some(style) = border_int(app, a, prop)? else {
+                return Ok(Box::new(|b| b));
+            };
             line_from(style, THIN).ok_or_else(OmError::app_defined)?;
             Box::new(move |b: Border| {
                 let weight = match style {
@@ -658,7 +808,9 @@ fn border_put(
             })
         }
         "Weight" => {
-            let weight = n()?;
+            let Some(weight) = border_int(app, a, prop)? else {
+                return Ok(Box::new(|b| b));
+            };
             line_from(CONTINUOUS, weight).ok_or_else(OmError::app_defined)?;
             Box::new(move |b: Border| {
                 let style = match line_parts(b.line).0 {
@@ -672,13 +824,17 @@ fn border_put(
             })
         }
         "Color" => colour(CellColor::Rgb(bgr_arg(app, a)?)),
-        "ColorIndex" => match n()? {
-            NONE => Box::new(|_| Border::default()),
-            i => colour(color_from_index(i)?),
+        "ColorIndex" => match border_int(app, a, prop)? {
+            None => Box::new(|b| b),
+            Some(NONE) => Box::new(|_| Border::default()),
+            Some(i) => colour(color_from_index(i)?),
         },
-        "ThemeColor" => colour(theme_color(n()?, 0.0)?),
+        "ThemeColor" => match border_int(app, a, prop)? {
+            None => Box::new(|b| b),
+            Some(i) => colour(theme_color(i, 0.0)?),
+        },
         "TintAndShade" => {
-            let t = app.put_f64(a)?;
+            let t = tint_arg(a)?;
             Box::new(move |b: Border| Border {
                 color: with_tint(b.color, t),
                 ..b
@@ -686,6 +842,33 @@ fn border_put(
         }
         _ => return Err(OmError::app_defined()),
     })
+}
+
+impl Application<'_> {
+    pub(crate) fn hyperlink_style(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Result<(), OmError> {
+        let wb = &mut self.book_mut(book)?.wb;
+        if &*wb.cell_style(CellAddr::new(sheet, rect.r0, rect.c0)).named != "Normal" {
+            return Ok(());
+        }
+        wb.style_table_mut().ensure_hyperlink();
+        let ns = wb
+            .style_table()
+            .get("Hyperlink")
+            .cloned()
+            .ok_or_else(OmError::app_defined)?;
+        wb.set_style_with(sheet, rect, &|s: &Style| {
+            let mut s = s.clone();
+            apply_named(&mut s, &ns);
+            s.named = ns.name.clone();
+            s
+        });
+        Ok(())
+    }
 }
 
 fn apply_named(s: &mut Style, n: &NamedStyle) {
@@ -717,6 +900,8 @@ impl Application<'_> {
         match o {
             StyleOwner::Range(r) => r.book,
             StyleOwner::Named(b, _) => *b,
+            StyleOwner::Display(r) => r.book,
+            StyleOwner::Cond(b, ..) => *b,
         }
     }
 
@@ -728,7 +913,7 @@ impl Application<'_> {
             .ok_or_else(|| OmError::exception(SCODE_BAD_INDEX, None))
     }
 
-    fn agree_on<T: PartialEq>(
+    pub(crate) fn agree_on<T: PartialEq>(
         &self,
         o: &StyleOwner,
         f: impl Fn(&Style) -> T,
@@ -740,7 +925,28 @@ impl Application<'_> {
                 Ok(agree(cells(sheet, rect).map(|a| f(wb.cell_style(a)))))
             }
             StyleOwner::Named(b, n) => Ok(Some(f(&self.named_style(*b, n)?.style))),
+            StyleOwner::Display(r) => {
+                let (sheet, rect) = self.resolve(r)?;
+                let wb = &self.book(r.book)?.wb;
+                Ok(agree(cells(sheet, rect).map(|a| f(&wb.display_style(a)))))
+            }
+            StyleOwner::Cond(b, s, id) => {
+                let wb = &self.book(*b)?.wb;
+                let rule = wb
+                    .cfv_sheet(*s)
+                    .and_then(|sh| sh.index_of(*id).map(|i| &sh.rules[i]))
+                    .ok_or_else(OmError::app_defined)?;
+                Ok(Some(f(&rule.dxf.style)))
+            }
         }
+    }
+
+    fn cond_mask(&self, o: &StyleOwner) -> Option<xlcalc::cfv::DxfMask> {
+        let StyleOwner::Cond(b, s, id) = o else {
+            return None;
+        };
+        let sh = self.book(*b).ok()?.wb.cfv_sheet(*s)?;
+        sh.index_of(*id).map(|i| sh.rules[i].dxf.mask)
     }
 
     fn edit_style(&mut self, o: &StyleOwner, f: &dyn Fn(&mut Style)) -> Result<(), OmError> {
@@ -753,6 +959,15 @@ impl Application<'_> {
                     f(&mut s);
                     s
                 });
+            }
+            StyleOwner::Display(_) => return Err(OmError::app_defined()),
+            StyleOwner::Cond(b, s, id) => {
+                let wb = &mut self.book_mut(*b)?.wb;
+                let sh = wb.cfv_sheet_mut(*s);
+                let i = sh.index_of(*id).ok_or_else(OmError::app_defined)?;
+                let dxf = &mut sh.rules[i].dxf;
+                let (a, b2) = dxf_probe(f);
+                merge_dxf(dxf, &a, &b2);
             }
             StyleOwner::Named(b, n) => {
                 let mut ns = self.named_style(*b, n)?.clone();
@@ -780,9 +995,34 @@ impl Application<'_> {
             .style_table()
             .theme
             .clone();
+
+        let put = matches!(m.kind, InvokeKind::Put | InvokeKind::PutRef);
+        let zero_name;
+        let mut a = a;
+        if matches!(o, StyleOwner::Named(..)) {
+            if m.name == "FontStyle" || (m.name == "Background" && put) {
+                return Err(OmError::app_defined());
+            }
+            if m.name == "Name"
+                && put
+                && matches!(a.put, None | Some(Variant::Empty | Variant::Null))
+            {
+                zero_name = Args {
+                    values: Vec::new(),
+                    put: Some(Variant::Bstr("0".into())),
+                    lcid: a.lcid,
+                };
+                a = &zero_name;
+            }
+        }
+        if matches!(o, StyleOwner::Display(_)) || m.name == "Background" {
+            if let Some(r) = display_font_special(m, a) {
+                return r;
+            }
+        }
         match m.kind {
             InvokeKind::Get => {
-                let f = FontFields {
+                let mut f = FontFields {
                     name: self.agree_on(o, |s| s.font.name.clone())?,
                     size: self.agree_on(o, |s| s.font.size_twips)?,
                     bold: self.agree_on(o, |s| s.font.bold)?,
@@ -794,9 +1034,24 @@ impl Application<'_> {
                     color: self.agree_on(o, |s| s.font.color)?,
                     scheme: self.agree_on(o, |s| s.font.scheme)?,
                 };
+
+                if let Some(mk) = self.cond_mask(o) {
+                    let style = mk.bold || mk.italic;
+                    f.name = None;
+                    f.size = None;
+                    f.scheme = None;
+                    f.sup = None;
+                    f.sub = None;
+                    f.bold = f.bold.filter(|_| style);
+                    f.italic = f.italic.filter(|_| style);
+                    f.underline = f.underline.filter(|_| mk.underline);
+                    f.strike = f.strike.filter(|_| mk.strike);
+                    f.color = f.color.filter(|_| mk.font_color);
+                }
                 font_prop(&theme, &f, m)
             }
             _ => {
+                self.style_guard(o, "Font", m.name)?;
                 let edit = font_put(self, m.name, a, &theme)?;
                 self.edit_style(o, &*edit)?;
                 Ok(Variant::Empty)
@@ -816,18 +1071,44 @@ impl Application<'_> {
             .style_table()
             .theme
             .clone();
+        if m.name == "InvertIfNegative" {
+            return Err(OmError::app_defined());
+        }
+
+        if (m.name, m.kind) == ("Gradient", InvokeKind::Get) {
+            return Ok(Variant::Dispatch(None));
+        }
+        if matches!(o, StyleOwner::Display(_))
+            && matches!(m.kind, InvokeKind::Put | InvokeKind::PutRef)
+        {
+            return Err(OmError::app_defined());
+        }
         match m.kind {
             InvokeKind::Get => {
-                let f = FillFields {
+                let mut f = FillFields {
                     pattern: self.agree_on(o, |s| s.fill.pattern)?,
                     color: self.agree_on(o, |s| s.fill.color)?,
                     pattern_color: self.agree_on(o, |s| s.fill.pattern_color)?,
                 };
+                if let Some(mk) = self.cond_mask(o) {
+                    f.pattern = f.pattern.filter(|_| mk.pattern_read);
+                    f.color = f.color.filter(|_| mk.fill_color);
+                    f.pattern_color = f.pattern_color.filter(|_| mk.pattern_color);
+                }
                 interior_prop(&theme, &f, m)
             }
             _ => {
+                self.style_guard(o, "Interior", m.name)?;
                 let edit = interior_put(self, m.name, a)?;
                 self.edit_style(o, &*edit)?;
+                if let StyleOwner::Cond(b, s, id) = o {
+                    if matches!(m.name, "Pattern" | "ThemeColor") {
+                        let sh = self.book_mut(*b)?.wb.cfv_sheet_mut(*s);
+                        if let Some(i) = sh.index_of(*id) {
+                            sh.rules[i].dxf.mask.pattern_read = true;
+                        }
+                    }
+                }
                 Ok(Variant::Empty)
             }
         }
@@ -842,14 +1123,38 @@ impl Application<'_> {
         use InvokeKind::*;
         match (m.name, m.kind) {
             ("Item" | "_Default", Get) => {
-                let i = a.i32(0)?.ok_or_else(OmError::app_defined)?;
+                let i = a
+                    .i32(0)
+                    .map_err(|_| OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))?
+                    .ok_or_else(OmError::app_defined)?;
+
+                if !(5..=12).contains(&i) && !matches!(i, -4131 | -4152 | -4160 | -4107) {
+                    return Err(OmError::app_defined());
+                }
                 Ok(self.alloc(Object::Border(o.clone(), i)))
             }
-            ("Count", Get) => Ok(i4(6)),
+            ("Count", Get) => Ok(i4(if matches!(o, StyleOwner::Cond(..)) {
+                4
+            } else {
+                6
+            })),
             (prop, Get) => {
+                let prop = if prop == "Value" { "LineStyle" } else { prop };
+
                 let mut seen: Option<Variant> = None;
                 for i in [7, 8, 9, 10, 11, 12] {
-                    let v = self.border_get(o, i, prop)?;
+                    if i > 10 && matches!(o, StyleOwner::Named(..)) {
+                        break;
+                    }
+
+                    let at = match i {
+                        7 if matches!(o, StyleOwner::Named(..)) => -4131,
+                        8 if matches!(o, StyleOwner::Named(..)) => -4160,
+                        9 if matches!(o, StyleOwner::Named(..)) => -4107,
+                        10 if matches!(o, StyleOwner::Named(..)) => -4152,
+                        _ => i,
+                    };
+                    let v = self.border_get(o, at, prop)?;
                     if v == Variant::Null && matches!(i, 11 | 12) {
                         continue;
                     }
@@ -861,9 +1166,33 @@ impl Application<'_> {
                 }
                 Ok(seen.unwrap_or(Variant::Null))
             }
+            (prop, _) if matches!(o, StyleOwner::Display(_)) => Err(match prop {
+                "LineStyle" | "Value" | "Weight" => OmError::unable_to_set(prop, "Borders"),
+                _ => OmError::app_defined(),
+            }),
             (prop, _) => {
+                let prop = if prop == "Value" { "LineStyle" } else { prop };
+
+                let cleared;
+                let a = if prop == "ColorIndex" && matches!(a.put, Some(Variant::Bool(_))) {
+                    cleared = Args {
+                        values: Vec::new(),
+                        put: Some(Variant::I4(NONE)),
+                        lcid: a.lcid,
+                    };
+                    &cleared
+                } else {
+                    a
+                };
                 for i in [7, 8, 9, 10, 11, 12] {
+                    if i > 10 && matches!(o, StyleOwner::Named(..)) {
+                        break;
+                    }
                     self.border_set(o, i, prop, a)?;
+                }
+
+                if matches!(prop, "LineStyle" | "Weight") && matches!(o, StyleOwner::Range(_)) {
+                    self.diagonal_line_set(o, prop, a)?;
                 }
                 Ok(Variant::Empty)
             }
@@ -877,6 +1206,12 @@ impl Application<'_> {
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
+        if matches!(o, StyleOwner::Cond(..))
+            && m.name == "LineStyle"
+            && !matches!(index, -4131 | -4152 | -4160 | -4107)
+        {
+            return Err(OmError::app_defined());
+        }
         match m.kind {
             InvokeKind::Get => self.border_get(o, index, m.name),
             _ => {
@@ -890,12 +1225,26 @@ impl Application<'_> {
         let b = self.owner_book(o);
         let theme = &self.book(b)?.wb.style_table().theme;
         match o {
-            StyleOwner::Named(..) => {
+            StyleOwner::Display(r) => {
+                let (sheet, rect) = self.resolve(r)?;
+                let Some((cells_at, side)) = border_cells(rect, index)? else {
+                    return Ok(Variant::Null);
+                };
+                let wb = &self.book(r.book)?.wb;
+                let first = CellAddr::new(sheet, cells_at.r0, cells_at.c0);
+                border_prop(theme, Some(side_of(&wb.display_style(first), side)), prop)
+            }
+            StyleOwner::Named(..) | StyleOwner::Cond(..) => {
+                let named = matches!(o, StyleOwner::Named(..));
                 let side = match index {
                     -4131 => Side::Edge(Edge::Left),
                     -4152 => Side::Edge(Edge::Right),
                     -4160 => Side::Edge(Edge::Top),
                     -4107 => Side::Edge(Edge::Bottom),
+                    7 if !named => Side::Edge(Edge::Left),
+                    10 if !named => Side::Edge(Edge::Right),
+                    8 if !named => Side::Edge(Edge::Top),
+                    9 if !named => Side::Edge(Edge::Bottom),
                     5 => Side::DiagonalDown,
                     6 => Side::DiagonalUp,
 
@@ -918,6 +1267,19 @@ impl Application<'_> {
 
                 let wb = &self.book(r.book)?.wb;
                 let first = CellAddr::new(sheet, cells_at.r0, cells_at.c0);
+
+                if !matches!(side, Side::Edge(_)) {
+                    let s = wb.cell_style(first);
+                    if rect != Rect::cell(rect.r0, rect.c0)
+                        || (!s.borders.diagonal_down && !s.borders.diagonal_up)
+                    {
+                        match prop {
+                            "ColorIndex" => return Ok(i4(NONE)),
+                            "ThemeColor" | "TintAndShade" => return Ok(Variant::Null),
+                            _ => {}
+                        }
+                    }
+                }
                 border_prop(theme, Some(shown_side(wb, first, side)), prop)
             }
         }
@@ -930,14 +1292,16 @@ impl Application<'_> {
         prop: &str,
         a: &Args,
     ) -> Result<(), OmError> {
+        self.style_guard(o, "Border", prop)?;
         let edit = border_put(self, prop, a)?;
         let r = match o {
-            StyleOwner::Named(..) => {
+            StyleOwner::Display(_) => return Err(OmError::app_defined()),
+            StyleOwner::Named(..) | StyleOwner::Cond(..) => {
                 let side = match index {
-                    -4131 => Edge::Left,
-                    -4152 => Edge::Right,
-                    -4160 => Edge::Top,
-                    -4107 => Edge::Bottom,
+                    -4131 | 7 => Edge::Left,
+                    -4152 | 10 => Edge::Right,
+                    -4160 | 8 => Edge::Top,
+                    -4107 | 9 => Edge::Bottom,
                     _ => return Err(OmError::app_defined()),
                 };
                 return self.edit_style(o, &|s: &mut Style| {
@@ -953,7 +1317,16 @@ impl Application<'_> {
         };
         let wb = &mut self.book_mut(r.book)?.wb;
         let first = CellAddr::new(sheet, at.r0, at.c0);
-        let line = edit(shown_side(wb, first, side));
+        let shown = shown_side(wb, first, side);
+
+        let multi = rect != Rect::cell(rect.r0, rect.c0);
+        if !matches!(side, Side::Edge(_))
+            && (multi || shown.line == BorderLine::None)
+            && matches!(prop, "Color" | "ColorIndex" | "ThemeColor" | "TintAndShade")
+        {
+            return Ok(());
+        }
+        let line = edit(shown);
         match side {
             Side::Edge(e) => {
                 wb.set_style_with(sheet, at, &|s: &Style| {
@@ -974,6 +1347,12 @@ impl Application<'_> {
                 wb.set_style_with(sheet, at, &|s: &Style| {
                     let mut s = s.clone();
                     let on = line.line != BorderLine::None;
+                    if multi {
+                        if !s.borders.diagonal_down && !s.borders.diagonal_up {
+                            s.borders.diagonal = line;
+                        }
+                        return s;
+                    }
                     if down {
                         s.borders.diagonal_down = on;
                     } else {
@@ -981,6 +1360,8 @@ impl Application<'_> {
                     }
                     if on {
                         s.borders.diagonal = line;
+                    } else if !s.borders.diagonal_down && !s.borders.diagonal_up {
+                        s.borders.diagonal = Border::default();
                     }
                     s
                 });
@@ -1009,9 +1390,10 @@ impl Application<'_> {
                     .map(|i| self.alloc(Object::Border(owner, i))),
                 None => Ok(self.alloc(Object::Borders(owner))),
             },
-            ("Style", Get) => self
-                .agree_on(&owner, |s| s.named.clone())
-                .map(|n| or_null(n, |n| self.alloc(Object::Style(r.book, n)))),
+            ("Style", Get) => self.agree_on(&owner, |s| s.named.clone()).map(|n| match n {
+                Some(n) => self.alloc(Object::Style(r.book, n)),
+                None => Variant::Dispatch(None),
+            }),
             ("Style", Put | PutRef) => (|| {
                 let name = match a.put.as_ref() {
                     Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
@@ -1083,6 +1465,39 @@ impl Application<'_> {
                 let name = found.ok_or_else(|| OmError::exception(SCODE_BAD_INDEX, None))?;
                 Ok(self.alloc(Object::Style(b, name)))
             }
+            "Add" => {
+                let name = a.string(0)?.ok_or_else(OmError::app_defined)?;
+                if name.chars().count() > 255 || table.get(&name).is_some() {
+                    return Err(OmError::app_defined());
+                }
+
+                let mut style = match a.get(1) {
+                    Some(Variant::Dispatch(_)) => {
+                        let (sheet, rect) = self.range_arg(a.get(1))?;
+                        self.book(b)?
+                            .wb
+                            .cell_style(CellAddr::new(sheet, rect.r0, rect.c0))
+                            .clone()
+                    }
+                    _ => table
+                        .get("Normal")
+                        .map(|n| n.style.clone())
+                        .unwrap_or_default(),
+                };
+                style.named = Arc::from(name.as_str());
+                self.book_mut(b)?.wb.style_table_mut().insert(NamedStyle {
+                    name: Arc::from(name.as_str()),
+                    builtin_id: None,
+                    style,
+                    include_number: true,
+                    include_font: true,
+                    include_alignment: true,
+                    include_border: true,
+                    include_patterns: true,
+                    include_protection: true,
+                });
+                Ok(self.alloc(Object::Style(b, Arc::from(name.as_str()))))
+            }
             _ => Err(unsupported("Styles", m)),
         }
     }
@@ -1102,9 +1517,25 @@ impl Application<'_> {
             ("Name" | "NameLocal" | "Value" | "_Default", Get) => {
                 Ok(Variant::Bstr(ns.name.to_string()))
             }
+
+            ("IndentLevel", Get) => Ok(Variant::Null),
+            ("MergeCells", Get) => Err(OmError::app_defined()),
             ("BuiltIn", Get) => flag(ns.builtin_id.is_some()),
-            ("NumberFormat" | "NumberFormatLocal", Get) => {
-                Ok(Variant::Bstr(ns.style.number_format.to_string()))
+            ("Delete", Func) if ns.builtin_id.is_none() => {
+                let wb = &mut self.book_mut(b)?.wb;
+                wb.style_table_mut()
+                    .named
+                    .retain(|s| !s.name.eq_ignore_ascii_case(name));
+                Ok(Variant::Bool(true))
+            }
+            ("NumberFormat", Get) => Ok(Variant::Bstr(ns.style.number_format.to_string())),
+
+            ("NumberFormatLocal", Get) => {
+                let wb = &self.book(b)?.wb;
+                Ok(Variant::Bstr(crate::range::engine_format(
+                    wb,
+                    &ns.style.number_format,
+                )))
             }
             ("IncludeNumber", Get) => flag(ns.include_number),
             ("IncludeFont", Get) => flag(ns.include_font),
@@ -1138,4 +1569,142 @@ fn neighbour(at: Rect, e: Edge) -> Option<Rect> {
         Edge::Bottom if at.r1 + 1 < MAX_ROWS => Rect::new(at.r1 + 1, at.c0, at.r1 + 1, at.c1),
         _ => return None,
     })
+}
+
+fn poison_style() -> Style {
+    let mut s = Style {
+        number_format: Arc::from("0.0000_);(@)"),
+        ..Style::default()
+    };
+    s.font.bold = true;
+    s.font.italic = true;
+    s.font.underline = Underline::Single;
+    s.font.strikethrough = true;
+    s.font.color = CellColor::Rgb(0x123456);
+    s.fill.pattern = Pattern::MediumGray;
+    s.fill.color = CellColor::Rgb(0xABCDEF);
+    s.fill.pattern_color = CellColor::Rgb(0x654321);
+    let b = Border {
+        line: BorderLine::Thick,
+        color: CellColor::Rgb(0x112233),
+    };
+    s.borders.left = b;
+    s.borders.right = b;
+    s.borders.top = b;
+    s.borders.bottom = b;
+    s
+}
+
+fn dxf_probe(f: &dyn Fn(&mut Style)) -> (Style, Style) {
+    let mut a = Style::default();
+    f(&mut a);
+    let mut b = poison_style();
+    f(&mut b);
+    (a, b)
+}
+
+fn merge_dxf(dxf: &mut xlcalc::cfv::Dxf, a: &Style, b: &Style) {
+    let (m, s) = (&mut dxf.mask, &mut dxf.style);
+    if a.number_format == b.number_format {
+        m.number_format = true;
+        s.number_format = a.number_format.clone();
+    }
+    if a.font.bold == b.font.bold {
+        m.bold = true;
+        s.font.bold = a.font.bold;
+    }
+    if a.font.italic == b.font.italic {
+        m.italic = true;
+        s.font.italic = a.font.italic;
+    }
+    if a.font.underline == b.font.underline {
+        m.underline = true;
+        s.font.underline = a.font.underline;
+    }
+    if a.font.strikethrough == b.font.strikethrough {
+        m.strike = true;
+        s.font.strikethrough = a.font.strikethrough;
+    }
+    if a.font.color == b.font.color {
+        m.font_color = true;
+        s.font.color = a.font.color;
+    }
+    if a.fill.pattern == b.fill.pattern {
+        m.pattern = true;
+        s.fill.pattern = a.fill.pattern;
+    }
+    if a.fill.color == b.fill.color
+        && a.fill.pattern != b.fill.pattern
+        && a.fill.pattern == Pattern::Solid
+    {
+        m.pattern = true;
+        s.fill.pattern = Pattern::Solid;
+    }
+    if a.fill.color == b.fill.color {
+        m.fill_color = true;
+        s.fill.color = a.fill.color;
+    }
+    if a.fill.pattern_color == b.fill.pattern_color {
+        m.pattern_color = true;
+        s.fill.pattern_color = a.fill.pattern_color;
+    }
+    if a.borders.left == b.borders.left {
+        m.left = true;
+        s.borders.left = a.borders.left;
+    }
+    if a.borders.right == b.borders.right {
+        m.right = true;
+        s.borders.right = a.borders.right;
+    }
+    if a.borders.top == b.borders.top {
+        m.top = true;
+        s.borders.top = a.borders.top;
+    }
+    if a.borders.bottom == b.borders.bottom {
+        m.bottom = true;
+        s.borders.bottom = a.borders.bottom;
+    }
+}
+
+fn display_font_special(m: &'static Member, a: &Args) -> Option<Result<Variant, OmError>> {
+    let put = matches!(m.kind, InvokeKind::Put | InvokeKind::PutRef);
+    if !put {
+        return (m.name == "Background").then_some(Ok(Variant::Null));
+    }
+    let text = matches!(a.put.as_ref(), Some(Variant::Bstr(t)) if t.trim().parse::<f64>().is_err());
+    let nothing = matches!(a.put.as_ref(), None | Some(Variant::Null | Variant::Empty));
+    Some(match m.name {
+        "Color" | "ColorIndex" | "ThemeColor" | "TintAndShade" | "ThemeFont" => {
+            Err(OmError::exception(0x8000_4001_u32 as i32, None))
+        }
+        "Bold" | "Italic" | "Strikethrough" | "Subscript" | "Superscript" if text => {
+            Err(OmError::unable_to_set(m.name, "Font"))
+        }
+        "Background" | "Size" | "Underline" if text || nothing => {
+            Err(OmError::unable_to_set(m.name, "Font"))
+        }
+        _ => Ok(Variant::Empty),
+    })
+}
+
+impl Application<'_> {
+    fn diagonal_line_set(&mut self, o: &StyleOwner, prop: &str, a: &Args) -> Result<(), OmError> {
+        let StyleOwner::Range(r) = o else {
+            return Ok(());
+        };
+        let edit = border_put(self, prop, a)?;
+        let (sheet, rect) = self.resolve(r)?;
+        let wb = &mut self.book_mut(r.book)?.wb;
+        wb.set_style_with(sheet, rect, &|s: &Style| {
+            let mut s = s.clone();
+            if !s.borders.diagonal_down && !s.borders.diagonal_up {
+                s.borders.diagonal = edit(Border {
+                    line: s.borders.diagonal.line,
+                    color: CellColor::Auto,
+                });
+            }
+            s
+        });
+        Ok(())
+    }
 }

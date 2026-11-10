@@ -998,6 +998,15 @@ fn indirect_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let (sheet, body) = match s.rfind('!') {
         Some(i) => {
             let raw = &s[..i];
+            if raw.contains('[') {
+                let text = raw.trim_matches('\x27').replace("''", "'");
+                return match ctx.wb.ext_find_open(&text) {
+                    Some(id) => {
+                        indirect_at(ctx, a1, id, s[i + 1..].trim_start_matches(INDIRECT_BLANKS))
+                    }
+                    None => Operand::err(XlError::REF),
+                };
+            }
             let name = match raw.strip_prefix('\'').and_then(|r| r.strip_suffix('\'')) {
                 Some(inner) if !inner.replace("''", "").contains('\'') => {
                     Some(inner.replace("''", "'"))
@@ -1018,7 +1027,10 @@ fn indirect_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
         None => (ctx.host.sheet, s),
     };
+    indirect_at(ctx, a1, sheet, body)
+}
 
+fn indirect_at(ctx: &mut EvalCtx, a1: bool, sheet: crate::SheetId, body: &str) -> Operand {
     if let Some(cell) = body
         .strip_suffix('#')
         .map(|c| c.trim_end_matches(INDIRECT_BLANKS))

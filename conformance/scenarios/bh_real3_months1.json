@@ -1,0 +1,402 @@
+{
+"sheets": [
+"Jan",
+"Sum"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Jan!A1",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "Jan!B1",
+"input": "Cat"
+},
+{
+"op": "set",
+"cell": "Jan!C1",
+"input": "Amt"
+},
+{
+"op": "set",
+"cell": "Jan!D1",
+"input": "Note"
+},
+{
+"op": "set",
+"cell": "Jan!A2",
+"input": "2/1/2026"
+},
+{
+"op": "set",
+"cell": "Jan!B2",
+"input": "Food"
+},
+{
+"op": "set",
+"cell": "Jan!C2",
+"input": "$45.20"
+},
+{
+"op": "set",
+"cell": "Jan!D2",
+"input": "a"
+},
+{
+"op": "set",
+"cell": "Jan!A3",
+"input": "5/1/2026"
+},
+{
+"op": "set",
+"cell": "Jan!B3",
+"input": "Fuel"
+},
+{
+"op": "set",
+"cell": "Jan!C3",
+"input": "$80"
+},
+{
+"op": "set",
+"cell": "Jan!D3",
+"input": "b"
+},
+{
+"op": "set",
+"cell": "Jan!A4",
+"input": "9/1/2026"
+},
+{
+"op": "set",
+"cell": "Jan!B4",
+"input": "Food"
+},
+{
+"op": "set",
+"cell": "Jan!C4",
+"input": "$62.75"
+},
+{
+"op": "set",
+"cell": "Jan!D4",
+"input": "c"
+},
+{
+"op": "set",
+"cell": "Jan!A5",
+"input": "15/1/2026"
+},
+{
+"op": "set",
+"cell": "Jan!B5",
+"input": "Rent"
+},
+{
+"op": "set",
+"cell": "Jan!C5",
+"input": "$1,800"
+},
+{
+"op": "set",
+"cell": "Jan!D5",
+"input": "d"
+},
+{
+"op": "table",
+"range": "Jan!A1:D5",
+"name": "tJan"
+},
+{
+"op": "set",
+"cell": "Jan!F1",
+"input": "Food total"
+},
+{
+"op": "set",
+"cell": "Jan!G1",
+"input": "=SUMIFS(tJan[Amt],tJan[Cat],\"Food\")"
+},
+{
+"op": "set",
+"cell": "Jan!F2",
+"input": "Share"
+},
+{
+"op": "set",
+"cell": "Jan!G2",
+"input": "=G1/SUM(tJan[Amt])"
+},
+{
+"op": "set",
+"cell": "Jan!F3",
+"input": "Rows"
+},
+{
+"op": "set",
+"cell": "Jan!G3",
+"input": "=ROWS(tJan[Amt])"
+},
+{
+"op": "set",
+"cell": "Jan!F4",
+"input": "Last"
+},
+{
+"op": "set",
+"cell": "Jan!G4",
+"input": "=INDEX(tJan[Amt],ROWS(tJan[Amt]))"
+},
+{
+"op": "set",
+"cell": "Jan!F5",
+"input": "Max cat"
+},
+{
+"op": "set",
+"cell": "Jan!G5",
+"input": "=INDEX(tJan[Cat],MATCH(MAX(tJan[Amt]),tJan[Amt],0))"
+},
+{
+"op": "format",
+"range": "Jan!B2",
+"fmt": "@"
+},
+{
+"op": "format",
+"range": "Jan!G2",
+"fmt": "0.0%"
+},
+{
+"op": "format",
+"range": "Jan!G1",
+"fmt": "$#,##0.00"
+},
+{
+"op": "read",
+"range": "Jan!A1:G5"
+},
+{
+"op": "set",
+"cell": "Jan!A6",
+"input": "20/1/2026"
+},
+{
+"op": "set",
+"cell": "Jan!B6",
+"input": "Food"
+},
+{
+"op": "set",
+"cell": "Jan!C6",
+"input": "$30"
+},
+{
+"op": "read",
+"range": "Jan!A1:G7"
+},
+{
+"op": "copy_sheet",
+"sheet": "Jan",
+"name": "Feb",
+"after": "Jan"
+},
+{
+"op": "read",
+"range": "Feb!A1:G7"
+},
+{
+"op": "set",
+"cell": "Feb!A2",
+"input": "3/2/2026"
+},
+{
+"op": "set",
+"cell": "Feb!C2",
+"input": "$99.99"
+},
+{
+"op": "set",
+"cell": "Feb!A3",
+"input": "4/2/2026"
+},
+{
+"op": "read",
+"range": "Feb!A1:G7"
+},
+{
+"op": "read",
+"range": "Jan!A1:G7"
+},
+{
+"op": "set",
+"cell": "Sum!A1",
+"input": "Month"
+},
+{
+"op": "set",
+"cell": "Sum!B1",
+"input": "Food"
+},
+{
+"op": "set",
+"cell": "Sum!C1",
+"input": "Total"
+},
+{
+"op": "set",
+"cell": "Sum!A2",
+"input": "Jan"
+},
+{
+"op": "set",
+"cell": "Sum!B2",
+"input": "=SUMIFS(tJan[Amt],tJan[Cat],\"Food\")"
+},
+{
+"op": "set",
+"cell": "Sum!C2",
+"input": "=SUM(tJan[Amt])"
+},
+{
+"op": "set",
+"cell": "Sum!A3",
+"input": "Feb"
+},
+{
+"op": "set",
+"cell": "Sum!B3",
+"input": "=SUMIFS(tJan2[Amt],tJan2[Cat],\"Food\")"
+},
+{
+"op": "set",
+"cell": "Sum!C3",
+"input": "=SUM(tJan2[Amt])"
+},
+{
+"op": "set",
+"cell": "Sum!A4",
+"input": "3D"
+},
+{
+"op": "set",
+"cell": "Sum!B4",
+"input": "=SUM(Jan:Feb!C2:C5)"
+},
+{
+"op": "set",
+"cell": "Sum!C4",
+"input": "=SUM(Jan:Feb!C:C)"
+},
+{
+"op": "set",
+"cell": "Sum!A5",
+"input": "Ind"
+},
+{
+"op": "set",
+"cell": "Sum!B5",
+"input": "=SUM(INDIRECT(\"'\"&A2&\"'!C2:C5\"))"
+},
+{
+"op": "set",
+"cell": "Sum!C5",
+"input": "=SUMPRODUCT(SUMIF(Jan!B:B,\"Food\",Jan!C:C))"
+},
+{
+"op": "read",
+"range": "Sum!A1:C5"
+},
+{
+"op": "paste_special",
+"from": "Jan!C2:C6",
+"to": "Jan!H2",
+"paste": "values"
+},
+{
+"op": "paste_special",
+"from": "Jan!C2:C6",
+"to": "Jan!I2",
+"paste": "formats"
+},
+{
+"op": "read",
+"range": "Jan!H1:I7"
+},
+{
+"op": "delete_rows",
+"sheet": "Jan",
+"at": 4,
+"count": 1
+},
+{
+"op": "read",
+"range": "Jan!A1:G7"
+},
+{
+"op": "read",
+"range": "Sum!A1:C5"
+},
+{
+"op": "set",
+"cell": "Jan!A7",
+"input": "28/1/2026"
+},
+{
+"op": "set",
+"cell": "Jan!B7",
+"input": "Fuel"
+},
+{
+"op": "set",
+"cell": "Jan!C7",
+"input": "$70"
+},
+{
+"op": "read",
+"range": "Jan!A1:G8"
+},
+{
+"op": "read",
+"range": "Sum!A1:C5"
+},
+{
+"op": "rename_sheet",
+"sheet": "Feb",
+"name": "Feb 26"
+},
+{
+"op": "read",
+"range": "Sum!A1:C5"
+},
+{
+"op": "set",
+"cell": "Sum!A6",
+"input": "Feb 26"
+},
+{
+"op": "set",
+"cell": "Sum!B6",
+"input": "=SUM(INDIRECT(\"'\"&A6&\"'!C2:C5\"))"
+},
+{
+"op": "set",
+"cell": "Sum!C6",
+"input": "=SUM('Feb 26'!C2:C5)"
+},
+{
+"op": "read",
+"range": "Sum!A1:C6"
+},
+{
+"op": "delete_sheet",
+"sheet": "Jan"
+},
+{
+"op": "read",
+"range": "Sum!A1:C6"
+}
+]
+}

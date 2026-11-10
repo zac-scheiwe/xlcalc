@@ -85,6 +85,10 @@ pub(crate) enum DateTok {
     ElapsedS(u8),
 
     LeftH(u8),
+
+    AmH(u8),
+    AmM(u8),
+    AmS(u8),
     LeftM(u8),
     LeftS(u8),
 
@@ -110,6 +114,10 @@ pub(crate) enum Item {
     Slash,
     Den(Ph),
     DenFixed(String),
+
+    DenTail(Ph),
+
+    DenTailPoint,
 
     NumAll,
 
@@ -164,6 +172,8 @@ pub(crate) struct FracLayout {
     pub int_has_q: bool,
 
     pub den_left: bool,
+
+    pub err: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -266,7 +276,30 @@ fn lcid_for_tag(t: &str) -> Option<u32> {
         .map(|(_, id)| *id)
 }
 
+pub(super) fn is_x_tag(t: &str) -> bool {
+    t.chars().count() > 3 && t.get(..2).is_some_and(|p| p.eq_ignore_ascii_case("x-"))
+}
+
+pub(super) fn excel_hex(t: &str) -> Option<u32> {
+    let mut acc: i32 = 0;
+    for c in t.chars() {
+        let d = match c.to_digit(36) {
+            Some(d) => d as i32,
+            None => c as i32 - 48,
+        };
+        acc = acc.wrapping_mul(16).wrapping_add(d);
+    }
+
+    if acc < 0 && acc > -0x400 {
+        return None;
+    }
+    Some(acc as u32)
+}
+
 fn parse_bracket(s: &str) -> Option<Tok> {
+    if s.is_empty() {
+        return Some(Tok::Elapsed(Unit::M, 1));
+    }
     let first = s.chars().next()?;
     if let Some(rest) = s.strip_prefix('$') {
         let (currency, id) = match rest.find('-') {
@@ -275,13 +308,13 @@ fn parse_bracket(s: &str) -> Option<Tok> {
         };
         let (lcid, tag) = match id {
             None => (None, None),
-            Some(t)
-                if t.len() >= 2 && t.is_char_boundary(2) && t[..2].eq_ignore_ascii_case("x-") =>
-            {
-                (None, Some(t.to_ascii_lowercase()))
-            }
+            Some(t) if is_x_tag(t) => (None, Some(t.to_ascii_lowercase())),
             Some(t) => (
-                u32::from_str_radix(t, 16).ok().or_else(|| lcid_for_tag(t)),
+                match lcid_for_tag(t) {
+                    Some(l) => Some(l),
+
+                    None => Some(excel_hex(t)?),
+                },
                 None,
             ),
         };
@@ -308,22 +341,27 @@ fn parse_bracket(s: &str) -> Option<Tok> {
         return Some(Tok::Cond(op, number_prefix(rest)));
     }
     let lower = s.to_ascii_lowercase();
-    let color = match lower.as_str() {
-        "black" => Some(Color::Black),
-        "blue" => Some(Color::Blue),
-        "cyan" => Some(Color::Cyan),
-        "green" => Some(Color::Green),
-        "magenta" => Some(Color::Magenta),
-        "red" => Some(Color::Red),
-        "white" => Some(Color::White),
-        "yellow" => Some(Color::Yellow),
-        _ => None,
-    };
-    if let Some(c) = color {
-        return Some(Tok::Color(c));
+
+    const NAMES: [(&str, Color); 8] = [
+        ("black", Color::Black),
+        ("blue", Color::Blue),
+        ("cyan", Color::Cyan),
+        ("green", Color::Green),
+        ("magenta", Color::Magenta),
+        ("red", Color::Red),
+        ("white", Color::White),
+        ("yellow", Color::Yellow),
+    ];
+    if let Some((_, c)) = NAMES.iter().find(|(n, _)| lower.starts_with(n)) {
+        return Some(Tok::Color(*c));
     }
     if let Some(n) = lower.strip_prefix("color") {
-        let n: u32 = n.parse().ok()?;
+        let digits: String = n
+            .trim_start_matches([' ', '\t'])
+            .chars()
+            .take_while(char::is_ascii_digit)
+            .collect();
+        let n: u32 = digits.trim_start_matches('0').parse().unwrap_or(0);
         return (1..=56)
             .contains(&n)
             .then_some(Tok::Color(Color::Indexed(n as u8)));
@@ -391,7 +429,8 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
                 cur.push(parse_bracket(&content)?);
                 i = j + 1;
             }
-            ';' => {
+
+            ';' | '\u{37e}' => {
                 sections.push(Vec::new());
                 i += 1;
             }
@@ -473,6 +512,9 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
                 i += 5;
             }
             'B' | 'b' if matches!(cs.get(i + 1), Some('1' | '2')) => {
+                if cs.get(i + 2).is_some_and(char::is_ascii_digit) {
+                    return None;
+                }
                 cur.push(Tok::Calendar(if cs[i + 1] == '1' { 1 } else { 2 }));
                 i += 2;
             }
@@ -495,7 +537,17 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
                 cur.push(Tok::Date(field, n.min(255) as u8));
                 i += n;
             }
+
+            'B' if i + 1 < cs.len() => {
+                let n = cs[i..]
+                    .iter()
+                    .take_while(|&&x| x == 'b' || x == 'B')
+                    .count();
+                cur.push(Tok::Date(DateField::Buddhist, n.min(255) as u8));
+                i += n;
+            }
             'B' | 'n' | 'N' => return None,
+            c if code_lookalike(c) => return None,
             _ => {
                 cur.push(Tok::Lit(c.to_string()));
                 i += 1;
@@ -506,6 +558,14 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
         return None;
     }
     Some(sections)
+}
+
+fn code_lookalike(c: char) -> bool {
+    matches!(u32::from(c),
+        0xC8..=0xCB | 0xD0 | 0xD1 | 0xDD | 0xE8..=0xEB | 0xF0 | 0xF1 | 0xFD | 0xFF
+        | 0x10E..=0x127 | 0x143..=0x149 | 0x15A..=0x161 | 0x176..=0x178
+        | 0x180..=0x185 | 0x18A..=0x18F | 0x193 | 0x194 | 0x19C..=0x19E
+        | 0x1E02..=0x1E07 | 0x1E0A..=0x1E1D | 0x1E20)
 }
 
 fn is_date_tok(t: &Tok) -> bool {
@@ -522,6 +582,7 @@ fn literal_item(t: &Tok) -> Option<Item> {
         Tok::LitDigit(c) => Item::Lit(c.to_string()),
         Tok::Space(c) => Item::Space(*c),
         Tok::Fill(c) => Item::Fill(*c),
+        Tok::AmPm => Item::Date(DateTok::AmPm),
         _ => return None,
     })
 }
@@ -616,7 +677,15 @@ fn compile_sci(toks: &[Tok]) -> Option<Body> {
                     items.push(Item::ExpDigit(*p));
                     n_exp += 1;
                 }
-                _ => items.push(Item::Lit("0".into())),
+
+                _ => items.push(Item::Lit(
+                    match p {
+                        Ph::Zero => "0",
+                        Ph::Hash => "",
+                        Ph::Q => " ",
+                    }
+                    .into(),
+                )),
             },
             Tok::Point => match phase {
                 0 => {
@@ -686,9 +755,6 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     let s = slashes[0];
 
     let point = toks[..s].iter().position(|t| matches!(t, Tok::Point));
-    if toks[s + 1..].iter().any(|t| matches!(t, Tok::Point)) {
-        return None;
-    }
     if let Some(p) = point {
         if toks[p..s].iter().any(|t| matches!(t, Tok::Ph(_))) {
             return None;
@@ -714,9 +780,8 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
         while num_end > 0 && !matches!(toks[num_end - 1], Tok::Ph(_)) {
             let t = &toks[num_end - 1];
             let ok = lit_between(t)
-                || (point.is_some_and(|p| num_end > p)
-                    && matches!(t, Tok::Point | Tok::Comma | Tok::Percent))
-                || matches!(t, Tok::Comma);
+                || (point.is_some_and(|p| num_end > p) && matches!(t, Tok::Point))
+                || matches!(t, Tok::Comma | Tok::Percent);
             if !ok {
                 return None;
             }
@@ -758,6 +823,10 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     if den_end == den_start {
         return None;
     }
+
+    if matches!(toks.get(den_end), Some(Tok::Point)) {
+        return None;
+    }
     let den_toks = &toks[den_start..den_end];
     let has_lit_digit = den_toks.iter().any(|t| matches!(t, Tok::LitDigit(_)));
     let den = if has_lit_digit {
@@ -777,6 +846,13 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     } else {
         Den::Max(den_toks.len().min(9) as u32)
     };
+
+    let garble = has_lit_digit
+        && den_toks
+            .iter()
+            .all(|t| matches!(t, Tok::LitDigit(_) | Tok::Ph(Ph::Zero)))
+        && toks[den_end..].iter().any(|t| matches!(t, Tok::Ph(_)));
+    let den = if garble { Den::Max(0) } else { den };
     let last_int = toks[..num_start]
         .iter()
         .rposition(|t| matches!(t, Tok::Ph(_)));
@@ -791,6 +867,7 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     let (mut num_has_q, mut num_has_zero, mut int_has_q) = (false, false, false);
     let mut num_first_q = false;
     let mut den_left = false;
+    let mut tail_ph_end: Option<usize> = None;
     for (i, t) in toks.iter().enumerate() {
         if Some(i) == last_int.map(|l| l + 1) {
             sep_start = items.len();
@@ -818,7 +895,7 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
             }
             Tok::Slash => items.push(Item::Slash),
             _ if (den_start..den_end).contains(&i) => {
-                if let Den::Max(_) = den {
+                if let (Den::Max(_), false) = (&den, garble) {
                     let Tok::Ph(p) = t else { return None };
                     if i == den_start {
                         den_left = *p == Ph::Q;
@@ -842,7 +919,15 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
                     den_item_end = items.len();
                 }
             }
-            Tok::Ph(_) => items.push(Item::Lit("0".into())),
+            Tok::Ph(p) if garble => {
+                items.push(Item::DenTail(*p));
+                tail_ph_end = Some(items.len());
+            }
+            Tok::Ph(_) => {
+                items.push(Item::Lit("0".into()));
+                tail_ph_end = Some(items.len());
+            }
+            Tok::Point if garble && i >= den_end => items.push(Item::DenTailPoint),
             Tok::Point => items.push(Item::Lit(".".into())),
             Tok::Comma
                 if (i >= num_end && i < s)
@@ -855,6 +940,21 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
                     items.push(Item::Lit(",".into()));
                 }
             }
+
+            Tok::Comma
+                if garble
+                    && i > den_end
+                    && matches!(toks[i - 1], Tok::Ph(_) | Tok::Comma)
+                    && toks[i..].iter().any(|t| matches!(t, Tok::Ph(_))) => {}
+            Tok::Comma
+                if garble
+                    && i > den_end
+                    && !toks[i..].iter().any(|t| matches!(t, Tok::Ph(_)))
+                    && toks[den_end..i].iter().any(|t| matches!(t, Tok::Ph(_))) =>
+            {
+                scale -= 3;
+            }
+            Tok::Comma if garble && i == den_end => {}
             Tok::Comma if i >= den_end => {
                 if toks[den_end..i].iter().all(|t| matches!(t, Tok::Comma)) {
                     scale -= 3;
@@ -883,7 +983,10 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     if !has_int {
         sep_start = num_item_start;
     }
+    let tail_end = items.len();
+    let ph_tail_end = tail_ph_end.unwrap_or(tail_end);
     Some(Body::Frac(FracLayout {
+        err: garble && matches!(toks.get(den_end), Some(Tok::Comma)),
         items,
         has_int,
         n_int,
@@ -893,7 +996,15 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
         scale: scale.rem_euclid(256),
         sep_start,
         num_start: num_item_start,
-        den_end: den_item_end,
+
+        den_end: if toks[den_end..]
+            .iter()
+            .any(|t| matches!(t, Tok::Ph(_) | Tok::Point))
+        {
+            ph_tail_end
+        } else {
+            den_item_end
+        },
         num_has_q,
         num_first_q,
         num_has_zero,
@@ -902,7 +1013,13 @@ fn compile_frac(toks: &[Tok]) -> Option<Body> {
     }))
 }
 
-fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
+fn has_date_field(items: &[Item]) -> bool {
+    items
+        .iter()
+        .any(|it| matches!(it, Item::Date(d) if !matches!(d, DateTok::General(_))))
+}
+
+fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool, cal_prefix: bool) -> Option<Body> {
     let mut items = Vec::new();
     let (mut subsec, mut ampm, mut elapsed) = (0u8, false, 0);
     let mut i = 0;
@@ -941,10 +1058,13 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
                     .take_while(|t| matches!(t, Tok::Ph(Ph::Zero)))
                     .count();
                 if k == 0 {
+                    if !has_date_field(&items) {
+                        return None;
+                    }
                     items.push(Item::Lit(".".into()));
                 } else {
                     if k > 3
-                        || items.is_empty()
+                        || (items.is_empty() && !cal_prefix)
                         || matches!(items.last(), Some(Item::Date(DateTok::General(_))))
                     {
                         return None;
@@ -954,18 +1074,37 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
                     i += k;
                 }
             }
-            Tok::General => items.push(Item::Date(DateTok::General(elapsed > 0))),
+            Tok::General => items.push(Item::Date(DateTok::General(elapsed > 0 && !ampm))),
 
             Tok::Comma if i > 0 && matches!(toks[i - 1], Tok::Comma) => {}
             Tok::Comma => items.push(Item::Lit(",".into())),
-            Tok::Slash => items.push(Item::Lit("/".into())),
+
+            Tok::Slash => {
+                if !has_date_field(&items) {
+                    return None;
+                }
+                items.push(Item::Lit("/".into()));
+            }
             Tok::Lit(_) | Tok::Space(_) | Tok::Fill(_) | Tok::Colon => items.push(literal_item(t)?),
             _ => return None,
         }
         i += 1;
     }
+
     if elapsed > 1 {
-        return None;
+        let unit = |it: &Item| match it {
+            Item::Date(DateTok::ElapsedH(_)) => Some(3),
+            Item::Date(DateTok::ElapsedM(_)) => Some(2),
+            Item::Date(DateTok::ElapsedS(_)) => Some(1),
+            _ => None,
+        };
+        let at: Vec<usize> = (0..items.len())
+            .filter(|&k| unit(&items[k]).is_some())
+            .collect();
+        let first = unit(&items[at[0]]);
+        if at.iter().any(|&k| unit(&items[k]) != first) {
+            return None;
+        }
     }
 
     if let Some(e) = items.iter().position(|it| {
@@ -1047,7 +1186,20 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
             .iter()
             .any(|it| matches!(it, Item::Date(DateTok::Minute(_))))
         {
-            return None;
+            let hours = items[..e].iter().any(|it| {
+                matches!(
+                    it,
+                    Item::Date(DateTok::Hour(_) | DateTok::ElapsedH(_) | DateTok::Second(_))
+                )
+            });
+            if hours || matches!(items[e], Item::Date(DateTok::ElapsedS(_))) {
+                return None;
+            }
+            for it in items[..e].iter_mut() {
+                if let Item::Date(DateTok::Minute(n)) = *it {
+                    *it = Item::Date(DateTok::Month(n));
+                }
+            }
         }
     }
 
@@ -1091,14 +1243,15 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
         let larger_after = items[e + 1..]
             .iter()
             .any(|it| matches!(it, Item::Date(d) if clock_rank(d).is_some_and(|r| r > rank)));
-        if preceded {
-            items[e] = Item::Date(left(rank, width));
-        } else if larger_after {
+
+        if larger_after {
             items[e] = Item::Date(match rank {
                 3 => DateTok::Hour(width),
                 2 => DateTok::Minute(width),
                 _ => DateTok::Second(width),
             });
+        } else if preceded {
+            items[e] = Item::Date(left(rank, width));
         }
 
         let (mut sub_seen, mut larger_seen) = (false, false);
@@ -1116,13 +1269,16 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
                     !matches!(d, DateTok::AmPm | DateTok::AmPmCjk) && clock_rank(d) != Some(rank);
                 if let Some(r) = clock_rank(d) {
                     let n = match *d {
-                        DateTok::Hour(n) | DateTok::Minute(n) | DateTok::Second(n) => n,
+                        DateTok::Hour(n) | DateTok::Minute(n) | DateTok::Second(n) => n.min(2),
                         _ => 0,
                     };
                     if r > rank && r == top && !larger_seen {
                         *d = left(r, n);
                         larger_seen = true;
-                    } else if r > rank || (r == rank && larger_after && !preceded) {
+                    } else if r > rank
+                        || (r == rank && larger_after && !preceded)
+                        || (r == rank && ampm && sub_seen)
+                    {
                     } else if r == rank {
                         *d = if preceded || sub_seen {
                             left(r, n)
@@ -1156,6 +1312,39 @@ fn compile_date(toks: &[Tok], lcid: Option<u32>, hijri: bool) -> Option<Body> {
         for k in twelve {
             if let Item::Date(DateTok::Hour(n)) = items[k] {
                 items[k] = Item::Date(DateTok::Hour12(n));
+            }
+        }
+    }
+
+    if ampm {
+        for it in items.iter_mut() {
+            if let Item::Date(d) = it {
+                *d = match *d {
+                    DateTok::ElapsedH(n) => DateTok::AmH(n),
+                    DateTok::ElapsedM(n) => DateTok::AmM(n),
+                    DateTok::ElapsedS(n) => DateTok::AmS(n),
+                    other => other,
+                };
+            }
+        }
+
+        if let Some(e) = items
+            .iter()
+            .position(|it| matches!(it, Item::Date(DateTok::LeftH(_))))
+        {
+            let mut second = false;
+            for it in items[e + 1..].iter_mut() {
+                match *it {
+                    Item::Date(DateTok::AmH(n)) => {
+                        *it = Item::Date(DateTok::LeftH(n));
+                        second = true;
+                    }
+
+                    Item::Date(DateTok::Minute(n)) if second => {
+                        *it = Item::Date(DateTok::Month(n));
+                    }
+                    _ => {}
+                }
             }
         }
     }
@@ -1233,7 +1422,8 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
             t => toks.push(t),
         }
     }
-    let hijri = calendar == Some(2);
+
+    let hijri = calendar == Some(2) && lcid.is_none_or(|l| (l >> 16) & 0xFF == 0);
 
     let digit_sys = lcid.map(|l| (l >> 24) as u8);
     let db = match (dbnum, lcid) {
@@ -1246,12 +1436,65 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
         _ => None,
     };
     if let Some((code, names)) = sys {
+        if let Some(s) = toks.iter().position(|t| matches!(t, Tok::Slash)) {
+            if !toks[..s]
+                .iter()
+                .any(|t| is_date_tok(t) || matches!(t, Tok::Ph(_)))
+            {
+                return None;
+            }
+        }
         toks = tokenize(code)?.pop()?;
         lcid = names;
     }
+
+    let ampm_subsec = toks
+        .iter()
+        .rposition(|t| matches!(t, Tok::Point))
+        .is_some_and(|p| {
+            let tail = &toks[p + 1..];
+            (1..=3).contains(&tail.len())
+                && tail.iter().all(|t| matches!(t, Tok::Ph(Ph::Zero)))
+                && toks[..p].iter().any(|t| matches!(t, Tok::AmPm))
+                && !toks[..p]
+                    .iter()
+                    .any(|t| matches!(t, Tok::Ph(_) | Tok::Percent))
+        });
+    if !ampm_subsec
+        && !toks
+            .iter()
+            .any(|t| matches!(t, Tok::Date(..) | Tok::Elapsed(..) | Tok::AmPmCjk))
+    {
+        if let Some(first) = toks.iter().position(|t| matches!(t, Tok::AmPm)) {
+            for t in &mut toks[first..] {
+                match t {
+                    Tok::Point => *t = Tok::Lit(".".into()),
+                    Tok::Percent => *t = Tok::Lit("%".into()),
+                    _ => {}
+                }
+            }
+        }
+    }
     let has = |f: &dyn Fn(&Tok) -> bool| toks.iter().any(f);
     let has_at = has(&|t| matches!(t, Tok::At));
-    let has_date = has(&is_date_tok);
+
+    let ampm_number = !ampm_subsec
+        && has(&|t| matches!(t, Tok::AmPm))
+        && !has(&|t| matches!(t, Tok::Date(..) | Tok::Elapsed(..) | Tok::AmPmCjk))
+        && has(&|t| matches!(t, Tok::Percent | Tok::Point | Tok::Ph(_)))
+        && !has(&|t| matches!(t, Tok::At | Tok::General | Tok::Slash | Tok::Exp(_)));
+    if ampm_number {
+        let first = toks.iter().position(|t| matches!(t, Tok::AmPm))?;
+        if toks[first..].iter().any(|t| matches!(t, Tok::Ph(_))) {
+            return None;
+        }
+    }
+
+    let cal_subsec = calendar.is_some()
+        && toks.first().is_some_and(|t| matches!(t, Tok::Point))
+        && (2..=4).contains(&toks.len())
+        && toks[1..].iter().all(|t| matches!(t, Tok::Ph(Ph::Zero)));
+    let has_date = (has(&is_date_tok) || cal_subsec) && !ampm_number;
     let has_general = has(&|t| matches!(t, Tok::General));
     let has_digits = has(&|t| matches!(t, Tok::Ph(_)));
     let has_point = has(&|t| matches!(t, Tok::Point));
@@ -1291,16 +1534,25 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
         for (i, t) in toks.iter().enumerate() {
             items.push(match t {
                 Tok::At => Item::Text,
-                Tok::Point => Item::Lit(".".into()),
+
+                Tok::Point | Tok::Percent => return None,
                 Tok::Comma if i > 0 && matches!(toks[i - 1], Tok::Comma) => continue,
                 Tok::Comma => Item::Lit(",".into()),
-                Tok::Percent => Item::Lit("%".into()),
                 _ => literal_item(t)?,
             });
         }
         Body::Text(items)
     } else if has_date {
-        compile_date(&toks, lcid, hijri)?
+        if calendar == Some(1) {
+            for t in &mut toks {
+                if let Tok::Date(DateField::Month, n) = t {
+                    if *n == 5 {
+                        *n = 4;
+                    }
+                }
+            }
+        }
+        compile_date(&toks, lcid, hijri, calendar.is_some())?
     } else if has_general {
         if toks.iter().filter(|t| matches!(t, Tok::General)).count() > 1 {
             return None;
@@ -1403,10 +1655,26 @@ pub(crate) fn parse_format(code: &str) -> Option<NumberFormat> {
     {
         return None;
     }
+
+    let lens = super::codelen::section_code_lens(code);
+    if lens.iter().all(Option::is_some) {
+        let mut total: u32 = lens.iter().flatten().sum();
+        if n == 1 {
+            total += match sections[0].body {
+                Body::Literal(_) if code.split('"').step_by(2).any(|s| !s.is_empty()) => 3,
+                Body::Literal(_) => 11,
+                Body::General(_) | Body::Text(_) | Body::Date(_) => 4,
+                _ => 0,
+            };
+        }
+        if total >= 253 {
+            return None;
+        }
+    }
     Some(NumberFormat {
         sections,
         text_section,
         numeric,
-        code_lens: super::codelen::section_code_lens(code),
+        code_lens: lens,
     })
 }

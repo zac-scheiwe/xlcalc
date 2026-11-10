@@ -1,0 +1,30 @@
+startup: Workbooks=0 Windows=0 StartupPath=[True]
+Windows.Count => 0
+Windows.Item(1) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Windows.Item(name) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Application.Windows.Count => 1
+Application.Windows(addin) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Application.Windows(1) => Book1
+Application.Windows(2) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Activate => active=Book1
+NewWindow => ERR Unable to get the NewWindow property of the Workbook class
+ActiveWindow => Book1
+Windows.Arrange => True ok
+ActiveWorkbook => Book1
+ActiveSheet => Sheet1
+Sheets.Item(1).Activate => ok
+Worksheets(1).Select => ERR Unable to get the Select property of the Worksheet class
+ActiveWorkbook after => Book1
+plain open Windows.Count => 0
+plain open IsAddin => True
+plain open Workbooks.Count => 1
+plain open Windows.Item(1) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+plain open Visible => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Windows.Visible put => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+IsAddin=true: Windows.Count => 0
+IsAddin=true: Application.Windows.Count => 1
+IsAddin=true: Workbooks.Count => 1
+IsAddin=false: Windows.Count => 1
+StartupPath leaf=[XLSTART] AltStartupPath=[]
+XLSTART files=[]
+PERSONAL.XLSB present=[False] open=[Book1]

@@ -155,9 +155,17 @@ fn suite(name: &str) -> (usize, Vec<String>) {
     for s in steps {
         if s["op"] == "vba_module" {
             let file = s["file"].as_str().unwrap();
+            let kind = if file.ends_with(".cls") {
+                ModuleKind::Class
+            } else {
+                ModuleKind::Standard
+            };
             modules.push(SourceModule {
-                name: file.trim_end_matches(".bas").to_string(),
-                kind: ModuleKind::Standard,
+                name: file
+                    .trim_end_matches(".bas")
+                    .trim_end_matches(".cls")
+                    .to_string(),
+                kind,
                 source: fs::read_to_string(root().join("vba").join(file)).unwrap(),
             });
         }
@@ -182,7 +190,14 @@ fn suite(name: &str) -> (usize, Vec<String>) {
             .unwrap_or_default();
         let want = variant(&item["result"]);
         checked += 1;
-        let got = project.call(proc, &args, &mut RunHost);
+        if std::env::var_os("VBA_TRACE").is_some() {
+            eprintln!("{proc}{args:?}");
+        }
+
+        let got = project.call(proc, &args, &mut RunHost).map(|v| match v {
+            Variant::Bstr(s) => Variant::Bstr(xlcalc_vba::rt::host_text(&s)),
+            v => v,
+        });
         let ok = matches!(&got, Ok(v) if same(v, &want));
         let known = KNOWN_RT.iter().find(|k| k.0 == proc);
         match known {
@@ -207,4 +222,54 @@ fn vba_boundary_runs() {
     let (n, failures) = suite("vba_boundary");
     assert!(n >= 40, "only {n} steps");
     assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn vba_lang_runs() {
+    let (n, failures) = std::thread::Builder::new()
+        .stack_size(256 << 20)
+        .spawn(|| suite("vba_lang"))
+        .unwrap()
+        .join()
+        .unwrap();
+    assert!(n >= 1000, "only {n} steps");
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+}
+
+#[test]
+fn vba_lang2_runs() {
+    let (n, failures) = std::thread::Builder::new()
+        .stack_size(256 << 20)
+        .spawn(|| suite("vba_lang2"))
+        .unwrap()
+        .join()
+        .unwrap();
+    assert!(n >= 300, "only {n} steps");
+    assert!(
+        failures.is_empty(),
+        "{}",
+        failures.join(
+            "
+"
+        )
+    );
+}
+
+#[test]
+fn vba_io_runs() {
+    let (n, failures) = std::thread::Builder::new()
+        .stack_size(256 << 20)
+        .spawn(|| suite("vba_io"))
+        .unwrap()
+        .join()
+        .unwrap();
+    assert!(n >= 300, "only {n} steps");
+    assert!(
+        failures.is_empty(),
+        "{}",
+        failures.join(
+            "
+"
+        )
+    );
 }

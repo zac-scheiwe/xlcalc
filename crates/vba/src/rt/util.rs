@@ -74,11 +74,111 @@ pub(super) fn is_null(v: &Variant) -> bool {
 }
 
 pub(super) fn units(s: &str) -> Vec<u16> {
-    s.encode_utf16().collect()
+    let (body, _) = split_odd(s);
+    body_units(body)
+}
+
+const LONE_BASE: u32 = 0x10F000;
+
+fn lone_unit(c: char) -> Option<u16> {
+    let v = c as u32;
+    (LONE_BASE..LONE_BASE + 0x800)
+        .contains(&v)
+        .then(|| (v - LONE_BASE) as u16 + 0xD800)
+}
+
+fn body_units(body: &str) -> Vec<u16> {
+    let mut out = Vec::with_capacity(body.len());
+    let mut buf = [0u16; 2];
+    for c in body.chars() {
+        match lone_unit(c) {
+            Some(u) => out.push(u),
+            None => out.extend_from_slice(c.encode_utf16(&mut buf)),
+        }
+    }
+    out
+}
+
+pub fn host_text(s: &str) -> String {
+    split_odd(s)
+        .0
+        .chars()
+        .map(|c| {
+            if lone_unit(c).is_some() {
+                char::REPLACEMENT_CHARACTER
+            } else {
+                c
+            }
+        })
+        .collect()
+}
+
+pub(crate) fn join(a: String, b: &str) -> String {
+    if !b.is_empty() && split_odd(&a).1.is_some() {
+        let mut bytes = bytes_of(&a);
+        bytes.extend(bytes_of(b));
+        return from_bytes(&bytes);
+    }
+    normalize(a + b)
+}
+
+pub(crate) fn normalize(s: String) -> String {
+    let (body, odd) = split_odd(&s);
+    if !body.chars().any(|c| lone_unit(c).is_some()) {
+        return s;
+    }
+    let mut out = from_units(&body_units(body));
+    if let Some(b) = odd {
+        out.push(char::from_u32(ODD_BASE + u32::from(b)).unwrap_or('?'));
+    }
+    out
+}
+
+const ODD_BASE: u32 = 0x10FF00;
+
+pub(crate) fn split_odd(s: &str) -> (&str, Option<u8>) {
+    match s.chars().next_back() {
+        Some(c) if (ODD_BASE..=ODD_BASE + 255).contains(&(c as u32)) => (
+            &s[..s.len() - c.len_utf8()],
+            Some((c as u32 - ODD_BASE) as u8),
+        ),
+        _ => (s, None),
+    }
+}
+
+pub(crate) fn bytes_of(s: &str) -> Vec<u8> {
+    let (body, odd) = split_odd(s);
+    let mut v: Vec<u8> = body_units(body)
+        .into_iter()
+        .flat_map(u16::to_le_bytes)
+        .collect();
+    v.extend(odd);
+    v
+}
+
+pub(crate) fn from_bytes(b: &[u8]) -> String {
+    let u: Vec<u16> = b
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|c| u16::from_le_bytes(*c))
+        .collect();
+    let mut s = from_units(&u);
+    if b.len() % 2 == 1 {
+        s.push(char::from_u32(ODD_BASE + u32::from(b[b.len() - 1])).unwrap_or('?'));
+    }
+    s
 }
 
 pub(super) fn from_units(u: &[u16]) -> String {
-    String::from_utf16_lossy(u)
+    char::decode_utf16(u.iter().copied())
+        .map(|r| {
+            r.unwrap_or_else(|e| {
+                char::from_u32(LONE_BASE + u32::from(e.unpaired_surrogate()) - 0xD800)
+                    .unwrap_or(char::REPLACEMENT_CHARACTER)
+            })
+        })
+        .collect()
 }
 
 pub(super) fn long_value(n: i64) -> R {

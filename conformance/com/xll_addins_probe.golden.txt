@@ -1,0 +1,19 @@
+count before => 6
+RegisterXLL => True
+count after RegisterXLL => 6
+names after RegisterXLL => ANALYS32.XLL,ATPVBAEN.XLAM,EUROTOOL.XLAM,addin_a.xlam,SOLVER.XLAM,mscoree.dll
+=XlcDbl(2) -> [4]
+Workbooks.Count => 1
+AddIns.Add => Name=xlc_testxll.dll Title=[Xlc_Testxll] Comments=[] Installed=False Path=[debug] IsOpen=False
+count after Add => 7
+names after Add => ANALYS32.XLL,ATPVBAEN.XLAM,EUROTOOL.XLAM,addin_a.xlam,SOLVER.XLAM,xlc_testxll.dll,mscoree.dll
+Installed = True => Installed=True Title=[Xlc_Testxll] Comments=[] IsOpen=False
+Workbooks.Count => 1
+=XlcDbl(3) -> [6]
+Application.Run => 8
+Installed = False => Installed=False
+=XlcDbl(5) -> [#VALUE!]
+Installed = True again => Installed=True
+=XlcDbl(6) -> [12]
+count end => 7
+names end => ANALYS32.XLL,ATPVBAEN.XLAM,EUROTOOL.XLAM,addin_a.xlam,SOLVER.XLAM,xlc_testxll.dll,mscoree.dll

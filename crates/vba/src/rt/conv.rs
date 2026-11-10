@@ -10,6 +10,13 @@ pub(super) fn cstr(ctx: &RtContext, a: &[Variant]) -> R {
     match &a[0] {
         Variant::BstrNull => Ok(Variant::BstrNull),
         Variant::Error(e) => text_out(format!("Error {}", e & 0xFFFF)),
+
+        Variant::Array(arr) if arr.elem == VarType::Ui1 => text_out(super::from_bytes(
+            &arr.data
+                .iter()
+                .map(|b| if let Variant::Ui1(b) = b { *b } else { 0 })
+                .collect::<Vec<_>>(),
+        )),
         v => text_out(text(ctx, v)?),
     }
 }
@@ -57,11 +64,26 @@ pub(super) fn cdate(ctx: &RtContext, a: &[Variant]) -> R {
     dates::to_date(ctx, &a[0]).map(Variant::Date)
 }
 
+pub(super) fn cdate_typed(ctx: &RtContext, a: &[Variant]) -> R {
+    match convert(ctx, &a[0], VarType::Date)? {
+        Variant::Date(x) if dates::in_date_range(x) => Ok(Variant::Date(x)),
+        Variant::Date(_) => Err(VbaError::new(6)),
+        _ => Err(VbaError::new(13)),
+    }
+}
+
+pub(super) fn select_test(_: &RtContext, a: &[Variant]) -> R {
+    Ok(Variant::Bool(matches!(a[0], Variant::Bool(true))))
+}
+
 pub(super) fn cvar(_: &RtContext, a: &[Variant]) -> R {
     Ok(a[0].clone())
 }
 
 pub(super) fn cverr(ctx: &RtContext, a: &[Variant]) -> R {
+    if let Variant::Error(_) = a[0] {
+        return Ok(a[0].clone());
+    }
     let n = long(ctx, &a[0])?;
     if !(0..=65535).contains(&n) {
         return Err(VbaError::new(5));
@@ -93,7 +115,8 @@ fn val_text(s: &str) -> f64 {
             let digits: String = rest.chars().take_while(|c| c.is_digit(radix)).collect();
             let v = u64::from_str_radix(&digits, radix).unwrap_or(0);
 
-            let short = digits.len() <= if radix == 16 { 4 } else { 6 };
+            let short = digits.len() <= if radix == 16 { 4 } else { 6 }
+                && !rest[digits.len()..].starts_with('&');
             return if short {
                 f64::from(v as u16 as i16)
             } else {
@@ -252,6 +275,16 @@ pub(super) fn abs(_: &RtContext, a: &[Variant]) -> R {
     unary(Unary::Abs, &a[0])
 }
 
+pub(super) fn abs_typed(_: &RtContext, a: &[Variant]) -> R {
+    if matches!(
+        a[0],
+        Variant::I2(i16::MIN) | Variant::I4(i32::MIN) | Variant::I8(i64::MIN)
+    ) {
+        return Err(VbaError::new(6));
+    }
+    unary(Unary::Abs, &a[0])
+}
+
 pub(super) fn sgn(ctx: &RtContext, a: &[Variant]) -> R {
     let x = double(ctx, &a[0])?;
     Ok(Variant::I2(if x > 0.0 {
@@ -266,4 +299,8 @@ pub(super) fn sgn(ctx: &RtContext, a: &[Variant]) -> R {
 pub(super) fn round(ctx: &RtContext, a: &[Variant]) -> R {
     let places = long_or(ctx, a, 1, 0)?;
     ops::round(&a[0], places).map_err(from_hr)
+}
+
+pub(super) fn clnglng(ctx: &RtContext, a: &[Variant]) -> R {
+    convert(ctx, &code_value(&a[0]), VarType::I8)
 }

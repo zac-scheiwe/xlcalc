@@ -48,6 +48,7 @@ pub fn parse_with(src: &str, sheet_exists: &dyn Fn(&str) -> bool) -> Result<Expr
         empty_ws: String::new(),
         binder: 0,
         locals: Vec::new(),
+        union_ok: true,
     };
     let mut e = p.expr()?;
 
@@ -104,6 +105,8 @@ struct Parser {
     binder: u8,
 
     locals: Vec<String>,
+
+    union_ok: bool,
 }
 
 const MAX_FORMULA_CHARS: usize = 8192;
@@ -399,7 +402,13 @@ impl Parser {
         };
         if let Some(op) = op {
             self.bump();
-            let expr = self.prefix()?;
+
+            let keep = self.union_ok && op != UnaryOp::Implicit;
+            let union_ok = std::mem::replace(&mut self.union_ok, keep);
+            let expr = self.prefix();
+            self.union_ok = union_ok;
+            let expr = expr?;
+            let at_union = op == UnaryOp::Implicit && union_ok;
 
             if op == UnaryOp::Implicit {
                 if let Expr::Field { expr: inner, field } = expr.unwrap_ws() {
@@ -412,10 +421,11 @@ impl Parser {
                     });
                 }
             }
-            return Ok(Expr::Unary {
+            let e = Expr::Unary {
                 op,
                 expr: Box::new(expr),
-            });
+            };
+            return if at_union { self.union_tail(e) } else { Ok(e) };
         }
         self.intersection()
     }
@@ -427,11 +437,39 @@ impl Parser {
                 | Tok::Sheet(_)
                 | Tok::StructRef { .. }
                 | Tok::Number { .. }
-                | Tok::Op("(")
+                | Tok::Op("(" | "@")
         )
     }
 
     fn intersection(&mut self) -> Result<Expr, ParseError> {
+        let left = self.intersection_inner()?;
+        self.union_tail(left)
+    }
+
+    fn union_tail(&mut self, mut left: Expr) -> Result<Expr, ParseError> {
+        while self.union_ok && self.is_op(",") {
+            let ws = self.cur().ws.clone();
+            left = left.with_ws("", &ws);
+            self.bump();
+            let right = if self.is_op("@") {
+                let saved = std::mem::replace(&mut self.union_ok, false);
+                let r = self.prefix();
+                self.union_ok = saved;
+                r?
+            } else {
+                let before = self.cur().ws.clone();
+                self.intersection_inner()?.with_ws(&before, "")
+            };
+            left = Expr::Binary {
+                op: BinOp::Union,
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+        }
+        Ok(left)
+    }
+
+    fn intersection_inner(&mut self) -> Result<Expr, ParseError> {
         let mut left = self.range()?;
         while self.cur().space_before && Self::starts_operand(&self.cur().tok) {
             let mut ws = self.cur().ws.clone();
@@ -439,7 +477,20 @@ impl Parser {
                 ws = linebreak_operator(&ws).ok_or_else(|| self.err("unexpected blank"))?;
             }
             left = left.with_ws("", &ws);
-            let right = self.range()?;
+
+            let right = if self.is_op("@") {
+                match self.prefix()? {
+                    Expr::Ws { after, expr, .. } if after.is_empty() => *expr,
+                    Expr::Ws { after, expr, .. } => Expr::Ws {
+                        before: String::new(),
+                        after,
+                        expr,
+                    },
+                    e => e,
+                }
+            } else {
+                self.range()?
+            };
             left = Expr::Binary {
                 op: BinOp::Intersect,
                 left: Box::new(left),
@@ -456,7 +507,7 @@ impl Parser {
             left = demote_field(left);
             self.names_mode |= demoted;
 
-            let keep_ws = matches!(left.unwrap_ws(), Expr::Name { .. });
+            let keep_ws = matches!(left.unwrap_ws(), Expr::Name { .. } | Expr::StructRef { .. });
             let (ws_before, ws_after) = if keep_ws {
                 let b = self.cur().ws.clone();
                 self.bump();
@@ -466,7 +517,13 @@ impl Parser {
                 (String::new(), String::new())
             };
             left = left.with_ws("", &ws_before);
-            let mut right = self.postfix()?.with_ws(&ws_after, "");
+
+            let right_op = if self.is_op("@") {
+                self.prefix()?
+            } else {
+                self.postfix()?
+            };
+            let mut right = right_op.with_ws(&ws_after, "");
             if demoted {
                 right = cell_to_name(right);
             }
@@ -543,7 +600,9 @@ impl Parser {
             return Err(self.err("functions nested too deeply"));
         }
         let mark = self.locals.len();
+        let union_ok = std::mem::replace(&mut self.union_ok, false);
         let r = self.args_inner();
+        self.union_ok = union_ok;
         self.locals.truncate(mark);
         self.funcs -= 1;
         r
@@ -636,7 +695,10 @@ impl Parser {
                 if self.parens > MAX_PAREN_DEPTH {
                     return Err(self.err("parentheses nested too deeply"));
                 }
-                let mut e = self.expr()?;
+                let union_ok = std::mem::replace(&mut self.union_ok, true);
+                let e = self.expr();
+                self.union_ok = union_ok;
+                let mut e = e?;
                 while self.is_op(",") {
                     let ws = self.cur().ws.clone();
                     e = e.with_ws("", &ws);
@@ -706,6 +768,14 @@ impl Parser {
                 })
             }
             Tok::Error(e) => Ok(Expr::Error(e)),
+
+            Tok::StructRef {
+                table: Some(table),
+                spec,
+            } if is_valid_name(&table) => Ok(Expr::StructRef {
+                table: Some(table),
+                spec,
+            }),
             _ => {
                 self.i = self.i.saturating_sub(1);
                 Err(self.err("expected a reference after sheet name"))
@@ -721,7 +791,33 @@ impl Parser {
             });
         }
 
+        let name = match &sheet {
+            Some(SheetSpec::Single(book))
+                if self.is_op("(") && !self.cur().space_before && is_addin_file(book) =>
+            {
+                let qualified = format!("{book}!{name}");
+                return self.after_ident(None, qualified);
+            }
+            _ => name,
+        };
+
+        if let Some(SheetSpec::Single(book)) = &sheet {
+            if !self.names_mode && self.is_op("(") && !self.cur().space_before {
+                let args = self.args()?;
+                return Ok(Expr::Func {
+                    name: format!("{book}!{name}"),
+                    args,
+                });
+            }
+        }
+
         if sheet.is_none() && self.is_op("(") && !self.cur().space_before {
+            if name
+                .split_once('.')
+                .is_some_and(|(base, _)| cell_part(base).is_some() && reads_as_r1c1(base))
+            {
+                return Err(self.err("cell word before a dot in a call name"));
+            }
             self.binder = match name.to_ascii_uppercase().trim_start_matches("_XLFN.") {
                 "LET" => 1,
                 "LAMBDA" => 2,
@@ -1117,6 +1213,11 @@ fn linebreak_operator(ws: &str) -> Option<String> {
         "\n".repeat(breaks),
         " ".repeat((tail + 255) % 256 + 1)
     ))
+}
+
+pub(super) fn is_addin_file(book: &str) -> bool {
+    let lower = book.to_ascii_lowercase();
+    [".xlam", ".xla", ".xll"].iter().any(|e| lower.ends_with(e))
 }
 
 #[cfg(test)]

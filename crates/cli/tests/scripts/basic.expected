@@ -30,7 +30,7 @@
 > sheet Orders
   on sheet Orders
 > A1 Item
-  3 evaluations in <t>: A1=Item
+  0 evaluations in <t>: A1=Item
 > B1 Qty
   0 evaluations in <t>: B1=Qty
 > A2 apple
@@ -41,7 +41,7 @@
   table Sales on A1:B2 with columns: Item, Qty
   0 evaluations in <t>
 > C2 =Sales[@Qty]*2
-  0 evaluations in <t>: C2=6
+  1 evaluation in <t>: C2=6
 > sheet Sheet1
   on sheet Sheet1
 > 'Orders'!B2 5
@@ -107,7 +107,7 @@
 > sheet Calc
   on sheet Calc
 > B1 0.5
-  6 evaluations in <t>: B1=0.5
+  0 evaluations in <t>: B1=0.5
 > B2 =100*B1
   1 evaluation in <t>: B2=50
 > goalseek B2 30 B1

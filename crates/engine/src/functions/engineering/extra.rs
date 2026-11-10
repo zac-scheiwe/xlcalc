@@ -9,6 +9,7 @@ pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let r: R<f64> = (|| {
         let mut terms = Vec::new();
         let mut skipped = false;
+        let mut negative = false;
         for (i, op) in ops.iter().enumerate() {
             if op.is_missing() {
                 if i == 0 {
@@ -33,6 +34,7 @@ pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     Value::Error(e) => return Err(*e),
                     _ => return Err(XlError::VALUE),
                 };
+                negative |= n < 0.0;
                 terms.push(n.trunc());
                 Ok(())
             })?;
@@ -40,7 +42,7 @@ pub fn multinomial(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         if terms.is_empty() && skipped {
             return Err(XlError::VALUE);
         }
-        if terms.iter().any(|&t| t < 0.0) {
+        if negative {
             return Err(XlError::NUM);
         }
         let total: f64 = terms.iter().sum();
@@ -86,14 +88,15 @@ pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             })?;
 
             let multi = matches!(coef, Operand::Val(Value::Array(_))) || vals.len() > 1;
-            let mut cs = Vec::new();
+
+            let mut cs: Vec<R<f64>> = Vec::new();
             for v in &vals {
-                match v {
-                    Value::Blank => cs.push(0.0),
-                    Value::Bool(_) => return Err(XlError::VALUE),
-                    Value::Text(_) if multi => return Err(XlError::VALUE),
-                    other => cs.push(ctx.to_number(other)?),
-                }
+                cs.push(match v {
+                    Value::Blank => Ok(0.0),
+                    Value::Bool(_) => Err(XlError::VALUE),
+                    Value::Text(_) if multi => Err(XlError::VALUE),
+                    other => ctx.to_number(other),
+                });
             }
             let mut sum = 0.0;
 
@@ -103,13 +106,17 @@ pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                     p = crate::x87::add(p, m);
                 }
                 if x == 0.0 && p <= 0.0 {
-                    return Err(XlError::NUM);
+                    return Err(cs.iter().find_map(|c| c.err()).unwrap_or(XlError::NUM));
                 }
+                let c = (*c)?;
                 let t = if x < 0.0 && p.fract() != 0.0 {
                     f64::NAN
                 } else {
-                    crate::x87::mul(*c, crate::xmath::pow(x, p))
+                    crate::x87::mul(c, crate::xmath::pow(x, p))
                 };
+                if t.is_infinite() {
+                    return Err(XlError::NUM);
+                }
                 if !t.is_nan() {
                     sum = crate::x87::add(sum, t);
                 }

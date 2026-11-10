@@ -201,7 +201,10 @@ impl Application<'_> {
             })(),
 
             "OnTime" => (|| {
-                let earliest = a.f64(0)?.ok_or_else(OmError::type_mismatch)?;
+                let Ok(earliest) = a.f64(0) else {
+                    return Ok(Variant::Empty);
+                };
+                let earliest = earliest.ok_or_else(OmError::type_mismatch)?;
                 let procedure = a.string(1)?.ok_or_else(OmError::type_mismatch)?;
                 let latest = a.f64(2)?;
                 let schedule = a.bool(3)?.unwrap_or(true);
@@ -213,7 +216,7 @@ impl Application<'_> {
                 self.host.on_time(&request, schedule);
                 if schedule {
                     self.on_time.push(request);
-                    Ok(Variant::Empty)
+                    Ok(Variant::Bool(true))
                 } else {
                     let at = self.on_time.iter().position(|r| {
                         r.earliest == request.earliest
@@ -224,9 +227,26 @@ impl Application<'_> {
                             self.on_time.remove(i);
                             Ok(Variant::Empty)
                         }
-                        None => Err(OmError::app_defined()),
+                        None => Err(OmError::app_defined_with(
+                            "Method 'OnTime' of object '_Application' failed",
+                        )),
                     }
                 }
+            })(),
+
+            "OnKey" => (|| {
+                let key = a.string(0)?.ok_or_else(OmError::type_mismatch)?;
+                if !valid_key(&key) {
+                    return Err(OmError::app_defined_with(
+                        "Method 'OnKey' of object '_Application' failed",
+                    ));
+                }
+                let key = key.to_ascii_lowercase();
+                self.on_key.retain(|(k, _)| *k != key);
+                if let Some(p) = a.string(1)?.filter(|p| !p.is_empty()) {
+                    self.on_key.push((key, p));
+                }
+                Ok(Variant::Empty)
             })(),
             "Dialogs" => Err(OmError::unsupported("Application.Dialogs")),
             _ => return None,
@@ -254,4 +274,42 @@ fn int_arg(args: &[Variant], i: usize) -> i32 {
             _ => 0,
         },
     }
+}
+
+fn valid_key(key: &str) -> bool {
+    const NAMES: &[&str] = &[
+        "backspace",
+        "break",
+        "capslock",
+        "clear",
+        "delete",
+        "del",
+        "down",
+        "end",
+        "enter",
+        "escape",
+        "esc",
+        "help",
+        "home",
+        "insert",
+        "left",
+        "numlock",
+        "pgdn",
+        "pgup",
+        "return",
+        "right",
+        "scrolllock",
+        "tab",
+        "up",
+    ];
+    let rest = key.trim_start_matches(['+', '^', '%']);
+    if let Some(inner) = rest.strip_prefix('{').and_then(|r| r.strip_suffix('}')) {
+        let n = inner.to_ascii_lowercase();
+        let f = n
+            .strip_prefix('f')
+            .and_then(|d| d.parse::<u32>().ok())
+            .is_some_and(|d| (1..=15).contains(&d));
+        return f || NAMES.contains(&n.as_str());
+    }
+    rest.chars().count() == 1
 }

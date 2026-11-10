@@ -10,6 +10,9 @@ publish = false
 name = "conform"
 path = "src/main.rs"
 
+[features]
+covsig = []
+
 [dependencies]
 xlcalc.workspace = true
 serde.workspace = true

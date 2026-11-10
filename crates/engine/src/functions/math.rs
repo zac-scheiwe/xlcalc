@@ -356,7 +356,7 @@ pub fn round_decimal(x: f64, digits: i32, mode: RoundMode) -> f64 {
         .map(|b| b - b'0')
         .collect();
 
-    let keep = exp + 1 + digits;
+    let keep = (exp + 1).wrapping_add(digits);
     if keep >= ds.len() as i32 {
         return number::round15(x);
     }
@@ -415,36 +415,42 @@ fn round_fn(ctx: &mut EvalCtx, a: &[Value], mode: RoundMode) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let d = num(ctx, &a[1])?;
-        let d = if matches!(mode, RoundMode::HalfAway) {
-            let d = ifuzz(d);
+        if matches!(mode, RoundMode::HalfAway) {
+            let n = ifuzz(d).clamp(-2147483647.0, 2147483647.0) as i32;
+            return Ok(Value::num(round_decimal(x, n, mode)));
+        }
+        if matches!(mode, RoundMode::Down) {
+            return Ok(Value::num(round_decimal(x, trunc_digits(d), mode)));
+        }
 
-            if d >= 2147483647.0 {
-                return Ok(Value::num(0.0));
-            }
-            d.clamp(-400.0, 400.0) as i32
-        } else {
-            let n = trunc_digits(d);
+        let t = round_decimal(x, trunc_digits(d), RoundMode::Down);
+        if !x.is_finite() || t == number::round15(x) {
+            return Ok(Value::num(t));
+        }
+        let n2 = trunc_digits_unit(d);
+        if n2 <= -309 {
+            return Err(XlError::NUM);
+        }
+        let unit: f64 = format!("1e{}", -n2).parse().unwrap_or(0.0);
 
-            let lo = (if d.abs() < 4294967296.0 {
-                d.abs() as u32
-            } else {
-                u32::MAX
-            }) as u16 as i16;
-            if matches!(mode, RoundMode::Up) && d < 0.0 && lo < 0 {
-                -400
-            } else {
-                n
-            }
-        };
-        Ok(Value::num(round_decimal(x, d, mode)))
+        let unit = if unit < f64::MIN_POSITIVE { 0.0 } else { unit };
+        Ok(Value::num(number::normalize(t + x.signum() * unit)))
     })())
 }
 
 fn trunc_digits(d: f64) -> i32 {
+    trunc_count(d, 100)
+}
+
+fn trunc_digits_unit(d: f64) -> i32 {
+    trunc_count(d, 309)
+}
+
+fn trunc_count(d: f64, neg16: i32) -> i32 {
     let a = d.abs().trunc();
     let u = if a < 4294967296.0 { a as u32 } else { u32::MAX };
     let lo = u as u16 as i16;
-    let n = if lo < 0 { 100 } else { lo as i32 };
+    let n = if lo < 0 { neg16 } else { lo as i32 };
     if d > 0.0 {
         n
     } else {

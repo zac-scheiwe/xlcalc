@@ -217,7 +217,7 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             a.t(4)?,
             a.o(5, 0.1)?,
         );
-        if n <= 0.0 {
+        if n == 0.0 {
             return Err(XlError::NUM);
         }
 
@@ -359,6 +359,9 @@ pub fn effect(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         let base = x87::add(x87::div(nominal, p), 1.0);
+        if p >= 4_294_967_295.0 {
+            return finite(x87::sub(crate::xmath::pow(base, p), 1.0));
+        }
         let (mut r, mut a, mut n) = (1.0, base, p as u64);
         while n != 0 {
             if n & 1 == 1 {

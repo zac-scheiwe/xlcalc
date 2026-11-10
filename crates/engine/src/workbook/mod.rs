@@ -1,6 +1,7 @@
 pub mod api;
 mod chain;
 mod edit;
+pub mod ext;
 pub mod names;
 pub mod notice;
 mod op;
@@ -12,6 +13,7 @@ pub mod store;
 pub mod tablelife;
 pub mod tables;
 pub mod track;
+mod transfer;
 
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
@@ -66,6 +68,10 @@ pub struct Settings {
     pub except_tables: bool,
 
     pub multi_threaded: bool,
+
+    pub force_full: bool,
+
+    pub force_full_seen: bool,
 }
 
 impl Default for Settings {
@@ -79,6 +85,8 @@ impl Default for Settings {
             threads: 0,
             except_tables: false,
             multi_threaded: true,
+            force_full: false,
+            force_full_seen: false,
         }
     }
 }
@@ -99,6 +107,16 @@ pub enum SheetKind {
     Worksheet,
 
     Chart,
+
+    Macro,
+
+    MacroIntl,
+}
+
+impl SheetKind {
+    pub fn is_macro(self) -> bool {
+        matches!(self, SheetKind::Macro | SheetKind::MacroIntl)
+    }
 }
 
 pub struct Sheet {
@@ -263,11 +281,19 @@ pub struct CalcState {
     pub(crate) stores: u64,
     pub(crate) next_born: i64,
 
-    pub(crate) chain_by_birth: bool,
+    pub(crate) skip_volatile: bool,
+
+    pub(crate) skip_host_volatile: bool,
 
     pub(crate) spilling: FxHashSet<FormulaId>,
 
     pub(crate) shifted: FxHashSet<FormulaId>,
+
+    pub(crate) keep_walk: bool,
+
+    pub(crate) no_empty_call: bool,
+
+    pub(crate) dead_pending: bool,
 
     pub(crate) stale_tables: bool,
 
@@ -275,6 +301,8 @@ pub struct CalcState {
     pub(crate) volatile: FxHashSet<FormulaId>,
 
     pub(crate) host_volatile: FxHashSet<FormulaId>,
+
+    pub(crate) cmd_manual: bool,
     pub(crate) circular: FxHashSet<FormulaId>,
     pub(crate) dirty_list: Vec<FormulaId>,
 
@@ -284,7 +312,7 @@ pub struct CalcState {
 
     pub(crate) partials: Vec<FormulaId>,
 
-    pub circular_ref: Option<CellAddr>,
+    pub circular_ref: Vec<CellAddr>,
 
     pub circ_iterating: bool,
 
@@ -297,6 +325,10 @@ pub struct CalcState {
     pub(crate) entered: Vec<FormulaId>,
 
     pub(crate) entered_groups: Vec<usize>,
+
+    pub(crate) chain_epoch: u64,
+
+    pub(crate) walk: crate::walk::WalkState,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -341,7 +373,12 @@ pub(crate) type TtcBlock = (SheetId, Rect, Vec<(u32, u32)>);
 
 pub struct Workbook {
     pub(crate) sheets: Vec<Sheet>,
+
+    pub(crate) ext_sheets: Vec<Sheet>,
+    pub(crate) ext: ext::ExtCell,
     next_sheet: u32,
+
+    book_name: Option<String>,
     pub(crate) formulas: Vec<Option<FormulaCell>>,
     free: Vec<FormulaId>,
 
@@ -368,11 +405,17 @@ pub struct Workbook {
 
     pub(crate) merges: crate::merge::Merges,
 
+    pub(crate) cfv: FxHashMap<SheetId, crate::cfv::SheetCfv>,
+
+    pub(crate) drawings: crate::drawing::Drawings,
+
     pub(crate) session: Session,
 
     pub(crate) arrays_seen: bool,
 
     pub(crate) apostrophe: FxHashMap<CellAddr, Text>,
+
+    pub insert_format_below: bool,
 
     op: op::OpFlags,
 
@@ -386,11 +429,26 @@ pub struct Workbook {
 
     pub(crate) scenarios: FxHashMap<SheetId, crate::scenarios::SheetScenarios>,
 
+    pub(crate) sparklines: FxHashMap<SheetId, Vec<crate::sparkline::SparkGroup>>,
+    pub(crate) spark_next: u32,
+
+    pub(crate) hyperlinks: FxHashMap<SheetId, Vec<crate::hyperlink::Hyperlink>>,
+    pub(crate) hl_next: u32,
+    pub(crate) cell_notes: FxHashMap<SheetId, crate::notes::NoteMap>,
+    pub(crate) note_next: u32,
+
+    pub(crate) spark_free: FxHashMap<SheetId, Vec<u32>>,
+    pub(crate) slicer_caches: Vec<crate::slicer::SlicerCache>,
+
+    pub(crate) pivots: crate::pivot::Pivots,
+
     pub(crate) tracks: track::Tracks,
 
     pub(crate) sbr: sbr::Sbr,
 
     pub(crate) function_host: Option<std::sync::Arc<dyn crate::host::FunctionHost>>,
+
+    pub(crate) rtd_source: Option<std::sync::Arc<dyn crate::host::RtdSource>>,
 
     pub(crate) share_plan: Option<crate::share::SharePlan>,
 
@@ -402,6 +460,8 @@ pub(crate) struct Session {
     pub(crate) selection: FxHashMap<SheetId, Selection>,
 
     pub(crate) fill_selected: FxHashMap<SheetId, (u32, u32)>,
+
+    pub(crate) rows_over_header: bool,
 
     pub(crate) last_format: Option<String>,
 }
@@ -450,6 +510,14 @@ struct Resolve<'a> {
 }
 
 impl SheetResolver for Resolve<'_> {
+    fn ext_sheet(&self, book: &str, sheet: &str) -> Option<SheetId> {
+        self.wb.ext_resolve(book, sheet).ok()
+    }
+
+    fn ext_book(&self, book: &str) -> bool {
+        self.wb.ext_touch_book(book)
+    }
+
     fn sheet_id(&self, name: &str) -> Option<SheetId> {
         self.wb
             .sheets
@@ -464,12 +532,24 @@ impl SheetResolver for Resolve<'_> {
             .is_some_and(|s| s.kind == SheetKind::Chart)
     }
 
+    fn macro_host(&self) -> bool {
+        formula::FORCE_MACRO.get()
+            || self
+                .wb
+                .sheet(self.host.sheet)
+                .is_some_and(|s| s.kind.is_macro())
+    }
+
     fn table(&self, name: Option<&str>) -> Option<(String, Vec<String>)> {
         let t = match name {
             Some(n) => self.wb.table_by_name(n),
             None => self.wb.table_at(self.host),
         }?;
         Some((t.name.clone(), t.columns.clone()))
+    }
+
+    fn bind_function(&self, name: &str) -> Option<String> {
+        self.wb.function_host.as_ref()?.bind(name)
     }
 
     fn name_exists(&self, name: &str) -> bool {
@@ -492,10 +572,13 @@ impl Workbook {
         let serial = local_serial(now);
         Workbook {
             sheets: Vec::new(),
+            ext_sheets: Vec::new(),
+            ext: Default::default(),
             session: Session {
                 active: SheetId(0),
                 selection: Default::default(),
                 fill_selected: Default::default(),
+                rows_over_header: false,
                 last_format: Some("General".into()),
             },
             op: op::OpFlags::IDLE,
@@ -503,6 +586,7 @@ impl Workbook {
             notes: Default::default(),
             passes: Default::default(),
             next_sheet: 1,
+            book_name: None,
             formulas: Vec::new(),
             free: Vec::new(),
             names: Names::default(),
@@ -521,25 +605,32 @@ impl Workbook {
                 waited: Default::default(),
                 stores: 0,
                 next_born: 0,
-                chain_by_birth: false,
+                skip_volatile: false,
+                skip_host_volatile: false,
                 spilling: FxHashSet::default(),
                 shifted: FxHashSet::default(),
+                keep_walk: false,
+                no_empty_call: false,
+                dead_pending: false,
                 stale_tables: false,
                 stale_copy: Vec::new(),
                 volatile: FxHashSet::default(),
                 host_volatile: FxHashSet::default(),
+                cmd_manual: false,
                 circular: FxHashSet::default(),
                 dirty_list: Vec::new(),
                 spill_dirty: Vec::new(),
                 read_spill: false,
                 partials: Vec::new(),
-                circular_ref: None,
+                circular_ref: Vec::new(),
                 circ_iterating: false,
                 fixed_now: None,
                 dt_seed: Vec::new(),
                 relink_scope: None,
                 entered: Vec::new(),
                 entered_groups: Vec::new(),
+                chain_epoch: 0,
+                walk: Default::default(),
             },
             tables: Vec::new(),
             tables_made: 0,
@@ -547,13 +638,26 @@ impl Workbook {
             styles: Default::default(),
             data_tables: Vec::new(),
             merges: Default::default(),
+            cfv: Default::default(),
+            drawings: Default::default(),
             arrays_seen: false,
             apostrophe: FxHashMap::default(),
+            insert_format_below: false,
             views: Default::default(),
             scenarios: Default::default(),
+            sparklines: Default::default(),
+            spark_free: Default::default(),
+            spark_next: 0,
+            hyperlinks: Default::default(),
+            hl_next: 0,
+            cell_notes: Default::default(),
+            note_next: 0,
+            slicer_caches: Vec::new(),
+            pivots: Default::default(),
             tracks: Default::default(),
             sbr: Default::default(),
             function_host: None,
+            rtd_source: None,
             share_plan: None,
             next_share: 0,
         }
@@ -570,9 +674,20 @@ impl Workbook {
     ) -> Result<SheetId, EditError> {
         self.command(Command::AddSheet, |wb| {
             let id = wb.add_sheet_run(name)?;
-            wb.move_sheet(id, before)?;
+            wb.place_added_sheet(id, before)?;
             Ok(id)
         })
+    }
+
+    fn place_added_sheet(&mut self, id: SheetId, before: Option<SheetId>) -> Result<(), EditError> {
+        if before.is_none() {
+            return Ok(());
+        }
+        self.calc.skip_volatile = true;
+        let r = self.move_sheet(id, before);
+        self.calc.skip_volatile = false;
+        self.calc.dead_pending = true;
+        r.map(|_| ())
     }
 
     pub fn add_chart_sheet_before(
@@ -585,6 +700,45 @@ impl Workbook {
             wb.move_sheet(id, before)?;
             Ok(id)
         })
+    }
+
+    pub fn add_macro_sheet_before(
+        &mut self,
+        name: &str,
+        intl: bool,
+        before: Option<SheetId>,
+    ) -> Result<SheetId, EditError> {
+        let kind = if intl {
+            SheetKind::MacroIntl
+        } else {
+            SheetKind::Macro
+        };
+        self.command(Command::AddSheet, |wb| {
+            let id = wb.add_sheet_kind(name, kind)?;
+            wb.move_sheet(id, before)?;
+            Ok(id)
+        })
+    }
+
+    pub fn set_name_macro_type(&mut self, key: &str, scope: Option<SheetId>, t: Option<i32>) {
+        self.names.set_macro_type(key, scope, t);
+    }
+
+    pub fn compile_xlm(
+        &self,
+        text: &str,
+        host: CellAddr,
+    ) -> Result<std::sync::Arc<Formula>, EditError> {
+        formula::FORCE_MACRO.set(true);
+        formula::NO_BANG.set(true);
+        let r = self.compile_formula(text, host);
+        formula::NO_BANG.set(false);
+        formula::FORCE_MACRO.set(false);
+        r.map(std::sync::Arc::new)
+    }
+
+    pub fn add_sheet_of_kind(&mut self, name: &str, kind: SheetKind) -> Result<SheetId, EditError> {
+        self.command(Command::AddSheet, |wb| wb.add_sheet_kind(name, kind))
     }
 
     fn add_sheet_run(&mut self, name: &str) -> Result<SheetId, EditError> {
@@ -610,14 +764,21 @@ impl Workbook {
 
         self.recompile_all();
         self.note_sheet(Notice::SheetAdded(id));
+        self.calc.dead_pending = true;
         Ok(id)
     }
 
     pub fn sheet(&self, id: SheetId) -> Option<&Sheet> {
+        if id.0 >= ext::EXT_BASE {
+            return self.ext_sheets.iter().find(|s| s.id == id);
+        }
         self.sheets.iter().find(|s| s.id == id)
     }
 
     pub(crate) fn sheet_mut(&mut self, id: SheetId) -> Option<&mut Sheet> {
+        if id.0 >= ext::EXT_BASE {
+            return self.ext_sheets.iter_mut().find(|s| s.id == id);
+        }
         self.sheets.iter_mut().find(|s| s.id == id)
     }
 
@@ -633,6 +794,14 @@ impl Workbook {
 
     pub fn sheet_at(&self, i: usize) -> &Sheet {
         &self.sheets[i]
+    }
+
+    pub fn book_name(&self) -> &str {
+        self.book_name.as_deref().unwrap_or("Book1")
+    }
+
+    pub fn set_book_name(&mut self, name: &str) {
+        self.book_name = Some(name.to_string());
     }
 
     pub fn sheet_count(&self) -> usize {
@@ -664,6 +833,9 @@ impl Workbook {
         }
         f.dirty = dirty;
         let a = f.addr;
+        if dirty && self.calc.walk.tracking() {
+            self.calc.walk.dirtied.push(fid);
+        }
         if let Some(sh) = self.sheets.iter_mut().find(|s| s.id == a.sheet) {
             if dirty {
                 sh.dirty.insert(a.row, a.col);
@@ -687,6 +859,9 @@ impl Workbook {
         };
         let (mut row, mut col) = (addr.row, addr.col);
         let fid = match sh.cells.get(addr.row, addr.col) {
+            Some(Entry::Const(_)) if self.ext_const_closed(addr.sheet) => {
+                return Value::Error(crate::XlError::REF)
+            }
             Some(Entry::Const(v)) => return v.clone(),
             Some(Entry::Formula(fid)) => *fid,
             None => match sh.spills.owner_of(addr.row, addr.col) {
@@ -883,6 +1058,12 @@ impl Workbook {
         text: &str,
         host: CellAddr,
     ) -> Result<(Formula, String), EditError> {
+        if text.starts_with('=') || text.trim_matches(' ').is_empty() {
+            return Err(EditError::Parse(parser::ParseError {
+                pos: 0,
+                message: "empty or doubled equals sign".into(),
+            }));
+        }
         let text = parser::r1c1::rewrite(text, host.row, host.col)
             .map_err(|m| EditError::Parse(parser::ParseError { pos: 0, message: m }))?;
         let exists = |name: &str| {
@@ -948,7 +1129,7 @@ impl Workbook {
         let one = Rect::new(addr.row, addr.col, addr.row, addr.col);
         let pending = self.totals_pending(addr.sheet, one);
         let r = self.set_input_raw(addr, input);
-        if r.is_ok() && input.starts_with('\'') && input.len() > 1 {
+        if r.is_ok() && input.starts_with('\'') {
             self.apostrophe.insert(addr, Text::from(&input[1..]));
         }
         if pending {
@@ -974,7 +1155,8 @@ impl Workbook {
         input: &str,
     ) -> Result<RecalcReport, EditError> {
         if !input.is_empty() && self.is_text_format(addr) && !self.op_on(Op::ReplaceEntry) {
-            return Ok(self.set_value(addr, Value::from(input)));
+            let text = input.strip_prefix('\'').unwrap_or(input);
+            return Ok(self.set_value(addr, Value::from(text)));
         }
         let input = &*self.typed_text(addr, input);
         match input::interpret(input, &self.input_env()) {
@@ -999,6 +1181,7 @@ impl Workbook {
                     v
                 };
                 let typed = matches!(v, Value::Number(_))
+                    || matches!(&v, Value::Text(t) if self.text_date_format(input, &self.input_env()).is_some() && t.as_ref() == input)
                     || (matches!(v, Value::Text(_))
                         && input::is_overflow_scientific(input, &self.input_env()));
 
@@ -1050,7 +1233,9 @@ impl Workbook {
         addr: CellAddr,
         text: &str,
     ) -> Result<RecalcReport, EditError> {
-        let r = if !text.is_empty() && self.is_text_format(addr) {
+        let r = if text.is_empty() {
+            Ok(self.set_value(addr, Value::from("")))
+        } else if self.is_text_format(addr) {
             let r = self.set_value(addr, Value::from(text));
             self.wrap_for_line_break(addr);
             Ok(r)
@@ -1065,6 +1250,9 @@ impl Workbook {
 
     pub fn typed_format(&self, input: &str) -> Option<String> {
         let env = self.input_env();
+        if input::wrapped_exponent(input).is_some() {
+            return Some("0.00E+00".to_string());
+        }
         match input::interpret(input, &env) {
             Entered::Value(Value::Text(_)) if input::is_overflow_scientific(input, &env) => {
                 Some("0.00E+00".to_string())
@@ -1073,8 +1261,36 @@ impl Workbook {
                 let p = crate::coerce::parse_number_text(input, env)?;
                 p.format.or_else(|| input::auto_format(&p.kind, &env))
             }
+            Entered::Value(Value::Text(_)) => self.text_date_format(input, &env),
             _ => None,
         }
+    }
+
+    fn text_date_format(&self, input: &str, env: &crate::coerce::ParseEnv) -> Option<String> {
+        let t = input.trim_end();
+        let (head, last) = t.rsplit_once(' ')?;
+        let (head, time, marked) =
+            if last.eq_ignore_ascii_case("am") || last.eq_ignore_ascii_case("pm") {
+                let (h, tm) = head.trim_end().rsplit_once(' ')?;
+                (h, tm, true)
+            } else {
+                (head, last, false)
+            };
+        let (clock, frac) = time.split_once('.').map_or((time, ""), |(c, f)| (c, f));
+        let parts: Vec<&str> = clock.split(':').collect();
+        let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
+        if !parts.iter().all(|p| digits(p))
+            || parts.len() > 3
+            || !frac.bytes().all(|b| b.is_ascii_digit())
+            || (parts.len() == 1 && (!marked || !frac.is_empty()))
+        {
+            return None;
+        }
+        let p = crate::coerce::parse_number_text(head.trim_end(), *env)?;
+        if p.kind != crate::coerce::NumberKind::Date {
+            return None;
+        }
+        p.format.or_else(|| input::auto_format(&p.kind, env))
     }
 
     pub(crate) fn input_env(&self) -> crate::coerce::ParseEnv<'_> {
@@ -1269,6 +1485,8 @@ impl Workbook {
 
     pub(crate) fn free_formula(&mut self, fid: FormulaId) {
         self.formulas[fid as usize] = None;
+        self.calc.volatile.remove(&fid);
+        self.calc.host_volatile.remove(&fid);
         self.free.push(fid);
     }
 
@@ -1336,10 +1554,26 @@ impl Workbook {
 
         self.with_op(Op::DtBlock, true, |this| {
             for fid in ids {
-                let (text, addr) = {
+                let (text, addr, missing) = {
                     let f = this.formula(fid);
-                    (f.text.clone(), f.addr)
+                    let mut missing = false;
+                    formula::walk(&f.formula.root, &mut |n| {
+                        missing |= matches!(
+                            n,
+                            formula::Node::Ref(formula::SheetRef::Missing(_), _)
+                                | formula::Node::DeadRef(formula::SheetRef::Missing(_))
+                                | formula::Node::Name {
+                                    sheet: Some(formula::SheetRef::Missing(_)),
+                                    ..
+                                }
+                        );
+                    });
+                    (f.text.clone(), f.addr, missing)
                 };
+
+                if !missing {
+                    continue;
+                }
                 if let Ok(formula) = this.compile_formula(&text, addr) {
                     this.unlink_formula(fid);
                     this.formula_mut(fid).formula = Arc::new(formula);
@@ -1616,7 +1850,12 @@ impl Workbook {
             ));
         }
         formula::NAME_CONTEXT.set(true);
+        formula::NAME_BANG.set(
+            self.sheet(self.session.active)
+                .is_some_and(|s| s.kind.is_macro()),
+        );
         let compiled = self.compile_formula(body, host);
+        formula::NAME_BANG.set(false);
         formula::NAME_CONTEXT.set(false);
         let compiled = compiled?;
 
@@ -1771,6 +2010,11 @@ impl Workbook {
         &self.settings
     }
 
+    pub fn set_force_full(&mut self, on: bool) {
+        self.settings.force_full = on;
+        self.settings.force_full_seen |= on;
+    }
+
     pub fn restore_settings(&mut self, settings: Settings) -> RecalcReport {
         self.command(Command::Setting, |wb| wb.restore_settings_run(settings))
     }
@@ -1803,6 +2047,10 @@ impl Workbook {
 
     pub fn names(&self) -> &Names {
         &self.names
+    }
+
+    pub fn set_name_visible(&mut self, key: &str, scope: Option<SheetId>, visible: bool) {
+        self.names.set_visible(key, scope, visible);
     }
 
     pub fn delete_hidden_name(&mut self, key: &str) -> bool {
@@ -1838,7 +2086,19 @@ impl Workbook {
         if self.calc.circ_iterating {
             None
         } else {
-            self.calc.circular_ref
+            self.calc.circular_ref.first().copied()
+        }
+    }
+
+    pub fn circular_ref_on(&self, sheet: SheetId) -> Option<CellAddr> {
+        if self.calc.circ_iterating {
+            None
+        } else {
+            self.calc
+                .circular_ref
+                .iter()
+                .copied()
+                .find(|c| c.sheet == sheet)
         }
     }
 
@@ -1948,16 +2208,30 @@ impl Workbook {
                 .collect();
             let mut cells = Vec::new();
 
+            let stale = |wb: &Workbook, fid: FormulaId| {
+                !wb.settings.iteration && wb.calc.circular.contains(&fid)
+            };
+            let mut left_alone = false;
             for fid in ids {
-                if wb.calc.volatile.contains(&fid)
-                    || wb.formula(fid).dirty
-                    || wb.calc.circular.contains(&fid)
+                left_alone |= stale(wb, fid);
+                if !stale(wb, fid)
+                    && (wb.calc.volatile.contains(&fid)
+                        || wb.calc.host_volatile.contains(&fid)
+                        || wb.formula(fid).dirty
+                        || wb.calc.circular.contains(&fid))
                 {
                     calc::mark_dirty(wb, fid);
                     cells.push(wb.formula(fid).addr);
                 }
             }
-            let report = calc::recalc_only(wb, &cells);
+            let mut report = calc::recalc_only(wb, &cells);
+
+            if left_alone && !report.sheets.contains(&sheet) {
+                report.sheets.push(sheet);
+                if wb.settings.mode == CalcMode::Automatic {
+                    wb.notes.calculated(&[sheet]);
+                }
+            }
             if wb.settings.mode != CalcMode::Automatic {
                 wb.notes.calculated(&report.sheets);
             }
@@ -1985,6 +2259,12 @@ impl Workbook {
                     calc::mark_dirty(wb, f);
                 }
             }
+
+            let mut readers = Vec::new();
+            wb.graph.dependents_of_rect(sheet, &rect, &mut readers);
+            for fid in readers {
+                calc::mark_dirty(wb, fid);
+            }
             wb.notes.no_after = true;
             wb.silently(|wb| calc::recalc_only(wb, &cells))
         })
@@ -2001,6 +2281,12 @@ impl Workbook {
                 })
                 .collect();
             for fid in ids {
+                calc::mark_dirty(wb, fid);
+            }
+
+            let mut readers = Vec::new();
+            wb.graph.dependents_of_rect(sheet, &rect, &mut readers);
+            for fid in readers {
                 calc::mark_dirty(wb, fid);
             }
             if auto {

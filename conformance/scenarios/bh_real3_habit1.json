@@ -1,0 +1,1186 @@
+{
+"sheets": [
+"H"
+],
+"steps": [
+{
+"op": "set",
+"cell": "H!A1",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "H!B1",
+"input": "Steps"
+},
+{
+"op": "set",
+"cell": "H!C1",
+"input": "Sleep"
+},
+{
+"op": "set",
+"cell": "H!D1",
+"input": "Weight"
+},
+{
+"op": "set",
+"cell": "H!E1",
+"input": "Workout"
+},
+{
+"op": "set",
+"cell": "H!F1",
+"input": "Week"
+},
+{
+"op": "set",
+"cell": "H!G1",
+"input": "ISO"
+},
+{
+"op": "set",
+"cell": "H!H1",
+"input": "Mon"
+},
+{
+"op": "set",
+"cell": "H!A2",
+"input": "2/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B2",
+"input": "8200"
+},
+{
+"op": "set",
+"cell": "H!C2",
+"input": "7:30"
+},
+{
+"op": "set",
+"cell": "H!D2",
+"input": "82.4"
+},
+{
+"op": "set",
+"cell": "H!E2",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F2",
+"input": "=WEEKNUM(A2,2)"
+},
+{
+"op": "set",
+"cell": "H!G2",
+"input": "=ISOWEEKNUM(A2)"
+},
+{
+"op": "set",
+"cell": "H!H2",
+"input": "=TEXT(A2,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A3",
+"input": "3/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B3",
+"input": "10450"
+},
+{
+"op": "set",
+"cell": "H!C3",
+"input": "6:45"
+},
+{
+"op": "set",
+"cell": "H!D3",
+"input": "82.1"
+},
+{
+"op": "set",
+"cell": "H!E3",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F3",
+"input": "=WEEKNUM(A3,2)"
+},
+{
+"op": "set",
+"cell": "H!G3",
+"input": "=ISOWEEKNUM(A3)"
+},
+{
+"op": "set",
+"cell": "H!H3",
+"input": "=TEXT(A3,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A4",
+"input": "4/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B4",
+"input": "6100"
+},
+{
+"op": "set",
+"cell": "H!C4",
+"input": "8:00"
+},
+{
+"op": "set",
+"cell": "H!D4",
+"input": "82.3"
+},
+{
+"op": "set",
+"cell": "H!E4",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F4",
+"input": "=WEEKNUM(A4,2)"
+},
+{
+"op": "set",
+"cell": "H!G4",
+"input": "=ISOWEEKNUM(A4)"
+},
+{
+"op": "set",
+"cell": "H!H4",
+"input": "=TEXT(A4,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A5",
+"input": "5/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B5",
+"input": "12000"
+},
+{
+"op": "set",
+"cell": "H!C5",
+"input": "5:50"
+},
+{
+"op": "set",
+"cell": "H!D5",
+"input": "81.9"
+},
+{
+"op": "set",
+"cell": "H!E5",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F5",
+"input": "=WEEKNUM(A5,2)"
+},
+{
+"op": "set",
+"cell": "H!G5",
+"input": "=ISOWEEKNUM(A5)"
+},
+{
+"op": "set",
+"cell": "H!H5",
+"input": "=TEXT(A5,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A6",
+"input": "6/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B6",
+"input": "9000"
+},
+{
+"op": "set",
+"cell": "H!C6",
+"input": "7:15"
+},
+{
+"op": "set",
+"cell": "H!D6",
+"input": "82.0"
+},
+{
+"op": "set",
+"cell": "H!E6",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F6",
+"input": "=WEEKNUM(A6,2)"
+},
+{
+"op": "set",
+"cell": "H!G6",
+"input": "=ISOWEEKNUM(A6)"
+},
+{
+"op": "set",
+"cell": "H!H6",
+"input": "=TEXT(A6,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A7",
+"input": "7/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B7",
+"input": "15300"
+},
+{
+"op": "set",
+"cell": "H!C7",
+"input": "9:00"
+},
+{
+"op": "set",
+"cell": "H!D7",
+"input": "81.8"
+},
+{
+"op": "set",
+"cell": "H!E7",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F7",
+"input": "=WEEKNUM(A7,2)"
+},
+{
+"op": "set",
+"cell": "H!G7",
+"input": "=ISOWEEKNUM(A7)"
+},
+{
+"op": "set",
+"cell": "H!H7",
+"input": "=TEXT(A7,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A8",
+"input": "8/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B8",
+"input": "2300"
+},
+{
+"op": "set",
+"cell": "H!C8",
+"input": "7:00"
+},
+{
+"op": "set",
+"cell": "H!D8",
+"input": "82.2"
+},
+{
+"op": "set",
+"cell": "H!E8",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F8",
+"input": "=WEEKNUM(A8,2)"
+},
+{
+"op": "set",
+"cell": "H!G8",
+"input": "=ISOWEEKNUM(A8)"
+},
+{
+"op": "set",
+"cell": "H!H8",
+"input": "=TEXT(A8,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A9",
+"input": "9/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B9",
+"input": "7600"
+},
+{
+"op": "set",
+"cell": "H!C9",
+"input": "6:30"
+},
+{
+"op": "set",
+"cell": "H!D9",
+"input": "81.7"
+},
+{
+"op": "set",
+"cell": "H!E9",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F9",
+"input": "=WEEKNUM(A9,2)"
+},
+{
+"op": "set",
+"cell": "H!G9",
+"input": "=ISOWEEKNUM(A9)"
+},
+{
+"op": "set",
+"cell": "H!H9",
+"input": "=TEXT(A9,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A10",
+"input": "10/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B10",
+"input": "8800"
+},
+{
+"op": "set",
+"cell": "H!C10",
+"input": "7:45"
+},
+{
+"op": "set",
+"cell": "H!D10",
+"input": "81.6"
+},
+{
+"op": "set",
+"cell": "H!E10",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F10",
+"input": "=WEEKNUM(A10,2)"
+},
+{
+"op": "set",
+"cell": "H!G10",
+"input": "=ISOWEEKNUM(A10)"
+},
+{
+"op": "set",
+"cell": "H!H10",
+"input": "=TEXT(A10,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A11",
+"input": "11/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B11",
+"input": "11200"
+},
+{
+"op": "set",
+"cell": "H!C11",
+"input": "8:15"
+},
+{
+"op": "set",
+"cell": "H!D11",
+"input": "81.9"
+},
+{
+"op": "set",
+"cell": "H!E11",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F11",
+"input": "=WEEKNUM(A11,2)"
+},
+{
+"op": "set",
+"cell": "H!G11",
+"input": "=ISOWEEKNUM(A11)"
+},
+{
+"op": "set",
+"cell": "H!H11",
+"input": "=TEXT(A11,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A12",
+"input": "12/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B12",
+"input": "9900"
+},
+{
+"op": "set",
+"cell": "H!C12",
+"input": "6:00"
+},
+{
+"op": "set",
+"cell": "H!D12",
+"input": "81.5"
+},
+{
+"op": "set",
+"cell": "H!E12",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F12",
+"input": "=WEEKNUM(A12,2)"
+},
+{
+"op": "set",
+"cell": "H!G12",
+"input": "=ISOWEEKNUM(A12)"
+},
+{
+"op": "set",
+"cell": "H!H12",
+"input": "=TEXT(A12,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A13",
+"input": "13/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B13",
+"input": "10100"
+},
+{
+"op": "set",
+"cell": "H!C13",
+"input": "7:20"
+},
+{
+"op": "set",
+"cell": "H!D13",
+"input": "81.4"
+},
+{
+"op": "set",
+"cell": "H!E13",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F13",
+"input": "=WEEKNUM(A13,2)"
+},
+{
+"op": "set",
+"cell": "H!G13",
+"input": "=ISOWEEKNUM(A13)"
+},
+{
+"op": "set",
+"cell": "H!H13",
+"input": "=TEXT(A13,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A14",
+"input": "14/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B14",
+"input": "5400"
+},
+{
+"op": "set",
+"cell": "H!C14",
+"input": "7:50"
+},
+{
+"op": "set",
+"cell": "H!D14",
+"input": "81.6"
+},
+{
+"op": "set",
+"cell": "H!E14",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F14",
+"input": "=WEEKNUM(A14,2)"
+},
+{
+"op": "set",
+"cell": "H!G14",
+"input": "=ISOWEEKNUM(A14)"
+},
+{
+"op": "set",
+"cell": "H!H14",
+"input": "=TEXT(A14,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A15",
+"input": "15/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B15",
+"input": "13000"
+},
+{
+"op": "set",
+"cell": "H!C15",
+"input": "8:30"
+},
+{
+"op": "set",
+"cell": "H!D15",
+"input": "81.2"
+},
+{
+"op": "set",
+"cell": "H!E15",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F15",
+"input": "=WEEKNUM(A15,2)"
+},
+{
+"op": "set",
+"cell": "H!G15",
+"input": "=ISOWEEKNUM(A15)"
+},
+{
+"op": "set",
+"cell": "H!H15",
+"input": "=TEXT(A15,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A16",
+"input": "16/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B16",
+"input": "8700"
+},
+{
+"op": "set",
+"cell": "H!C16",
+"input": "7:05"
+},
+{
+"op": "set",
+"cell": "H!D16",
+"input": "81.3"
+},
+{
+"op": "set",
+"cell": "H!E16",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F16",
+"input": "=WEEKNUM(A16,2)"
+},
+{
+"op": "set",
+"cell": "H!G16",
+"input": "=ISOWEEKNUM(A16)"
+},
+{
+"op": "set",
+"cell": "H!H16",
+"input": "=TEXT(A16,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A17",
+"input": "17/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B17",
+"input": "9100"
+},
+{
+"op": "set",
+"cell": "H!C17",
+"input": "6:55"
+},
+{
+"op": "set",
+"cell": "H!D17",
+"input": "81.0"
+},
+{
+"op": "set",
+"cell": "H!E17",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F17",
+"input": "=WEEKNUM(A17,2)"
+},
+{
+"op": "set",
+"cell": "H!G17",
+"input": "=ISOWEEKNUM(A17)"
+},
+{
+"op": "set",
+"cell": "H!H17",
+"input": "=TEXT(A17,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A18",
+"input": "18/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B18",
+"input": "10800"
+},
+{
+"op": "set",
+"cell": "H!C18",
+"input": "7:40"
+},
+{
+"op": "set",
+"cell": "H!D18",
+"input": "81.1"
+},
+{
+"op": "set",
+"cell": "H!E18",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F18",
+"input": "=WEEKNUM(A18,2)"
+},
+{
+"op": "set",
+"cell": "H!G18",
+"input": "=ISOWEEKNUM(A18)"
+},
+{
+"op": "set",
+"cell": "H!H18",
+"input": "=TEXT(A18,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A19",
+"input": "19/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B19",
+"input": "7000"
+},
+{
+"op": "set",
+"cell": "H!C19",
+"input": "7:10"
+},
+{
+"op": "set",
+"cell": "H!D19",
+"input": "80.9"
+},
+{
+"op": "set",
+"cell": "H!E19",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F19",
+"input": "=WEEKNUM(A19,2)"
+},
+{
+"op": "set",
+"cell": "H!G19",
+"input": "=ISOWEEKNUM(A19)"
+},
+{
+"op": "set",
+"cell": "H!H19",
+"input": "=TEXT(A19,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A20",
+"input": "20/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B20",
+"input": "6500"
+},
+{
+"op": "set",
+"cell": "H!C20",
+"input": "8:05"
+},
+{
+"op": "set",
+"cell": "H!D20",
+"input": "81.0"
+},
+{
+"op": "set",
+"cell": "H!E20",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "H!F20",
+"input": "=WEEKNUM(A20,2)"
+},
+{
+"op": "set",
+"cell": "H!G20",
+"input": "=ISOWEEKNUM(A20)"
+},
+{
+"op": "set",
+"cell": "H!H20",
+"input": "=TEXT(A20,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A21",
+"input": "21/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B21",
+"input": "12100"
+},
+{
+"op": "set",
+"cell": "H!C21",
+"input": "6:20"
+},
+{
+"op": "set",
+"cell": "H!D21",
+"input": "80.8"
+},
+{
+"op": "set",
+"cell": "H!E21",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F21",
+"input": "=WEEKNUM(A21,2)"
+},
+{
+"op": "set",
+"cell": "H!G21",
+"input": "=ISOWEEKNUM(A21)"
+},
+{
+"op": "set",
+"cell": "H!H21",
+"input": "=TEXT(A21,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "H!A22",
+"input": "22/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B22",
+"input": "9500"
+},
+{
+"op": "set",
+"cell": "H!C22",
+"input": "7:35"
+},
+{
+"op": "set",
+"cell": "H!D22",
+"input": "80.7"
+},
+{
+"op": "set",
+"cell": "H!E22",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "H!F22",
+"input": "=WEEKNUM(A22,2)"
+},
+{
+"op": "set",
+"cell": "H!G22",
+"input": "=ISOWEEKNUM(A22)"
+},
+{
+"op": "set",
+"cell": "H!H22",
+"input": "=TEXT(A22,\"mmm\")"
+},
+{
+"op": "read",
+"range": "H!A1:H22"
+},
+{
+"op": "set",
+"cell": "H!J1",
+"input": "Week"
+},
+{
+"op": "set",
+"cell": "H!K1",
+"input": "Avg steps"
+},
+{
+"op": "set",
+"cell": "H!L1",
+"input": "Avg sleep"
+},
+{
+"op": "set",
+"cell": "H!M1",
+"input": "Workouts"
+},
+{
+"op": "set",
+"cell": "H!N1",
+"input": "Wt chg"
+},
+{
+"op": "set",
+"cell": "H!O1",
+"input": "Best day"
+},
+{
+"op": "set",
+"cell": "H!J2",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "H!K2",
+"input": "=AVERAGEIFS($B$2:$B$22,$G$2:$G$22,J2)"
+},
+{
+"op": "set",
+"cell": "H!L2",
+"input": "=AVERAGEIFS($C$2:$C$22,$G$2:$G$22,J2)"
+},
+{
+"op": "set",
+"cell": "H!M2",
+"input": "=COUNTIFS($G$2:$G$22,J2,$E$2:$E$22,\"Y\")"
+},
+{
+"op": "set",
+"cell": "H!N2",
+"input": "=LOOKUP(2,1/($G$2:$G$22=J2),$D$2:$D$22)-INDEX($D$2:$D$22,MATCH(J2,$G$2:$G$22,0))"
+},
+{
+"op": "set",
+"cell": "H!O2",
+"input": "=TEXT(INDEX($A$2:$A$22,MATCH(MAXIFS($B$2:$B$22,$G$2:$G$22,J2),$B$2:$B$22,0)),\"ddd\")"
+},
+{
+"op": "set",
+"cell": "H!J3",
+"input": "11"
+},
+{
+"op": "set",
+"cell": "H!K3",
+"input": "=AVERAGEIFS($B$2:$B$22,$G$2:$G$22,J3)"
+},
+{
+"op": "set",
+"cell": "H!L3",
+"input": "=AVERAGEIFS($C$2:$C$22,$G$2:$G$22,J3)"
+},
+{
+"op": "set",
+"cell": "H!M3",
+"input": "=COUNTIFS($G$2:$G$22,J3,$E$2:$E$22,\"Y\")"
+},
+{
+"op": "set",
+"cell": "H!N3",
+"input": "=LOOKUP(2,1/($G$2:$G$22=J3),$D$2:$D$22)-INDEX($D$2:$D$22,MATCH(J3,$G$2:$G$22,0))"
+},
+{
+"op": "set",
+"cell": "H!O3",
+"input": "=TEXT(INDEX($A$2:$A$22,MATCH(MAXIFS($B$2:$B$22,$G$2:$G$22,J3),$B$2:$B$22,0)),\"ddd\")"
+},
+{
+"op": "set",
+"cell": "H!J4",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "H!K4",
+"input": "=AVERAGEIFS($B$2:$B$22,$G$2:$G$22,J4)"
+},
+{
+"op": "set",
+"cell": "H!L4",
+"input": "=AVERAGEIFS($C$2:$C$22,$G$2:$G$22,J4)"
+},
+{
+"op": "set",
+"cell": "H!M4",
+"input": "=COUNTIFS($G$2:$G$22,J4,$E$2:$E$22,\"Y\")"
+},
+{
+"op": "set",
+"cell": "H!N4",
+"input": "=LOOKUP(2,1/($G$2:$G$22=J4),$D$2:$D$22)-INDEX($D$2:$D$22,MATCH(J4,$G$2:$G$22,0))"
+},
+{
+"op": "set",
+"cell": "H!O4",
+"input": "=TEXT(INDEX($A$2:$A$22,MATCH(MAXIFS($B$2:$B$22,$G$2:$G$22,J4),$B$2:$B$22,0)),\"ddd\")"
+},
+{
+"op": "format",
+"range": "H!K2:K4",
+"fmt": "#,##0"
+},
+{
+"op": "format",
+"range": "H!L2:L4",
+"fmt": "h:mm"
+},
+{
+"op": "format",
+"range": "H!N2:N4",
+"fmt": "+0.0;-0.0"
+},
+{
+"op": "format",
+"range": "H!C2:C22",
+"fmt": "h:mm"
+},
+{
+"op": "read",
+"range": "H!J1:O4"
+},
+{
+"op": "set",
+"cell": "H!Q1",
+"input": "=SUMPRODUCT((B2:B22>=10000)*1)"
+},
+{
+"op": "set",
+"cell": "H!Q2",
+"input": "=TEXT(AVERAGE(C2:C22),\"h:mm\")"
+},
+{
+"op": "set",
+"cell": "H!Q3",
+"input": "=AVERAGE(C2:C22)*24"
+},
+{
+"op": "set",
+"cell": "H!Q4",
+"input": "=COUNTIF(B2:B22,\">=\"&AVERAGE(B2:B22))"
+},
+{
+"op": "set",
+"cell": "H!Q5",
+"input": "=MAX(B2:B22)"
+},
+{
+"op": "set",
+"cell": "H!Q6",
+"input": "=CORREL(B2:B22,D2:D22)"
+},
+{
+"op": "set",
+"cell": "H!Q7",
+"input": "=SLOPE(D2:D22,A2:A22)*7"
+},
+{
+"op": "set",
+"cell": "H!Q8",
+"input": "=FORECAST.LINEAR(A22+7,D2:D22,A2:A22)"
+},
+{
+"op": "set",
+"cell": "H!Q9",
+"input": "=TREND(D2:D22,A2:A22,A22+7)"
+},
+{
+"op": "set",
+"cell": "H!Q10",
+"input": "=GROWTH(B2:B22,A2:A22,A22+7)"
+},
+{
+"op": "set",
+"cell": "H!Q11",
+"input": "=STDEV.P(B2:B22)"
+},
+{
+"op": "set",
+"cell": "H!Q12",
+"input": "=ROUND(AVERAGE(D2:D8)-AVERAGE(D16:D22),2)"
+},
+{
+"op": "set",
+"cell": "H!Q13",
+"input": "=MAX(FREQUENCY(IF(E2:E22=\"Y\",ROW(E2:E22)),IF(E2:E22<>\"Y\",ROW(E2:E22))))"
+},
+{
+"op": "set",
+"cell": "H!Q14",
+"input": "=LET(r,E2:E22=\"Y\",SUM(--(r)))"
+},
+{
+"op": "set",
+"cell": "H!Q15",
+"input": "=SUM(SCAN(0,E2:E22,LAMBDA(a,x,IF(x=\"Y\",a+1,0))))"
+},
+{
+"op": "set",
+"cell": "H!Q16",
+"input": "=MAX(SCAN(0,E2:E22,LAMBDA(a,x,IF(x=\"Y\",a+1,0))))"
+},
+{
+"op": "read",
+"range": "H!Q1:Q16"
+},
+{
+"op": "set",
+"cell": "H!B8",
+"input": "20000"
+},
+{
+"op": "set",
+"cell": "H!C9",
+"input": "4:15"
+},
+{
+"op": "read",
+"range": "H!J1:O4"
+},
+{
+"op": "read",
+"range": "H!Q1:Q16"
+},
+{
+"op": "insert_rows",
+"sheet": "H",
+"at": 10,
+"count": 1
+},
+{
+"op": "set",
+"cell": "H!A10",
+"input": "8/3/2026"
+},
+{
+"op": "set",
+"cell": "H!B10",
+"input": "9000"
+},
+{
+"op": "set",
+"cell": "H!C10",
+"input": "7:00"
+},
+{
+"op": "set",
+"cell": "H!D10",
+"input": "82"
+},
+{
+"op": "set",
+"cell": "H!E10",
+"input": "Y"
+},
+{
+"op": "autofill",
+"from": "H!F9:H9",
+"to": "H!F10:H10",
+"type": "default"
+},
+{
+"op": "read",
+"range": "H!A8:H12"
+},
+{
+"op": "read",
+"range": "H!J1:O4"
+},
+{
+"op": "read",
+"range": "H!Q1:Q16"
+}
+]
+}

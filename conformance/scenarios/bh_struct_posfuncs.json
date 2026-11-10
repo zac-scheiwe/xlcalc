@@ -1,0 +1,165 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "16"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "25"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C6",
+   "input": "=ROW()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C7",
+   "input": "=COLUMN()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C8",
+   "input": "=INDIRECT(\"A\"&ROW()-5)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C9",
+   "input": "=OFFSET(A1,ROW()-6,0)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C10",
+   "input": "=CELL(\"address\",A3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C11",
+   "input": "=ADDRESS(ROW(A3),COLUMN(A3))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C12",
+   "input": "=SHEET()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C13",
+   "input": "=SHEET(Sheet3!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C14",
+   "input": "=SHEETS(Sheet1:Sheet3!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C15",
+   "input": "=ROW(A3:A4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C16",
+   "input": "=SUM(ROW(A3:A4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C17",
+   "input": "=INDIRECT(\"A1:A\"&ROW())"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C18",
+   "input": "=ROWS(INDIRECT(\"A1:A3\"))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C19",
+   "input": "=SUMPRODUCT(ROW(A1:A5))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C20",
+   "input": "=AREAS((A1,A3))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!C21",
+   "input": "=CELL(\"row\",A3)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!C6:C21"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet2",
+   "at": 3,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!C6:C23"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!C6:C23"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet2",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!C6:D23"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet3",
+   "before": "Sheet1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!D6:D23"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Sheet3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!D6:D23"
+  }
+ ]
+}

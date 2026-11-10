@@ -2,7 +2,7 @@ use crate::xlsb_rec::{Recs, P};
 use crate::xml::{self, Node};
 use std::fmt::Write as _;
 
-const BORDER_STYLES: [&str; 14] = [
+pub(crate) const BORDER_STYLES: [&str; 14] = [
     "none",
     "thin",
     "medium",
@@ -19,7 +19,7 @@ const BORDER_STYLES: [&str; 14] = [
     "slantDashDot",
 ];
 
-const PATTERNS: [&str; 19] = [
+pub(crate) const PATTERNS: [&str; 19] = [
     "none",
     "solid",
     "mediumGray",
@@ -79,7 +79,7 @@ fn index_of(list: &[&str], v: Option<&str>) -> Option<usize> {
     v.and_then(|v| list.iter().position(|x| *x == v))
 }
 
-fn color_bytes(c: Option<&Node>, default: [u8; 8]) -> [u8; 8] {
+pub(crate) fn color_bytes(c: Option<&Node>, default: [u8; 8]) -> [u8; 8] {
     let Some(c) = c else { return default };
     let tint = c
         .attr("tint")
@@ -115,7 +115,7 @@ fn color_bytes(c: Option<&Node>, default: [u8; 8]) -> [u8; 8] {
     b
 }
 
-const AUTO: [u8; 8] = [1, 0, 0, 0, 0, 0, 0, 0];
+pub(crate) const AUTO: [u8; 8] = [1, 0, 0, 0, 0, 0, 0, 0];
 const FILL_FORE: [u8; 8] = [3, 64, 0, 0, 0, 0, 0, 0xFF];
 const FILL_BACK: [u8; 8] = [3, 65, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF];
 
@@ -286,7 +286,14 @@ pub(crate) fn to_bin(xml_bytes: &[u8]) -> Result<Vec<u8>, String> {
     }
     r.empty(620);
 
-    count_rec(&mut r, 505, 0);
+    let dxfs: Vec<&Node> = root
+        .child("dxfs")
+        .map(|n| n.children("dxf").collect())
+        .unwrap_or_default();
+    count_rec(&mut r, 505, dxfs.len());
+    for x in dxfs {
+        r.with(507, |p| crate::xlsb_dxf::record(p, x));
+    }
     r.empty(506);
     r.with(508, |p| {
         p.u32(0)
@@ -408,7 +415,7 @@ impl Rd<'_> {
     }
 }
 
-fn color_xml(tag: &str, c: [u8; 8]) -> String {
+pub(crate) fn color_xml(tag: &str, c: [u8; 8]) -> String {
     let mut s = format!("<{tag}");
     match c[0] >> 1 {
         0 => s.push_str(" auto=\"1\""),
@@ -637,6 +644,7 @@ pub(crate) fn to_xml(records: impl Iterator<Item = (u32, Vec<u8>)>) -> Result<St
         (String::new(), String::new(), String::new(), String::new());
     let (mut style_xfs, mut cell_xfs, mut styles) = (String::new(), String::new(), String::new());
     let mut in_cell_xfs = false;
+    let mut dxfs = String::new();
     for (id, d) in records {
         match id {
             44 => {
@@ -649,6 +657,7 @@ pub(crate) fn to_xml(records: impl Iterator<Item = (u32, Vec<u8>)>) -> Result<St
                     esc(&code)
                 );
             }
+            507 => dxfs.push_str(&crate::xlsb_dxf::xml(&d)?),
             43 => fonts.push_str(&font_xml(&d)?),
             45 => fills.push_str(&fill_xml(&d)?),
             46 => borders.push_str(&border_xml(&d)?),
@@ -673,7 +682,7 @@ pub(crate) fn to_xml(records: impl Iterator<Item = (u32, Vec<u8>)>) -> Result<St
         }
     }
     Ok(format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts>{fmts}</numFmts><fonts>{fonts}</fonts><fills>{fills}</fills><borders>{borders}</borders><cellStyleXfs>{style_xfs}</cellStyleXfs><cellXfs>{cell_xfs}</cellXfs><cellStyles>{styles}</cellStyles></styleSheet>"
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts>{fmts}</numFmts><fonts>{fonts}</fonts><fills>{fills}</fills><borders>{borders}</borders><cellStyleXfs>{style_xfs}</cellStyleXfs><cellXfs>{cell_xfs}</cellXfs><cellStyles>{styles}</cellStyles><dxfs>{dxfs}</dxfs></styleSheet>"
     ))
 }
 

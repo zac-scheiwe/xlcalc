@@ -10,12 +10,24 @@ pub struct CalNames {
 
 pub fn names(cal: u8, lang: u32) -> Option<&'static CalNames> {
     match cal {
-        0x06 | 0x17 if lang != 0x0409 => table(cal, 0),
+        0x06 | 0x17 if lang == 0 || lang == 0x0409 || lang & 0x3FF == 1 => table(cal, 0),
+        0x06 | 0x17 => table(cal, 0x0409),
+
+        0x08 if lang != 0 && lang != 0x0409 && lang & 0x3FF != 0x0D => table(cal, 0x0409),
 
         0x07 | 0x09 | 0x0A | 0x0B | 0x0C => table(cal, 0),
+
+        0x0E | 0x0F | 0x11 if lang != 0 => table(cal, 0x0409),
         _ if lang == 0 || lang == 0x0409 => table(cal, lang),
         _ => None,
     }
+}
+
+pub fn names_tag(cal: u8, lang: u32) -> Option<&'static CalNames> {
+    if matches!(cal, 0x06 | 0x17) && lang == 0x0409 {
+        return table(cal, 0x0409);
+    }
+    names(cal, lang)
 }
 
 pub fn month_name(n: &'static CalNames, hebrew_leap: bool, m: u32, kind: u8) -> &'static str {

@@ -1,0 +1,315 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('AB1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('AB2')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    0
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    2
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    3
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    4
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    5
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    6
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    7
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    8
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    9
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    10
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    11
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB6')"
+    },
+    12
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AC1:AC6')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB3:AB6')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB2')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB1')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB2')",
+   "call": "AutoFill",
+   "args": []
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB2:AB3')",
+   "call": "AutoFill",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('AB1:AB3')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB6')",
+   "prop": "Value2"
+  }
+ ]
+}

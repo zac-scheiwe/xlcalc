@@ -36,9 +36,28 @@ pub struct Names {
     copy_stale: FxHashMap<(SheetId, Text), Vec<Text>>,
 
     hidden: std::collections::BTreeMap<String, String>,
+
+    invisible: rustc_hash::FxHashSet<(Option<SheetId>, Text)>,
+
+    macro_types: FxHashMap<(Option<SheetId>, Text), i32>,
 }
 
 impl Names {
+    pub fn macro_type(&self, key: &str, scope: Option<SheetId>) -> Option<i32> {
+        self.macro_types.get(&(scope, key.into())).copied()
+    }
+
+    pub fn set_macro_type(&mut self, key: &str, scope: Option<SheetId>, t: Option<i32>) {
+        match t {
+            Some(t) => {
+                self.macro_types.insert((scope, key.into()), t);
+            }
+            None => {
+                self.macro_types.remove(&(scope, key.into()));
+            }
+        }
+    }
+
     pub fn get(&self, key: &str, scope: Option<SheetId>) -> Option<&NameDef> {
         self.map.get(&(scope, Text::from(key)))
     }
@@ -59,6 +78,7 @@ impl Names {
 
     pub fn insert(&mut self, def: NameDef) -> Option<NameDef> {
         let key = (def.scope, Text::from(def.name.to_uppercase()));
+        self.invisible.remove(&key);
         if let Some(s) = def.scope {
             self.deleted_scoped.remove(&(s, key.1.clone()));
             let bound = self.unbound_locals(&def, s);
@@ -116,6 +136,7 @@ impl Names {
     }
 
     pub fn remove(&mut self, key: &str, scope: Option<SheetId>) -> Option<NameDef> {
+        self.invisible.remove(&(scope, Text::from(key)));
         if let Some(s) = scope {
             self.global_bound.remove(&(s, Text::from(key)));
             self.copy_stale.remove(&(s, Text::from(key)));
@@ -137,6 +158,19 @@ impl Names {
 
     pub fn iter(&self) -> impl Iterator<Item = &NameDef> {
         self.map.values()
+    }
+
+    pub fn is_visible(&self, key: &str, scope: Option<SheetId>) -> bool {
+        !self.invisible.contains(&(scope, Text::from(key)))
+    }
+
+    pub fn set_visible(&mut self, key: &str, scope: Option<SheetId>, visible: bool) {
+        let k = (scope, Text::from(key));
+        if visible {
+            self.invisible.remove(&k);
+        } else if self.map.contains_key(&k) {
+            self.invisible.insert(k);
+        }
     }
 
     pub(crate) fn note_hidden(&mut self, name: &str) {

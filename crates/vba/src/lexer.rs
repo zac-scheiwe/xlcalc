@@ -61,6 +61,7 @@ struct Lexer<'a> {
 }
 
 pub fn lex(module: &str, src: &str) -> Result<Vec<Token>, CompileError> {
+    let src = crate::precomp::preprocess(module, src)?;
     let mut lx = Lexer {
         chars: src.chars().collect(),
         pos: 0,
@@ -209,6 +210,19 @@ impl Lexer<'_> {
                         self.push(Tok::P(P::Hash), line, col, space);
                     }
                 }
+                '[' if self.peek(1) == Some('_') => {
+                    self.bump();
+                    let mut name = String::new();
+                    while let Some(c) = self.peek(0).filter(|&c| c != ']' && c != '\n') {
+                        name.push(c);
+                        self.bump();
+                    }
+                    if self.peek(0) != Some(']') {
+                        return Err(self.err(line, col, "unterminated bracketed name"));
+                    }
+                    self.bump();
+                    self.push(Tok::Ident(name, None), line, col, space);
+                }
                 '[' => {
                     return Err(self.err(line, col, "unsupported: bracketed names ([A1], [x y])"));
                 }
@@ -326,7 +340,12 @@ impl Lexer<'_> {
             text.push(c);
             self.bump();
         }
-        if self.peek(0) == Some('.') && self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
+        if self.peek(0) == Some('.')
+            && self.peek(1).is_none_or(|c| {
+                c.is_ascii_digit()
+                    || !text.is_empty() && !(c.is_alphabetic() || c == '_' || c == '.')
+            })
+        {
             float = true;
             text.push('.');
             self.bump();

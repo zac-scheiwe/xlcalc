@@ -1,0 +1,32 @@
+=== 1 set C2 =Z1+1
+  @ start 0,0 C2:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C2:0
+  | C2
+=== 2 set B3 =Z1+1
+  @ start 0,0 B3:f C2:0
+  @ end rerun=1 next=0,0 valid=0 st=7 B3:0 C2:0
+  | B3
+=== 3 set A1 =COUNT(B2:C3)
+  @ start 0,0 A1:f B3:0 C2:0
+  @ end rerun=1 next=0,0 valid=0 st=7 A1:0 B3:0 C2:0
+  | A1
+=== 4 const Z1 5
+  @ start 0,0 A1:f B3:f C2:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C2:0 B3:0 A1:0
+  | A1? +S:A1 +S:C2 C2 ^C2 -S:- A1? +S:B3 B3 ^B3 -S:- A1 ^A1 -S:-
+=== 5 set A1 =SUM(B2:C3)
+  @ start 0,0 A1:f C2:0 B3:0
+  @ end rerun=1 next=0,0 valid=0 st=7 A1:0 C2:0 B3:0
+  | A1
+=== 6 const Z1 6
+  @ start 0,0 A1:f C2:f B3:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C2:0 B3:0 A1:0
+  | A1? +S:A1 +S:C2 C2 ^C2 -S:- A1? +S:B3 B3 ^B3 -S:- A1 ^A1 -S:-
+=== 7 set A1 =C3:C3+B2:C2
+  @ start 0,0 A1:f C2:0 B3:0
+  @ end rerun=1 next=0,0 valid=0 st=7 A1:0 C2:0 B3:0
+  | A1 sA1
+=== 8 const Z1 7
+  @ start 0,0 A1:0 C2:f B3:f
+  @ end rerun=1 next=0,0 valid=0 st=7 A1:0 C2:0 B3:0
+  | C2 B3

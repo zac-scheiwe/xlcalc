@@ -1,0 +1,446 @@
+{
+"sheets": [
+"Budget"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Budget!A1",
+"input": "Category"
+},
+{
+"op": "set",
+"cell": "Budget!B1",
+"input": "Planned"
+},
+{
+"op": "set",
+"cell": "Budget!C1",
+"input": "Actual"
+},
+{
+"op": "set",
+"cell": "Budget!D1",
+"input": "Diff"
+},
+{
+"op": "set",
+"cell": "Budget!E1",
+"input": "% of income"
+},
+{
+"op": "set",
+"cell": "Budget!F1",
+"input": "Status"
+},
+{
+"op": "set",
+"cell": "Budget!A2",
+"input": "Rent"
+},
+{
+"op": "set",
+"cell": "Budget!B2",
+"input": "$1,800"
+},
+{
+"op": "set",
+"cell": "Budget!C2",
+"input": "$1,800"
+},
+{
+"op": "set",
+"cell": "Budget!A3",
+"input": "Groceries"
+},
+{
+"op": "set",
+"cell": "Budget!B3",
+"input": "$650.50"
+},
+{
+"op": "set",
+"cell": "Budget!C3",
+"input": "$712.35"
+},
+{
+"op": "set",
+"cell": "Budget!A4",
+"input": "Transport"
+},
+{
+"op": "set",
+"cell": "Budget!B4",
+"input": "$220"
+},
+{
+"op": "set",
+"cell": "Budget!C4",
+"input": "$198.4"
+},
+{
+"op": "set",
+"cell": "Budget!A5",
+"input": "Dining"
+},
+{
+"op": "set",
+"cell": "Budget!B5",
+"input": "$300"
+},
+{
+"op": "set",
+"cell": "Budget!C5",
+"input": "$412.9"
+},
+{
+"op": "set",
+"cell": "Budget!A6",
+"input": "Utilities"
+},
+{
+"op": "set",
+"cell": "Budget!B6",
+"input": "$240"
+},
+{
+"op": "set",
+"cell": "Budget!C6",
+"input": "$251.17"
+},
+{
+"op": "set",
+"cell": "Budget!A7",
+"input": "Savings"
+},
+{
+"op": "set",
+"cell": "Budget!B7",
+"input": "$500"
+},
+{
+"op": "set",
+"cell": "Budget!C7",
+"input": "$500"
+},
+{
+"op": "set",
+"cell": "Budget!A8",
+"input": "Fun"
+},
+{
+"op": "set",
+"cell": "Budget!B8",
+"input": "$150"
+},
+{
+"op": "set",
+"cell": "Budget!C8",
+"input": "$75"
+},
+{
+"op": "set",
+"cell": "Budget!H1",
+"input": "Income"
+},
+{
+"op": "set",
+"cell": "Budget!I1",
+"input": "$5,200"
+},
+{
+"op": "set",
+"cell": "Budget!H2",
+"input": "Tax rate"
+},
+{
+"op": "set",
+"cell": "Budget!I2",
+"input": "17.5%"
+},
+{
+"op": "set",
+"cell": "Budget!D2",
+"input": "=C2-B2"
+},
+{
+"op": "set",
+"cell": "Budget!E2",
+"input": "=C2/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F2",
+"input": "=IF(D2>0,\"Over by \"&TEXT(D2,\"$0.00\"),IF(D2=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!D3",
+"input": "=C3-B3"
+},
+{
+"op": "set",
+"cell": "Budget!E3",
+"input": "=C3/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F3",
+"input": "=IF(D3>0,\"Over by \"&TEXT(D3,\"$0.00\"),IF(D3=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!D4",
+"input": "=C4-B4"
+},
+{
+"op": "set",
+"cell": "Budget!E4",
+"input": "=C4/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F4",
+"input": "=IF(D4>0,\"Over by \"&TEXT(D4,\"$0.00\"),IF(D4=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!D5",
+"input": "=C5-B5"
+},
+{
+"op": "set",
+"cell": "Budget!E5",
+"input": "=C5/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F5",
+"input": "=IF(D5>0,\"Over by \"&TEXT(D5,\"$0.00\"),IF(D5=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!D6",
+"input": "=C6-B6"
+},
+{
+"op": "set",
+"cell": "Budget!E6",
+"input": "=C6/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F6",
+"input": "=IF(D6>0,\"Over by \"&TEXT(D6,\"$0.00\"),IF(D6=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!D7",
+"input": "=C7-B7"
+},
+{
+"op": "set",
+"cell": "Budget!E7",
+"input": "=C7/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F7",
+"input": "=IF(D7>0,\"Over by \"&TEXT(D7,\"$0.00\"),IF(D7=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!D8",
+"input": "=C8-B8"
+},
+{
+"op": "set",
+"cell": "Budget!E8",
+"input": "=C8/$I$1"
+},
+{
+"op": "set",
+"cell": "Budget!F8",
+"input": "=IF(D8>0,\"Over by \"&TEXT(D8,\"$0.00\"),IF(D8=0,\"On plan\",\"Under\"))"
+},
+{
+"op": "set",
+"cell": "Budget!A9",
+"input": "Total"
+},
+{
+"op": "set",
+"cell": "Budget!B9",
+"input": "=SUM(B2:B8)"
+},
+{
+"op": "set",
+"cell": "Budget!C9",
+"input": "=SUM(C2:C8)"
+},
+{
+"op": "set",
+"cell": "Budget!D9",
+"input": "=C9-B9"
+},
+{
+"op": "set",
+"cell": "Budget!E9",
+"input": "=SUM(E2:E8)"
+},
+{
+"op": "set",
+"cell": "Budget!A10",
+"input": "Left"
+},
+{
+"op": "set",
+"cell": "Budget!C10",
+"input": "=I1-C9"
+},
+{
+"op": "set",
+"cell": "Budget!E10",
+"input": "=C10/I1"
+},
+{
+"op": "read",
+"range": "Budget!A1:I10"
+},
+{
+"op": "format",
+"range": "Budget!B2:D10",
+"fmt": "$#,##0.00;[Red]-$#,##0.00"
+},
+{
+"op": "format",
+"range": "Budget!E2:E10",
+"fmt": "0.0%"
+},
+{
+"op": "read",
+"range": "Budget!A1:I10"
+},
+{
+"op": "set",
+"cell": "Budget!H4",
+"input": "=I1*(1-I2)"
+},
+{
+"op": "set",
+"cell": "Budget!H5",
+"input": "=TEXT(E3,\"0.0%\")"
+},
+{
+"op": "set",
+"cell": "Budget!H6",
+"input": "=LARGE(D2:D8,1)"
+},
+{
+"op": "set",
+"cell": "Budget!H7",
+"input": "=INDEX(A2:A8,MATCH(MAX(D2:D8),D2:D8,0))"
+},
+{
+"op": "set",
+"cell": "Budget!H8",
+"input": "=COUNTIF(F2:F8,\"Over*\")"
+},
+{
+"op": "set",
+"cell": "Budget!H9",
+"input": "=SUMIF(D2:D8,\">0\")"
+},
+{
+"op": "set",
+"cell": "Budget!H10",
+"input": "=SUMPRODUCT((D2:D8>0)*D2:D8)/C9"
+},
+{
+"op": "read",
+"range": "Budget!H4:H10"
+},
+{
+"op": "sort",
+"range": "Budget!A2:F8",
+"keys": [
+{
+"key": 4,
+"order": "desc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "Budget!A1:F10"
+},
+{
+"op": "read",
+"range": "Budget!H4:H10"
+},
+{
+"op": "insert_rows",
+"sheet": "Budget",
+"at": 5,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Budget!A5",
+"input": "Phone"
+},
+{
+"op": "set",
+"cell": "Budget!B5",
+"input": "$60"
+},
+{
+"op": "set",
+"cell": "Budget!C5",
+"input": "$65.99"
+},
+{
+"op": "autofill",
+"from": "Budget!D4:F4",
+"to": "Budget!D5:F5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Budget!A1:I11"
+},
+{
+"op": "read",
+"range": "Budget!H4:H10"
+},
+{
+"op": "set",
+"cell": "Budget!I1",
+"input": "$5,400"
+},
+{
+"op": "read",
+"range": "Budget!A1:F11"
+},
+{
+"op": "copy_sheet",
+"sheet": "Budget",
+"name": "BudgetMar",
+"after": "Budget"
+},
+{
+"op": "set",
+"cell": "BudgetMar!C3",
+"input": "$1,000"
+},
+{
+"op": "read",
+"range": "BudgetMar!A1:I11"
+},
+{
+"op": "read",
+"range": "Budget!A1:I11"
+}
+]
+}

@@ -1,0 +1,437 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "name",
+   "name": "x",
+   "refers_to": "=Sheet1!$C$1"
+  },
+  {
+   "op": "name",
+   "name": "Total",
+   "refers_to": "=Sheet1!$C$2"
+  },
+  {
+   "op": "name",
+   "name": "_a",
+   "refers_to": "=Sheet1!$C$3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=$A:$B"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=$A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=IFS  ( Total ,1E309)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "=1E308  :REGEXTEST\n(  XFE1  < R1C1\t)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "'=$A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "=c"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "\t=R2C3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "=TAKE\n(\nT(1.E3\n-\n1.E3,\t~123456789012345678,\tINFO (false\n, 0001)  )\t, Sheet1!A1 -  FILTER(XFD1 )\t, A1:A1 )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "=SORT (0.1234567890123456789, CO2, \t)>=  {1,2,3}   a.b\n \t123456789012345678##"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "={1,2,3}"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "'=XFE1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "=~x"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A13",
+   "input": "=1%% > $A$1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A14",
+   "input": "=_xlfn.SUM\n( )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A15",
+   "input": "=PI  (  )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A16",
+   "input": "=1E-3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A17",
+   "input": "=$A:$B"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A18",
+   "input": "=TRUE!"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A19",
+   "input": "=-CO2 +1E309@"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A20",
+   "input": "=é"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A21",
+   "input": "=R2C3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A22",
+   "input": "=false\n*LOG10"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A23",
+   "input": "=#N/A\n<> 1%%##"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A24",
+   "input": "=0.1234567890123456789"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A25",
+   "input": "=foo  (#N/A) *\nSEQUENCE\t(\t\n)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A26",
+   "input": "=IFS(  (R1C1 ,\t_xlfn.foo\t(\t ,) <={\"a\",TRUE;#N/A,1.5} ,\t+sum(\n.5\n))"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A27",
+   "input": "=#N/A\n<-1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A28",
+   "input": "=ISFORMULA( STDEV.S(a1,0.1234567890123456789))  \n0001"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A29",
+   "input": "=ISFORMULA  ( ,  LEN(MAP\n( a.b\t) ,A0 ,R1C1 *\nLOG10),  r)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A30",
+   "input": "=TAKE (TAKE( 0.1234567890123456789\n,\t$A$1  ),  a1##,  {\"a\",TRUE;#N/A,1.5}  )#"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A31",
+   "input": "=1E308"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A32",
+   "input": "=SORT (\n}$A:$B,0.1234567890123456789   x,5. =A$1\n)##"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A33",
+   "input": "=_xlfn.foo()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A34",
+   "input": "=A1:B2"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A35",
+   "input": "=$A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A36",
+   "input": "=5. -\t'Sheet1'!A1\n>\nSUMPRODUCT\n() %A1%"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A37",
+   "input": "=XMATCH\n(NORM.DIST  (\n\"\",\n1,\nXFD1\t))= R2C3:\n-1&false >  1.5"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A38",
+   "input": "=TAKE\t( a1\n>  1E3  , XFE1  ) <= $A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A39",
+   "input": "=IF\n(\n ,_xlfn.foo  (\nTotal  ,VSTACK(1.E3,Sheet2!B2  )  ,  ) ,Sheet1!A1 )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A40",
+   "input": "\t=N\t(R[1]C[1] &  CO2  )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "read_text",
+   "range": "Sheet1!A1:A40"
+  }
+ ]
+}

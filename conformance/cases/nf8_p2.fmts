@@ -1,0 +1,108 @@
+# CELL format for dates with locale/elapsed/calendar tokens
+mmm
+mmm;0
+[$-D] mmm
+[$-D] mmm;0
+[$-409]mmm
+[$-409]d-mmm
+[$-409]d-mmm-yy
+[$-409]m/d/yy
+[$-409]h:mm
+[$-409]h:mm AM/PM
+[$-409]h:mm:ss
+[$-409]yyyy
+[$-409]dd/mm/yyyy
+[$-F800]
+[$-F800]yyyy
+[$-F400]
+[$-F400]h:mm:ss
+[$-F800]dddd, mmmm dd, yyyy
+[$-F800]m/d/yyyy
+[hhh]:dd-mmm-yy
+[h]:dd-mmm-yy
+[h]:mm
+[h]:mm:ss
+[mm]:ss
+[mm]:ss.0
+[s]
+[h]
+[h]:mm AM/PM
+d/m/yy [h]
+[h] d/m/yy
+d/m/yy [mm]
+[>=-5]m/d/yy:[$-1000000]yyyy
+[Yellow][<=0.5]d/m\z[h]:mm:ss.00
+m/d/yy:yyyy
+d/m\z[h]:mm:ss.00
+d/m\zh:mm:ss.00
+d/m
+m/d
+d-mmm
+mmm-yy
+mmmm yyyy
+mmmm
+dddd
+ddd
+d
+dd
+yy
+yyyy
+yyyy-mm-dd
+yyyy-mm-dd hh:mm
+dd mmm yyyy
+d mmmm yyyy
+mm/dd
+h
+hh
+h AM/PM
+h:mm
+hh:mm
+h:mm:ss
+h:mm:ss.0
+mm:ss
+mm:ss.0
+h:mm AM/PM
+h:mm:ss AM/PM
+h:mm:ss.0 AM/PM
+AM/PM h:mm
+a/p
+A/P
+h a/p
+h:mm a/p
+am/pm
+AM/PM
+AM/PM h
+e
+ee
+e.h:mm:ss.0 AM/PM
+ggg-h:mm:ss AM/PM
+B1yyyy
+B2yyyy
+B1yyyy h:mm:ss.0 AM/PM
+B2dd/mm/yyyy
+[$-804]aaa
+[$-804]aaaa
+[$-411]aaaa
+[$-411]aaa
+aaa
+aaaa
+[$-409]ddd
+[$-F800]ddd
+[$-409]mmmm d
+[$-804]yyyy"年"m"月"d"日"
+[$-804]yyyy年m月d日
+yyyy"年"m"月"d"日"
+d mmm yy hh:mm
+m/d/yyyy h:mm
+mmmmm
+mmmmmm
+yyy
+yyyyy
+dddd mmmm
+m
+mm
+d/m/yy h:mm
+d/m/yy mm
+d/mm/yy
+dd/m/yy
+dd/mm/yy

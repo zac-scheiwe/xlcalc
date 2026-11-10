@@ -1,0 +1,14 @@
+const A1 1
+addsheet S2 Sheet1
+addsheet S3 S2
+setx Sheet1!B1 =UL("a",A1)
+setx S2!B1 =UL("b",Sheet1!A1)
+setx S3!B1 =UL("c",Sheet1!A1)
+setx Sheet1!B2 =UL("d",A1)
+setx S2!B2 =UL("e",Sheet1!A1)
+setx S3!B2 =UV("v",Sheet1!A1)
+setx S2!B3 =UL("f",S3!B2)
+const A1 2
+copysheet S2 S3
+const A1 3
+copysheet Sheet1 S3

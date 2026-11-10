@@ -43,6 +43,28 @@ pub trait ObjectHost {
 
     fn debug_assert(&mut self) {}
 
+    fn dll_call(&mut self, lib: &str, name: &str, args: &[Variant]) -> Result<Variant, VbaError> {
+        let _ = (lib, name, args);
+        Err(VbaError::new(453))
+    }
+
+    fn create_object(&mut self, progid: &str) -> Result<ObjectId, VbaError> {
+        let _ = progid;
+        Err(VbaError::new(429))
+    }
+
+    fn get_object(
+        &mut self,
+        path: Option<&str>,
+        class: Option<&str>,
+    ) -> Result<ObjectId, VbaError> {
+        Err(VbaError::new(if path.is_some() && class.is_none() {
+            432
+        } else {
+            429
+        }))
+    }
+
     fn interaction(&mut self, what: Interaction, args: &[Variant]) -> Result<Variant, VbaError> {
         let _ = args;
         Err(VbaError {
@@ -100,6 +122,7 @@ pub struct ExcelNames;
 const GLOBAL_MEMBERS: &[&str] = &[
     "ActiveCell",
     "ActiveSheet",
+    "ActiveWindow",
     "ActiveWorkbook",
     "Application",
     "Calculate",
@@ -114,6 +137,7 @@ const GLOBAL_MEMBERS: &[&str] = &[
     "Sheets",
     "ThisWorkbook",
     "Union",
+    "Windows",
     "Workbooks",
     "Worksheets",
     "WorksheetFunction",

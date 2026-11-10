@@ -1,0 +1,104 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=SEQUENCE(5)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=SUM(A1#)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=ROWS(A1#)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=FORMULATEXT(B1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=A1:A5*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=SUM(A2:A4)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D6"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 3,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D9"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D9"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E9"
+  },
+  {
+   "op": "insert_cells",
+   "range": "Sheet1!B3",
+   "shift": "down"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E9"
+  },
+  {
+   "op": "delete_cells",
+   "range": "Sheet1!B1",
+   "shift": "up"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E9"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!B1",
+   "to": "Sheet1!H1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:I9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "x"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:I9"
+  }
+ ]
+}

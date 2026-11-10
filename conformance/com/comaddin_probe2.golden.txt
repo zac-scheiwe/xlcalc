@@ -1,0 +1,64 @@
+--- startup
+TestAddin ctor
+TestAddin OnConnection mode=1 app=obj:Microsoft Excel inst=obj connect=True custom=len1
+TestAddin OnAddInsUpdate
+TestAddin2 ctor
+TestAddin2 OnConnection mode=1 app=obj:Microsoft Excel inst=obj connect=True custom=len1
+TestAddin OnAddInsUpdate
+TestAddin2 OnAddInsUpdate
+TestAddin OnStartupComplete
+TestAddin2 OnStartupComplete
+Count => 6
+Item(0) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Item(-1) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Item(6) => Xlc.TestAddin2
+Item(1.5) => MicrosoftDataStreamerforExcel
+Item(case) => Xlc.TestAddin
+Item(guid) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Item(desc) => ERR Invalid index. (Exception from HRESULT: 0x8002000B (DISP_E_BADINDEX))
+Item() => ERR Cannot find an overload for "Item" and the argument count: "0"
+Object.Twice => 6
+Object type => ERR Specified cast is not valid.
+Application => Microsoft Excel
+Parent => Microsoft Excel
+Creator => 1480803660
+Description => Xlc Test Add-in
+Guid => {7D2B0F71-6C10-4E8F-8B5F-1E2D6C8A3B21}
+set ProgId => ERR Cannot find an overload for "ProgId" and the argument count: "1"
+set Description => ERR Error HRESULT E_FAIL has been returned from a call to a COM component.
+set Object => ERR Object reference not set to an instance of an object.
+Connect=true again =>
+--- Connect=true again
+Connect=1 =>
+--- Connect=1
+Connect=false =>
+--- Connect=false
+TestAddin OnDisconnection mode=1
+TestAddin2 OnAddInsUpdate
+Connect=false again =>
+--- Connect=false again
+TestAddin ctor
+TestAddin OnDisconnection mode=1
+TestAddin2 OnAddInsUpdate
+Object after disconnect => True
+Connect after => False
+Update =>
+--- Update
+Connect=true =>
+--- Connect=true
+TestAddin ctor
+TestAddin OnConnection mode=0 app=obj:Microsoft Excel inst=obj connect=True custom=len1
+TestAddin OnAddInsUpdate
+TestAddin2 OnAddInsUpdate
+Object.Hello => hello w
+enum => ExcelPlugInShell.PowerMapConnect;MicrosoftDataStreamerforExcel;NativeShim.InquireConnector.1;PowerPivotExcelClientAddIn.NativeEntry.1;Xlc.TestAddin;Xlc.TestAddin2
+Count after => 6
+powermap connect => False
+Excel COMAddIns.Application => Microsoft Excel
+Excel COMAddIns.Parent => Microsoft Excel
+Excel COMAddIns.Creator => 1480803660
+--- quit
+TestAddin OnBeginShutdown
+TestAddin2 OnBeginShutdown
+TestAddin OnDisconnection mode=0
+TestAddin2 OnDisconnection mode=0

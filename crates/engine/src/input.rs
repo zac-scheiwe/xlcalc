@@ -23,6 +23,9 @@ pub fn interpret(s: &str, env: &ParseEnv) -> Entered {
     if let Some(rest) = s.strip_prefix('\'') {
         return Entered::Value(Value::from(rest));
     }
+    if let Some(v) = wrapped_exponent(s) {
+        return Entered::Value(Value::Number(v));
+    }
     if s.eq_ignore_ascii_case("TRUE") {
         return Entered::Value(Value::Bool(true));
     }
@@ -111,24 +114,60 @@ pub(crate) fn auto_close_call(body: &str) -> std::borrow::Cow<'_, str> {
     format!("{body})").into()
 }
 
+pub fn wrapped_exponent(s: &str) -> Option<f64> {
+    let t = s.trim_end_matches(' ');
+    let (neg, t) = match t.strip_prefix('-') {
+        Some(r) => (true, r),
+        None => (false, t),
+    };
+    let epos = t.find(['e', 'E'])?;
+    let (mant, ex) = (&t[..epos], &t[epos + 1..]);
+    let ex = ex.strip_prefix('+').unwrap_or(ex);
+    if ex.is_empty()
+        || !ex.bytes().all(|b| b.is_ascii_digit())
+        || ex.trim_start_matches('0') != "2147483647"
+    {
+        return None;
+    }
+    let (int, frac) = mant.split_once('.').unwrap_or((mant, ""));
+    if int.len() != 1
+        || !(b'1'..=b'9').contains(&int.as_bytes()[0])
+        || !frac.bytes().all(|b| b.is_ascii_digit())
+    {
+        return None;
+    }
+    let v: f64 = mant.parse().ok()?;
+    let v = v / 10.0;
+    Some(if neg { -v } else { v })
+}
+
 pub fn is_overflow_scientific(s: &str, env: &ParseEnv) -> bool {
-    let dec = env.locale.decimal_sep;
     let Some(epos) = s.find(['e', 'E']) else {
         return false;
     };
-    let thousands = env.locale.thousands_sep;
-    let mant: String = s[..epos].chars().filter(|&c| c != thousands).collect();
-    let (m, e) = (mant.as_str(), s[epos + 1..].trim_start_matches(['+', '-']));
-    let digits = |t: &str| !t.is_empty() && t.chars().all(|c| c.is_ascii_digit());
-    let mant_ok = match m.split_once(dec) {
-        Some((a, b)) => (digits(a) || a.is_empty()) && (digits(b) || b.is_empty()) && m.len() > 1,
-        None => digits(m),
+    let after = &s[epos + 1..];
+    let (sign, rest) = match after.as_bytes().first() {
+        Some(b'+') => ("", &after[1..]),
+        Some(b'-') => ("-", &after[1..]),
+        _ => ("", after),
     };
+    let ndig = rest.bytes().take_while(u8::is_ascii_digit).count();
+    if ndig == 0 {
+        return false;
+    }
+    let exp = rest[..ndig].trim_start_matches('0');
+    if exp.len() > 10 || exp.parse::<u64>().unwrap_or(0) > i32::MAX as u64 {
+        return false;
+    }
+    let head = s[..epos].trim_start_matches(' ');
+    let (head, paren) = match head.strip_prefix('(') {
+        Some(h) => (h, true),
+        None => (head, false),
+    };
+    if paren && head.starts_with(['+', '-']) {
+        return false;
+    }
 
-    let grouped = s[..epos].contains(thousands);
-    let overflows = || {
-        let t = format!("{}e{}", m.replace(dec, "."), &s[epos + 1..]);
-        t.parse::<f64>().is_ok_and(f64::is_infinite)
-    };
-    mant_ok && digits(e) && (!grouped || overflows()) && parse_number_text(s, *env).is_none()
+    parse_number_text(&format!("{head}e1"), *env).is_some()
+        && parse_number_text(&format!("{head}e{sign}{exp}"), *env).is_none()
 }

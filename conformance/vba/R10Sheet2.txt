@@ -1,0 +1,26 @@
+Option Explicit
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+    On Error Resume Next
+    R10Log = R10Log & "[S2chg:" & Target.Address(False, False) & ":" & Target.Areas.Count & "]"
+End Sub
+
+Private Sub Worksheet_SelectionChange(ByVal Target As Range)
+    On Error Resume Next
+    R10Log = R10Log & "[S2sel:" & Target.Address(False, False) & "]"
+End Sub
+
+Private Sub Worksheet_Calculate()
+    On Error Resume Next
+    R10Log = R10Log & "[S2calc]"
+End Sub
+
+Private Sub Worksheet_Activate()
+    On Error Resume Next
+    R10Log = R10Log & "[S2act]"
+End Sub
+
+Private Sub Worksheet_Deactivate()
+    On Error Resume Next
+    R10Log = R10Log & "[S2deact]"
+End Sub

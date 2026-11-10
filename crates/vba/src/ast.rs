@@ -274,6 +274,8 @@ pub enum StmtKind {
     End,
 
     Stop,
+
+    Block(Vec<Stmt>),
     GoSub(String),
     Return,
 

@@ -66,10 +66,19 @@ fn match_at(p: &[Pat], t: &[char], ti: usize, mc: bool, need_end: bool) -> Optio
     }
 }
 
+pub(crate) fn text_matches(text: &str, what: &str, whole: bool, match_case: bool) -> bool {
+    let p = compile(what);
+    let t: Vec<char> = text.chars().collect();
+    if whole {
+        return match_at(&p, &t, 0, match_case, true).is_some();
+    }
+    (0..=t.len()).any(|i| match_at(&p, &t, i, match_case, false).is_some())
+}
+
 pub(crate) fn replace_text(text: &str, spec: &ReplaceSpec) -> Option<String> {
     let p = compile(&spec.what);
     if p.is_empty() {
-        return None;
+        return (spec.whole && text.is_empty()).then(|| spec.with.clone());
     }
     let t: Vec<char> = text.chars().collect();
     if spec.whole {
@@ -119,6 +128,23 @@ impl Workbook {
         };
         let mut cells: Vec<(u32, u32)> =
             sh.cells.iter_rect(scope).map(|(r, c, _)| (r, c)).collect();
+
+        if spec.whole && spec.what.is_empty() {
+            if let Some(b) = sh.cells.bounds() {
+                for r in scope.r0.max(b.r0)..=scope.r1.min(b.r1) {
+                    for c in scope.c0.max(b.c0)..=scope.c1.min(b.c1) {
+                        if sh.cells.get(r, c).is_none() {
+                            cells.push((r, c));
+                        }
+                    }
+                }
+                cells.sort_unstable();
+            }
+        }
+
+        if self.filter_mode(sheet) {
+            cells.retain(|&(r, c)| !self.row_hidden(sheet, r) && !self.col_hidden(sheet, c));
+        }
         if spec.by_columns {
             cells.sort_by_key(|&(r, c)| (c, r));
             let start = cells.partition_point(|&(r, c)| (c, r) <= (rect.c0, rect.r0));
@@ -173,6 +199,12 @@ impl Workbook {
             .sheet(addr.sheet)
             .and_then(|s| s.cells.get(addr.row, addr.col))
         else {
+            if spec.whole && spec.what.is_empty() && !spec.with.is_empty() {
+                return self
+                    .set_legacy_entry(addr, &spec.with)
+                    .map(Some)
+                    .map_err(|_| ());
+            }
             return Ok(None);
         };
         let (text, formula, array, prefixed) = match entry {
@@ -183,7 +215,8 @@ impl Workbook {
 
                 let prefixed = matches!(v, Value::Text(s) if !s.is_empty()
                     && !self.is_text_format(addr)
-                    && self.apostrophe.get(&addr).is_some_and(|a| a == s));
+                    && (s.starts_with('=')
+                        || self.apostrophe.get(&addr).is_some_and(|a| a == s)));
                 (t, false, None, prefixed)
             }
             Entry::Formula(fid) => {

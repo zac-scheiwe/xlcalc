@@ -1,0 +1,138 @@
+# CELL("format"): elapsed brackets and locale tags among date fields
+[h]:d/m/yy
+[h] dd-mmm-yy
+[h]-d/m/yy
+[h]/d/m/yy
+[h]:dd-mmm-yy
+[s]:d/m
+[m]:dd-mmm
+[h]d/m/yy
+[h]  d/m/yy
+[h] d/m/yy
+[h]_xd/m
+[s]_xd/m
+[s]xd/m
+x[h]d/m/yy
+"x"[h]d/m/yy
+0 [h]d/m
+[h]:mm d/m/yy
+[h]:mm:ss d/m/yy
+d/m/yy [h]:mm
+d/m/yy[h]
+d/m/yy:[h]
+[h]:mmm d
+[h]:m/d/yy
+[h]:mmm-yy
+[h]:yyyy
+[h]:h:mm
+h:mm [h]
+h:mm:ss d/m/yy
+h:mm d/m/yy
+h:mm m/d/yy
+h:mm d-mmm
+h:mm AM/PM d/m/yy
+d/m/yy h:mm
+d/m/yy[$-409]
+d[$-409]/m/yy
+d/m[$-409]/yy
+d/m/yy[$-409]h:mm
+m/d/yy[$-409]
+mmm[$-409]
+mmm-yy[$-409]
+[Red][$-409]mmm
+[Red][$-409]d/m/yy
+[$-409][Red]mmm
+[$-409]h:mm:ss
+[$-409]d
+[$-409]dd
+[$-409]ddd
+[$-409]m
+[$-409]mm
+[$-409]y
+[$-409]mmm d
+[$-409]mmmm d, yyyy
+[$-409]ddd mmm
+[$-409]ddd d mmm
+[$-409]m/yyyy
+[$-409]mm/yy
+[$-409]yy/mm
+[$-409]mmm yyyy
+[$€-407]mmm
+[$€-407]d/m/yy
+[$€-407]m/d/yy
+[$$-409]mmm
+[$-409]e
+[$-409]e mmm
+e mmm
+e d/m/yy
+g d/m/yy
+d/m/yy e
+d/m/yy g
+d/m e
+d/m/yyyy gg
+mmm e
+ggg mmm
+B2d/m/yy
+B1d/m/yy
+B2mmm
+B1m/d/yy
+[$-1030409]d/m/yy
+[$-1030409]mmm
+[$-1030409]m/d/yy
+d/m/yy aaa
+aaa d/m/yy
+ddd/m
+mmm ddd
+mmm-yy ddd
+d aaa
+yyyy-mm-dd
+yy-mm-dd
+y/m/d
+y-mmm
+y
+m/y
+m-y
+m/yy/d
+m/y/d
+mmm-d-yy
+mmm/d
+mmmm/d
+mmm d, yy
+mmm dd yyyy
+dd.mm.yyyy
+d.m.yy
+d-m
+d m
+d/m
+m d
+m/d
+m/d/yy h:mm
+m/d/yy h:mm AM/PM
+mm:ss
+mm:ss.0
+mm:ss d/m
+mm d
+m h
+h m
+h mm
+h:m
+h:m:s
+h:m AM/PM
+h:mm:ss.00
+h:mm:ss.0 AM/PM
+h AM/PM
+h
+hh
+hh:mm
+ss
+mm
+s.0
+AM/PM
+am/pm h
+A/P h:mm
+h:mm A/P
+h:mm:ss A/P
+h:mm AM/PM yyyy
+h:mm yyyy
+h:mm mmm
+h:mm mmm-yy

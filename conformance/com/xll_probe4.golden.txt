@@ -1,0 +1,10 @@
+RegisterXLL => True
+sref =XlcRefTo(0,1) -> before=[5] afterEdit=[5] afterCalculate=[5] afterFull=[7]
+sref+0 =XlcRefTo(0,1)+0 -> before=[5] afterEdit=[5] afterCalculate=[5] afterFull=[7]
+sref-sum =SUM(XlcRefTo(0,1)) -> before=[5] afterEdit=[5] afterCalculate=[5] afterFull=[7]
+sref-vol =XlcRefToVol(0,1) -> before=[5] afterEdit=[7] afterCalculate=[7] afterFull=[7]
+ref-other =XlcRefSheet(0,1,"Other") -> before=[50] afterEdit=[50] afterCalculate=[50] afterFull=[70]
+ref-other+0 =XlcRefSheet(0,1,"Other")+0 -> before=[50] afterEdit=[50] afterCalculate=[50] afterFull=[70]
+ref-same =XlcRefSheet(0,1,"Sheet1") -> before=[5] afterEdit=[5] afterCalculate=[5] afterFull=[7]
+sref-argdep =XlcRefTo(0,1)+B2 -> before=[11] afterEdit=[11] afterCalculate=[11] afterFull=[13]
+sref-sumB2 =SUM(XlcRefTo(1,1),0) -> before=[6] afterEdit=[6] afterCalculate=[6] afterFull=[9]

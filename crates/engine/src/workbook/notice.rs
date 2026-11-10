@@ -7,6 +7,8 @@ use super::{CalcMode, EditError, Workbook};
 pub enum Notice {
     Changed { sheet: SheetId, areas: Vec<Rect> },
 
+    ChangedAsOne { sheet: SheetId, areas: Vec<Rect> },
+
     Calculated { sheets: Vec<SheetId> },
 
     AfterCalculate,
@@ -52,6 +54,10 @@ pub enum Command {
     DataSeries,
 
     Sort,
+
+    Atp,
+
+    Pivot,
 
     Scenario,
 
@@ -115,6 +121,8 @@ pub(crate) enum After {
 
     Ran,
 
+    RanAnyMode,
+
     Always,
 
     PerPass,
@@ -140,7 +148,7 @@ const fn r(order: Order, change: bool, calc: bool, after: After) -> Rule {
 }
 
 pub(crate) const fn rule(cmd: Command) -> Rule {
-    use After::{Always, Never, PerPass, Ran};
+    use After::{Always, Never, PerPass, Ran, RanAnyMode};
     use Order::{CalcFirst, CalcThenChange, ChangeFirst};
     match cmd {
         Command::Entry => r(CalcFirst, true, true, Ran),
@@ -167,20 +175,23 @@ pub(crate) const fn rule(cmd: Command) -> Rule {
         | Command::Subtotal
         | Command::Merge
         | Command::Table
-        | Command::GoalSeek
         | Command::DataTable
         | Command::View
         | Command::Name
+        | Command::Pivot
+        | Command::Atp
         | Command::Control => r(ChangeFirst, false, true, Ran),
 
         Command::TableResize => r(ChangeFirst, true, true, PerPass),
+
+        Command::GoalSeek => r(ChangeFirst, false, true, RanAnyMode),
         Command::Calculate => r(ChangeFirst, false, true, Always),
         Command::CalculateSheet => r(ChangeFirst, false, true, Never),
         Command::Setting => r(ChangeFirst, false, true, Ran),
         Command::AddSheet | Command::ActivateSheet => r(ChangeFirst, false, false, Never),
         Command::CopySheet | Command::RenameSheet => r(CalcThenChange, false, true, Ran),
         Command::MoveSheet => r(CalcThenChange, false, true, Ran),
-        Command::DeleteSheet => r(ChangeFirst, false, false, Never),
+        Command::DeleteSheet => r(CalcThenChange, false, true, Ran),
     }
 }
 
@@ -317,6 +328,7 @@ impl Notes {
         let after = match rule.after {
             After::Never | After::PerPass => false,
             After::Ran => ran && auto,
+            After::RanAnyMode => ran,
             After::Always => true,
         };
         let mut calc: Vec<Notice> = Vec::new();
@@ -456,6 +468,7 @@ impl Workbook {
     pub fn command<R: Outcome>(&mut self, cmd: Command, f: impl FnOnce(&mut Workbook) -> R) -> R {
         if self.notes.depth == 0 {
             self.notes.active = Some(self.session.active);
+            self.calc.cmd_manual = self.settings.mode == super::CalcMode::Manual;
             self.sbr_command(cmd);
         }
         self.notes.depth += 1;
@@ -748,6 +761,7 @@ mod tests {
             keys: vec![SortKey {
                 index: 0,
                 descending: true,
+                color: None,
             }],
             ..Default::default()
         };
@@ -860,7 +874,15 @@ mod tests {
             }]
         );
         wb.delete_sheet(s2).unwrap();
-        assert_eq!(wb.take_notices(), [Notice::SheetDeleting(s2)]);
+
+        assert_eq!(
+            wb.take_notices(),
+            [
+                Notice::Calculated { sheets: vec![s1] },
+                Notice::SheetDeleting(s2),
+                Notice::AfterCalculate
+            ]
+        );
         assert!(wb.notes.idle());
     }
 }

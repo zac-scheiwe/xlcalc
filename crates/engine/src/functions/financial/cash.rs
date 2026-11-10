@@ -253,7 +253,13 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
         _ => Err(XlError::NUM),
     };
     let classify_d = |i: usize, x: &Value| match x {
-        Value::Number(n) => atp::check_date(ctx, *n).map(|d| d as f64),
+        Value::Number(n) => atp::check_date(ctx, *n).map(|d| d as f64).and_then(|d| {
+            if !xirr && d == 0.0 {
+                Err(XlError::NUM)
+            } else {
+                Ok(d)
+            }
+        }),
         Value::Error(e) => Err(*e),
         Value::Text(_) | Value::Bool(_) => Err(text_err(i == 0)),
         Value::Blank if xirr => Ok(0.0),
@@ -273,6 +279,10 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
     }
     if xirr {
         atp::opt(ctx, a, 2, 0.1)?;
+    }
+
+    if vals.len() != dates.len() {
+        return Err(XlError::NUM);
     }
 
     let mut v = Vec::with_capacity(vals.len());

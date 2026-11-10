@@ -1,3 +1,4 @@
+mod ampm_elapsed;
 mod calendars;
 mod calendars_cn;
 mod calendars_he;
@@ -10,9 +11,14 @@ mod general;
 mod locales;
 mod locales_more;
 mod parse;
+mod readback;
 mod render;
 
 pub use general::{format_general_cell, format_general_width, TEXT_GENERAL_WIDTH};
+pub(crate) use readback::{
+    digits_with_date, format_key, quote_ampm, readback_spelling, spelled_for_parse,
+    typed_elapsed_ok,
+};
 pub(crate) use render::{FILL_MARK, GENERAL_MARK, SPACE_MARK};
 
 use crate::datetime::DateSystem;
@@ -120,6 +126,10 @@ impl NumberFormat {
 
     pub fn format_number(&self, x: f64, loc: &Locale, ds: DateSystem) -> Result<Rendered, XlError> {
         render::render_number(self, x, loc, ds)
+    }
+
+    pub(crate) fn digits_of_tag(&self, text: &str) -> String {
+        render::digits_of_tag(self, text)
     }
 
     pub(crate) fn format_cell_number(

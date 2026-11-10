@@ -61,13 +61,19 @@ impl Workbook {
     ) -> Result<bool, EditError> {
         let iteration = std::mem::replace(&mut self.settings.iteration, false);
         let r = self.seek(target, goal, changing);
-        let r = self.goal_seek_settle(r);
+        let r = self.goal_seek_settle(r, changing);
         self.settings.iteration = iteration;
         r
     }
 
-    fn goal_seek_settle(&mut self, r: Result<bool, EditError>) -> Result<bool, EditError> {
+    fn goal_seek_settle(
+        &mut self,
+        r: Result<bool, EditError>,
+        changing: CellAddr,
+    ) -> Result<bool, EditError> {
         if r.is_ok() {
+            calc::cell_changed(self, changing);
+
             let tables = self.settings.mode == crate::workbook::CalcMode::Manual;
             if tables {
                 calc::recalc_with(self, true);
@@ -107,7 +113,10 @@ impl Workbook {
             _ => {}
         }
 
-        calc::recalc_cells(s.wb);
+        if s.wb.settings.mode != crate::workbook::CalcMode::Automatic || s.wb.settings.except_tables
+        {
+            calc::recalc_cells(s.wb);
+        }
         let f0 = s.read();
 
         let mut rec = Records::default();

@@ -47,10 +47,21 @@ fn d360(sd: i64, sm: u32, sy: i64, ed: i64, em: u32, ey: i64) -> i64 {
 }
 
 pub fn days360_us(sys: DateSystem, a: i64, b: i64, both: bool) -> i64 {
+    days360_us_with(sys, a, b, both, false)
+}
+
+fn days360_us_with(sys: DateSystem, a: i64, b: i64, both: bool, exact_feb: bool) -> i64 {
     let s = ymd(sys, a);
     let e = ymd(sys, b);
     let (mut sd, mut ed) = (s.d as i64, e.d as i64);
-    let feb_end = |t: Ymd, serial: i64| t.m == 2 && atp_last_of_month(sys, serial);
+    let feb_end = |t: Ymd, serial: i64| {
+        t.m == 2
+            && if exact_feb {
+                t.d == dim(t.y, 2)
+            } else {
+                atp_last_of_month(sys, serial)
+            }
+    };
     if feb_end(e, b) && (feb_end(s, a) || both) {
         ed = 30;
     }
@@ -395,6 +406,13 @@ impl Basis {
             0 => days360_us(self.sys, a, b, false) as f64,
             4 => days360_eu(self.sys, a, b) as f64,
             _ => (b - a) as f64,
+        }
+    }
+
+    pub fn days_dsm(&self, a: i64, b: i64) -> f64 {
+        match self.basis {
+            0 => days360_us_with(self.sys, a, b, false, true) as f64,
+            _ => self.days(a, b),
         }
     }
 

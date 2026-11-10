@@ -19,6 +19,8 @@ pub enum PasteWhat {
     Formulas,
 
     Formats,
+
+    Validation,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -181,7 +183,7 @@ fn transpose_ref(
 
     let in_block = || -> bool {
         let same = match sheet {
-            SheetRef::Current => true,
+            SheetRef::Current | SheetRef::Own => true,
             SheetRef::Sheet(id) => *id == from.sheet,
             _ => false,
         };
@@ -318,10 +320,31 @@ impl Workbook {
         dst: Rect,
         spec: &PasteSpecial,
     ) -> Result<RecalcReport, EditError> {
+        if spec.what == PasteWhat::Validation {
+            self.paste_validation(src_sheet, src, dst_sheet, dst);
+            return Ok(RecalcReport::default());
+        }
         let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst_sheet, dst);
         let r = self.with_paste_block((dst_sheet, dst), |this| {
             this.paste_special_raw(src_sheet, src, dst_sheet, dst, spec)
         });
+        if r.is_ok() && matches!(spec.what, PasteWhat::All | PasteWhat::Formats) && !spec.transpose
+        {
+            let to = Rect::new(
+                dst.r0,
+                dst.c0,
+                dst.r1.max(dst.r0 + src.rows() - 1),
+                dst.c1.max(dst.c0 + src.cols() - 1),
+            );
+            self.cfv_copy(
+                src_sheet,
+                src,
+                dst_sheet,
+                to,
+                false,
+                spec.what == PasteWhat::All,
+            );
+        }
         if r.is_ok()
             && matches!(
                 spec.what,
@@ -360,23 +383,23 @@ impl Workbook {
         dst: Rect,
         spec: &PasteSpecial,
     ) -> Result<RecalcReport, EditError> {
-        if !spec.transpose {
-            if let Some(Ok((steps, _, _))) = self.view_copy_plan(src_sheet, src, dst_sheet, dst) {
-                if steps.len() > 1 || steps[0].0 != src {
-                    let mut report = RecalcReport::default();
-                    for (run, to) in steps {
-                        let d = Rect::new(
-                            to.row,
-                            to.col,
-                            to.row + run.rows() - 1,
-                            to.col + run.cols() - 1,
-                        );
-                        let r = self.paste_special_one(src_sheet, run, dst_sheet, d, spec)?;
-                        report.changed.extend(r.changed);
-                        report.evaluations += r.evaluations;
-                    }
-                    return Ok(report);
+        if let Some(Ok((steps, _, _))) =
+            self.view_copy_plan(src_sheet, src, dst_sheet, dst, spec.transpose, true)
+        {
+            if steps.len() > 1 || steps[0].0 != src {
+                let mut report = RecalcReport::default();
+                for (run, to) in steps {
+                    let (dr, dc) = if spec.transpose {
+                        (run.cols(), run.rows())
+                    } else {
+                        (run.rows(), run.cols())
+                    };
+                    let d = Rect::new(to.row, to.col, to.row + dr - 1, to.col + dc - 1);
+                    let r = self.paste_special_one(src_sheet, run, dst_sheet, d, spec)?;
+                    report.changed.extend(r.changed);
+                    report.evaluations += r.evaluations;
                 }
+                return Ok(report);
             }
         }
         self.paste_special_one(src_sheet, src, dst_sheet, dst, spec)
@@ -600,6 +623,12 @@ impl Workbook {
         }
 
         self.suspend_merges(dst_sheet, &suspend, true);
+
+        let live = spec.op != PasteOp::None
+            && spec.what != PasteWhat::Formulas
+            && src_sheet == dst_sheet
+            && src.intersects(&target);
+        let mut live_from: Vec<CellAddr> = Vec::new();
         let mut plan: Vec<(CellAddr, Act)> = Vec::new();
         let mut fmt_pairs: Vec<(CellAddr, CellAddr)> = Vec::new();
         for rr in 0..reps_r {
@@ -614,7 +643,12 @@ impl Workbook {
                         let to =
                             CellAddr::new(dst_sheet, dst.r0 + rr * lr + i, dst.c0 + rc * lc + j);
                         let from = CellAddr::new(src_sheet, sr, sc);
-                        let act = self.paste_cell(from, to, spec, src);
+                        let act = if live {
+                            live_from.push(from);
+                            Act::Skip
+                        } else {
+                            self.paste_cell(from, to, spec, src)
+                        };
 
                         let skipped = spec.skip_blanks && self.src_blank(from);
                         if spec.what != PasteWhat::Values
@@ -654,7 +688,12 @@ impl Workbook {
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
-        for (to, act) in plan {
+        for (k, (to, act)) in plan.into_iter().enumerate() {
+            let act = if live {
+                self.paste_cell(live_from[k], to, spec, src)
+            } else {
+                act
+            };
             match act {
                 Act::Skip => continue,
                 Act::SetCalc(v) => {

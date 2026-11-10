@@ -153,8 +153,11 @@ fn rowstate(s: &mut OmSession, step: &J) -> Result<RowState, OmError> {
         if s.get(row, "Hidden")? == Variant::Bool(true) {
             hr.push(r as u32);
         }
-        if let Variant::I4(l) = s.get(row, "OutlineLevel")? {
-            lv.push(l as u32);
+
+        match s.get(row, "OutlineLevel")? {
+            Variant::I4(l) => lv.push(l as u32),
+            Variant::R8(l) => lv.push(l as u32),
+            _ => {}
         }
     }
     let mut hc = Vec::new();

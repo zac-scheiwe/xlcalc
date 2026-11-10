@@ -670,6 +670,7 @@ impl Console {
                             Ok(i) if i >= 1 => spec.keys.push(xlcalc::SortKey {
                                 index: i - 1,
                                 descending: false,
+                                color: None,
                             }),
                             _ => {
                                 return self

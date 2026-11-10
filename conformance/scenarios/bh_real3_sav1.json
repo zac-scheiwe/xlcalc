@@ -1,0 +1,398 @@
+{
+"sheets": [
+"Sav"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Sav!A1",
+"input": "Goal"
+},
+{
+"op": "set",
+"cell": "Sav!B1",
+"input": "$50,000"
+},
+{
+"op": "set",
+"cell": "Sav!A2",
+"input": "Start"
+},
+{
+"op": "set",
+"cell": "Sav!B2",
+"input": "$8,000"
+},
+{
+"op": "set",
+"cell": "Sav!A3",
+"input": "Monthly"
+},
+{
+"op": "set",
+"cell": "Sav!B3",
+"input": "$450"
+},
+{
+"op": "set",
+"cell": "Sav!A4",
+"input": "Rate"
+},
+{
+"op": "set",
+"cell": "Sav!B4",
+"input": "4.2%"
+},
+{
+"op": "set",
+"cell": "Sav!A5",
+"input": "Compounding"
+},
+{
+"op": "set",
+"cell": "Sav!B5",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "Sav!A6",
+"input": "Eff"
+},
+{
+"op": "set",
+"cell": "Sav!B6",
+"input": "=EFFECT(B4,B5)"
+},
+{
+"op": "set",
+"cell": "Sav!A7",
+"input": "Nominal"
+},
+{
+"op": "set",
+"cell": "Sav!B7",
+"input": "=NOMINAL(B6,B5)"
+},
+{
+"op": "set",
+"cell": "Sav!A8",
+"input": "Months to goal"
+},
+{
+"op": "set",
+"cell": "Sav!B8",
+"input": "=NPER(B4/B5,-B3,-B2,B1)"
+},
+{
+"op": "set",
+"cell": "Sav!A9",
+"input": "Years"
+},
+{
+"op": "set",
+"cell": "Sav!B9",
+"input": "=B8/12"
+},
+{
+"op": "set",
+"cell": "Sav!A10",
+"input": "FV 10y"
+},
+{
+"op": "set",
+"cell": "Sav!B10",
+"input": "=FV(B4/B5,120,-B3,-B2)"
+},
+{
+"op": "set",
+"cell": "Sav!A11",
+"input": "Needed monthly"
+},
+{
+"op": "set",
+"cell": "Sav!B11",
+"input": "=PMT(B4/B5,120,-B2,B1)*-1"
+},
+{
+"op": "set",
+"cell": "Sav!A12",
+"input": "Rate needed"
+},
+{
+"op": "set",
+"cell": "Sav!B12",
+"input": "=RATE(120,-B3,-B2,B1)*12"
+},
+{
+"op": "set",
+"cell": "Sav!A13",
+"input": "Target date"
+},
+{
+"op": "set",
+"cell": "Sav!B13",
+"input": "=EDATE(DATE(2026,3,1),ROUNDUP(B8,0))"
+},
+{
+"op": "set",
+"cell": "Sav!A14",
+"input": "PV"
+},
+{
+"op": "set",
+"cell": "Sav!B14",
+"input": "=PV(B4/B5,120,-B3,B1)"
+},
+{
+"op": "set",
+"cell": "Sav!A15",
+"input": "Gap"
+},
+{
+"op": "set",
+"cell": "Sav!B15",
+"input": "=B1-B10"
+},
+{
+"op": "format",
+"range": "Sav!B1:B3",
+"fmt": "$#,##0"
+},
+{
+"op": "format",
+"range": "Sav!B4",
+"fmt": "0.00%"
+},
+{
+"op": "format",
+"range": "Sav!B6:B7",
+"fmt": "0.000%"
+},
+{
+"op": "format",
+"range": "Sav!B9",
+"fmt": "0.0"
+},
+{
+"op": "format",
+"range": "Sav!B10:B11",
+"fmt": "$#,##0.00"
+},
+{
+"op": "format",
+"range": "Sav!B12",
+"fmt": "0.00%"
+},
+{
+"op": "format",
+"range": "Sav!B13",
+"fmt": "mmmm yyyy"
+},
+{
+"op": "read",
+"range": "Sav!A1:B15"
+},
+{
+"op": "set",
+"cell": "Sav!A18",
+"input": "Year"
+},
+{
+"op": "set",
+"cell": "Sav!B18",
+"input": "Open"
+},
+{
+"op": "set",
+"cell": "Sav!C18",
+"input": "Deposits"
+},
+{
+"op": "set",
+"cell": "Sav!D18",
+"input": "Interest"
+},
+{
+"op": "set",
+"cell": "Sav!E18",
+"input": "Close"
+},
+{
+"op": "set",
+"cell": "Sav!A19",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Sav!B19",
+"input": "=B2"
+},
+{
+"op": "set",
+"cell": "Sav!C19",
+"input": "=$B$3*12"
+},
+{
+"op": "set",
+"cell": "Sav!D19",
+"input": "=E19-B19-C19"
+},
+{
+"op": "set",
+"cell": "Sav!E19",
+"input": "=FV($B$4/$B$5,12,-$B$3,-B19)"
+},
+{
+"op": "set",
+"cell": "Sav!A20",
+"input": "=A19+1"
+},
+{
+"op": "set",
+"cell": "Sav!B20",
+"input": "=E19"
+},
+{
+"op": "set",
+"cell": "Sav!C20",
+"input": "=$B$3*12"
+},
+{
+"op": "set",
+"cell": "Sav!D20",
+"input": "=E20-B20-C20"
+},
+{
+"op": "set",
+"cell": "Sav!E20",
+"input": "=FV($B$4/$B$5,12,-$B$3,-B20)"
+},
+{
+"op": "format",
+"range": "Sav!B19:E20",
+"fmt": "$#,##0.00"
+},
+{
+"op": "autofill",
+"from": "Sav!A20:E20",
+"to": "Sav!A20:E30",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Sav!A18:E30"
+},
+{
+"op": "set",
+"cell": "Sav!G18",
+"input": "=IFERROR(INDEX(A19:A30,MATCH(TRUE,INDEX(E19:E30>=B1,0),0)),\"beyond\")"
+},
+{
+"op": "set",
+"cell": "Sav!G19",
+"input": "=XLOOKUP(TRUE,E19:E30>=B1,A19:A30,\"none\")"
+},
+{
+"op": "set",
+"cell": "Sav!G20",
+"input": "=SUMPRODUCT(D19:D30)"
+},
+{
+"op": "set",
+"cell": "Sav!G21",
+"input": "=RRI(10,B2,B10)"
+},
+{
+"op": "set",
+"cell": "Sav!G22",
+"input": "=FVSCHEDULE(B2,{0.04,0.05,0.03})"
+},
+{
+"op": "set",
+"cell": "Sav!G23",
+"input": "=XNPV(0.05,{-1000,300,400,500},{46000,46200,46400,46800})"
+},
+{
+"op": "set",
+"cell": "Sav!G24",
+"input": "=XIRR({-1000,300,400,500},{46000,46200,46400,46800})"
+},
+{
+"op": "set",
+"cell": "Sav!G25",
+"input": "=IRR({-1000,300,400,500})"
+},
+{
+"op": "set",
+"cell": "Sav!G26",
+"input": "=NPV(0.05,300,400,500)-1000"
+},
+{
+"op": "set",
+"cell": "Sav!G27",
+"input": "=MIRR({-1000,300,400,500},0.05,0.06)"
+},
+{
+"op": "set",
+"cell": "Sav!G28",
+"input": "=PDURATION(0.04,1000,2000)"
+},
+{
+"op": "set",
+"cell": "Sav!G29",
+"input": "=CUMIPMT(0.05/12,60,20000,1,12,0)"
+},
+{
+"op": "set",
+"cell": "Sav!G30",
+"input": "=SLN(10000,1000,5)+DB(10000,1000,5,2)+DDB(10000,1000,5,2)+SYD(10000,1000,5,2)"
+},
+{
+"op": "read",
+"range": "Sav!G18:G30"
+},
+{
+"op": "set",
+"cell": "Sav!B4",
+"input": "5%"
+},
+{
+"op": "set",
+"cell": "Sav!B3",
+"input": "$600"
+},
+{
+"op": "read",
+"range": "Sav!A1:B15"
+},
+{
+"op": "read",
+"range": "Sav!A18:G30"
+},
+{
+"op": "insert_rows",
+"sheet": "Sav",
+"at": 22,
+"count": 1
+},
+{
+"op": "read",
+"range": "Sav!A18:G31"
+},
+{
+"op": "copy_sheet",
+"sheet": "Sav",
+"name": "Sav2",
+"after": "Sav"
+},
+{
+"op": "set",
+"cell": "Sav2!B5",
+"input": "4"
+},
+{
+"op": "read",
+"range": "Sav2!A1:B15"
+}
+]
+}

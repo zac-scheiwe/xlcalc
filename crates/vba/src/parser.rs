@@ -288,8 +288,10 @@ impl Parser {
             m.implements.push((name, pos));
             return self.expect_eol();
         }
-        if self.is_kw("declare") {
-            return Err(self.unsupported("Declare (DLL calls)"));
+        if self.eat_kw("declare") {
+            let proc = self.declare(public.unwrap_or(true))?;
+            m.procs.push(proc);
+            return Ok(());
         }
         if self.eat_kw("type") {
             let t = self.type_decl(public.unwrap_or(true))?;
@@ -615,6 +617,93 @@ impl Parser {
             ret_array,
             body,
         })
+    }
+
+    fn declare(&mut self, public: bool) -> R<Proc> {
+        self.eat_kw("ptrsafe");
+        let kind = if self.eat_kw("function") {
+            ProcKind::Function
+        } else {
+            self.expect_kw("sub")?;
+            ProcKind::Sub
+        };
+        let pos = self.pos();
+        let (name, suffix) = self.ident()?;
+        self.expect_kw("lib")?;
+        let lib = self.string_literal()?;
+        let alias = if self.eat_kw("alias") {
+            self.string_literal()?
+        } else {
+            name.clone()
+        };
+        let params = self.param_list()?;
+        let ret = if kind.returns_value() {
+            self.as_type(suffix)?
+        } else {
+            None
+        };
+        self.expect_header_end()?;
+        let lit = |s: String| Arg {
+            name: None,
+            value: Some(Expr {
+                pos,
+                kind: ExprKind::Lit(Variant::Bstr(s)),
+            }),
+        };
+        let mut args = vec![lit(lib), lit(alias)];
+        for p in &params {
+            args.push(Arg {
+                name: None,
+                value: Some(Expr {
+                    pos,
+                    kind: ExprKind::Name(p.var.name.clone(), None),
+                }),
+            });
+        }
+        let callee = Expr {
+            pos,
+            kind: ExprKind::Name("DeclareCall".to_string(), None),
+        };
+        let kind_stmt = if kind.returns_value() {
+            StmtKind::Assign {
+                target: Expr {
+                    pos,
+                    kind: ExprKind::Name(name.clone(), None),
+                },
+                value: Expr {
+                    pos,
+                    kind: ExprKind::Index(Box::new(callee), args),
+                },
+                set: false,
+            }
+        } else {
+            StmtKind::Call { callee, args }
+        };
+        Ok(Proc {
+            kind,
+            name,
+            pos,
+            public,
+            friend: false,
+            is_static: false,
+            params,
+            ret,
+            ret_array: false,
+            body: vec![Stmt {
+                pos,
+                kind: kind_stmt,
+            }],
+        })
+    }
+
+    fn string_literal(&mut self) -> R<String> {
+        match self.tok().clone() {
+            Tok::Lit(Variant::Bstr(s)) => {
+                self.advance();
+                Ok(s)
+            }
+            _ => Err(self.expected("a string")),
+        }
     }
 
     fn param(&mut self) -> R<Param> {
@@ -960,8 +1049,15 @@ impl Parser {
             "private" | "public" | "global" | "option" | "enum" | "function" | "sub" => {
                 return Err(self.err(format!("{word} is not valid inside a procedure")))
             }
-            "open" | "close" | "print" | "input" | "line" | "get" | "put" | "write" | "seek"
-            | "lock" | "unlock" | "kill" | "mkdir" | "rmdir" | "chdir" | "name" | "reset" => {
+            "open" | "close" | "reset" => self.file_statement(&word)?,
+            "name" if self.name_statement() => self.file_statement(&word)?,
+            "print" | "write" | "input" | "get" | "put" | "seek"
+                if matches!(self.peek_tok(1), Tok::P(P::Hash)) =>
+            {
+                self.file_statement(&word)?
+            }
+            "line" if self.is_kw_at(1, "input") => self.file_statement("lineinput")?,
+            "lock" | "unlock" | "chdir" | "chdrive" => {
                 return Err(self.unsupported("file statements"))
             }
             "stop" => {
@@ -996,7 +1092,34 @@ impl Parser {
                 }
                 StmtKind::RaiseEvent { name, args }
             }
-            "error" => return Err(self.unsupported("the Error statement (use Err.Raise)")),
+            "error" => {
+                let pos = self.pos();
+                self.advance();
+                let value = self.expr()?;
+                let err = Expr {
+                    pos,
+                    kind: ExprKind::Name("Err".into(), None),
+                };
+                StmtKind::Call {
+                    callee: Expr {
+                        pos,
+                        kind: ExprKind::Member(Some(Box::new(err)), "Raise".into()),
+                    },
+                    args: vec![
+                        Arg {
+                            name: None,
+                            value: Some(value),
+                        },
+                        Arg {
+                            name: Some("__stmt".into()),
+                            value: Some(Expr {
+                                pos,
+                                kind: ExprKind::Lit(Variant::Bool(true)),
+                            }),
+                        },
+                    ],
+                }
+            }
             _ => self.simple_statement()?,
         }))
     }
@@ -1006,6 +1129,224 @@ impl Parser {
             Tok::Ident(s, None) => Ok(s.to_ascii_lowercase()),
             Tok::Lit(v @ (Variant::I2(_) | Variant::I4(_))) => Ok(line_label(&v)),
             _ => Err(self.err("expected a label")),
+        }
+    }
+
+    fn name_statement(&self) -> bool {
+        !matches!(
+            self.peek_tok(1),
+            Tok::P(P::Eq | P::Dot | P::LParen | P::Comma | P::Colon) | Tok::Newline | Tok::Eof
+        )
+    }
+
+    fn file_statement(&mut self, word: &str) -> R<StmtKind> {
+        let pos = self.pos();
+        let name = |n: &str| Expr {
+            pos,
+            kind: ExprKind::Name(n.to_string(), None),
+        };
+        let int = |n: i16| Expr {
+            pos,
+            kind: ExprKind::Lit(Variant::I2(n)),
+        };
+        let text = |t: &str| Expr {
+            pos,
+            kind: ExprKind::Lit(Variant::Bstr(t.to_string())),
+        };
+        let args_of = |args: Vec<Expr>| -> Vec<Arg> {
+            args.into_iter()
+                .map(|a| Arg {
+                    name: None,
+                    value: Some(a),
+                })
+                .collect()
+        };
+        let call = |n: &str, args: Vec<Expr>| StmtKind::Call {
+            callee: name(n),
+            args: args_of(args),
+        };
+        let func = |n: &str, args: Vec<Expr>| Expr {
+            pos,
+            kind: ExprKind::Index(Box::new(name(n)), args_of(args)),
+        };
+        self.advance();
+        if word == "lineinput" {
+            self.advance();
+        }
+        match word {
+            "open" => {
+                let path = self.expr()?;
+                let mut mode = 5;
+                if self.eat_kw("for") {
+                    mode = match self.any_ident()?.to_ascii_lowercase().as_str() {
+                        "input" => 1,
+                        "output" => 2,
+                        "append" => 3,
+                        "binary" => 4,
+                        "random" => 5,
+                        _ => return Err(self.err_at(pos, "bad Open mode".to_string())),
+                    };
+                }
+                let mut access = 0;
+                let mut lock = 0;
+                while !self.eat_kw("as") {
+                    if self.eat_kw("access") {
+                        let read = self.eat_kw("read");
+                        let write = self.eat_kw("write");
+                        if !read && !write {
+                            return Err(self.expected("Read or Write"));
+                        }
+                        access = i16::from(read) + 2 * i16::from(write);
+                    } else if self.eat_kw("lock") {
+                        let read = self.eat_kw("read");
+                        let write = self.eat_kw("write");
+                        if !read && !write {
+                            return Err(self.expected("Read or Write"));
+                        }
+                        lock = i16::from(read) + 2 * i16::from(write);
+                    } else if !self.eat_kw("shared") {
+                        return Err(self.expected("'As'"));
+                    }
+                }
+                self.eat_p(P::Hash);
+                let num = self.expr()?;
+                let mut len = int(-1);
+                if self.eat_kw("len") {
+                    self.expect_p(P::Eq)?;
+                    len = self.expr()?;
+                }
+                Ok(call(
+                    "FileOpen<>",
+                    vec![path, int(mode), num, len, int(access), int(lock)],
+                ))
+            }
+            "close" | "reset" => {
+                let mut args = Vec::new();
+                while !self.at_stmt_end() {
+                    self.eat_p(P::Hash);
+                    args.push(self.expr()?);
+                    if !self.eat_p(P::Comma) {
+                        break;
+                    }
+                }
+                if word == "reset" {
+                    args.clear();
+                }
+                Ok(call("FileClose<>", args))
+            }
+            "name" => {
+                let old = self.expr()?;
+                self.expect_kw("as")?;
+                let new = self.expr()?;
+                Ok(call("Name<>", vec![old, new]))
+            }
+            "print" | "write" => {
+                self.expect_p(P::Hash)?;
+                let mut args = vec![self.expr()?];
+                if !self.at_stmt_end() {
+                    self.expect_p(P::Comma)?;
+                }
+
+                while !self.at_stmt_end() {
+                    if self.eat_p(P::Semicolon) {
+                        args.push(text(";"));
+                    } else if self.eat_p(P::Comma) {
+                        args.push(text(","));
+                    } else {
+                        let e = self.expr()?;
+                        match &e.kind {
+                            ExprKind::Index(f, a) if a.len() == 1 && a[0].value.is_some() => {
+                                if let ExprKind::Name(n, _) = &f.kind {
+                                    let k = n.to_ascii_lowercase();
+                                    if k == "spc" || k == "tab" {
+                                        args.push(text(&k[..1]));
+                                        args.extend(a[0].value.clone());
+                                        continue;
+                                    }
+                                }
+                            }
+                            ExprKind::Name(n, None) if n.eq_ignore_ascii_case("tab") => {
+                                args.push(text("t"));
+                                args.push(Expr {
+                                    pos,
+                                    kind: ExprKind::Empty,
+                                });
+                                continue;
+                            }
+                            _ => {}
+                        }
+                        args.push(text("v"));
+                        args.push(e);
+                    }
+                }
+                Ok(call(
+                    if word == "print" {
+                        "FilePrint<>"
+                    } else {
+                        "FileWrite<>"
+                    },
+                    args,
+                ))
+            }
+            "input" | "lineinput" => {
+                self.expect_p(P::Hash)?;
+                let num = self.expr()?;
+                let mut targets = Vec::new();
+                while self.eat_p(P::Comma) {
+                    targets.push(self.postfix(false, false)?);
+                }
+                if targets.is_empty() {
+                    return Err(self.expected("a variable"));
+                }
+                let fname = if word == "input" {
+                    "InputField<>"
+                } else {
+                    "LineInput<>"
+                };
+                let stmts = targets
+                    .into_iter()
+                    .map(|t| Stmt {
+                        pos,
+                        kind: StmtKind::Assign {
+                            value: func(fname, vec![num.clone(), t.clone()]),
+                            target: t,
+                            set: false,
+                        },
+                    })
+                    .collect();
+                Ok(StmtKind::Block(stmts))
+            }
+            "get" | "put" => {
+                self.eat_p(P::Hash);
+                let num = self.expr()?;
+                self.expect_p(P::Comma)?;
+                let mut recpos = Expr {
+                    pos,
+                    kind: ExprKind::Lit(Variant::Empty),
+                };
+                if !self.is_p(P::Comma) {
+                    recpos = self.expr()?;
+                }
+                self.expect_p(P::Comma)?;
+                let var = self.expr()?;
+                if word == "put" {
+                    Ok(call("FilePut<>", vec![num, recpos, var]))
+                } else {
+                    Ok(StmtKind::Assign {
+                        value: func("FileGet<>", vec![num, recpos, var.clone()]),
+                        target: var,
+                        set: false,
+                    })
+                }
+            }
+            "seek" => {
+                self.eat_p(P::Hash);
+                let num = self.expr()?;
+                self.expect_p(P::Comma)?;
+                let to = self.expr()?;
+                Ok(call("FileSeek<>", vec![num, to]))
+            }
+            _ => Err(self.unsupported("file statements")),
         }
     }
 
@@ -1402,6 +1743,8 @@ impl Parser {
         if self.eat_kw("byval") {
             return Err(self.unsupported("ByVal in a call"));
         }
+
+        self.eat_p(P::Hash);
         Ok(Arg {
             name: None,
             value: Some(self.expr()?),

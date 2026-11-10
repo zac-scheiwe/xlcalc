@@ -13,13 +13,15 @@ mod editsteps;
 mod filecmds;
 mod filesteps;
 mod golden;
+mod minimize;
 mod omsteps;
 mod sheetsteps;
 mod tablesteps;
 mod viewsteps;
 mod wbsuite;
 
-use golden::{compact_golden, expand_golden, is_compact, load_golden};
+use golden::{compact_golden, expand_golden, is_compact, load_golden, load_golden_text};
+use minimize::SuiteSel;
 use serde_json::{json, Value as J};
 use xlcalc::{parse_cell_ref, parse_range_ref, CellAddr, Value, Workbook, XlError};
 use xlcalc_om::flags;
@@ -84,6 +86,7 @@ fn suites() -> BTreeMap<String, (&'static str, PathBuf)> {
         ("scenarios", "json", "scenario"),
         ("workbooks", "xlsx", "workbook"),
         ("workbooks", "xlsb", "workbook"),
+        ("workbooks", "xls", "workbook"),
     ] {
         let Ok(rd) = fs::read_dir(conf_dir().join(dir)) else {
             continue;
@@ -123,12 +126,13 @@ fn selected(args: &[String]) -> Vec<String> {
 
 fn workbook_path(suite: &str) -> PathBuf {
     let dir = conf_dir().join("workbooks");
-    let b = dir.join(format!("{suite}.xlsb"));
-    if b.exists() {
-        b
-    } else {
-        dir.join(format!("{suite}.xlsx"))
+    for ext in ["xlsb", "xls"] {
+        let b = dir.join(format!("{suite}.{ext}"));
+        if b.exists() {
+            return b;
+        }
     }
+    dir.join(format!("{suite}.xlsx"))
 }
 
 fn record(args: &[String]) -> ExitCode {
@@ -230,6 +234,7 @@ fn record(args: &[String]) -> ExitCode {
         if let Some(sc) = scenario_steps.get(n) {
             golden["scenario"] = sc.clone();
         }
+        golden::tokenize_root(&mut golden);
         let out = golden_dir.join(format!("{n}.json"));
         fs::write(
             &out,
@@ -300,6 +305,7 @@ fn record_workbooks(names: &[String], all: &BTreeMap<String, (&'static str, Path
                 golden[k] = v.clone();
             }
         }
+        golden::tokenize_root(&mut golden);
         fs::write(
             golden_dir.join(format!("{n}.json")),
             serde_json::to_string(&compact_golden(&golden)).unwrap(),
@@ -549,6 +555,12 @@ struct Tally {
 
     truncated: Option<(usize, String)>,
     command_tier: bool,
+
+    ran: std::collections::HashSet<String>,
+    secs: f64,
+    load_secs: f64,
+
+    partial: bool,
 }
 
 fn oos_what(s: &str) -> Option<String> {
@@ -602,6 +614,10 @@ impl Tally {
             pending_oos: None,
             truncated: None,
             command_tier: false,
+            ran: Default::default(),
+            secs: 0.0,
+            load_secs: 0.0,
+            partial: false,
         }
     }
 
@@ -641,7 +657,7 @@ impl Tally {
     }
 }
 
-fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool) -> Tally {
+fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool, sel: &SuiteSel) -> Tally {
     let mut wb = Workbook::empty();
     xlcalc::testing::set_fixed_now(&mut wb, None);
     load_fixture(&mut wb);
@@ -653,11 +669,20 @@ fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool) -> Tally {
 
     wb.set_mode(xlcalc::CalcMode::Manual);
     let mut tally = Tally::new();
-    for it in golden["items"].as_array().unwrap() {
+    let mut occ = minimize::OccCounter::default();
+    for (idx, it) in golden["items"].as_array().unwrap().iter().enumerate() {
         let formula = it["formula"].as_str().unwrap();
         if grep.is_some_and(|g| !formula.to_lowercase().contains(&g.to_lowercase())) {
             continue;
         }
+        if let SuiteSel::Items(keep) = sel {
+            if !keep.contains(&occ.next(it)) {
+                continue;
+            }
+            tally.ran.insert(formula.to_string());
+        }
+        minimize::item_begin();
+        let bad_before = tally.close + tally.near + tally.wrong;
         let host = parse_cell_ref(&wb, it["host"].as_str().unwrap(), t_id).unwrap();
         let invalid = it["invalid"].as_bool().unwrap_or(false);
 
@@ -721,6 +746,7 @@ fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool) -> Tally {
             }
         }
         wb.clear(host);
+        minimize::item_end(it, idx, tally.close + tally.near + tally.wrong > bad_before);
     }
     tally
 }
@@ -760,6 +786,7 @@ fn run_scenario(golden: &J, suite: &str) -> Tally {
     let steps_text = sc["steps"].to_string().to_ascii_uppercase();
     let uses_clock = steps_text.contains("NOW(") || steps_text.contains("TODAY(");
     let mut typed: BTreeMap<String, String> = BTreeMap::new();
+    omsteps::OmSession::set_sheets_in_new(sc["sheets_in_new_workbook"].as_u64().unwrap_or(1) as u32);
     let mut om: Option<omsteps::OmSession> = None;
     if sc["fresh_excel"].as_bool().unwrap_or(false) {
         om = Some(omsteps::OmSession::fresh(&mut wb));
@@ -774,6 +801,9 @@ fn run_scenario(golden: &J, suite: &str) -> Tally {
         let rec = &results[i];
         if std::env::var("CONF_TRACE").is_ok() {
             eprintln!("step {i}");
+        }
+        if std::env::var("CONF_CHAIN").is_ok() && i > 0 {
+            eprintln!("CHAIN step {i}: {}", wb.debug_chain());
         }
         if let Ok(r) = std::env::var("CONF_FMT") {
             if let Some((s, rect)) = parse_range_ref(&wb, &r, default_sheet) {
@@ -1180,19 +1210,61 @@ fn run_scenario(golden: &J, suite: &str) -> Tally {
     tally
 }
 
-fn run_suite(n: &str, grep: Option<&str>, check_text: bool) -> Option<Tally> {
+fn run_suite(
+    n: &str,
+    grep: Option<&str>,
+    check_text: bool,
+    man: Option<&minimize::Manifest>,
+) -> Option<Tally> {
     let path = conf_dir().join("golden").join(format!("{n}.json"));
-    if !path.exists() {
-        return None;
+    let bytes = fs::read(&path).ok()?;
+    let sel = match man {
+        Some(m) => m.select(n, minimize::hash_bytes(&bytes)),
+        None => SuiteSel::All,
+    };
+    let t0 = std::time::Instant::now();
+    let mut t = run_suite_bytes(n, &path, &bytes, grep, check_text, &sel, false);
+    if let Some(t) = t.as_mut() {
+        t.secs = t0.elapsed().as_secs_f64();
     }
-    let golden: J = load_golden(&path);
-    Some(if golden["kind"] == "scenario" {
+    t
+}
+
+fn run_suite_bytes(
+    n: &str,
+    path: &Path,
+    bytes: &[u8],
+    grep: Option<&str>,
+    check_text: bool,
+    sel: &SuiteSel,
+    record: bool,
+) -> Option<Tally> {
+    if matches!(sel, SuiteSel::Skip) {
+        let mut t = Tally::new();
+        t.partial = true;
+        return Some(t);
+    }
+    let tl = std::time::Instant::now();
+    let golden: J = load_golden_text(path, std::str::from_utf8(bytes).ok()?);
+    let load_secs = tl.elapsed().as_secs_f64();
+    let kind = golden["kind"].as_str().unwrap_or("formulas").to_string();
+    if record && kind != "formulas" {
+        minimize::suite_begin();
+    }
+    let t = if kind == "scenario" {
         run_scenario(&golden, n)
-    } else if golden["kind"] == "workbook" {
+    } else if kind == "workbook" {
         wbsuite::run_workbook(&golden, &workbook_path(n), check_text)
     } else {
-        run_formulas(&golden, grep, check_text)
-    })
+        run_formulas(&golden, grep, check_text, sel)
+    };
+    if record && kind != "formulas" {
+        minimize::suite_end(&kind, t.close + t.near + t.wrong > 0);
+    }
+    let mut t = t;
+    t.load_secs = load_secs;
+    t.partial = !matches!(sel, SuiteSel::All);
+    Some(t)
 }
 
 fn run_suites(
@@ -1200,6 +1272,7 @@ fn run_suites(
     jobs: usize,
     grep: Option<&str>,
     check_text: bool,
+    man: Option<&minimize::Manifest>,
 ) -> Vec<Option<Tally>> {
     let next = AtomicUsize::new(0);
     let slots: Vec<Mutex<Option<Tally>>> = names.iter().map(|_| Mutex::new(None)).collect();
@@ -1211,7 +1284,7 @@ fn run_suites(
                     .spawn_scoped(sc, || loop {
                         let i = next.fetch_add(1, Ordering::Relaxed);
                         let Some(n) = names.get(i) else { break };
-                        let t = run_suite(n, grep, check_text);
+                        let t = run_suite(n, grep, check_text, man);
                         *slots[i].lock().unwrap() = t;
                     })
                     .unwrap()
@@ -1280,6 +1353,8 @@ fn run(args: &[String]) -> ExitCode {
             .cloned()
     };
     let grep = flag("--grep");
+    let full = args.iter().any(|a| a == "--full");
+    let times = args.iter().any(|a| a == "--times");
     let jobs: usize = flag("--jobs")
         .and_then(|s| s.parse().ok())
         .unwrap_or_else(|| {
@@ -1311,6 +1386,24 @@ fn run(args: &[String]) -> ExitCode {
             .cloned()
             .collect::<Vec<_>>(),
     );
+
+    let explicit = args
+        .iter()
+        .any(|a| !a.starts_with('-') && !skip_values.contains(a))
+        || changed.is_some();
+    let man = if full || (explicit && !args.iter().any(|a| a == "--min")) {
+        None
+    } else {
+        minimize::Manifest::load()
+    };
+    println!(
+        "mode: {}",
+        if man.is_some() {
+            "minimized (conformance/minimal.json; `--full` replays everything)"
+        } else {
+            "full"
+        }
+    );
     if let Some(base) = &changed {
         let ch = changed_suites(base);
         names.retain(|n| ch.contains(n));
@@ -1322,6 +1415,8 @@ fn run(args: &[String]) -> ExitCode {
     let mut known = read_out_of_scope();
     let mut todo: Vec<String> = Vec::new();
     let mut ran: Vec<String> = Vec::new();
+    let mut partial: std::collections::BTreeSet<String> = Default::default();
+    let mut ran_formulas: BTreeMap<String, std::collections::HashSet<String>> = BTreeMap::new();
     let (mut te, mut tc, mut tn, mut tw) = (0, 0, 0, 0);
 
     let mut tiers = [[0usize; 5]; 2];
@@ -1329,7 +1424,7 @@ fn run(args: &[String]) -> ExitCode {
         "{:<20} {:>7} {:>7} {:>7} {:>7} {:>8}",
         "suite", "exact", "close", "near", "wrong", "score"
     );
-    let results = run_suites(&names, jobs, grep.as_deref(), check_text);
+    let results = run_suites(&names, jobs, grep.as_deref(), check_text, man.as_ref());
     for (n, tally) in names.iter().zip(results) {
         let Some(tally) = tally else {
             println!("{n:<20} (no golden — run `conform record {n}`)");
@@ -1350,8 +1445,18 @@ fn run(args: &[String]) -> ExitCode {
                 100.0
             }
         );
+        if times {
+            println!(
+                "{:<20} time {:>9.2}s (golden load {:.2}s)",
+                "", tally.secs, tally.load_secs
+            );
+        }
         if tally.out_of_scope > 0 || tally.truncated.is_some() {
             println!("{:<20} out_of_scope {:>5}", "", tally.out_of_scope);
+        }
+        if tally.partial {
+            partial.insert(n.clone());
+            ran_formulas.insert(n.clone(), tally.ran.clone());
         }
         if verbose {
             if let Some((n, what)) = &tally.truncated {
@@ -1423,7 +1528,12 @@ fn run(args: &[String]) -> ExitCode {
 
     let stale: Vec<&OutOfScope> = known
         .iter()
-        .filter(|k| k.hits == 0 && names.contains(&k.suite) && !k.pattern.starts_with(COM_ONLY))
+        .filter(|k| {
+            k.hits == 0
+                && names.contains(&k.suite)
+                && !partial.contains(&k.suite)
+                && !k.pattern.starts_with(COM_ONLY)
+        })
         .collect();
     println!(
         "OUT_OF_SCOPE {} listed, {} matched, {} stale",
@@ -1437,7 +1547,7 @@ fn run(args: &[String]) -> ExitCode {
     todo.sort();
     println!("TODO {}", todo.len());
     if grep.is_none() {
-        write_todo(&ran, &todo);
+        write_todo(&ran, &todo, &partial, &ran_formulas);
     }
     if !todo.is_empty() {
         ExitCode::FAILURE
@@ -1446,14 +1556,40 @@ fn run(args: &[String]) -> ExitCode {
     }
 }
 
-fn write_todo(ran: &[String], new: &[String]) {
+fn write_todo(
+    ran: &[String],
+    new: &[String],
+    partial: &std::collections::BTreeSet<String>,
+    ran_formulas: &BTreeMap<String, std::collections::HashSet<String>>,
+) {
     let path = conf_dir().join("todo.txt");
     let old = fs::read_to_string(&path).unwrap_or_default();
+    let new_keys: std::collections::HashSet<&str> = new
+        .iter()
+        .map(|n| n.split("  → ").next().unwrap_or(""))
+        .collect();
     let mut lines: Vec<String> = old
         .lines()
         .filter(|l| !l.trim().is_empty())
         .filter(|l| {
-            let suite = l.split(" | ").next().unwrap_or("");
+            let mut parts = l.splitn(2, " | ");
+            let suite = parts.next().unwrap_or("");
+
+            if partial.contains(suite) {
+                let f = parts
+                    .next()
+                    .unwrap_or("")
+                    .split("  → ")
+                    .next()
+                    .unwrap_or("");
+                let replayed = ran_formulas.get(suite).is_some_and(|r| r.contains(f));
+                let still = new_keys.contains(format!("{suite} | {f}").as_str());
+                return conf_dir()
+                    .join("golden")
+                    .join(format!("{suite}.json"))
+                    .exists()
+                    && !(replayed && !still);
+            }
             !ran.iter().any(|r| r == suite)
                 && conf_dir()
                     .join("golden")
@@ -1464,6 +1600,7 @@ fn write_todo(ran: &[String], new: &[String]) {
         .collect();
     lines.extend(new.iter().cloned());
     lines.sort();
+    lines.dedup();
     let mut text = lines.join("\n");
     if !text.is_empty() {
         text.push('\n');
@@ -1636,6 +1773,39 @@ fn short(v: &J) -> String {
     } else {
         s
     }
+}
+
+fn vba_code(text: &str) -> String {
+    let mut kept: Vec<String> = Vec::new();
+    for line in text.lines() {
+        let st = line.trim_start();
+        let is_rem = st.len() >= 3
+            && st.is_char_boundary(3)
+            && st[..3].eq_ignore_ascii_case("rem")
+            && !st[3..]
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_alphanumeric() || c == '_');
+        if st.starts_with('\'') || is_rem {
+            continue;
+        }
+        let mut line = line;
+        if !line.contains('"') {
+            let mut prev_space = false;
+            for (i, c) in line.char_indices() {
+                if c == '\'' && prev_space {
+                    line = line[..i].trim_end();
+                    break;
+                }
+                prev_space = c.is_whitespace();
+            }
+        }
+        let line = line.trim_end_matches([' ', '\t', '\r']);
+        if !line.is_empty() {
+            kept.push(line.to_string());
+        }
+    }
+    kept.join("\n")
 }
 
 fn diff_json(path: &str, g: &J, f: &J, out: &mut Vec<String>) {
@@ -1966,6 +2136,8 @@ fn main() -> ExitCode {
         .spawn(move || match args.first().map(String::as_str) {
             Some("record") => record(&args[1..]),
             Some("run") => run(&args[1..]),
+            Some("sigs") => minimize::sigs_cmd(&args[1..]),
+            Some("minimize") => minimize::minimize_cmd(&args[1..]),
             Some("compact") => compact_cmd(&args[1..]),
             Some("verify-golden") => verify_golden(&args[1..]),
             Some("compare-golden") => compare_golden(&args[1..]),
@@ -2016,4 +2188,19 @@ fn eval_file(path: &str) -> ExitCode {
         }
     }
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod vba_code_tests {
+    use super::vba_code;
+
+    #[test]
+    fn comments_blank_lines_and_trailing_spaces_do_not_count() {
+        let with = "Option Explicit\r\n' a comment\r\n\r\nDim x As Long  ' trailing\r\n    Rem old style\r\nx = 1   \r\nMsg = \"it's\" ' kept: the line has a quote\r\n";
+        let without =
+            "Option Explicit\nDim x As Long\nx = 1\nMsg = \"it's\" ' kept: the line has a quote";
+        assert_eq!(vba_code(with), vba_code(without));
+        assert_eq!(vba_code(without), without);
+        assert_eq!(vba_code("Remark = 1"), "Remark = 1");
+    }
 }

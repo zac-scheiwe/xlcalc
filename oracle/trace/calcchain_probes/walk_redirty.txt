@@ -1,0 +1,51 @@
+=== 1 set B1 =E4+1
+  @ start 0,0 B1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 B1:0
+  | B1
+=== 2 set2 E3 =D4:E5*2
+  @ start 0,0 {E3}:f B1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {E3}:e B1:e
+  | { }?0xa71b0008 B1?
+  @ start 0,0 {E3}:c B1:c
+  @ end rerun=0 next=0,0 valid=1 st=7 {E3}:c B1:c
+  | { }? +U:{E3} B1? +U:B1
+  @ start 0,0 {E3}:c B1:c
+  @ end rerun=0 next=0,0 valid=1 st=7 {E3}:c B1:c
+  | { }? +U:{E3} B1? +U:B1
+=== 3 set G1 =H1+1
+  @ start 0,0 G1:f {E3}:f B1:f
+  @ end rerun=1 next=0,1 valid=1 st=7 G1:0 {E3}:f B1:f
+  | G1 { }? +U:{E3} B1? +U:B1
+  @ start 0,1 G1:0 {E3}:f B1:f
+  @ end rerun=0 next=0,1 valid=1 st=7 G1:0 {E3}:f B1:f
+  | { }? +U:{E3} B1? +U:B1
+  @ start 0,1 G1:0 {E3}:f B1:f
+  @ end rerun=0 next=0,1 valid=1 st=7 G1:0 {E3}:f B1:f
+  | { }? +U:{E3} B1? +U:B1
+=== 4 set H1 =G1+1
+  @ start 0,0 H1:f G1:f {E3}:f B1:f
+  @ end rerun=0 next=0,0 valid=1 st=7 G1:f H1:f {E3}:f B1:f
+  | H1? +S:H1 +S:G1 G1? +U:G1 +U:H1 clear:S { }? +U:{E3} B1? +U:B1
+  @ start 0,0 G1:f H1:f {E3}:f B1:f
+  @ end rerun=0 next=0,0 valid=1 st=7 H1:f G1:f {E3}:f B1:f
+  | G1? +S:G1 +S:H1 H1? +U:H1 +U:G1 clear:S { }? +U:{E3} B1? +U:B1
+=== 5 clear E4
+  @ start 0,0 H1:f G1:f {E3}:f B1:f
+  @ end rerun=1 next=0,2 valid=1 st=7 {E3}:e B1:e G1:f H1:f
+  | H1? +S:H1 +S:G1 G1? +U:G1 +U:H1 clear:S { }?0xa71b0008 B1?
+  @ start 0,2 {E3}:e B1:e G1:f H1:f
+  @ end rerun=0 next=0,2 valid=1 st=7 {E3}:e B1:e H1:f G1:f
+  | G1? +S:G1 +S:H1 H1? +U:H1 +U:G1 clear:S
+  @ start 0,0 {E3}:c B1:c H1:c G1:c
+  @ end rerun=0 next=0,0 valid=1 st=7 {E3}:c B1:c G1:c H1:c
+  | { }? +U:{E3} B1? +U:B1 H1? +S:H1 +S:G1 G1? +U:G1 +U:H1 clear:S
+  @ start 0,0 {E3}:c B1:c G1:c H1:c
+  @ end rerun=0 next=0,0 valid=1 st=7 {E3}:c B1:c H1:c G1:c
+  | { }? +U:{E3} B1? +U:B1 G1? +S:G1 +S:H1 H1? +U:H1 +U:G1 clear:S
+=== 6 const Z9 1
+  @ start 0,0 {E3}:f B1:f H1:f G1:f
+  @ end rerun=0 next=0,0 valid=1 st=7 {E3}:f B1:f G1:f H1:f
+  | { }? +U:{E3} B1? +U:B1 H1? +S:H1 +S:G1 G1? +U:G1 +U:H1 clear:S
+  @ start 0,0 {E3}:f B1:f G1:f H1:f
+  @ end rerun=0 next=0,0 valid=1 st=7 {E3}:f B1:f H1:f G1:f
+  | { }? +U:{E3} B1? +U:B1 G1? +S:G1 +S:H1 H1? +U:H1 +U:G1 clear:S

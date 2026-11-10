@@ -8,6 +8,7 @@ use crate::formula::{CRef, Formula, Rc, SheetRef};
 use crate::formula_print::print_node;
 use crate::functions::arrays::collate;
 use crate::structure::map_refs;
+use crate::style::{CellColor, Pattern};
 use crate::value::Value;
 use crate::workbook::{CalcMode, EditError, Entry, Workbook};
 
@@ -18,6 +19,15 @@ pub struct SortKey {
     pub index: u32,
 
     pub descending: bool,
+
+    pub color: Option<SortColor>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct SortColor {
+    pub font: bool,
+
+    pub rgb: Option<u32>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -29,6 +39,8 @@ pub struct SortSpec {
     pub by_columns: bool,
 
     pub match_case: bool,
+
+    pub custom: Vec<Vec<String>>,
 }
 
 fn rank(v: &Value) -> u8 {
@@ -58,12 +70,34 @@ fn cmp_asc(a: &Value, b: &Value, match_case: bool) -> Ordering {
     }
 }
 
-fn cmp_key(a: &Value, b: &Value, desc: bool, match_case: bool) -> Ordering {
+fn list_pos(v: &Value, list: &[String], match_case: bool) -> Option<usize> {
+    let Value::Text(t) = v else {
+        return None;
+    };
+    list.iter().position(|e| {
+        if match_case {
+            e == t.as_ref()
+        } else {
+            e.to_lowercase() == t.to_lowercase()
+        }
+    })
+}
+
+fn cmp_key(a: &Value, b: &Value, desc: bool, match_case: bool, list: &[String]) -> Ordering {
     let (ab, bb) = (rank(a) == 5, rank(b) == 5);
     if ab || bb {
         return ab.cmp(&bb);
     }
-    let o = cmp_asc(a, b, match_case);
+    let o = if list.is_empty() {
+        cmp_asc(a, b, match_case)
+    } else {
+        match (list_pos(a, list, match_case), list_pos(b, list, match_case)) {
+            (Some(x), Some(y)) => x.cmp(&y),
+            (Some(_), None) => Ordering::Less,
+            (None, Some(_)) => Ordering::Greater,
+            (None, None) => cmp_asc(a, b, match_case),
+        }
+    };
     if desc {
         o.reverse()
     } else {
@@ -193,11 +227,35 @@ impl Workbook {
             }
             self.value(a)
         };
+        let theme = &self.style_table().theme;
+
+        let keyval = |line: u32, k: &SortKey| -> Value {
+            let Some(sc) = k.color else {
+                return at(line, k.index);
+            };
+            let (r, c) = if spec.by_columns {
+                (rect.r0 + k.index, rect.c0 + line)
+            } else {
+                (rect.r0 + line, rect.c0 + k.index)
+            };
+            let st = self.cell_style(CellAddr::new(sheet, r, c));
+            let has = if sc.font {
+                match st.font.color {
+                    CellColor::Auto => None,
+                    c => Some(theme.rgb(c, 0)),
+                }
+            } else if st.fill.pattern == Pattern::None {
+                None
+            } else {
+                Some(theme.rgb(st.fill.color, 0xFF_FFFF))
+            };
+            Value::Number(if has == sc.rgb { 0.0 } else { 1.0 })
+        };
         let keyvals: Vec<Vec<Value>> = (0..n)
             .map(|i| {
                 spec.keys
                     .iter()
-                    .map(|k| at(skip + i, k.index))
+                    .map(|k| keyval(skip + i, k))
                     .collect::<Vec<_>>()
             })
             .collect();
@@ -209,6 +267,7 @@ impl Workbook {
                     &keyvals[b as usize][ki],
                     k.descending,
                     spec.match_case,
+                    spec.custom.get(ki).map_or(&[][..], |l| l.as_slice()),
                 );
                 if o != Ordering::Equal {
                     return o;
@@ -274,6 +333,55 @@ impl Workbook {
             }
         }
         Ok(Some((r0, last, low)))
+    }
+
+    fn sort_drop_subtotals(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        spec: &SortSpec,
+        skip: u32,
+    ) -> Result<(Rect, Option<u8>, bool), EditError> {
+        let n = rect.rows().saturating_sub(skip);
+        if spec.by_columns || n < 2 || rect.is_cell() {
+            return Ok((rect, None, false));
+        }
+        let (r0, r1) = (rect.r0 + skip, rect.r1);
+        if (r0..=r1).any(|r| self.row_hidden(sheet, r)) {
+            return Ok((rect, None, false));
+        }
+        let Some((_, last, _)) = self.outline_sort_level(sheet, r0, r1)? else {
+            return Ok((rect, None, false));
+        };
+        let row = Rect {
+            r0: last,
+            r1: last,
+            ..rect
+        };
+        if self.subtotal_rows(sheet, row).is_empty() {
+            return Ok((rect, None, false));
+        }
+
+        let header_level = (skip > 0)
+            .then(|| self.row_outline_level(sheet, rect.r0).saturating_sub(1) as u8)
+            .filter(|&l| l > 0);
+        let removed = self.subtotal_rows(sheet, rect).len() as u32;
+
+        let first = Rect { r0, r1: r0, ..rect };
+        let start_moves = !self.subtotal_rows(sheet, first).is_empty();
+        let end_row = Rect {
+            r0: rect.r1,
+            ..rect
+        };
+        let end_deleted = u32::from(!self.subtotal_rows(sheet, end_row).is_empty());
+        self.remove_subtotal_run(sheet, rect)?;
+        let rect = Rect {
+            r0: rect.r0 + u32::from(start_moves),
+            ..rect
+        };
+
+        let r1 = (rect.r1 + end_deleted).saturating_sub(removed).max(rect.r0);
+        Ok((Rect { r1, ..rect }, header_level, true))
     }
 
     fn outline_order(
@@ -446,7 +554,20 @@ impl Workbook {
             return Err(EditError::Compile("sort key is outside the range".into()));
         }
         let (_, skip) = Self::sort_lines(rect, spec);
+        let (rect, header_level, dropped) = self.sort_drop_subtotals(sheet, rect, spec, skip)?;
         let mut order = self.sort_order(sheet, rect, spec);
+        let mut skip = skip;
+        if header_level.is_some() && !order.is_empty() {
+            let m = order.len() as u32 + 1;
+            let mut perm = vec![0; m as usize];
+            perm[1] = 0;
+            for (j, &o) in order.iter().enumerate() {
+                let slot = if j == 0 { 0 } else { j + 1 };
+                perm[slot] = 1 + o;
+            }
+            order = perm;
+            skip = 0;
+        }
 
         let hidden_line = |line: u32| {
             if spec.by_columns {
@@ -467,6 +588,13 @@ impl Workbook {
         let mut row_moves: Vec<(u32, u32)> = Vec::new();
         if let Some((first, last, top)) = outline {
             order = self.outline_order(sheet, rect.r0 + skip, &order, first, last, top);
+            row_moves = order
+                .iter()
+                .enumerate()
+                .filter(|&(j, &s)| j as u32 != s)
+                .map(|(j, &s)| (rect.r0 + skip + s, rect.r0 + skip + j as u32))
+                .collect();
+        } else if dropped {
             row_moves = order
                 .iter()
                 .enumerate()
@@ -531,7 +659,7 @@ impl Workbook {
                             to.col as i64 - f.addr.col as i64,
                         );
                         let root = map_refs(&f.formula.root, &mut |sheet, cref| {
-                            if *sheet == SheetRef::Current {
+                            if matches!(sheet, SheetRef::Current | SheetRef::Own) {
                                 Some(move_ref(cref, to))
                             } else {
                                 Some(Some(retarget(cref, dr, dc)))
@@ -555,9 +683,13 @@ impl Workbook {
             }
         }
         self.fmt_sort_pairs(&fmt_pairs);
+        self.notes_sort_pairs(&fmt_pairs);
         self.view_sorted(sheet, rect);
         if !row_moves.is_empty() {
             self.view_move_rows(sheet, &row_moves);
+        }
+        if let Some(l) = header_level.filter(|&l| l > 0) {
+            self.set_subtotal_levels(sheet, rect.r0 + 1, rect.r0 + 1, Some(l));
         }
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;

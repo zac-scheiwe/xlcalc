@@ -1,0 +1,346 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B1')",
+   "prop": "Value2",
+   "value": 10
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('C1')",
+   "prop": "Value2",
+   "value": 100
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A2')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2')",
+   "prop": "Value2",
+   "value": 20
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('C2')",
+   "prop": "Value2",
+   "value": 200
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A3')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B3')",
+   "prop": "Value2",
+   "value": 30
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('C3')",
+   "prop": "Value2",
+   "value": 300
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A4')",
+   "prop": "Value2",
+   "value": 4
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B4')",
+   "prop": "Value2",
+   "value": 40
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('C4')",
+   "prop": "Value2",
+   "value": 400
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A5')",
+   "prop": "Value2",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B5')",
+   "prop": "Value2",
+   "value": 50
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('C5')",
+   "prop": "Value2",
+   "value": 500
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A3,A5')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('E1')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('E1:E8')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('G1')",
+   "call": "PasteSpecial"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('G1:G8')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A2,C1:C2')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('I1')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('I1:K4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A2,B4:B5')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('M1')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('M1:N6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A3')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('O1,O3')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('O1:O6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('Q1,Q3')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('Q1:Q4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A2')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('S1:S2,S4:S5')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('S1:S6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A2,A4:A5')",
+   "call": "Copy",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('U1')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('U1:U6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1,A3,A5')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('W1')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('W1:W6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:B2,A4:B5')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('Y1')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('Y1:Z6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:A3')",
+   "call": "Copy"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('AB1:AB3,AB5:AB7')",
+   "call": "PasteSpecial",
+   "args": [
+    -4163
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('AB1:AB8')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1')",
+   "prop": "CutCopyMode",
+   "value": false
+  }
+ ]
+}

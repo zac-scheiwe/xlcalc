@@ -63,6 +63,7 @@ impl Workbook {
         let mut next = self.next_share;
         let mut cache: FxHashMap<Key, (Node, CellAddr, u32)> = FxHashMap::default();
         let mut plan = SharePlan::default();
+        let mut origin: FxHashMap<u32, u32> = FxHashMap::default();
         for (src, dst) in pairs {
             let f = self.formula(self.formula_at(src).unwrap());
             let shared = f.share.filter(|g| members.get(g).copied().unwrap_or(0) > 1);
@@ -81,6 +82,9 @@ impl Workbook {
                 }
             }
             next += 1;
+            if let Some(g) = f.share {
+                origin.insert(next, g);
+            }
             cache.insert(key, (normal, dst, next));
             plan.cells.insert(dst, (None, Some(next)));
         }
@@ -91,7 +95,7 @@ impl Workbook {
         }
         for (_, id) in plan.cells.values_mut() {
             if count[&id.unwrap()] < 2 {
-                *id = None;
+                *id = origin.get(&id.unwrap()).copied();
             }
         }
         plan

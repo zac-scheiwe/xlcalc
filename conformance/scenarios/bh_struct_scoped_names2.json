@@ -1,0 +1,117 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "name",
+   "name": "loc",
+   "refers_to": "=Sheet1!$A$1",
+   "scope": "Sheet1"
+  },
+  {
+   "op": "name",
+   "name": "sc",
+   "refers_to": "=Sheet1!$A$2",
+   "scope": "Sheet1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=loc+sc"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "=Sheet1!loc"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=SUM(Sheet1:Sheet2!A1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!B1:B3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet1",
+   "after": "Sheet2",
+   "name": "Cp"
+  },
+  {
+   "op": "read",
+   "range": "Cp!A1:B3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "set",
+   "cell": "Cp!A1",
+   "input": "100"
+  },
+  {
+   "op": "read",
+   "range": "Cp!B1:B3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!B1:B3"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet1",
+   "name": "Main"
+  },
+  {
+   "op": "read",
+   "range": "Cp!A1:B3"
+  },
+  {
+   "op": "read",
+   "range": "Main!B1:B3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Main"
+  },
+  {
+   "op": "read",
+   "range": "Cp!A1:B3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

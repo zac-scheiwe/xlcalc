@@ -1,0 +1,236 @@
+=--@Data!A1
+=IF(-1,+COLUMN(),Data!A$1:$B2)=--Data!$A$1
+=---"a"
+={1;2;3}
+=Data!A1%%
+=#REF!-CHOOSE(--Data!A1):--@#REF! Data!$A$1
+=IF(COLUMNS(TRUE=Data!A1:B2:IF(Data!A3,@-{"a",1;TRUE,#N/A},PI())  ),1,ROWS(COLUMN()%%-PI()  ):  COLUMN({1;2;3} {"a",1;TRUE,#N/A}))
+=MIN(+-{"a",1;TRUE,#N/A})>Data!A2%%
+=FALSE	-Data!A$1:$B2
+=50%%
+=Data!$A$1<=Data!A1:B2
+=(SORT(MAX(Data!D1:D4)))%
+=IF(+-{1,2,3}%%,(--@FALSE%),+-Data!A:A^Data!A2)%%<COLUMN()*Data!A1:A5+FALSE%:N(+-+-2.5)
+=COUNT(@-2.5)	=+-Data!B2:C3%
+=@-Data!A1:A5&{"a",1;TRUE,#N/A}
+=@PI()
+=""
+=(0)
+=IF(IF(Data!C1:C3,--@Data!A:A,TRUE),-@Data!C1:C3%>1,IF({"a",1;TRUE,#N/A},{"a",1;TRUE,#N/A},#DIV/0!))
+=IF(--@50%,IF(0,50%,(-Data!A:A)),COLUMN(--#REF!))<SEQUENCE(T(#N/A^COLUMN()))
+=@-0&--@TRUE
+=IF(2.5%%,ROW(),TRUE)
+=INDEX(+-Data!A3)
+=IF(SORT(#REF!)&Data!A2--"1"%,IF(IF(Data!D1:D4,+#DIV/0!,Data!C1:C3),@-#N/A,COLUMN(#DIV/0!))+IF("1",Data!A1:A3%,IF(Data!C1:C3,Data!A3,"1"%%)),Data!$A$1< Data!A1:B2<>Data!A$1:$B2  ^-{1,2,3}&Data!1:1   @Data!B2*Data!A$1:$B2)
+=+-Data!A1:A3
+=@Data!B2:C3 IF(-TRUE%%,IF({1,2;3,4},#DIV/0!%%,#DIV/0!%),--#N/A)
+=(FALSE)
+=--#REF!%
+=(Data!A1)
+=IF(-Data!A1:B2,{1;2;3},#REF!/-@"")*IF("",1,{1;2;3})<	-Data!1:1^	0 ABS(Data!A:A) @-{1,2,3}%
+=IF(IF(COLUMN((  50%)),--@Data!A2%%,-Data!D1:D4),TRUE,(@ROW()<>  ISERROR(-Data!B2% )))
+=IF(((@-0)),Data!C1:C3<= (Data!B2),+(Data!A1:A3))
+=-Data!A3
+=Data!B2:C3<>""
+=-@{1,2;3,4}<AND(@1)
+=+-""%/@{"a",1;TRUE,#N/A}
+=+Data!A$1:$B2
+=--@@{"a",1;TRUE,#N/A}
+=-Data!A3<=-Data!1:1
+=IF(IF(CHOOSE({1;2;3})),IF(Data!A1:A3%%,(#DIV/0!),(+-Data!A2)),@-Data!B2:C3%)
+=2.5
+=IF(--"1",1,@2.5)>=#DIV/0!^Data!1:1:Data!A$1:$B2%%
+=(-@Data!A1:A3%%) {"a",1;TRUE,#N/A}/Data!1:1
+=(-Data!A:A) <=-1
+=COLUMN(1%)/(-@--"")
+=TRUE
+=--{1;2;3}
+=@--@-+#N/A
+=SORT(FALSE)
+=+1E3+IF(+-Data!A1:A3%%,Data!A:A%%,{1,2,3})
+=2.5:@-{"a",1;TRUE,#N/A}
+=Data!D1:D4
+=IF(IF((Data!A1:A3)^+-#DIV/0!-+-Data!A3%,-Data!B2:C3<>-@"1"%%-Data!A2<=@-1E3,Data!A3),50%,ROW(+-(--PI())  ))
+=PI()*Data!A:A
+=1
+=PI()%%
+={1;2;3}<>(+1E3	<Data!B2 )
+=#N/A
+=FALSE%
+=@+IF(Data!1:1+  -@{1,2,3})
+=--@Data!A1:A5
+=IF((Data!A1:A3/{"a",1;TRUE,#N/A}),(-@TRUE)%,(Data!C1:C3	^Data!A$1:$B2))
+=0
+=-@50%*"a"<""
+=Data!A1:B2%=IF(Data!1:1,Data!A1:A5,{1,2,3})
+=Data!C1:C3:Data!A:A
+=IF(@-SORT(+-{1,2;3,4}%),(+@FALSE+Data!A1:B2),{1,2;3,4})
+={"a",1;TRUE,#N/A}%%
+=--@{1,2;3,4}
+=-@+#DIV/0!	/Data!A1:A3
+=IF(-Data!A1:A5,Data!B2,(-@Data!A2%%))
+=("")
+=IF(+Data!$A$1,({1,2,3}),#REF!%> FALSE)%
+=Data!C1:C3>={1,2,3}
+=-@Data!A3>Data!B2:C3:+-{"a",1;TRUE,#N/A}%
+=IF(TRUE=Data!D1:D4,Data!A1:A3:Data!A2,@-1%%)<=1
+=--@@-{"a",1;TRUE,#N/A}%%
+=MIN(@(Data!A1:B2):Data!D1:D4)
+=#REF!
+=ABS(  50%)
+=-1%
+=+AND(--@ROW()%%)
+=1E3
+=Data!A1
+=Data!B2:C3*CHOOSE(  1E3)
+=--{1,2;3,4}
+=Data!D1:D4:@Data!A:A^--@Data!A$1:$B2%%<=@Data!B2:C3*ISREF( +Data!A1)
+=+-COLUMN()%
+=@+Data!$A$1:IF("a"%,@--1,50%%)
+=T(Data!A2  )
+=@-50%
+=Data!1:1%
+=(--Data!A2 #N/A*-Data!A2	*COLUMN()>Data!$A$1)
+=Data!B2:C3
+=IF((TRUE%)-0/50%+Data!C1:C3<Data!A1:B2>=--@FALSE,+#REF!,Data!$A$1)
+=COLUMN(Data!C1:C3)	<>-Data!A3
+=Data!C1:C3%%
+=--Data!C1:C3 +--Data!A1<Data!A$1:$B2
+=(1)
+=(+Data!D1:D4+	"a")
+=((  "1") )%%
+=IF(-1%,+-Data!B2,@"")
+=COLUMN()%*#DIV/0! >--@0-@-{1,2,3}/	Data!A1:A3	*	+FALSE
+=COLUMN()%%
+=SORT(@-#N/A)
+=IF(--@Data!B2:C3,COUNT((IF(@{"a",1;TRUE,#N/A}%%,--@COLUMN(),""))),Data!$A$1)
+=Data!1:1&-1>=Data!A1:A5	=--FALSE%%
+=1E3*{1,2,3}
+=+#DIV/0! <#DIV/0!
+={1,2;3,4}
+=-@FALSE<=SUM((@-COLUMN())  )
+=SORT(@-Data!A1:A5)
+=COLUMN((  Data!$A$1%%)  )
+=IF(T(Data!A3),Data!A1:A3,MAX(@-Data!B2))
+=(+Data!1:1>(-@#DIV/0!  ))
+=--@"a"
+=Data!D1:D4  <=#DIV/0!>=+-(Data!A:A	)
+=ROWS(( Data!A1:B2) )
+=@Data!A1
+=IF({1,2;3,4}<=-Data!$A$1,--50%,IF(@-Data!D1:D4,PI(),1))+@"a":#DIV/0!<= @-PI()
+=IF(IF(-1%%,#N/A,Data!$A$1),INDEX(#DIV/0!),(Data!A:A))
+=--@@#DIV/0!
+=0%%
+=+-COLUMN()>=FALSE%%
+=+COLUMN()
+=IF(-COLUMN(),@-"1"+1+IF(Data!$A$1,Data!A2%%,--Data!C1:C3),+@Data!A:A%%)
+=IF(IF(Data!B2:C3,--@2.5,TRUE),(Data!A$1:$B2),IF(@TRUE,+Data!A1,-1))
+=Data!A1:B2/{"a",1;TRUE,#N/A}  -ISERROR(COLUMN()-Data!A1:A3)
+=SEQUENCE(Data!A2)<>+-Data!A$1:$B2=-@{"a",1;TRUE,#N/A} COLUMNS(Data!C1:C3)
+="1"
+=--@{1;2;3}:Data!A1:A3
+=@-Data!A:A:"a"%%
+=IF(+{"a",1;TRUE,#N/A},-TRUE,--"1")
+=CHOOSE(+-Data!D1:D4>@1	)<Data!A1:#N/A%
+=@-{1,2,3}%%%%
+=IF((Data!A1) *COUNT(ROW()),+-@+50%,IF((--{1,2;3,4}),""<>{1;2;3},--@Data!A1:A5*@"1"%))
+=SEQUENCE(Data!A1:B2)
+=IF(Data!B2:C3,"1",Data!A1:A5)>Data!A2
+=50%
+=+{1,2,3}>@1E3
+=Data!A3
+=-@ROW({1,2;3,4}+ PI())
+=IF((ROW())=@+-{"a",1;TRUE,#N/A},--Data!A3^ROW()   PI()%%<--@(Data!C1:C3%),((@-+-Data!$A$1)))
+=IF({"a",1;TRUE,#N/A},@-{1,2,3},#REF!)*@#DIV/0!
+=@-Data!A:A
+=Data!$A$1
+=(ISREF(IF({1,2;3,4},--@Data!B2,-Data!C1:C3)))=Data!A:A <1E3^	--@PI()%%
+=ROW()  / "1"
+=@PI()&-@""&(Data!1:1  )-MIN(Data!D1:D4)
+=+"a"%%
+=IF(+-"a"*Data!A3%,-@Data!A$1:$B2,-@Data!A1)
+=Data!A$1:$B2
+=@Data!$A$1
+="":-1
+=+Data!A1:A3
+=IF((Data!A:A<-@Data!1:1),@"1",++Data!A1)
+=(--50%)&ROW()<>-@{1;2;3}
+=--Data!$A$1
+=+#N/A -@Data!1:1%%
+=50%:Data!A3
+=--@0
+=AND(Data!B2+--@Data!A2)
+=IF(@-Data!D1:D4%,IF({1,2;3,4}>= 0%%,+-Data!A1:B2%%,"a">-1),@-Data!B2:C3%%)
+=--@+""
+=ROW(Data!B2:C3)
+=COUNT(--Data!1:1)
+=@-Data!B2:C3
+=IF(-1,+Data!A2%+--COLUMN(),T(2.5))
+={1,2,3}% -@{1,2;3,4} PI()
+=#REF!>ABS(TRANSPOSE(-@1E3 ))
+=(FALSE>"")
+=IF(@-++"a",COLUMNS(((@Data!A1:A5))),(+PI()<=IF(--2.5,--Data!A3,Data!D1:D4)))
+=(IF((0),{"a",1;TRUE,#N/A},IF(Data!A:A,#DIV/0!,ROW())))
+=(Data!A1:A3)/--@COLUMN()
+=FALSE-#REF!
+=+-Data!A:A
+=Data!A1:B2
+=IF(#DIV/0!,Data!D1:D4,--@{"a",1;TRUE,#N/A}):#DIV/0!%
+=SORT( @-{"a",1;TRUE,#N/A})
+=ROW():Data!A2
+=IF(+-Data!B2%,"",--Data!A1:A5%)
+=( Data!A:A%)& IF(-{"a",1;TRUE,#N/A},0*+Data!A:A,--@Data!A1:A3 	@-ROW())+--CHOOSE(Data!B2)
+=-Data!A1&(  -#N/A)
+=--Data!A3
+=COLUMNS(1&1E3)=  -AND(-1	)=Data!D1:D4>+-Data!A1:A3
+=0^--@{1,2,3}%%
+=+-Data!A1
+=---@1E3%
+=IF(0,+-Data!D1:D4,Data!A2)%%
+=@-Data!B2:C3%%%
+=IF(-@Data!A2	----@50% @-Data!A1:A3,IF(-@{1,2;3,4},-@50%%,@-Data!$A$1)+ IF(-@Data!B2,{1,2;3,4},ROW()) &Data!A$1:$B2*#DIV/0!%%,----@-2.5%)
+=@Data!B2:C3
+=Data!A$1:$B2%%%^Data!B2:C3%%+ROW()<=@Data!A2
+=--COLUMN()<Data!C1:C3%%	   IF(IF(-Data!A1:A3,Data!A1:B2%%,-1),#DIV/0!&-{"a",1;TRUE,#N/A}%,Data!B2:C3  Data!A$1:$B2)>=50%%
+=(-1)
+=-@{"a",1;TRUE,#N/A}%%
+=IF(Data!A1:A3,{1;2;3},{1,2,3})
+=#DIV/0!%
+=IF(1-#N/A,#N/A,( @-#REF!))&N(@-Data!B2)
+=SEQUENCE(--ROW()  /--@Data!B2)
+=@{1;2;3}<>IF(+-#DIV/0!,@Data!1:1% #DIV/0!,"":+-COLUMN())<= IF(IF(FALSE,#REF!,2.5),2.5%,(Data!A$1:$B2))
+=+#N/A<=@Data!A3	+	IF(1E3,{"a",1;TRUE,#N/A},-@1E3)
+=+-ISERROR( -#N/A)
+=INDEX(  Data!B2:C3=  Data!$A$1)
+=+Data!B2
+=SEQUENCE(#DIV/0!  )
+=+-ROW(Data!A1)
+=IF((1E3 )	)^(PI())/-@#REF!%%
+=+-Data!A2%
+=COLUMN()
+=(Data!C1:C3)<=-AND(ROW()%%	*#N/A)
+=-@{1,2;3,4}%*Data!C1:C3%	<> +-#DIV/0!>=( FALSE)<>0&{1;2;3}%
+=SUM(IF((	#N/A ),IF("",2.5%,Data!B2),IF(LEN(""),-Data!A3,1E3)))
+=Data!A2
+=(	(Data!D1:D4) ):@-"a"&-@Data!A1:A3
+=Data!B2
+=Data!D1:D4%
+=IF(-@Data!D1:D4,--@""/-@#N/A,IF({1;2;3},ROW()%,@-Data!A$1:$B2))
+=+Data!A2/-Data!A1:A3%%	:-@Data!A3
+=SEQUENCE((COUNT(  @-COLUMN())) )
+=MIN(Data!$A$1)
+=Data!A1:B2%
+=(50%%)
+=-Data!A$1:$B2
+=--Data!A$1:$B2%%*IF(50%,-@Data!B2:C3%%,{1,2,3})
+=--@#REF!
+=LEN(IF((1E3<TRUE),Data!A1:A3>=@--1,IF(2.5:"a"%,0&+Data!A1:A3,Data!$A$1*Data!1:1)))
+=(	{"a",1;TRUE,#N/A}%%)
+=TRANSPOSE(IF(CHOOSE(Data!$A$1%%),"",SORT(  -#REF!%)) *Data!B2:C3)
+=-@0  >50%
+=IF(IF(IF(Data!C1:C3,--@Data!A:A,@-{1;2;3}),IF("1",@#N/A,+TRUE),Data!$A$1),@----#N/A,Data!A3*--@Data!A1:B2%%)<=IF(IF(--2.5%%,@Data!1:1%%,{1,2,3}),@-TRUE%<Data!$A$1 /  Data!B2:C3* -Data!$A$1,-1)
+=@Data!A:A
+=ROW(-@Data!B2)
+=MAX(Data!A2)
+=COLUMN(#REF!  >=Data!D1:D4%)
+=Data!$A$1%

@@ -77,9 +77,16 @@ pub fn z_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         }
 
         let m = x87::div(v.iter().fold(0.0, |s, &x| x87::add(s, x)), n);
+
         let s = match sigma {
             Some(s) => s,
-            None => x87::sqrt(xl_sample_var(&v)),
+            None => {
+                let var = xl_sample_var(&v);
+                if var.is_infinite() {
+                    return Err(XlError::NUM);
+                }
+                x87::sqrt(var)
+            }
         };
         if s == 0.0 {
             return Err(XlError::DIV0);

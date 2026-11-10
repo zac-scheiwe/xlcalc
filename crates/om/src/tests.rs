@@ -299,10 +299,13 @@ fn names_add_read_and_delete() {
 #[test]
 fn r1c1_formulas_convert_to_a1() {
     use crate::range::r1c1_to_a1;
-    assert_eq!(r1c1_to_a1("=RC[-1]+1", 0, 13), "=M1+1");
-    assert_eq!(r1c1_to_a1("=SUM(R[-1]C[-1],R2C2)", 5, 5), "=SUM(E5,$B$2)");
+    assert_eq!(r1c1_to_a1("=RC[-1]+1", 0, 13).unwrap(), "=M1+1");
     assert_eq!(
-        r1c1_to_a1("=ROUND(R1C1,0)&\"RC\"", 3, 3),
+        r1c1_to_a1("=SUM(R[-1]C[-1],R2C2)", 5, 5).unwrap(),
+        "=SUM(E5,$B$2)"
+    );
+    assert_eq!(
+        r1c1_to_a1("=ROUND(R1C1,0)&\"RC\"", 3, 3).unwrap(),
         "=ROUND($A$1,0)&\"RC\""
     );
 }
@@ -521,4 +524,104 @@ fn the_default_host_refuses_dialogs_and_queues_on_time() {
     assert_eq!(a.run("Ask", &[]).unwrap(), Variant::I2(6));
     a.run("Plan", &[]).unwrap();
     assert_eq!(*log.lock().unwrap(), ["Go?|4|T", "x 1 "]);
+}
+
+#[test]
+fn links_follow_open_source() {
+    let mut a = Application::new();
+    let root = a.handle();
+    let wbs = obj(get(&mut a, root, "Workbooks", &[]));
+    let src = obj(get(&mut a, wbs, "Add", &[]));
+    let sname = match get(&mut a, src, "Name", &[]) {
+        Variant::Bstr(s) => s,
+        v => panic!("{v:?}"),
+    };
+    let r = range(&mut a, "A1");
+    put(&mut a, r, "Value2", Variant::R8(5.0));
+    let dst = obj(get(&mut a, wbs, "Add", &[]));
+    let _ = dst;
+    let d = range(&mut a, "A1");
+    put(
+        &mut a,
+        d,
+        "Formula",
+        Variant::Bstr(format!("=[{sname}]Sheet1!A1+1")),
+    );
+    assert_eq!(get(&mut a, d, "Value2", &[]), Variant::R8(6.0));
+    put(&mut a, r, "Value2", Variant::R8(8.0));
+    assert_eq!(get(&mut a, d, "Value2", &[]), Variant::R8(9.0));
+}
+
+#[test]
+fn closed_source_prints_with_path() {
+    let mut a = Application::new();
+    let root = a.handle();
+    let wbs = obj(get(&mut a, root, "Workbooks", &[]));
+    let src = obj(a.invoke(wbs, "Add", Call::VB, &[], &[]).unwrap());
+    let r = range(&mut a, "A1");
+    put(&mut a, r, "Value2", Variant::R8(5.0));
+    let dir = std::env::temp_dir().join("xlcalc_links_t1");
+    std::fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("srcx.xlsx").to_string_lossy().to_string();
+    a.invoke(src, "SaveAs", Call::VB, &[Variant::Bstr(path.clone())], &[])
+        .unwrap();
+    let dst = obj(a.invoke(wbs, "Add", Call::VB, &[], &[]).unwrap());
+    let _ = dst;
+    let d = range(&mut a, "A1");
+    put(
+        &mut a,
+        d,
+        "Formula",
+        Variant::Bstr("=[srcx.xlsx]Sheet1!A1+1".into()),
+    );
+    a.invoke(src, "Close", Call::VB, &[Variant::Bool(false)], &[])
+        .unwrap();
+    let f = get(&mut a, d, "Formula", &[]);
+    assert_eq!(
+        f,
+        Variant::Bstr(format!(
+            "='{}{}[srcx.xlsx]Sheet1'!A1+1",
+            dir.to_string_lossy(),
+            std::path::MAIN_SEPARATOR
+        ))
+    );
+    assert_eq!(get(&mut a, d, "Value2", &[]), Variant::R8(6.0));
+}
+
+#[test]
+fn external_names_follow_open_source() {
+    let mut a = Application::new();
+    let root = a.handle();
+    let wbs = obj(get(&mut a, root, "Workbooks", &[]));
+    let src = obj(a.invoke(wbs, "Add", Call::VB, &[], &[]).unwrap());
+    let sname = match get(&mut a, src, "Name", &[]) {
+        Variant::Bstr(s) => s,
+        v => panic!("{v:?}"),
+    };
+    let r = range(&mut a, "A2");
+    put(&mut a, r, "Value2", Variant::R8(7.0));
+    let names = obj(get(&mut a, src, "Names", &[]));
+    a.invoke(
+        names,
+        "Add",
+        Call::VB,
+        &[
+            Variant::Bstr("One".into()),
+            Variant::Bstr("=Sheet1!$A$2".into()),
+        ],
+        &[],
+    )
+    .unwrap();
+    let _dst = obj(a.invoke(wbs, "Add", Call::VB, &[], &[]).unwrap());
+    let d = range(&mut a, "A1");
+    put(&mut a, d, "Formula", Variant::Bstr(format!("={sname}!One")));
+    assert_eq!(
+        get(&mut a, d, "Formula", &[]),
+        Variant::Bstr(format!("={sname}!One"))
+    );
+    assert_eq!(get(&mut a, d, "Value2", &[]), Variant::R8(7.0));
+    a.invoke(src, "Activate", Call::VB, &[], &[]).unwrap();
+    let r2 = range(&mut a, "A2");
+    put(&mut a, r2, "Value2", Variant::R8(9.0));
+    assert_eq!(get(&mut a, d, "Value2", &[]), Variant::R8(9.0));
 }

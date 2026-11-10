@@ -1,0 +1,109 @@
+{
+ "steps": [
+  {
+   "op": "iteration",
+   "enabled": true,
+   "max_change": 0.001,
+   "max_iter": 5
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=A1+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=C1/2+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=B1/2+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=D2*0.5+10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "=D1*0.5+10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=IF(E1>=3,E1,E1+1)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E2"
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E2"
+  },
+  {
+   "op": "iteration",
+   "enabled": true,
+   "max_change": 1,
+   "max_iter": 100
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E2"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E3"
+  },
+  {
+   "op": "insert_cols",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "calc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F3"
+  },
+  {
+   "op": "iteration",
+   "enabled": false,
+   "max_change": 0.001,
+   "max_iter": 100
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F5"
+  }
+ ]
+}

@@ -10,11 +10,14 @@ use crate::workbook::{
     tables::Table, EditError, Entry, FormulaId, NameDef, Sheet, SheetState, Workbook,
 };
 
-const DEAD: SheetId = SheetId(0);
+pub(crate) const DEAD: SheetId = SheetId(0);
 
 pub const MAX_SHEET_NAME: usize = 31;
 
-fn remap_sheet(n: &Node, f: &mut dyn FnMut(&SheetRef) -> Option<SheetRef>) -> Option<Node> {
+pub(crate) fn remap_sheet(
+    n: &Node,
+    f: &mut dyn FnMut(&SheetRef) -> Option<SheetRef>,
+) -> Option<Node> {
     match n {
         Node::Ref(sr, c) => f(sr).map(|s| Node::Ref(s, *c)),
         Node::Name {
@@ -253,7 +256,10 @@ impl Workbook {
 
         let new = new.split(' ').next().unwrap_or("");
         self.check_sheet_name(new, Some(id))?;
+        let roots = self.cfv_roots();
+        self.calc.dead_pending = true;
         self.sheets[pos].name = new.to_string();
+        self.cfv_apply_roots(roots, &mut |n| n.clone());
         self.reprint_all();
 
         if let Some(cell) = crate::functions::lookup("CELL") {
@@ -274,7 +280,7 @@ impl Workbook {
         Ok(self.after_edit(vec![]))
     }
 
-    fn dirty_all(&mut self, ids: &[FormulaId]) {
+    pub(crate) fn dirty_all(&mut self, ids: &[FormulaId]) {
         for &fid in ids {
             if self.formulas.get(fid as usize).is_some_and(|f| f.is_some()) {
                 crate::calc::mark_dirty(self, fid);
@@ -293,11 +299,35 @@ impl Workbook {
     pub fn delete_sheet(&mut self, id: SheetId) -> Result<RecalcReport, EditError> {
         self.command(Command::DeleteSheet, |wb| {
             notice::note_deleting(wb, id);
-            wb.delete_sheet_run(id)
+            wb.delete_sheet_run(id, None)
         })
     }
 
-    fn delete_sheet_run(&mut self, id: SheetId) -> Result<RecalcReport, EditError> {
+    pub fn delete_sheet_moved(
+        &mut self,
+        id: SheetId,
+        to: SheetId,
+    ) -> Result<RecalcReport, EditError> {
+        self.command(Command::MoveSheet, |wb| wb.delete_sheet_run(id, Some(to)))
+    }
+
+    pub fn sheet_after_delete(&self, id: SheetId) -> Option<SheetId> {
+        let pos = self.sheet_position(id)?;
+        let shown = |s: &&Sheet| s.state == SheetState::Visible;
+        self.sheets[pos + 1..]
+            .iter()
+            .find(shown)
+            .or_else(|| self.sheets[..pos].iter().rev().find(shown))
+            .or_else(|| self.sheets.get(pos + 1))
+            .or_else(|| self.sheets.get(pos.wrapping_sub(1)))
+            .map(|s| s.id)
+    }
+
+    pub(crate) fn delete_sheet_run(
+        &mut self,
+        id: SheetId,
+        moved_to: Option<SheetId>,
+    ) -> Result<RecalcReport, EditError> {
         self.release_stale_copies();
         let pos = self.sheet_position(id).ok_or(EditError::NoSuchSheet)?;
         if self.sheets.len() <= 1 {
@@ -305,6 +335,7 @@ impl Workbook {
                 "a workbook must contain at least one visible worksheet".into(),
             ));
         }
+        self.slicers_drop_sheet(id);
         if self.sheets[pos].state == SheetState::Visible
             && self
                 .sheets
@@ -314,17 +345,11 @@ impl Workbook {
             return Err(EditError::NoVisibleSheet);
         }
         if self.session.active == id {
-            let shown = |s: &&Sheet| s.state == SheetState::Visible;
-            let next = self.sheets[pos + 1..]
-                .iter()
-                .find(shown)
-                .or_else(|| self.sheets[..pos].iter().rev().find(shown))
-                .or_else(|| self.sheets.get(pos + 1))
-                .or_else(|| self.sheets.get(pos.wrapping_sub(1)));
-            if let Some(s) = next {
-                self.session.active = s.id;
+            if let Some(next) = self.sheet_after_delete(id) {
+                self.session.active = next;
             }
         }
+        let cfv_roots = self.cfv_roots();
         let order = self.positions();
         let removed_tables: Vec<String> = self
             .tables
@@ -332,7 +357,10 @@ impl Workbook {
             .filter(|t| t.sheet == id)
             .map(|t| t.name.clone())
             .collect();
-        let mut give_up = |sr: &SheetRef| span_without(sr, &order, id);
+        let mut give_up = |sr: &SheetRef| match (sr, moved_to) {
+            (SheetRef::Sheet(s), Some(to)) if *s == id => Some(SheetRef::Sheet(to)),
+            _ => span_without(sr, &order, id),
+        };
         let plan = self.rewrite_all(&mut |n| match n {
             Node::StructRef { table, .. }
                 if removed_tables.iter().any(|r| text::eq_ordinal_ci(r, table)) =>
@@ -374,13 +402,19 @@ impl Workbook {
             self.names.remove(&key, Some(id));
         }
         self.sheets.remove(pos);
+        self.cfv.remove(&id);
+        self.cfv_apply_roots(cfv_roots, &mut |root| {
+            crate::formula::map_node(root, &mut |n| remap_sheet(n, &mut give_up))
+        });
+        self.drawing_drop_sheet(id);
+        self.spark_drop_sheet(id);
+        self.hl_drop_sheet(id);
+        self.notes_drop_sheet(id);
         self.track_drop_sheet(id);
-        if self.calc.circular_ref.is_some_and(|a| a.sheet == id) {
-            self.calc.circular_ref = None;
-        }
+        self.calc.circular_ref.retain(|a| a.sheet != id);
         self.apply_plan(plan);
         self.reprint_names();
-        self.calc.chain_by_birth = true;
+        self.calc.keep_walk = true;
         Ok(self.relink_and_recalc())
     }
 
@@ -458,16 +492,17 @@ impl Workbook {
         };
         self.sheets.insert(to, sheet);
         self.apply_plan(plan);
+
+        self.calc.dead_pending = !self.calc.skip_volatile;
         self.calc.relink_scope = Some(crate::structure::DirtyScope {
             listed: true,
             moved: listed,
             ..crate::structure::DirtyScope::new(id, snapshot)
         });
-        self.calc.chain_by_birth = true;
         Ok(self.relink_and_recalc())
     }
 
-    fn copy_name(&self, src: &str) -> Result<String, EditError> {
+    pub(crate) fn copy_name(&self, src: &str) -> Result<String, EditError> {
         let inner = src.strip_suffix(')').and_then(|s| {
             s.rfind('(')
                 .map(|i| (&s[..i], s[i + 1..].trim_matches(' ')))
@@ -582,6 +617,15 @@ impl Workbook {
     ) -> Result<SheetId, EditError> {
         let src_pos = self.sheet_position(src).ok_or(EditError::NoSuchSheet)?;
         self.release_stale_copies();
+
+        if self.settings.mode == crate::CalcMode::Automatic
+            && !(self.calc.volatile.is_empty()
+                && self.calc.host_volatile.is_empty()
+                && crate::calc::dead_host_formulas(self).is_empty())
+        {
+            self.calc.dead_pending = true;
+            self.silently(|wb| wb.recalc_point());
+        }
         let has_tables = self.tables.iter().any(|t| t.sheet == src);
         let at = match before {
             Some(b) => self.sheet_position(b).ok_or(EditError::NoSuchSheet)?,
@@ -616,6 +660,13 @@ impl Workbook {
 
         self.copy_sheet_data_tables(src, new);
         self.copy_sheet_scenarios(src, new);
+        if let Some(c) = self.cfv.get(&src).cloned() {
+            self.cfv.insert(new, c);
+        }
+        self.drawing_copy_sheet(src, new);
+        self.spark_copy_sheet(src, new);
+        self.hl_copy_sheet(src, new);
+        self.notes_copy_sheet(src, new);
         let mut redirect = |sr: &SheetRef| match sr {
             SheetRef::Sheet(s) if *s == src => Some(SheetRef::Sheet(new)),
             SheetRef::Span(a, b) if *a == src || *b == src => Some(SheetRef::Sheet(DEAD)),
@@ -636,13 +687,14 @@ impl Workbook {
                 }),
             n => remap_sheet(n, &mut redirect),
         };
+        let self_kind = self.sheets[src_pos].kind;
         self.sheets.insert(
             at,
             Sheet {
                 id: new,
                 name,
                 state: SheetState::Visible,
-                kind: Default::default(),
+                kind: self_kind,
                 cells: Default::default(),
                 spills: Default::default(),
                 dirty: Default::default(),
@@ -1003,7 +1055,8 @@ impl Workbook {
                 ..crate::structure::DirtyScope::new(new, Default::default())
             });
         }
-        self.calc.chain_by_birth = true;
+
+        self.calc.skip_host_volatile = true;
         self.silently(|wb| {
             wb.relink_and_recalc();
             if has_tables && auto {
@@ -1011,10 +1064,18 @@ impl Workbook {
                 wb.notify_cell_change(new);
             }
         });
+        self.calc.skip_host_volatile = false;
         if auto {
-            self.dirty_all(&copied);
+            let mut dirty = copied.clone();
+            dirty.extend(
+                self.formula_ids()
+                    .filter(|&f| crate::host::calls_host(self, &self.formula(f).formula.root)),
+            );
+            self.dirty_all(&dirty);
         }
+        self.calc.no_empty_call = true;
         self.recalc_point();
+        self.calc.no_empty_call = false;
         for (from, to) in stale {
             if let (Some(a), Some(b)) = (self.formula_at(from), self.formula_at(to)) {
                 let v = self.formula(a).value.clone();
@@ -1089,4 +1150,17 @@ fn span_after_move(
     } else {
         SheetRef::Span(a, b)
     })
+}
+
+impl Workbook {
+    pub(crate) fn reads_volatile_cell(&self, fid: FormulaId) -> bool {
+        self.formula(fid).precedents.iter().any(|p| match p {
+            crate::graph::Prec::Cell(s, r, c) => {
+                self.formula_at(CellAddr::new(*s, *r, *c)).is_some_and(|g| {
+                    self.calc.volatile.contains(&g) || self.calc.host_volatile.contains(&g)
+                })
+            }
+            _ => false,
+        })
+    }
 }

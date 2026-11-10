@@ -380,6 +380,10 @@ pub struct Alignment {
 
     pub rotation: u8,
     pub shrink: bool,
+
+    pub reading_order: u8,
+
+    pub add_indent: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -395,6 +399,8 @@ pub struct Style {
     pub named: Arc<str>,
 
     pub custom_code: bool,
+
+    pub implicit_general: bool,
 }
 
 impl Default for Style {
@@ -421,6 +427,7 @@ impl Default for Style {
             formula_hidden: false,
             named: Arc::from("Normal"),
             custom_code: false,
+            implicit_general: false,
         }
     }
 }
@@ -430,6 +437,7 @@ impl Style {
         Style {
             number_format: Arc::from(fmt),
             custom_code: false,
+            implicit_general: false,
             ..self.clone()
         }
     }
@@ -496,6 +504,15 @@ impl StyleTable {
         self.named
             .iter()
             .find(|s| s.name.eq_ignore_ascii_case(name))
+    }
+
+    pub fn ensure_hyperlink(&mut self) {
+        if self.get("Hyperlink").is_none() {
+            self.insert(builtin("Hyperlink", 8, "F", &|s| {
+                s.font.underline = Underline::Single;
+                s.font.color = CellColor::theme(10, 0.0);
+            }));
+        }
     }
 
     pub fn insert(&mut self, s: NamedStyle) {
@@ -794,6 +811,154 @@ pub fn apply_tint(rgb: u32, tint: f64) -> u32 {
     hls_to_rgb(h, l.floor() as i32, s)
 }
 
+fn mul_div(a: i32, b: i32, c: i32) -> i32 {
+    let n = i64::from(a) * i64::from(b);
+    let c = i64::from(c);
+    ((if n >= 0 { n + c / 2 } else { n - c / 2 }) / c) as i32
+}
+
+fn cv_hls(rgb: u32) -> (i32, i32, i32) {
+    let ch = |s: u32| i32::try_from((rgb >> s) & 0xFF).unwrap_or(0);
+    let (r, g, b) = (ch(16), ch(8), ch(0));
+    let (mx, mn) = (r.max(g).max(b), r.min(g).min(b));
+    let l = mul_div(mx + mn, 240, 510);
+    let d = mx - mn;
+    if d == 0 {
+        return (160, l, 0);
+    }
+    let s = if l <= 120 {
+        mul_div(d, 240, mx + mn)
+    } else {
+        mul_div(d, 240, 510 - (mx + mn))
+    };
+    let part = |c: i32| mul_div(mx - c, 40, d);
+    let h = if r == mx {
+        part(b) - part(g)
+    } else if g == mx {
+        80 + part(r) - part(b)
+    } else {
+        160 + part(g) - part(r)
+    };
+    let h = if h < 0 { h + 240 } else { h };
+    (if h > 240 { h - 240 } else { h }, l, s)
+}
+
+const CV_ICV_TABLE: [(u32, u8); 29] = [
+    (0xFCD5B4, 51),
+    (0xFABF8F, 52),
+    (0x215967, 21),
+    (0x7030A0, 36),
+    (0x604960, 36),
+    (0xB1A0C7, 36),
+    (0x806426, 36),
+    (0x403151, 28),
+    (0xE4DFEC, 46),
+    (0xCCC0DA, 46),
+    (0xEBF1DE, 42),
+    (0xD8E4BC, 11),
+    (0xC4D79B, 11),
+    (0x4F6228, 17),
+    (0xF2DCDB, 45),
+    (0x963634, 60),
+    (0x4F81BD, 62),
+    (0xDCE6F1, 31),
+    (0xB8CCE4, 44),
+    (0x95B3D7, 30),
+    (0x244062, 18),
+    (0x1F497D, 56),
+    (0xC5D9F1, 31),
+    (0x538DD5, 62),
+    (0x163656, 18),
+    (0x948A54, 19),
+    (0xF2F2F2, 22),
+    (0xBFBFBF, 55),
+    (0x92D050, 50),
+];
+
+pub fn cv_color_index(rgb: u32) -> u8 {
+    if let Some(i) = PALETTE.iter().position(|&p| p == rgb) {
+        return i as u8 + 1;
+    }
+    if let Some(&(_, ci)) = CV_ICV_TABLE.iter().find(|&&(c, _)| c == rgb) {
+        return ci - 7;
+    }
+    let ch = |c: u32, s: u32| i32::try_from((c >> s) & 0xFF).unwrap_or(0);
+    let is_grey = |c: u32| {
+        let (r, g, b) = (ch(c, 16), ch(c, 8), ch(c, 0));
+        (r - g).abs() <= 10 && (g - b).abs() <= 10 && (b - r).abs() <= 10
+    };
+    let pick = |grey: bool| {
+        let (h, l, s) = cv_hls(rgb);
+        let mut best: Option<(i32, usize)> = None;
+        for (i, &p) in PALETTE.iter().enumerate() {
+            let d = if grey {
+                if !is_grey(p) {
+                    continue;
+                }
+                [16, 8, 0]
+                    .iter()
+                    .map(|&s| (ch(p, s) - ch(rgb, s)).abs())
+                    .sum()
+            } else {
+                let (ph, pl, ps) = cv_hls(p);
+                let sq = |a: i32, b: i32| {
+                    let x = (a - b) as f32;
+                    f64::from(x * x)
+                };
+                (sq(l, pl) * 0.3) as i32 - (sq(s, ps) * -0.1) as i32 - (sq(h, ph) * -0.6) as i32
+            };
+            if best.is_none_or(|(bd, _)| d < bd) {
+                best = Some((d, i));
+                if d == 0 {
+                    break;
+                }
+            }
+        }
+        best
+    };
+    let found = if is_grey(rgb) { pick(true) } else { None };
+    let (_, i) = found.or_else(|| pick(false)).unwrap_or((0, 0));
+    i as u8 + 1
+}
+
+pub fn apply_tint_cv(rgb: u32, tint: f64) -> u32 {
+    let t = (tint * 32767.0).round() as i32;
+    if t == 0 {
+        return rgb;
+    }
+    let (h, l, s) = cv_hls(rgb);
+    let l = if t < 0 {
+        (32767 + t) * l / 32767
+    } else {
+        (32767 - t) * l / 32767 - (32767 - t) * 240 / 32767 + 240
+    };
+    if s == 0 {
+        let v = u32::try_from(mul_div(l, 255, 240)).unwrap_or(0);
+        return (v << 16) | (v << 8) | v;
+    }
+    let m2 = if l <= 120 {
+        mul_div(l, 240 + s, 240)
+    } else {
+        s + l - mul_div(l, s, 240)
+    };
+    let m1 = 2 * l - m2;
+    let c = |hh: i32| {
+        let hh = if hh < 0 { hh + 240 } else { hh };
+        let hh = if hh > 240 { hh - 240 } else { hh };
+        let v = if hh < 40 {
+            m1 + mul_div(m2 - m1, hh, 40)
+        } else if hh < 120 {
+            m2
+        } else if hh < 160 {
+            m1 + mul_div(m2 - m1, 160 - hh, 40)
+        } else {
+            m1
+        };
+        u32::try_from(mul_div(v, 255, 240)).unwrap_or(0)
+    };
+    (c(h + 80) << 16) | (c(h) << 8) | c(h - 80)
+}
+
 impl Theme {
     pub fn rgb(&self, c: CellColor, auto: u32) -> u32 {
         match c {
@@ -829,6 +994,31 @@ mod tests {
             let got = apply_tint(rgb, t);
             let want = ((bgr & 0xFF) << 16) | (bgr & 0xFF00) | (bgr >> 16);
             assert_eq!(got, want, "{rgb:06X} {t}");
+        }
+    }
+
+    #[test]
+    fn conditional_format_colours_match_excel() {
+        let swap = |bgr: u32| ((bgr & 0xFF) << 16) | (bgr & 0xFF00) | (bgr >> 16);
+        for (t, bgr) in [
+            (16383, 0xE2C7B1),
+            (8191, 0xD5AA8A),
+            (24575, 0xF1E2D8),
+            (-8191, 0xA4683C),
+            (-16383, 0x6D4527),
+        ] {
+            let got = apply_tint_cv(swap(0xC68E63), f64::from(t) / 32767.0);
+            assert_eq!(got, swap(bgr), "{t}");
+        }
+
+        for (bgr, ci) in [
+            (6_524_614, 46),
+            (0xE2C7B1, 15),
+            (0xB4D5FC, 44),
+            (0xFFFFFF, 2),
+            (14_617_244, 7),
+        ] {
+            assert_eq!(cv_color_index(swap(bgr)), ci, "{bgr:06X}");
         }
     }
 

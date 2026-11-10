@@ -1,0 +1,474 @@
+{
+"sheets": [
+"Rc"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Rc!A1",
+"input": "Serves"
+},
+{
+"op": "set",
+"cell": "Rc!B1",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Rc!A2",
+"input": "Want"
+},
+{
+"op": "set",
+"cell": "Rc!B2",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Rc!A3",
+"input": "Factor"
+},
+{
+"op": "set",
+"cell": "Rc!B3",
+"input": "=B2/B1"
+},
+{
+"op": "set",
+"cell": "Rc!A5",
+"input": "Ingredient"
+},
+{
+"op": "set",
+"cell": "Rc!B5",
+"input": "Qty"
+},
+{
+"op": "set",
+"cell": "Rc!C5",
+"input": "Unit"
+},
+{
+"op": "set",
+"cell": "Rc!D5",
+"input": "Scaled"
+},
+{
+"op": "set",
+"cell": "Rc!E5",
+"input": "Text"
+},
+{
+"op": "set",
+"cell": "Rc!F5",
+"input": "Rounded 1/4"
+},
+{
+"op": "set",
+"cell": "Rc!G5",
+"input": "Cups"
+},
+{
+"op": "set",
+"cell": "Rc!A6",
+"input": "Flour"
+},
+{
+"op": "set",
+"cell": "Rc!B6",
+"input": "1.5"
+},
+{
+"op": "set",
+"cell": "Rc!C6",
+"input": "cup"
+},
+{
+"op": "set",
+"cell": "Rc!A7",
+"input": "Sugar"
+},
+{
+"op": "set",
+"cell": "Rc!B7",
+"input": "0.75"
+},
+{
+"op": "set",
+"cell": "Rc!C7",
+"input": "cup"
+},
+{
+"op": "set",
+"cell": "Rc!A8",
+"input": "Butter"
+},
+{
+"op": "set",
+"cell": "Rc!B8",
+"input": "0.333333333333333"
+},
+{
+"op": "set",
+"cell": "Rc!C8",
+"input": "cup"
+},
+{
+"op": "set",
+"cell": "Rc!A9",
+"input": "Eggs"
+},
+{
+"op": "set",
+"cell": "Rc!B9",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Rc!C9",
+"input": "each"
+},
+{
+"op": "set",
+"cell": "Rc!A10",
+"input": "Milk"
+},
+{
+"op": "set",
+"cell": "Rc!B10",
+"input": "1.25"
+},
+{
+"op": "set",
+"cell": "Rc!C10",
+"input": "cup"
+},
+{
+"op": "set",
+"cell": "Rc!A11",
+"input": "Salt"
+},
+{
+"op": "set",
+"cell": "Rc!B11",
+"input": "0.125"
+},
+{
+"op": "set",
+"cell": "Rc!C11",
+"input": "tsp"
+},
+{
+"op": "set",
+"cell": "Rc!A12",
+"input": "Vanilla"
+},
+{
+"op": "set",
+"cell": "Rc!B12",
+"input": "2.5"
+},
+{
+"op": "set",
+"cell": "Rc!C12",
+"input": "tsp"
+},
+{
+"op": "set",
+"cell": "Rc!D6",
+"input": "=B6*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E6",
+"input": "=TEXT(D6,\"# ?/?\")&\" \"&C6"
+},
+{
+"op": "set",
+"cell": "Rc!F6",
+"input": "=MROUND(D6,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G6",
+"input": "=IF(C6=\"cup\",D6,IF(C6=\"tsp\",D6/48,\"\"))"
+},
+{
+"op": "set",
+"cell": "Rc!D7",
+"input": "=B7*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E7",
+"input": "=TEXT(D7,\"# ?/?\")&\" \"&C7"
+},
+{
+"op": "set",
+"cell": "Rc!F7",
+"input": "=MROUND(D7,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G7",
+"input": "=IF(C7=\"cup\",D7,IF(C7=\"tsp\",D7/48,\"\"))"
+},
+{
+"op": "set",
+"cell": "Rc!D8",
+"input": "=B8*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E8",
+"input": "=TEXT(D8,\"# ?/?\")&\" \"&C8"
+},
+{
+"op": "set",
+"cell": "Rc!F8",
+"input": "=MROUND(D8,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G8",
+"input": "=IF(C8=\"cup\",D8,IF(C8=\"tsp\",D8/48,\"\"))"
+},
+{
+"op": "set",
+"cell": "Rc!D9",
+"input": "=B9*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E9",
+"input": "=TEXT(D9,\"# ?/?\")&\" \"&C9"
+},
+{
+"op": "set",
+"cell": "Rc!F9",
+"input": "=MROUND(D9,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G9",
+"input": "=IF(C9=\"cup\",D9,IF(C9=\"tsp\",D9/48,\"\"))"
+},
+{
+"op": "set",
+"cell": "Rc!D10",
+"input": "=B10*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E10",
+"input": "=TEXT(D10,\"# ?/?\")&\" \"&C10"
+},
+{
+"op": "set",
+"cell": "Rc!F10",
+"input": "=MROUND(D10,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G10",
+"input": "=IF(C10=\"cup\",D10,IF(C10=\"tsp\",D10/48,\"\"))"
+},
+{
+"op": "set",
+"cell": "Rc!D11",
+"input": "=B11*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E11",
+"input": "=TEXT(D11,\"# ?/?\")&\" \"&C11"
+},
+{
+"op": "set",
+"cell": "Rc!F11",
+"input": "=MROUND(D11,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G11",
+"input": "=IF(C11=\"cup\",D11,IF(C11=\"tsp\",D11/48,\"\"))"
+},
+{
+"op": "set",
+"cell": "Rc!D12",
+"input": "=B12*$B$3"
+},
+{
+"op": "set",
+"cell": "Rc!E12",
+"input": "=TEXT(D12,\"# ?/?\")&\" \"&C12"
+},
+{
+"op": "set",
+"cell": "Rc!F12",
+"input": "=MROUND(D12,0.25)"
+},
+{
+"op": "set",
+"cell": "Rc!G12",
+"input": "=IF(C12=\"cup\",D12,IF(C12=\"tsp\",D12/48,\"\"))"
+},
+{
+"op": "format",
+"range": "Rc!B6:B12",
+"fmt": "# ??/??"
+},
+{
+"op": "format",
+"range": "Rc!D6:D12",
+"fmt": "# ?/8"
+},
+{
+"op": "format",
+"range": "Rc!F6:F12",
+"fmt": "# ?/4"
+},
+{
+"op": "format",
+"range": "Rc!G6:G12",
+"fmt": "0.00"
+},
+{
+"op": "read",
+"range": "Rc!A1:G12"
+},
+{
+"op": "set",
+"cell": "Rc!I1",
+"input": "=TEXT(1.75,\"# ??/??\")"
+},
+{
+"op": "set",
+"cell": "Rc!I2",
+"input": "=TEXT(0.333333,\"?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I3",
+"input": "=TEXT(2.5,\"# ?/2\")"
+},
+{
+"op": "set",
+"cell": "Rc!I4",
+"input": "=TEXT(0.7,\"# ?/10\")"
+},
+{
+"op": "set",
+"cell": "Rc!I5",
+"input": "=TEXT(3,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I6",
+"input": "=TEXT(0.05,\"?/??\")"
+},
+{
+"op": "set",
+"cell": "Rc!I7",
+"input": "=TEXT(-1.25,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I8",
+"input": "=TEXT(1/3,\"0 ?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I9",
+"input": "=TEXT(7/8,\"??/??\")"
+},
+{
+"op": "set",
+"cell": "Rc!I10",
+"input": "=TEXT(1.999,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I11",
+"input": "=TEXT(12.4,\"# ???/???\")"
+},
+{
+"op": "set",
+"cell": "Rc!I12",
+"input": "=TEXT(0.5,\"# ?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I13",
+"input": "=TEXT(0.5,\"0 ?/?\")"
+},
+{
+"op": "set",
+"cell": "Rc!I14",
+"input": "=TEXT(100.3,\"# ?/4\")"
+},
+{
+"op": "set",
+"cell": "Rc!I15",
+"input": "=TEXT(2/3,\"#/#\")"
+},
+{
+"op": "set",
+"cell": "Rc!I16",
+"input": "=TEXT(1.5,\"[<1]0.00;# ?/?\")"
+},
+{
+"op": "read",
+"range": "Rc!I1:I16"
+},
+{
+"op": "set",
+"cell": "Rc!B2",
+"input": "6"
+},
+{
+"op": "read",
+"range": "Rc!A1:G12"
+},
+{
+"op": "insert_rows",
+"sheet": "Rc",
+"at": 8,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Rc!A8",
+"input": "Cinnamon"
+},
+{
+"op": "set",
+"cell": "Rc!B8",
+"input": "0.5"
+},
+{
+"op": "set",
+"cell": "Rc!C8",
+"input": "tsp"
+},
+{
+"op": "autofill",
+"from": "Rc!D7:G7",
+"to": "Rc!D8:G8",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Rc!A5:G13"
+},
+{
+"op": "set",
+"cell": "Rc!B1",
+"input": "3"
+},
+{
+"op": "read",
+"range": "Rc!A1:G13"
+}
+]
+}

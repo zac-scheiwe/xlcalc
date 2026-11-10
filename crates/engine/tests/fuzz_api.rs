@@ -616,6 +616,7 @@ fn one_op(g: &mut Gen, wb: &mut Workbook, desc: &mut String) {
                 .map(|_| SortKey {
                     index: g.rng.below(6),
                     descending: g.rng.chance(50),
+                    color: None,
                 })
                 .collect();
             let spec = SortSpec {
@@ -623,6 +624,7 @@ fn one_op(g: &mut Gen, wb: &mut Workbook, desc: &mut String) {
                 header: g.rng.chance(40),
                 by_columns: g.rng.chance(25),
                 match_case: g.rng.chance(30),
+                ..Default::default()
             };
             note(desc, format!("sort_range({s:?}, {r:?}, {spec:?})"));
             let _ = wb.sort_range(s, r, &spec);

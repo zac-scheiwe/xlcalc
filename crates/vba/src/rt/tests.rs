@@ -123,7 +123,8 @@ fn strings() {
     assert_eq!(call("InStr", &[s("abcabc"), s("c")]), Ok(n(3)));
     assert_eq!(call("InStr", &[n(4), s("abcabc"), s("c")]), Ok(n(6)));
     assert_eq!(call("InStr", &[s("abc"), s("B")]), Ok(n(0)));
-    assert_eq!(call("InStr", &[s("abc"), s("B"), n(1)]), Ok(n(2)));
+
+    assert_eq!(call("InStr", &[s("abc"), s("B"), n(1)]), Err(13));
     assert_eq!(call("InStrRev", &[s("abcabc"), s("b")]), Ok(n(5)));
     assert_eq!(
         txt("Replace", &[s("aaa"), s("a"), s("bb"), n(2), n(1)]),

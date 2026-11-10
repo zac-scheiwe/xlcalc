@@ -48,10 +48,12 @@ impl Workbook {
     }
 
     pub(crate) fn track_shift(&mut self, s: &Shift) {
+        self.pivots_shift(s);
         self.tracks.adjust(s.sheet, |r| s.adjust_rect(r));
     }
 
     pub(crate) fn track_move(&mut self, mv: &Move) {
+        self.pivots_move(mv);
         self.tracks.live.retain(|_, (s, r)| match mv.adjust(*s, r) {
             Adj::Keep => true,
             Adj::To(n) | Adj::Moved(n) => {
@@ -825,6 +827,7 @@ mod tests {
                             keys: vec![SortKey {
                                 index: 0,
                                 descending: true,
+                                color: None,
                             }],
                             ..SortSpec::default()
                         };

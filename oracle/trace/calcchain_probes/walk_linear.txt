@@ -1,0 +1,51 @@
+=== 1 const Z1 1
+=== 2 set C1 =Z1+1
+  @ start 0,0 C1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0
+  | C1
+=== 3 set B1 =C1+1
+  @ start 0,0 B1:f C1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 B1:0 C1:0
+  | B1
+=== 4 set A1 =B1+1
+  @ start 0,0 A1:f B1:0 C1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 A1:0 B1:0 C1:0
+  | A1
+=== 5 const Z1 2
+  @ start 0,0 A1:f B1:f C1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 B1:0 A1:0
+  | A1? +S:A1 +S:B1 B1? +S:C1 C1 ^C1 -S:- B1 ^B1 -S:- A1 ^A1 -S:-
+=== 6 const Z1 3
+  @ start 0,0 C1:f B1:f A1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 B1:0 A1:0
+  | C1 B1 A1
+=== 7 new
+=== 8 const Z1 1
+=== 9 set D1 =Z1+1
+  @ start 0,0 D1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 D1:0
+  | D1
+=== 10 set C1 =D1+1
+  @ start 0,0 C1:f D1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 D1:0
+  | C1
+=== 11 set B1 =C1+1
+  @ start 0,0 B1:f C1:0 D1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 B1:0 C1:0 D1:0
+  | B1
+=== 12 set A1 =B1+1
+  @ start 0,0 A1:f B1:0 C1:0 D1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 A1:0 B1:0 C1:0 D1:0
+  | A1
+=== 13 set X1 =Z1*2
+  @ start 0,0 X1:f A1:0 B1:0 C1:0 D1:0
+  @ end rerun=1 next=0,0 valid=0 st=7 X1:0 A1:0 B1:0 C1:0 D1:0
+  | X1
+=== 14 const Z1 2
+  @ start 0,0 X1:f A1:f B1:f C1:f D1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 X1:0 D1:0 C1:0 B1:0 A1:0
+  | X1 A1? +S:A1 +S:B1 B1? +S:C1 C1? +S:D1 D1 ^D1 -S:- C1 ^C1 -S:- B1 ^B1 -S:- A1 ^A1 -S:-
+=== 15 const Z1 3
+  @ start 0,0 X1:f D1:f C1:f B1:f A1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 X1:0 D1:0 C1:0 B1:0 A1:0
+  | X1 D1 C1 B1 A1

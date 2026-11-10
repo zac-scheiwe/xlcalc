@@ -1,0 +1,11 @@
+[package]
+name = "xlcalc-testxll"
+description = "A small .xll for testing the XLL host against real Excel and xlcalc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "xlc_testxll"
+crate-type = ["cdylib"]

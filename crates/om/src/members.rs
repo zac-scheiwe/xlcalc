@@ -20593,7 +20593,7 @@ static M_OPTIONBUTTONS: &[Member] = &[
 static M_OUTLINE: &[Member] = &[
     m("Application", 0x94, Get, Object("Application"), &[]),
     m("AutomaticStyles", 0x3bf, Get, Bool, &[]),
-    m("AutomaticStyles", 0x3bf, Put, Void, &[p("", Bool)]),
+    m("AutomaticStyles", 0x3bf, Put, Void, &[p("", Variant)]),
     m("Creator", 0x95, Get, Enum("XlCreator"), &[]),
     m("Parent", 0x96, Get, Dispatch, &[]),
     m(
@@ -20604,21 +20604,9 @@ static M_OUTLINE: &[Member] = &[
         &[o("RowLevels", Variant), o("ColumnLevels", Variant)],
     ),
     m("SummaryColumn", 0x3c1, Get, Enum("XlSummaryColumn"), &[]),
-    m(
-        "SummaryColumn",
-        0x3c1,
-        Put,
-        Void,
-        &[p("", Enum("XlSummaryColumn"))],
-    ),
+    m("SummaryColumn", 0x3c1, Put, Void, &[p("", Variant)]),
     m("SummaryRow", 0x386, Get, Enum("XlSummaryRow"), &[]),
-    m(
-        "SummaryRow",
-        0x386,
-        Put,
-        Void,
-        &[p("", Enum("XlSummaryRow"))],
-    ),
+    m("SummaryRow", 0x386, Put, Void, &[p("", Variant)]),
 ];
 
 static M_OVAL: &[Member] = &[
@@ -23392,11 +23380,7 @@ static M_RANGE: &[Member] = &[
             d("Header", Enum("XlYesNoGuess"), DefaultValue::I4(2)),
             o("OrderCustom", Variant),
             o("MatchCase", Variant),
-            d(
-                "Orientation",
-                Enum("XlSortOrientation"),
-                DefaultValue::I4(2),
-            ),
+            o("Orientation", Enum("XlSortOrientation")),
             d("SortMethod", Enum("XlSortMethod"), DefaultValue::I4(1)),
             d("DataOption1", Enum("XlSortDataOption"), DefaultValue::I4(0)),
             d("DataOption2", Enum("XlSortDataOption"), DefaultValue::I4(0)),
@@ -24183,11 +24167,7 @@ static M_RANGE: &[Member] = &[
             d("Header", Enum("XlYesNoGuess"), DefaultValue::I4(2)),
             o("OrderCustom", Variant),
             o("MatchCase", Variant),
-            d(
-                "Orientation",
-                Enum("XlSortOrientation"),
-                DefaultValue::I4(2),
-            ),
+            o("Orientation", Enum("XlSortOrientation")),
             d("SortMethod", Enum("XlSortMethod"), DefaultValue::I4(1)),
             d("DataOption1", Enum("XlSortDataOption"), DefaultValue::I4(0)),
             d("DataOption2", Enum("XlSortDataOption"), DefaultValue::I4(0)),
@@ -24212,11 +24192,7 @@ static M_RANGE: &[Member] = &[
             d("Header", Enum("XlYesNoGuess"), DefaultValue::I4(2)),
             o("OrderCustom", Variant),
             o("MatchCase", Variant),
-            d(
-                "Orientation",
-                Enum("XlSortOrientation"),
-                DefaultValue::I4(2),
-            ),
+            o("Orientation", Enum("XlSortOrientation")),
             d("DataOption1", Enum("XlSortDataOption"), DefaultValue::I4(0)),
             d("DataOption2", Enum("XlSortDataOption"), DefaultValue::I4(0)),
             d("DataOption3", Enum("XlSortDataOption"), DefaultValue::I4(0)),

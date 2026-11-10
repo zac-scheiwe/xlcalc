@@ -1,6 +1,7 @@
 use crate::xml::Node;
 use std::collections::HashMap;
 use std::sync::Arc;
+use xlcalc::cfv::Dxf;
 use xlcalc::style::{
     Alignment, Border, BorderLine, Borders, CellColor, Fill, Font, FontScheme, HAlign, NamedStyle,
     Pattern, Style, StyleTable, Underline, VAlign,
@@ -295,6 +296,89 @@ impl Parts<'_> {
     }
 }
 
+pub(crate) fn dxf_read(x: &Node) -> Dxf {
+    let mut d = Dxf::default();
+    let mut w = Vec::new();
+    let (m, s) = (&mut d.mask, &mut d.style);
+    if let Some(f) = x.child("font") {
+        let ft = font(f, &mut w);
+        if f.child("b").is_some() {
+            m.bold = true;
+            s.font.bold = ft.bold;
+        }
+        if f.child("i").is_some() {
+            m.italic = true;
+            s.font.italic = ft.italic;
+        }
+        if f.child("u").is_some() {
+            m.underline = true;
+            s.font.underline = ft.underline;
+        }
+        if f.child("strike").is_some() {
+            m.strike = true;
+            s.font.strikethrough = ft.strikethrough;
+        }
+        if f.child("color").is_some() {
+            m.font_color = true;
+            s.font.color = ft.color;
+        }
+    }
+    if let Some(n) = x.child("numFmt") {
+        let code = n.attr("formatCode").map(str::to_string).or_else(|| {
+            n.attr("numFmtId")
+                .and_then(|i| i.parse().ok())
+                .and_then(builtin)
+                .map(str::to_string)
+        });
+        if let Some(c) = code {
+            m.number_format = true;
+            s.number_format = Arc::from(c.as_str());
+        }
+    }
+    if let Some(p) = x.child("fill").and_then(|f| f.child("patternFill")) {
+        let (fg, bg) = (p.child("fgColor"), p.child("bgColor"));
+        match p.attr("patternType") {
+            None | Some("solid") => {
+                m.pattern = true;
+                s.fill.pattern = Pattern::Solid;
+                if let Some(c) = bg.or(fg) {
+                    m.fill_color = true;
+                    s.fill.color = color(Some(c));
+                }
+            }
+            Some(t) => {
+                m.pattern = true;
+                m.pattern_read = true;
+                s.fill.pattern = Pattern::from_name(t).unwrap_or(Pattern::None);
+                if let Some(c) = bg {
+                    m.fill_color = true;
+                    s.fill.color = color(Some(c));
+                }
+                if let Some(c) = fg {
+                    m.pattern_color = true;
+                    s.fill.pattern_color = color(Some(c));
+                }
+            }
+        }
+    }
+    if let Some(b) = x.child("border") {
+        let bs = borders(b, &mut w);
+        let set = |name: &str| b.child(name).is_some_and(|e| e.attr("style").is_some());
+        for (name, flag, src, dst) in [
+            ("left", &mut m.left, bs.left, &mut s.borders.left),
+            ("right", &mut m.right, bs.right, &mut s.borders.right),
+            ("top", &mut m.top, bs.top, &mut s.borders.top),
+            ("bottom", &mut m.bottom, bs.bottom, &mut s.borders.bottom),
+        ] {
+            if set(name) {
+                *flag = true;
+                *dst = src;
+            }
+        }
+    }
+    d
+}
+
 fn applies(x: &Node) -> [bool; 6] {
     [
         "applyNumberFormat",
@@ -456,6 +540,8 @@ fn alignment(a: &Node, w: &mut Vec<String>) -> Alignment {
         indent: num("indent"),
         rotation: num("textRotation"),
         shrink: flag(a, "shrinkToFit", false),
+        reading_order: num("readingOrder").min(2),
+        add_indent: false,
     }
 }
 
@@ -942,6 +1028,104 @@ impl StyleWriter {
         }
     }
 
+    pub fn dxf(&mut self, d: &Dxf) -> Option<usize> {
+        let (m, s) = (&d.mask, &d.style);
+        let mut x = String::from("<dxf>");
+        let mut font = String::new();
+        for (on, val, el) in [
+            (m.bold, s.font.bold, "b"),
+            (m.italic, s.font.italic, "i"),
+            (m.strike, s.font.strikethrough, "strike"),
+        ] {
+            if on {
+                font.push_str(&if val {
+                    format!("<{el}/>")
+                } else {
+                    format!("<{el} val=\"0\"/>")
+                });
+            }
+        }
+        if m.underline {
+            font.push_str(match s.font.underline {
+                Underline::None => "<u val=\"none\"/>",
+                Underline::Single => "<u/>",
+                Underline::Double => "<u val=\"double\"/>",
+                Underline::SingleAccounting => "<u val=\"singleAccounting\"/>",
+                Underline::DoubleAccounting => "<u val=\"doubleAccounting\"/>",
+            });
+        }
+        if m.font_color {
+            font.push_str(&color_xml("color", s.font.color, false));
+        }
+        if !font.is_empty() {
+            x.push_str(&format!("<font>{font}</font>"));
+        }
+        if m.number_format {
+            let id = self.fmt_id(&s.number_format);
+            let code = self
+                .numfmts
+                .iter()
+                .find(|(i, _)| *i == id)
+                .map(|(_, c)| c.clone())
+                .unwrap_or_else(|| builtin(id).unwrap_or("General").to_string());
+            x.push_str(&format!(
+                "<numFmt numFmtId=\"{id}\" formatCode=\"{}\"/>",
+                crate::rawxml::escape_attr(&code)
+            ));
+        }
+        if m.pattern || m.fill_color || m.pattern_color {
+            let solid = s.fill.pattern == Pattern::Solid || !m.pattern;
+            let mut p = String::from("<fill><patternFill");
+            let mut kids = String::new();
+            if solid {
+                if m.pattern && !m.fill_color {
+                    p.push_str(" patternType=\"solid\"");
+                }
+                if m.fill_color {
+                    kids.push_str(&color_xml("bgColor", s.fill.color, false));
+                }
+            } else {
+                p.push_str(&format!(" patternType=\"{}\"", s.fill.pattern.name()));
+                if m.pattern_color {
+                    kids.push_str(&color_xml("fgColor", s.fill.pattern_color, false));
+                }
+                if m.fill_color {
+                    kids.push_str(&color_xml("bgColor", s.fill.color, false));
+                }
+            }
+            x.push_str(&format!("{p}>{kids}</patternFill></fill>"));
+        }
+        if m.left || m.right || m.top || m.bottom {
+            x.push_str("<border>");
+            for (on, name, e) in [
+                (m.left, "left", s.borders.left),
+                (m.right, "right", s.borders.right),
+                (m.top, "top", s.borders.top),
+                (m.bottom, "bottom", s.borders.bottom),
+            ] {
+                if on && e.line != BorderLine::None {
+                    x.push_str(&format!(
+                        "<{name} style=\"{}\">{}</{name}>",
+                        e.line.name(),
+                        color_xml("color", e.color, true)
+                    ));
+                } else if on {
+                    x.push_str(&format!("<{name}/>"));
+                }
+            }
+            x.push_str("</border>");
+        }
+        if x == "<dxf>" {
+            return None;
+        }
+        x.push_str("</dxf>");
+        if let Some(i) = self.table.dxfs.iter().position(|e| **e == *x) {
+            return Some(i);
+        }
+        self.table.dxfs.push(Arc::from(x.as_str()));
+        Some(self.table.dxfs.len() - 1)
+    }
+
     pub fn write(mut self) -> Vec<u8> {
         use crate::rawxml::{escape_attr, Tag};
         let numfmts = (!self.numfmts.is_empty()).then(|| {
@@ -1242,4 +1426,11 @@ mod writer_tests {
         assert!(back.quote_prefix(1) && !back.quote_prefix(0));
         assert_eq!(back.table().dxfs, first.table().dxfs);
     }
+}
+
+pub(crate) fn builtin_id(code: &str) -> u32 {
+    let code = norm_code(code);
+    (1..=49)
+        .find(|&i| builtin(i).is_some_and(|b| norm_code(b) == code))
+        .unwrap_or(0)
 }

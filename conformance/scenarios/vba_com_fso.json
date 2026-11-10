@@ -1,0 +1,30 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "vba_module",
+   "file": "vba_com_fso.bas"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=FsoT1()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=FsoT2()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=FsoT3()"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A3"
+  }
+ ]
+}

@@ -410,7 +410,11 @@ fn to_file(wb: &Workbook, text: &str, host: Option<CellAddr>) -> String {
             let tree = cx.walk(e);
             let text = print(&tree);
             tree.drop_deep();
-            text
+            if text.contains('[') || text.contains('!') {
+                wb.ext_file_indexes(&text)
+            } else {
+                text
+            }
         }
         Err(_) => body.to_string(),
     }
@@ -494,6 +498,10 @@ impl Workbook {
 
     pub(crate) fn note_hidden_in(&mut self, root: &crate::formula::Node, host: Option<CellAddr>) {
         use crate::formula::Node;
+
+        if host.is_some_and(|h| self.sheet(h.sheet).is_some_and(|s| s.kind.is_macro())) {
+            return;
+        }
         let mut maybe = false;
         let mut plain: Vec<&'static str> = Vec::new();
         crate::formula::walk(root, &mut |n| match n {
@@ -524,7 +532,13 @@ impl Workbook {
             root,
             host.unwrap_or(CellAddr::new(crate::address::SheetId(0), 0, 0)),
         );
-        let toks = hidden_tokens(&to_file(self, &shown, host));
+
+        let filed = if shown.len() > 1000 {
+            stacker::grow(64 << 20, || to_file(self, &shown, host))
+        } else {
+            to_file(self, &shown, host)
+        };
+        let toks = hidden_tokens(&filed);
         for t in toks {
             self.names.note_hidden(&t);
         }

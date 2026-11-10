@@ -39,13 +39,13 @@ pub enum CRef {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SheetRef {
     Current,
+
+    Own,
     Sheet(SheetId),
 
     Span(SheetId, SheetId),
 
     Missing(Text),
-
-    External(Text),
 }
 
 #[derive(Debug)]
@@ -226,7 +226,23 @@ pub trait SheetResolver {
         false
     }
 
+    fn ext_sheet(&self, _book: &str, _sheet: &str) -> Option<SheetId> {
+        None
+    }
+
+    fn ext_book(&self, _book: &str) -> bool {
+        false
+    }
+
     fn table(&self, name: Option<&str>) -> Option<(String, Vec<String>)>;
+
+    fn bind_function(&self, _name: &str) -> Option<String> {
+        None
+    }
+
+    fn macro_host(&self) -> bool {
+        false
+    }
 
     fn name_exists(&self, _name: &str) -> bool {
         false
@@ -234,6 +250,12 @@ pub trait SheetResolver {
 }
 
 thread_local! {
+
+    pub static FORCE_MACRO: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+
+    pub static NO_BANG: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+
+    pub static NAME_BANG: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 
     pub static NAME_CONTEXT: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
@@ -248,6 +270,8 @@ struct Compiler<'a> {
     cx: &'a CompileCtx<'a>,
     scope: Vec<Text>,
     volatile: bool,
+
+    refused: std::cell::Cell<bool>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -266,8 +290,12 @@ pub fn compile(expr: &Expr, cx: &CompileCtx) -> Result<Formula, CompileError> {
         cx,
         scope: Vec::new(),
         volatile: false,
+        refused: std::cell::Cell::new(false),
     };
     let root = c.node(expr)?;
+    if c.refused.get() {
+        return Err(CompileError("no such sheet in the linked workbook".into()));
+    }
     Ok(Formula {
         root,
         volatile: c.volatile,
@@ -319,9 +347,18 @@ impl<'a> Compiler<'a> {
     fn sheet(&self, spec: &Option<SheetSpec>) -> SheetRef {
         match spec {
             None => SheetRef::Current,
+            Some(SheetSpec::Single(n)) if n.is_empty() => {
+                if NO_BANG.get() || !(NAME_BANG.get() || self.cx.sheets.macro_host()) {
+                    self.refused.set(true);
+                }
+                SheetRef::Own
+            }
             Some(SheetSpec::Single(n)) => match self.cx.sheets.sheet_id(n) {
                 Some(id) if !self.cx.sheets.is_chart_sheet(id) => SheetRef::Sheet(id),
-                _ => SheetRef::Missing(n.as_str().into()),
+                _ => {
+                    self.cx.sheets.ext_book(n);
+                    SheetRef::Missing(n.as_str().into())
+                }
             },
             Some(SheetSpec::Range(a, b)) => {
                 let spelled = b
@@ -340,7 +377,34 @@ impl<'a> Compiler<'a> {
                     _ => SheetRef::Missing(format!("{a}:[{b}]{b}").into()),
                 }
             }
-            Some(SheetSpec::External { book, .. }) => SheetRef::External(book.as_str().into()),
+            Some(SheetSpec::External { book, sheet }) => {
+                if sheet.is_none() {
+                    self.refused.set(true);
+                }
+                if let Some((s1, s2)) = sheet.as_deref().and_then(|s| s.split_once(':')) {
+                    let a = self.cx.sheets.ext_sheet(book, s1);
+                    let b = self.cx.sheets.ext_sheet(book, s2);
+                    return match (a, b) {
+                        (Some(x), Some(y)) if x == y => SheetRef::Sheet(x),
+                        (Some(x), Some(y)) => SheetRef::Span(x, y),
+                        _ => {
+                            self.refused.set(true);
+                            SheetRef::Missing(book.as_str().into())
+                        }
+                    };
+                }
+                match self
+                    .cx
+                    .sheets
+                    .ext_sheet(book, sheet.as_deref().unwrap_or(""))
+                {
+                    Some(id) => SheetRef::Sheet(id),
+                    None => {
+                        self.refused.set(true);
+                        SheetRef::Missing(book.as_str().into())
+                    }
+                }
+            }
         }
     }
 
@@ -629,7 +693,11 @@ impl<'a> Compiler<'a> {
                 self.field_node(x, field)
             }
             Expr::Binary { op, left, right } => {
+                let number_to_sheet_ref = *op == BinOp::Range
+                    && matches!(left.unwrap_ws(), Expr::Number(_))
+                    && matches!(right.unwrap_ws(), Expr::Ref { sheet: Some(_), .. });
                 if matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union)
+                    && !number_to_sheet_ref
                     && !(functions::is_reference_expr(left) && functions::is_reference_expr(right))
                 {
                     return Err(CompileError(format!(
@@ -844,7 +912,7 @@ impl<'a> Compiler<'a> {
         }
         let stripped_up = strip_prefixes(name).to_uppercase();
 
-        if functions::xlm::NAME_ONLY.contains(&&*stripped_up) {
+        if functions::xlm::NAME_ONLY.contains(&&*stripped_up) && !self.cx.sheets.macro_host() {
             if !NAME_CONTEXT.get() {
                 return Err(CompileError("That function isn't valid".into()));
             }
@@ -857,12 +925,17 @@ impl<'a> Compiler<'a> {
                 ));
             }
         }
-        if functions::lookup(&stripped_up).is_none()
+        let macro_host = self.cx.sheets.macro_host();
+        if !macro_host
+            && functions::lookup(&stripped_up).is_none()
             && functions::xlm::XLM_ONLY.contains(&&*stripped_up)
         {
             return Err(CompileError("That function isn't valid".into()));
         }
-        match functions::lookup(&up) {
+
+        let block_if = macro_host && up == "IF" && args.len() == 1;
+        let shadowed = macro_host && functions::xlm::SHADOWING.contains(&&*stripped_up);
+        match functions::lookup(&up).filter(|_| !block_if && !shadowed) {
             Some(id) => {
                 let def = functions::def(id);
                 if args.len() < def.min_args as usize || args.len() > def.max_args as usize {
@@ -918,11 +991,31 @@ impl<'a> Compiler<'a> {
                     args: self.nodes(args)?,
                 })
             }
-            None => Ok(Node::NamedCall {
-                key: up.as_str().into(),
-                display: bare.into(),
-                args: self.nodes(args)?,
-            }),
+            None => {
+                let bound = self.cx.sheets.bind_function(&up);
+
+                if let (None, Some((book, _))) = (&bound, bare.rsplit_once('!')) {
+                    let known = bare.rsplit_once('!').is_some_and(|(_, f)| {
+                        functions::lookup(f).is_some()
+                            || functions::xlm::XLM_ONLY.contains(&f.to_ascii_uppercase().as_str())
+                    });
+                    if (known || self.cx.sheets.sheet_id(book).is_none())
+                        && !self.cx.sheets.ext_book(book)
+                    {
+                        return Err(CompileError("That function isn't valid".into()));
+                    }
+                }
+                Ok(Node::NamedCall {
+                    key: bound.map_or_else(|| up.as_str().into(), |k| k.as_str().into()),
+
+                    display: if self.cx.sheets.bind_function(&up).is_some() {
+                        bare.rsplit_once('!').map_or(bare, |(_, f)| f).into()
+                    } else {
+                        bare.into()
+                    },
+                    args: self.nodes(args)?,
+                })
+            }
         }
     }
 }

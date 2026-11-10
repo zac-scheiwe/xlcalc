@@ -1,0 +1,6 @@
+set C2 =D2+1
+set D2 =C2+1
+set G1 =C2+1
+array A2:A3 =C2:C3+G1
+set F1:G1 =IF(COLUMN()=6,A2,7)
+const Z9 1

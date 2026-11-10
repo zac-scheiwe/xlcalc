@@ -1,10 +1,24 @@
+mod casetable;
 mod conv;
 mod dates;
+mod files;
 mod format;
 mod info;
 mod maths;
 mod strings;
 mod util;
+pub(crate) use strings::map_unit;
+
+pub(crate) fn let_date(locale: Locale, v: &Variant) -> Result<Variant, crate::VbaError> {
+    let ctx = RtContext {
+        locale,
+        ..RtContext::default()
+    };
+    dates::to_date(&ctx, v).map(Variant::Date)
+}
+pub use strings::ansi_bytes;
+pub use util::host_text;
+pub(crate) use util::{bytes_of, from_bytes, join, split_odd};
 
 use crate::types::VType;
 use crate::VbaError;
@@ -59,6 +73,7 @@ static BUILTINS: &[Builtin] = &[
     b("CStr", VType::String, 1, 1, conv::cstr),
     b("CDbl", VType::Double, 1, 1, conv::cdbl),
     b("CLng", VType::Long, 1, 1, conv::clng),
+    b("CLngLng", VType::LongLong, 1, 1, conv::clnglng),
     b("CInt", VType::Integer, 1, 1, conv::cint),
     b("CByte", VType::Byte, 1, 1, conv::cbyte),
     b("CBool", VType::Boolean, 1, 1, conv::cbool),
@@ -88,11 +103,32 @@ static BUILTINS: &[Builtin] = &[
     b("Cos", VType::Double, 1, 1, maths::cos),
     b("Tan", VType::Double, 1, 1, maths::tan),
     b("Len", VType::Long, 1, 1, strings::len),
+    b("Abs<typed>", VType::Variant, 1, 1, conv::abs_typed),
+    b("Select<test>", VType::Boolean, 1, 1, conv::select_test),
+    b("CDate<typed>", VType::Date, 1, 1, conv::cdate_typed),
+    b("Rnd", VType::Single, 0, 1, maths::rnd),
+    b("Randomize", VType::Variant, 0, 1, maths::randomize),
+    b("Error", VType::Variant, 0, 1, info::error_text),
+    b("Error$", VType::String, 0, 1, info::error_text),
+    b("LenB", VType::Long, 1, 1, strings::lenb),
+    b("AscB", VType::Byte, 1, 1, strings::ascb),
+    b("ChrB", VType::Variant, 1, 1, strings::chrb),
+    b("ChrB$", VType::String, 1, 1, strings::chrb),
+    b("MidB", VType::Variant, 2, 3, strings::midb),
+    b("MidB$", VType::String, 2, 3, strings::midb),
+    b("LeftB", VType::Variant, 2, 2, strings::leftb),
+    b("LeftB$", VType::String, 2, 2, strings::leftb),
+    b("RightB", VType::Variant, 2, 2, strings::rightb),
+    b("RightB$", VType::String, 2, 2, strings::rightb),
+    b("InStrB", VType::Variant, 2, 4, strings::instrb),
+    b("Filter", VType::Variant, 2, 4, strings::filter),
+    b("StrConv", VType::Variant, 2, 3, strings::strconv),
     b("Left", VType::Variant, 2, 2, strings::left),
     b("Left$", VType::String, 2, 2, strings::left_d),
     b("Right", VType::Variant, 2, 2, strings::right),
     b("Right$", VType::String, 2, 2, strings::right_d),
     b("Mid", VType::Variant, 2, 3, strings::mid),
+    b("MidAssign", VType::String, 4, 4, strings::mid_assign),
     b("Mid$", VType::String, 2, 3, strings::mid_d),
     b("InStr", VType::Variant, 2, 4, strings::instr),
     b("InStrRev", VType::Variant, 2, 4, strings::instrrev),
@@ -122,6 +158,9 @@ static BUILTINS: &[Builtin] = &[
     b("Split", VType::Variant, 1, 4, strings::split),
     b("Join", VType::Variant, 1, 2, strings::join),
     b("IIf", VType::Variant, 3, 3, info::iif),
+    b("Switch", VType::Variant, 2, 255, info::switch),
+    b("Choose", VType::Variant, 2, 255, info::choose),
+    b("Partition", VType::Variant, 4, 4, info::partition),
     b("DoEvents", VType::Integer, 0, 0, info::do_events),
     b("IsNumeric", VType::Boolean, 1, 1, info::is_numeric),
     b("IsDate", VType::Boolean, 1, 1, info::is_date),
@@ -144,14 +183,62 @@ static BUILTINS: &[Builtin] = &[
     b("Weekday", VType::Variant, 1, 2, dates::weekday),
     b("DateAdd", VType::Variant, 3, 3, dates::date_add),
     b("DateDiff", VType::Variant, 3, 5, dates::date_diff),
+    b("DatePart", VType::Variant, 2, 4, dates::date_part),
+    b("MonthName", VType::String, 1, 2, dates::month_name_fn),
+    b("WeekdayName", VType::String, 1, 3, dates::weekday_name),
     b("Now", VType::Date, 0, 0, dates::now),
     b("Date", VType::Date, 0, 0, dates::date),
     b("Date$", VType::String, 0, 0, dates::date_text),
     b("Time", VType::Date, 0, 0, dates::time),
     b("Time$", VType::String, 0, 0, dates::time_text),
     b("Timer", VType::Single, 0, 0, dates::timer),
+    b("FileOpen<>", VType::Variant, 6, 6, files::open),
+    b("FileClose<>", VType::Variant, 0, 255, files::close),
+    b("FilePrint<>", VType::Variant, 1, 255, files::print),
+    b("FileWrite<>", VType::Variant, 1, 255, files::write),
+    b("LineInput<>", VType::String, 2, 2, files::line_input),
+    b("Input", VType::String, 2, 2, files::input_chars),
+    b("InputField<>", VType::Variant, 2, 2, files::input_field),
+    b("FilePut<>", VType::Variant, 3, 3, files::put),
+    b("FileGet<>", VType::Variant, 3, 3, files::get),
+    b("FileSeek<>", VType::Variant, 2, 2, files::seek_stmt),
+    b("Name<>", VType::Variant, 2, 2, files::name),
+    b("EOF", VType::Boolean, 1, 1, files::eof),
+    b("LOF", VType::Long, 1, 1, files::lof),
+    b("Loc", VType::Long, 1, 1, files::loc),
+    b("Seek", VType::Long, 1, 1, files::seek_fn),
+    b("FreeFile", VType::Integer, 0, 1, files::freefile),
+    b("Kill", VType::Variant, 1, 1, files::kill),
+    b("FileCopy", VType::Variant, 2, 2, files::file_copy),
+    b("MkDir", VType::Variant, 1, 1, files::mkdir),
+    b("RmDir", VType::Variant, 1, 1, files::rmdir),
+    b("FileLen", VType::Long, 1, 1, files::file_len),
+    b("GetAttr", VType::Integer, 1, 1, files::get_attr),
+    b("SetAttr", VType::Variant, 2, 2, files::set_attr),
+    b("Dir", VType::String, 0, 2, files::dir),
+    b("Dir$", VType::String, 0, 2, files::dir),
+    b("CurDir", VType::Variant, 0, 1, files::cur_dir),
+    b("CurDir$", VType::String, 0, 1, files::cur_dir),
+    b("Environ", VType::Variant, 1, 1, files::environ),
+    b("Environ$", VType::String, 1, 1, files::environ),
     b("Format", VType::Variant, 1, 4, format::format),
     b("Format$", VType::String, 1, 4, format::format_d),
+    b("FormatNumber", VType::String, 1, 5, format::format_number),
+    b("FormatPercent", VType::String, 1, 5, format::format_percent),
+    b(
+        "FormatCurrency",
+        VType::String,
+        1,
+        5,
+        format::format_currency,
+    ),
+    b(
+        "FormatDateTime",
+        VType::String,
+        1,
+        2,
+        format::format_date_time,
+    ),
 ];
 
 #[cfg(test)]

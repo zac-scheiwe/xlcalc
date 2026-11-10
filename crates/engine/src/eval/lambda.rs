@@ -64,6 +64,15 @@ pub fn call_value(ctx: &mut EvalCtx, f: Value, args: &[Node]) -> Operand {
 }
 
 pub fn call_named(ctx: &mut EvalCtx, key: &str, args: &[Node]) -> Operand {
+    if (key == "IF" || crate::functions::xlm::XLM_ONLY.contains(&key))
+        && ctx
+            .wb
+            .sheet(ctx.host.sheet)
+            .is_some_and(|s| s.kind.is_macro())
+    {
+        let _ = eval_args(ctx, args);
+        return Operand::Val(crate::value::Value::Bool(false));
+    }
     if ctx.wb.names.lookup(key, ctx.host.sheet).is_none() {
         if let Some(host) = ctx.wb.function_host.as_deref() {
             if let Some(sig) = host.signature(key) {
@@ -78,6 +87,17 @@ pub fn call_named(ctx: &mut EvalCtx, key: &str, args: &[Node]) -> Operand {
         return Operand::err(XlError::NAME);
     }
     let f = super::refs::eval_name(ctx, key, None);
+
+    if let Operand::Ref(super::Reference::Area(a)) = &f {
+        if a.rect.rows() == 1
+            && a.rect.cols() == 1
+            && ctx.wb.sheet(a.sheet).is_some_and(|s| s.kind.is_macro())
+        {
+            let target = crate::address::CellAddr::new(a.sheet, a.rect.r0, a.rect.c0);
+            let ops = args.iter().map(|n| ctx.eval(n)).collect();
+            return crate::xlm::call_from_cell(ctx, target, ops);
+        }
+    }
 
     if matches!(f, Operand::Ref(_)) {
         return Operand::err(XlError::REF);

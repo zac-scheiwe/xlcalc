@@ -1,0 +1,187 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=Sheet1!A1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=SUM(A1:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A2",
+   "input": "=Sheet2!A1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A3",
+   "input": "=SUM(A1:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!A1",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!A2",
+   "input": "=Sheet3!A1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!A3",
+   "input": "=SUM(A1:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=Sheet2!A2+Sheet1!A2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=SUM(Sheet1:Sheet3!A1:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=SEQUENCE(Sheet2!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "=INDIRECT(\"Sheet2!A\"&2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "=INDIRECT(\"'Sheet 2'!A1\")"
+  },
+  {
+   "op": "name",
+   "name": "g",
+   "refers_to": "=Sheet2!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "h",
+   "refers_to": "=Sheet1:Sheet3!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=SUM(g)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=SUM(h)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  },
+  {
+   "op": "copy_sheet",
+   "sheet": "Sheet2",
+   "after": "Sheet3",
+   "name": "Sheet 2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet 2!A1:A3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!A1:A3",
+   "to": "Sheet2!D1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet2!A1:D3"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet2!A1:A3",
+   "to": "Sheet3!E1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet3!A1:E3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet3",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  },
+  {
+   "op": "read",
+   "range": "Sheet3!A1:E3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "move_sheet",
+   "sheet": "Sheet2",
+   "before": "Sheet1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet 2",
+   "name": "Sheet 3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:C8"
+  }
+ ]
+}

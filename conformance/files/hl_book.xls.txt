@@ -1,0 +1,21 @@
+Links A1 addr=https://example.com/ sub=<null> tip=Go home text=Home mail=<err> name=Home cell=Home hasf=Home
+Links A2 addr=mailto:someone@example.com?subject=Hi there sub=<null> tip=Write text=Mail mail=Hi there name=Mail cell=Mail hasf=Mail
+Links A3 addr=mailto:a@b.c sub=<null> tip=<null> text=mailto:a@b.c mail= name=mailto:a@b.c cell=mailto:a@b.c hasf=mailto:a@b.c
+Links A4 addr=docs\readme.txt sub=<null> tip=rel file text=Readme mail=<err> name=Readme cell=Readme hasf=Readme
+Links A5 addr=../../../../../../temp/a b.txt sub=<null> tip=<null> text=Abs file mail=<err> name=Abs file cell=Abs file hasf=Abs file
+Links A6 addr=\server\share\f.xlsx sub=Sheet1!A1 tip=<null> text=UNC mail=<err> name=UNC cell=UNC hasf=UNC
+Links A7 addr=<null> sub=Other!B2 tip=Jump text=To other mail= name=To other cell=To other hasf=To other
+Links A8 addr=https://example.com/page sub=top tip=<null> text=Frag mail=<err> name=Frag cell=Frag hasf=Frag
+Links A9 addr=https://example.com/a?b=c&d=e sub=<null> tip=<null> text=https://example.com/a?b=c&d=e mail=<err> name=https://example.com/a?b=c&d=e cell=https://example.com/a?b=c&d=e hasf=https://example.com/a?b=c&d=e
+Links A10 addr=..\other\book.xlsx sub=Sheet1!C3 tip=tip & <x> "q" text=Other book mail=<err> name=Other book cell=Other book hasf=Other book
+Links A11 addr=https://example.com/ü ö sub=<null> tip=<null> text=Uni mail=<err> name=Uni cell=Uni hasf=Uni
+Links A12 addr=<null> sub=Other!B2:C3 tip=<null> text=Other!B2:C3 mail= name=Other!B2:C3 cell=Other!B2:C3 hasf=Other!B2:C3
+Links A13 addr=http://example.com/ sub=<null> tip=<null> text=Case mail=<err> name=Case cell=Case hasf=Case
+Links A14 addr=https://example.com/aAb sub=<null> tip=<null> text=Pct41 mail=<err> name=Pct41 cell=Pct41 hasf=Pct41
+Links A15 addr=https://example.com/a%25b sub=<null> tip=<null> text=Pct25 mail=<err> name=Pct25 cell=Pct25 hasf=Pct25
+Links A16 addr=x%41y.txt sub=<null> tip=<null> text=FilePct mail=<err> name=FilePct cell=FilePct hasf=FilePct
+Links A17 addr=mailto:a@b.c?subject=x%20y&body=z sub=<null> tip=<null> text=Mail2 mail=x%20y name=Mail2 cell=Mail2 hasf=Mail2
+Links C1:D2 addr=https://example.com/block sub=<null> tip=blk text=Block mail=<err> name=Block cell=Block hasf=Block
+Links F1 addr=https://example.com/n sub=<null> tip=<null> text=https://example.com/n mail=<err> name=https://example.com/n cell=https://example.com/n hasf=https://example.com/n
+Links F2 addr=https://example.com/num sub=<null> tip=<null> text=<null> mail=<err> name=T cell=5 hasf=5
+Other B2 addr=<null> sub=Links!A1 tip=<null> text=back mail= name=back cell=back hasf=back

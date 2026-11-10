@@ -7,7 +7,10 @@ use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::formula::{CRef, Node, Rc, SheetRef};
 use crate::functions;
-use crate::numfmt::NumberFormat;
+use crate::numfmt::{
+    digits_with_date, format_key, quote_ampm, readback_spelling, spelled_for_parse,
+    typed_elapsed_ok, NumberFormat,
+};
 use crate::parser::ast::{BinOp, UnaryOp};
 use crate::style::Style;
 use crate::value::{Array, Value};
@@ -26,6 +29,10 @@ pub struct CellFormats {
     pub(crate) sheets: FxHashMap<SheetId, (u64, Sty)>,
     seq: u64,
     compiled: FxHashMap<Arc<str>, Option<Arc<NumberFormat>>>,
+
+    registry: FxHashMap<String, String>,
+
+    ampm_upper: bool,
     pub(crate) precision: bool,
 
     late: FxHashMap<usize, (std::sync::Weak<Style>, Option<Arc<str>>)>,
@@ -46,6 +53,43 @@ impl CellFormats {
             && self.rows.is_empty()
             && self.cols.is_empty()
             && self.sheets.is_empty())
+    }
+
+    pub(crate) fn import_sheet(&mut self, other: &CellFormats, from: SheetId, to: SheetId) {
+        for (k, v) in other.map.iter().filter(|(k, _)| k.0 == from) {
+            let s = self.intern((**v).clone());
+            self.map.insert((to, k.1, k.2), s);
+        }
+        if let Some(r) = other.sticky.get(&from) {
+            self.sticky.insert(to, *r);
+        }
+        let mut lines: Vec<(u64, u8, u32, Sty)> = Vec::new();
+        for (k, (n, v)) in other.rows.iter().filter(|(k, _)| k.0 == from) {
+            lines.push((*n, 0, k.1, v.clone()));
+        }
+        for (k, (n, v)) in other.cols.iter().filter(|(k, _)| k.0 == from) {
+            lines.push((*n, 1, k.1, v.clone()));
+        }
+        if let Some((n, v)) = other.sheets.get(&from) {
+            lines.push((*n, 2, 0, v.clone()));
+        }
+        lines.sort_by_key(|l| (l.0, l.1, l.2));
+        for (_, kind, i, v) in lines {
+            let s = self.intern((*v).clone());
+            self.seq += 1;
+            let stamp = (self.seq, s);
+            match kind {
+                0 => {
+                    self.rows.insert((to, i), stamp);
+                }
+                1 => {
+                    self.cols.insert((to, i), stamp);
+                }
+                _ => {
+                    self.sheets.insert(to, stamp);
+                }
+            }
+        }
     }
 
     pub(crate) fn borderless(&mut self, s: Sty) -> Sty {
@@ -112,15 +156,88 @@ impl CellFormats {
         }
     }
 
+    fn register_stored(&mut self, code: &str) {
+        if code.contains("AM/PM") {
+            self.ampm_upper = true;
+        }
+        if code != "General" {
+            self.registry
+                .entry(format_key(code).to_ascii_lowercase())
+                .or_insert_with(|| code.to_string());
+        }
+    }
+
+    fn registered(&mut self, typed: &str, spelled: String) -> String {
+        let lower = format_key(&spelled).to_ascii_lowercase();
+
+        let untagged = lower.strip_prefix("[$-f400]").unwrap_or(&lower);
+        let built_in_ampm = matches!(untagged, "h:mm am/pm" | "h:mm:ss am/pm");
+        let spelled = if self.ampm_upper || built_in_ampm {
+            spelled.replace("am/pm", "AM/PM")
+        } else {
+            spelled
+        };
+        if spelled == "General" {
+            return spelled;
+        }
+        let mut key = registry_key(&spelled);
+        key.push_str(&escaped_letters(typed));
+        if let Some(b) = BUILT_IN_PAIRS
+            .iter()
+            .find(|b| format_key(b).to_ascii_lowercase() == key)
+        {
+            return (*b).to_string();
+        }
+        self.registry.entry(key).or_insert(spelled).clone()
+    }
+
     fn compile(&mut self, f: &Arc<str>) -> Option<Arc<NumberFormat>> {
         if let Some(c) = self.compiled.get(f) {
             return c.clone();
         }
-        let c = NumberFormat::parse(f).ok().map(Arc::new);
+        let c = NumberFormat::parse(f)
+            .or_else(|e| {
+                if ampm_literal_allowed(f) {
+                    NumberFormat::parse(&quote_ampm(f))
+                } else {
+                    Err(e)
+                }
+            })
+            .ok()
+            .map(Arc::new);
         self.compiled.insert(f.clone(), c.clone());
         c
     }
 }
+
+fn escaped_letters(typed: &str) -> String {
+    let mut out = String::new();
+    let mut it = typed.chars();
+    while let Some(c) = it.next() {
+        if c == '\\' {
+            out.extend(it.next().filter(char::is_ascii_alphabetic));
+        }
+    }
+    out
+}
+
+fn registry_key(spelled: &str) -> String {
+    let key = format_key(spelled);
+    let mut out = String::with_capacity(key.len());
+    let mut escaped = false;
+    for c in key.chars() {
+        out.push(if escaped { c } else { c.to_ascii_lowercase() });
+        escaped = !escaped && c == '\\';
+    }
+    out
+}
+
+const BUILT_IN_PAIRS: [&str; 4] = [
+    "#,##0;-#,##0",
+    "#,##0;[Red]-#,##0",
+    "#,##0.00;-#,##0.00",
+    "#,##0.00;[Red]-#,##0.00",
+];
 
 const YIELDING: [&str; 16] = [
     "0%",
@@ -181,6 +298,7 @@ impl Workbook {
         let same = |a: &Style, b: &Style| {
             Style {
                 custom_code: b.custom_code,
+                implicit_general: b.implicit_general,
                 ..a.clone()
             } == *b
         };
@@ -391,10 +509,9 @@ impl Workbook {
     }
 
     pub(crate) fn store_format(&mut self, addr: CellAddr, fmt: &str) {
-        let s = self
-            .cellfmt
-            .style(addr)
-            .with_number_format(&norm_format(fmt));
+        let stored = stored_format(fmt);
+        self.cellfmt.register_stored(&stored);
+        let s = self.cellfmt.style(addr).with_number_format(&stored);
         self.store_style(addr, s);
     }
 
@@ -554,8 +671,23 @@ impl Workbook {
     }
 
     fn apply_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) {
-        let fmt = norm_format(fmt);
-        self.apply_style_with(sheet, rect, &|s: &Style| s.with_number_format(&fmt));
+        let spelled = norm_format(fmt);
+
+        let implicit = !fmt.contains(';') && spelled.ends_with(";General");
+        let fmt = self.cellfmt.registered(fmt, spelled);
+        self.apply_style_with(sheet, rect, &|s: &Style| Style {
+            implicit_general: implicit,
+            ..s.with_number_format(&fmt)
+        });
+    }
+
+    pub fn set_number_format_stored(&mut self, sheet: SheetId, rect: Rect, code: &str) {
+        let fmt = stored_format(code);
+        self.cellfmt.register_stored(&fmt);
+        self.command(Command::Format, |wb| {
+            wb.apply_style_with(sheet, rect, &|s: &Style| s.with_number_format(&fmt));
+            RecalcReport::default()
+        });
     }
 
     pub fn clear_formats(&mut self, sheet: SheetId, rect: Rect) -> RecalcReport {
@@ -716,7 +848,7 @@ impl Workbook {
     }
 
     fn set_number_format_body(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
-        if self.sheet(sheet).is_none() || at_sign_rejected(fmt) {
+        if self.sheet(sheet).is_none() || format_refused(fmt) {
             return RecalcReport::default();
         }
         let before = self.late_candidates(sheet, rect, true);
@@ -963,7 +1095,7 @@ impl Workbook {
 
     fn ref_format(&self, sr: &SheetRef, cref: &CRef, host: CellAddr) -> Option<Arc<str>> {
         let sheet = match sr {
-            SheetRef::Current => host.sheet,
+            SheetRef::Current | SheetRef::Own => host.sheet,
             SheetRef::Sheet(s) => *s,
             _ => return None,
         };
@@ -1196,7 +1328,11 @@ pub(crate) fn is_text_format_code(f: &str) -> bool {
         return false;
     }
     let numeric = |s: &str| {
-        let l = s.to_ascii_lowercase().replace("general", "");
+        let l = s
+            .to_ascii_lowercase()
+            .replace("general", "")
+            .replace("am/pm", "")
+            .replace("a/p", "");
         l.contains([
             '0', '#', '?', '%', 'd', 'm', 'y', 'h', 's', 'e', '@', 'b', 'g',
         ])
@@ -1210,11 +1346,56 @@ pub(crate) fn is_text_format_code(f: &str) -> bool {
         && !text.to_ascii_lowercase().contains(['0', '#', '?'])
 }
 
+pub fn number_format_refused(fmt: &str) -> bool {
+    format_refused(fmt)
+}
+
+fn format_refused(fmt: &str) -> bool {
+    if fmt.is_empty() {
+        return false;
+    }
+    if at_sign_rejected(&quote_ampm(fmt)) {
+        return true;
+    }
+    let spelled = spelled_for_parse(fmt);
+    !typed_elapsed_ok(fmt)
+        || digits_with_date(&spelled)
+        || percent_in_fourth(&spelled)
+        || (NumberFormat::parse(&spelled).is_err()
+            && (!ampm_literal_allowed(&spelled)
+                || NumberFormat::parse(&quote_ampm(&spelled)).is_err()))
+}
+
+fn ampm_literal_allowed(code: &str) -> bool {
+    let lower = code.to_ascii_lowercase();
+    let Some(a) = lower.find("am/pm") else {
+        return true;
+    };
+    let start = lower[..a].rfind(';').map_or(0, |s| s + 1);
+    let sec = &lower[start..a];
+    !sec.split('[').skip(1).any(|b| {
+        b.split(']').next().is_some_and(|n| {
+            n.chars()
+                .next()
+                .is_some_and(|c| matches!(c, 'h' | 'm' | 's'))
+                && n.chars().all(|x| n.starts_with(x))
+        })
+    })
+}
+
+fn percent_in_fourth(spelled: &str) -> bool {
+    let secs = format_sections(spelled);
+    secs.len() == 4 && secs[3].contains('%')
+}
+
 fn at_sign_rejected(f: &str) -> bool {
     let secs = format_sections(f);
     let n = secs.len();
 
-    if secs.iter().any(|s| s.contains("e+") || s.contains("e-")) {
+    if secs
+        .iter()
+        .any(|s| (s.contains("e+") || s.contains("e-")) && s.contains(['0', '#', '?']))
+    {
         return true;
     }
     secs.iter().enumerate().any(|(i, s)| {
@@ -1267,6 +1448,14 @@ fn norm_format(fmt: &str) -> String {
     }
 }
 
+fn stored_format(fmt: &str) -> String {
+    if fmt.is_empty() || fmt.eq_ignore_ascii_case("general") {
+        "General".into()
+    } else {
+        unquote_dollar(fmt).into_owned()
+    }
+}
+
 fn unquote_dollar(fmt: &str) -> std::borrow::Cow<'_, str> {
     if !fmt.contains("\"$\"") {
         return fmt.into();
@@ -1303,220 +1492,4 @@ fn unquote_dollar(fmt: &str) -> std::borrow::Cow<'_, str> {
         }
     }
     out.into()
-}
-
-enum FmtTok {
-    Bracket(String),
-
-    Raw(String),
-
-    Esc(char),
-    Ch(char),
-}
-
-fn fmt_tokens(fmt: &str) -> Vec<FmtTok> {
-    let cs: Vec<char> = fmt.chars().collect();
-    let mut out = Vec::new();
-    let mut i = 0;
-    while i < cs.len() {
-        let c = cs[i];
-        match c {
-            '"' | '[' => {
-                let close = if c == '"' { '"' } else { ']' };
-                let end = cs[i + 1..].iter().position(|&d| d == close);
-                let Some(end) = end else {
-                    out.push(FmtTok::Raw(cs[i..].iter().collect()));
-                    break;
-                };
-                let s: String = cs[i..=i + 1 + end].iter().collect();
-                out.push(if c == '[' {
-                    FmtTok::Bracket(s)
-                } else {
-                    FmtTok::Raw(s)
-                });
-                i += end + 2;
-            }
-            '\\' if i + 1 < cs.len() => {
-                out.push(FmtTok::Esc(cs[i + 1]));
-                i += 2;
-            }
-            '_' | '*' if i + 1 < cs.len() => {
-                out.push(FmtTok::Raw(cs[i..i + 2].iter().collect()));
-                i += 2;
-            }
-            _ => {
-                out.push(FmtTok::Ch(c));
-                i += 1;
-            }
-        }
-    }
-    out
-}
-
-fn fmt_tok_text(t: &FmtTok, out: &mut String) {
-    match t {
-        FmtTok::Bracket(s) | FmtTok::Raw(s) => out.push_str(s),
-        FmtTok::Esc(c) => {
-            out.push('\\');
-            out.push(*c);
-        }
-        FmtTok::Ch(c) => out.push(*c),
-    }
-}
-
-fn readback_spelling(fmt: &str) -> String {
-    let mut sections: Vec<Vec<FmtTok>> = vec![Vec::new()];
-    for t in fmt_tokens(fmt) {
-        if matches!(t, FmtTok::Ch(';')) {
-            sections.push(Vec::new());
-        } else {
-            sections.last_mut().expect("one section").push(t);
-        }
-    }
-    let mut texts: Vec<String> = sections.into_iter().map(canon_section).collect();
-    if texts.len() == 3 && texts[2] == texts[0] {
-        texts.pop();
-    }
-    if texts.len() == 1 && has_condition(&texts[0]) {
-        texts.push("General".into());
-    }
-    texts.join(";")
-}
-
-fn has_condition(section: &str) -> bool {
-    fmt_tokens(section)
-        .iter()
-        .any(|t| matches!(t, FmtTok::Bracket(b) if b[1..].starts_with(['<', '>', '='])))
-}
-
-fn same_tok(t: &FmtTok) -> FmtTok {
-    match t {
-        FmtTok::Bracket(s) => FmtTok::Bracket(s.clone()),
-        FmtTok::Raw(s) => FmtTok::Raw(s.clone()),
-        FmtTok::Esc(c) => FmtTok::Esc(*c),
-        FmtTok::Ch(c) => FmtTok::Ch(*c),
-    }
-}
-
-fn canon_section(mut toks: Vec<FmtTok>) -> String {
-    let n = toks
-        .iter()
-        .take_while(|t| matches!(t, FmtTok::Bracket(b) if tag_rank(b).is_some()))
-        .count();
-    let mut lead: Vec<FmtTok> = toks.drain(..n).collect();
-    lead.sort_by_key(|t| match t {
-        FmtTok::Bracket(b) => tag_rank(b).unwrap_or(3),
-        _ => 3,
-    });
-    for t in &mut lead {
-        if let FmtTok::Bracket(b) = t {
-            *b = canon_tag(b);
-        }
-    }
-    let only_colour = toks.is_empty()
-        && !lead.is_empty()
-        && lead
-            .iter()
-            .all(|t| matches!(t, FmtTok::Bracket(b) if tag_rank(b) == Some(0)));
-
-    if matches!(toks.first(), Some(FmtTok::Ch('@')))
-        && matches!(lead.last(), Some(FmtTok::Bracket(b)) if b == "[$-409]")
-    {
-        lead.pop();
-        lead.push(FmtTok::Bracket("[$]".into()));
-    }
-    let has_time = toks
-        .iter()
-        .any(|t| matches!(t, FmtTok::Ch('h' | 'H' | 's' | 'S')));
-    let mut out: Vec<FmtTok> = lead;
-    let mut i = 0;
-    while i < toks.len() {
-        match &toks[i] {
-            FmtTok::Ch('y' | 'Y') => {
-                let mut j = i;
-                while matches!(toks.get(j), Some(FmtTok::Ch('y' | 'Y'))) {
-                    j += 1;
-                }
-                let k = match j - i {
-                    1 => 2,
-                    3 => 4,
-                    k => k,
-                };
-                out.extend(std::iter::repeat_with(|| FmtTok::Ch('y')).take(k));
-                i = j;
-            }
-            FmtTok::Ch(a @ ('a' | 'A'))
-                if has_time
-                    && matches!(toks.get(i + 1), Some(FmtTok::Ch('/')))
-                    && matches!(toks.get(i + 2), Some(FmtTok::Ch('p' | 'P'))) =>
-            {
-                out.push(FmtTok::Esc(*a));
-                i += 1;
-            }
-            FmtTok::Ch('#')
-                if matches!(toks.get(i + 1), Some(FmtTok::Ch(',')))
-                    && matches!(toks.get(i + 2), Some(FmtTok::Ch('#')))
-                    && !matches!(toks.get(i + 3), Some(FmtTok::Ch('#' | '0' | '?' | ','))) =>
-            {
-                out.extend("#,###".chars().map(FmtTok::Ch));
-                i += 3;
-            }
-            FmtTok::Esc(c)
-                if *c == ' '
-                    || *c == '.'
-                    || (c.is_ascii_alphabetic() && !"abdeghmnsyABDEGHMNSYcCwW".contains(*c)) =>
-            {
-                out.push(FmtTok::Ch(*c));
-                i += 1;
-            }
-            t => {
-                out.push(same_tok(t));
-                i += 1;
-            }
-        }
-    }
-    let mut s = String::new();
-    for t in &out {
-        fmt_tok_text(t, &mut s);
-    }
-    if only_colour {
-        s.push_str("General");
-    }
-    s
-}
-
-fn tag_rank(b: &str) -> Option<u8> {
-    let inner = &b[1..b.len() - 1];
-    let lower = inner.to_ascii_lowercase();
-    if [
-        "red", "blue", "green", "black", "white", "cyan", "magenta", "yellow",
-    ]
-    .contains(&lower.as_str())
-        || lower
-            .strip_prefix("color")
-            .is_some_and(|r| !r.trim().is_empty() && r.trim().chars().all(|c| c.is_ascii_digit()))
-    {
-        Some(0)
-    } else if inner.starts_with(['<', '>', '=']) {
-        Some(1)
-    } else if inner
-        .strip_prefix("$-")
-        .is_some_and(|h| !h.is_empty() && h.chars().all(|c| c.is_ascii_hexdigit()))
-    {
-        Some(2)
-    } else {
-        None
-    }
-}
-
-fn canon_tag(b: &str) -> String {
-    let inner = &b[1..b.len() - 1];
-    if let Some(h) = inner.strip_prefix("$-") {
-        let t = h.trim_start_matches('0');
-        return format!("[$-{}]", if t.is_empty() { "0" } else { t });
-    }
-    if let Some(r) = inner.to_ascii_lowercase().strip_prefix("color") {
-        return format!("[Color{}]", r.trim());
-    }
-    b.to_string()
 }

@@ -76,12 +76,26 @@ impl Workbook {
         }
     }
 
-    pub(crate) fn ever_used(&self, sheet: SheetId) -> Option<Rect> {
+    pub fn ever_used(&self, sheet: SheetId) -> Option<Rect> {
         let cells = self.sheet(sheet)?.cells.sticky_bounds();
         match (cells, self.cellfmt.sticky.get(&sheet)) {
             (Some(a), Some(b)) => Some(a.union_bounds(b)),
             (a, b) => a.or(b.copied()),
         }
+    }
+
+    pub fn data_beside(&self, sheet: SheetId, rect: Rect, insert: bool) -> (bool, bool) {
+        let Some(sh) = self.sheet(sheet) else {
+            return (false, false);
+        };
+        let (mut right, mut below) = (false, false);
+        for (r, c, _) in sh.cells.iter() {
+            let past_c = if insert { c >= rect.c0 } else { c > rect.c1 };
+            let past_r = if insert { r >= rect.r0 } else { r > rect.r1 };
+            right |= (rect.r0..=rect.r1).contains(&r) && past_c;
+            below |= (rect.c0..=rect.c1).contains(&c) && past_r;
+        }
+        (right, below)
     }
 
     pub fn addr(&self, sheet: SheetId, a1: &str) -> Option<CellAddr> {

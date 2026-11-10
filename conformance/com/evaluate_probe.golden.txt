@@ -1,0 +1,217 @@
+App.Evaluate [1+2] => Double:3
+App.Evaluate ["abc"] => String:abc
+App.Evaluate [TRUE] => Boolean:True
+App.Evaluate [A1] => com:Range A1 sheet=Sheet1
+App.Evaluate [B1] => com:Range B1 sheet=Sheet1
+App.Evaluate [B2] => com:Range B2 sheet=Sheet1
+App.Evaluate [B3] => com:Range B3 sheet=Sheet1
+App.Evaluate [C1] => com:Range C1 sheet=Sheet1
+App.Evaluate [C3] => com:Range C3 sheet=Sheet1
+App.Evaluate [B1:C2] => com:Range B1:C2 sheet=Sheet1
+App.Evaluate [B1:C3] => com:Range B1:C3 sheet=Sheet1
+App.Evaluate [nm] => com:Range B1:C2 sheet=Sheet1
+App.Evaluate [k] => Double:42
+App.Evaluate [SUM(B1:C2)] => Double:11.5
+App.Evaluate [SUM(nm)] => Double:11.5
+App.Evaluate [{1,2;3,4}] => arr2d 2x2 lb=1 {Double:1;Double:2;Double:3;Double:4}
+App.Evaluate [{1,2,3}] => arr1d 3x1 lb=1 {Double:1;Double:2;Double:3}
+App.Evaluate [{1;2}] => arr2d 2x1 lb=1 {Double:1;Double:2}
+App.Evaluate [{1}] => arr1d 1x1 lb=1 {Double:1}
+App.Evaluate [1/0] => Int32:-2146826281
+App.Evaluate [#N/A] => Int32:-2146826246
+App.Evaluate [NA()] => Int32:-2146826246
+App.Evaluate [B1:B3*2] => arr2d 3x1 lb=1 {Double:3;Int32:-2146826273;Double:2}
+App.Evaluate [ROW()] => arr1d 1x1 lb=1 {Double:4}
+App.Evaluate [COLUMN()] => arr1d 1x1 lb=1 {Double:4}
+App.Evaluate [ROW(B5)] => arr1d 1x1 lb=1 {Double:5}
+App.Evaluate [ROW(1:1)] => arr1d 1x1 lb=1 {Double:1}
+App.Evaluate [CELL("address")] => String:$D$4
+App.Evaluate [CELL("address",B2)] => String:$B$2
+App.Evaluate [Other!A1] => com:Range A1 sheet=Other
+App.Evaluate [Other!A1:B2] => com:Range A1:B2 sheet=Other
+App.Evaluate [Sheet1!B1] => com:Range B1 sheet=Sheet1
+App.Evaluate [A1:C1 B1:B3] => com:Range B1 sheet=Sheet1
+App.Evaluate [(B1,C2)] => com:Range B1,C2 sheet=Sheet1
+App.Evaluate [OFFSET(B1,1,1)] => com:Range C2 sheet=Sheet1
+App.Evaluate [INDEX(B1:C3,2,2)] => com:Range C2 sheet=Sheet1
+App.Evaluate [B1:C3 C2] => com:Range C2 sheet=Sheet1
+App.Evaluate [INDIRECT("B2")] => com:Range B2 sheet=Sheet1
+App.Evaluate [Self(B1)] => com:Range B1 sheet=Sheet1
+App.Evaluate [Self(B1:C1)] => com:Range B1:C1 sheet=Sheet1
+App.Evaluate [Twice(4)] => Double:8
+App.Evaluate [Arr()] => arr2d 2x2 lb=1 {Double:1;Double:2;Double:3;Double:4}
+App.Evaluate [Grid()] => Int32:-2146826273
+App.Evaluate [Prop(B1,"Address")] => String:$B$1
+App.Evaluate [Prop(A1,"Address")] => String:$A$1
+App.Evaluate [Kind(B1)] => String:__ComObject
+App.Evaluate [NOW()>0] => Boolean:True
+App.Evaluate [ISREF(B1)] => Boolean:True
+App.Evaluate [ISREF(Self(B1:C2))] => Boolean:True
+App.Evaluate [ROWS(Self(B1:C3))] => Double:3
+App.Evaluate [SUM(Arr())] => Double:10
+App.Evaluate [1+] => Int32:-2146826273
+App.Evaluate [SUM(] => Int32:-2146826273
+App.Evaluate [x] => Int32:-2146826259
+App.Evaluate [x+1] => Int32:-2146826259
+App.Evaluate ["a"&B1] => String:a1.5
+App.Evaluate [B1&"x"] => String:1.5x
+App.Evaluate [LEN(B2)] => Double:3
+App.Evaluate [TEXT(B1,"0.00")] => String:1.50
+App.Evaluate [A1:A3] => com:Range A1:A3 sheet=Sheet1
+App.Evaluate [D4] => com:Range D4 sheet=Sheet1
+App.Evaluate [ROW(D4)] => arr1d 1x1 lb=1 {Double:4}
+App.Evaluate [ROW(A1:A3)] => arr2d 3x1 lb=1 {Double:1;Double:2;Double:3}
+App.Evaluate [COLUMN(A:C)] => arr1d 3x1 lb=1 {Double:1;Double:2;Double:3}
+App.Evaluate [INDEX({1,2;3,4},2,1)] => Double:3
+App.Evaluate [MMULT({1,2;3,4},{1;1})] => arr2d 2x1 lb=1 {Double:3;Double:7}
+App.Evaluate [TRANSPOSE({1,2,3})] => arr2d 3x1 lb=1 {Double:1;Double:2;Double:3}
+App.Evaluate [SEQUENCE(2,2)] => arr2d 2x2 lb=1 {Double:1;Double:2;Double:3;Double:4}
+App.Evaluate [XLOOKUP(7,C1:C3,B1:B3)] => com:Range B2 sheet=Sheet1
+App.Evaluate [LET(x,2,x*3)] => Double:6
+App.Evaluate [B1:] => Int32:-2146826273
+App.Evaluate [1:1] => com:Range 1:1 sheet=Sheet1
+App.Evaluate [A:A] => com:Range A:A sheet=Sheet1
+App.Evaluate [[A1]] => Int32:-2146826273
+App.Evaluate [[B1]] => Int32:-2146826273
+App.Evaluate [="a"] => String:a
+App.Evaluate [=1+2] => Double:3
+App.Evaluate [=B1] => com:Range B1 sheet=Sheet1
+App.Evaluate [  1+2  ] => Double:3
+App.Evaluate [1 + 2] => Double:3
+App.Evaluate [SUM(1,2,3)] => Double:6
+App.Evaluate [sum(1,2)] => Double:3
+App.Evaluate [""] => String:
+App.Evaluate [NULL] => Int32:-2146826259
+App.Evaluate [B1:C2 + 1] => arr2d 2x2 lb=1 {Double:2.5;Double:4;Int32:-2146826273;Double:8}
+App.Evaluate [-B1] => Double:-1.5
+App.Evaluate [B1^2] => Double:2.25
+App.Evaluate [ROW(INDIRECT("A1:A3"))] => Int32:-2146826265
+App.Evaluate [IF(TRUE,INDIRECT("B1"))] => com:Range B1 sheet=Sheet1
+App.Evaluate [IFERROR(INDIRECT("B1"),9)] => Double:9
+App.Evaluate [ISREF(INDIRECT("B1"))] => Boolean:False
+App.Evaluate [INDIRECT(INDIRECT("B2"))] => Int32:-2146826265
+App.Evaluate [INDEX(INDIRECT("B1:B3"),2)] => com:Range B2 sheet=Sheet1
+App.Evaluate [INDEX(INDIRECT("B1:B3"),2)+0] => Int32:-2146826265
+App.Evaluate [COUNT(INDIRECT("B1:B3"))] => Double:0
+App.Evaluate [INDIRECT("B1")&""] => Int32:-2146826265
+App.Evaluate [INDIRECT("B1"):C2] => com:Range B1:C2 sheet=Sheet1
+App.Evaluate [SUM(INDIRECT("B1"):C2)] => Int32:-2146826265
+App.Evaluate [OFFSET(INDIRECT("B1"),1,0)] => com:Range B2 sheet=Sheet1
+App.Evaluate [SUM(OFFSET(INDIRECT("B1"),0,0,2,1))] => Int32:-2146826265
+App.Evaluate [ROW(INDIRECT("B1"))] => Int32:-2146826265
+App.Evaluate [COLUMN(INDIRECT("B1:C1"))] => Int32:-2146826265
+App.Evaluate [ROWS(INDIRECT("B1:B3"))] => Int32:-2146826265
+App.Evaluate [(INDIRECT("B1"))] => com:Range B1 sheet=Sheet1
+App.Evaluate [LET(x,INDIRECT("B1"),x)] => com:Range B1 sheet=Sheet1
+App.Evaluate [IF(INDIRECT("B1"),1,2)] => Int32:-2146826265
+App.Evaluate [CHOOSE(1,INDIRECT("B1"))] => com:Range B1 sheet=Sheet1
+App.Evaluate [SUM(INDIRECT("B1:B3"))] => Int32:-2146826265
+App.Evaluate [INDIRECT("B1")+0] => Int32:-2146826265
+App.Evaluate [ROW(OFFSET(B1,1,0,2,1))] => arr2d 2x1 lb=1 {Double:2;Double:3}
+App.Evaluate [IF(B1>1,"y","n")] => String:y
+App.Evaluate [CHOOSE(2,B1,C2)] => com:Range C2 sheet=Sheet1
+App.Evaluate [NA] => Int32:-2146826259
+App.Evaluate [#REF!] => Int32:-2146826265
+App.Evaluate [#NAME?] => Int32:-2146826259
+App.Evaluate [#VALUE!] => Int32:-2146826273
+App.Evaluate [1E308*10] => Int32:-2146826273
+App.Evaluate [0.1+0.2] => Double:0.3
+App.Evaluate [1/3] => Double:0.333333333333333
+App.Evaluate [DATE(2020,1,2)] => Double:43832
+App.Evaluate [TODAY()>0] => Boolean:True
+App.Evaluate [LEFT("abc",2)] => String:ab
+App.Evaluate [AND(TRUE,FALSE)] => Boolean:False
+App.Evaluate [ISERROR(1/0)] => Boolean:True
+App.Evaluate [B1=B1] => Boolean:True
+App.Evaluate [B3] => com:Range B3 sheet=Sheet1
+App.Evaluate [ROW(Other!A5)] => arr1d 1x1 lb=1 {Double:5}
+App.Evaluate [Other!nm] => Int32:-2146826259
+App.Evaluate [Other!k] => Int32:-2146826259
+App.Evaluate [R1C2] => Int32:-2146826273
+App.Evaluate [RC2] => com:Range RC2 sheet=Sheet1
+App.Evaluate [R[1]C[1]] => Int32:-2146826273
+App.Evaluate [R2] => com:Range R2 sheet=Sheet1
+App.Evaluate [C2] => com:Range C2 sheet=Sheet1
+Ws1.Evaluate [A1] => com:Range A1 sheet=Sheet1
+Ws2.Evaluate [A1] => com:Range A1 sheet=Other
+Ws1.Evaluate [B1:C2] => com:Range B1:C2 sheet=Sheet1
+Ws2.Evaluate [B1:C2] => com:Range B1:C2 sheet=Other
+Ws1.Evaluate [ROW()] => arr1d 1x1 lb=1 {Double:4}
+Ws2.Evaluate [ROW()] => arr1d 1x1 lb=1 {Double:4}
+Ws1.Evaluate [COLUMN()] => arr1d 1x1 lb=1 {Double:4}
+Ws2.Evaluate [COLUMN()] => arr1d 1x1 lb=1 {Double:4}
+Ws1.Evaluate [CELL("address")] => String:$D$4
+Ws2.Evaluate [CELL("address")] => String:[BookN]Sheet1!$D$4
+Ws1.Evaluate [Other!A1] => com:Range A1 sheet=Other
+Ws2.Evaluate [Other!A1] => com:Range A1 sheet=Other
+Ws1.Evaluate [nm] => com:Range B1:C2 sheet=Sheet1
+Ws2.Evaluate [nm] => Int32:-2146826259
+Ws1.Evaluate [SUM(A1:A3)] => Double:0
+Ws2.Evaluate [SUM(A1:A3)] => Double:9
+Ws1.Evaluate [A1+1] => Double:1
+Ws2.Evaluate [A1+1] => Double:10
+Ws1.Evaluate [OFFSET(A1,1,1)] => com:Range B2 sheet=Sheet1
+Ws2.Evaluate [OFFSET(A1,1,1)] => com:Range B2 sheet=Other
+Ws1.Evaluate [ROW(A5)] => arr1d 1x1 lb=1 {Double:5}
+Ws2.Evaluate [ROW(A5)] => arr1d 1x1 lb=1 {Double:5}
+Ws1.Evaluate [Prop(A1,"Address")] => String:$A$1
+Ws2.Evaluate [Prop(A1,"Address")] => String:$A$1
+Ws1.Evaluate [Self(B1)] => com:Range B1 sheet=Sheet1
+Ws2.Evaluate [Self(B1)] => com:Range B1 sheet=Other
+App.Evaluate [A1] active=Other => com:Range A1 sheet=Other
+App.Evaluate [Sheet1!B1] active=Other => com:Range B1 sheet=Sheet1
+App.Evaluate [nm] active=Other => Int32:-2146826259
+App.Evaluate [ROW()] active=Other => arr1d 1x1 lb=1 {Double:1}
+App.Evaluate [255] => Double:101
+App.Evaluate [256 chars] => String:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+App.Evaluate [300 chars] => Int32:-2146826273
+App.Evaluate [missing] => ERR Cannot find an overload for "Evaluate" and the argument count: "0". [0x80131501]
+App.Evaluate [number] => Double:5
+App.Evaluate [empty] => Int32:-2146826273
+X4M [1+2] => Double:3
+X4M [GET.CELL(5,Sheet1!R1C2)] => Double:1.5
+X4M [Twice(4)] => Boolean:False
+X4M [Self(R1C2)] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "Exception from HRESULT: 0x800A03EC" [0x80131501]
+X4M [ROW()] => Double:2
+X4M [COLUMN()] => Double:2
+X4M [ROW(R7C1)] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "Exception from HRESULT: 0x800A03EC" [0x80131501]
+X4M [NA()] => Int32:-2146826246
+X4M ["x"&"y"] => String:xy
+X4M [SUM(R1C2:R2C3)] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "Exception from HRESULT: 0x800A03EC" [0x80131501]
+X4M [RC] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "Exception from HRESULT: 0x800A03EC" [0x80131501]
+X4M [R1C2] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "Exception from HRESULT: 0x800A03EC" [0x80131501]
+X4M [GET.WORKBOOK(1)] => String:[BookN]Sheet1
+X4M [FOO(1)] => Int32:-2146826259
+X4M [1+] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "This is an incomplete formula. It has an operator, like + or -, not followed by an operand. Try one of the following:
+
+ Add the missing operand to the formula, or delete the extra operator.
+ If this isn't a formula, don't use an equal sign ("=") or a minus sign ("-") at the start of the text, or precede it with a single quote (')." [0x80131501]
+X4M [NOW()>0] => Boolean:True
+RegisterXLL => Boolean:True
+App.Evaluate [XlcDbl(5)] => Double:10
+App.Evaluate [XlcDbl(B1)] => Double:3
+App.Evaluate [XlcDbl(B1:B2)] => Double:3
+App.Evaluate [XlcDbl("x")] => Int32:-2146826273
+App.Evaluate [XlcDbl(1)+XlcDbl(2)] => Int32:-2146826259
+App.Evaluate [XlcType(B1)] => String:sref:0,0,1,1
+App.Evaluate [XlcType(B1:C2)] => String:sref:0,1,1,2
+App.Evaluate [XlcTypeU(B1:C2)] => String:sref:0,1,1,2
+App.Evaluate [XlcArr(1)] => Int32:-2146826273
+App.Evaluate [XlcCaller(1)] => Int32:-2146826273
+App.Evaluate [XlcVol(1)] => Int32:-2146826273
+App.Evaluate [SUM(XlcDbl(1),XlcDbl(2))] => Int32:-2146826259
+App.Evaluate [XlcDbl(ROW())] => Double:8
+App.Evaluate [XlcDbl(1)+1] => Double:3
+App.Evaluate [1+XlcDbl(1)] => Double:3
+App.Evaluate [XlcDbl(XlcDbl(1))] => Double:4
+App.Evaluate [XlcDbl(2)*XlcDbl(2)] => Int32:-2146826259
+App.Evaluate [SUM(XlcDbl(1))] => Double:2
+App.Evaluate [SUM(XlcDbl(1),1)] => Double:3
+App.Evaluate [Twice(1)+Twice(2)] => Int32:-2146826259
+App.Evaluate [SUM(Twice(1),Twice(2))] => Int32:-2146826259
+App.Evaluate [XlcDbl(1)+XlcDbl(1)] => Int32:-2146826259
+App.Evaluate [XlcDbl(1)&XlcDbl(2)] => Int32:-2146826259
+Ws1.Evaluate [XlcDbl(5)] => Double:10
+X4M [XlcDbl(5)] => Double:10
+X4M [XlcDbl(R1C2)] => ERR Exception calling "ExecuteExcel4Macro" with "1" argument(s): "Exception from HRESULT: 0x800A03EC" [0x80131501]
+X4M [XlcDbl(1)+1] => Double:3

@@ -273,7 +273,8 @@ fn ordinal_suffix(n: u64) -> &'static str {
 enum FmtKind {
     Number,
     Date { time: bool },
-    Time,
+
+    Time(bool),
 }
 
 fn fmt_kind(fmt: &str) -> FmtKind {
@@ -284,6 +285,7 @@ fn fmt_kind(fmt: &str) -> FmtKind {
     let mut chars = f.chars().peekable();
 
     let mut toks: Vec<char> = Vec::new();
+    let mut has_hour = false;
     while let Some(c) = chars.next() {
         if in_q {
             if c == '"' {
@@ -293,7 +295,7 @@ fn fmt_kind(fmt: &str) -> FmtKind {
         }
         match c {
             '"' => in_q = true,
-            ';' => break,
+            ';' => sect.push(' '),
             '\\' | '_' | '*' => {
                 chars.next();
             }
@@ -307,6 +309,7 @@ fn fmt_kind(fmt: &str) -> FmtKind {
                 }
                 let t = inner.trim_start_matches(['h', 'm', 's']);
                 if t.is_empty() && !inner.is_empty() {
+                    has_hour |= inner.starts_with('h');
                     toks.push(inner.chars().next().unwrap());
                     sect.push('x');
                 }
@@ -324,6 +327,7 @@ fn fmt_kind(fmt: &str) -> FmtKind {
                 }
             }
             'd' | 'y' | 'm' | 'h' | 's' => {
+                has_hour |= c == 'h';
                 if toks.last() != Some(&c) || sect.ends_with(|x: char| !x.is_alphabetic()) {
                     toks.push(c);
                 }
@@ -372,18 +376,81 @@ fn fmt_kind(fmt: &str) -> FmtKind {
     if has_date {
         FmtKind::Date { time: has_time }
     } else if has_time {
-        FmtKind::Time
+        FmtKind::Time(has_hour)
     } else {
         FmtKind::Number
     }
 }
 
-fn num_class(fmt: &str) -> u8 {
+const CLASS_DATE: u8 = 9;
+
+fn section_for(fmt: &str, n: f64) -> &str {
+    let mut secs: Vec<&str> = Vec::new();
+    let (mut start, mut in_q, mut esc) = (0, false, false);
+    for (i, c) in fmt.char_indices() {
+        if esc {
+            esc = false;
+        } else if in_q {
+            in_q = c != '"';
+        } else if c == '"' {
+            in_q = true;
+        } else if matches!(c, '\\' | '_' | '*') {
+            esc = true;
+        } else if c == ';' {
+            secs.push(&fmt[start..i]);
+            start = i + 1;
+        }
+    }
+    secs.push(&fmt[start..]);
+    let cond = |sec: &str| -> Option<bool> {
+        let mut rest = sec;
+        while let Some(rem) = rest.strip_prefix('[') {
+            let end = rem.find(']')?;
+            let tag = &rem[..end];
+            rest = &rem[end + 1..];
+            let op_len = tag.chars().take_while(|c| "<>=".contains(*c)).count();
+            if op_len == 0 {
+                continue;
+            }
+            let lim: f64 = tag[op_len..].trim().parse().ok()?;
+            return Some(match &tag[..op_len] {
+                "<" => n < lim,
+                "<=" => n <= lim,
+                ">" => n > lim,
+                ">=" => n >= lim,
+                "<>" => n != lim,
+                _ => n == lim,
+            });
+        }
+        None
+    };
+    let conds: Vec<Option<bool>> = secs.iter().map(|s| cond(s)).collect();
+    let any_cond = conds.iter().any(Option::is_some);
+    for (i, sec) in secs.iter().enumerate() {
+        let hit = match conds[i] {
+            Some(b) => b,
+            None if i + 1 == secs.len() => true,
+            None if any_cond => i > 0 && conds[0].is_some() || i == 0,
+            None => match (i, secs.len()) {
+                (0, 2) => n >= 0.0,
+                (0, _) => n > 0.0,
+                (1, _) => n < 0.0,
+                _ => true,
+            },
+        };
+        if hit {
+            return sec;
+        }
+    }
+    secs[0]
+}
+
+fn num_class(fmt: &str, n: f64) -> u8 {
     let f = fmt.trim();
     if f.eq_ignore_ascii_case("general") {
         return 0;
     }
-    let first = f.split(';').next().unwrap_or("");
+    let first = section_for(f, n);
     if first.to_ascii_lowercase().ends_with("]general") && first.starts_with("[$-") {
         return 8;
     }
@@ -424,13 +491,17 @@ fn num_class(fmt: &str) -> u8 {
     let lower = plain.to_ascii_lowercase();
     if plain.contains('*') {
         7
+    } else if let Some(slash) = plain.find('/') {
+        if plain[..slash].contains(['#', '0']) {
+            5
+        } else {
+            1
+        }
     } else if plain.contains('%') {
         2
     } else if lower.contains("e+") || lower.contains("e-") {
         4
-    } else if plain.contains('/') {
-        5
-    } else if currency || plain.contains(['$', '\u{20ac}', '\u{a3}', '\u{a5}']) {
+    } else if currency || plain.contains('$') {
         3
     } else if plain.contains('@') {
         6
@@ -452,7 +523,8 @@ enum Kind {
 
     Num(f64, u8),
     Date { v: f64, time: bool, months: bool },
-    Time(f64),
+
+    Time(f64, bool),
     Text(TextNum),
     List(ListItem),
 }
@@ -461,7 +533,7 @@ fn same_group(a: &Kind, b: &Kind) -> bool {
     match (a, b) {
         (Kind::Num(..), Kind::Num(..)) => true,
         (Kind::Date { .. }, Kind::Date { .. }) => true,
-        (Kind::Time(_), Kind::Time(_)) => true,
+        (Kind::Time(_, a), Kind::Time(_, b)) => a == b,
         (Kind::Text(x), Kind::Text(y)) => {
             x.prefix == y.prefix && x.suffix == y.suffix && x.ordinal == y.ordinal
         }
@@ -564,6 +636,8 @@ struct Ctx {
     len: usize,
 
     shared: Vec<bool>,
+
+    shared_time: Vec<bool>,
     nlines: usize,
     sys: crate::datetime::DateSystem,
 }
@@ -690,6 +764,12 @@ pub(crate) fn date_in_month(sys: crate::datetime::DateSystem, mi: i64, dom: u32,
     serial_from_ymd(sys, y, m as i64, d as i64)
 }
 
+fn line_shared(l: u32, nlines: u32, len: u32, numeric_at: &dyn Fn(u32, u32) -> bool) -> Vec<bool> {
+    (0..len)
+        .map(|s| (l > 0 && numeric_at(l - 1, s)) || (l + 1 < nlines && numeric_at(l + 1, s)))
+        .collect()
+}
+
 impl Ctx {
     fn increments_single(&self, slot: usize) -> bool {
         !matches!(self.ty, FillType::Default | FillType::Values)
@@ -712,14 +792,14 @@ fn group_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> 
                 .collect();
             numeric_value(ctx, slots, &ys, k, p, false, false)
         }
-        Kind::Time(_) => {
+        Kind::Time(..) => {
             if matches!(ty, FillType::Linear | FillType::Growth) {
                 return None;
             }
             let ys: Vec<f64> = slots
                 .iter()
                 .map(|&s| match items[s] {
-                    Kind::Time(v) => v,
+                    Kind::Time(v, _) => v,
                     _ => 0.0,
                 })
                 .collect();
@@ -727,7 +807,8 @@ fn group_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> 
                 if matches!(
                     ty,
                     FillType::Default | FillType::Series | FillType::Values | FillType::Linear
-                ) {
+                ) && !ctx.shared_time.get(slots[0]).copied().unwrap_or(false)
+                {
                     return Some(Value::Number(round15(ys[0] + (ctx.sign * p) as f64 / 24.0)));
                 }
                 return None;
@@ -741,9 +822,19 @@ fn group_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> 
                 if fr.iter().all(|f| (f - fr[0]).abs() < TOD_STEP) {
                     let f0 = fr[0];
                     fr.fill(f0);
+                } else if let [f0, f1] = &mut fr[..] {
+                    *f1 = *f0 + (ys[1] - ys[0]).fract();
                 }
                 match numeric_value(ctx, slots, &fr, k, p, false, false)? {
-                    Value::Number(n) => Some(Value::Number(round15(ys[0] - fr[0] + n))),
+                    Value::Number(n) => {
+                        let v = ys[0] - fr[0] + n;
+
+                        Some(Value::Number(round15(if v < 0.0 {
+                            v - v.floor()
+                        } else {
+                            v
+                        })))
+                    }
                     v => Some(v),
                 }
             }
@@ -1015,6 +1106,14 @@ enum DMode {
     YearShift { eom: bool, dom: u32 },
 }
 
+fn wrap_day_step(slope: f64) -> f64 {
+    if slope.fract() == 0.0 && slope.abs() < 1e15 {
+        f64::from(slope as i64 as i16)
+    } else {
+        slope
+    }
+}
+
 fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> Option<Value> {
     let sys = ctx.sys;
     let m = slots.len();
@@ -1022,8 +1121,12 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
     if matches!(ty, FillType::Linear | FillType::Growth) {
         return None;
     }
-    let (time, months_fmt) = match &items[slots[0]] {
-        Kind::Date { time, months, .. } => (*time, *months),
+
+    let time = slots
+        .iter()
+        .any(|&s| matches!(items[s], Kind::Date { time: true, .. }));
+    let months_fmt = match &items[slots[0]] {
+        Kind::Date { months, .. } => *months,
         _ => return None,
     };
     let raw: Vec<f64> = slots
@@ -1185,11 +1288,26 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
         DMode::Cycle => return None,
         DMode::Days { slope } => {
             let x = if m == 1 { pf } else { x_new };
+            let slope = wrap_day_step(slope);
 
             let mut v = dv[0] + slope * x;
             if time && matches!(ty, FillType::Default | FillType::Series | FillType::Values) {
-                let tt: Vec<i64> = raw.iter().map(|&r| tod_units(r)).collect();
-                let series = if m == 1 {
+                let mut tt: Vec<i64> = raw.iter().map(|&r| tod_units(r)).collect();
+
+                let timed: Vec<usize> = (0..m)
+                    .filter(|&j| matches!(items[slots[j]], Kind::Date { time: true, .. }))
+                    .collect();
+                let series = if timed.len() < m {
+                    let last = tt[*timed.last().unwrap_or(&0)];
+                    tt[0] = last;
+                    Some((
+                        wrap_day_step(
+                            (ints[m - 1] - ints[0]) as f64
+                                / (coords(slots).xs[m - 1] - coords(slots).xs[0]),
+                        ),
+                        0.0,
+                    ))
+                } else if m == 1 {
                     Some((slope, 0.0))
                 } else {
                     let c = coords(slots);
@@ -1198,7 +1316,7 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
                     let idf: Vec<f64> = ints.iter().map(|&i| i as f64).collect();
                     let dt = (tt[m - 1] - tt[0]) as f64 / dx;
                     (linear_in(&c.xs, &idf) && linear_in(&c.xs, &ttf) && dt.fract() == 0.0)
-                        .then(|| ((ints[m - 1] - ints[0]) as f64 / dx, dt))
+                        .then(|| (wrap_day_step((ints[m - 1] - ints[0]) as f64 / dx), dt))
                 };
                 if let Some((day_slope, td)) = series {
                     v = (ints[0] as f64 + day_slope * x)
@@ -1264,7 +1382,7 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
         }
     };
 
-    if v < 0.0 && !matches!(mode, DMode::Days { .. }) {
+    if v < 0.0 {
         return None;
     }
     Some(Value::Number(v))
@@ -1403,7 +1521,7 @@ fn plan_terms(ctx: &Ctx, items: &[Kind], total: usize) -> Vec<Act> {
         .map(|q| {
             let (s, p) = (q % len, (q / len) as i64);
             match group_of[s] {
-                Some(_) if p == 0 && !matches!(items[s], Kind::Num(..) | Kind::Time(_)) => {
+                Some(_) if p == 0 && !matches!(items[s], Kind::Num(..) | Kind::Time(..)) => {
                     Act::Copy(s)
                 }
                 Some((g, k)) => match group_value(ctx, items, &groups[g], k, p) {
@@ -1429,11 +1547,14 @@ impl Workbook {
                 Value::Number(n) => {
                     let fmt = self.number_format(addr);
                     match fmt_kind(fmt) {
-                        FmtKind::Date { .. } | FmtKind::Time if *n < 0.0 => {
-                            Kind::Num(*n, num_class(fmt))
+                        FmtKind::Date { .. }
+                            if *n < 0.0 || *n >= self.settings.date_system.max_serial() + 1.0 =>
+                        {
+                            Kind::Num(*n, CLASS_DATE)
                         }
-                        FmtKind::Number => Kind::Num(*n, num_class(fmt)),
-                        FmtKind::Time => Kind::Time(*n),
+                        FmtKind::Time(_) if *n < 0.0 => Kind::Num(*n, CLASS_DATE),
+                        FmtKind::Number => Kind::Num(*n, num_class(fmt, *n)),
+                        FmtKind::Time(h) => Kind::Time(*n, h),
                         FmtKind::Date { time } => Kind::Date {
                             v: *n,
                             time,
@@ -1669,17 +1790,21 @@ impl Workbook {
         let numeric_at = |l: u32, s: u32| -> bool {
             matches!(
                 self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)),
-                Kind::Num(..) | Kind::Date { .. } | Kind::Time(_)
+                Kind::Num(..)
             )
         };
-        let shared: Vec<bool> = (0..h)
-            .map(|s| (0..w).filter(|&l| numeric_at(l, s)).count() > 1)
-            .collect();
+        let time_at = |l: u32, s: u32| -> bool {
+            matches!(
+                self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)),
+                Kind::Date { .. } | Kind::Time(..)
+            )
+        };
         let ctx = Ctx {
             ty,
             sign: 1,
             len: h as usize,
-            shared,
+            shared: Vec::new(),
+            shared_time: Vec::new(),
             nlines: w as usize,
             sys: self.settings.date_system,
         };
@@ -1691,6 +1816,11 @@ impl Workbook {
                 let items: Vec<Kind> = (0..h)
                     .map(|s| self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)))
                     .collect();
+                let ctx = Ctx {
+                    shared: line_shared(l, w, h, &numeric_at),
+                    shared_time: line_shared(l, w, h, &time_at),
+                    ..ctx.clone()
+                };
                 if !lone {
                     let acts = plan_terms(&ctx, &items, periods * h as usize);
                     return (0..h as usize)
@@ -1710,6 +1840,7 @@ impl Workbook {
                             len: 1,
                             nlines: 1,
                             shared: vec![false],
+                            shared_time: vec![false],
                             ..ctx.clone()
                         };
                         plan_terms(&one, &items[s..=s], periods)
@@ -1986,19 +2117,26 @@ impl Workbook {
                 Dir::Right => (src.r0 + l, src.c0 + s),
                 Dir::Left => (src.r0 + l, src.c1 - s),
             };
+            matches!(self.fill_kind(CellAddr::new(sheet, r, c)), Kind::Num(..))
+        };
+        let time_at = |l: u32, s: u32| -> bool {
+            let (r, c) = match dir {
+                Dir::Down => (src.r0 + s, src.c0 + l),
+                Dir::Up => (src.r1 - s, src.c0 + l),
+                Dir::Right => (src.r0 + l, src.c0 + s),
+                Dir::Left => (src.r0 + l, src.c1 - s),
+            };
             matches!(
                 self.fill_kind(CellAddr::new(sheet, r, c)),
-                Kind::Num(..) | Kind::Date { .. } | Kind::Time(_)
+                Kind::Date { .. } | Kind::Time(..)
             )
         };
-        let shared: Vec<bool> = (0..len)
-            .map(|s| (0..nlines).filter(|&l| numeric_at(l, s)).count() > 1)
-            .collect();
         let ctx = Ctx {
             ty,
             sign: dir.sign(),
             len: len as usize,
-            shared,
+            shared: Vec::new(),
+            shared_time: Vec::new(),
             nlines: nlines as usize,
             sys: self.settings.date_system,
         };
@@ -2019,6 +2157,11 @@ impl Workbook {
                     self.fill_kind(CellAddr::new(sheet, r, c))
                 })
                 .collect();
+            let ctx = Ctx {
+                shared_time: line_shared(l, nlines, len, &time_at),
+                shared: line_shared(l, nlines, len, &numeric_at),
+                ..ctx.clone()
+            };
             plans.push(plan_line(&ctx, &items, count as usize));
         }
         if dir == Dir::Down {

@@ -1,0 +1,30 @@
+Option Explicit
+Private WithEvents Src As R9Src
+Public Hits As String
+
+Public Sub Attach(ByVal s As R9Src)
+    Set Src = s
+End Sub
+
+Public Sub Detach()
+    Set Src = Nothing
+End Sub
+
+Private Sub Src_Ev1(ByVal n As Long, res As String)
+    Hits = Hits & "[bk1:" & n & "]"
+    res = res & "B" & n
+End Sub
+
+Private Sub Src_Ev2(a As Long, b As Variant)
+    Hits = Hits & "[bk2:" & a & "]"
+    a = a - 1
+End Sub
+
+Private Sub Src_Ev3()
+    Hits = Hits & "[bk3]"
+End Sub
+
+Public Function GetHits() As String
+    GetHits = Hits
+    Hits = ""
+End Function

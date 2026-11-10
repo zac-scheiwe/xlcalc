@@ -48,10 +48,16 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let months = (12 / freq) as i64;
         let f = days::ymd(sys, first);
         let eom = f.d >= days::dim(f.y, f.m);
+
+        let out_of_range = std::cell::Cell::new(false);
         let adj = |s: i64, k: i64| {
             let d = days::ymd(sys, s);
             let (y, m, dd) = days::add_months(d.y, d.m, d.d, k, eom);
-            days::serial(sys, y, m, dd)
+            let r = days::serial(sys, y, m, dd);
+            if !(1..=2_958_465).contains(&r) {
+                out_of_range.set(true);
+            }
+            r
         };
 
         let cnt = |x: i64, y: i64, period: bool, count: bool| -> f64 {
@@ -95,6 +101,9 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             }
             cur = prev;
         }
+        if out_of_range.get() {
+            return Err(XlError::NUM);
+        }
         finite(x87::mul(x87::mul(par, x87::div(rate, freq as f64)), acc))
     })())
 }
@@ -116,11 +125,11 @@ pub fn accrintm(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 }
 
 fn disc_args(ctx: &EvalCtx, a: &[Arg]) -> R<(i64, i64, f64, f64, Basis)> {
+    let b = basis_of(ctx, a, 4)?;
     let settle = atp::date(ctx, a, 0)?;
     let mat = atp::date(ctx, a, 1)?;
     let x = atp::req(ctx, a, 2)?;
     let y = atp::req(ctx, a, 3)?;
-    let b = basis_of(ctx, a, 4)?;
     if settle >= mat {
         return Err(XlError::NUM);
     }
@@ -135,7 +144,7 @@ pub fn disc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         let q = x87::sub(1.0, x87::div(pr, redemption));
-        finite(x87::mul(q, x87::div(b.year(s, m), b.days(s, m))))
+        finite(x87::mul(q, x87::div(b.year(s, m), b.days_dsm(s, m))))
     })())
 }
 
@@ -147,7 +156,7 @@ pub fn intrate(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         let t = x87::div(x87::sub(redemption, inv), inv);
-        finite(x87::mul(x87::div(b.year(s, m), b.days(s, m)), t))
+        finite(x87::mul(x87::div(b.year(s, m), b.days_dsm(s, m)), t))
     })())
 }
 
@@ -160,7 +169,7 @@ pub fn received(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 
         let d = x87::sub(
             1.0,
-            x87::div(x87::mul(discount, b.days(s, m)), b.year(s, m)),
+            x87::div(x87::mul(discount, b.days_dsm(s, m)), b.year(s, m)),
         );
         if d <= 0.0 {
             return Err(XlError::NUM);
@@ -177,7 +186,7 @@ pub fn pricedisc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         let t = x87::div(
-            x87::mul(x87::mul(discount, redemption), b.days(s, m)),
+            x87::mul(x87::mul(discount, redemption), b.days_dsm(s, m)),
             b.year(s, m),
         );
         finite(x87::sub(redemption, t))
@@ -192,17 +201,17 @@ pub fn yielddisc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         let t = x87::div(x87::sub(redemption, pr), pr);
-        finite(x87::mul(x87::div(b.year(s, m), b.days(s, m)), t))
+        finite(x87::mul(x87::div(b.year(s, m), b.days_dsm(s, m)), t))
     })())
 }
 
 fn mat_args(ctx: &EvalCtx, a: &[Arg]) -> R<(i64, i64, i64, f64, f64, Basis)> {
+    let b = basis_of(ctx, a, 5)?;
     let settle = atp::date(ctx, a, 0)?;
     let mat = atp::date(ctx, a, 1)?;
     let issue = atp::date(ctx, a, 2)?;
     let rate = atp::req(ctx, a, 3)?;
     let x = atp::req(ctx, a, 4)?;
-    let b = basis_of(ctx, a, 5)?;
     if settle >= mat || issue >= settle || rate < 0.0 {
         return Err(XlError::NUM);
     }
@@ -357,7 +366,7 @@ fn bond(ctx: &EvalCtx, settle: i64, mat: i64, freq: f64, a: &[Arg], bi: usize) -
     }
     let c = days::coupons(b.sys, settle, mat, freq);
 
-    if c.pcd < 0 {
+    if c.pcd < 1 {
         return Err(XlError::NUM);
     }
     Ok(Bond {

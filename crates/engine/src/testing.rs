@@ -143,3 +143,7 @@ pub fn visit_sum(wb: &Workbook, host: CellAddr, sheet: SheetId, rect: Rect) -> f
     });
     acc
 }
+
+pub fn escape_column(name: &str) -> String {
+    crate::workbook::tables::escape_column(name)
+}

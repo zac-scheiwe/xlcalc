@@ -41,6 +41,8 @@ pub(crate) struct Instance {
     pub terminating: bool,
 
     pub keys: Vec<Option<String>>,
+
+    pub log: Vec<(bool, usize)>,
 }
 
 pub(crate) struct Item {
@@ -111,7 +113,7 @@ impl Exec<'_> {
         self.class_of_type(ty).is_some()
     }
 
-    fn class_of_key(&self, key: u64) -> Result<usize, VbaError> {
+    pub(super) fn class_of_key(&self, key: u64) -> Result<usize, VbaError> {
         self.st
             .instances
             .get(&key)
@@ -296,6 +298,7 @@ impl Exec<'_> {
                 seq: vec![0; n],
                 terminating: false,
                 keys: Vec::new(),
+                log: Vec::new(),
             },
         );
         let id = make_id(key, 0);
@@ -462,6 +465,10 @@ impl Exec<'_> {
                             let k = super::flat(&a.bounds, &ns)?;
                             Ok(a.data[k].clone())
                         }
+
+                        v if !matches!(v, Variant::Dispatch(_) | Variant::Unknown(_)) => {
+                            Err(VbaError::new(451))
+                        }
                         v => {
                             let o = Self::object_id(&v)?;
                             self.invoke(o, "", InvokeKind::Get, pos, Vec::new())
@@ -489,8 +496,24 @@ impl Exec<'_> {
             InvokeKind::PutRef => member.set,
         };
         let Some(p) = proc.filter(|&p| visible(p)) else {
+            if kind == InvokeKind::Put && member.get.is_some_and(visible) {
+                if let Some(g) = member.get {
+                    if code.procs[g].kind != crate::ast::ProcKind::PropertyGet {
+                        return Err(VbaError::new(if items.is_empty() { 446 } else { 450 }));
+                    }
+                }
+                return Err(VbaError::new(451));
+            }
             return Err(VbaError::new(438));
         };
+
+        if kind == InvokeKind::Get
+            && code.procs[p].kind == crate::ast::ProcKind::PropertyGet
+            && items.len() > code.procs[p].params.len()
+            && !code.procs[p].params.iter().any(|q| q.param_array)
+        {
+            return Err(VbaError::new(451));
+        }
         let cells = self.bind_items(&code.procs[p].params, items)?;
         self.run(p, cells, me, None)
     }
@@ -596,12 +619,20 @@ impl Exec<'_> {
                 seq: Vec::new(),
                 terminating: false,
                 keys: Vec::new(),
+                log: Vec::new(),
             },
         );
         let id = make_id(key, 0);
         let depth = self.st.frames.len();
         self.st.pins.push((depth, id));
         id
+    }
+
+    pub(super) fn collection_log(&self, id: ObjectId) -> Vec<(bool, usize)> {
+        instance_of(id)
+            .and_then(|(key, _)| self.st.instances.get(&key))
+            .map(|x| x.log.clone())
+            .unwrap_or_default()
     }
 
     pub(super) fn collection_items(&self, id: ObjectId) -> Option<Vec<Variant>> {
@@ -618,20 +649,32 @@ impl Exec<'_> {
         })
     }
 
-    fn collection_pos(&self, key: u64, index: &Variant) -> Result<usize, VbaError> {
+    fn collection_pos(&self, key: u64, index: &Variant, remove: bool) -> Result<usize, VbaError> {
         let x = &self.st.instances[&key];
         if let Variant::Bstr(s) = index {
             return x
                 .keys
                 .iter()
-                .position(|k| k.as_ref().is_some_and(|k| k.eq_ignore_ascii_case(s)))
+                .position(|k| k.as_ref().is_some_and(|k| self.same_key(k, s)))
                 .ok_or_else(|| VbaError::new(5));
         }
         let n = self.cv.to_i64(&super::Val::V(index.clone()))?;
         usize::try_from(n - 1)
             .ok()
             .filter(|&i| i < x.fields.len())
-            .ok_or_else(|| VbaError::new(9))
+            .ok_or_else(|| VbaError::new(if remove && x.fields.is_empty() { 5 } else { 9 }))
+    }
+
+    fn same_key(&self, a: &str, b: &str) -> bool {
+        matches!(
+            super::ops::var_cmp(
+                &Variant::Bstr(a.to_string()),
+                &Variant::Bstr(b.to_string()),
+                true,
+                self.cv.locale
+            ),
+            Ok(Some(std::cmp::Ordering::Equal))
+        )
     }
 
     fn collection_member(
@@ -644,7 +687,9 @@ impl Exec<'_> {
         if kind != InvokeKind::Get {
             return Err(VbaError::new(438));
         }
-        let name = if name.is_empty() { "item" } else { name }.to_ascii_lowercase();
+
+        let implicit = name.is_empty();
+        let name = if implicit { "item" } else { name }.to_ascii_lowercase();
         let order: &[&str] = match name.as_str() {
             "add" => &["item", "key", "before", "after"],
             "count" => &[],
@@ -673,8 +718,10 @@ impl Exec<'_> {
                 Ok(Variant::I4(n as i32))
             }
             "item" | "remove" => {
-                let index = args[0].take().ok_or_else(|| VbaError::new(449))?;
-                let at = self.collection_pos(key, &index)?;
+                let index = args[0]
+                    .take()
+                    .ok_or_else(|| VbaError::new(if implicit { 450 } else { 449 }))?;
+                let at = self.collection_pos(key, &index, name == "remove")?;
                 if name == "item" {
                     return match &self.st.instances[&key].fields[at] {
                         Cell::Own(s) => Ok(s.val.clone()),
@@ -684,6 +731,7 @@ impl Exec<'_> {
                 if let Some(x) = self.st.instances.get_mut(&key) {
                     x.fields.remove(at);
                     x.keys.remove(at);
+                    x.log.push((true, at));
                 }
                 self.st.dirty = true;
                 Ok(Variant::Empty)
@@ -699,21 +747,28 @@ impl Exec<'_> {
                     let taken = self.st.instances[&key]
                         .keys
                         .iter()
-                        .any(|o| o.as_ref().is_some_and(|o| o.eq_ignore_ascii_case(k)));
+                        .any(|o| o.as_ref().is_some_and(|o| self.same_key(o, k)));
                     if taken {
                         return Err(VbaError::new(457));
                     }
                 }
                 let at = match (args[2].take(), args[3].take()) {
                     (Some(_), Some(_)) => return Err(VbaError::new(5)),
-                    (Some(b), None) => self.collection_pos(key, &b)?,
-                    (None, Some(a)) => self.collection_pos(key, &a)? + 1,
+
+                    (Some(_), None) | (None, Some(_))
+                        if self.st.instances[&key].fields.is_empty() =>
+                    {
+                        return Err(VbaError::new(5))
+                    }
+                    (Some(b), None) => self.collection_pos(key, &b, false)?,
+                    (None, Some(a)) => self.collection_pos(key, &a, false)? + 1,
                     (None, None) => self.st.instances[&key].fields.len(),
                 };
                 let cell = Cell::Own(super::Slot::value(VType::Variant, item));
                 if let Some(x) = self.st.instances.get_mut(&key) {
                     x.fields.insert(at, cell);
                     x.keys.insert(at, ckey);
+                    x.log.push((false, at));
                 }
                 Ok(Variant::Empty)
             }

@@ -1,4 +1,4 @@
-use crate::address::{CellAddr, Rect, SheetId};
+use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
 use crate::calc::{self, RecalcReport};
 use crate::value::Value;
 use crate::workbook::Command;
@@ -64,6 +64,8 @@ pub struct SubtotalSpec {
     pub replace: bool,
 
     pub below: bool,
+
+    pub page_breaks: bool,
 }
 
 fn generic_error() -> EditError {
@@ -137,7 +139,7 @@ impl Workbook {
         }
     }
 
-    fn subtotal_rows(&self, sheet: SheetId, rect: Rect) -> Vec<u32> {
+    pub(crate) fn subtotal_rows(&self, sheet: SheetId, rect: Rect) -> Vec<u32> {
         (rect.r0..=rect.r1)
             .filter(|&r| {
                 (rect.c0..=rect.c1).any(|c| {
@@ -158,6 +160,10 @@ impl Workbook {
         Ok(())
     }
 
+    fn drop_total_break(&mut self, sheet: SheetId, row: u32) {
+        self.delete_page_break(sheet, true, row + 1);
+    }
+
     pub fn remove_subtotal(
         &mut self,
         sheet: SheetId,
@@ -166,7 +172,7 @@ impl Workbook {
         self.command(Command::Subtotal, |wb| wb.remove_subtotal_run(sheet, rect))
     }
 
-    fn remove_subtotal_run(
+    pub(crate) fn remove_subtotal_run(
         &mut self,
         sheet: SheetId,
         rect: Rect,
@@ -189,6 +195,7 @@ impl Workbook {
         self.settings.mode = CalcMode::Manual;
         let mut res = Ok(());
         for &r in rows.iter().rev() {
+            self.drop_total_break(sheet, r);
             match self.delete_rows(sheet, r, 1) {
                 Ok(rep) => report.changed.extend(rep.changed),
                 Err(e) => {
@@ -232,6 +239,9 @@ impl Workbook {
         let autosel = rect.is_cell();
         let mut rect = if autosel {
             self.current_region(sheet, rect)
+        } else if rect.r0 == 0 && rect.c0 == 0 && rect.r1 + 1 == MAX_ROWS && rect.c1 + 1 == MAX_COLS
+        {
+            self.used_range(sheet).ok_or_else(generic_error)?
         } else {
             rect
         };
@@ -328,7 +338,8 @@ impl Workbook {
         self.note_cell_format(CellAddr::new(sheet, rect.r0, rect.c0));
 
         let outline = !self.filter_mode(sheet);
-        if outline {
+
+        if outline && spec.replace {
             self.set_subtotal_levels(sheet, rect.r0, rect.r1, None);
         }
         let mut old = self.subtotal_rows(sheet, *rect);
@@ -338,7 +349,23 @@ impl Workbook {
         } else {
             std::mem::take(&mut old)
         };
+
+        let has_levels = self.views.get(&sheet).is_some_and(|v| !v.levels.is_empty());
+        let below = if existing.is_empty() && !(has_levels && self.filter_mode(sheet)) {
+            spec.below
+        } else {
+            !self.outline_settings(sheet).0
+        };
+        let spec = &SubtotalSpec {
+            below,
+            ..spec.clone()
+        };
+        {
+            let (_, left, styles) = self.outline_settings(sheet);
+            self.set_outline_settings(sheet, !below, left, styles);
+        }
         for &r in old.iter().rev() {
+            self.drop_total_break(sheet, r);
             let rep = self.delete_rows(sheet, r, 1)?;
             report.changed.extend(rep.changed);
         }
@@ -348,10 +375,34 @@ impl Workbook {
             return Err(generic_error());
         }
         let mut c0 = rect.c0;
-        let last = rect.r1;
+        let mut last = rect.r1;
+
+        let blank_row = |wb: &Workbook, r: u32| {
+            (rect.c0..=rect.c1).all(|c| wb.sheet(sheet).unwrap().cells.get(r, c).is_none())
+        };
+
+        let in_filter = |wb: &Workbook, r: u32| {
+            wb.views.get(&sheet).is_some_and(|v| {
+                v.filters
+                    .iter()
+                    .any(|f| f.table.is_none() && f.rect.r0 <= r && r <= f.rect.r1)
+            })
+        };
+
+        let used = self.view_used_r1(sheet);
+        while last > first
+            && ((blank_row(self, last) && !in_filter(self, last) && used.is_none_or(|u| last > u))
+                || (existing.contains(&last) && self.row_level(sheet, last) == 1))
+        {
+            last -= 1;
+        }
         if first > last {
             return Ok(Vec::new());
         }
+
+        let grand_in_range = existing
+            .iter()
+            .any(|&r| r > last && r <= rect.r1 && self.row_level(sheet, r) == 1);
 
         let lcol = c0;
         if spec.totals.contains(&spec.group) {
@@ -383,9 +434,32 @@ impl Workbook {
         let mut cur: Option<(u32, u32, String)> = None;
         for r in first..=last {
             if existing.contains(&r) {
+                if let Some((a, b, ck)) = cur.take() {
+                    if !ck.is_empty() && !all_hidden(self, a, b) {
+                        let label = self.display_text(CellAddr::new(sheet, a, gcol));
+                        runs.push(Run { a, b, label });
+                    }
+                }
                 continue;
             }
             let k = key(self, r);
+
+            if !spec.below && k.is_empty() {
+                if let Some((a, b, ck)) = cur.take() {
+                    if !ck.is_empty() && !all_hidden(self, a, b) {
+                        let label = self.display_text(CellAddr::new(sheet, a, gcol));
+                        runs.push(Run { a, b, label });
+                    }
+                }
+                if !all_hidden(self, r, r) {
+                    runs.push(Run {
+                        a: r,
+                        b: r,
+                        label: String::new(),
+                    });
+                }
+                continue;
+            }
             match &mut cur {
                 Some((_, b, ck)) if *ck == k => *b = r,
                 _ => {
@@ -407,12 +481,49 @@ impl Workbook {
         }
 
         let mut at: std::collections::BTreeMap<u32, u32> = std::collections::BTreeMap::new();
-        for run in &runs {
-            *at.entry(if spec.below { run.b + 1 } else { run.a })
+
+        let ins_at = |wb: &Workbook, run: &Run| -> u32 {
+            if spec.below {
+                return run.b + 1;
+            }
+            let lab = run.label.trim().to_lowercase();
+            let mut p = run.a;
+            while p > first
+                && existing.contains(&(p - 1))
+                && !lab.is_empty()
+                && wb
+                    .display_text(CellAddr::new(sheet, p - 1, gcol))
+                    .trim()
+                    .to_lowercase()
+                    .starts_with(&lab)
+            {
+                p -= 1;
+            }
+            p
+        };
+        let ins_pts: Vec<u32> = runs.iter().map(|r| ins_at(self, r)).collect();
+        for &p in &ins_pts {
+            *at.entry(p).or_default() += 1;
+        }
+
+        let (code_n, _) = spec.function.code_name();
+        let grand_dup = existing.iter().copied().find(|&r| {
+            let lc = if lcol < c0 { lcol } else { gcol };
+            let t = c0 + spec.totals[0] - 1;
+            self.display_text(CellAddr::new(sheet, r, lc))
+                .to_lowercase()
+                .starts_with("grand")
+                && self
+                    .formula_text(CellAddr::new(sheet, r, t))
+                    .is_some_and(|f| {
+                        f.to_ascii_uppercase()
+                            .starts_with(&format!("=SUBTOTAL({code_n},"))
+                    })
+        });
+        if grand_dup.is_none() {
+            *at.entry(if spec.below { last + 1 } else { first })
                 .or_default() += 1;
         }
-        *at.entry(if spec.below { last + 1 } else { first })
-            .or_default() += 1;
         for (_, b) in self.array_blocks(sheet) {
             if at.keys().any(|&p| b.r0 < p && p <= b.r1) {
                 return Err(crate::cse::part_of_array());
@@ -433,11 +544,16 @@ impl Workbook {
         let shift = |r: u32| -> u32 { at.range(..=r).map(|(_, n)| n).sum::<u32>() };
         let below_shift = |r: u32| -> u32 { at.range(..r).map(|(_, n)| n).sum::<u32>() };
 
+        let old_breaks = self.views.get(&sheet).map(|v| v.hbreaks.clone());
         let mut added = 0;
         for (&p, &n) in at.iter() {
             let rep = self.insert_rows_raw(sheet, p + added, n)?;
             report.changed.extend(rep.changed);
             added += n;
+        }
+
+        if let (false, Some(ob)) = (spec.below, old_breaks) {
+            self.view_mut(sheet).hbreaks = ob.iter().map(|&r| r + below_shift(r)).collect();
         }
         let (code, name) = spec.function.code_name();
 
@@ -493,33 +609,109 @@ impl Workbook {
             }
             Ok(())
         };
-        let (fa, fb) = (fin(first), fin(last));
+        let (fb, fa) = (
+            fin(last),
+            (first..=last)
+                .find(|r| !existing.contains(r))
+                .map_or(fin(first), fin),
+        );
         let mut run_rows = Vec::new();
-        for run in &runs {
+        for (run, &p) in runs.iter().zip(&ins_pts) {
             let (a, b) = (fin(run.a), fin(run.b));
 
-            let row = if spec.below { b + 1 } else { a - 1 };
+            let row = if spec.below {
+                b + 1
+            } else if p < run.a {
+                p + below_shift(p) + u32::from(p == first)
+            } else {
+                a - 1
+            };
             put(self, row, &format!("{} {}", run.label, name), a, b)?;
             run_rows.push(row);
         }
-        let grand = if spec.below {
+        let grand = if let Some(g) = grand_dup {
+            fin(g)
+        } else if spec.below {
             fb + at.get(&(last + 1)).copied().unwrap_or(0)
         } else {
             first + below_shift(first)
         };
+
+        if spec.page_breaks {
+            for (run, &t) in runs.iter().zip(&run_rows) {
+                if spec.below {
+                    self.add_page_break(sheet, true, t + 1 + u32::from(grand == t + 1));
+                } else if Some(run.a) != runs.first().map(|r| r.a) {
+                    self.add_page_break(sheet, true, t);
+                }
+            }
+        }
         let data_end = (first..=last)
             .rev()
             .find(|r| !existing.contains(r))
             .map_or(fb, fin);
 
-        put(self, grand, &format!("Grand {name}"), fa, data_end)?;
+        if grand_dup.is_none() {
+            put(self, grand, &format!("Grand {name}"), fa, data_end)?;
+        }
 
         let lo = run_rows.iter().copied().chain([fa]).min().unwrap();
         let hi = run_rows.iter().copied().chain([fb]).max().unwrap();
         if outline {
-            self.set_subtotal_levels(sheet, lo, hi, Some(2));
-            for r in run_rows {
-                self.set_subtotal_levels(sheet, r, r, Some(1));
+            let kept: std::collections::BTreeSet<u32> = existing.iter().map(|&r| fin(r)).collect();
+            let lv = |wb: &Workbook, r: u32| wb.row_level(sheet, r).saturating_sub(1) as u8;
+            let grand_base = lv(self, fb);
+            let trailing_blank = spec.below && runs.last().is_none_or(|r| fin(r.b) < fb);
+            let all_rows: std::collections::BTreeSet<u32> = run_rows.iter().copied().collect();
+            let mut data_lv: Vec<(u32, u8)> = Vec::new();
+            for (run, &t) in runs.iter().zip(&run_rows) {
+                let (a, b) = (fin(run.a), fin(run.b));
+
+                let nest = !(kept.is_empty() || spec.below);
+                let base = if nest {
+                    lv(self, b).saturating_sub(1)
+                } else {
+                    lv(self, b)
+                };
+                self.set_subtotal_levels(sheet, t, t, Some(base));
+                for r in a..=b {
+                    if !nest && !kept.contains(&r) && !all_rows.contains(&r) {
+                        data_lv.push((r, lv(self, r) + 1));
+                    }
+                }
+            }
+            for (r, l) in data_lv {
+                self.set_subtotal_levels(sheet, r, r, Some(l));
+            }
+            if kept.is_empty() {
+                for r in lo..=hi {
+                    let l = lv(self, r) + 1;
+                    self.set_subtotal_levels(sheet, r, r, Some(l));
+                }
+                let g = if trailing_blank {
+                    lv(self, fb)
+                } else {
+                    grand_base
+                };
+                self.set_subtotal_levels(sheet, grand, grand, Some(g));
+            } else {
+                if grand_dup.is_none() {
+                    let end = if existing.contains(&last) {
+                        fin(last).saturating_sub(1)
+                    } else {
+                        hi
+                    };
+                    let top = if spec.below && !grand_in_range && end >= fa {
+                        for r in fa..=end {
+                            let l = lv(self, r) + 1;
+                            self.set_subtotal_levels(sheet, r, r, Some(l));
+                        }
+                        Some(lv(self, grand.saturating_sub(1)))
+                    } else {
+                        None
+                    };
+                    self.set_subtotal_levels(sheet, grand, grand, top);
+                }
             }
         } else {
             let above = self.row_level(sheet, grand.saturating_sub(1));

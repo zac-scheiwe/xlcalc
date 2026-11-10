@@ -1,0 +1,425 @@
+{
+"sheets": [
+"Inv"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Inv!A1",
+"input": "SKU"
+},
+{
+"op": "set",
+"cell": "Inv!B1",
+"input": "Item"
+},
+{
+"op": "set",
+"cell": "Inv!C1",
+"input": "Stock"
+},
+{
+"op": "set",
+"cell": "Inv!D1",
+"input": "Reorder"
+},
+{
+"op": "set",
+"cell": "Inv!E1",
+"input": "Cost"
+},
+{
+"op": "set",
+"cell": "Inv!F1",
+"input": "Supplier"
+},
+{
+"op": "set",
+"cell": "Inv!A2",
+"input": "A-100"
+},
+{
+"op": "set",
+"cell": "Inv!B2",
+"input": "Bolt M6"
+},
+{
+"op": "set",
+"cell": "Inv!C2",
+"input": "120"
+},
+{
+"op": "set",
+"cell": "Inv!D2",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "Inv!E2",
+"input": "0.12"
+},
+{
+"op": "set",
+"cell": "Inv!F2",
+"input": "Fixings"
+},
+{
+"op": "set",
+"cell": "Inv!A3",
+"input": "A-101"
+},
+{
+"op": "set",
+"cell": "Inv!B3",
+"input": "Nut M6"
+},
+{
+"op": "set",
+"cell": "Inv!C3",
+"input": "80"
+},
+{
+"op": "set",
+"cell": "Inv!D3",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "Inv!E3",
+"input": "0.08"
+},
+{
+"op": "set",
+"cell": "Inv!F3",
+"input": "Fixings"
+},
+{
+"op": "set",
+"cell": "Inv!A4",
+"input": "B-200"
+},
+{
+"op": "set",
+"cell": "Inv!B4",
+"input": "Drill"
+},
+{
+"op": "set",
+"cell": "Inv!C4",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Inv!D4",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Inv!E4",
+"input": "89.9"
+},
+{
+"op": "set",
+"cell": "Inv!F4",
+"input": "Tools"
+},
+{
+"op": "set",
+"cell": "Inv!A5",
+"input": "B-201"
+},
+{
+"op": "set",
+"cell": "Inv!B5",
+"input": "Saw"
+},
+{
+"op": "set",
+"cell": "Inv!C5",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "Inv!D5",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "Inv!E5",
+"input": "24.5"
+},
+{
+"op": "set",
+"cell": "Inv!F5",
+"input": "Tools"
+},
+{
+"op": "set",
+"cell": "Inv!A6",
+"input": "C-300"
+},
+{
+"op": "set",
+"cell": "Inv!B6",
+"input": "Glue"
+},
+{
+"op": "set",
+"cell": "Inv!C6",
+"input": "0"
+},
+{
+"op": "set",
+"cell": "Inv!D6",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Inv!E6",
+"input": "6.75"
+},
+{
+"op": "set",
+"cell": "Inv!F6",
+"input": "Chem"
+},
+{
+"op": "set",
+"cell": "Inv!A7",
+"input": "C-301"
+},
+{
+"op": "set",
+"cell": "Inv!B7",
+"input": "Tape"
+},
+{
+"op": "set",
+"cell": "Inv!C7",
+"input": "55"
+},
+{
+"op": "set",
+"cell": "Inv!D7",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "Inv!E7",
+"input": "3.2"
+},
+{
+"op": "set",
+"cell": "Inv!F7",
+"input": "Chem"
+},
+{
+"op": "table",
+"range": "Inv!A1:F7",
+"name": "tInv"
+},
+{
+"op": "set",
+"cell": "Inv!G1",
+"input": "Value"
+},
+{
+"op": "set",
+"cell": "Inv!H1",
+"input": "Flag"
+},
+{
+"op": "set",
+"cell": "Inv!G2",
+"input": "=[@Stock]*[@Cost]"
+},
+{
+"op": "set",
+"cell": "Inv!H2",
+"input": "=IF([@Stock]=0,\"OUT\",IF([@Stock]<[@Reorder],\"Reorder \"&([@Reorder]*2-[@Stock]),\"OK\"))"
+},
+{
+"op": "read",
+"range": "Inv!A1:H7"
+},
+{
+"op": "format",
+"range": "Inv!E2:E7",
+"fmt": "$0.00"
+},
+{
+"op": "format",
+"range": "Inv!G2:G7",
+"fmt": "$#,##0.00"
+},
+{
+"op": "read",
+"range": "Inv!A1:H7"
+},
+{
+"op": "set",
+"cell": "Inv!J1",
+"input": "=COUNTIFS(tInv[Flag],\"Reorder*\")"
+},
+{
+"op": "set",
+"cell": "Inv!J2",
+"input": "=SUMIFS(tInv[Value],tInv[Supplier],\"Fixings\")"
+},
+{
+"op": "set",
+"cell": "Inv!J3",
+"input": "=COUNTIFS(tInv[Stock],\"<\"&AVERAGE(tInv[Stock]))"
+},
+{
+"op": "set",
+"cell": "Inv!J4",
+"input": "=SUMPRODUCT((tInv[Stock]<tInv[Reorder])*(tInv[Reorder]-tInv[Stock])*tInv[Cost])"
+},
+{
+"op": "set",
+"cell": "Inv!J5",
+"input": "=TEXTJOIN(\", \",TRUE,IF(tInv[Stock]<tInv[Reorder],tInv[Item],\"\"))"
+},
+{
+"op": "set",
+"cell": "Inv!J6",
+"input": "=ROWS(tInv)&\" items, \"&COUNTIF(tInv[Flag],\"OK\")&\" ok\""
+},
+{
+"op": "set",
+"cell": "Inv!J7",
+"input": "=XLOOKUP(\"Saw\",tInv[Item],tInv[Value])"
+},
+{
+"op": "set",
+"cell": "Inv!J8",
+"input": "=INDEX(tInv[Item],MATCH(MAX(tInv[Value]),tInv[Value],0))"
+},
+{
+"op": "set",
+"cell": "Inv!J9",
+"input": "=SUBTOTAL(109,tInv[Value])"
+},
+{
+"op": "set",
+"cell": "Inv!J10",
+"input": "=AVERAGEIFS(tInv[Cost],tInv[Supplier],\"Tools\",tInv[Stock],\">0\")"
+},
+{
+"op": "set",
+"cell": "Inv!J11",
+"input": "=SUM(tInv[[Stock]:[Reorder]])"
+},
+{
+"op": "set",
+"cell": "Inv!J12",
+"input": "=SUMIFS(tInv[Stock],tInv[SKU],\"A-*\")"
+},
+{
+"op": "set",
+"cell": "Inv!J13",
+"input": "=COUNTIF(tInv[SKU],\"?-1??\")"
+},
+{
+"op": "read",
+"range": "Inv!J1:J13"
+},
+{
+"op": "set",
+"cell": "Inv!A8",
+"input": "D-400"
+},
+{
+"op": "read",
+"range": "Inv!A1:H9"
+},
+{
+"op": "read",
+"range": "Inv!J1:J13"
+},
+{
+"op": "set",
+"cell": "Inv!B8",
+"input": "Hammer"
+},
+{
+"op": "set",
+"cell": "Inv!C8",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Inv!D8",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "Inv!E8",
+"input": "15"
+},
+{
+"op": "set",
+"cell": "Inv!F8",
+"input": "Tools"
+},
+{
+"op": "read",
+"range": "Inv!A1:H9"
+},
+{
+"op": "read",
+"range": "Inv!J1:J13"
+},
+{
+"op": "table_sort",
+"sheet": "Inv",
+"name": "tInv",
+"keys": [
+{
+"key": 8,
+"order": "asc"
+},
+{
+"key": 7,
+"order": "desc"
+}
+]
+},
+{
+"op": "read",
+"range": "Inv!A1:H9"
+},
+{
+"op": "read",
+"range": "Inv!J1:J13"
+},
+{
+"op": "set",
+"cell": "Inv!C4",
+"input": "500"
+},
+{
+"op": "read",
+"range": "Inv!A1:H9"
+},
+{
+"op": "read",
+"range": "Inv!J1:J13"
+},
+{
+"op": "table_totals",
+"sheet": "Inv",
+"name": "tInv",
+"value": true
+},
+{
+"op": "read",
+"range": "Inv!A1:H10"
+},
+{
+"op": "read",
+"range": "Inv!J1:J13"
+}
+]
+}

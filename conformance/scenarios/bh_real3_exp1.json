@@ -1,0 +1,623 @@
+{
+"sheets": [
+"Rates",
+"Exp"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Rates!A1",
+"input": "City"
+},
+{
+"op": "set",
+"cell": "Rates!B1",
+"input": "Per diem"
+},
+{
+"op": "set",
+"cell": "Rates!A2",
+"input": "Auckland"
+},
+{
+"op": "set",
+"cell": "Rates!B2",
+"input": "$95"
+},
+{
+"op": "set",
+"cell": "Rates!A3",
+"input": "Wellington"
+},
+{
+"op": "set",
+"cell": "Rates!B3",
+"input": "$88.50"
+},
+{
+"op": "set",
+"cell": "Rates!A4",
+"input": "Christchurch"
+},
+{
+"op": "set",
+"cell": "Rates!B4",
+"input": "$80"
+},
+{
+"op": "set",
+"cell": "Rates!A5",
+"input": "Other"
+},
+{
+"op": "set",
+"cell": "Rates!B5",
+"input": "$70"
+},
+{
+"op": "set",
+"cell": "Rates!D1",
+"input": "Mileage"
+},
+{
+"op": "set",
+"cell": "Rates!E1",
+"input": "0.99"
+},
+{
+"op": "set",
+"cell": "Rates!D2",
+"input": "Cap"
+},
+{
+"op": "set",
+"cell": "Rates!E2",
+"input": "$1,500"
+},
+{
+"op": "set",
+"cell": "Exp!A1",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "Exp!B1",
+"input": "City"
+},
+{
+"op": "set",
+"cell": "Exp!C1",
+"input": "Description"
+},
+{
+"op": "set",
+"cell": "Exp!D1",
+"input": "Days"
+},
+{
+"op": "set",
+"cell": "Exp!E1",
+"input": "Km"
+},
+{
+"op": "set",
+"cell": "Exp!F1",
+"input": "Taxi"
+},
+{
+"op": "set",
+"cell": "Exp!G1",
+"input": "Hotel"
+},
+{
+"op": "set",
+"cell": "Exp!A2",
+"input": "3/3/2026"
+},
+{
+"op": "set",
+"cell": "Exp!B2",
+"input": "Auckland"
+},
+{
+"op": "set",
+"cell": "Exp!C2",
+"input": "Client visit"
+},
+{
+"op": "set",
+"cell": "Exp!D2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Exp!E2",
+"input": "120"
+},
+{
+"op": "set",
+"cell": "Exp!F2",
+"input": "$45.20"
+},
+{
+"op": "set",
+"cell": "Exp!G2",
+"input": "$310"
+},
+{
+"op": "set",
+"cell": "Exp!A3",
+"input": "10/3/2026"
+},
+{
+"op": "set",
+"cell": "Exp!B3",
+"input": "Wellington"
+},
+{
+"op": "set",
+"cell": "Exp!C3",
+"input": "Conf"
+},
+{
+"op": "set",
+"cell": "Exp!D3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Exp!E3",
+"input": "0"
+},
+{
+"op": "set",
+"cell": "Exp!F3",
+"input": "$62.5"
+},
+{
+"op": "set",
+"cell": "Exp!G3",
+"input": "$540.75"
+},
+{
+"op": "set",
+"cell": "Exp!A4",
+"input": "17/3/2026"
+},
+{
+"op": "set",
+"cell": "Exp!B4",
+"input": "Dunedin"
+},
+{
+"op": "set",
+"cell": "Exp!C4",
+"input": "Audit"
+},
+{
+"op": "set",
+"cell": "Exp!D4",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Exp!E4",
+"input": "340"
+},
+{
+"op": "set",
+"cell": "Exp!F4",
+"input": "$0"
+},
+{
+"op": "set",
+"cell": "Exp!G4",
+"input": "$150"
+},
+{
+"op": "set",
+"cell": "Exp!A5",
+"input": "24/3/2026"
+},
+{
+"op": "set",
+"cell": "Exp!B5",
+"input": "Christchurch"
+},
+{
+"op": "set",
+"cell": "Exp!C5",
+"input": "Training"
+},
+{
+"op": "set",
+"cell": "Exp!D5",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "Exp!E5",
+"input": "0"
+},
+{
+"op": "set",
+"cell": "Exp!F5",
+"input": "$38"
+},
+{
+"op": "set",
+"cell": "Exp!G5",
+"input": "$260"
+},
+{
+"op": "set",
+"cell": "Exp!H1",
+"input": "Per diem"
+},
+{
+"op": "set",
+"cell": "Exp!I1",
+"input": "Mileage"
+},
+{
+"op": "set",
+"cell": "Exp!J1",
+"input": "Total"
+},
+{
+"op": "set",
+"cell": "Exp!K1",
+"input": "Month"
+},
+{
+"op": "set",
+"cell": "Exp!H2",
+"input": "=D2*IFERROR(VLOOKUP(B2,Rates!$A$2:$B$5,2,FALSE),Rates!$B$5)"
+},
+{
+"op": "set",
+"cell": "Exp!I2",
+"input": "=E2*Rates!$E$1"
+},
+{
+"op": "set",
+"cell": "Exp!J2",
+"input": "=SUM(F2:I2)"
+},
+{
+"op": "set",
+"cell": "Exp!K2",
+"input": "=TEXT(A2,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Exp!H3",
+"input": "=D3*IFERROR(VLOOKUP(B3,Rates!$A$2:$B$5,2,FALSE),Rates!$B$5)"
+},
+{
+"op": "set",
+"cell": "Exp!I3",
+"input": "=E3*Rates!$E$1"
+},
+{
+"op": "set",
+"cell": "Exp!J3",
+"input": "=SUM(F3:I3)"
+},
+{
+"op": "set",
+"cell": "Exp!K3",
+"input": "=TEXT(A3,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Exp!H4",
+"input": "=D4*IFERROR(VLOOKUP(B4,Rates!$A$2:$B$5,2,FALSE),Rates!$B$5)"
+},
+{
+"op": "set",
+"cell": "Exp!I4",
+"input": "=E4*Rates!$E$1"
+},
+{
+"op": "set",
+"cell": "Exp!J4",
+"input": "=SUM(F4:I4)"
+},
+{
+"op": "set",
+"cell": "Exp!K4",
+"input": "=TEXT(A4,\"mmm\")"
+},
+{
+"op": "set",
+"cell": "Exp!H5",
+"input": "=D5*IFERROR(VLOOKUP(B5,Rates!$A$2:$B$5,2,FALSE),Rates!$B$5)"
+},
+{
+"op": "set",
+"cell": "Exp!I5",
+"input": "=E5*Rates!$E$1"
+},
+{
+"op": "set",
+"cell": "Exp!J5",
+"input": "=SUM(F5:I5)"
+},
+{
+"op": "set",
+"cell": "Exp!K5",
+"input": "=TEXT(A5,\"mmm\")"
+},
+{
+"op": "read",
+"range": "Exp!A1:K5"
+},
+{
+"op": "format",
+"range": "Exp!A2:A5",
+"fmt": "ddd d mmm"
+},
+{
+"op": "format",
+"range": "Exp!F2:J5",
+"fmt": "$#,##0.00"
+},
+{
+"op": "set",
+"cell": "Exp!A7",
+"input": "Total"
+},
+{
+"op": "set",
+"cell": "Exp!J7",
+"input": "=SUM(J2:J5)"
+},
+{
+"op": "set",
+"cell": "Exp!J8",
+"input": "=MIN(J7,Rates!E2)"
+},
+{
+"op": "set",
+"cell": "Exp!J9",
+"input": "=J7-J8"
+},
+{
+"op": "set",
+"cell": "Exp!A8",
+"input": "Week of first"
+},
+{
+"op": "set",
+"cell": "Exp!B8",
+"input": "=A2-WEEKDAY(A2,2)+1"
+},
+{
+"op": "set",
+"cell": "Exp!B9",
+"input": "=NETWORKDAYS(A2,A5)"
+},
+{
+"op": "set",
+"cell": "Exp!B10",
+"input": "=WORKDAY(A5,5)"
+},
+{
+"op": "set",
+"cell": "Exp!B11",
+"input": "=EOMONTH(A2,0)"
+},
+{
+"op": "set",
+"cell": "Exp!B12",
+"input": "=A5-A2"
+},
+{
+"op": "set",
+"cell": "Exp!B13",
+"input": "=TEXT(A5-A2,\"0\")&\" days\""
+},
+{
+"op": "set",
+"cell": "Exp!B14",
+"input": "=DAYS(A5,A2)"
+},
+{
+"op": "set",
+"cell": "Exp!B15",
+"input": "=WEEKNUM(A2)"
+},
+{
+"op": "set",
+"cell": "Exp!B16",
+"input": "=ISOWEEKNUM(A2)"
+},
+{
+"op": "set",
+"cell": "Exp!B17",
+"input": "=A2+30"
+},
+{
+"op": "set",
+"cell": "Exp!B18",
+"input": "=MAX(A2:A5)-MIN(A2:A5)"
+},
+{
+"op": "read",
+"range": "Exp!A7:J9"
+},
+{
+"op": "read",
+"range": "Exp!B8:B18"
+},
+{
+"op": "set",
+"cell": "Exp!B4",
+"input": "Auckland"
+},
+{
+"op": "set",
+"cell": "Exp!E4",
+"input": "55"
+},
+{
+"op": "read",
+"range": "Exp!A1:K5"
+},
+{
+"op": "read",
+"range": "Exp!J7:J9"
+},
+{
+"op": "insert_rows",
+"sheet": "Exp",
+"at": 4,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Exp!A4",
+"input": "12/3/2026"
+},
+{
+"op": "set",
+"cell": "Exp!B4",
+"input": "Wellington"
+},
+{
+"op": "set",
+"cell": "Exp!D4",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Exp!E4",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "Exp!F4",
+"input": "$12"
+},
+{
+"op": "set",
+"cell": "Exp!G4",
+"input": "$0"
+},
+{
+"op": "autofill",
+"from": "Exp!H3:K3",
+"to": "Exp!H4:K4",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Exp!A1:K6"
+},
+{
+"op": "read",
+"range": "Exp!J8:J10"
+},
+{
+"op": "read",
+"range": "Exp!B9:B19"
+},
+{
+"op": "sort",
+"range": "Exp!A2:K6",
+"keys": [
+{
+"key": 10,
+"order": "desc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "Exp!A1:K6"
+},
+{
+"op": "read",
+"range": "Exp!J8:J10"
+},
+{
+"op": "set",
+"cell": "Rates!E1",
+"input": "0.995"
+},
+{
+"op": "set",
+"cell": "Rates!B3",
+"input": "$90"
+},
+{
+"op": "read",
+"range": "Exp!H1:K6"
+},
+{
+"op": "read",
+"range": "Exp!J8:J10"
+},
+{
+"op": "set",
+"cell": "Exp!M1",
+"input": "=SUMPRODUCT(Exp!D2:D6*(Exp!B2:B6=\"Auckland\"))"
+},
+{
+"op": "set",
+"cell": "Exp!M2",
+"input": "=SUMIFS(Exp!J2:J6,Exp!A2:A6,\">=\"&DATE(2026,3,10),Exp!A2:A6,\"<\"&DATE(2026,3,20))"
+},
+{
+"op": "set",
+"cell": "Exp!M3",
+"input": "=TEXTJOIN(\", \",TRUE,Exp!B2:B6)"
+},
+{
+"op": "set",
+"cell": "Exp!M4",
+"input": "=COUNTIFS(Exp!B2:B6,\"<>Auckland\",Exp!J2:J6,\">300\")"
+},
+{
+"op": "set",
+"cell": "Exp!M5",
+"input": "=AVERAGEIF(Exp!B2:B6,\"A*\",Exp!J2:J6)"
+},
+{
+"op": "set",
+"cell": "Exp!M6",
+"input": "=ROUND(Exp!J7*0.15/1.15,2)"
+},
+{
+"op": "set",
+"cell": "Exp!M7",
+"input": "=TEXT(Exp!J7,\"$#,##0.00;($#,##0.00)\")"
+},
+{
+"op": "set",
+"cell": "Exp!M8",
+"input": "=DOLLAR(Exp!J7,1)"
+},
+{
+"op": "set",
+"cell": "Exp!M9",
+"input": "=FIXED(Exp!J7,0)"
+},
+{
+"op": "set",
+"cell": "Exp!M10",
+"input": "=TEXT(Exp!A2,\"dddd, d mmmm yyyy\")"
+},
+{
+"op": "set",
+"cell": "Exp!M11",
+"input": "=TEXT(Exp!A2,\"[$-409]mmmm d, yyyy\")"
+},
+{
+"op": "read",
+"range": "Exp!M1:M11"
+}
+]
+}

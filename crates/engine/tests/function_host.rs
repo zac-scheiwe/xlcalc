@@ -33,7 +33,7 @@ fn describe(a: &Arg, cx: &CallContext) -> String {
         Arg::Value(Value::Number(n)) => format!("num:{n}"),
         Arg::Value(Value::Array(a)) => format!("array:{}x{}", a.rows, a.cols),
         Arg::Value(v) => format!("value:{v:?}"),
-        Arg::Ref(areas) => {
+        Arg::Ref(areas) | Arg::XRef(areas) => {
             let mut sum = 0.0;
             for a in areas {
                 for r in a.rect.r0..=a.rect.r1 {

@@ -333,6 +333,20 @@ pub fn power(z: C, n: f64) -> R<C> {
             Err(XlError::NUM)
         };
     }
+
+    if !(z.im == 0.0 && z.re > 0.0) {
+        let sq = z.re * z.re + z.im * z.im;
+        if !sq.is_finite() {
+            return Err(XlError::NUM);
+        }
+        if sq == 0.0 {
+            return if n > 0.0 {
+                Ok(C::new(0.0, 0.0))
+            } else {
+                Err(XlError::NUM)
+            };
+        }
+    }
     let m = if z.im == 0.0 { z.re.abs() } else { z.modulus() };
 
     let r = crate::xmath::pow(m, n);
@@ -679,6 +693,10 @@ pub fn imcsc(z: C) -> R<C> {
 pub fn imcot(z: C) -> R<C> {
     if hyp_band(z.im) != 0 {
         return Ok(C::new(0.0, -1f64.copysign(z.im)));
+    }
+
+    if z.im == 0.0 && z.re.abs() >= TRIG_LIMIT {
+        return Ok(C::new(0.0, 0.0));
     }
     if z.re.abs() < TRIG_LIMIT {
         match tan_cot(z, true) {

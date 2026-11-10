@@ -46,7 +46,7 @@ impl Application<'_> {
             At::First => mark,
             At::BeforeChange => log[mark..]
                 .iter()
-                .position(|n| matches!(n, Notice::Changed { .. }))
+                .position(|n| matches!(n, Notice::Changed { .. } | Notice::ChangedAsOne { .. }))
                 .map_or_else(|| after_calc(log), |i| mark + i),
             At::BeforeAfterCalc => after_calc(log),
             At::Last => log.len(),
@@ -140,6 +140,7 @@ impl Application<'_> {
         &mut self,
         b: BookId,
         s: SheetId,
+        stay_on_err: bool,
         f: impl FnOnce(&mut Self) -> Result<R, OmError>,
     ) -> Result<R, OmError> {
         let was = self.book(b)?.wb.active_sheet();
@@ -151,6 +152,10 @@ impl Application<'_> {
             .set_active_sheet(s)
             .map_err(edit_error)?;
         let r = f(self);
+
+        if stay_on_err && r.is_err() {
+            return r;
+        }
         if let Ok(bk) = self.book_mut(b) {
             if bk.wb.sheet(was).is_some() {
                 let _ = bk.wb.set_active_sheet(was);
@@ -184,7 +189,7 @@ impl Application<'_> {
             }
             _ => None,
         };
-        self.with_sheet_shown(b, s, |app| {
+        self.with_sheet_shown(b, s, false, |app| {
             let (ds, dr) = match dest {
                 Some(d) => d,
                 None => match app.book(b)?.wb.selection_of(s).areas.as_slice() {
@@ -192,7 +197,15 @@ impl Application<'_> {
                     _ => return Err(unsupported("Worksheet", m)),
                 },
             };
-            app.paste_copy(b, (ss, src), (ds, dr), false)?;
+            if let Err(e) = app.paste_copy(b, (ss, src), (ds, dr), false) {
+                if dest.is_none() {
+                    app.book_mut(b)?
+                        .wb
+                        .set_selection(ds, Selection::of(&[paste_area(src, dr)]))
+                        .map_err(edit_error)?;
+                }
+                return Err(e);
+            }
             if dest.is_none() {
                 let pasted = paste_area(src, dr);
                 app.book_mut(b)?
@@ -212,6 +225,35 @@ impl Application<'_> {
         cut: bool,
     ) -> Result<(), OmError> {
         let mark = self.notice_mark(b);
+        let area = if cut {
+            Rect::new(dr.r0, dr.c0, dr.r0 + src.rows() - 1, dr.c0 + src.cols() - 1)
+        } else {
+            paste_area(src, dr)
+        };
+        self.paste_guard(b, (ss, src), (ds, area), cut)?;
+
+        if cut && dr.rows() * dr.cols() > 1 {
+            let wb = &self.book(b)?.wb;
+            if wb.filter_mode(ds) && wb.hidden_rows(ds).iter().any(|r| *r >= 1) {
+                let vis: Vec<u32> = (dr.r0..=dr.r1).filter(|r| !wb.row_hidden(ds, *r)).collect();
+                if vis.len() > 1 && vis.windows(2).any(|w| w[1] != w[0] + 1) {
+                    return Err(OmError::app_defined_with(
+                        "This can't be done on a multiple range selection.\n\nSelect a single range and try again.",
+                    ));
+                }
+                if vis.len() as u32 != src.rows() || dr.cols() != src.cols() {
+                    return Err(OmError::app_defined_with(
+                        "You can't paste this here because the Cut area and paste area aren't the same size.\n\nSelect just one cell in the paste area or an area that's the same size, and try pasting again.",
+                    ));
+                }
+            }
+        }
+
+        let kept = if cut {
+            self.locked_snapshot(b, ss, src)
+        } else {
+            self.locked_snapshot(b, ds, area)
+        };
         let wb = &mut self.book_mut(b)?.wb;
         let pasted = if cut {
             wb.move_range(ss, src, CellAddr::new(ds, dr.r0, dr.c0))
@@ -221,6 +263,9 @@ impl Application<'_> {
             wb.copy_to_range(ss, src, ds, dr).map_err(edit_error)?;
             paste_area(src, dr)
         };
+        self.book_mut(b)?.wb.hl_paste(ss, src, ds, pasted, cut);
+        self.book_mut(b)?.wb.notes_paste(ss, src, ds, pasted, cut);
+        self.restore_locked(b, &kept);
         if pasted != dr {
             self.note_selection(b, mark, At::BeforeAfterCalc, ds, &[pasted]);
         }

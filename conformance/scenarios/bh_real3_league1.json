@@ -1,0 +1,592 @@
+{
+"sheets": [
+"L"
+],
+"steps": [
+{
+"op": "set",
+"cell": "L!A1",
+"input": "Team"
+},
+{
+"op": "set",
+"cell": "L!B1",
+"input": "P"
+},
+{
+"op": "set",
+"cell": "L!C1",
+"input": "W"
+},
+{
+"op": "set",
+"cell": "L!D1",
+"input": "D"
+},
+{
+"op": "set",
+"cell": "L!E1",
+"input": "L"
+},
+{
+"op": "set",
+"cell": "L!F1",
+"input": "GF"
+},
+{
+"op": "set",
+"cell": "L!G1",
+"input": "GA"
+},
+{
+"op": "set",
+"cell": "L!H1",
+"input": "GD"
+},
+{
+"op": "set",
+"cell": "L!I1",
+"input": "Pts"
+},
+{
+"op": "set",
+"cell": "L!A2",
+"input": "Reds"
+},
+{
+"op": "set",
+"cell": "L!B2",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C2",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "L!D2",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "L!E2",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "L!F2",
+"input": "22"
+},
+{
+"op": "set",
+"cell": "L!G2",
+"input": "8"
+},
+{
+"op": "set",
+"cell": "L!A3",
+"input": "Blues"
+},
+{
+"op": "set",
+"cell": "L!B3",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C3",
+"input": "6"
+},
+{
+"op": "set",
+"cell": "L!D3",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "L!E3",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "L!F3",
+"input": "18"
+},
+{
+"op": "set",
+"cell": "L!G3",
+"input": "9"
+},
+{
+"op": "set",
+"cell": "L!A4",
+"input": "Greens"
+},
+{
+"op": "set",
+"cell": "L!B4",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C4",
+"input": "6"
+},
+{
+"op": "set",
+"cell": "L!D4",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "L!E4",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "L!F4",
+"input": "20"
+},
+{
+"op": "set",
+"cell": "L!G4",
+"input": "11"
+},
+{
+"op": "set",
+"cell": "L!A5",
+"input": "Yellows"
+},
+{
+"op": "set",
+"cell": "L!B5",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C5",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "L!D5",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "L!E5",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "L!F5",
+"input": "15"
+},
+{
+"op": "set",
+"cell": "L!G5",
+"input": "14"
+},
+{
+"op": "set",
+"cell": "L!A6",
+"input": "Whites"
+},
+{
+"op": "set",
+"cell": "L!B6",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C6",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "L!D6",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "L!E6",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "L!F6",
+"input": "9"
+},
+{
+"op": "set",
+"cell": "L!G6",
+"input": "17"
+},
+{
+"op": "set",
+"cell": "L!A7",
+"input": "Blacks"
+},
+{
+"op": "set",
+"cell": "L!B7",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C7",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "L!D7",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "L!E7",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "L!F7",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "L!G7",
+"input": "24"
+},
+{
+"op": "set",
+"cell": "L!H2",
+"input": "=F2-G2"
+},
+{
+"op": "set",
+"cell": "L!I2",
+"input": "=C2*3+D2"
+},
+{
+"op": "set",
+"cell": "L!J2",
+"input": "=RANK.EQ(I2,$I$2:$I$7)"
+},
+{
+"op": "set",
+"cell": "L!K2",
+"input": "=COUNTIFS($I$2:$I$7,\">\"&I2)+COUNTIFS($I$2:$I$7,I2,$H$2:$H$7,\">\"&H2)+1"
+},
+{
+"op": "set",
+"cell": "L!L2",
+"input": "=TEXT(H2,\"+0;-0;0\")"
+},
+{
+"op": "set",
+"cell": "L!H3",
+"input": "=F3-G3"
+},
+{
+"op": "set",
+"cell": "L!I3",
+"input": "=C3*3+D3"
+},
+{
+"op": "set",
+"cell": "L!J3",
+"input": "=RANK.EQ(I3,$I$2:$I$7)"
+},
+{
+"op": "set",
+"cell": "L!K3",
+"input": "=COUNTIFS($I$2:$I$7,\">\"&I3)+COUNTIFS($I$2:$I$7,I3,$H$2:$H$7,\">\"&H3)+1"
+},
+{
+"op": "set",
+"cell": "L!L3",
+"input": "=TEXT(H3,\"+0;-0;0\")"
+},
+{
+"op": "set",
+"cell": "L!H4",
+"input": "=F4-G4"
+},
+{
+"op": "set",
+"cell": "L!I4",
+"input": "=C4*3+D4"
+},
+{
+"op": "set",
+"cell": "L!J4",
+"input": "=RANK.EQ(I4,$I$2:$I$7)"
+},
+{
+"op": "set",
+"cell": "L!K4",
+"input": "=COUNTIFS($I$2:$I$7,\">\"&I4)+COUNTIFS($I$2:$I$7,I4,$H$2:$H$7,\">\"&H4)+1"
+},
+{
+"op": "set",
+"cell": "L!L4",
+"input": "=TEXT(H4,\"+0;-0;0\")"
+},
+{
+"op": "set",
+"cell": "L!H5",
+"input": "=F5-G5"
+},
+{
+"op": "set",
+"cell": "L!I5",
+"input": "=C5*3+D5"
+},
+{
+"op": "set",
+"cell": "L!J5",
+"input": "=RANK.EQ(I5,$I$2:$I$7)"
+},
+{
+"op": "set",
+"cell": "L!K5",
+"input": "=COUNTIFS($I$2:$I$7,\">\"&I5)+COUNTIFS($I$2:$I$7,I5,$H$2:$H$7,\">\"&H5)+1"
+},
+{
+"op": "set",
+"cell": "L!L5",
+"input": "=TEXT(H5,\"+0;-0;0\")"
+},
+{
+"op": "set",
+"cell": "L!H6",
+"input": "=F6-G6"
+},
+{
+"op": "set",
+"cell": "L!I6",
+"input": "=C6*3+D6"
+},
+{
+"op": "set",
+"cell": "L!J6",
+"input": "=RANK.EQ(I6,$I$2:$I$7)"
+},
+{
+"op": "set",
+"cell": "L!K6",
+"input": "=COUNTIFS($I$2:$I$7,\">\"&I6)+COUNTIFS($I$2:$I$7,I6,$H$2:$H$7,\">\"&H6)+1"
+},
+{
+"op": "set",
+"cell": "L!L6",
+"input": "=TEXT(H6,\"+0;-0;0\")"
+},
+{
+"op": "set",
+"cell": "L!H7",
+"input": "=F7-G7"
+},
+{
+"op": "set",
+"cell": "L!I7",
+"input": "=C7*3+D7"
+},
+{
+"op": "set",
+"cell": "L!J7",
+"input": "=RANK.EQ(I7,$I$2:$I$7)"
+},
+{
+"op": "set",
+"cell": "L!K7",
+"input": "=COUNTIFS($I$2:$I$7,\">\"&I7)+COUNTIFS($I$2:$I$7,I7,$H$2:$H$7,\">\"&H7)+1"
+},
+{
+"op": "set",
+"cell": "L!L7",
+"input": "=TEXT(H7,\"+0;-0;0\")"
+},
+{
+"op": "read",
+"range": "L!A1:L7"
+},
+{
+"op": "set",
+"cell": "L!N1",
+"input": "=SORTBY(A2:I7,I2:I7,-1,H2:H7,-1,F2:F7,-1)"
+},
+{
+"op": "read",
+"range": "L!N1:V6"
+},
+{
+"op": "set",
+"cell": "L!N9",
+"input": "=SORTBY(A2:A7,I2:I7,-1,H2:H7,-1)"
+},
+{
+"op": "set",
+"cell": "L!O9",
+"input": "=TAKE(N1#,2,1)"
+},
+{
+"op": "set",
+"cell": "L!P9",
+"input": "=INDEX(SORT(A2:I7,{9,8},{-1,-1}),,1)"
+},
+{
+"op": "set",
+"cell": "L!Q9",
+"input": "=CHOOSECOLS(SORT(A2:I7,9,-1),1,9)"
+},
+{
+"op": "set",
+"cell": "L!S9",
+"input": "=SORT(FILTER(A2:I7,I2:I7>10),9,-1)"
+},
+{
+"op": "set",
+"cell": "L!U9",
+"input": "=XLOOKUP(MAX(I2:I7),I2:I7,A2:A7)"
+},
+{
+"op": "set",
+"cell": "L!V9",
+"input": "=SUMPRODUCT((I2:I7=MAX(I2:I7))*1)"
+},
+{
+"op": "set",
+"cell": "L!V10",
+"input": "=TEXTJOIN(\",\",,SORTBY(A2:A7,F2:F7-G2:G7,-1))"
+},
+{
+"op": "read",
+"range": "L!N9:V15"
+},
+{
+"op": "format",
+"range": "L!H2:H7",
+"fmt": "+0;-0;0"
+},
+{
+"op": "format",
+"range": "L!I2:I7",
+"fmt": "0 \"pts\""
+},
+{
+"op": "read",
+"range": "L!A1:L7"
+},
+{
+"op": "set",
+"cell": "L!C3",
+"input": "7"
+},
+{
+"op": "set",
+"cell": "L!D3",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "L!E3",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "L!F3",
+"input": "19"
+},
+{
+"op": "set",
+"cell": "L!G3",
+"input": "8"
+},
+{
+"op": "read",
+"range": "L!A1:L7"
+},
+{
+"op": "read",
+"range": "L!N1:V6"
+},
+{
+"op": "read",
+"range": "L!N9:V15"
+},
+{
+"op": "sort",
+"range": "L!A2:L7",
+"keys": [
+{
+"key": 9,
+"order": "desc"
+},
+{
+"key": 8,
+"order": "desc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "L!A1:L7"
+},
+{
+"op": "read",
+"range": "L!N1:V6"
+},
+{
+"op": "set",
+"cell": "L!A8",
+"input": "Pinks"
+},
+{
+"op": "set",
+"cell": "L!B8",
+"input": "10"
+},
+{
+"op": "set",
+"cell": "L!C8",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "L!D8",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "L!E8",
+"input": "0"
+},
+{
+"op": "set",
+"cell": "L!F8",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "L!G8",
+"input": "4"
+},
+{
+"op": "autofill",
+"from": "L!H7:L7",
+"to": "L!H8:L8",
+"type": "default"
+},
+{
+"op": "read",
+"range": "L!A7:L8"
+},
+{
+"op": "read",
+"range": "L!N1:V9"
+}
+]
+}

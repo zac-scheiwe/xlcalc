@@ -16,7 +16,9 @@ pub(crate) fn civil(days: i64) -> (i64, u32, u32) {
 pub(crate) fn split(x: f64) -> (i64, u32, u32, i64, bool) {
     let mut whole = x.trunc();
     let mut secs = ((x - whole).abs() * 86_400.0 + 0.5).floor() as i64;
-    if secs == 86_400 {
+    if secs == 86_400 && whole == 2_958_465.0 {
+        secs = 86_399;
+    } else if secs == 86_400 {
         secs = 0;
         whole += 1.0;
     }

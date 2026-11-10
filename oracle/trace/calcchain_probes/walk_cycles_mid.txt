@@ -1,0 +1,94 @@
+=== 1 set Z9 =1+1
+  @ start 0,0 Z9:f
+  @ end rerun=1 next=0,0 valid=0 st=7 Z9:0
+  | Z9
+=== 2 set C1 =A1+1
+  @ start 0,0 C1:f Z9:0
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 Z9:0
+  | C1
+=== 3 set B1 =C1+1
+  @ start 0,0 B1:f C1:0 Z9:0
+  @ end rerun=1 next=0,0 valid=0 st=7 B1:0 C1:0 Z9:0
+  | B1
+=== 4 set A1 =B1+1
+  @ start 0,0 A1:f B1:f C1:f Z9:0
+  @ end rerun=0 next=0,1 valid=1 st=7 Z9:0 C1:f B1:f A1:f
+  | A1? +S:A1 +S:B1 B1? +S:C1 C1? +U:C1 +U:B1 +U:A1 clear:S
+  @ start 0,1 Z9:0 C1:f B1:f A1:f
+  @ end rerun=0 next=0,1 valid=1 st=7 Z9:0 B1:f A1:f C1:f
+  | C1? +S:C1 +S:A1 A1? +S:B1 B1? +U:B1 +U:A1 +U:C1 clear:S
+=== 5 set D1 =A1+1
+  @ start 0,0 D1:f Z9:0 B1:f A1:f C1:f
+  @ end rerun=0 next=0,1 valid=1 st=7 Z9:0 C1:f B1:f A1:f D1:f
+  | D1? +S:D1 +S:A1 A1? +S:B1 B1? +S:C1 C1? +U:C1 +U:B1 +U:A1 +U:D1 clear:S
+  @ start 0,1 Z9:0 C1:f B1:f A1:f D1:f
+  @ end rerun=0 next=0,1 valid=1 st=7 Z9:0 B1:f A1:f C1:f D1:f
+  | C1? +S:C1 +S:A1 A1? +S:B1 B1? +U:B1 +U:A1 +U:C1 clear:S D1? +U:D1
+=== 6 set Y9 =3
+  @ start 0,0 Y9:f Z9:0 B1:f A1:f C1:f D1:f
+  @ end rerun=1 next=0,2 valid=1 st=7 Y9:0 Z9:0 A1:f C1:f B1:f D1:f
+  | Y9 B1? +S:B1 +S:C1 C1? +S:A1 A1? +U:A1 +U:C1 +U:B1 clear:S D1? +U:D1
+  @ start 0,2 Y9:0 Z9:0 A1:f C1:f B1:f D1:f
+  @ end rerun=0 next=0,2 valid=1 st=7 Y9:0 Z9:0 C1:f B1:f A1:f D1:f
+  | A1? +S:A1 +S:B1 B1? +S:C1 C1? +U:C1 +U:B1 +U:A1 clear:S D1? +U:D1
+  @ start 0,2 Y9:0 Z9:0 C1:f B1:f A1:f D1:f
+  @ end rerun=0 next=0,2 valid=1 st=7 Y9:0 Z9:0 B1:f A1:f C1:f D1:f
+  | C1? +S:C1 +S:A1 A1? +S:B1 B1? +U:B1 +U:A1 +U:C1 clear:S D1? +U:D1
+=== 7 set Y8 =3
+  @ start 0,0 Y8:f Y9:0 Z9:0 B1:f A1:f C1:f D1:f
+  @ end rerun=1 next=0,3 valid=1 st=7 Y8:0 Y9:0 Z9:0 A1:f C1:f B1:f D1:f
+  | Y8 B1? +S:B1 +S:C1 C1? +S:A1 A1? +U:A1 +U:C1 +U:B1 clear:S D1? +U:D1
+  @ start 0,3 Y8:0 Y9:0 Z9:0 A1:f C1:f B1:f D1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 Y8:0 Y9:0 Z9:0 C1:f B1:f A1:f D1:f
+  | A1? +S:A1 +S:B1 B1? +S:C1 C1? +U:C1 +U:B1 +U:A1 clear:S D1? +U:D1
+  @ start 0,3 Y8:0 Y9:0 Z9:0 C1:f B1:f A1:f D1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 Y8:0 Y9:0 Z9:0 B1:f A1:f C1:f D1:f
+  | C1? +S:C1 +S:A1 A1? +S:B1 B1? +U:B1 +U:A1 +U:C1 clear:S D1? +U:D1
+=== 8 new
+=== 9 set Z9 =1+1
+  @ start 0,0 Z9:f
+  @ end rerun=1 next=0,0 valid=0 st=7 Z9:0
+  | Z9
+=== 10 set C1 =A1+1
+  @ start 0,0 C1:f Z9:0
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 Z9:0
+  | C1
+=== 11 set B1 =C1+1
+  @ start 0,0 B1:f C1:0 Z9:0
+  @ end rerun=1 next=0,0 valid=0 st=7 B1:0 C1:0 Z9:0
+  | B1
+=== 12 set E1 =D1+1
+  @ start 0,0 E1:f B1:0 C1:0 Z9:0
+  @ end rerun=1 next=0,0 valid=0 st=7 E1:0 B1:0 C1:0 Z9:0
+  | E1
+=== 13 set D1 =B1+1
+  @ start 0,0 D1:f E1:f B1:0 C1:0 Z9:0
+  @ end rerun=1 next=0,0 valid=0 st=7 D1:0 E1:0 B1:0 C1:0 Z9:0
+  | D1 E1
+=== 14 set A1 =E1+1
+  @ start 0,0 A1:f D1:f E1:f B1:f C1:f Z9:0
+  @ end rerun=0 next=0,1 valid=1 st=7 Z9:0 C1:f B1:f D1:f E1:f A1:f
+  | A1? +S:A1 +S:E1 E1? +S:D1 D1? +S:B1 B1? +S:C1 C1? +U:C1 +U:B1 +U:D1 +U:E1 +U:A1 clear:S
+  @ start 0,1 Z9:0 C1:f B1:f D1:f E1:f A1:f
+  @ end rerun=0 next=0,1 valid=1 st=7 Z9:0 B1:f D1:f E1:f A1:f C1:f
+  | C1? +S:C1 +S:A1 A1? +S:E1 E1? +S:D1 D1? +S:B1 B1? +U:B1 +U:D1 +U:E1 +U:A1 +U:C1 clear:S
+=== 15 set Y9 =3
+  @ start 0,0 Y9:f Z9:0 B1:f D1:f E1:f A1:f C1:f
+  @ end rerun=1 next=0,2 valid=1 st=7 Y9:0 Z9:0 D1:f E1:f A1:f C1:f B1:f
+  | Y9 B1? +S:B1 +S:C1 C1? +S:A1 A1? +S:E1 E1? +S:D1 D1? +U:D1 +U:E1 +U:A1 +U:C1 +U:B1 clear:S
+  @ start 0,2 Y9:0 Z9:0 D1:f E1:f A1:f C1:f B1:f
+  @ end rerun=0 next=0,2 valid=1 st=7 Y9:0 Z9:0 E1:f A1:f C1:f B1:f D1:f
+  | D1? +S:D1 +S:B1 B1? +S:C1 C1? +S:A1 A1? +S:E1 E1? +U:E1 +U:A1 +U:C1 +U:B1 +U:D1 clear:S
+  @ start 0,2 Y9:0 Z9:0 E1:f A1:f C1:f B1:f D1:f
+  @ end rerun=0 next=0,2 valid=1 st=7 Y9:0 Z9:0 A1:f C1:f B1:f D1:f E1:f
+  | E1? +S:E1 +S:D1 D1? +S:B1 B1? +S:C1 C1? +S:A1 A1? +U:A1 +U:C1 +U:B1 +U:D1 +U:E1 clear:S
+=== 16 set Y8 =3
+  @ start 0,0 Y8:f Y9:0 Z9:0 A1:f C1:f B1:f D1:f E1:f
+  @ end rerun=1 next=0,3 valid=1 st=7 Y8:0 Y9:0 Z9:0 C1:f B1:f D1:f E1:f A1:f
+  | Y8 A1? +S:A1 +S:E1 E1? +S:D1 D1? +S:B1 B1? +S:C1 C1? +U:C1 +U:B1 +U:D1 +U:E1 +U:A1 clear:S
+  @ start 0,3 Y8:0 Y9:0 Z9:0 C1:f B1:f D1:f E1:f A1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 Y8:0 Y9:0 Z9:0 B1:f D1:f E1:f A1:f C1:f
+  | C1? +S:C1 +S:A1 A1? +S:E1 E1? +S:D1 D1? +S:B1 B1? +U:B1 +U:D1 +U:E1 +U:A1 +U:C1 clear:S
+  @ start 0,3 Y8:0 Y9:0 Z9:0 B1:f D1:f E1:f A1:f C1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 Y8:0 Y9:0 Z9:0 D1:f E1:f A1:f C1:f B1:f
+  | B1? +S:B1 +S:C1 C1? +S:A1 A1? +S:E1 E1? +S:D1 D1? +U:D1 +U:E1 +U:A1 +U:C1 +U:B1 clear:S

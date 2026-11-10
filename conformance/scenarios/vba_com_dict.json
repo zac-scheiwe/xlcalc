@@ -1,0 +1,40 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "vba_module",
+   "file": "vba_com_dict.bas"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=DictT1()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=DictT2()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=DictT3()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "=DictT4()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "=DictT5()"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A5"
+  }
+ ]
+}

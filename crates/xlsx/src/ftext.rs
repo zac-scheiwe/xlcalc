@@ -331,6 +331,63 @@ pub fn unescape_xstring(s: &str) -> String {
     out
 }
 
+pub fn ext_index(text: &str, keys: &[String]) -> String {
+    if keys.is_empty() || !text.contains('[') {
+        return text.to_string();
+    }
+    let chars: Vec<char> = text.chars().collect();
+    let mut s = String::with_capacity(text.len() + 16);
+    let mut i = 0;
+    let mut in_str = false;
+    while i < chars.len() {
+        let c = chars[i];
+        if c == '"' {
+            in_str = !in_str;
+        }
+        if !in_str && c == '[' {
+            let prev = i.checked_sub(1).map(|p| chars[p]);
+            let digits: String = chars[i + 1..]
+                .iter()
+                .take_while(|c| c.is_ascii_digit())
+                .collect();
+            let close = i + 1 + digits.len();
+            let ok_prev =
+                !prev.is_some_and(|p| p.is_alphanumeric() || matches!(p, '_' | '.' | '['));
+            if ok_prev && !digits.is_empty() && chars.get(close) == Some(&']') {
+                if let Some(key) = digits
+                    .parse::<usize>()
+                    .ok()
+                    .and_then(|n| n.checked_sub(1))
+                    .and_then(|n| keys.get(n))
+                {
+                    if chars.get(close + 1) == Some(&'!') {
+                        let plain = key
+                            .chars()
+                            .all(|c| c.is_alphanumeric() || matches!(c, '_' | '.'));
+                        if plain {
+                            s.push_str(key);
+                        } else {
+                            s.push('\x27');
+                            s.push_str(&key.replace('\x27', "''"));
+                            s.push('\x27');
+                        }
+                        i = close + 1;
+                        continue;
+                    }
+                    s.push('[');
+                    s.push_str(key);
+                    s.push(']');
+                    i = close + 1;
+                    continue;
+                }
+            }
+        }
+        s.push(c);
+        i += 1;
+    }
+    s
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

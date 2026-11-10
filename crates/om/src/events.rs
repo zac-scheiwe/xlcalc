@@ -137,6 +137,8 @@ struct Ctx {
     target: Vec<Rect>,
 
     values: Vec<(&'static str, Variant)>,
+
+    win: Option<(BookId, u32)>,
 }
 
 impl<'v> Application<'v> {
@@ -212,10 +214,12 @@ impl<'v> Application<'v> {
     }
 
     pub fn flush_events(&mut self) {
-        if self.view.is_some() {
+        if self.view.is_some() || self.hold_activation {
             return;
         }
+        self.activation_events(self.event_win, self.current_window());
         let books: Vec<BookId> = self.books.iter().map(|b| b.id).collect();
+        let mut due: Vec<(BookId, Notice)> = Vec::new();
         for b in books {
             let notices = match self.book_mut(b) {
                 Ok(bk) if !bk.wb.notices().is_empty() => bk.wb.take_notices(),
@@ -227,10 +231,133 @@ impl<'v> Application<'v> {
                 }
                 continue;
             }
-            for n in notices {
-                self.fire_notice(b, n);
+            due.extend(notices.into_iter().map(|n| (b, n)));
+        }
+
+        let mut calc_books: Vec<BookId> = Vec::new();
+        for (b, n) in &due {
+            if matches!(n, Notice::Calculated { .. }) && !calc_books.contains(b) {
+                calc_books.push(*b);
             }
         }
+        if calc_books.len() > 1 {
+            let mut calcs: Vec<(BookId, Notice)> = Vec::new();
+            let mut rest: Vec<(BookId, Notice)> = Vec::new();
+            let mut after = None;
+            for (b, n) in due {
+                match n {
+                    Notice::Calculated { .. } => calcs.push((b, n)),
+                    Notice::AfterCalculate => after = Some((b, n)),
+                    _ => rest.push((b, n)),
+                }
+            }
+            calcs.reverse();
+
+            let sources: Vec<BookId> = calc_books
+                .iter()
+                .flat_map(|&d| {
+                    let di = self.book_index(d);
+                    let links = self.book(d).map(|bk| bk.wb.ext_links()).unwrap_or_default();
+                    links
+                        .iter()
+                        .filter_map(|l| self.link_source(l, di))
+                        .filter_map(|si| self.books.get(si).map(|x| x.id))
+                        .collect::<Vec<_>>()
+                })
+                .collect();
+            calcs.sort_by_key(|(b, _)| sources.contains(b));
+            calcs.extend(after);
+            calcs.extend(rest);
+            due = calcs;
+        } else {
+            let mut i = 0;
+            while i + 1 < due.len() {
+                if matches!(due[i].1, Notice::AfterCalculate)
+                    && matches!(
+                        due[i + 1].1,
+                        Notice::Calculated { .. } | Notice::AfterCalculate
+                    )
+                    && due[i].0 != due[i + 1].0
+                {
+                    due.remove(i);
+                } else {
+                    i += 1;
+                }
+            }
+        }
+        for (b, n) in due {
+            self.fire_notice(b, n);
+        }
+    }
+
+    pub(crate) fn activation_events(
+        &mut self,
+        old: Option<(BookId, u32)>,
+        new: Option<(BookId, u32)>,
+    ) {
+        let held = std::mem::replace(&mut self.hold_activation, true);
+        self.activation_events_inner(old, new);
+        self.hold_activation = held;
+    }
+
+    fn activation_events_inner(&mut self, old: Option<(BookId, u32)>, new: Option<(BookId, u32)>) {
+        self.event_win = new;
+
+        let list = self.window_list();
+        let old = old.filter(|w| list.contains(w));
+        if old == new {
+            return;
+        }
+        if let Some(o) = old {
+            self.raise_window(o, "WindowDeactivate");
+            if new.map(|n| n.0) != Some(o.0) {
+                self.raise_book_activation(o.0, "Deactivate", "WorkbookDeactivate");
+            }
+        }
+        if let Some(n) = new {
+            if old.map(|o| o.0) != Some(n.0) {
+                self.raise_book_activation(n.0, "Activate", "WorkbookActivate");
+            }
+            self.raise_window(n, "WindowActivate");
+        }
+    }
+
+    pub(crate) fn window_swap_events(&mut self, old: Option<(BookId, u32)>, new: (BookId, u32)) {
+        let held = std::mem::replace(&mut self.hold_activation, true);
+        self.event_win = Some(new);
+        if let Some(o) = old {
+            self.raise_window(o, "WindowDeactivate");
+        }
+        self.raise_window(new, "WindowActivate");
+        self.hold_activation = held;
+    }
+
+    fn raise_window(&mut self, w: (BookId, u32), name: &str) {
+        if self.book(w.0).is_err() {
+            return;
+        }
+        let cx = Ctx {
+            book: Some(w.0),
+            win: Some(w),
+            ..Ctx::default()
+        };
+        self.raise(EventSource::Workbook(w.0), name, &cx);
+        self.raise(EventSource::Application, name, &cx);
+    }
+
+    fn raise_book_activation(&mut self, b: BookId, wb_event: &str, app_event: &str) {
+        let cx = Ctx {
+            book: Some(b),
+            ..Ctx::default()
+        };
+        if self.book(b).is_ok() {
+            self.raise(EventSource::Workbook(b), wb_event, &cx);
+        }
+        self.raise(EventSource::Application, app_event, &cx);
+    }
+
+    pub(crate) fn raise_application(&mut self, name: &str) {
+        self.raise(EventSource::Application, name, &Ctx::default());
     }
 
     fn fire_notice(&mut self, b: BookId, n: Notice) {
@@ -239,6 +366,9 @@ impl<'v> Application<'v> {
                 for area in areas {
                     self.sheet_levels(b, sheet, "Change", "SheetChange", &[area]);
                 }
+            }
+            Notice::ChangedAsOne { sheet, areas } => {
+                self.sheet_levels(b, sheet, "Change", "SheetChange", &areas);
             }
             Notice::Calculated { sheets } => {
                 for s in sheets {
@@ -271,7 +401,7 @@ impl<'v> Application<'v> {
         }
     }
 
-    fn sheet_levels(
+    pub(crate) fn sheet_levels(
         &mut self,
         b: BookId,
         s: SheetId,
@@ -287,6 +417,7 @@ impl<'v> Application<'v> {
             sheet: Some(s),
             target: target.to_vec(),
             values: Vec::new(),
+            win: None,
         };
         self.raise(EventSource::Worksheet(b, s), sheet_event, &cx);
         self.raise(EventSource::Workbook(b), book_event, &cx);
@@ -353,6 +484,10 @@ impl<'v> Application<'v> {
             "Sh" => match (cx.book, cx.sheet) {
                 (Some(b), Some(s)) => self.alloc(Object::Worksheet(b, s)),
                 _ => Variant::Dispatch(None),
+            },
+            "Wn" => match cx.win {
+                Some((b, n)) => self.alloc(Object::Window(b, n)),
+                None => Variant::Dispatch(None),
             },
             "Wb" => match cx.book {
                 Some(b) => self.alloc(Object::Workbook(b)),
@@ -491,9 +626,10 @@ impl<'v> Application<'v> {
             None => crate::vba::VbaHost::compile(&bk.vba.modules, &bk.name),
         };
         let host = std::sync::Arc::new(host);
-        bk.vba.host = Some(host.clone());
+        bk.vba.host = Some(host);
 
-        bk.wb.renew_function_host(host);
+        bk.vba.renew = true;
+        self.refresh_chains();
         Ok(())
     }
 
@@ -547,30 +683,116 @@ impl<'v> Application<'v> {
         cancel
     }
 
+    pub(crate) fn raise_workbook(&mut self, b: BookId, name: &str) {
+        let cx = Ctx {
+            book: Some(b),
+            ..Ctx::default()
+        };
+        self.raise(EventSource::Workbook(b), name, &cx);
+    }
+
+    pub(crate) fn raise_before_close(&mut self, b: BookId) {
+        if self.enable_events {
+            self.before(b, "BeforeClose", "WorkbookBeforeClose", false);
+        }
+    }
+
     pub(crate) fn close_with_events(&mut self, b: BookId, a: &Args) -> Result<Variant, OmError> {
         self.book(b)?;
         if self.enable_events && self.before(b, "BeforeClose", "WorkbookBeforeClose", false) {
             return Ok(Variant::Bool(true));
         }
-        self.close_book(b, a)
+        let list = self.window_list();
+        let mine: Vec<usize> = (0..list.len()).filter(|i| list[*i].0 == b).collect();
+        let (Some(&top), Some(&last)) = (mine.first(), mine.last()) else {
+            let old = self.event_win;
+            let r = self.close_book(b, a)?;
+            self.activation_events(old, self.current_window());
+            return Ok(r);
+        };
+        let next = (1..=list.len())
+            .map(|k| list[(last + k) % list.len()])
+            .find(|w| w.0 != b);
+        let held = std::mem::replace(&mut self.hold_activation, true);
+        self.event_win = Some(list[top]);
+        self.raise_window(list[top], "WindowDeactivate");
+        self.raise_book_activation(b, "Deactivate", "WorkbookDeactivate");
+        let r = self.close_book(b, a);
+        self.hold_activation = held;
+        let r = r?;
+        let first = self.current_window();
+        self.event_win = None;
+        if let (Some(nx), Some(f)) = (next, first) {
+            self.activation_events(None, Some(nx));
+            self.activation_events(Some(nx), Some(f));
+        }
+        self.event_win = first;
+        Ok(r)
     }
 
     pub(crate) fn add_with_events(&mut self, a: &Args) -> Result<Variant, OmError> {
-        let r = self.workbooks_add(a)?;
+        self.hold_activation = true;
+        let r = match self.workbooks_add(a) {
+            Ok(r) => r,
+            Err(e) => {
+                self.hold_activation = false;
+                return Err(e);
+            }
+        };
         if let Some(b) = self.opened_book(&r) {
+            if let Ok(bk) = self.book_mut(b) {
+                bk.wb.take_notices();
+            }
             let cx = Ctx {
                 book: Some(b),
                 ..Ctx::default()
             };
             self.raise(EventSource::Application, "NewWorkbook", &cx);
         }
+        self.hold_activation = false;
         Ok(r)
     }
 
     pub(crate) fn open_with_events(&mut self, a: &Args) -> Result<Variant, OmError> {
         let before: Vec<BookId> = self.books.iter().map(|b| b.id).collect();
-        let r = self.workbooks_open(a)?;
+        self.hold_activation = true;
+        let r = self.workbooks_open(a);
+        let r = match r {
+            Ok(r) => r,
+            Err(e) => {
+                self.hold_activation = false;
+                return Err(e);
+            }
+        };
         if let Some(b) = self.opened_book(&r).filter(|b| !before.contains(b)) {
+            let mut refreshed = match a.i32(1) {
+                Ok(Some(u)) => u != 0,
+                _ => !self.ask_to_update_links,
+            };
+
+            let live = self.book(b).is_ok_and(|bk| {
+                let bi = self.book_index(b);
+                bk.wb
+                    .ext_links()
+                    .iter()
+                    .any(|l| self.link_source(l, bi).is_some())
+            });
+            refreshed |= live;
+            if let Ok(bk) = self.book_mut(b) {
+                let linked = bk.wb.has_ext_links();
+                let calc = bk
+                    .wb
+                    .notices()
+                    .iter()
+                    .find(|n| matches!(n, Notice::Calculated { .. }))
+                    .cloned();
+                let log = bk.wb.notices_mut();
+                log.clear();
+                if linked && refreshed {
+                    log.extend(calc);
+                }
+                log.push(Notice::AfterCalculate);
+            }
             let cx = Ctx {
                 book: Some(b),
                 ..Ctx::default()
@@ -581,6 +803,7 @@ impl<'v> Application<'v> {
             }
             self.raise(EventSource::Application, "WorkbookOpen", &cx);
         }
+        self.hold_activation = false;
         Ok(r)
     }
 

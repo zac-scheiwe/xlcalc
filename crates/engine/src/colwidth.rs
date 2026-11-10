@@ -78,6 +78,91 @@ const ASCII_PX: [u8; 95] = [
     17, 11, 11, 11, 11, 7, 10, 7, 11, 9, 14, 9, 9, 9, 6, 10, 6, 11,
 ];
 
+const BOLD_ASCII_PX: [u8; 95] = [
+    4, 7, 8, 11, 11, 17, 13, 5, 7, 7, 11, 11, 6, 7, 6, 8, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11,
+    6, 6, 11, 11, 11, 10, 17, 12, 12, 14, 14, 11, 11, 14, 14, 6, 7, 12, 10, 16, 14, 14, 12, 14, 13,
+    12, 10, 14, 12, 18, 12, 12, 11, 7, 8, 7, 11, 9, 11, 11, 12, 11, 12, 11, 7, 10, 12, 6, 6, 11, 6,
+    18, 12, 11, 12, 12, 7, 10, 7, 12, 10, 15, 10, 10, 9, 7, 10, 7, 11,
+];
+
+fn bold_char_px(c: char) -> u32 {
+    match c as u32 {
+        n @ 32..=126 => u32::from(BOLD_ASCII_PX[(n - 32) as usize]),
+        _ => DIGIT_PX,
+    }
+}
+
+const FILTER_BUTTON_PX: u32 = 25;
+
+struct HeaderFit {
+    row: u32,
+    c0: u32,
+    c1: u32,
+    bold: bool,
+    button: u32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct PivotFit {
+    pub row: u32,
+    pub col: u32,
+    pub bold: bool,
+    pub extra: u32,
+}
+
+impl PivotFit {
+    pub(crate) fn header(row: u32, col: u32, extra: u32) -> PivotFit {
+        PivotFit {
+            row,
+            col,
+            bold: true,
+            extra,
+        }
+    }
+}
+
+pub(crate) struct ColFit {
+    pub compact: bool,
+    pub left_cols: u32,
+    pub levels: Vec<u8>,
+}
+
+impl ColFit {
+    fn groups(
+        &self,
+        c0: u32,
+        c1: u32,
+        widest: &std::collections::BTreeMap<u32, u32>,
+    ) -> Vec<(u32, u32)> {
+        let outline = !self.compact || self.left_cols == 0;
+        let lv = |c: u32| self.levels.get((c - c0) as usize).copied().unwrap_or(1);
+        let top = (c0..=c1).map(lv).max().unwrap_or(1);
+        let flat = (c0..=c1).map(lv).min().unwrap_or(1) == top;
+        let mut out = Vec::new();
+        let mut c = c0;
+        while c <= c1 {
+            let own = widest.get(&c).copied();
+            if !outline {
+                out.extend(own.map(|w| (c, w)));
+            } else if c + 1 < c0 + self.left_cols {
+            } else if c + 1 == c0 + self.left_cols || flat || lv(c) != top {
+                out.extend(own.map(|w| (c, w)));
+            } else {
+                let mut end = c;
+                while end < c1 && lv(end + 1) == top {
+                    end += 1;
+                }
+                let w = (c..=end).filter_map(|k| widest.get(&k).copied()).max();
+                out.extend(w.map(|w| (c, w)));
+                out.extend((c + 1..=end).filter_map(|k| w.map(|w| (k, w))));
+                c = end;
+            }
+            c += 1;
+        }
+        out
+    }
+}
+
 pub fn char_px(c: char) -> u32 {
     match c as u32 {
         n @ 32..=126 => u32::from(ASCII_PX[(n - 32) as usize]),
@@ -149,7 +234,24 @@ impl Workbook {
         self.views
             .get(&sheet)
             .and_then(|v| v.col_px.get(&col))
-            .map_or(self.standard_px(), |w| w.0)
+            .map_or_else(|| self.sheet_std_px(sheet), |w| w.0)
+    }
+
+    pub fn sheet_std_px(&self, sheet: SheetId) -> u32 {
+        self.views
+            .get(&sheet)
+            .and_then(|v| v.std_px)
+            .unwrap_or_else(|| self.standard_px())
+    }
+
+    pub fn set_sheet_standard_width(&mut self, sheet: SheetId, cw: f64) {
+        let px = width_to_px_d(cw, self.digit_px());
+        let default = self.standard_px();
+        self.view_mut(sheet).std_px = (px != default).then_some(px);
+    }
+
+    pub fn sheet_standard_width(&self, sheet: SheetId) -> f64 {
+        px_to_width_d(self.sheet_std_px(sheet), self.digit_px())
     }
 
     pub fn digit_px(&self) -> u32 {
@@ -201,7 +303,7 @@ impl Workbook {
             self.set_cols_hidden(sheet, c0, c1 - c0 + 1, false);
         }
         let px = width_to_px_d(cw, self.digit_px());
-        let std = self.standard_px();
+        let std = self.sheet_std_px(sheet);
         let v = self.view_mut(sheet);
         for c in c0..=c1 {
             if px == std {
@@ -216,7 +318,7 @@ impl Workbook {
         let Some(v) = self.views.get(&sheet) else {
             return Vec::new();
         };
-        let std = self.standard_px();
+        let std = self.sheet_std_px(sheet);
         let mut cols: Vec<u32> = v.col_px.keys().chain(&v.hidden_cols).copied().collect();
         cols.sort_unstable();
         cols.dedup();
@@ -256,7 +358,7 @@ impl Workbook {
             if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
                 continue;
             }
-            if px > set.map_or(self.standard_px(), |s| s.0) {
+            if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
                 self.view_mut(sheet)
                     .col_px
                     .insert(c, (px.min(MAX_PX), false));
@@ -269,14 +371,92 @@ impl Workbook {
             return;
         };
         let cells: Vec<(u32, u32)> = sh.cells.iter_rect(rect).map(|(r, c, _)| (r, c)).collect();
+        let headers = self.filter_headers(sheet);
         let mut widest: std::collections::BTreeMap<u32, u32> = Default::default();
         for (r, c) in cells {
-            if let Some(px) = self.full_text_px(CellAddr::new(sheet, r, c)) {
+            let addr = CellAddr::new(sheet, r, c);
+            let hdr = headers
+                .iter()
+                .find(|h| h.row == r && (h.c0..=h.c1).contains(&c));
+            let px = match (self.value(addr), hdr) {
+                (Value::Text(t), Some(h)) if h.bold => {
+                    Some(t.chars().map(bold_char_px).sum::<u32>())
+                }
+                _ => self.full_text_px(addr),
+            };
+            if let Some(px) = px {
                 let w = widest.entry(c).or_default();
-                *w = (*w).max(fit_px(px));
+                *w = (*w).max(fit_px(px + hdr.map_or(0, |h| h.button)));
             }
         }
         for (c, px) in widest {
+            if self.col_hidden(sheet, c) {
+                self.set_cols_hidden(sheet, c, 1, false);
+            }
+            self.view_mut(sheet)
+                .col_px
+                .insert(c, (px.min(MAX_PX), false));
+        }
+    }
+
+    fn filter_headers(&self, sheet: SheetId) -> Vec<HeaderFit> {
+        let mut out = Vec::new();
+        if let Some(v) = self.views.get(&sheet) {
+            for f in v.filters.iter().filter(|f| f.table.is_none()) {
+                if let Some(r) = self.filter_rect(f) {
+                    out.push(HeaderFit {
+                        row: r.r0,
+                        c0: r.c0,
+                        c1: r.c1,
+                        bold: false,
+                        button: FILTER_BUTTON_PX,
+                    });
+                }
+            }
+        }
+        for t in self
+            .tables()
+            .iter()
+            .filter(|t| t.sheet == sheet && t.headers)
+        {
+            out.push(HeaderFit {
+                row: t.rect.r0,
+                c0: t.rect.c0,
+                c1: t.rect.c1,
+                bold: true,
+                button: if t.show_filter { FILTER_BUTTON_PX } else { 0 },
+            });
+        }
+        out
+    }
+
+    pub(crate) fn autofit_pivot(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        attrs: &[PivotFit],
+        plan: &ColFit,
+    ) {
+        let Some(sh) = self.sheet(sheet) else {
+            return;
+        };
+        let cells: Vec<(u32, u32)> = sh.cells.iter_rect(rect).map(|(r, c, _)| (r, c)).collect();
+        let by_cell: std::collections::HashMap<(u32, u32), &PivotFit> =
+            attrs.iter().map(|a| ((a.row, a.col), a)).collect();
+        let mut widest: std::collections::BTreeMap<u32, u32> = Default::default();
+        for (r, c) in cells {
+            let addr = CellAddr::new(sheet, r, c);
+            let at = by_cell.get(&(r, c)).copied();
+            let px = match (self.value(addr), at) {
+                (Value::Text(t), Some(a)) if a.bold => Some(t.chars().map(bold_char_px).sum()),
+                _ => self.full_text_px(addr),
+            };
+            if let Some(px) = px {
+                let w = widest.entry(c).or_default();
+                *w = (*w).max(fit_px(px) + at.map_or(0, |a| a.extra));
+            }
+        }
+        for (c, px) in plan.groups(rect.c0, rect.c1, &widest) {
             if !self.col_hidden(sheet, c) {
                 self.view_mut(sheet)
                     .col_px
@@ -390,7 +570,9 @@ impl Workbook {
                 } else {
                     avail / DIGIT_PX
                 };
-                return format_general_cell(g, chars as usize).unwrap_or_else(|| hashes(avail));
+                return format_general_cell(g, chars as usize)
+                    .map(|t| f.digits_of_tag(&t))
+                    .unwrap_or_else(|| hashes(avail));
             }
             _ => {}
         }
@@ -409,7 +591,7 @@ impl Workbook {
             match format_general_cell(x.abs(), room as usize) {
                 Some(g) => {
                     used += text_px(&g);
-                    g
+                    f.digits_of_tag(&g)
                 }
                 None => return hashes(avail),
             }

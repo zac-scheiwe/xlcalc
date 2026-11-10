@@ -122,12 +122,18 @@ fn round_trip(path: &Path) -> (Package, Package) {
     let name = path.display().to_string();
     let bytes = std::fs::read(path).unwrap();
     let first = import_bytes(bytes).unwrap();
-    let saved = save(
-        &first.workbook,
-        Some(&first.package),
-        &SaveOptions::default(),
-    )
-    .unwrap_or_else(|e| panic!("{name}: save: {e}"));
+
+    let opts = SaveOptions {
+        dir: first
+            .workbook
+            .ext_links()
+            .first()
+            .map(|l| l.dir().to_string())
+            .unwrap_or_default(),
+        ..SaveOptions::default()
+    };
+    let saved = save(&first.workbook, Some(&first.package), &opts)
+        .unwrap_or_else(|e| panic!("{name}: save: {e}"));
     assert!(saved.warnings.is_empty(), "{name}: {:?}", saved.warnings);
     let problems = check_package(&saved.bytes);
     assert!(problems.is_empty(), "{name}: {problems:#?}");
@@ -140,12 +146,7 @@ fn round_trip(path: &Path) -> (Package, Package) {
     );
 
     if !second.workbook.settings().iteration {
-        let again = save(
-            &second.workbook,
-            Some(&second.package),
-            &SaveOptions::default(),
-        )
-        .unwrap();
+        let again = save(&second.workbook, Some(&second.package), &opts).unwrap();
         assert!(again.bytes == saved.bytes, "{name}: second save differs");
     }
     (first.package, second.package)
@@ -573,4 +574,71 @@ fn row_heights_round_trip() {
         vec![(2, 264), (4, 102)]
     );
     assert!(back.workbook.row_hidden(s, 6));
+}
+
+#[test]
+fn external_links_round_trip() {
+    let mut wb = Workbook::empty();
+    let s = wb.add_sheet("Sheet1").unwrap();
+    let l = wb.ext_link(r"C:\data\src.xlsx");
+    wb.ext_set_link(l, r"C:\data\src.xlsx", false);
+    wb.ext_set_data(
+        l,
+        vec![xlcalc::ExtSheetData {
+            name: "Data".into(),
+            cells: vec![(0, 0, Value::Number(5.0))],
+        }],
+    );
+    wb.set_formula(CellAddr::new(s, 0, 0), r"='C:\data\[src.xlsx]Data'!A1+1")
+        .unwrap();
+    let saved = save(&wb, None, &SaveOptions::default()).unwrap();
+    assert!(
+        String::from_utf8_lossy(&saved.bytes).contains("externalLinks/externalLink1.xml"),
+        "no part written"
+    );
+    let imp = import_bytes(saved.bytes).unwrap();
+    let w2 = imp.workbook;
+    assert_eq!(w2.ext_links().len(), 1);
+    assert_eq!(w2.ext_links()[0].name(), "src.xlsx");
+    assert_eq!(
+        w2.formula_text(CellAddr::new(w2.sheet_by_name("Sheet1").unwrap().id, 0, 0))
+            .unwrap(),
+        r"='C:\data\[src.xlsx]Data'!A1+1"
+    );
+}
+
+#[test]
+fn notes_with_form_controls() {
+    let mut wb = Workbook::new();
+    let s = wb.sheet_at(0).id;
+    wb.note_add(xlcalc::CellAddr::new(s, 1, 1), "kept", "zac", true);
+    let list = all_controls();
+    let opts = SaveOptions {
+        controls: vec![(s, list.clone())],
+        ..SaveOptions::default()
+    };
+    let saved = save(&wb, None, &opts).unwrap();
+    assert!(check_package(&saved.bytes).is_empty());
+    assert!(saved.warnings.is_empty(), "{:?}", saved.warnings);
+    if let Ok(d) = std::env::var("NOTES_OUT") {
+        std::fs::write(format!("{d}/ctl.xlsx"), &saved.bytes).unwrap();
+    }
+    let back = import_bytes(saved.bytes).unwrap();
+    let id = back.workbook.sheet_at(0).id;
+    assert_eq!(read_controls(&back.package, id).len(), list.len());
+    let notes: Vec<_> = back
+        .workbook
+        .notes(id)
+        .map(|(k, n)| (k, n.text.clone(), n.visible))
+        .collect();
+    assert_eq!(notes, vec![((1, 1), "kept".to_string(), true)]);
+    let mut wb2 = back.workbook;
+    let nid = wb2.note_at(id, 1, 1).unwrap().id;
+    wb2.note_remove(id, nid);
+    let saved2 = save(&wb2, Some(&back.package), &SaveOptions::default()).unwrap();
+    assert!(check_package(&saved2.bytes).is_empty());
+    let back2 = import_bytes(saved2.bytes).unwrap();
+    let id2 = back2.workbook.sheet_at(0).id;
+    assert_eq!(back2.workbook.notes(id2).count(), 0);
+    assert_eq!(read_controls(&back2.package, id2).len(), list.len());
 }

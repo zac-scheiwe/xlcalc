@@ -1,0 +1,187 @@
+=== 1 set2 E6 4
+=== 2 set2 D5 =IFERROR(C1,5)+1
+  @ start 0,0 D5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 D5:0
+  | D5
+=== 3 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4 D5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 D5:0
+  | { }
+=== 4 array C4:C5 =B5:B6*2
+  @ start 0,0 {C4}:f C4:4 C5:4 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 D5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 D5:0
+  | { }
+=== 5 set2 B3 =A6*2+E3
+=== 6 set2 A1 3
+=== 7 array A1:A2 =C1:C2+1
+=== 8 set2 C1 =COUNT(B2:D3)
+  @ start 0,0 C1:f {C4}:0 C4:0 C5:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 D5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 {C4}:0 C4:0 C5:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 D5:0
+  | C1 D5
+=== 9 set2 E3 =D4:E5*2
+  @ start 0,0 {E3}:f C1:0 {C4}:0 C4:0 C5:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 D5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {E3}:e C1:e {C4}:0 C4:0 C5:0 {A2}:0 A2:e B2:e A3:0 B3:0 A4:0 B4:0 D5:e
+  | { }?0xa71b0008 C1? A2? B2? A3 B3 A4 B4 D5?
+  @ start 0,0 {E3}:c C1:c {C4}:0 C4:0 C5:0 {A2}:0 A2:c B2:c A3:0 B3:0 A4:0 B4:0 D5:c
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:c B2:c C1:c A2:c D5:c
+  | { }? +U:{E3} C1? +S:C1 +S:B2 B2? +U:B2 +U:C1 clear:S A2? +U:A2 D5? +U:D5
+  @ start 0,8 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:c B2:c C1:c A2:c D5:c
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:c B2:c C1:c A2:c D5:c
+  | { }? +U:{E3} B2? +U:B2 C1? +U:C1 A2? +U:A2 D5? +U:D5
+=== 10 set2 B1 =A4*2+E4
+  @ start 0,0 B1:f {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f B2:f C1:f A2:f D5:f
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f B1:f B2:f C1:f A2:f D5:f
+  | B1? +S:B1 +S:{E3} { }? +U:{E3} +U:B1 clear:S B2? +U:B2 C1? +U:C1 A2? +U:A2 D5? +U:D5
+  @ start 0,8 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f B1:f B2:f C1:f A2:f D5:f
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f B1:f B2:f C1:f A2:f D5:f
+  | { }? +U:{E3} B1? +U:B1 B2? +U:B2 C1? +U:C1 A2? +U:A2 D5? +U:D5
+=== 11 set2 A3 =SUM(A2:A4)
+=== 12 set2 A6 =A2+7
+  @ start 0,0 A6:f {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f B1:f B2:f C1:f A2:f D5:f
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f A6:f B1:f B2:f C1:f D5:f
+  | A6? +S:A6 +S:A2 A2? +S:{E3} { }? +U:{E3} +U:A2 +U:A6 clear:S B1? +U:B1 B2? +U:B2 C1? +U:C1 D5? +U:D5
+  @ start 0,8 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f A6:f B1:f B2:f C1:f D5:f
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C5:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f A6:f B1:f B2:f C1:f D5:f
+  | { }? +U:{E3} A2? +U:A2 A6? +U:A6 B1? +U:B1 B2? +U:B2 C1? +U:C1 D5? +U:D5
+=== 13 set2 B2 8
+=== 14 array C4:C6 =A1:A3*2
+  @ start 0,0 {C4}:f C4:4 C5:4 C6:4 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f A6:f B1:f B2:f C1:f D5:f
+  @ end rerun=1 next=0,8 valid=1 st=7 {C4}:0 C4:0 C6:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f C5:f A6:f B1:f B2:f C1:f D5:f
+  | { } C5? +S:C5 +S:A2 A2? +S:{E3} { }? +U:{E3} +U:A2 +U:C5 clear:S A6? +U:A6 B1? +U:B1 B2? +U:B2 C1? +U:C1 D5? +U:D5
+  @ start 0,8 {C4}:0 C4:0 C6:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f C5:f A6:f B1:f B2:f C1:f D5:f
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C6:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f C5:f A6:f B1:f B2:f C1:f D5:f
+  | { }? +U:{E3} A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1 B2? +U:B2 C1? +U:C1 D5? +U:D5
+  @ start 0,8 {C4}:0 C4:0 C6:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f C5:f A6:f B1:f B2:f C1:f D5:f
+  @ end rerun=0 next=0,8 valid=1 st=7 {C4}:0 C4:0 C6:0 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:f A2:f C5:f A6:f B1:f B2:f C1:f D5:f
+  | { }? +U:{E3} A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1 B2? +U:B2 C1? +U:C1 D5? +U:D5
+=== 15 set2 A2 6
+=== 16 array E5:E6 =C1:C2*2
+  @ start 0,0 {E5}:f E5:4 E6:4 {C4}:0 C4:f C6:f {A2}:0 A3:f B3:f A4:f B4:f {E3}:f A2:f C5:f A6:f B1:f B2:f C1:f D5:f
+  @ end rerun=1 next=0,7 valid=1 st=7 {E5}:0 E6:0 {C4}:0 C4:0 {A2}:0 A4:0 B4:0 {E3}:f B2:f C1:f E5:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f D5:f
+  | { } E5? +S:E5 +S:C1 C1? +S:B2 B2? +S:{E3} { }? +U:{E3} +U:B2 +U:C1 +U:E5 clear:S C4 C6? +S:C6 +S:A3 A3? +U:A3 +U:C6 clear:S B3? +U:B3 A4 B4 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1 D5? +U:D5
+  @ start 0,7 {E5}:0 E6:0 {C4}:0 C4:0 {A2}:0 A4:0 B4:0 {E3}:f B2:f C1:f E5:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f D5:f
+  @ end rerun=0 next=0,7 valid=1 st=7 {E5}:0 E6:0 {C4}:0 C4:0 {A2}:0 A4:0 B4:0 {E3}:f B2:f C1:f E5:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f D5:f
+  | { }? +U:{E3} B2? +U:B2 C1? +U:C1 E5? +U:E5 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1 D5? +U:D5
+  @ start 0,7 {E5}:0 E6:0 {C4}:0 C4:0 {A2}:0 A4:0 B4:0 {E3}:f B2:f C1:f E5:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f D5:f
+  @ end rerun=0 next=0,7 valid=1 st=7 {E5}:0 E6:0 {C4}:0 C4:0 {A2}:0 A4:0 B4:0 {E3}:f B2:f C1:f E5:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f D5:f
+  | { }? +U:{E3} B2? +U:B2 C1? +U:C1 E5? +U:E5 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1 D5? +U:D5
+=== 17 set2 B4 9
+=== 18 array D5:E6 =B1:B2*2
+  @ start 0,0 {D5}:f D5:4 E5:4 D6:4 E6:4 {C4}:0 C4:0 {A2}:0 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,3 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 19 array B3:B4 =C1:C2*2
+=== 20 set2 A1 =D1+7
+  @ start 0,0 A1:f {C4}:0 C4:f {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=1 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | A1 C4 { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,4 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,4 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 21 set2 B3 5
+=== 22 array A3:A4 =C4:C5+1
+=== 23 clear D4
+  @ start 0,0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,4 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 24 set2 E5 =1/0
+=== 25 set2 B5 =COUNT(D1:D3)
+  @ start 0,0 B5:f A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=1 next=0,5 valid=1 st=7 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | B5 { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,5 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,5 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 26 set2 A4 7
+=== 27 clear D2
+  @ start 0,0 B5:f A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=1 next=0,5 valid=1 st=7 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | B5 { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,5 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,5 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 28 array C5:C6 =IF(C2:C3>2,C2:C3,-1)
+=== 29 set2 D2 =E5+6
+  @ start 0,0 D2:f B5:f A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | D2? +S:D2 +S:{D5} { }? +U:{D5} +U:D2 clear:S B5? +U:B5 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,4 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 A1:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} D2? +U:D2 B5? +U:B5 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 30 clear A1
+  @ start 0,0 {C4}:0 C4:f {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=1 next=0,3 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | C4 { }? +U:{D5} D2? +U:D2 B5? +U:B5 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,3 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} D2? +U:D2 B5? +U:B5 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,3 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,3 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f B5:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} D2? +U:D2 B5? +U:B5 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 31 set2 B5 =E1+5
+  @ start 0,0 B5:f {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=1 next=0,4 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | B5 { }? +U:{D5} D2? +U:D2 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,4 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} D2? +U:D2 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+  @ start 0,4 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=0 next=0,4 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  | { }? +U:{D5} D2? +U:D2 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2? +U:B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2? +U:A2 C5? +U:C5 A6? +U:A6 B1? +U:B1
+=== 32 clear E4
+  @ start 0,0 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f B2:f C1:f A3:f C6:f B3:f A2:f C5:f A6:f B1:f
+  @ end rerun=1 next=0,8 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 B2:0 A2:0 C5:0 A6:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f C1:f A3:f C6:f B3:f B1:f
+  | { }? +U:{D5} D2? +U:D2 +U:D5 +U:E5 +U:D6 +U:E6 A4? +U:A4 B4? +U:B4 { }? +U:{E3} B2 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3 A2 C5 A6 B1? +U:B1
+  @ start 0,8 B5:0 {C4}:0 C4:0 {A2}:0 B2:0 A2:0 C5:0 A6:0 {D5}:f D2:f D5:4 E5:4 D6:4 E6:4 A4:f B4:f {E3}:f C1:f A3:f C6:f B3:f B1:f
+  @ end rerun=1 next=0,8 valid=0 st=7 B5:0 {C4}:0 C4:e {A2}:0 B2:e A2:e C5:e A6:e {D5}:0 E6:e A4:e B1:e E5:e D2:e D5:e D6:e B4:e {E3}:e C1:e A3:e C6:e B3:e
+  | { } D2? +S:D2 +S:E5 E5? +S:B1 B1? +S:A4 A4? +S:E6 ^E6 -S:- A4 ^A4 -S:- B1 ^B1 -S:- E5 ^E5 -S:- D2 ^D2 -S:- D5 B4 { }?0xa71b0008 C1? A3? C6? B3?
+  @ start 0,0 B5:0 {C4}:0 C4:c {A2}:0 B2:c A2:c C5:c A6:c {D5}:0 E6:c A4:c B1:c E5:c D2:c D5:c D6:c B4:c {E3}:c C1:c A3:c C6:c B3:c
+  @ end rerun=1 next=0,5 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:c B2:c A2:c C5:c A6:c E6:c A4:c B1:c E5:c D2:c D5:c D6:c B4:c C1:c A3:c C6:c B3:c
+  | C4 B2? +S:B2 +S:{E3} { }? +U:{E3} +U:B2 clear:S A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+  @ start 0,5 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:c B2:c A2:c C5:c A6:c E6:c A4:c B1:c E5:c D2:c D5:c D6:c B4:c C1:c A3:c C6:c B3:c
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:c B2:c A2:c C5:c A6:c E6:c A4:c B1:c E5:c D2:c D5:c D6:c B4:c C1:c A3:c C6:c B3:c
+  | { }? +U:{E3} B2? +U:B2 A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+  @ start 0,5 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:c B2:c A2:c C5:c A6:c E6:c A4:c B1:c E5:c D2:c D5:c D6:c B4:c C1:c A3:c C6:c B3:c
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:c B2:c A2:c C5:c A6:c E6:c A4:c B1:c E5:c D2:c D5:c D6:c B4:c C1:c A3:c C6:c B3:c
+  | { }? +U:{E3} B2? +U:B2 A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+=== 33 set2 C2 6
+  @ start 0,0 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  | { }? +U:{E3} B2? +U:B2 A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+  @ start 0,5 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  @ end rerun=0 next=0,5 valid=1 st=7 B5:0 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  | { }? +U:{E3} B2? +U:B2 A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+=== 34 set2 C4 6
+=== 35 set2 A4 =C5:D6*2
+=== 36 array C5:C6 =C5:C6*2
+=== 37 clear A2
+=== 38 set2 E1 =COUNT(B2:D3)
+  @ start 0,0 E1:f B5:f {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  @ end rerun=0 next=0,4 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E1:f B5:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  | E1? +S:E1 +S:B2 B2? +S:{E3} { }? +U:{E3} +U:B2 +U:E1 clear:S B5? +U:B5 A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+  @ start 0,4 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E1:f B5:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  @ end rerun=0 next=0,4 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E1:f B5:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f C1:f A3:f C6:f B3:f
+  | { }? +U:{E3} B2? +U:B2 E1? +U:E1 B5? +U:B5 A2? +U:A2 C5? +U:C5 A6? +U:A6 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 C1? +U:C1 A3? +U:A3 C6? +U:C6 B3? +U:B3
+=== 39 set2 C6 =SUM(B1:B2)
+=== 40 set2 C1 =INDEX(B3:B4,1)*3
+  @ start 0,0 C1:f {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E1:f B5:f A2:f C5:f A6:f E6:f A4:f B1:f E5:f D2:f D5:f D6:f B4:f A3:f C6:f B3:f
+  @ end rerun=0 next=0,4 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E6:f A4:f B1:f E5:f B3:f C1:f E1:f B5:f A2:f C5:f A6:f D2:f D5:f D6:f B4:f A3:f C6:f
+  | C1? +S:C1 +S:B3 B3? +S:E5 E5? +S:B1 B1? +S:A4 A4? +S:E6 E6? +S:B2 B2? +S:{E3} { }? +U:{E3} +U:B2 +U:E6 +U:A4 +U:B1 +U:E5 +U:B3 +U:C1 clear:S E1? +U:E1 B5? +U:B5 A2? +U:A2 C5? +U:C5 A6? +U:A6 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 A3? +U:A3 C6? +U:C6
+  @ start 0,4 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E6:f A4:f B1:f E5:f B3:f C1:f E1:f B5:f A2:f C5:f A6:f D2:f D5:f D6:f B4:f A3:f C6:f
+  @ end rerun=0 next=0,4 valid=1 st=7 {C4}:0 C4:0 {A2}:0 {D5}:0 {E3}:f B2:f E6:f A4:f B1:f E5:f B3:f C1:f E1:f B5:f A2:f C5:f A6:f D2:f D5:f D6:f B4:f A3:f C6:f
+  | { }? +U:{E3} B2? +U:B2 E6? +U:E6 A4? +U:A4 B1? +U:B1 E5? +U:E5 B3? +U:B3 C1? +U:C1 E1? +U:E1 B5? +U:B5 A2? +U:A2 C5? +U:C5 A6? +U:A6 D2? +U:D2 D5? +U:D5 D6? +U:D6 B4? +U:B4 A3? +U:A3 C6? +U:C6

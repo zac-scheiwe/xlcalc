@@ -637,13 +637,11 @@ fn explicit_requires_declarations() {
 
 #[test]
 fn unsupported_constructs_are_compile_errors() {
-    for src in [
-        "Function F()\n    Open \"x\" For Input As #1\nEnd Function",
-        "Declare PtrSafe Function GetTickCount Lib \"kernel32\" () As Long",
-    ] {
-        let p = Project::compile(&[module("M", src)], &ExcelNames);
-        assert!(!p.errors().is_empty(), "{src}");
-    }
+    let src = "Function F()
+    Lock #1
+End Function";
+    let p = Project::compile(&[module("M", src)], &ExcelNames);
+    assert!(!p.errors().is_empty(), "{src}");
     let class = SourceModule {
         name: "C".to_string(),
         kind: ModuleKind::Class,
@@ -656,4 +654,16 @@ fn unsupported_constructs_are_compile_errors() {
 
     assert!(p.errors().is_empty(), "{:?}", p.errors());
     assert!(p.signature("F").is_some());
+}
+
+#[test]
+fn udt_arrays() {
+    let src = "Type Pt\n X As Long\n B(1 To 2) As Byte\nEnd Type\n\
+Type Box\n P As Pt\n N As String\nEnd Type\n\
+Dim g() As Box\n\
+Sub Fill(a() As Box, ByVal n As Long)\n ReDim Preserve a(1 To n)\n a(n).P.X = n * 10\n a(n).P.B(2) = n\n a(n).N = \"z\"\nEnd Sub\n\
+Function Total(a() As Box) As Long\n Dim i As Long\n For i = LBound(a) To UBound(a)\n Total = Total + a(i).P.X + a(i).P.B(2)\n Next\nEnd Function\n\
+Function F() As String\n Dim t As Box\n ReDim g(1 To 1)\n g(1).P.X = 1\n Fill g, 3\n t = g(3)\n g(1) = t\n \
+F = Total(g) & \":\" & UBound(g) & \":\" & g(1).N & \":\" & Len(g(2))\n Erase g\nEnd Function\n";
+    assert_eq!(ok(src, "F", &[]), s("66:3:z:14"));
 }

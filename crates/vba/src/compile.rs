@@ -93,17 +93,18 @@ pub fn compile(sources: &[SourceModule], lib: &dyn Library) -> (Code, Vec<Compil
         .iter()
         .flat_map(|(_, m)| m.types.iter().filter(|t| t.public).cloned())
         .collect();
+    let global = crate::udt::global(&parsed.iter().map(|(_, m)| m).collect::<Vec<_>>(), &shared);
     parsed = parsed
         .into_iter()
-        .filter_map(
-            |(i, mut m)| match crate::udt::lower(&sources[i].name, &mut m, &shared) {
+        .filter_map(|(i, mut m)| {
+            match crate::udt::lower(&sources[i].name, &mut m, &shared, &global) {
                 Ok(()) => Some((i, m)),
                 Err(e) => {
                     errors.push(e);
                     None
                 }
-            },
-        )
+            }
+        })
         .collect();
     loop {
         let mods: Vec<(&SourceModule, &Module)> =
@@ -202,9 +203,40 @@ fn vba_constant(name: &str) -> Option<Variant> {
         "vbsystemmodal" => i(4096),
         "vbbinarycompare" => i(0),
         "vbtextcompare" => i(1),
+        "vbdatabasecompare" => i(2),
+        "vbformfeed" => s(""),
+        "vbverticaltab" => s(""),
+        "vbback" => s(""),
+
+        "vbusesystemdayofweek" | "vbusesystem" | "vbgeneraldate" => i(0),
+        "vbsunday" | "vbfirstjan1" | "vblongdate" | "vbuppercase" => i(1),
+        "vbmonday" | "vbfirstfourdays" | "vbshortdate" | "vblowercase" => i(2),
+        "vbtuesday" | "vbfirstfullweek" | "vblongtime" | "vbpropercase" => i(3),
+        "vbwednesday" | "vbshorttime" | "vbwide" => i(4),
+        "vbthursday" => i(5),
+        "vbfriday" => i(6),
+        "vbsaturday" => i(7),
+        "vbnarrow" => i(8),
+        "vbkatakana" => i(16),
+        "vbhiragana" => i(32),
+        "vbunicode" => i(64),
+        "vbfromunicode" => i(128),
         "vbobjecterror" => i(-2147221504),
+
+        "vbnormal" => i(0),
+        "vbreadonly" => i(1),
+        "vbhidden" => i(2),
+        "vbsystem" => i(4),
+        "vbvolume" => i(8),
+        "vbdirectory" => i(16),
+        "vbarchive" => i(32),
         "vbtrue" => i(-1),
         "vbfalse" => i(0),
+        "vbmethod" => i(1),
+        "vbget" => i(2),
+        "vblet" => i(4),
+        "vbset" => i(8),
+        "vbusedefault" => i(-2),
         "vbempty" => i(0),
         "vbnull" => i(1),
         "vbinteger" => i(2),
@@ -218,7 +250,9 @@ fn vba_constant(name: &str) -> Option<Variant> {
         "vberror" => i(10),
         "vbboolean" => i(11),
         "vbvariant" => i(12),
+        "vbdataobject" => i(13),
         "vbdecimal" => i(14),
+        "vbuserdefinedtype" => i(36),
         "vbbyte" => i(17),
         "vblonglong" => i(20),
         "vbarray" => i(8192),
@@ -240,6 +274,11 @@ fn intrinsic(name: &str) -> Option<Intrinsic> {
         "msgbox" => Intrinsic::Ask(Interaction::MsgBox),
         "inputbox" => Intrinsic::Ask(Interaction::InputBox),
         "beep" => Intrinsic::Ask(Interaction::Beep),
+        "createobject" => Intrinsic::CreateObject,
+        "declarecall" => Intrinsic::DeclareCall,
+        "callbyname" => Intrinsic::CallByName,
+        "erl" => Intrinsic::Erl,
+        "getobject" => Intrinsic::GetObject,
         _ => return None,
     })
 }
@@ -255,6 +294,9 @@ fn intrinsic_type(i: Intrinsic) -> VType {
         Intrinsic::Ask(Interaction::MsgBox) => VType::Integer,
         Intrinsic::Ask(Interaction::InputBox) => VType::String,
         Intrinsic::Ask(Interaction::Beep) => VType::Variant,
+        Intrinsic::CreateObject | Intrinsic::GetObject => VType::Object(None),
+        Intrinsic::DeclareCall | Intrinsic::CallByName => VType::Variant,
+        Intrinsic::Erl => VType::Long,
     }
 }
 
@@ -544,9 +586,6 @@ impl<'a> Compiler<'a> {
         let Some(e) = &v.fixed_len else {
             return Ok(None);
         };
-        if v.array.is_some() {
-            return Err(self.err(mi, v.pos, "unsupported: arrays of fixed-length strings"));
-        }
         let n = match &e.kind {
             ExprKind::Lit(Variant::I2(n)) => i64::from(*n),
             ExprKind::Lit(Variant::I4(n)) => i64::from(*n),
@@ -926,8 +965,7 @@ impl<'c, 'a> Ctx<'c, 'a> {
             array: !matches!(array, ArrayDecl::Scalar),
         };
         let r = if is_static || self.all_static {
-            let id = self.c.code.globals.len();
-            self.c.code.globals.push(GlobalInfo {
+            let info = GlobalInfo {
                 name: v.name.clone(),
                 ty,
                 array,
@@ -935,8 +973,16 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 auto_new,
                 public: false,
                 with_events: None,
-            });
-            VarRef::Global(id)
+            };
+
+            if let Some(c) = &mut self.c.code.modules[self.mi].class {
+                c.fields.push(info);
+                VarRef::Field(c.fields.len() - 1)
+            } else {
+                let id = self.c.code.globals.len();
+                self.c.code.globals.push(info);
+                VarRef::Global(id)
+            }
         } else {
             let id = self.locals.len();
             self.locals.push(LocalInfo {
@@ -1033,6 +1079,8 @@ impl<'c, 'a> Ctx<'c, 'a> {
         self.block(&p.body)?;
         self.resolve_fixups()?;
         let sig = &self.c.sigs[id];
+        let frame_units =
+            crate::frame::frame_units(sig.kind, &params, &ret, &self.locals, &self.ops);
         Ok(ProcCode {
             name: sig.name.clone(),
             module: self.mi,
@@ -1046,6 +1094,7 @@ impl<'c, 'a> Ctx<'c, 'a> {
             ops: self.ops,
             stmt_start: self.starts,
             volatile: self.volatile,
+            frame_units,
         })
     }
 
@@ -1152,6 +1201,29 @@ impl<'c, 'a> Ctx<'c, 'a> {
                     }
                 }
             }
+            StmtKind::Assign {
+                target,
+                value,
+                set: false,
+            } if let Some((inner, mut args)) = self.mid_statement(target) => {
+                args.push(Arg {
+                    name: None,
+                    value: Some(value.clone()),
+                });
+                let call = Expr {
+                    pos: target.pos,
+                    kind: ExprKind::Index(
+                        Box::new(Expr {
+                            pos: target.pos,
+                            kind: ExprKind::Name("MidAssign".to_string(), None),
+                        }),
+                        args,
+                    ),
+                };
+                let (place, _) = self.place(&inner)?;
+                let v = self.expr(&call)?;
+                self.emit(Op::Let(place, v), true);
+            }
             StmtKind::Assign { target, value, set } => {
                 let (mut place, st) = self.place(target)?;
                 let v = self.expr(value)?;
@@ -1168,7 +1240,7 @@ impl<'c, 'a> Ctx<'c, 'a> {
                     self.emit(Op::Set(place, v), true);
                 } else {
                     if let Place::Var(VarRef::Local(_) | VarRef::Global(_)) = place {
-                        if st.array && !self.is_dynamic_array(&place) {
+                        if st.array && !self.is_dynamic_array(&place) && !is_file_get(value) {
                             return Err(self.err(target.pos, "cannot assign to a fixed array"));
                         }
                     }
@@ -1257,6 +1329,8 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 let collection = self.expr(collection)?;
                 let hidden = self.hidden(VType::Variant);
                 self.hidden(VType::Variant);
+                self.hidden(VType::Variant);
+                let again = collection.clone();
                 let init = self.emit(
                     Op::ForEachInit {
                         var: place.clone(),
@@ -1271,6 +1345,7 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 self.emit(
                     Op::ForEachNext {
                         var: place,
+                        collection: again,
                         hidden,
                         body: init + 1,
                     },
@@ -1354,6 +1429,9 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 if self.labels.insert(name.clone(), self.here()).is_some() {
                     return Err(self.err(s.pos, format!("duplicate label {name}")));
                 }
+                if let Ok(n) = name.parse::<i32>() {
+                    self.emit(Op::Line(n), true);
+                }
             }
             StmtKind::OnError(mode) => {
                 let m = match mode {
@@ -1382,6 +1460,7 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 let mut items = Vec::new();
                 for a in list {
                     items.push(match a {
+                        PrintArg::Value(e) if is_print_layout(e) => continue,
                         PrintArg::Value(e) => {
                             let v = self.expr(e)?;
                             self.no_array(&v, e.pos)?;
@@ -1393,6 +1472,7 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 }
                 self.emit(Op::DebugPrint(items), true);
             }
+            StmtKind::Block(body) => self.block(body)?,
             StmtKind::DebugAssert(e) => {
                 let v = self.expr(e)?;
                 self.no_array(&v, e.pos)?;
@@ -1496,6 +1576,59 @@ impl<'c, 'a> Ctx<'c, 'a> {
         }
     }
 
+    fn case_test(&mut self, op: BinOp, a: CExpr, b: CExpr, pos: Pos) -> R<CExpr> {
+        let (Some(var), Some(test)) = (find_builtin("CVar"), find_builtin("Select<test>")) else {
+            return self.compare(op, a, b, pos);
+        };
+
+        let whole;
+        let (a, b) = {
+            let conv = |subject: &CExpr, other: CExpr| {
+                let name = match subject.ty() {
+                    VType::Byte => "CByte",
+                    VType::Integer => "CInt",
+                    VType::Long => "CLng",
+                    _ => return other,
+                };
+                match find_builtin(name) {
+                    Some(f) if matches!(other.ty(), VType::Single | VType::Double) => CExpr {
+                        st: SType::scalar(subject.ty().clone()),
+                        kind: EK::Builtin(BuiltinRef(f), vec![other]),
+                    },
+                    _ => other,
+                }
+            };
+            let is_value = |e: &CExpr| matches!(e.kind, EK::Builtin(..));
+            if matches!(a.kind, EK::Var(VarRef::Local(_))) {
+                let was = is_value(&b);
+                let b = conv(&a, b);
+                whole = !was && is_value(&b);
+                (a, b)
+            } else {
+                let was = is_value(&a);
+                let a = conv(&b, a);
+                whole = !was && is_value(&a);
+                (a, b)
+            }
+        };
+
+        let wrap = |e: CExpr| {
+            if matches!(e.kind, EK::Var(VarRef::Local(_))) && e.ty() != &VType::Variant && !whole {
+                CExpr {
+                    st: SType::scalar(VType::Variant),
+                    kind: EK::Builtin(BuiltinRef(var), vec![e]),
+                }
+            } else {
+                e
+            }
+        };
+        let c = self.compare(op, wrap(a), wrap(b), pos)?;
+        Ok(CExpr {
+            st: SType::scalar(VType::Boolean),
+            kind: EK::Builtin(BuiltinRef(test), vec![c]),
+        })
+    }
+
     fn select(
         &mut self,
         subject: &Expr,
@@ -1509,30 +1642,34 @@ impl<'c, 'a> Ctx<'c, 'a> {
         }
         let slot = self.hidden(st.ty.clone());
         self.emit(Op::Bind(slot, subj), true);
+
+        let over = self.emit(Op::Jump(0), false);
+        let mut ends = vec![self.emit(Op::Jump(0), true)];
+        let tests = self.here();
+        self.set_target(over, tests);
         let s = CExpr {
             st: st.clone(),
             kind: EK::Var(VarRef::Local(slot)),
         };
-        let mut ends = Vec::new();
         for (clauses, body) in cases {
             let mut to_body = Vec::new();
             for clause in clauses {
                 match clause {
                     CaseClause::Value(e) => {
                         let v = self.expr(e)?;
-                        let c = self.compare(BinOp::Eq, s.clone(), v, e.pos)?;
+                        let c = self.case_test(BinOp::Eq, s.clone(), v, e.pos)?;
                         to_body.push(self.emit(Op::JumpIf(c, 0), true));
                     }
                     CaseClause::Is(op, e) => {
                         let v = self.expr(e)?;
-                        let c = self.compare(*op, s.clone(), v, e.pos)?;
+                        let c = self.case_test(*op, s.clone(), v, e.pos)?;
                         to_body.push(self.emit(Op::JumpIf(c, 0), true));
                     }
                     CaseClause::Range(a, b) => {
                         let lo = self.expr(a)?;
                         let hi = self.expr(b)?;
-                        let c1 = self.compare(BinOp::Le, lo, s.clone(), a.pos)?;
-                        let c2 = self.compare(BinOp::Le, s.clone(), hi, b.pos)?;
+                        let c1 = self.case_test(BinOp::Le, lo, s.clone(), a.pos)?;
+                        let c2 = self.case_test(BinOp::Le, s.clone(), hi, b.pos)?;
                         let skip = self.emit(Op::JumpIfNot(c1, 0), true);
                         to_body.push(self.emit(Op::JumpIf(c2, 0), false));
                         let next = self.here();
@@ -2102,6 +2239,9 @@ impl<'c, 'a> Ctx<'c, 'a> {
                             "number" => (ErrProp::Number, VType::Long),
                             "description" => (ErrProp::Description, VType::String),
                             "source" => (ErrProp::Source, VType::String),
+                            "helpfile" => (ErrProp::HelpFile, VType::String),
+                            "helpcontext" => (ErrProp::HelpContext, VType::Long),
+                            "lastdllerror" => (ErrProp::LastDllError, VType::Long),
                             _ => return Err(self.err(pos, format!("unsupported: Err.{name}"))),
                         };
                         return Ok(CExpr {
@@ -2173,8 +2313,88 @@ impl<'c, 'a> Ctx<'c, 'a> {
         {
             return Err(self.err(pos, format!("argument not optional ({})", b.0.name)));
         }
+
+        let mut b = b;
+        if let [a] = out.as_slice() {
+            if b.0.name == "Abs"
+                && !a.st.array
+                && matches!(a.ty(), VType::Integer | VType::Long | VType::LongLong)
+            {
+                if let Some(t) = find_builtin("Abs<typed>") {
+                    b = BuiltinRef(t);
+                }
+            }
+        }
+
+        if let [a] = out.as_slice() {
+            if b.0.name == "CDate"
+                && !a.st.array
+                && matches!(
+                    a.ty(),
+                    VType::Byte
+                        | VType::Integer
+                        | VType::Long
+                        | VType::LongLong
+                        | VType::Single
+                        | VType::Double
+                        | VType::Currency
+                )
+            {
+                if let Some(t) = find_builtin("CDate<typed>") {
+                    b = BuiltinRef(t);
+                }
+            }
+        }
+
+        if let [a] = out.as_slice() {
+            let bytes = b.0.name.eq_ignore_ascii_case("lenb");
+            if (bytes || b.0.name.eq_ignore_ascii_case("len")) && !a.st.array {
+                let size = match a.ty() {
+                    VType::Byte => Some(1),
+                    VType::Boolean | VType::Integer => Some(2),
+                    VType::Long | VType::Single => Some(4),
+                    VType::LongLong | VType::Double | VType::Currency | VType::Date => Some(8),
+                    _ => None,
+                };
+                if let Some(n) = size {
+                    return Ok(lit(Variant::I4(n)));
+                }
+            }
+        }
+
+        if matches!(b.0.name, "FilePut<>" | "FileGet<>" | "InputField<>") {
+            if let Some(a) = out.last() {
+                let elem = a.ty().var_type().map_or(12, |t| t as i32);
+                let mut code = if a.st.array { 0x2000 | elem } else { elem };
+
+                let fixed = match &a.kind {
+                    EK::Var(VarRef::Local(i)) => {
+                        self.locals.get(*i).is_some_and(|l| l.fixed.is_some())
+                    }
+                    EK::Var(VarRef::Global(i)) => self
+                        .c
+                        .code
+                        .globals
+                        .get(*i)
+                        .is_some_and(|g| g.fixed.is_some()),
+                    _ => false,
+                };
+                if fixed && !a.st.array {
+                    code |= 0x1000;
+                }
+                out.push(lit(Variant::I4(code)));
+            }
+        }
+
+        let ret = if b.0.name.to_ascii_lowercase().starts_with("len")
+            && out.first().is_some_and(|a| a.ty().is_dynamic())
+        {
+            VType::Variant
+        } else {
+            b.0.ret.clone()
+        };
         Ok(CExpr {
-            st: SType::scalar(b.0.ret.clone()),
+            st: SType::scalar(ret),
             kind: EK::Builtin(b, out),
         })
     }
@@ -2185,11 +2405,25 @@ impl<'c, 'a> Ctx<'c, 'a> {
             Intrinsic::UBound | Intrinsic::LBound => (1, 2),
             Intrinsic::Ask(Interaction::MsgBox) => (1, 5),
             Intrinsic::Ask(Interaction::InputBox) => (1, 7),
-            Intrinsic::Ask(Interaction::Beep) => (0, 0),
+            Intrinsic::Ask(Interaction::Beep) | Intrinsic::Erl => (0, 0),
+            Intrinsic::CreateObject => (1, 2),
+            Intrinsic::GetObject => (0, 2),
+            Intrinsic::DeclareCall => (2, usize::MAX),
+            Intrinsic::CallByName => (3, usize::MAX),
             _ => (1, 1),
         };
         if args.len() < min || args.len() > max {
             return Err(self.err(pos, format!("wrong number of arguments to {i:?}")));
+        }
+
+        if i == Intrinsic::TypeName {
+            if let Some(ExprKind::Name(n, _)) =
+                args.first().and_then(|a| a.value.as_ref()).map(|v| &v.kind)
+            {
+                if matches!(self.lookup(n), Some(Sym::Err)) {
+                    return Ok(lit(Variant::Bstr("ErrObject".to_string())));
+                }
+            }
         }
         let mut out = Vec::new();
         for a in args {
@@ -2198,7 +2432,10 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 (None, None) if i == Intrinsic::Array => {
                     return Err(self.err(pos, "Array cannot have a left-out element"))
                 }
-                (None, None) if matches!(i, Intrinsic::Ask(_)) && !out.is_empty() => {
+                (None, None)
+                    if matches!(i, Intrinsic::GetObject)
+                        || matches!(i, Intrinsic::Ask(_)) && !out.is_empty() =>
+                {
                     out.push(CExpr {
                         st: SType::scalar(VType::Variant),
                         kind: EK::Missing,
@@ -2345,6 +2582,37 @@ impl<'c, 'a> Ctx<'c, 'a> {
         Ok(CArg::Value(self.expr(e)?))
     }
 
+    fn mid_statement(&mut self, target: &Expr) -> Option<(Expr, Vec<Arg>)> {
+        let ExprKind::Index(callee, args) = &target.kind else {
+            return None;
+        };
+        let ExprKind::Name(name, _) = &callee.kind else {
+            return None;
+        };
+        if !["mid", "mid$", "midb", "midb$"].contains(&name.to_ascii_lowercase().as_str())
+            || !(2..=3).contains(&args.len())
+            || matches!(self.resolve(name, None, target.pos), Ok(Sym::Var(..)))
+        {
+            return None;
+        }
+        let first = args[0].value.clone()?;
+        let mut out = vec![Arg {
+            name: None,
+            value: Some(first.clone()),
+        }];
+        out.extend(args[1..].iter().cloned());
+        if args.len() == 2 {
+            out.push(Arg {
+                name: None,
+                value: Some(Expr {
+                    pos: target.pos,
+                    kind: ExprKind::Lit(Variant::I4(i32::MAX)),
+                }),
+            });
+        }
+        Some((first, out))
+    }
+
     fn place(&mut self, e: &Expr) -> R<(Place, SType)> {
         let pos = e.pos;
         match &e.kind {
@@ -2405,6 +2673,9 @@ impl<'c, 'a> Ctx<'c, 'a> {
                                         "number" => (ErrProp::Number, VType::Long),
                                         "description" => (ErrProp::Description, VType::String),
                                         "source" => (ErrProp::Source, VType::String),
+                                        "helpfile" => (ErrProp::HelpFile, VType::String),
+                                        "helpcontext" => (ErrProp::HelpContext, VType::Long),
+                                        "lastdllerror" => (ErrProp::LastDllError, VType::Long),
                                         _ => {
                                             return Err(self
                                                 .err(pos, format!("cannot assign to Err.{name}")))
@@ -2462,5 +2733,20 @@ impl<'c, 'a> Ctx<'c, 'a> {
                 Ok(o)
             }
         }
+    }
+}
+
+fn is_file_get(e: &Expr) -> bool {
+    matches!(&e.kind, ExprKind::Index(f, _) if matches!(&f.kind, ExprKind::Name(n, None) if n == "FileGet<>"))
+}
+
+fn is_print_layout(e: &Expr) -> bool {
+    let is_layout = |n: &str| n.eq_ignore_ascii_case("spc") || n.eq_ignore_ascii_case("tab");
+    match &e.kind {
+        ExprKind::Index(f, a) => {
+            matches!(&f.kind, ExprKind::Name(n, _) if is_layout(n)) && a.len() == 1
+        }
+        ExprKind::Name(n, None) => n.eq_ignore_ascii_case("tab"),
+        _ => false,
     }
 }

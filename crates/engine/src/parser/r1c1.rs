@@ -63,6 +63,19 @@ fn resolve(p: Part, host: u32, max: u32) -> Option<(u32, bool)> {
     }
 }
 
+pub fn forced_name(word: &str) -> bool {
+    if crate::address::parse_a1_cell(word).is_some() {
+        return true;
+    }
+    let b = word.as_bytes();
+    b.len() > 1
+        && matches!(b[0], b'R' | b'r' | b'C' | b'c')
+        && b[1..]
+            .iter()
+            .all(|c| c.is_ascii_digit() || matches!(c, b'R' | b'r' | b'C' | b'c'))
+        && b[1..].iter().any(u8::is_ascii_digit)
+}
+
 pub fn rewrite(src: &str, row: u32, col: u32) -> Result<String, String> {
     let lower = src.to_ascii_lowercase();
     if lower.contains("let(") || lower.contains("lambda(") {
@@ -118,7 +131,7 @@ fn pass(src: &str, row: u32, col: u32, names: bool) -> Result<(String, bool), St
             i = end;
             continue;
         }
-        let prev_word = i > 0 && is_word(s[i - 1]) && s[i - 1] != b'.';
+        let prev_word = i > 0 && (is_word(s[i - 1]) && s[i - 1] != b'.' || s[i - 1] == 1);
         if (c == b'R' || c == b'r') && !prev_word && !(i > 0 && s[i - 1] == b'$') {
             if let Some((text, next)) = token(s, i, row, col)? {
                 out.push_str(&text);
@@ -145,7 +158,9 @@ fn pass(src: &str, row: u32, col: u32, names: bool) -> Result<(String, bool), St
             if w.contains('$') {
                 return Err("$ references are invalid in R1C1 mode".into());
             }
-            if crate::address::parse_a1_cell(w).is_some() && s.get(j) != Some(&b'(') {
+            let colon = s.get(j) == Some(&b':') || (i > 0 && s[i - 1] == b':');
+            let col_word = colon && w.len() <= 3 && crate::address::letters_to_col(w).is_some();
+            if (forced_name(w) || col_word) && s.get(j) != Some(&b'(') {
                 out.push('\u{1}');
             }
             out.push_str(w);
@@ -185,6 +200,11 @@ fn token(s: &[u8], i: usize, row: u32, col: u32) -> Result<Option<(String, usize
             return Ok(None);
         }
         if after(k) && !bang_follows(k) {
+            if (matches!(rp, Part::Abs(_)) && resolve(rp, row, MAX_ROWS).is_none())
+                || (matches!(cp, Part::Abs(_)) && resolve(cp, col, MAX_COLS).is_none())
+            {
+                return Ok(None);
+            }
             let (r, ra) = resolve(rp, row, MAX_ROWS).ok_or("R1C1 row out of range")?;
             let (c, ca) = resolve(cp, col, MAX_COLS).ok_or("R1C1 column out of range")?;
             let text = format!(

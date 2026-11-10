@@ -451,6 +451,16 @@ impl Workbook {
             }
         }
 
+        if self
+            .merges(dest.sheet)
+            .iter()
+            .any(|m| m.intersects(&area) && !crate::cse::inside(m, &area))
+        {
+            return Err(EditError::Compile(
+                "We can't do that to a merged cell.".into(),
+            ));
+        }
+
         let before_tables: Vec<(String, Rect)> = self
             .tables
             .iter()
@@ -526,7 +536,7 @@ impl Workbook {
                             let r = Ok(wb.set_value(addr, Value::from(t.as_str())));
                             wb.store_format(addr, "@");
                             r
-                        } else if t.starts_with('\'') {
+                        } else if t.starts_with('\'') || has_r1c1_alias(&t) {
                             Ok(wb.set_value(addr, Value::from(t.as_str())))
                         } else {
                             match wb.set_input(addr, &t) {
@@ -591,6 +601,61 @@ impl Workbook {
         }
         Ok(calc::finish_report(report))
     }
+}
+
+fn has_r1c1_alias(t: &str) -> bool {
+    fn part(b: &[u8], i: &mut usize, tag: u8) -> bool {
+        if b.get(*i).map(u8::to_ascii_lowercase) != Some(tag) {
+            return false;
+        }
+        *i += 1;
+        if b.get(*i) == Some(&b'[') {
+            let mut j = *i + 1;
+            if b.get(j) == Some(&b'-') {
+                j += 1;
+            }
+            let d = j;
+            while b.get(j).is_some_and(u8::is_ascii_digit) {
+                j += 1;
+            }
+            if j > d && b.get(j) == Some(&b']') {
+                *i = j + 1;
+            }
+        } else {
+            while b.get(*i).is_some_and(u8::is_ascii_digit) {
+                *i += 1;
+            }
+        }
+        true
+    }
+    let word = |x: u8| x.is_ascii_alphanumeric() || matches!(x, b'_' | b'.');
+    let b = t.as_bytes();
+    let mut s = 0;
+    while s < b.len() {
+        if !word(b[s]) {
+            s += 1;
+            continue;
+        }
+        let word_start = s == 0 || !(word(b[s - 1]) || b[s - 1] == b'$');
+        let mut i = s;
+        let r = part(b, &mut i, b'r');
+        let c = part(b, &mut i, b'c');
+        let ended = b.get(i).is_none_or(|x| !(word(*x) || *x == b'('));
+        let a1 = {
+            let w = &b[s..i];
+            let letters = w.iter().take_while(|x| x.is_ascii_alphabetic()).count();
+            (1..=3).contains(&letters)
+                && letters < w.len()
+                && w[letters..].iter().all(u8::is_ascii_digit)
+        };
+        if word_start && (r || c) && ended && !a1 {
+            return true;
+        }
+        while s < b.len() && word(b[s]) {
+            s += 1;
+        }
+    }
+    false
 }
 
 #[cfg(test)]

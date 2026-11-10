@@ -380,6 +380,7 @@ fn looks_like_r1c1(name: &str) -> bool {
 
 pub fn sheet_spec_text(spec: &SheetSpec) -> String {
     match spec {
+        SheetSpec::Single(n) if n.is_empty() => "!".to_string(),
         SheetSpec::Single(n) => format!("{}!", sheet_name_text(n)),
         SheetSpec::Range(a, b) => {
             let combined = format!("{a}:{b}");
@@ -389,10 +390,16 @@ pub fn sheet_spec_text(spec: &SheetSpec) -> String {
                 format!("'{}'!", combined.replace('\'', "''"))
             }
         }
-        SheetSpec::External { book, sheet } => match sheet {
-            Some(s) => format!("[{book}]{s}!"),
-            None => format!("[{book}]!"),
-        },
+        SheetSpec::External { book, sheet } => {
+            let s = sheet.as_deref().unwrap_or("");
+            let (dir, name) = crate::workbook::ext::split_path(book);
+            let body = format!("{dir}[{name}]{s}");
+            if dir.is_empty() && crate::workbook::ext::plain_part(&body.replace(':', "")) {
+                format!("{body}!")
+            } else {
+                format!("'{}'!", body.replace('\x27', "''"))
+            }
+        }
     }
 }
 
@@ -465,6 +472,14 @@ pub(super) fn write_expr(s: &mut String, e: &Expr) {
     crate::deep(|| write_expr_inner(s, e))
 }
 
+fn ends_with_ws(e: &Expr) -> bool {
+    match e {
+        Expr::Ws { after, .. } => !after.is_empty(),
+        Expr::Unary { expr, .. } => ends_with_ws(expr),
+        _ => false,
+    }
+}
+
 fn write_expr_inner(s: &mut String, e: &Expr) {
     match e {
         Expr::Number(n) => s.push_str(&format_general(*n)),
@@ -482,6 +497,10 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
             if let Some(sp) = sheet {
                 s.push_str(&sheet_spec_text(sp));
             }
+
+            if crate::address::parse_a1_cell(name).is_some() {
+                s.push('\u{1}');
+            }
             s.push_str(name);
         }
         Expr::StructRef { table, spec } => {
@@ -493,8 +512,19 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
             s.push(']');
         }
         Expr::Func { name, args } => {
+            let name = match name.rsplit_once('!') {
+                Some((book, f)) if super::is_addin_file(book) => f,
+                _ => name.as_str(),
+            };
             let bare = crate::formula::strip_prefixes(name);
             s.push_str(&name[..name.len() - bare.len()]);
+            if let Some((book, func)) = bare.rsplit_once('!') {
+                s.push_str(&sheet_name_text(book));
+                s.push('!');
+                s.push_str(func);
+                write_args(s, args);
+                return;
+            }
 
             if crate::functions::lookup(&bare.to_uppercase()).is_some() {
                 s.push_str(&bare.to_uppercase());
@@ -529,12 +559,23 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
             s.push_str(field);
         }
         Expr::Binary { op, left, right } => {
+            let mark = |s: &mut String, e: &Expr| {
+                if *op == BinOp::Range
+                    && matches!(&**left, Expr::Name { .. })
+                    && matches!(e, Expr::Name { sheet: None, name }
+                        if crate::address::letters_to_col(name).is_some()
+                            && crate::address::parse_a1_cell(name).is_none())
+                {
+                    s.push('\u{1}');
+                }
+            };
             write_expr(s, left);
 
-            let typed = matches!(&**left, Expr::Ws { after, .. } if !after.is_empty());
+            let typed = ends_with_ws(left);
             if !(*op == BinOp::Intersect && typed) {
                 s.push_str(op.symbol());
             }
+            mark(s, right);
             write_expr(s, right);
         }
         Expr::Paren(x) => {

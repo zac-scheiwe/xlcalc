@@ -1,0 +1,32 @@
+Option Explicit
+Private WithEvents Src As R9Src
+Public Hits As String
+
+Public Sub Attach(ByVal s As R9Src)
+    Set Src = s
+End Sub
+
+Public Sub Detach()
+    Set Src = Nothing
+End Sub
+
+Private Sub Src_Ev1(ByVal n As Long, res As String)
+    Hits = Hits & "[sh1:" & n & "]"
+    res = res & "S" & n
+    If n = 13 Then On Error Resume Next: Err.Raise 5
+End Sub
+
+Private Sub Src_Ev2(a As Long, b As Variant)
+    Hits = Hits & "[sh2:" & a & "]"
+    a = a * 10
+    b = "sheet"
+End Sub
+
+Private Sub Src_Ev3()
+    Hits = Hits & "[sh3]"
+End Sub
+
+Public Function GetHits() As String
+    GetHits = Hits
+    Hits = ""
+End Function

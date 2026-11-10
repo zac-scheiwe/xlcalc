@@ -1,0 +1,134 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=A2+A3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "=SUM(A2:A3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "=C1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "=IFERROR(C1,-1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "=ISREF(A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "=ROWS(A2:A3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C7",
+   "input": "=A2:A3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C8",
+   "input": "=SUM(C3,1)"
+  },
+  {
+   "op": "name",
+   "name": "nn",
+   "refers_to": "=Sheet1!$A$2:$A$3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D1",
+   "input": "=SUM(nn)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!D2",
+   "input": "=ISREF(nn)"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!C1:D8"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D8"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 2
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "30"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "=A2+A3"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:D8"
+  }
+ ]
+}

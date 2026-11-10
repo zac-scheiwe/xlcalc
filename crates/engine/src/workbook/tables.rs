@@ -77,6 +77,12 @@ pub struct Table {
 
     pub hdr_fmt: Option<Option<Arc<str>>>,
 
+    pub style: Option<String>,
+
+    pub stripes: [bool; 4],
+
+    pub comment: String,
+
     pub(crate) sbr_lists: Option<std::collections::BTreeSet<u16>>,
 }
 
@@ -253,6 +259,28 @@ impl Workbook {
             .find(|t| crate::text::eq_ordinal_ci(&t.name, name))
     }
 
+    pub fn tables_made(&self) -> usize {
+        self.tables_made
+    }
+
+    pub fn set_table_look(&mut self, name: &str, f: impl FnOnce(&mut Table)) -> bool {
+        match self
+            .tables
+            .iter_mut()
+            .find(|t| crate::text::eq_ordinal_ci(&t.name, name))
+        {
+            Some(t) => {
+                f(t);
+                true
+            }
+            None => false,
+        }
+    }
+
+    pub fn table_filter_on(&mut self, name: &str) -> bool {
+        self.set_table_look(name, |t| t.show_filter = true)
+    }
+
     pub fn table_at(&self, addr: CellAddr) -> Option<&Table> {
         self.tables
             .iter()
@@ -426,6 +454,9 @@ impl Workbook {
             emptied: false,
             fmt_snap: Vec::new(),
             hdr_fmt: None,
+            style: Some("TableStyleMedium2".to_string()),
+            stripes: [true, false, false, false],
+            comment: String::new(),
             sbr_lists: None,
         });
         let ti = self.tables.len() - 1;
@@ -456,6 +487,15 @@ impl Workbook {
             .collect();
         for f in anchors {
             calc::mark_dirty(self, f);
+        }
+
+        calc::name_changed(self, &table_dep_key(name));
+        calc::name_changed(self, &name.to_uppercase());
+        if self.calc.dirty_list.is_empty() {
+            self.calc.skip_host_volatile = true;
+            let r = self.recalc_point();
+            self.calc.skip_host_volatile = false;
+            return Ok(r);
         }
         Ok(self.table_changed(name))
     }
@@ -1666,6 +1706,9 @@ impl Workbook {
     }
 
     pub(crate) fn table_auto_expand(&mut self, addr: CellAddr, is_formula: bool) {
+        if self.op_on(super::Op::PivotWrite) {
+            return;
+        }
         let Some((ti, rect, grow_col)) = self.table_expansion(addr, is_formula) else {
             return;
         };
@@ -1705,6 +1748,9 @@ impl Workbook {
             self.extend_col_formats(ti);
         } else {
             self.extend_row_formats(addr.sheet, rect);
+            if rect.r1 > old.r1 {
+                self.pivots_grow(addr.sheet, old, rect.r1 - old.r1);
+            }
         }
         if grow_col && !self.tables[ti].headers {
             let t = &mut self.tables[ti];
@@ -1747,9 +1793,13 @@ impl Workbook {
         if refs_grew {
             let _ = self.relink_and_recalc();
         }
-        let _ = self.table_changed(&name);
+
+        calc::name_changed(self, &table_dep_key(&name));
+        calc::name_changed(self, &name.to_uppercase());
         if !grow_col {
+            let mode = std::mem::replace(&mut self.settings.mode, super::CalcMode::Manual);
             self.table_fill_new_rows(ti, (rect.r1, rect.r1), &firsts, true);
+            self.settings.mode = mode;
         }
     }
 
@@ -2059,6 +2109,14 @@ impl Workbook {
     }
 
     pub(crate) fn rename_table_column(&mut self, ti: usize, old: &str, new: &str) {
+        let tname = self.tables[ti].name.clone();
+        for c in self.slicer_caches.iter_mut().filter(|c| !c.pivot) {
+            if crate::text::eq_ordinal_ci(&c.table, &tname)
+                && crate::text::eq_ordinal_ci(&c.field, old)
+            {
+                c.field = new.to_string();
+            }
+        }
         let (ko, kn) = (Table::auto_key(old), Table::auto_key(new));
         if ko != kn {
             let t = &mut self.tables[ti];

@@ -303,10 +303,21 @@ impl Workbook {
         }
 
         if let Ok(rep) = &r {
-            let alive = rep
-                .changed
+            let volatile_left = self
+                .calc
+                .volatile
                 .iter()
-                .any(|&a| a.sheet == sheet && self.formula_at(a).is_some());
+                .chain(&self.calc.host_volatile)
+                .any(|&f| {
+                    self.formulas
+                        .get(f as usize)
+                        .is_some_and(|c| c.as_ref().is_some_and(|c| c.addr.sheet == sheet))
+                });
+            let alive = volatile_left
+                || rep
+                    .changed
+                    .iter()
+                    .any(|&a| a.sheet == sheet && self.formula_at(a).is_some());
             if !alive {
                 self.notes.forget_calculated(sheet);
             }
@@ -711,7 +722,8 @@ pub(crate) fn reads_own_cell(wb: &Workbook, fid: FormulaId) -> bool {
     let mut hit = false;
     crate::formula::walk(&wb.formula(fid).formula.root, &mut |n| {
         if let Node::Ref(sr, CRef::Cell { row, col }) = n {
-            if matches!(sr, SheetRef::Current) || *sr == SheetRef::Sheet(host.sheet) {
+            if matches!(sr, SheetRef::Current | SheetRef::Own) || *sr == SheetRef::Sheet(host.sheet)
+            {
                 if let (Some(r), Some(c)) = (
                     row.resolve(host.row, 1 << 20, false),
                     col.resolve(host.col, 1 << 14, false),

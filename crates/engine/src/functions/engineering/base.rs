@@ -131,14 +131,26 @@ pub fn convert(ctx: &mut EvalCtx, ops: &[Operand], from: Radix, to: Radix) -> Op
     })
 }
 
-pub fn base_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
+pub fn base_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    let ops: Vec<Operand> = ops
+        .iter()
+        .map(|o| match o {
+            Operand::Ref(r) if r.is_span() && r.single().is_none() => Operand::err(XlError::REF),
+            o => o.clone(),
+        })
+        .collect();
+    atp::call(ctx, &ops, "v", |ctx, a, _| base_vals(ctx, a))
+}
+
+fn base_vals(ctx: &mut EvalCtx, a: &[Option<Value>]) -> Value {
+    let get = |i: usize| a.get(i).cloned().flatten().unwrap_or(Value::Blank);
     val((|| {
-        let n_raw = num(ctx, &a[0])?;
+        let n_raw = num(ctx, &get(0))?;
         let n = n_raw.trunc();
-        let radix = num(ctx, &a[1])?.trunc();
+        let radix = num(ctx, &get(1))?.trunc();
         let min_len = match a.get(2) {
-            None | Some(Value::Blank) => None,
-            Some(v) => Some(num(ctx, v)?.trunc()),
+            None | Some(None) => None,
+            Some(Some(v)) => Some(num(ctx, v)?.trunc()),
         };
         if n_raw < 0.0 {
             return Err(XlError::NUM);

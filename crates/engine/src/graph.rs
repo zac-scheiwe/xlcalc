@@ -88,6 +88,20 @@ impl DepGraph {
         }
     }
 
+    pub fn read_rects(&self, sheet: SheetId) -> Vec<Rect> {
+        let mut out: Vec<Rect> = Vec::new();
+        if let Some(m) = self.points.get(&sheet) {
+            out.extend(m.keys().map(|&(r, c)| Rect::new(r, c, r, c)));
+        }
+        if let Some(t) = self.ranges.get(&sheet) {
+            out.extend(t.iter().map(|e| {
+                let (lo, hi) = (e.geom().lower(), e.geom().upper());
+                Rect::new(lo[0] as u32, lo[1] as u32, hi[0] as u32, hi[1] as u32)
+            }));
+        }
+        out
+    }
+
     pub fn dependents_of_cell(&self, sheet: SheetId, row: u32, col: u32, out: &mut Vec<FormulaId>) {
         if let Some(m) = self.points.get(&sheet) {
             if let Some(v) = m.get(&(row, col)) {
@@ -143,19 +157,40 @@ pub fn collect_precedents(wb: &Workbook, formula: &Formula, host: CellAddr) -> V
             return out;
         }
     }
+
+    if wb.sheet(host.sheet).is_some_and(|s| s.kind.is_macro()) {
+        let mut command = false;
+        crate::formula::walk(&formula.root, &mut |n| {
+            if let Node::NamedCall { key, .. } = n {
+                command |=
+                    key.as_ref() == "IF" || crate::functions::xlm::XLM_ONLY.contains(&&**key);
+            }
+        });
+        if command {
+            return out;
+        }
+    }
     collect_node(wb, &formula.root, host, false, &mut out, &mut seen_names);
     out
 }
 
 fn sheets_of(wb: &Workbook, sheet: &SheetRef, host: CellAddr) -> SmallVec<[SheetId; 1]> {
     match sheet {
-        SheetRef::Current => smallvec::smallvec![host.sheet],
+        SheetRef::Current | SheetRef::Own => smallvec::smallvec![host.sheet],
         SheetRef::Sheet(id) => smallvec::smallvec![*id],
-        SheetRef::Span(a, b) => match (wb.sheet_position(*a), wb.sheet_position(*b)) {
-            (Some(x), Some(y)) => (x.min(y)..=x.max(y)).map(|i| wb.sheet_at(i).id).collect(),
-            _ => SmallVec::new(),
-        },
-        SheetRef::Missing(_) | SheetRef::External(_) => SmallVec::new(),
+        SheetRef::Span(a, b) => {
+            if a.0 >= crate::workbook::ext::EXT_BASE {
+                wb.ext_span(*a, *b).into_iter().collect()
+            } else {
+                match (wb.sheet_position(*a), wb.sheet_position(*b)) {
+                    (Some(x), Some(y)) => {
+                        (x.min(y)..=x.max(y)).map(|i| wb.sheet_at(i).id).collect()
+                    }
+                    _ => SmallVec::new(),
+                }
+            }
+        }
+        SheetRef::Missing(_) => SmallVec::new(),
     }
 }
 

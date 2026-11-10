@@ -1,7 +1,12 @@
-use crate::{part, rels, Zip};
+use crate::package::rels_name;
+use crate::xlsb_sheet::SheetXml;
+use crate::xml::Node;
+use crate::{external_targets, part, rels, tree, Zip};
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::io::Write as _;
+
+pub(crate) mod ext;
 
 const REL: &str = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
 
@@ -9,7 +14,7 @@ pub fn is_xlsb(zip: &mut Zip) -> bool {
     zip.by_name("xl/workbook.bin").is_ok()
 }
 
-struct Recs<'a> {
+pub(crate) struct Recs<'a> {
     b: &'a [u8],
     p: usize,
 }
@@ -42,43 +47,43 @@ impl<'a> Iterator for Recs<'a> {
     }
 }
 
-fn recs(b: &[u8]) -> Recs<'_> {
+pub(crate) fn recs(b: &[u8]) -> Recs<'_> {
     Recs { b, p: 0 }
 }
 
-struct Rd<'a> {
+pub(crate) struct Rd<'a> {
     b: &'a [u8],
     p: usize,
 }
 
 impl<'a> Rd<'a> {
-    fn new(b: &'a [u8]) -> Self {
+    pub(crate) fn new(b: &'a [u8]) -> Self {
         Rd { b, p: 0 }
     }
-    fn take(&mut self, n: usize) -> Result<&'a [u8], String> {
+    pub(crate) fn take(&mut self, n: usize) -> Result<&'a [u8], String> {
         let s = self.b.get(self.p..self.p + n).ok_or("record too short")?;
         self.p += n;
         Ok(s)
     }
-    fn u8(&mut self) -> Result<u8, String> {
+    pub(crate) fn u8(&mut self) -> Result<u8, String> {
         Ok(self.take(1)?[0])
     }
-    fn u16(&mut self) -> Result<u16, String> {
+    pub(crate) fn u16(&mut self) -> Result<u16, String> {
         let s = self.take(2)?;
         Ok(u16::from_le_bytes([s[0], s[1]]))
     }
-    fn u32(&mut self) -> Result<u32, String> {
+    pub(crate) fn u32(&mut self) -> Result<u32, String> {
         let s = self.take(4)?;
         Ok(u32::from_le_bytes([s[0], s[1], s[2], s[3]]))
     }
-    fn f64(&mut self) -> Result<f64, String> {
+    pub(crate) fn f64(&mut self) -> Result<f64, String> {
         let s = self.take(8)?;
         let mut a = [0u8; 8];
         a.copy_from_slice(s);
         Ok(f64::from_le_bytes(a))
     }
 
-    fn utf16(&mut self, n: usize) -> Result<String, String> {
+    pub(crate) fn utf16(&mut self, n: usize) -> Result<String, String> {
         let units: Vec<u16> = self
             .take(n * 2)?
             .as_chunks::<2>()
@@ -89,19 +94,19 @@ impl<'a> Rd<'a> {
         Ok(String::from_utf16_lossy(&units))
     }
 
-    fn wstr(&mut self) -> Result<String, String> {
+    pub(crate) fn wstr(&mut self) -> Result<String, String> {
         let n = self.u32()?;
         if n == 0xFFFF_FFFF {
             return Ok(String::new());
         }
         self.utf16(n as usize)
     }
-    fn rest(&self) -> &'a [u8] {
+    pub(crate) fn rest(&self) -> &'a [u8] {
         &self.b[self.p.min(self.b.len())..]
     }
 }
 
-fn esc(s: &str) -> String {
+pub(crate) fn esc(s: &str) -> String {
     let mut o = String::with_capacity(s.len());
     for c in s.chars() {
         match c {
@@ -115,7 +120,7 @@ fn esc(s: &str) -> String {
     o
 }
 
-fn xstr(s: &str) -> String {
+pub(crate) fn xstr(s: &str) -> String {
     let mut o = String::with_capacity(s.len());
     let mut it = s.chars().peekable();
     while let Some(c) = it.next() {
@@ -131,7 +136,7 @@ fn xstr(s: &str) -> String {
     esc(&o)
 }
 
-fn error_name(code: u8) -> Option<&'static str> {
+pub(crate) fn error_name(code: u8) -> Option<&'static str> {
     Some(match code {
         0x00 => "#NULL!",
         0x07 => "#DIV/0!",
@@ -152,15 +157,15 @@ fn error_name(code: u8) -> Option<&'static str> {
     })
 }
 
-fn cell_name(row: u32, col: u32) -> String {
+pub(crate) fn cell_name(row: u32, col: u32) -> String {
     format!("{}{}", xlcalc::col_to_letters(col), row + 1)
 }
 
-fn rect_name(r0: u32, c0: u32, r1: u32, c1: u32) -> String {
+pub(crate) fn rect_name(r0: u32, c0: u32, r1: u32, c1: u32) -> String {
     format!("{}:{}", cell_name(r0, c0), cell_name(r1, c1))
 }
 
-fn rk_value(rk: u32) -> f64 {
+pub(crate) fn rk_value(rk: u32) -> f64 {
     let v = if rk & 2 != 0 {
         f64::from((rk as i32) >> 2)
     } else {
@@ -173,7 +178,7 @@ fn rk_value(rk: u32) -> f64 {
     }
 }
 
-fn quote_sheet(n: &str) -> String {
+pub(crate) fn quote_sheet(n: &str) -> String {
     let lower = n.to_lowercase();
     let bytes = lower.as_bytes();
     let mut plain = !n.is_empty()
@@ -220,7 +225,7 @@ fn quote_sheet(n: &str) -> String {
     }
 }
 
-struct NameDef {
+pub(crate) struct NameDef {
     name: String,
     flags: u32,
     scope: Option<u32>,
@@ -235,25 +240,34 @@ struct TableDef {
     headers: u32,
     totals: u32,
     columns: Vec<String>,
+
+    totals_cols: Vec<(u32, String)>,
+
+    filter: Option<(u32, u32, u32, u32)>,
+
+    style: Option<(u16, String)>,
 }
 
 #[derive(Clone, Copy, PartialEq)]
-enum Book {
+pub(crate) enum Book {
     This,
     Other,
+
+    Ext(usize),
 }
 
-struct Ctx<'a> {
+pub(crate) struct Ctx<'a> {
     sheets: &'a [String],
     xti: &'a [(u32, i32, i32)],
     books: &'a [Book],
+    ext: &'a [ext::ExtBook],
     names: &'a [NameDef],
     tables: &'a [TableDef],
 
     cur: std::cell::Cell<Option<u32>>,
 }
 
-enum Dec {
+pub(crate) enum Dec {
     Text(String),
 
     Exp { row: u32, col: u32, table: bool },
@@ -267,7 +281,7 @@ fn col_text(col: u32, rel: bool) -> String {
     )
 }
 
-fn ref_text(row: u32, col: u32, row_rel: bool, col_rel: bool) -> String {
+pub(crate) fn ref_text(row: u32, col: u32, row_rel: bool, col_rel: bool) -> String {
     format!(
         "{}{}{}",
         col_text(col, col_rel),
@@ -298,6 +312,34 @@ impl Ctx<'_> {
             .xti
             .get(usize::from(ixti))
             .ok_or("extern sheet index out of range")?;
+        if let Some(Book::Ext(n)) = self.books.get(book as usize) {
+            let sheets = &self.ext.get(n - 1).ok_or("no such linked workbook")?.sheets;
+            let name = |i: i32| -> Result<&str, String> {
+                usize::try_from(i)
+                    .ok()
+                    .and_then(|i| sheets.get(i))
+                    .map(String::as_str)
+                    .ok_or_else(|| "sheet index out of range".to_string())
+            };
+            if first == -1 || last == -1 {
+                return Ok("#REF!".into());
+            }
+            if first == -2 {
+                return Ok(format!("[{n}]!"));
+            }
+            let (a, b) = (name(first)?, name(last)?);
+            let both = if first == last {
+                a.to_string()
+            } else {
+                format!("{a}:{b}")
+            };
+            let plain = quote_sheet(a) == a && quote_sheet(b) == b;
+            return Ok(if plain {
+                format!("[{n}]{both}!")
+            } else {
+                format!("'[{n}]{}'!", both.replace('\x27', "''"))
+            });
+        }
         if self.books.get(book as usize) != Some(&Book::This) {
             return Err("reference into another workbook".into());
         }
@@ -446,7 +488,12 @@ fn pop_n(st: &mut Vec<String>, n: usize) -> Result<Vec<String>, String> {
     Ok(st.split_off(st.len() - n))
 }
 
-fn decode(ctx: &Ctx<'_>, rgce: &[u8], rgcb: &[u8], base: (u32, u32)) -> Result<Dec, String> {
+pub(crate) fn decode(
+    ctx: &Ctx<'_>,
+    rgce: &[u8],
+    rgcb: &[u8],
+    base: (u32, u32),
+) -> Result<Dec, String> {
     let mut rd = Rd::new(rgce);
     let mut ex = Rd::new(rgcb);
     let mut st: Vec<String> = Vec::new();
@@ -659,6 +706,16 @@ fn decode(ctx: &Ctx<'_>, rgce: &[u8], rgcb: &[u8], base: (u32, u32)) -> Result<D
             0x39 | 0x59 | 0x79 => {
                 let ixti = rd.u16()?;
                 let idx = rd.u32()?;
+                if let Some(&(book, _, _)) = ctx.xti.get(usize::from(ixti)) {
+                    if let Some(Book::Ext(n)) = ctx.books.get(book as usize) {
+                        let name = (idx as usize)
+                            .checked_sub(1)
+                            .and_then(|i| ctx.ext.get(n - 1)?.names.get(i))
+                            .ok_or("external name index out of range")?;
+                        push(&mut st, format!("[{n}]!{name}"), &mut space);
+                        continue;
+                    }
+                }
                 let n = ctx.name_text(idx)?;
 
                 let scoped = n.contains('!');
@@ -748,6 +805,46 @@ fn parsed_formula<'a>(rd: &mut Rd<'a>) -> Result<(&'a [u8], &'a [u8]), String> {
     Ok((rgce, rgcb))
 }
 
+pub(crate) struct Formulas {
+    pub sheets: Vec<String>,
+    pub xti: Vec<(u32, i32, i32)>,
+    pub books: Vec<Book>,
+    pub names: Vec<(String, Option<u32>)>,
+    pub ext: Vec<ext::ExtBook>,
+}
+
+impl Formulas {
+    pub(crate) fn decode(
+        &self,
+        rgce: &[u8],
+        rgcb: &[u8],
+        base: (u32, u32),
+        cur: Option<u32>,
+    ) -> Result<Dec, String> {
+        let names: Vec<NameDef> = self
+            .names
+            .iter()
+            .map(|(n, s)| NameDef {
+                name: n.clone(),
+                flags: 0,
+                scope: *s,
+                rgce: Vec::new(),
+                rgcb: Vec::new(),
+            })
+            .collect();
+        let ctx = Ctx {
+            sheets: &self.sheets,
+            xti: &self.xti,
+            books: &self.books,
+            ext: &self.ext,
+            names: &names,
+            tables: &[],
+            cur: std::cell::Cell::new(cur),
+        };
+        decode(&ctx, rgce, rgcb, base)
+    }
+}
+
 enum Val {
     Blank,
     Num(f64),
@@ -782,6 +879,11 @@ struct Shared {
     rgcb: Vec<u8>,
 }
 
+type HlIo<'a> = (
+    &'a mut Vec<(String, String, String)>,
+    &'a HashMap<String, String>,
+);
+
 fn read_sheet(
     ctx: &Ctx<'_>,
     data: &[u8],
@@ -789,10 +891,13 @@ fn read_sheet(
     table_rids: &[String],
     sheet: &str,
     warnings: &mut Vec<String>,
+    (hl_rels, ext_targets): HlIo<'_>,
 ) -> Result<String, String> {
-    let mut rows: Vec<(u32, bool, Option<f64>)> = Vec::new();
+    let mut links = String::new();
+    let mut rows: Vec<(u32, bool, Option<f64>, u16)> = Vec::new();
 
-    let mut cols: Vec<(u32, u32, u32, bool, bool)> = Vec::new();
+    let mut cols: Vec<(u32, u32, u32, bool, bool, u16)> = Vec::new();
+    let mut sx = SheetXml::default();
     let mut cells: Vec<(usize, Cell)> = Vec::new();
     let mut shared: HashMap<(u32, u32), Shared> = HashMap::new();
     let mut array_masters: Vec<(u32, u32)> = Vec::new();
@@ -801,10 +906,46 @@ fn read_sheet(
     let mut cur_row = 0u32;
 
     let mut pending_table: Option<(u32, u32, String)> = None;
+    let mut filt = crate::xlsb_filter::Reader::default();
+    let mut spark = crate::xlsb_spark::Reader::default();
+    let mut cfdv = crate::xlsb_cfdv::Reader::default();
+    let mut in_custom_view = false;
+    let mut custom_views = 0usize;
     for (id, d) in recs(data) {
         let mut rd = Rd::new(d);
+
         match id {
+            423 => {
+                in_custom_view = true;
+                custom_views += 1;
+                continue;
+            }
+            424 => {
+                in_custom_view = false;
+                continue;
+            }
+            _ if in_custom_view => continue,
+            _ => {}
+        }
+        match id {
+            137 => sx.view(d),
+            151 => sx.pane(d),
+            152 => sx.select(d),
+            176 => sx.merge(d),
+            535 => sx.protection(d),
+            id if crate::xlsb_filter::Reader::wants(id) => filt.rec(id, d)?,
+            id if crate::xlsb_spark::Reader::wants(id) => spark.rec(id, d, ctx, warnings)?,
+            id if crate::xlsb_cfdv::Reader::wants(id) => cfdv.rec(id, d, ctx, warnings)?,
+            477 => sx.print_options(d),
+            476 => sx.margins(d),
+            478 => sx.page_setup(d),
+            479 => sx.header_footer(d),
+            392 => sx.breaks_begin(true),
+            394 => sx.breaks_begin(false),
+            396 => sx.brk(d),
             147 => {
+                sx.ws_prop(d);
+
                 if d.len() > 19 {
                     let mut r = Rd::new(&d[19..]);
                     if let Ok(n) = r.wstr() {
@@ -822,14 +963,14 @@ fn read_sheet(
                 cur_row = r;
 
                 let custom = (flags & 0x2000 != 0).then(|| f64::from(twips) / 20.0);
-                rows.push((r, flags & 0x1000 != 0, custom));
+                rows.push((r, flags & 0x1000 != 0, custom, flags));
             }
             49 => cm = rd.u32()?,
             60 => {
                 let (min, max, w) = (rd.u32()?, rd.u32()?, rd.u32()?);
                 rd.u32()?;
                 let fl = rd.u16()?;
-                cols.push((min, max, w, fl & 1 != 0, fl & 2 != 0));
+                cols.push((min, max, w, fl & 1 != 0, fl & 2 != 0, fl));
             }
             1..=11 => {
                 let col = rd.u32()?;
@@ -954,6 +1095,23 @@ fn read_sheet(
                     }
                 }
             }
+            494 => {
+                let (r0, r1) = (rd.u32()?, rd.u32()?);
+                let (c0, c1) = (rd.u32()?, rd.u32()?);
+                let (rid, loc, tip, disp) = (rd.wstr()?, rd.wstr()?, rd.wstr()?, rd.wstr()?);
+                let _ = write!(links, "<hyperlink ref=\"{}\"", rect_name(r0, c0, r1, c1));
+                if let Some(t) = ext_targets.get(&rid) {
+                    let id = format!("rIdH{}", hl_rels.len() + 1);
+                    let _ = write!(links, " r:id=\"{id}\"");
+                    hl_rels.push((id, format!("{REL}/hyperlink"), t.clone()));
+                }
+                for (k, v) in [("location", &loc), ("tooltip", &tip), ("display", &disp)] {
+                    if !v.is_empty() {
+                        let _ = write!(links, " {k}=\"{}\"", esc(v));
+                    }
+                }
+                links.push_str("/>");
+            }
             428 => {
                 let r0 = rd.u32()?;
                 let r1 = rd.u32()?;
@@ -989,33 +1147,69 @@ fn read_sheet(
     x.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"");
     x.push_str(REL);
     x.push_str("\">");
-    if let Some(n) = &code_name {
-        let _ = write!(x, "<sheetPr codeName=\"{}\"/>", esc(n));
+    x.push_str(&sx.sheet_pr(code_name.as_deref()));
+    x.push_str(&sx.views());
+    let (row_level, col_level) = (
+        rows.iter().map(|r| (r.3 >> 8) & 7).max().unwrap_or(0),
+        cols.iter().map(|c| (c.5 >> 8) & 7).max().unwrap_or(0),
+    );
+    if row_level > 0 || col_level > 0 {
+        let _ = write!(x, "<sheetFormatPr defaultRowHeight=\"15\"");
+        if row_level > 0 {
+            let _ = write!(x, " outlineLevelRow=\"{row_level}\"");
+        }
+        if col_level > 0 {
+            let _ = write!(x, " outlineLevelCol=\"{col_level}\"");
+        }
+        x.push_str("/>");
     }
     if !cols.is_empty() {
         x.push_str("<cols>");
-        for (min, max, w, hidden, custom) in &cols {
+        for (min, max, w, hidden, custom, fl) in &cols {
             let _ = write!(
                 x,
-                "<col min=\"{}\" max=\"{}\" width=\"{}\"{}{}/>",
+                "<col min=\"{}\" max=\"{}\" width=\"{}\"{}{}",
                 min + 1,
                 max + 1,
                 f64::from(*w) / 256.0,
                 if *hidden { " hidden=\"1\"" } else { "" },
                 if *custom { " customWidth=\"1\"" } else { "" }
             );
+            if (fl >> 8) & 7 > 0 {
+                let _ = write!(x, " outlineLevel=\"{}\"", (fl >> 8) & 7);
+            }
+            if fl & 0x800 != 0 {
+                x.push_str(" collapsed=\"1\"");
+            }
+            x.push_str("/>");
         }
         x.push_str("</cols>");
     }
     x.push_str("<sheetData>");
     let mut ci = 0usize;
-    for (i, (r, hidden, custom)) in rows.iter().enumerate() {
+    for (i, (r, hidden, custom, fl)) in rows.iter().enumerate() {
         let _ = write!(
             x,
-            "<row r=\"{}\"{}{}>",
+            "<row r=\"{}\"{}{}{}{}{}>",
             r + 1,
             custom.map_or(String::new(), |h| format!(" ht=\"{h}\" customHeight=\"1\"")),
-            if *hidden { " hidden=\"1\"" } else { "" }
+            if *hidden { " hidden=\"1\"" } else { "" },
+            if (fl >> 8) & 7 > 0 {
+                format!(" outlineLevel=\"{}\"", (fl >> 8) & 7)
+            } else {
+                String::new()
+            },
+            if fl & 0x800 != 0 {
+                " collapsed=\"1\""
+            } else {
+                ""
+            },
+            match fl & 3 {
+                1 => " thickTop=\"1\"",
+                2 => " thickBot=\"1\"",
+                3 => " thickTop=\"1\" thickBot=\"1\"",
+                _ => "",
+            }
         );
         while ci < cells.len() && cells[ci].0 == i + 1 {
             write_cell(&mut x, &cells[ci].1, dynamic_cm);
@@ -1024,6 +1218,20 @@ fn read_sheet(
         x.push_str("</row>");
     }
     x.push_str("</sheetData>");
+    if custom_views > 0 {
+        warnings.push(format!(
+            "sheet {sheet}: {custom_views} custom view(s) not carried"
+        ));
+    }
+    x.push_str(sx.protection_xml());
+    x.push_str(filt.xml());
+    x.push_str(&sx.merges_xml());
+    x.push_str(cfdv.cf_xml());
+    x.push_str(&cfdv.dv_xml());
+    if !links.is_empty() {
+        let _ = write!(x, "<hyperlinks>{links}</hyperlinks>");
+    }
+    x.push_str(&sx.tail_xml());
     for (i, rid) in table_rids.iter().enumerate() {
         if i == 0 {
             x.push_str("<tableParts>");
@@ -1033,6 +1241,7 @@ fn read_sheet(
             x.push_str("</tableParts>");
         }
     }
+    x.push_str(spark.xml());
     x.push_str("</worksheet>");
     Ok(x)
 }
@@ -1075,25 +1284,120 @@ fn write_cell(x: &mut String, c: &Cell, dynamic_cm: &[bool]) {
     let _ = write!(x, "<c {attrs}>{f}{v}</c>");
 }
 
-struct Pkg {
-    parts: Vec<(String, Vec<u8>)>,
+pub(crate) struct Pkg {
+    pub(crate) parts: Vec<(String, Vec<u8>)>,
 }
 
 impl Pkg {
-    fn text(&mut self, name: &str, s: String) {
+    pub(crate) fn text(&mut self, name: &str, s: String) {
         self.parts.push((name.to_string(), s.into_bytes()));
     }
 }
 
-fn rels_xml(items: &[(String, String, String)]) -> String {
+#[derive(Default)]
+struct Pivots {
+    caches: Vec<String>,
+    tables: usize,
+}
+
+const PIVOT_TABLE_TYPE: &str =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotTable+xml";
+const PIVOT_CACHE_TYPE: &str =
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.pivotCacheDefinition+xml";
+
+impl Pivots {
+    fn add(
+        &mut self,
+        zip: &mut Zip,
+        sheet: &str,
+        pkg: &mut Pkg,
+        types: &mut Vec<(String, String)>,
+        warnings: &mut Vec<String>,
+    ) -> Vec<(String, String, String)> {
+        let mut out = Vec::new();
+        for (_, ty, tp) in rels(zip, sheet).unwrap_or_default() {
+            if !ty.ends_with("/pivotTable") {
+                continue;
+            }
+            let Some(bin) = part(zip, &tp) else {
+                warnings.push(format!("pivot table {tp}: missing part"));
+                continue;
+            };
+            let xml = match crate::xlsb_pivot::table(&bin) {
+                Ok((x, _)) => x,
+                Err(e) => {
+                    warnings.push(format!("pivot table {tp}: {e}"));
+                    continue;
+                }
+            };
+            let Some(cache_src) = rels(zip, &tp)
+                .unwrap_or_default()
+                .into_iter()
+                .find(|r| r.1.ends_with("/pivotCacheDefinition"))
+                .map(|r| r.2)
+            else {
+                warnings.push(format!("pivot table {tp}: no cache"));
+                continue;
+            };
+            let k = if let Some(k) = self.caches.iter().position(|c| *c == cache_src) {
+                k + 1
+            } else {
+                let Some(cbin) = part(zip, &cache_src) else {
+                    warnings.push(format!("pivot cache {cache_src}: missing part"));
+                    continue;
+                };
+                match crate::xlsb_pivot::cache_def(&cbin, "rId1", warnings) {
+                    Ok(cx) => {
+                        self.caches.push(cache_src.clone());
+                        let k = self.caches.len();
+                        let name = format!("xl/pivotCache/pivotCacheDefinition{k}.xml");
+                        pkg.text(&name, cx);
+                        types.push((name, PIVOT_CACHE_TYPE.into()));
+                        k
+                    }
+                    Err(e) => {
+                        warnings.push(format!("pivot cache {cache_src}: {e}"));
+                        continue;
+                    }
+                }
+            };
+            self.tables += 1;
+            let n = self.tables;
+            let name = format!("xl/pivotTables/pivotTable{n}.xml");
+            pkg.text(&name, xml);
+            pkg.text(
+                &format!("xl/pivotTables/_rels/pivotTable{n}.xml.rels"),
+                rels_xml(&[(
+                    "rId1".into(),
+                    format!("{REL}/pivotCacheDefinition"),
+                    format!("/xl/pivotCache/pivotCacheDefinition{k}.xml"),
+                )]),
+            );
+            types.push((name.clone(), PIVOT_TABLE_TYPE.into()));
+            out.push((
+                format!("rIdPv{n}"),
+                format!("{REL}/pivotTable"),
+                format!("/{name}"),
+            ));
+        }
+        out
+    }
+}
+
+pub(crate) fn rels_xml(items: &[(String, String, String)]) -> String {
     let mut s = String::from(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">",
     );
     for (id, ty, target) in items {
         let _ = write!(
             s,
-            "<Relationship Id=\"{id}\" Type=\"{ty}\" Target=\"{}\"/>",
-            esc(target)
+            "<Relationship Id=\"{id}\" Type=\"{ty}\" Target=\"{}\"{}/>",
+            esc(target),
+            if ty.ends_with("/hyperlink") {
+                " TargetMode=\"External\""
+            } else {
+                ""
+            }
         );
     }
     s.push_str("</Relationships>");
@@ -1109,10 +1413,24 @@ fn read_table(zip: &mut Zip, path: &str) -> Result<TableDef, String> {
         headers: 1,
         totals: 0,
         columns: Vec::new(),
+        totals_cols: Vec::new(),
+        filter: None,
+        style: None,
     };
     for (id, d) in recs(&data) {
         let mut rd = Rd::new(d);
         match id {
+            161 => {
+                let r0 = rd.u32()?;
+                let r1 = rd.u32()?;
+                let c0 = rd.u32()?;
+                let c1 = rd.u32()?;
+                t.filter = Some((r0, c0, r1, c1));
+            }
+            513 => {
+                let flags = rd.u16()?;
+                t.style = Some((flags, rd.wstr()?));
+            }
             343 => {
                 let r0 = rd.u32()?;
                 let r1 = rd.u32()?;
@@ -1129,13 +1447,114 @@ fn read_table(zip: &mut Zip, path: &str) -> Result<TableDef, String> {
                 t.name = if name.is_empty() { display } else { name };
             }
             347 => {
-                rd.take(7 * 4)?;
+                rd.take(4)?;
+                let ilta = rd.u32()?;
+                rd.take(5 * 4)?;
                 t.columns.push(rd.wstr()?);
+                t.totals_cols.push((ilta, rd.wstr().unwrap_or_default()));
             }
             _ => {}
         }
     }
     Ok(t)
+}
+
+fn legacy_rid(data: &[u8]) -> Option<String> {
+    recs(data)
+        .find(|(id, _)| *id == 551)
+        .and_then(|(_, d)| Rd::new(d).wstr().ok())
+}
+
+fn comments_xml(bin: &[u8]) -> String {
+    let mut authors = String::new();
+    let mut list = String::new();
+    let mut cur: Option<(u32, String)> = None;
+    for (id, d) in recs(bin) {
+        let mut rd = Rd::new(d);
+        match id {
+            632 => {
+                if let Ok(a) = rd.wstr() {
+                    let _ = write!(authors, "<author>{}</author>", xstr(&a));
+                }
+            }
+            635 => {
+                let author = rd.u32().unwrap_or(0);
+                let rows = (rd.u32(), rd.u32(), rd.u32(), rd.u32());
+                if let (Ok(r0), Ok(_), Ok(c0), Ok(_)) = rows {
+                    cur = Some((author, rect_name(r0, c0, r0, c0)));
+                }
+            }
+            637 => {
+                if let (Some((author, at)), Ok(_), Ok(t)) = (cur.take(), rd.u8(), rd.wstr()) {
+                    let _ = write!(
+                        list,
+                        "<comment ref=\"{at}\" authorId=\"{author}\"><text><t xml:space=\"preserve\">{}</t></text></comment>",
+                        xstr(&t)
+                    );
+                }
+            }
+            _ => {}
+        }
+    }
+    format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<comments xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><authors>{authors}</authors><commentList>{list}</commentList></comments>"
+    )
+}
+
+fn drawing_rid(data: &[u8]) -> Option<String> {
+    recs(data)
+        .find(|(id, _)| *id == 550)
+        .and_then(|(_, d)| Rd::new(d).wstr().ok())
+}
+
+fn copy_drawing(
+    zip: &mut Zip,
+    part_name: &str,
+    types: &Node,
+    pkg: &mut Pkg,
+    done: &mut Vec<String>,
+    ov: &mut Vec<(String, String)>,
+) {
+    if done.iter().any(|d| d == part_name) {
+        return;
+    }
+    let Some(bytes) = part(zip, part_name) else {
+        return;
+    };
+    done.push(part_name.to_string());
+    pkg.parts.push((part_name.to_string(), bytes));
+    let ct = types
+        .children("Override")
+        .find(|o| {
+            o.attr("PartName")
+                .is_some_and(|p| p.trim_start_matches('/').eq_ignore_ascii_case(part_name))
+        })
+        .and_then(|o| o.attr("ContentType"))
+        .map(str::to_string)
+        .or_else(|| {
+            let ext = part_name
+                .rsplit_once('.')
+                .map(|x| x.1.to_ascii_lowercase())?;
+            types
+                .children("Default")
+                .find(|d| {
+                    d.attr("Extension")
+                        .is_some_and(|e| e.eq_ignore_ascii_case(&ext))
+                })
+                .and_then(|d| d.attr("ContentType"))
+                .map(str::to_string)
+        });
+    if let Some(c) = ct {
+        ov.push((part_name.to_string(), c));
+    }
+    let rn = rels_name(part_name);
+    if let Some(r) = part(zip, &rn) {
+        pkg.parts.push((rn, r));
+    }
+    for (_, _, target) in rels(zip, part_name).unwrap_or_default() {
+        copy_drawing(zip, &target, types, pkg, done, ov);
+    }
 }
 
 pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
@@ -1144,15 +1563,23 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
     let wbin = part(zip, "xl/workbook.bin").ok_or("no xl/workbook.bin")?;
 
     let mut date1904 = false;
+    let mut protect = (false, false, false, 0u16);
     let mut wb_code = None;
     let mut bundles: Vec<(u32, String, String)> = Vec::new();
     let mut calc = String::new();
     let mut xti: Vec<(u32, i32, i32)> = Vec::new();
     let mut books: Vec<Book> = Vec::new();
+    let mut exts: Vec<ext::ExtBook> = Vec::new();
     let mut names: Vec<NameDef> = Vec::new();
     for (id, d) in recs(&wbin) {
         let mut rd = Rd::new(d);
         match id {
+            534 => {
+                let pwd = rd.u16()?;
+                rd.u16()?;
+                let f = rd.u16()?;
+                protect = (f & 1 != 0, f & 2 != 0, f & 4 != 0, pwd);
+            }
             153 => {
                 date1904 = rd.u32()? & 1 != 0;
                 rd.u32()?;
@@ -1193,7 +1620,17 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
                     calc.push_str(" fullPrecision=\"0\"");
                 }
             }
-            355 => books.push(Book::Other),
+            355 => {
+                let rid = rd.wstr()?;
+                let path = wb_rels.iter().find(|r| r.0 == rid).map(|r| r.2.clone());
+                match path {
+                    Some(p) => {
+                        exts.push(ext::read(zip, &p)?);
+                        books.push(Book::Ext(exts.len()));
+                    }
+                    None => books.push(Book::Other),
+                }
+            }
             357 | 358 => books.push(Book::This),
             667 => books.push(Book::Other),
             362 => {
@@ -1317,6 +1754,7 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
         sheets: &sheet_names,
         xti: &xti,
         books: &books,
+        ext: &exts,
         names: &names,
         tables: &tables,
         cur: std::cell::Cell::new(None),
@@ -1324,8 +1762,8 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
 
     let mut dn = String::new();
     for n in &names {
-        if n.flags & 0x20 != 0
-            || n.name.starts_with("_xlnm.")
+        let auto = n.flags & 0x20 != 0;
+        if n.name.starts_with("_xlnm.")
             || n.name.starts_with("_xlfn.")
             || n.name.starts_with("_xlpm.")
         {
@@ -1347,10 +1785,29 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
             .scope
             .map(|s| format!(" localSheetId=\"{s}\""))
             .unwrap_or_default();
+        let mut attrs = String::new();
+        if n.flags & 1 != 0 {
+            attrs.push_str(" hidden=\"1\"");
+        }
+        if n.flags & 2 != 0 && n.flags & 8 != 0 {
+            attrs.push_str(" function=\"1\"");
+        }
+        if n.flags & 8 != 0 {
+            attrs.push_str(" xlm=\"1\"");
+            let group = (n.flags >> 6) & 0x1ff;
+            if group != 0 {
+                let _ = write!(attrs, " functionGroupId=\"{group}\"");
+            }
+        }
+        let shown = if auto {
+            format!("_xlnm.{}", n.name)
+        } else {
+            n.name.clone()
+        };
         let _ = write!(
             dn,
-            "<definedName name=\"{}\"{scope}>{}</definedName>",
-            esc(&n.name),
+            "<definedName name=\"{}\"{attrs}{scope}>{}</definedName>",
+            esc(&shown),
             esc(&text)
         );
     }
@@ -1358,6 +1815,9 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
     let mut pkg = Pkg { parts: Vec::new() };
     let mut sheets_xml = String::new();
     let mut wb_rel_items: Vec<(String, String, String)> = Vec::new();
+    let mut copied: Vec<String> = Vec::new();
+    let mut copied_types: Vec<(String, String)> = Vec::new();
+    let mut pivots = Pivots::default();
     for (i, (state, rid, name)) in bundles.iter().enumerate() {
         let n = i + 1;
         let Some((_, _, path)) = wb_rels.iter().find(|r| &r.0 == rid) else {
@@ -1371,22 +1831,168 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
         let mine = &sheet_tables[i];
         let table_rids: Vec<String> = (0..mine.len()).map(|k| format!("rId{}", k + 1)).collect();
         ctx.cur.set(Some(i as u32));
-        let xml = read_sheet(&ctx, &data, &dynamic_cm, &table_rids, name, &mut warnings)?;
-        pkg.text(&format!("xl/worksheets/sheet{n}.xml"), xml);
-        if !mine.is_empty() {
-            let items: Vec<(String, String, String)> = mine
+        let is_chart = wb_rels
+            .iter()
+            .any(|r| &r.0 == rid && r.1.ends_with("/chartsheet"));
+        let macro_kind = wb_rels.iter().find(|r| &r.0 == rid).map_or(0, |r| {
+            if r.1.ends_with("/xlMacrosheet") {
+                1
+            } else if r.1.ends_with("/xlIntlMacrosheet") {
+                2
+            } else {
+                0
+            }
+        });
+        let drawing_target = drawing_rid(&data).and_then(|d| {
+            rels(zip, path)
+                .unwrap_or_default()
+                .into_iter()
+                .find(|r| r.0 == d)
+                .map(|r| r.2)
+        });
+        let drawing_rid_out = format!("rId{}", mine.len() + 1);
+        let mut hl_rels: Vec<(String, String, String)> = Vec::new();
+        let mut xml = if is_chart {
+            String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<chartsheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheetViews><sheetView workbookViewId=\"0\"/></sheetViews><pageMargins left=\"0.7\" right=\"0.7\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/></chartsheet>")
+        } else {
+            read_sheet(
+                &ctx,
+                &data,
+                &dynamic_cm,
+                &table_rids,
+                name,
+                &mut warnings,
+                (&mut hl_rels, &external_targets(zip, path)),
+            )?
+        };
+        if macro_kind > 0 {
+            let tag = if macro_kind == 2 {
+                "xm:intlmacrosheet"
+            } else {
+                "xm:macrosheet"
+            };
+            xml = xml
+                .replacen(
+                    "<worksheet ",
+                    &format!(
+                        "<{tag} xmlns:xm=\"http://schemas.microsoft.com/office/excel/2006/main\" "
+                    ),
+                    1,
+                )
+                .replace("</worksheet>", &format!("</{tag}>"));
+        }
+        let mut items: Vec<(String, String, String)> = mine
+            .iter()
+            .enumerate()
+            .map(|(k, &ti)| {
+                (
+                    format!("rId{}", k + 1),
+                    format!("{REL}/table"),
+                    format!("/xl/tables/table{}.xml", ti + 1),
+                )
+            })
+            .collect();
+        items.extend(pivots.add(zip, path, &mut pkg, &mut copied_types, &mut warnings));
+        items.extend(hl_rels);
+        if let Some(target) = drawing_target {
+            let types = match tree(zip, "[Content_Types].xml") {
+                Ok(Some(t)) => t,
+                _ => Node::default(),
+            };
+            copy_drawing(
+                zip,
+                &target,
+                &types,
+                &mut pkg,
+                &mut copied,
+                &mut copied_types,
+            );
+            items.push((
+                drawing_rid_out.clone(),
+                format!("{REL}/drawing"),
+                format!("/{target}"),
+            ));
+            let tag = format!("<drawing r:id=\"{drawing_rid_out}\"/>");
+            let at = [
+                "<legacyDrawing",
+                "<oleObjects",
+                "<controls",
+                "<tableParts",
+                "<extLst",
+            ]
+            .iter()
+            .filter_map(|t| xml.find(t))
+            .min()
+            .or_else(|| xml.rfind("</worksheet>"))
+            .or_else(|| xml.rfind("</chartsheet>"));
+            if let Some(at) = at {
+                xml.insert_str(at, &tag);
+            }
+        }
+        let all_rels = rels(zip, path).unwrap_or_default();
+        let comments_bin = all_rels
+            .iter()
+            .find(|r| r.1.ends_with("/comments"))
+            .and_then(|r| part(zip, &r.2));
+        let vml_target = legacy_rid(&data).and_then(|l| {
+            all_rels
                 .iter()
-                .enumerate()
-                .map(|(k, &ti)| {
-                    (
-                        format!("rId{}", k + 1),
-                        format!("{REL}/table"),
-                        format!("/xl/tables/table{}.xml", ti + 1),
-                    )
-                })
-                .collect();
+                .find(|r| r.0 == l && r.1.ends_with("/vmlDrawing"))
+                .map(|r| r.2.clone())
+        });
+        if let Some(bin) = comments_bin {
+            let cpart = format!("xl/comments{n}.xml");
+            pkg.text(&cpart, comments_xml(&bin));
+            copied_types.push((
+                cpart.clone(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml"
+                    .to_string(),
+            ));
+            items.push((
+                format!("rIdCm{n}"),
+                format!("{REL}/comments"),
+                format!("/{cpart}"),
+            ));
+        }
+        if let Some(target) = vml_target {
+            let types = match tree(zip, "[Content_Types].xml") {
+                Ok(Some(t)) => t,
+                _ => Node::default(),
+            };
+            copy_drawing(
+                zip,
+                &target,
+                &types,
+                &mut pkg,
+                &mut copied,
+                &mut copied_types,
+            );
+            items.push((
+                format!("rIdVml{n}"),
+                format!("{REL}/vmlDrawing"),
+                format!("/{target}"),
+            ));
+            let tag = format!("<legacyDrawing r:id=\"rIdVml{n}\"/>");
+            let at = ["<oleObjects", "<controls", "<tableParts", "<extLst"]
+                .iter()
+                .filter_map(|t| xml.find(t))
+                .min()
+                .or_else(|| xml.rfind("</worksheet>"));
+            if let Some(at) = at {
+                xml.insert_str(at, &tag);
+            }
+        }
+        let kind_dir = if is_chart {
+            "chartsheets"
+        } else if macro_kind > 0 {
+            "macrosheets"
+        } else {
+            "worksheets"
+        };
+        pkg.text(&format!("xl/{kind_dir}/sheet{n}.xml"), xml);
+        if !items.is_empty() {
             pkg.text(
-                &format!("xl/worksheets/_rels/sheet{n}.xml.rels"),
+                &format!("xl/{kind_dir}/_rels/sheet{n}.xml.rels"),
                 rels_xml(&items),
             );
         }
@@ -1400,10 +2006,19 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
             "<sheet name=\"{}\" sheetId=\"{n}\"{st} r:id=\"rId{n}\"/>",
             esc(name)
         );
+        let rel_type = match macro_kind {
+            1 => "http://schemas.microsoft.com/office/2006/relationships/xlMacrosheet".to_string(),
+            2 => "http://schemas.microsoft.com/office/2006/relationships/xlIntlMacrosheet"
+                .to_string(),
+            _ => format!(
+                "{REL}/{}",
+                if is_chart { "chartsheet" } else { "worksheet" }
+            ),
+        };
         wb_rel_items.push((
             format!("rId{n}"),
-            format!("{REL}/worksheet"),
-            format!("/xl/worksheets/sheet{n}.xml"),
+            rel_type,
+            format!("/xl/{kind_dir}/sheet{n}.xml"),
         ));
     }
     for (i, t) in tables.iter().enumerate() {
@@ -1419,14 +2034,75 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
         if t.totals > 0 {
             let _ = write!(x, " totalsRowCount=\"{}\"", t.totals);
         }
-        x.push_str("><tableColumns>");
-        for c in &t.columns {
-            let _ = write!(x, "<tableColumn name=\"{}\"/>", esc(c));
+        x.push('>');
+        if let Some((f0, g0, f1, g1)) = t.filter {
+            let _ = write!(x, "<autoFilter ref=\"{}\"/>", rect_name(f0, g0, f1, g1));
         }
-        x.push_str("</tableColumns></table>");
+        let _ = write!(x, "<tableColumns count=\"{}\">", t.columns.len());
+        for (k, c) in t.columns.iter().enumerate() {
+            let _ = write!(x, "<tableColumn id=\"{}\" name=\"{}\"", k + 1, esc(c));
+            if let Some((ilta, label)) = t.totals_cols.get(k) {
+                const FUNCS: [&str; 9] = [
+                    "",
+                    "average",
+                    "count",
+                    "countNums",
+                    "max",
+                    "min",
+                    "sum",
+                    "stdDev",
+                    "var",
+                ];
+                if !label.is_empty() {
+                    let _ = write!(x, " totalsRowLabel=\"{}\"", esc(label));
+                }
+                if let Some(f) = FUNCS.get(*ilta as usize).filter(|f| !f.is_empty()) {
+                    let _ = write!(x, " totalsRowFunction=\"{f}\"");
+                }
+            }
+            x.push_str("/>");
+        }
+        x.push_str("</tableColumns>");
+        if let Some((fl, name)) = &t.style {
+            let b = |bit: u16| u8::from(fl & bit != 0);
+            let _ = write!(
+                x,
+                "<tableStyleInfo name=\"{}\" showFirstColumn=\"{}\" showLastColumn=\"{}\" showRowStripes=\"{}\" showColumnStripes=\"{}\"/>",
+                esc(name),
+                b(1),
+                b(2),
+                b(4),
+                b(8)
+            );
+        }
+        x.push_str("</table>");
         pkg.text(&format!("xl/tables/table{}.xml", i + 1), x);
     }
 
+    let mut ext_refs = String::new();
+    for (i, e) in exts.iter().enumerate() {
+        let n = i + 1;
+        let rid = format!("rIdExt{n}");
+        wb_rel_items.push((
+            rid.clone(),
+            format!("{REL}/externalLink"),
+            format!("/xl/externalLinks/externalLink{n}.xml"),
+        ));
+        let _ = write!(ext_refs, "<externalReference r:id=\"{rid}\"/>");
+        pkg.text(
+            &format!("xl/externalLinks/externalLink{n}.xml"),
+            e.xml.clone(),
+        );
+        if let Some(r) = &e.rels {
+            pkg.parts.push((
+                format!("xl/externalLinks/_rels/externalLink{n}.xml.rels"),
+                r.clone(),
+            ));
+        }
+    }
+    if !ext_refs.is_empty() {
+        ext_refs = format!("<externalReferences>{ext_refs}</externalReferences>");
+    }
     let n_items = wb_rel_items.len();
     wb_rel_items.push((
         format!("rId{}", n_items + 1),
@@ -1446,6 +2122,84 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
         ));
         pkg.text("xl/metadata.xml", meta);
     }
+
+    if let Some((_, _, tp)) = wb_rels.iter().find(|r| r.1.ends_with("/theme")) {
+        if let Some(b) = part(zip, tp) {
+            let n = wb_rel_items.len();
+            wb_rel_items.push((
+                format!("rIdTheme{n}"),
+                format!("{REL}/theme"),
+                format!("/{tp}"),
+            ));
+            pkg.parts.push((tp.clone(), b));
+            copied_types.push((
+                tp.clone(),
+                "application/vnd.openxmlformats-officedocument.theme+xml".into(),
+            ));
+        }
+    }
+    let mut root_items = vec![(
+        "rId1".to_string(),
+        format!("{REL}/officeDocument"),
+        "/xl/workbook.xml".to_string(),
+    )];
+    for (name, ty, ct) in [
+        (
+            "docProps/core.xml",
+            "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties",
+            "application/vnd.openxmlformats-package.core-properties+xml",
+        ),
+        (
+            "docProps/app.xml",
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties",
+            "application/vnd.openxmlformats-officedocument.extended-properties+xml",
+        ),
+        (
+            "docProps/custom.xml",
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties",
+            "application/vnd.openxmlformats-officedocument.custom-properties+xml",
+        ),
+    ] {
+        if let Some(b) = part(zip, name) {
+            pkg.parts.push((name.to_string(), b));
+            copied_types.push((name.to_string(), ct.into()));
+            root_items.push((
+                format!("rId{}", root_items.len() + 1),
+                ty.to_string(),
+                format!("/{name}"),
+            ));
+        }
+    }
+    pkg.text("_rels/.rels", rels_xml(&root_items));
+    if !copied_types.is_empty() {
+        let mut ct = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">");
+        let mut exts: Vec<String> = Vec::new();
+        for (p, t) in &copied_types {
+            let e = p.rsplit_once('.').map(|x| x.1.to_ascii_lowercase());
+            match e.as_deref() {
+                Some("xml") => {
+                    let _ = write!(
+                        ct,
+                        "<Override PartName=\"/{p}\" ContentType=\"{}\"/>",
+                        esc(t)
+                    );
+                }
+                Some("rels") | None => {}
+                Some(e) => {
+                    if !exts.iter().any(|x| x == e) {
+                        let _ = write!(
+                            ct,
+                            "<Default Extension=\"{e}\" ContentType=\"{}\"/>",
+                            esc(t)
+                        );
+                        exts.push(e.to_string());
+                    }
+                }
+            }
+        }
+        ct.push_str("</Types>");
+        pkg.text("[Content_Types].xml", ct);
+    }
     pkg.text("xl/sharedStrings.xml", sst);
     pkg.text("xl/styles.xml", styles);
     pkg.text("xl/_rels/workbook.xml.rels", rels_xml(&wb_rel_items));
@@ -1455,8 +2209,9 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
     pkg.text(
         "xl/workbook.xml",
         format!(
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"{REL}\"><workbookPr{}{code}/><sheets>{sheets_xml}</sheets><definedNames>{dn}</definedNames><calcPr{calc}/></workbook>",
-            if date1904 { " date1904=\"1\"" } else { "" }
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"{REL}\"><workbookPr{}{code}/>{}<sheets>{sheets_xml}</sheets>{ext_refs}<definedNames>{dn}</definedNames><calcPr{calc}/></workbook>",
+            if date1904 { " date1904=\"1\"" } else { "" },
+            crate::xls::protect_xml(protect)
         ),
     );
     if let Some(v) = part(zip, "xl/vbaProject.bin") {
@@ -1486,6 +2241,7 @@ mod tests {
             sheets,
             xti: &[],
             books,
+            ext: &[],
             names: &[],
             tables: &[],
             cur: std::cell::Cell::new(None),

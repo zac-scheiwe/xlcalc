@@ -81,6 +81,10 @@ impl Workbook {
         }
         self.passes.merged = self.passes.merge > 0;
         let silent = self.passes.silent > 0;
+
+        if !self.settings.iteration && !self.calc.circular.is_empty() {
+            self.notes.no_after = true;
+        }
         self.notes.pass(sheets, silent);
     }
 }

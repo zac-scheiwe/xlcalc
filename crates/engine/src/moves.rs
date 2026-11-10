@@ -330,7 +330,7 @@ impl Move {
 
     fn edit(&self, sheet: &SheetRef, cref: &CRef, old: CellAddr, new: CellAddr) -> RefEdit {
         let target = match sheet {
-            SheetRef::Current => Some(old.sheet),
+            SheetRef::Current | SheetRef::Own => Some(old.sheet),
             SheetRef::Sheet(id) => Some(*id),
             _ => None,
         };
@@ -480,6 +480,8 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         let r = self.move_range_body(src_sheet, src, dst);
         if r.is_ok() {
+            self.cfv_cut(src_sheet, src, dst);
+            self.drawing_cut(src_sheet, src, dst);
             self.notify_list_select(dst.sheet, dst.row, dst.col);
             self.view_clipboard_op(dst.sheet, dst.row, dst.col);
             self.view_touch_row_pub(src_sheet, src.r1);
@@ -636,7 +638,15 @@ impl Workbook {
             if src_sheet == dst.sheet && crate::cse::inside(&old, &src) {
                 continue;
             }
+            let anchor = (self.formula(f).addr.row, self.formula(f).addr.col);
             if let Some(sh) = self.sheet_mut(dst.sheet) {
+                if src_sheet == dst.sheet {
+                    let to = (
+                        (anchor.0 as i64 + (dest.r0 as i64 - src.r0 as i64)) as u32,
+                        (anchor.1 as i64 + (dest.c0 as i64 - src.c0 as i64)) as u32,
+                    );
+                    sh.spills.carry_cut(f, anchor, to);
+                }
                 let last = sh.cells.sticky_bounds().map_or(0, |b| b.r1).max(dest.r1);
                 sh.spills.note_cut_anchor(f, last, circ_dst);
             }
@@ -731,7 +741,7 @@ impl Workbook {
             let host = def.host();
             let mut changed = false;
             let root = edit_refs(&def.formula.root, &mut |sheet, cref| {
-                if !all_abs(cref) || matches!(sheet, SheetRef::Current) {
+                if !all_abs(cref) || matches!(sheet, SheetRef::Current | SheetRef::Own) {
                     return RefEdit::Keep;
                 }
                 let e = mv.edit(sheet, cref, host, host);
@@ -976,7 +986,7 @@ impl Workbook {
             let host = f.addr;
             edit_refs(&f.formula.root, &mut |s, cref| {
                 let t = match s {
-                    SheetRef::Current => host.sheet,
+                    SheetRef::Current | SheetRef::Own => host.sheet,
                     SheetRef::Sheet(id) => *id,
                     _ => return RefEdit::Keep,
                 };
@@ -1109,7 +1119,7 @@ impl Workbook {
             let mut changed = false;
             let root = edit_refs(&formula.root, &mut |s, cref| {
                 let t = match s {
-                    SheetRef::Current => host.sheet,
+                    SheetRef::Current | SheetRef::Own => host.sheet,
                     SheetRef::Sheet(id) => *id,
                     _ => return RefEdit::Keep,
                 };

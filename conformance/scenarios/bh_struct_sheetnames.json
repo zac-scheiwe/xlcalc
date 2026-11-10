@@ -1,0 +1,115 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=Sheet2!A1+1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=SUM(Sheet2:Sheet3!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=INDIRECT(\"Sheet2!A1\")"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "=FORMULATEXT(A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet3!A1",
+   "input": "1"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet2",
+   "name": "My Sheet"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A4"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "Sheet3",
+   "name": "O'Brien"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "=SUM('My Sheet:O''Brien'!A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "='O''Brien'!A1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "My Sheet",
+   "name": "2024"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "2024",
+   "name": "R1C1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "R1C1",
+   "name": "A1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A6"
+  },
+  {
+   "op": "rename_sheet",
+   "sheet": "A1",
+   "name": "True"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A6"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "True"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A6"
+  }
+ ]
+}

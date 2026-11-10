@@ -1,0 +1,107 @@
+=== 1 set E5 =F1
+  @ start 0,0 E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 E5:0
+  | E5
+=== 2 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4 E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 E5:0
+  | { }
+=== 3 const F1 2
+  @ start 0,0 {A2}:0 A2:f B2:f A3:f B3:f A4:f B4:f E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 E5:0 A3:0 B3:0 A4:0 B4:0
+  | A2 B2 A3? +S:A3 +S:E5 E5 ^E5 -S:- A3 ^A3 -S:- B3 A4 B4
+=== 4 const F1 3
+  @ start 0,0 {A2}:0 A2:f B2:f E5:f A3:f B3:f A4:f B4:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 E5:0 A3:0 B3:0 A4:0 B4:0
+  | A2 B2 E5 A3 B3 A4 B4
+=== 5 new
+=== 6 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0
+  | { }
+=== 7 set2 E3 =D4:E5*2
+  @ start 0,0 {E3}:f {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {E3}:e {A2}:0 A2:e B2:e A3:0 B3:0 A4:0 B4:0
+  | { }?0xa71b0008 A2? B2? A3 B3 A4 B4
+  @ start 0,0 {E3}:c {A2}:0 A2:c B2:c A3:0 B3:0 A4:0 B4:0
+  @ end rerun=0 next=0,5 valid=1 st=7 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:c A2:c B2:c
+  | { }? +U:{E3} A2? +U:A2 B2? +U:B2
+  @ start 0,5 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:c A2:c B2:c
+  @ end rerun=0 next=0,5 valid=1 st=7 {A2}:0 A3:0 B3:0 A4:0 B4:0 {E3}:c A2:c B2:c
+  | { }? +U:{E3} A2? +U:A2 B2? +U:B2
+=== 8 new
+=== 9 set E5 =F1
+  @ start 0,0 E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 E5:0
+  | E5
+=== 10 set E4 =F1
+  @ start 0,0 E4:f E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 E4:0 E5:0
+  | E4
+=== 11 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4 E4:0 E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 E4:0 E5:0
+  | { }
+=== 12 const F1 2
+  @ start 0,0 {A2}:0 A2:f B2:f A3:f B3:f A4:f B4:f E4:f E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 E4:0 A2:0 B2:0 E5:0 A3:0 B3:0 A4:0 B4:0
+  | A2? +S:A2 +S:E4 E4 ^E4 -S:- A2 ^A2 -S:- B2 A3? +S:A3 +S:E5 E5 ^E5 -S:- A3 ^A3 -S:- B3 A4 B4
+=== 13 const F1 3
+  @ start 0,0 {A2}:0 E4:f A2:f B2:f E5:f A3:f B3:f A4:f B4:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 E4:0 A2:0 B2:0 E5:0 A3:0 B3:0 A4:0 B4:0
+  | E4 A2 B2 E5 A3 B3 A4 B4
+=== 14 new
+=== 15 set E5 =F1
+  @ start 0,0 E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 E5:0
+  | E5
+=== 16 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4 E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 E5:0
+  | { }
+=== 17 set C1 =COUNT(B2:D3)
+  @ start 0,0 C1:f {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 E5:0
+  | C1
+=== 18 const F1 2
+  @ start 0,0 C1:f {A2}:0 A2:f B2:f A3:f B3:f A4:f B4:f E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 B2:0 E5:0 B3:0 C1:0 {A2}:0 A2:0 A3:0 A4:0 B4:0
+  | C1? +S:C1 +S:B2 B2 ^B2 -S:- C1? +S:B3 B3? +S:E5 E5 ^E5 -S:- B3 ^B3 -S:- C1 ^C1 -S:- A2 A3 A4 B4
+=== 19 const F1 3
+  @ start 0,0 B2:f E5:f B3:f C1:f {A2}:0 A2:f A3:f A4:f B4:f
+  @ end rerun=1 next=0,0 valid=0 st=7 B2:0 E5:0 B3:0 C1:0 {A2}:0 A2:0 A3:0 A4:0 B4:0
+  | B2 E5 B3 C1 A2 A3 A4 B4
+=== 20 new
+=== 21 set E5 =F1
+  @ start 0,0 E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 E5:0
+  | E5
+=== 22 set C1 =COUNT(B2:D3)
+  @ start 0,0 C1:f E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 C1:0 E5:0
+  | C1
+=== 23 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4 C1:f E5:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0 C1:0 E5:0
+  | { } C1
+=== 24 const F1 2
+  @ start 0,0 {A2}:0 A2:f B2:f A3:f B3:f A4:f B4:f C1:f E5:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 E5:0 A3:0 B3:0 A4:0 B4:0 C1:0
+  | A2 B2 A3? +S:A3 +S:E5 E5 ^E5 -S:- A3 ^A3 -S:- B3 A4 B4 C1
+=== 25 const F1 3
+  @ start 0,0 {A2}:0 A2:f B2:f E5:f A3:f B3:f A4:f B4:f C1:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 E5:0 A3:0 B3:0 A4:0 B4:0 C1:0
+  | A2 B2 E5 A3 B3 A4 B4 C1
+=== 26 new
+=== 27 array A2:B4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 B2:4 A3:4 B3:4 A4:4 B4:4
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0
+  | { }
+=== 28 set E5 =F1
+  @ start 0,0 E5:f {A2}:0 A2:f B2:f A3:f B3:f A4:f B4:f
+  @ end rerun=1 next=0,0 valid=0 st=7 E5:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0
+  | E5 A2 B2 A3 B3 A4 B4
+=== 29 const F1 2
+  @ start 0,0 E5:f {A2}:0 A2:f B2:f A3:f B3:f A4:f B4:f
+  @ end rerun=1 next=0,0 valid=0 st=7 E5:0 {A2}:0 A2:0 B2:0 A3:0 B3:0 A4:0 B4:0
+  | E5 A2 B2 A3 B3 A4 B4

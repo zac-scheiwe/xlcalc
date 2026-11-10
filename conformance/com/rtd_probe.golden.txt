@@ -1,0 +1,63 @@
+throttle => 2000
+unregistered now => err:-2146826246
+unregistered later => err:-2146826246
+const now => c:x|c:x
+const later => c:x|c:x
+echo => echo|p|q|echo|p|q
+err => err:-2146826246
+count 1 => 1|1
+count 2 => 2|2
+same topic again => c:x|c:x
+set =RTD("Xlc.TestRtd") => ERR Exception from HRESULT: 0x800A03EC
+no topics => |
+one topic string => c:|c:
+server name => c:y|c:y
+numeric progid => err:-2146826246
+topic from cell => 5|5
+in arithmetic => err:-2146826273
+C2 before save => c:x|c:x
+xml C1 => <c r="C1" t="e"><f>RTD("no.such.server",,"a")</f><v>#N/A</v></c>
+xml C2 => <c r="C2" t="str"><f>RTD("xlc.testrtd",,"const","x")</f><v>c:x</v></c>
+xml after C1 => <c r="C1" t="str"><f>RTD("no.such.server",,"a")</f><v>cached_C1</v></c>
+manual open C1 => err:-2146826246
+manual open C2 => c:x|c:x
+manual after wait C1 => err:-2146826246
+manual after wait C2 => c:x|c:x
+manual after calc C1 => err:-2146826246
+manual after calc C2 => c:x|c:x
+auto open C1 => err:-2146826246
+auto open C2 => c:x|c:x
+auto after wait C1 => err:-2146826246
+auto after wait C2 => c:x|c:x
+--- server log
+ServerStart
+ConnectData 2 [const|x] new=True
+ConnectData 3 [echo|p|q] new=True
+ConnectData 4 [err] new=True
+ConnectData 5 [count] new=True
+RefreshData 1
+RefreshData 2
+RefreshData 3
+ConnectData 6 [const] new=True
+RefreshData 4
+ServerStart
+ConnectData 7 [const|y] new=True
+RefreshData 5
+ConnectData 9 [] new=True
+ConnectData 10 [5] new=True
+DisconnectData 9
+RefreshData 6
+RefreshData 7
+DisconnectData 3
+DisconnectData 4
+DisconnectData 5
+DisconnectData 6
+DisconnectData 7
+ServerTerminate
+DisconnectData 10
+DisconnectData 2
+ServerTerminate
+ServerStart
+ConnectData 2 [const|x] new=True
+DisconnectData 2
+ServerTerminate

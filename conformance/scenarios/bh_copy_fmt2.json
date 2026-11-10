@@ -1,0 +1,120 @@
+{
+  "sheets": [
+    "Sheet1",
+    "Sheet2"
+  ],
+  "steps": [
+    {
+      "input": "1",
+      "op": "set",
+      "cell": "Sheet1!A1"
+    },
+    {
+      "input": "2",
+      "op": "set",
+      "cell": "Sheet1!B1"
+    },
+    {
+      "input": "= A1 + B1",
+      "op": "set",
+      "cell": "Sheet1!D1"
+    },
+    {
+      "input": "= A1 + 5",
+      "op": "set",
+      "cell": "Sheet1!D2"
+    },
+    {
+      "input": "=5 + A1",
+      "op": "set",
+      "cell": "Sheet1!D3"
+    },
+    {
+      "input": "=5+ A1",
+      "op": "set",
+      "cell": "Sheet1!D4"
+    },
+    {
+      "input": "= A1+5",
+      "op": "set",
+      "cell": "Sheet1!D5"
+    },
+    {
+      "input": "=SUM( A1)",
+      "op": "set",
+      "cell": "Sheet1!D6"
+    },
+    {
+      "input": "=SUM( A1,2)",
+      "op": "set",
+      "cell": "Sheet1!D7"
+    },
+    {
+      "input": "=-( A1)",
+      "op": "set",
+      "cell": "Sheet1!D8"
+    },
+    {
+      "input": "=ABS( A1)+1",
+      "op": "set",
+      "cell": "Sheet1!D9"
+    },
+    {
+      "input": "=( A1)*2",
+      "op": "set",
+      "cell": "Sheet1!D10"
+    },
+    {
+      "input": "=A1 +B1",
+      "op": "set",
+      "cell": "Sheet1!D11"
+    },
+    {
+      "input": "= A1",
+      "op": "set",
+      "cell": "Sheet1!D12"
+    },
+    {
+      "input": "=SUM( A1 ,B1)",
+      "op": "set",
+      "cell": "Sheet1!D13"
+    },
+    {
+      "input": "=IF( A1,1, B1)",
+      "op": "set",
+      "cell": "Sheet1!D14"
+    },
+    {
+      "input": "=SUM(1, A1 )",
+      "op": "set",
+      "cell": "Sheet1!D15"
+    },
+    {
+      "input": "= A1&\"x\"",
+      "op": "set",
+      "cell": "Sheet1!D16"
+    },
+    {
+      "range": "Sheet1!D1:D16",
+      "op": "read"
+    },
+    {
+      "to": "Sheet2!B1",
+      "from": "Sheet1!D1:D16",
+      "op": "copy"
+    },
+    {
+      "range": "Sheet2!B1:B16",
+      "op": "read"
+    },
+    {
+      "to": "Sheet1!B20",
+      "from": "Sheet1!D1:D16",
+      "op": "copy"
+    },
+    {
+      "range": "Sheet1!B20:B35",
+      "op": "read"
+    }
+  ]
+}

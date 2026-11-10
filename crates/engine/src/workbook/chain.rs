@@ -148,6 +148,7 @@ impl Workbook {
 
     pub(crate) fn chain_reset(&mut self, ids: &[FormulaId]) {
         self.calc.chain = BTreeMap::new();
+        self.calc.chain_epoch += 1;
         for (rank, &fid) in ids.iter().enumerate() {
             let key = (rank as i64 + 1) * GAP;
             self.formula_mut(fid).seq = key;
@@ -162,6 +163,34 @@ impl Workbook {
 }
 
 impl Workbook {
+    pub fn debug_chain(&self) -> String {
+        let mut out = Vec::new();
+        for (&k, &g) in &self.calc.chain {
+            if !self.chain_holds(k, g) {
+                continue;
+            }
+            let f = self.formula(g);
+            let a = f.addr;
+            match f.array {
+                Some((rows, cols)) => {
+                    out.push(format!("{}{{}}", a.a1()));
+                    if rows * cols > 1 {
+                        for r in 0..rows {
+                            for c in 0..cols {
+                                out.push(crate::CellAddr::new(a.sheet, a.row + r, a.col + c).a1());
+                            }
+                        }
+                    }
+                }
+                None if f.spill.is_some() || matches!(f.value, crate::Value::Array(_)) => {
+                    out.push(format!("{}{{}}", a.a1()))
+                }
+                None => out.push(a.a1()),
+            }
+        }
+        out.join(" ")
+    }
+
     pub(crate) fn chain_reenter(&mut self, ids: &[FormulaId]) {
         for &fid in ids {
             let old = self.formula(fid).seq;

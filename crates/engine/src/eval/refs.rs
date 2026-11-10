@@ -19,7 +19,7 @@ pub fn resolve_rect(cref: &CRef, host: CellAddr, wrap: bool) -> Option<Rect> {
 pub fn resolve_sheets(ctx: &EvalCtx, sheet: &SheetRef) -> Vec<SheetId> {
     let wb = ctx.wb;
     match sheet {
-        SheetRef::Current => vec![ctx.host.sheet],
+        SheetRef::Current | SheetRef::Own => vec![ctx.host.sheet],
         SheetRef::Sheet(id) => {
             if wb.sheet(*id).is_some() {
                 vec![*id]
@@ -27,14 +27,20 @@ pub fn resolve_sheets(ctx: &EvalCtx, sheet: &SheetRef) -> Vec<SheetId> {
                 vec![]
             }
         }
-        SheetRef::Span(a, b) => match (wb.sheet_position(*a), wb.sheet_position(*b)) {
-            (Some(x), Some(y)) => {
-                let (lo, hi) = (x.min(y), x.max(y));
-                (lo..=hi).map(|i| wb.sheet_at(i).id).collect()
+        SheetRef::Span(a, b) => {
+            if a.0 >= crate::workbook::ext::EXT_BASE {
+                wb.ext_span(*a, *b)
+            } else {
+                match (wb.sheet_position(*a), wb.sheet_position(*b)) {
+                    (Some(x), Some(y)) => {
+                        let (lo, hi) = (x.min(y), x.max(y));
+                        (lo..=hi).map(|i| wb.sheet_at(i).id).collect()
+                    }
+                    _ => vec![],
+                }
             }
-            _ => vec![],
-        },
-        SheetRef::Missing(_) | SheetRef::External(_) => vec![],
+        }
+        SheetRef::Missing(_) => vec![],
     }
 }
 
@@ -48,12 +54,14 @@ pub fn resolve(ctx: &mut EvalCtx, sheet: &SheetRef, cref: &CRef) -> Operand {
 
         0 => {
             let n = rect.cell_count() as usize;
-            if n > 1 && n <= 65536 {
+            if n > 1 && n <= 2_097_152 {
                 let (rows, cols) = (rect.rows(), rect.cols());
                 Operand::Val(
                     crate::value::Array::new(rows, cols, vec![Value::Error(XlError::REF); n])
                         .into_value(),
                 )
+            } else if n > 2_097_152 && ctx.fn_depth == 0 {
+                Operand::Val(Value::Number(0.0))
             } else {
                 Operand::err(XlError::REF)
             }
@@ -72,6 +80,21 @@ pub fn resolve(ctx: &mut EvalCtx, sheet: &SheetRef, cref: &CRef) -> Operand {
 }
 
 pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Operand {
+    if sheet.is_none() {
+        if let Some(v) = ctx
+            .xlm_vars
+            .as_ref()
+            .and_then(|v| v.get(&(ctx.host.sheet, key.into())))
+        {
+            return v.clone();
+        }
+    }
+    if let Some(r) = sheet.and_then(|s| ctx.wb.ext_name_lookup(s, key)) {
+        return match r {
+            Ok((id, rect)) => Operand::Ref(Reference::Area(Area { sheet: id, rect })),
+            Err(()) => Operand::err(XlError::NAME),
+        };
+    }
     let scope = match sheet {
         None => Some(ctx.host.sheet),
 

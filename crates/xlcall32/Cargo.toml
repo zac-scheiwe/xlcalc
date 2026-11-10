@@ -1,0 +1,11 @@
+[package]
+name = "xlcalc-xlcall32"
+description = "A stand-in xlcall32.dll for XLLs loaded by an xlcalc host: Excel4/Excel4v forward to the host's MdCallBack"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+name = "xlcall32"
+crate-type = ["cdylib"]

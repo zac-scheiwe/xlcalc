@@ -25,6 +25,39 @@ pub fn print_node_r1c1(wb: &Workbook, node: &Node, host: CellAddr) -> String {
     s
 }
 
+fn ends_with_ws(n: &Node) -> bool {
+    match n {
+        Node::Ws { after, .. } => !after.is_empty(),
+        Node::Unary(_, x) => ends_with_ws(x),
+        _ => false,
+    }
+}
+
+fn r1c1_call_name(func: &str, host: CellAddr) -> String {
+    if R1C1.with(|f| f.get()) {
+        if let Some((r, c, ra, ca)) = crate::address::parse_a1_cell(func) {
+            let row = if ra {
+                format!("R{}", r + 1)
+            } else {
+                match r as i64 - host.row as i64 {
+                    0 => "R".to_string(),
+                    d => format!("R[{d}]"),
+                }
+            };
+            let col = if ca {
+                format!("C{}", c + 1)
+            } else {
+                match c as i64 - host.col as i64 {
+                    0 => "C".to_string(),
+                    d => format!("C[{d}]"),
+                }
+            };
+            return format!("{row}{col}");
+        }
+    }
+    func.to_string()
+}
+
 fn axis_r1c1(rc: Rc, letter: char, host: u32, max: u32) -> Option<String> {
     rc.resolve(host, max, false)?;
     Some(match (rc.abs, rc.v) {
@@ -49,8 +82,22 @@ fn cref_text_r1c1(cref: &CRef, host: CellAddr) -> Option<String> {
                 format!("{}{}:{}{}", row(r0)?, col(c0)?, row(r1)?, col(c1)?)
             }
         }
-        CRef::Cols { c0, c1 } => format!("{}:{}", col(c0)?, col(c1)?),
-        CRef::Rows { r0, r1 } => format!("{}:{}", row(r0)?, row(r1)?),
+        CRef::Cols { c0, c1 } => {
+            let (a, b) = (col(c0)?, col(c1)?);
+            if a == b {
+                a
+            } else {
+                format!("{a}:{b}")
+            }
+        }
+        CRef::Rows { r0, r1 } => {
+            let (a, b) = (row(r0)?, row(r1)?);
+            if a == b {
+                a
+            } else {
+                format!("{a}:{b}")
+            }
+        }
     })
 }
 
@@ -129,29 +176,38 @@ fn sheet_prefix(wb: &Workbook, sheet: &SheetRef) -> String {
     let name = |id| wb.sheet(id).map(|s| s.name.clone());
     match sheet {
         SheetRef::Current => String::new(),
+        SheetRef::Own => "!".into(),
+        SheetRef::Sheet(id) if id.0 >= crate::workbook::ext::EXT_BASE => {
+            wb.ext_prefix(*id).unwrap_or_else(|| "#REF!".into())
+        }
         SheetRef::Sheet(id) => match name(*id) {
             Some(n) => format!("{}!", sheet_name_text(&n)),
             None => "#REF!".into(),
         },
-        SheetRef::Span(a, b) => match (name(*a), name(*b)) {
-            (Some(x), Some(y)) => {
-                let (x, y) = match (wb.sheet_position(*a), wb.sheet_position(*b)) {
-                    (Some(p), Some(q)) if p > q => (y, x),
-                    _ => (x, y),
-                };
-                let combined = format!("{x}:{y}");
-                if sheet_name_text(&x) == x && sheet_name_text(&y) == y {
-                    format!("{combined}!")
-                } else {
-                    format!("'{}'!", combined.replace('\'', "''"))
+        SheetRef::Span(a, b) => {
+            if a.0 >= crate::workbook::ext::EXT_BASE {
+                wb.ext_span_prefix(*a, *b).unwrap_or_else(|| "#REF!".into())
+            } else {
+                match (name(*a), name(*b)) {
+                    (Some(x), Some(y)) => {
+                        let (x, y) = match (wb.sheet_position(*a), wb.sheet_position(*b)) {
+                            (Some(p), Some(q)) if p > q => (y, x),
+                            _ => (x, y),
+                        };
+                        let combined = format!("{x}:{y}");
+                        if sheet_name_text(&x) == x && sheet_name_text(&y) == y {
+                            format!("{combined}!")
+                        } else {
+                            format!("'{}'!", combined.replace('\'', "''"))
+                        }
+                    }
+                    _ => "#REF!".into(),
                 }
             }
-            _ => "#REF!".into(),
-        },
+        }
 
         SheetRef::Missing(n) if n.contains(":[") => format!("'{}'!", n.replace('\x27', "''")),
         SheetRef::Missing(n) => format!("{}!", sheet_name_text(n)),
-        SheetRef::External(b) => format!("[{b}]!"),
     }
 }
 
@@ -213,6 +269,11 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
             display,
             sheet,
         } => {
+            if let Some(p) = sheet.as_ref().and_then(|sh| wb.ext_name_prefix(sh)) {
+                s.push_str(&p);
+                s.push_str(display);
+                return;
+            }
             if let Some(sh) = sheet {
                 let book_level = matches!(sh, SheetRef::Sheet(id)
                     if wb.sheet(*id).is_some()
@@ -240,7 +301,13 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                             && !c.is_ascii_alphanumeric()
                             && !matches!(c, '_' | '.' | '\\' | '?' | '$')
                     };
-                    if crate::address::parse_a1_cell(t).is_some() || t.chars().any(odd) {
+
+                    let cell_like = if R1C1.with(|f| f.get()) {
+                        crate::parser::reads_as_r1c1(t)
+                    } else {
+                        crate::address::parse_a1_cell(t).is_some()
+                    };
+                    if cell_like || t.chars().any(odd) {
                         s.push('\'');
                         s.push_str(t);
                         s.push('\'');
@@ -271,6 +338,13 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         Node::Unary(UnaryOp::Plus, x) if matches!(**x, Node::Lit(Value::Number(_))) => {
             write(wb, x, host, s);
         }
+
+        Node::Unary(UnaryOp::Implicit, x)
+            if matches!(x.unwrap_ws(), Node::NamedCall { .. })
+                && wb.sheet(host.sheet).is_some_and(|s| s.kind.is_macro()) =>
+        {
+            write(wb, x, host, s);
+        }
         Node::Unary(op, x) => {
             s.push_str(match op {
                 UnaryOp::Neg => "-",
@@ -291,11 +365,22 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         Node::Binary(op, a, b) => {
             write(wb, a, host, s);
 
-            let typed = matches!(&**a, Node::Ws { after, .. } if !after.is_empty());
+            let typed = ends_with_ws(a);
             if !(*op == BinOp::Intersect && typed) {
                 s.push_str(op.symbol());
             }
+
+            let column_name = *op == BinOp::Range
+                && matches!(a.unwrap_ws(), Node::Name { .. })
+                && matches!(b.unwrap_ws(), Node::Name { sheet: None, display, .. }
+                    if crate::address::letters_to_col(display).is_some());
+            if column_name {
+                s.push('(');
+            }
             write(wb, b, host, s);
+            if column_name {
+                s.push(')');
+            }
         }
         Node::Paren(x) => {
             s.push('(');
@@ -330,8 +415,31 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
             args(wb, a, host, s);
         }
         Node::NamedCall {
-            display, args: a, ..
+            key,
+            display,
+            args: a,
         } => {
+            if let Some(prefix) = wb.function_host().and_then(|h| h.display(key)) {
+                s.push_str(&prefix);
+            } else if let Some((book, func)) = display.rsplit_once('!') {
+                match wb.ext_name_prefix(&SheetRef::Missing(book.into())) {
+                    Some(p) => {
+                        s.push_str(&p);
+                        s.push_str(&r1c1_call_name(func, host));
+                    }
+                    None => {
+                        if crate::workbook::ext::plain_part(book) {
+                            s.push_str(book);
+                        } else {
+                            s.push_str(&format!("'{}'", book.replace('\x27', "''")));
+                        }
+                        s.push('!');
+                        s.push_str(&r1c1_call_name(func, host));
+                    }
+                }
+                args(wb, a, host, s);
+                return;
+            }
             s.push_str(
                 wb.names
                     .placeholder(&display.to_uppercase())

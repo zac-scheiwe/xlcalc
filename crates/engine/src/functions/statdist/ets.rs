@@ -138,6 +138,19 @@ pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
                 return Err(*e);
             }
         }
+
+        let first_scalar = if matches!(kind, Kind::Value | Kind::Confint) {
+            3
+        } else {
+            2
+        };
+        for op in o.iter().skip(first_scalar) {
+            if let Operand::Val(v) = op {
+                if !matches!(v, Value::Array(_)) {
+                    ctx.to_number(v)?;
+                }
+            }
+        }
         let mut i = 0;
         let target = if matches!(kind, Kind::Value | Kind::Confint) {
             i = 1;

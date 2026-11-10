@@ -50,3 +50,100 @@ fn xlsb_keeps_the_vba_project() {
 fn a_file_that_is_not_a_package_is_refused() {
     assert!(xlcalc_xlsx::import_bytes(b"not a zip".to_vec()).is_err());
 }
+
+#[test]
+fn xlsb_external_links_read_like_the_xlsx_twin() {
+    let a = xlcalc_xlsx::import_file(&fixture("extlinks.xlsx")).unwrap();
+    let b = xlcalc_xlsx::import_file(&fixture("xlsb_extlinks.xlsb")).unwrap();
+    assert!(b.warnings.is_empty(), "{:?}", b.warnings);
+    let (sa, sb) = (
+        a.workbook.sheets().next().unwrap().id,
+        b.workbook.sheets().next().unwrap().id,
+    );
+    for row in 0..8 {
+        let (ca, cb) = (
+            xlcalc::CellAddr::new(sa, row, 0),
+            xlcalc::CellAddr::new(sb, row, 0),
+        );
+        assert_eq!(
+            format!("{:?}", a.workbook.value(ca)),
+            format!("{:?}", b.workbook.value(cb)),
+            "value A{}",
+            row + 1
+        );
+        assert_eq!(
+            a.workbook.formula_text(ca),
+            b.workbook.formula_text(cb),
+            "formula A{}",
+            row + 1
+        );
+    }
+    assert_eq!(a.workbook.ext_links(), b.workbook.ext_links());
+    assert_eq!(a.workbook.ext_names(0), b.workbook.ext_names(0));
+}
+
+fn zip_part(bytes: &[u8], name: &str) -> Vec<u8> {
+    use std::io::Read;
+    let mut z = zip::ZipArchive::new(std::io::Cursor::new(bytes)).unwrap();
+    let mut v = Vec::new();
+    z.by_name(name).unwrap().read_to_end(&mut v).unwrap();
+    v
+}
+
+#[test]
+fn xlsb_writer_matches_excel_for_external_links() {
+    let xlsx = std::fs::read(fixture("extlinks.xlsx")).unwrap();
+    let theirs = std::fs::read(fixture("xlsb_extlinks.xlsb")).unwrap();
+    let (ours, warnings) = xlcalc_xlsx::xlsx_to_xlsb(&xlsx).unwrap();
+    for n in 1..=2 {
+        let part = format!("xl/externalLinks/externalLink{n}.bin");
+        assert_eq!(
+            zip_part(&ours, &part),
+            zip_part(&theirs, &part),
+            "link {n} (warnings {warnings:?})"
+        );
+    }
+
+    let a = xlcalc_xlsx::import_bytes(xlsx).unwrap();
+    let b = xlcalc_xlsx::import_bytes(ours).unwrap();
+    assert!(b.warnings.is_empty(), "{:?}", b.warnings);
+    assert_eq!(a.workbook.ext_links(), b.workbook.ext_links());
+    let s = a.workbook.sheets().next().unwrap().id;
+    let t = b.workbook.sheets().next().unwrap().id;
+    for row in 0..8 {
+        assert_eq!(
+            a.workbook.formula_text(xlcalc::CellAddr::new(s, row, 0)),
+            b.workbook.formula_text(xlcalc::CellAddr::new(t, row, 0))
+        );
+    }
+}
+
+#[test]
+fn xlsb_writer_matches_excel_for_external_3d_spans() {
+    let xlsx = std::fs::read(fixture("extspan.xlsx")).unwrap();
+    let theirs = std::fs::read(fixture("xlsb_extspan.xlsb")).unwrap();
+    let (ours, warnings) = xlcalc_xlsx::xlsx_to_xlsb(&xlsx).unwrap();
+
+    let part = "xl/externalLinks/externalLink1.bin";
+    assert_eq!(
+        zip_part(&ours, part),
+        zip_part(&theirs, part),
+        "{part} (warnings {warnings:?})"
+    );
+    let a = xlcalc_xlsx::import_bytes(xlsx).unwrap();
+    let b = xlcalc_xlsx::import_bytes(ours).unwrap();
+    let c = xlcalc_xlsx::import_file(&fixture("xlsb_extspan.xlsb")).unwrap();
+    let s = a.workbook.sheets().next().unwrap().id;
+    let t = b.workbook.sheets().next().unwrap().id;
+    let u = c.workbook.sheets().next().unwrap().id;
+    for row in 0..3 {
+        assert_eq!(
+            a.workbook.formula_text(xlcalc::CellAddr::new(s, row, 0)),
+            c.workbook.formula_text(xlcalc::CellAddr::new(u, row, 0))
+        );
+        assert_eq!(
+            a.workbook.formula_text(xlcalc::CellAddr::new(s, row, 0)),
+            b.workbook.formula_text(xlcalc::CellAddr::new(t, row, 0))
+        );
+    }
+}

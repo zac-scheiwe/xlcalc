@@ -21,8 +21,6 @@ pub use project::{MacroLookup, ParamSig, ProcSignature, Project, Sink};
 
 pub(crate) const MISSING: Variant = Variant::Error(HResult::DISP_E_PARAMNOTFOUND.0);
 
-const MAX_DEPTH: usize = 200;
-
 pub(crate) fn end_error() -> VbaError {
     VbaError {
         number: 40040,
@@ -79,6 +77,8 @@ struct ErrState {
     number: i32,
     description: String,
     source: String,
+    help_file: String,
+    help_context: i32,
 }
 
 #[derive(Debug, Default)]
@@ -86,6 +86,8 @@ pub(crate) struct State {
     globals: Vec<Cell>,
     consts: Vec<Option<Variant>>,
     err: ErrState,
+
+    erl: i32,
     stack: Vec<Cell>,
 
     frames: Vec<Option<ObjectId>>,
@@ -103,6 +105,26 @@ pub(crate) struct State {
     ending: bool,
 
     calls: usize,
+
+    units: u32,
+
+    div_inf: Option<f64>,
+}
+
+const HELP_FILE: &str = r"C:\Program Files\Common Files\Microsoft Shared\VBA\VBA7.1\1033\VbLR6.chm";
+
+fn known_error(n: i32) -> bool {
+    n > 1 && n < 1000 && VbaError::new(n).description != VbaError::new(1).description
+}
+
+fn help_context(n: i32, raised: bool) -> i32 {
+    if n < 0 {
+        1_000_440
+    } else if known_error(n) || raised && n == 0 {
+        1_000_000 + n
+    } else {
+        1_000_095
+    }
 }
 
 fn elem_vt(ty: &VType) -> VarType {
@@ -118,6 +140,12 @@ fn empty_array(elem: &VType) -> Variant {
         bounds: Vec::new(),
         data: Vec::new(),
     }))
+}
+
+fn fill_fixed(a: &mut Variant, fixed: Option<u32>) {
+    if let (Variant::Array(a), Some(n)) = (a, fixed) {
+        a.data.fill(Variant::Bstr("\0".repeat(n as usize)));
+    }
 }
 
 fn new_array(elem: &VType, bounds: Vec<(i32, u32)>) -> Variant {
@@ -196,7 +224,7 @@ struct Ctl {
 
     err_pc: usize,
 
-    armed: bool,
+    line: i32,
 
     gosub: Vec<usize>,
 }
@@ -250,6 +278,8 @@ pub(crate) struct Exec<'a> {
     me: Option<ObjectId>,
 
     raise_source: Option<String>,
+
+    raise_help: Option<(String, i32)>,
 }
 
 impl Drop for Exec<'_> {
@@ -283,6 +313,7 @@ impl<'a> Exec<'a> {
             module: 0,
             me: None,
             raise_source: None,
+            raise_help: None,
         }
     }
 
@@ -356,13 +387,13 @@ impl<'a> Exec<'a> {
 
     fn at(&mut self, loc: &Loc) -> Result<(&mut Variant, VType, Kind, Option<u32>), VbaError> {
         if let Loc::Elem(base, k) = loc {
-            let (v, _, _, _) = self.at(base)?;
+            let (v, _, _, fixed) = self.at(base)?;
             let Variant::Array(a) = v else {
                 return Err(VbaError::new(13));
             };
             let ty = VType::of_var_type(a.elem);
             let v = a.data.get_mut(*k).ok_or_else(|| VbaError::new(9))?;
-            return Ok((v, ty, Kind::Scalar, None));
+            return Ok((v, ty, Kind::Scalar, fixed));
         }
         if let Cell::Ref(next) = self.root_cell(loc)? {
             let next = next.clone();
@@ -401,7 +432,11 @@ impl<'a> Exec<'a> {
                 None => (Kind::Scalar, ty.default_value()),
             },
             ArrayDecl::Dynamic => (Kind::Dynamic, empty_array(ty)),
-            ArrayDecl::Fixed(bounds) => (Kind::Fixed, new_array(ty, self.bounds(bounds)?)),
+            ArrayDecl::Fixed(bounds) => {
+                let mut a = new_array(ty, self.bounds(bounds)?);
+                fill_fixed(&mut a, fixed);
+                (Kind::Fixed, a)
+            }
         };
         Ok(Slot {
             ty: ty.clone(),
@@ -435,6 +470,13 @@ impl<'a> Exec<'a> {
     }
 
     fn set_err(&mut self, e: &VbaError) {
+        let help = self.raise_help.take().unwrap_or_else(|| {
+            if known_error(e.number) {
+                (HELP_FILE.to_string(), help_context(e.number, false))
+            } else {
+                Default::default()
+            }
+        });
         self.st.err = ErrState {
             number: e.number,
             description: e.description.clone(),
@@ -442,6 +484,8 @@ impl<'a> Exec<'a> {
                 .raise_source
                 .take()
                 .unwrap_or_else(|| "VBAProject".to_string()),
+            help_file: help.0,
+            help_context: help.1,
         };
     }
 
@@ -462,11 +506,15 @@ impl<'a> Exec<'a> {
         me: Option<ObjectId>,
         back: Option<&mut Vec<Variant>>,
     ) -> Result<Variant, VbaError> {
-        if self.st.frames.len() >= MAX_DEPTH {
-            return Err(VbaError::new(28));
-        }
         let code = self.code;
         let p = &code.procs[id];
+        let units_before = self.st.units;
+        if self.st.frames.len() >= crate::frame::MAX_FRAMES
+            || units_before + p.frame_units + crate::frame::CALL_MARGIN > crate::frame::STACK_UNITS
+        {
+            return Err(VbaError::new(28));
+        }
+        self.st.units += p.frame_units;
         let me = match code.modules[p.module].kind {
             crate::ModuleKind::Standard => None,
             crate::ModuleKind::Class => me,
@@ -497,7 +545,9 @@ impl<'a> Exec<'a> {
         self.module = p.module;
         self.me = me;
         self.st.frames.push(me);
-        let r = self.enter(p);
+
+        let r = stacker::maybe_grow(256 * 1024, 8 * 1024 * 1024, || self.enter(p));
+        self.st.units = units_before;
         let ret = match &mut self.st.stack[base] {
             Cell::Own(s) => std::mem::replace(&mut s.val, Variant::Empty),
             Cell::Ref(_) => Variant::Empty,
@@ -533,7 +583,7 @@ impl<'a> Exec<'a> {
             mode: OnErrorMode::Disable,
             in_handler: false,
             err_pc: 0,
-            armed: false,
+            line: 0,
             gosub: Vec::new(),
         };
         let mut pc = 0;
@@ -552,10 +602,12 @@ impl<'a> Exec<'a> {
                     match ctl.mode {
                         OnErrorMode::ResumeNext => {
                             self.set_err(&e);
+                            self.st.erl = ctl.line;
                             pc = next_start(p, pc);
                         }
                         OnErrorMode::GoTo(t) => {
                             self.set_err(&e);
+                            self.st.erl = ctl.line;
                             ctl.in_handler = true;
                             ctl.err_pc = pc;
                             pc = t;
@@ -566,7 +618,7 @@ impl<'a> Exec<'a> {
             }
         }
 
-        if ctl.armed {
+        if ctl.in_handler {
             self.clear_err();
         }
         Ok(())
@@ -704,12 +756,15 @@ impl<'a> Exec<'a> {
     }
 
     fn flat_at(&mut self, base: &Loc, idx: &[Variant]) -> Result<Option<usize>, VbaError> {
-        let mut ns = Vec::new();
-        for v in idx {
-            ns.push(self.cv.to_i64(&Val::V(v.clone()))?);
-        }
-        match self.at(base)?.0 {
-            Variant::Array(a) => flat(&a.bounds, &ns).map(Some),
+        let held = self.at(base)?.0.clone();
+        match held {
+            Variant::Array(a) => {
+                let mut ns = Vec::new();
+                for v in idx {
+                    ns.push(self.cv.to_i64(&Val::V(v.clone()))?);
+                }
+                flat(&a.bounds, &ns).map(Some)
+            }
             Variant::Dispatch(_) => Ok(None),
             _ => Err(VbaError::new(13)),
         }
@@ -755,23 +810,55 @@ impl<'a> Exec<'a> {
             _ => None,
         };
         let v = if kind != Kind::Scalar {
-            let v = spill(val, from)?;
+            let mut v = spill(val, from)?;
+
+            if let (Variant::Bstr(s), VType::Byte, Kind::Dynamic) = (&v, &ty, kind) {
+                let bytes = crate::rt::bytes_of(s);
+                v = Variant::Array(Box::new(SafeArray {
+                    elem: VarType::Ui1,
+                    bounds: vec![(0, bytes.len() as u32)],
+                    data: bytes.into_iter().map(Variant::Ui1).collect(),
+                }));
+            }
             let Variant::Array(a) = &v else {
                 return Err(VbaError::new(13));
             };
-            if kind == Kind::Fixed || (ty != VType::Variant && a.elem != elem_vt(&ty)) {
+
+            let same_shape = matches!(&cur, Variant::Array(c) if c.bounds == a.bounds);
+            if (kind == Kind::Fixed && !same_shape)
+                || (ty != VType::Variant && a.elem != elem_vt(&ty))
+            {
                 return Err(VbaError::new(13));
             }
             v
         } else if let Some(obj) = cur_obj {
             let id = Self::object_id(&obj)?;
-            let v = self.operand(val, from)?;
+
+            let v = if is_instance(id) {
+                spill(val, from)?
+            } else {
+                self.operand(val, from)?
+            };
             self.invoke(id, "", InvokeKind::Put, vec![v], Vec::new())?;
             return Ok(());
         } else if ty == VType::Variant {
             self.operand_raw(val, from)?
         } else {
-            let v = self.deobj_val(val)?;
+            let mut v = self.deobj_val(val)?;
+
+            if let (VType::String, Val::V(Variant::Array(a))) = (&ty, &v) {
+                if a.elem == VarType::Ui1 && a.bounds.len() == 1 {
+                    if a.data.is_empty() {
+                        return Err(VbaError::new(7));
+                    }
+                    let bytes: Vec<u8> = a
+                        .data
+                        .iter()
+                        .map(|b| if let Variant::Ui1(b) = b { *b } else { 0 })
+                        .collect();
+                    v = Val::V(Variant::Bstr(crate::rt::from_bytes(&bytes)));
+                }
+            }
             match (self.cv.let_coerce(v, from, &ty)?, fixed) {
                 (Variant::Bstr(s), Some(n)) => Variant::Bstr(fit(&s, n as usize, false)),
                 (v, _) => v,
@@ -854,6 +941,12 @@ impl<'a> Exec<'a> {
                     }
                     ErrProp::Description => self.st.err.description = self.cv.to_str(v, from)?,
                     ErrProp::Source => self.st.err.source = self.cv.to_str(v, from)?,
+                    ErrProp::HelpFile => self.st.err.help_file = self.cv.to_str(v, from)?,
+                    ErrProp::HelpContext => {
+                        self.st.err.help_context =
+                            i32::try_from(self.cv.to_i64(&v)?).map_err(|_| VbaError::new(6))?;
+                    }
+                    ErrProp::LastDllError => return Err(VbaError::new(450)),
                 }
                 Ok(())
             }
@@ -968,7 +1061,10 @@ impl<'a> Exec<'a> {
             }
         }
         let id = self.lend(|h| h.global())?;
-        self.invoke(id, name, kind, pos, named)
+        self.invoke(id, name, kind, pos, named).map_err(|mut e| {
+            e.description = e.description.replace("'_Application'", "'_Global'");
+            e
+        })
     }
 
     fn document_object(&mut self, module: usize) -> Result<ObjectId, VbaError> {
@@ -1029,6 +1125,10 @@ impl<'a> Exec<'a> {
     fn cond(&mut self, e: &CExpr) -> Result<bool, VbaError> {
         let v = self.eval(e)?;
         let v = self.deobj_val(v)?;
+
+        if matches!(v, Val::V(Variant::Null)) {
+            return Err(VbaError::new(13));
+        }
         self.cv.truth(v)
     }
 
@@ -1108,6 +1208,9 @@ impl<'a> Exec<'a> {
                 ErrProp::Number => Variant::I4(self.st.err.number),
                 ErrProp::Description => Variant::Bstr(self.st.err.description.clone()),
                 ErrProp::Source => Variant::Bstr(self.st.err.source.clone()),
+                ErrProp::HelpFile => Variant::Bstr(self.st.err.help_file.clone()),
+                ErrProp::HelpContext => Variant::I4(self.st.err.help_context),
+                ErrProp::LastDllError => Variant::I4(0),
             }),
             EK::TypeOf(a, class) => {
                 let v = self.eval_spilled(a)?;
@@ -1185,8 +1288,34 @@ impl<'a> Exec<'a> {
         }
         let text = self.text();
         if res.is_dynamic() || a.ty().is_dynamic() || b.ty().is_dynamic() {
-            let x = self.operand(x, a.ty())?;
-            let y = self.operand(y, b.ty())?;
+            let mut x = self.operand(x, a.ty())?;
+            let mut y = self.operand(y, b.ty())?;
+
+            let compare = matches!(
+                op,
+                BinOp::Eq | BinOp::Ne | BinOp::Lt | BinOp::Le | BinOp::Gt | BinOp::Ge
+            );
+            if compare {
+                if *b.ty() == VType::String && matches!(x, Variant::Date(_)) {
+                    x = self.cv.coerce(x, &VType::String)?;
+                } else if *a.ty() == VType::String && matches!(y, Variant::Date(_)) {
+                    y = self.cv.coerce(y, &VType::String)?;
+                }
+
+                let numeric = |t: &VType| {
+                    !t.is_dynamic()
+                        && !matches!(t, VType::String | VType::Boolean | VType::Object(_))
+                };
+                if *b.ty() == VType::Boolean && matches!(x, Variant::Bstr(_)) {
+                    x = self.cv.coerce(x.clone(), &VType::Boolean).unwrap_or(x);
+                } else if *a.ty() == VType::Boolean && matches!(y, Variant::Bstr(_)) {
+                    y = self.cv.coerce(y.clone(), &VType::Boolean).unwrap_or(y);
+                } else if numeric(b.ty()) && matches!(x, Variant::Bstr(_)) {
+                    x = self.cv.coerce(x.clone(), &VType::Double).unwrap_or(x);
+                } else if numeric(a.ty()) && matches!(y, Variant::Bstr(_)) {
+                    y = self.cv.coerce(y.clone(), &VType::Double).unwrap_or(y);
+                }
+            }
             if op == BinOp::Like {
                 if matches!(x, Variant::Null) || matches!(y, Variant::Null) {
                     return Ok(Val::V(Variant::Null));
@@ -1205,7 +1334,24 @@ impl<'a> Exec<'a> {
         }
         let x = self.deobj_val(x)?;
         let y = self.deobj_val(y)?;
-        self.cv.binary(op, res, (x, a.ty()), (y, b.ty()), text)
+        let sign = |v: &Val| match v {
+            Val::X(f) => f.to_f64(),
+            Val::V(Variant::R8(d)) => Some(*d),
+            Val::V(Variant::I2(n)) => Some(f64::from(*n)),
+            Val::V(Variant::I4(n)) => Some(f64::from(*n)),
+            _ => None,
+        };
+        let signs = (op == BinOp::Div && *res == VType::Double)
+            .then(|| (sign(&x), sign(&y)))
+            .and_then(|(p, q)| Some((p?, q?)));
+        let r = self.cv.binary(op, res, (x, a.ty()), (y, b.ty()), text);
+        if let (Err(e), Some((p, q))) = (&r, signs) {
+            if e.number == 11 {
+                self.st.div_inf =
+                    Some(f64::INFINITY.copysign(p) * if q.is_sign_negative() { -1.0 } else { 1.0 });
+            }
+        }
+        r
     }
 
     fn builtin(&mut self, b: &Builtin, args: &[CExpr], ty: &VType) -> Result<Variant, VbaError> {
@@ -1213,7 +1359,13 @@ impl<'a> Exec<'a> {
         for a in args {
             let v = self.eval(a)?;
 
-            if matches!(b.name, "CStr" | "StrReverse") {
+            if b.name.starts_with("Is") && matches!(&v, Val::V(Variant::Dispatch(None))) {
+                vals.push(Variant::Dispatch(None));
+            } else if matches!(b.name, "IsEmpty" | "IsNull" | "IsError")
+                && matches!(&v, Val::V(Variant::Dispatch(Some(_))))
+            {
+                vals.push(spill(v, a.ty())?);
+            } else if matches!(b.name, "CStr" | "StrReverse") {
                 vals.push(self.operand_raw(v, a.ty())?);
             } else {
                 vals.push(self.operand(v, a.ty())?);
@@ -1277,6 +1429,96 @@ impl<'a> Exec<'a> {
             }
             return self.lend(|h| h.interaction(what, &vals));
         }
+        if i == Intrinsic::DeclareCall {
+            let mut vals = Vec::with_capacity(args.len());
+            for a in args {
+                let v = self.eval(a)?;
+                vals.push(self.operand(v, a.ty())?);
+            }
+            let (Variant::Bstr(lib), Variant::Bstr(name)) = (&vals[0], &vals[1]) else {
+                return Err(VbaError::new(13));
+            };
+            return self.lend(|h| h.dll_call(lib, name, &vals[2..]));
+        }
+        if i == Intrinsic::Erl {
+            return Ok(Variant::I4(self.st.erl));
+        }
+        if i == Intrinsic::CallByName {
+            let ov = self.eval_spilled(&args[0])?;
+            let id = Self::object_id(&ov)?;
+            let name = match self.eval_spilled(&args[1])? {
+                Variant::Bstr(s) => s,
+                _ => return Err(VbaError::new(13)),
+            };
+            let call_type = self.long(&args[2])?;
+
+            if matches!(call_type, 1 | 2) {
+                let code = self.code;
+                let found = instance_of(id)
+                    .filter(|&(_, iface)| iface == 0)
+                    .and_then(|(key, _)| self.class_of_key(key).ok())
+                    .and_then(|class| code.class(class))
+                    .and_then(|ci| ci.members.get(&name.to_ascii_lowercase()))
+                    .filter(|m| m.field.is_none())
+                    .and_then(|m| m.get);
+                if let Some(p) = found {
+                    let is_prop = matches!(code.procs[p].kind, crate::ast::ProcKind::PropertyGet);
+                    if is_prop == (call_type == 1) {
+                        return Err(VbaError::new(450));
+                    }
+                }
+            }
+            let kind = match call_type {
+                1 | 2 => InvokeKind::Get,
+                4 => InvokeKind::Put,
+                8 => InvokeKind::PutRef,
+
+                _ => return Err(VbaError::new(438)),
+            };
+
+            if call_type == 1
+                && !is_instance(id)
+                && matches!(
+                    name.to_ascii_lowercase().as_str(),
+                    "offset" | "resize" | "item" | "cells" | "range" | "rows" | "columns"
+                )
+            {
+                return Err(VbaError::new(438));
+            }
+            if is_instance(id) {
+                let mut items = Vec::new();
+                for a in &args[3..] {
+                    items.push(Item::value(self.eval_spilled(a)?));
+                }
+                return self.call_member(id, &name, kind, items, false);
+            }
+            let mut pos = Vec::new();
+            for a in &args[3..] {
+                pos.push(self.eval_spilled(a)?);
+            }
+            return self.invoke(id, &name, kind, pos, Vec::new());
+        }
+        if matches!(i, Intrinsic::CreateObject | Intrinsic::GetObject) {
+            let mut vals = Vec::with_capacity(args.len());
+            for a in args {
+                let v = self.eval(a)?;
+                vals.push(self.operand(v, a.ty())?);
+            }
+            let text = |x: Option<&Variant>| match x {
+                None => Ok(None),
+                Some(v) if *v == MISSING => Ok(None),
+                Some(Variant::Bstr(s)) => Ok(Some(s.clone())),
+                Some(_) => Err(VbaError::new(13)),
+            };
+            let (a, b) = (text(vals.first())?, text(vals.get(1))?);
+            let id = if i == Intrinsic::CreateObject {
+                let progid = a.ok_or_else(|| VbaError::new(449))?;
+                self.lend(|h| h.create_object(&progid))?
+            } else {
+                self.lend(|h| h.get_object(a.as_deref(), b.as_deref()))?
+            };
+            return Ok(Variant::Dispatch(Some(id)));
+        }
         let v = self.eval_spilled(&args[0])?;
         Ok(match i {
             Intrinsic::IsMissing => Variant::Bool(v == MISSING),
@@ -1309,14 +1551,41 @@ impl<'a> Exec<'a> {
                     (i64::from(lo) + i64::from(n) - 1) as i32
                 })
             }
-            Intrinsic::Array | Intrinsic::Ask(_) => unreachable!("handled above"),
+            Intrinsic::Array
+            | Intrinsic::Ask(_)
+            | Intrinsic::CreateObject
+            | Intrinsic::GetObject
+            | Intrinsic::CallByName
+            | Intrinsic::Erl
+            | Intrinsic::DeclareCall => {
+                unreachable!("handled above")
+            }
         })
     }
 
     fn op(&mut self, p: &'a ProcCode, pc: usize, ctl: &mut Ctl) -> Result<Flow, VbaError> {
         match &p.ops[pc] {
             Op::Let(place, e) => {
-                let v = self.eval(e)?;
+                self.st.div_inf = None;
+                let v = match self.eval(e) {
+                    Ok(v) => v,
+                    Err(err) => {
+                        if let Some(inf) = self.st.div_inf.take() {
+                            if err.number == 11 && *e.ty() == VType::Double {
+                                if let Place::Var(r) = place {
+                                    let loc = self.var_loc(*r);
+                                    if matches!(
+                                        self.at(&loc),
+                                        Ok((_, VType::Double, Kind::Scalar, _))
+                                    ) {
+                                        self.store_let(place, Val::V(Variant::R8(inf)), e.ty())?;
+                                    }
+                                }
+                            }
+                        }
+                        return Err(err);
+                    }
+                };
                 self.store_let(place, v, e.ty())?;
             }
             Op::Set(place, e) => {
@@ -1359,6 +1628,10 @@ impl<'a> Exec<'a> {
                 let (_, cty, _, _) = self.at(&loc)?;
                 let f = self.eval(from)?;
                 let f = self.counter_value(f, from.ty(), &cty)?;
+
+                *self.at(&loc)?.0 = f.clone();
+                self.set_hidden(*hidden, Variant::Empty);
+                self.set_hidden(*hidden + 1, Variant::Empty);
                 let t = self.eval(to)?;
                 let t = self.counter_value(t, to.ty(), &cty)?;
                 let s = match step {
@@ -1389,6 +1662,9 @@ impl<'a> Exec<'a> {
                 let cur = self.load(&loc)?;
                 let t = self.hidden(*hidden).clone();
                 let s = self.hidden(*hidden + 1).clone();
+                if matches!(s, Variant::Empty) {
+                    return Ok(Flow::Next);
+                }
                 let next = if counter.is_dynamic() {
                     ops::var_binary(BinOp::Add, &cur, &s, false, self.cv.locale)?
                 } else {
@@ -1415,41 +1691,115 @@ impl<'a> Exec<'a> {
                 exit,
             } => {
                 let c = self.eval_spilled(collection)?;
+                let mut live = None;
+                let mut live_id = None;
                 let items = match c {
-                    Variant::Array(a) => a.data,
+                    Variant::Array(a) => {
+                        if a.bounds.is_empty() {
+                            return Err(VbaError::new(92));
+                        }
+                        a.data
+                    }
                     v => {
                         let id = Self::object_id(&v)?;
                         if is_instance(id) {
                             let Some(items) = self.collection_items(id) else {
                                 return Err(VbaError::new(438));
                             };
+                            live_id = Some(id);
+                            live = Some(v);
                             items
                         } else {
                             self.lend(|h| h.enumerate(id))?
                         }
                     }
                 };
+                let count = items.len();
                 let Some(first) = items.first().cloned() else {
                     return Ok(Flow::Jump(*exit));
                 };
+
                 self.set_hidden(
                     *hidden,
-                    Variant::Array(Box::new(SafeArray {
-                        elem: VarType::Variant,
-                        bounds: vec![(0, items.len() as u32)],
-                        data: items,
-                    })),
+                    live.unwrap_or_else(|| {
+                        Variant::Array(Box::new(SafeArray {
+                            elem: VarType::Variant,
+                            bounds: vec![(0, items.len() as u32)],
+                            data: items,
+                        }))
+                    }),
                 );
-                self.set_hidden(*hidden + 1, Variant::I4(0));
+
+                let (next, mark) = match &live_id {
+                    Some(id) => (
+                        if count > 1 { 1 } else { -1 },
+                        self.collection_log(*id).len() as i32,
+                    ),
+                    None => (0, 0),
+                };
+                self.set_hidden(*hidden + 1, Variant::I4(next));
+                self.set_hidden(*hidden + 2, Variant::I4(mark));
                 self.assign_item(var, first.canon())?;
             }
-            Op::ForEachNext { var, hidden, body } => {
+            Op::ForEachNext {
+                var,
+                collection,
+                hidden,
+                body,
+            } => {
                 let pos = match self.hidden(*hidden + 1) {
-                    Variant::I4(n) => *n as usize + 1,
+                    Variant::I4(n) => (*n + 1).max(0) as usize,
                     _ => usize::MAX,
                 };
-                let item = match self.hidden(*hidden) {
-                    Variant::Array(a) => a.data.get(pos).cloned(),
+                if let Variant::Dispatch(Some(id)) | Variant::Unknown(Some(id)) =
+                    self.hidden(*hidden).clone()
+                {
+                    if is_instance(id) {
+                        let Variant::I4(mut next) = *self.hidden(*hidden + 1) else {
+                            return Ok(Flow::Next);
+                        };
+                        let Variant::I4(mark) = *self.hidden(*hidden + 2) else {
+                            return Ok(Flow::Next);
+                        };
+                        let log = self.collection_log(id);
+                        for &(removed, at) in log.iter().skip(mark as usize) {
+                            if next < 0 {
+                                break;
+                            }
+                            let at = at as i32;
+                            if removed && at < next || !removed && at <= next {
+                                next += if removed { -1 } else { 1 };
+                            }
+                        }
+                        let items = self.collection_items(id).unwrap_or_default();
+                        if next < 0 || next as usize >= items.len() {
+                            self.end_each(var)?;
+                            return Ok(Flow::Next);
+                        }
+                        let item = items[next as usize].clone();
+                        let after = if (next as usize) + 1 < items.len() {
+                            next + 1
+                        } else {
+                            -1
+                        };
+                        let mark = log.len() as i32;
+                        self.set_hidden(*hidden + 1, Variant::I4(after));
+                        self.set_hidden(*hidden + 2, Variant::I4(mark));
+                        self.assign_item(var, item.canon())?;
+                        return Ok(Flow::Jump(*body));
+                    }
+                }
+                let item = match self.hidden(*hidden).clone() {
+                    Variant::Array(a) => match collection.kind {
+                        EK::Var(_) => match self.eval_spilled(collection)? {
+                            Variant::Array(now) => now.data.get(pos).cloned(),
+                            _ => a.data.get(pos).cloned(),
+                        },
+                        _ => a.data.get(pos).cloned(),
+                    },
+                    Variant::Dispatch(Some(id)) | Variant::Unknown(Some(id)) => {
+                        self.collection_items(id).and_then(|v| v.get(pos).cloned())
+                    }
                     _ => None,
                 };
                 if let Some(item) = item {
@@ -1457,6 +1807,8 @@ impl<'a> Exec<'a> {
                     self.assign_item(var, item.canon())?;
                     return Ok(Flow::Jump(*body));
                 }
+
+                self.end_each(var)?;
             }
             Op::ReDim {
                 var,
@@ -1477,7 +1829,6 @@ impl<'a> Exec<'a> {
                 } else {
                     ctl.mode = m.clone();
                 }
-                ctl.armed |= !matches!(m, OnErrorMode::Disable);
                 self.clear_err();
             }
             Op::Resume(k) => {
@@ -1493,14 +1844,20 @@ impl<'a> Exec<'a> {
                 }));
             }
             Op::ErrClear => self.clear_err(),
+            Op::Line(n) => ctl.line = *n,
             Op::ErrRaise(args) => return Err(self.raise(args)?),
             Op::Return => return Ok(Flow::Return),
             Op::GoSub(t) => {
+                if self.st.units >= crate::frame::STACK_UNITS {
+                    return Err(VbaError::new(28));
+                }
+                self.st.units += 1;
                 ctl.gosub.push(pc + 1);
                 return Ok(Flow::Jump(*t));
             }
             Op::GoSubReturn => {
                 let back = ctl.gosub.pop().ok_or_else(|| VbaError::new(3))?;
+                self.st.units -= 1;
                 return Ok(Flow::Jump(back));
             }
             Op::OnGoTo {
@@ -1509,12 +1866,16 @@ impl<'a> Exec<'a> {
                 gosub,
             } => {
                 let i = self.long(index)?;
-                if i < 0 {
+                if !(0..=255).contains(&i) {
                     return Err(VbaError::new(5));
                 }
 
                 if let Some(&t) = (i as usize).checked_sub(1).and_then(|k| targets.get(k)) {
                     if *gosub {
+                        if self.st.units >= crate::frame::STACK_UNITS {
+                            return Err(VbaError::new(28));
+                        }
+                        self.st.units += 1;
                         ctl.gosub.push(pc + 1);
                     }
                     return Ok(Flow::Jump(t));
@@ -1583,10 +1944,28 @@ impl<'a> Exec<'a> {
         counter: &VType,
     ) -> Result<Variant, VbaError> {
         if counter.is_dynamic() {
-            self.operand(v, from)
+            match self.operand(v, from)? {
+                t @ Variant::Bstr(_) => self.cv.coerce(t, &VType::Double),
+                other => Ok(other),
+            }
         } else {
             let v = self.deobj_val(v)?;
             self.cv.let_coerce(v, from, counter)
+        }
+    }
+
+    fn end_each(&mut self, var: &Place) -> Result<(), VbaError> {
+        let is_variant = match var {
+            Place::Var(r) => {
+                let loc = self.var_loc(*r);
+                matches!(self.at(&loc)?.1, VType::Variant)
+            }
+            _ => true,
+        };
+        if is_variant {
+            self.assign_item(var, Variant::Empty)
+        } else {
+            self.store_set(var, Variant::Dispatch(None))
         }
     }
 
@@ -1607,7 +1986,7 @@ impl<'a> Exec<'a> {
     ) -> Result<(), VbaError> {
         let bs = self.bounds(bounds)?;
         let loc = self.var_loc(var);
-        let (slot, ty, kind, _) = self.at(&loc)?;
+        let (slot, ty, kind, fixed) = self.at(&loc)?;
         let elem = match kind {
             Kind::Fixed => return Err(VbaError::new(10)),
             Kind::Dynamic => ty,
@@ -1616,12 +1995,30 @@ impl<'a> Exec<'a> {
                 _ => elem.clone(),
             },
         };
+
+        let size: u64 = match elem {
+            VType::Byte | VType::Boolean => 2,
+            VType::Variant => 16,
+            VType::Double | VType::Currency | VType::Date => 8,
+            _ => 4,
+        };
+        let count = bs
+            .iter()
+            .try_fold(1u64, |n, b| n.checked_mul(u64::from(b.1)))
+            .unwrap_or(u64::MAX);
+        if count.saturating_mul(size) >= 1 << 31 {
+            return Err(VbaError::new(7));
+        }
         let mut new = new_array(&elem, bs.clone());
+        fill_fixed(&mut new, fixed);
         if preserve {
             if let (Variant::Array(old), Variant::Array(fresh)) = (&*slot, &mut new) {
                 if !old.bounds.is_empty() {
                     let n = bs.len();
-                    if old.bounds.len() != n || old.bounds[..n - 1] != bs[..n - 1] {
+                    if old.bounds.len() != n
+                        || old.bounds[..n - 1] != bs[..n - 1]
+                        || old.bounds[n - 1].0 != bs[n - 1].0
+                    {
                         return Err(VbaError::new(9));
                     }
                     let keep = old.data.len().min(fresh.data.len());
@@ -1635,13 +2032,14 @@ impl<'a> Exec<'a> {
 
     fn erase(&mut self, r: VarRef) -> Result<(), VbaError> {
         let loc = self.var_loc(r);
-        let (slot, ty, kind, _) = self.at(&loc)?;
+        let (slot, ty, kind, fixed) = self.at(&loc)?;
         match kind {
             Kind::Dynamic => *slot = empty_array(&ty),
             Kind::Fixed => {
                 if let Variant::Array(a) = slot {
                     a.data.fill(ty.default_value());
                 }
+                fill_fixed(slot, fixed);
             }
             Kind::Scalar => match slot {
                 Variant::Array(_) => *slot = Variant::Empty,
@@ -1654,7 +2052,12 @@ impl<'a> Exec<'a> {
     fn raise(&mut self, args: &[NamedArg]) -> Result<VbaError, VbaError> {
         const NAMES: [&str; 5] = ["number", "source", "description", "helpfile", "helpcontext"];
         let mut vals: [Option<Variant>; 5] = Default::default();
-        for (i, a) in args.iter().enumerate() {
+        let stmt = args.iter().any(|a| a.name.as_deref() == Some("__stmt"));
+        for (i, a) in args
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.name.as_deref() != Some("__stmt"))
+        {
             let k = match &a.name {
                 Some(n) => NAMES
                     .iter()
@@ -1670,17 +2073,66 @@ impl<'a> Exec<'a> {
         let Some(n) = vals[0].take() else {
             return Err(VbaError::new(449));
         };
-        let n = i32::try_from(self.cv.to_i64(&Val::V(n))?).map_err(|_| VbaError::new(6))?;
-        if n == 0 {
+        let mut n = i32::try_from(self.cv.to_i64(&Val::V(n))?).map_err(|_| VbaError::new(6))?;
+
+        if stmt && !(1..=65535).contains(&n) {
+            return Err(VbaError::new(5));
+        }
+        let hresult = n;
+        if n < 0 && (n as u32) >> 16 == 0x800A {
+            n = (n as u32 & 0xFFFF) as i32;
+        } else if n == i32::MIN + 0x7_0057 {
+            n = 5;
+        }
+        if n == 0 && hresult == 0 || n > 65535 {
             return Err(VbaError::new(5));
         }
         let mut e = VbaError::new(n);
+        if n == 0 {
+            e.description = String::new();
+        }
+        if n < 0 {
+            e.description = "Automation error".to_string();
+            if let Some((_, msg)) = crate::hresult_text::HRESULT_TEXT
+                .iter()
+                .find(|(h, _)| *h == n)
+            {
+                e.description = format!(
+                    "Automation error
+{msg} "
+                );
+            }
+        }
+
+        if !self.st.err.description.is_empty() {
+            e.description.clone_from(&self.st.err.description);
+        }
         if let Some(d) = vals[2].take() {
             e.description = self.cv.to_str(Val::V(d), &VType::Variant)?;
         }
-        if let Some(s) = vals[1].take() {
-            self.raise_source = Some(self.cv.to_str(Val::V(s), &VType::Variant)?);
+        match vals[1].take() {
+            Some(s) => self.raise_source = Some(self.cv.to_str(Val::V(s), &VType::Variant)?),
+            None if !self.st.err.source.is_empty() => {
+                self.raise_source = Some(self.st.err.source.clone());
+            }
+            None => {}
         }
+        let given = vals[3].is_some() || vals[4].is_some();
+        let file = match vals[3].take() {
+            Some(f) => self.cv.to_str(Val::V(f), &VType::Variant)?,
+            None => String::new(),
+        };
+        let ctx = match vals[4].take() {
+            Some(c) => i32::try_from(self.cv.to_i64(&Val::V(c))?).map_err(|_| VbaError::new(6))?,
+            None => 0,
+        };
+        self.raise_help = Some(if given {
+            (file, ctx)
+        } else if n == 0 {
+            (String::new(), 0)
+        } else {
+            (HELP_FILE.to_string(), help_context(n, true))
+        });
         Ok(e)
     }
 }

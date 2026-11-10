@@ -153,16 +153,8 @@ fn visit_kind(k: &mut Node, pre: &mut Text, o: &mut String) {
                 }
             }
         }
-        Node::Func { id, args } => {
-            let is_if = crate::functions::def(*id).name == "IF";
-            let n = args.len();
-            for (i, a) in args.iter_mut().enumerate() {
-                visit(a, o);
-
-                if is_if && n > 1 && (i == 0 || (i == 1 && n > 2)) {
-                    o.clear();
-                }
-            }
+        Node::Func { args, .. } => {
+            args.iter_mut().for_each(|a| visit(a, o));
             land(pre, o);
         }
         Node::NamedCall { args, .. } => {

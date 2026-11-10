@@ -1,15 +1,15 @@
 [workspace]
 resolver = "2"
-members = ["crates/vbaproject", "crates/vba", "crates/engine", "crates/cli", "crates/conformance", "crates/xlsx", "crates/om", "crates/variant", "crates/com"]
+members = ["crates/vbaproject", "crates/vba", "crates/engine", "crates/cli", "crates/conformance", "crates/xlsx", "crates/om", "crates/variant", "crates/com", "crates/winbridge", "crates/xll", "crates/testxll", "crates/xlcall32"]
 
 [workspace.package]
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 license = "0BSD"
 repository = "https://github.com/zac-scheiwe/xlcalc"
 
 [workspace.dependencies]
-xlcalc = { path = "crates/engine", version = "0.5.0" }
+xlcalc = { path = "crates/engine", version = "0.6.0" }
 rustc-hash = "2.0"
 smallvec = { version = "1.13", features = ["union"] }
 rstar = "0.12"

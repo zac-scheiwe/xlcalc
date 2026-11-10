@@ -50,6 +50,9 @@ pub enum ErrProp {
     Number,
     Description,
     Source,
+    HelpFile,
+    HelpContext,
+    LastDllError,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -66,6 +69,16 @@ pub enum Intrinsic {
     LBound,
 
     Ask(crate::host::Interaction),
+
+    CreateObject,
+
+    DeclareCall,
+
+    CallByName,
+
+    Erl,
+
+    GetObject,
 }
 
 #[derive(Clone, Debug)]
@@ -179,6 +192,8 @@ pub enum Op {
     },
     ForEachNext {
         var: Place,
+
+        collection: CExpr,
         hidden: usize,
         body: usize,
     },
@@ -192,6 +207,8 @@ pub enum Op {
     OnError(OnErrorMode),
     Resume(ResumeKind),
     ErrClear,
+
+    Line(i32),
     ErrRaise(Vec<NamedArg>),
     Return,
 
@@ -278,6 +295,8 @@ pub struct ProcCode {
     pub stmt_start: Vec<bool>,
 
     pub volatile: bool,
+
+    pub frame_units: u32,
 }
 
 #[derive(Clone, Debug)]

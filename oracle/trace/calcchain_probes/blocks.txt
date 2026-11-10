@@ -1,0 +1,29 @@
+set E5 =F1
+array A2:B4 =E4:E6+5
+const F1 2
+const F1 3
+new
+array A2:B4 =E4:E6+5
+set2 E3 =D4:E5*2
+new
+set E5 =F1
+set E4 =F1
+array A2:B4 =E4:E6+5
+const F1 2
+const F1 3
+new
+set E5 =F1
+array A2:B4 =E4:E6+5
+set C1 =COUNT(B2:D3)
+const F1 2
+const F1 3
+new
+set E5 =F1
+set C1 =COUNT(B2:D3)
+array A2:B4 =E4:E6+5
+const F1 2
+const F1 3
+new
+array A2:B4 =E4:E6+5
+set E5 =F1
+const F1 2

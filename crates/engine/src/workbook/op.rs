@@ -19,16 +19,18 @@ pub(crate) enum Op {
     TextToColumns,
 
     PasteHeader,
+
+    PivotWrite,
 }
 
 impl Op {
-    const fn bit(self) -> u8 {
-        1 << self as u8
+    const fn bit(self) -> u16 {
+        1 << self as u16
     }
 }
 
 pub(crate) struct OpFlags {
-    on: u8,
+    on: u16,
 
     paste_block: Option<(SheetId, Rect)>,
 }
@@ -42,7 +44,7 @@ impl OpFlags {
 
 struct Scope<'a> {
     wb: &'a mut Workbook,
-    saved_on: u8,
+    saved_on: u16,
     saved_block: Option<(SheetId, Rect)>,
 }
 

@@ -597,6 +597,22 @@ fn strip_numbers(j: &mut J) {
     }
 }
 
+fn vba_modules_code(list: &J) -> Vec<(J, J, String)> {
+    list.as_array()
+        .map(|a| {
+            a.iter()
+                .map(|m| {
+                    (
+                        m["name"].clone(),
+                        m["type"].clone(),
+                        crate::vba_code(m["text"].as_str().unwrap_or_default()),
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 fn cut(s: &str) -> String {
     if s.chars().count() > 160 {
         format!("{}...", s.chars().take(160).collect::<String>())
@@ -653,6 +669,7 @@ fn diff_books(want: &J, got: &J) -> Vec<String> {
                     ));
                 }
             }
+            "vba_modules" if vba_modules_code(wv) == vba_modules_code(gv) => {}
             _ if wv != gv => d.push(format!(
                 "{k}: Excel {} | xlcalc {}",
                 cut(&wv.to_string()),

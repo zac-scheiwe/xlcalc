@@ -1,0 +1,218 @@
+{
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=A1*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=A2*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=A3*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "=A4*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "=A5*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "=A6*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "=A7*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B8",
+   "input": "=A8*2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "=SUM(A2:A4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "=SUM(A2:A4 A3:B3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "=SUM(A2:INDEX(A:A,4))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "=SUM(A3:A3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E5",
+   "input": "=SUM(A2:A4,A6:A7)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E6",
+   "input": "=SUM((A2:A4,A6:A7))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E7",
+   "input": "=SUM(A4:A2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E8",
+   "input": "=SUM(B2:A4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E9",
+   "input": "=INDEX(A1:A8,3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E10",
+   "input": "=SUM(OFFSET(A2,0,0,3,1))"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E11",
+   "input": "=ROWS(A2:A4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E12",
+   "input": "=SUM(A2:A4*B2:B4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E13",
+   "input": "=SUMPRODUCT(A2:A4,B2:B4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E14",
+   "input": "=SUM($A$2:A4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E15",
+   "input": "=COUNTA(A2:C4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E16",
+   "input": "=SUM(A5:A5:A6)"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!A3",
+   "to": "Sheet1!A10"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E17"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!A2:A4",
+   "to": "Sheet1!A6"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E17"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!B1:B3",
+   "to": "Sheet1!A2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:E17"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!E1:E3",
+   "to": "Sheet1!F2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:F17"
+  },
+  {
+   "op": "copy",
+   "from": "Sheet1!F2:F4",
+   "to": "Sheet1!H1"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H17"
+  },
+  {
+   "op": "cut",
+   "from": "Sheet1!A1:B8",
+   "to": "Sheet1!A2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:H17"
+  }
+ ]
+}

@@ -1,0 +1,219 @@
+{
+"sheets": [
+"P"
+],
+"steps": [
+{
+"op": "set",
+"cell": "P!A1",
+"input": "Item"
+},
+{
+"op": "set",
+"cell": "P!B1",
+"input": "Price"
+},
+{
+"op": "set",
+"cell": "P!C1",
+"input": "Qty"
+},
+{
+"op": "set",
+"cell": "P!D1",
+"input": "Total"
+},
+{
+"op": "set",
+"cell": "P!A2",
+"input": "A"
+},
+{
+"op": "set",
+"cell": "P!B2",
+"input": "10.5"
+},
+{
+"op": "set",
+"cell": "P!C2",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "P!A3",
+"input": "B"
+},
+{
+"op": "set",
+"cell": "P!B3",
+"input": "$20"
+},
+{
+"op": "set",
+"cell": "P!C3",
+"input": "2"
+},
+{
+"op": "set",
+"cell": "P!A4",
+"input": "C"
+},
+{
+"op": "set",
+"cell": "P!B4",
+"input": "7.25%"
+},
+{
+"op": "set",
+"cell": "P!C4",
+"input": "4"
+},
+{
+"op": "set",
+"cell": "P!A5",
+"input": "D"
+},
+{
+"op": "set",
+"cell": "P!B5",
+"input": "1/2"
+},
+{
+"op": "set",
+"cell": "P!C5",
+"input": "5"
+},
+{
+"op": "set",
+"cell": "P!D2",
+"input": "=B2*C2"
+},
+{
+"op": "autofill",
+"from": "P!D2:D2",
+"to": "P!D2:D5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "P!A1:D5"
+},
+{
+"op": "set",
+"cell": "P!F1",
+"input": "1.1"
+},
+{
+"op": "copy",
+"from": "P!F1",
+"to": "P!F2"
+},
+{
+"op": "paste_special",
+"from": "P!F1",
+"to": "P!B2:B5",
+"paste": "values",
+"operation": "mul"
+},
+{
+"op": "read",
+"range": "P!A1:D5"
+},
+{
+"op": "paste_special",
+"from": "P!B2:B5",
+"to": "P!H2",
+"paste": "values"
+},
+{
+"op": "paste_special",
+"from": "P!D2:D5",
+"to": "P!I2",
+"paste": "formulas"
+},
+{
+"op": "read",
+"range": "P!H1:I6"
+},
+{
+"op": "set",
+"cell": "P!K1",
+"input": "Jan-26"
+},
+{
+"op": "autofill",
+"from": "P!K1:K1",
+"to": "P!K1:K6",
+"type": "default"
+},
+{
+"op": "set",
+"cell": "P!L1",
+"input": "Mon"
+},
+{
+"op": "autofill",
+"from": "P!L1:L1",
+"to": "P!L1:L8",
+"type": "default"
+},
+{
+"op": "set",
+"cell": "P!M1",
+"input": "Q1"
+},
+{
+"op": "autofill",
+"from": "P!M1:M1",
+"to": "P!M1:M5",
+"type": "default"
+},
+{
+"op": "set",
+"cell": "P!N1",
+"input": "1/1/2026"
+},
+{
+"op": "set",
+"cell": "P!N2",
+"input": "1/2/2026"
+},
+{
+"op": "autofill",
+"from": "P!N1:N2",
+"to": "P!N1:N6",
+"type": "default"
+},
+{
+"op": "set",
+"cell": "P!O1",
+"input": "Item 1"
+},
+{
+"op": "autofill",
+"from": "P!O1:O1",
+"to": "P!O1:O4",
+"type": "default"
+},
+{
+"op": "set",
+"cell": "P!P1",
+"input": "31/1/2026"
+},
+{
+"op": "set",
+"cell": "P!P2",
+"input": "28/2/2026"
+},
+{
+"op": "autofill",
+"from": "P!P1:P2",
+"to": "P!P1:P5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "P!K1:P8"
+}
+]
+}

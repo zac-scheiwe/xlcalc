@@ -1,0 +1,588 @@
+--- CreateTextFile
+ctf basic = '68-65-6C-6C-6F'
+ctf type = obj:ITextStream
+ctf exists overwrite=false ! 58
+ctf exists overwrite=true = ''
+ctf exists default = ''
+ctf unicode = 'FF-FE-68-00-69-00'
+ctf unicode empty = 'FF-FE'
+ctf unicode no overwrite new = 'FF-FE'
+ctf ascii latin1 euro = 'E9-80'
+ctf ascii cjk ! 5
+ctf ascii cjk bytes = '7A'
+ctf unicode cjk = 'FF-FE-E9-00-AC-20-2D-4E'
+ctf missing folder ! 76
+ctf empty path ! 0x80070057
+ctf star ! 52
+ctf question ! 52
+ctf lt ! 52
+ctf quote ! 52
+ctf pipe ! 52
+ctf is folder ! 70
+ctf dir trailing ! 76
+ctf slash path = ''
+ctf overwrite 0 exists ! 58
+ctf overwrite 5 exists = 'ok'
+ctf overwrite text ! 0x80020005
+ctf no args ! 0x8002000E
+ctf 4 args ! 0x8002000E
+ctf readonly exists ! 70
+ctf readonly exists no overwrite ! 58
+ctf null path ! 0x80070057
+--- TextStream write
+type = obj:ITextStream
+pos start ! 54
+eos on write-only ! 54
+eol on write-only ! 54
+write abc = '1,4'
+writeline = '2,1'
+writeline noarg = '3,1'
+writeblank 2 = '5,1'
+writeblank 0 = '5,1'
+writeblank -1 ! 0x80070057
+writeblank text ! 0x80020005
+writeblank noarg ! 0x8002000E
+write number = '6,1'
+write mixed breaks = '8,2'
+write tabs = '8,5'
+write noarg ! 0x8002000E
+readall on write-only ! 54
+readline on write-only ! 54
+read1 on write-only ! 54
+skip on write-only ! 54
+skipline on write-only ! 54
+close = <null>
+write after close ! 91
+writeline after close ! 91
+line after close ! 91
+column after close ! 91
+close twice = <null>
+eos after close ! 91
+bytes = '61-62-63-64-65-0D-0A-0D-0A-0D-0A-0D-0A-31-32-31-2E-35-54-72-75-65-33-0D-0A-61-0A-62-0D-63-0D-0A-64-09-09-78'
+unclosed released = '61-62-63'
+--- OpenTextFile
+otf missing ! 53
+otf missing mode1 ! 53
+otf missing mode1 create = ''
+otf missing mode2 ! 53
+otf missing mode2 create = ''
+otf missing mode8 ! 53
+otf missing mode8 create = '78'
+otf existing mode1 create = 'line1'
+otf missing folder create ! 76
+otf missing folder read ! 76
+otf mode 0 ! 0x80070057
+otf mode 3 ! 0x80070057
+otf mode 4 ! 0x80070057
+otf mode 9 ! 0x80070057
+otf mode -1 ! 0x80070057
+otf mode text ! 0x80020005
+otf mode double 2 = 'ok'
+otf mode 1.5 = True
+otf mode 2.5 ! 53
+otf format 1 ! 0x80070057
+otf format -3 ! 0x80070057
+otf format 2 ! 0x80070057
+otf folder ! 70
+otf folder write ! 70
+otf folder trailing ! 76
+otf empty ! 0x80070057
+otf noarg ! 0x8002000E
+otf readonly mode2 ! 70
+otf readonly mode8 ! 70
+otf readonly mode1 = 'ok'
+--- TextStream read
+type = obj:ITextStream
+start pos = '1,1,False,False'
+readline = 'line1'
+pos = '2,1,False,False'
+read 2 = 'li'
+pos = '2,3,False,False'
+read 0 = <null>
+read -1 ! 0x80070057
+read text ! 0x80020005
+read noarg ! 0x8002000E
+read 2 = 'ne'
+pos = '2,5,False,False'
+skip 1 = '2,6,False,True'
+skip 0 = '2,6,False,True'
+skip -1 ! 0x80070057
+skipline = '3,1,False,False'
+readline last = 'line3'
+readall past end ! 62
+readline past end ! 62
+read past end ! 62
+skip past end ! 62
+skip 0 past end = <null>
+skipline past end ! 62
+write on read ! 54
+writeline on read ! 54
+writeblank on read ! 54
+close = <null>
+read after close ! 91
+eos after close ! 91
+skip beyond = <null>
+skip beyond pos = '3,6,True,True'
+read beyond = 'line1
+line2
+line3'
+readall = 'line1
+line2
+line3'
+readall then pos = '3,6,True,True'
+readall twice ! 62
+readline x3 pos = 'line3 3,6,True,True'
+skipline x3 pos = '3,6,True,True'
+skipline x4 ! 62
+skip 3 chars pos = '2,1,False,False'
+read 12 crosses line = 'line1\r\nline2 2,6,False,True'
+read 100 pos = '3,6,True,True'
+--- line terminators
+lines lf.txt = '[a]2,1;[b]3,1;[c]4,1;'
+readall lf.txt = 'a\nb\nc\n'
+chars lf.txt = '61(1,2,False,True) 0A(2,1,False,False) 62(2,2,False,True) 0A(3,1,False,False) 63(3,2,False,True) 0A(4,1,True,True) '
+lines cr.txt = '[a\rb\rc]1,6;'
+readall cr.txt = 'a\rb\rc'
+chars cr.txt = '61(1,2,False,False) 0D(1,3,False,False) 62(1,4,False,False) 0D(1,5,False,False) 63(1,6,True,True) '
+lines mix.txt = '[a]2,1;[]3,1;[b]4,1;[\rc\r]5,1;[d]5,2;'
+readall mix.txt = 'a\r\n\r\nb\n\rc\r\r\nd'
+chars mix.txt = '61(1,2,False,True) 0D(1,3,False,True) 0A(2,1,False,True) 0D(2,2,False,True) 0A(3,1,False,False) 62(3,2,False,True) 0A(4,1,False,False) 0D(4,2,False,False) 63(4,3,False,False) 0D(4,4,False,True) 0D(4,5,False,True) 0A(5,1,False,False) 64(5,2,True,True) '
+lines trail.txt = '[a]2,1;[b]3,1;'
+readall trail.txt = 'a\r\nb\r\n'
+chars trail.txt = '61(1,2,False,True) 0D(1,3,False,True) 0A(2,1,False,False) 62(2,2,False,True) 0D(2,3,False,True) 0A(3,1,True,True) '
+lines crend.txt = '[ab\r]1,4;'
+readall crend.txt = 'ab\r'
+chars crend.txt = '61(1,2,False,False) 62(1,3,False,False) 0D(1,4,True,True) '
+empty eos = True
+empty eol = True
+empty pos = '1,1,True,True'
+empty readall ! 62
+empty readline ! 62
+empty read1 ! 62
+empty skip0 = <null>
+empty read0 = <null>
+read0 type = 'null'
+readall type = 'String'
+line type = 'Int32'
+eos type = 'Boolean'
+--- encodings
+read bom16.txt fmt=-2 = '0061 0062'
+read bom16.txt fmt=-1 = '0061 0062'
+read bom16.txt fmt=0 = '00FF 00FE 0061 0000 0062 0000'
+read bom16.txt default = '00FF 00FE 0061 0000 0062 0000'
+OpenAsTextStream bom16.txt = '0061 0062'
+read bom8.txt fmt=-2 = '00EF 00BB 00BF 0061 0062'
+read bom8.txt fmt=-1 = 'BBEF 61BF'
+read bom8.txt fmt=0 = '00EF 00BB 00BF 0061 0062'
+read bom8.txt default = '00EF 00BB 00BF 0061 0062'
+OpenAsTextStream bom8.txt = '00EF 00BB 00BF 0061 0062'
+read utf8.txt fmt=-2 = '00C3 00A9 0061'
+read utf8.txt fmt=-1 = 'A9C3'
+read utf8.txt fmt=0 = '00C3 00A9 0061'
+read utf8.txt default = '00C3 00A9 0061'
+OpenAsTextStream utf8.txt = '00C3 00A9 0061'
+read ansi.txt fmt=-2 = '00E9 20AC 0061'
+read ansi.txt fmt=-1 = '80E9'
+read ansi.txt fmt=0 = '00E9 20AC 0061'
+read ansi.txt default = '00E9 20AC 0061'
+OpenAsTextStream ansi.txt = '00E9 20AC 0061'
+read nobom16.txt fmt=-2 = '0061 0062'
+read nobom16.txt fmt=-1 = '0061 0062'
+read nobom16.txt fmt=0 = '0061 0000 0062 0000'
+read nobom16.txt default = '0061 0000 0062 0000'
+OpenAsTextStream nobom16.txt = '0061 0062'
+read oddbom16.txt fmt=-2 = '00FF 00FE 0061'
+read oddbom16.txt fmt=-1 ! 62
+read oddbom16.txt fmt=0 = '00FF 00FE 0061'
+read oddbom16.txt default = '00FF 00FE 0061'
+OpenAsTextStream oddbom16.txt = '00FF 00FE 0061'
+read bombe.txt fmt=-2 = '00FE 00FF 0000 0061'
+read bombe.txt fmt=-1 = '0061'
+read bombe.txt fmt=0 = '00FE 00FF 0000 0061'
+read bombe.txt default = '00FE 00FF 0000 0061'
+OpenAsTextStream bombe.txt = '00FE 00FF 0000 0061'
+read nobom16b.txt fmt=-2 = '0061 000D 000A 0062'
+read nobom16b.txt fmt=-1 = '0061 000D 000A 0062'
+read nobom16b.txt fmt=0 = '0061 0000 000D 0000 000A 0000 0062 0000'
+read nobom16b.txt default = '0061 0000 000D 0000 000A 0000 0062 0000'
+OpenAsTextStream nobom16b.txt = '0061 000D 000A 0062'
+read nobom16c.txt fmt=-2 = '0061 004E 0062 004E'
+read nobom16c.txt fmt=-1 = '4E61 4E62'
+read nobom16c.txt fmt=0 = '0061 004E 0062 004E'
+read nobom16c.txt default = '0061 004E 0062 004E'
+OpenAsTextStream nobom16c.txt = '0061 004E 0062 004E'
+write fmt=-1 new = 'FF-FE-61-00-62-00-63-00-0D-00-0A-00'
+append fmt=-1 existing = 'FF-FE-61-00-62-00-63-00-0D-00-0A-00-64-00'
+append fmt=0 to unicode = 'FF-FE-61-00-62-00-63-00-0D-00-0A-00-64-00-65'
+overwrite fmt=-1 = 'FF-FE'
+write fmt=-2 new = 'E9-80'
+write fmt=-2 cjk ! 5
+write fmt=0 new = 'E9-80'
+append to bom8 = 'EF-BB-BF-61-62-7A'
+append to bom16 default = 'FF-FE-61-00-7A'
+append to bom16 fmt-2 = 'FF-FE-61-00-7A-00'
+append to nobom16 fmt-2 = '61-00-62-00-7A-00'
+append to empty fmt=-1 = 'FF-FE-7A-00'
+append to empty fmt=-1 no write = 'FF-FE'
+append to existing nobom fmt=-1 = '61-00-7A-00'
+mode2 no write truncates = ''
+mode8 no write = '61-62'
+append line = '61-62-63-0D-0A'
+append pos after crlf file = '2,1'
+append pos no newline = '2,4'
+append pos empty = '1,1'
+append pos unicode = '1,1'
+append pos lf only = '3,1'
+mode2 pos = '1,1'
+--- sharing
+open for write twice ! 70
+read while writing = obj:ITextStream
+append while writing ! 70
+delete while writing ! 70
+getfile size while writing = Int32:0
+copyfile while writing = <null>
+close writer = 'ok'
+read twice = 'ok'
+write while reading = obj:ITextStream
+delete while reading ! 70
+close readers = 'ok'
+delete after = True
+--- File
+type = obj:IFile
+Name = 'f1.txt'
+Path = '<T>\f1.txt'
+ShortName = 'f1.txt'
+ShortPath = False
+Size = Int32:5
+Size type = 'Int32'
+Type = 'Text Document'
+Attributes = Int32:32
+Attributes type = 'Int32'
+IsRoot? ! 0x80020006
+ParentFolder = obj:IFolder
+ParentFolder.Path = '<T>'
+Drive = obj:IDrive
+Drive.DriveLetter = 'C'
+DateCreated = True
+DateCreated type = 'DateTime'
+DateLastModified = True
+DateLastAccessed = True
+modified follows write = '2001-02-03 04:05:06'
+modified default put ! 0x8002000E
+Size put ! 0x8002000E
+Path put ! 0x8002000E
+Type put ! 0x8002000E
+Name case = 'Up.TXT'
+Path case = '<T>\Up.TXT'
+Path slash = '<T>\f1.txt'
+Path dotdot = '<T>\f1.txt'
+Path relative ! 53
+Path trailing slash = obj:IFile
+getfile folder ! 53
+getfile empty ! 0x80070057
+getfile missing folder ! 53
+getfile wildcard ! 53
+Type of f1.txt = 'Text Document'
+Type of noext = 'File'
+Type of x.xyz = 'XYZ File'
+Type of Up.TXT = 'Text Document'
+Type of p.xlsx = 'Microsoft Excel Worksheet'
+Type of v.dll = 'Application extension'
+Type of h.htm = 'Brave HTML Document'
+Type of d.docx = 'DOCX File'
+Type of dot. = 'File'
+Type of a.b.log = 'Text Document'
+attr set readonly = '1 True'
+attr set readonly+hidden+system = Int32:7
+attr set 0 = Int32:0
+attr set archive = Int32:32
+attr set 16 = Int32:0
+attr set 64 = Int32:0
+attr set 128 = Int32:0
+attr set 2048 = Int32:0
+attr set 8 = Int32:0
+attr set 4096 = Int32:0
+attr set 0 again = Int32:0
+attr text ! 0x80020005
+attr fs = 'Normal'
+attr reset 32 = Int32:32
+name put = 'f1b.txt <T>\f1b.txt False True'
+name put back = 'f1.txt'
+name put existing ! 58
+name put case only ! 58
+name put case back ! 58
+name put with path ! 0x80070057
+name put empty ! 0x80070057
+name put bad char ! 0x80070057
+name put same ! 58
+OpenAsTextStream default = 'hello'
+OpenAsTextStream write = '48-45-4C-4C-4F'
+OpenAsTextStream append = '48-45-4C-4C-4F-21'
+OpenAsTextStream unicode = 'FF-FE-68-00-69-00'
+OpenAsTextStream badmode ! 0x80070057
+Size after = Int32:6
+Size stale after write = '6 2'
+--- File copy move delete
+copy = '63-6F-70-79-6D-65 <T>\c1.txt'
+copy existing default = 'ok'
+copy existing overwrite false ! 58
+copy existing overwrite true = 'ok'
+copy to folder with slash = True
+copy to folder without slash ! 70
+copy to missing folder ! 76
+copy to missing folder slash ! 76
+copy wildcard dest ! 0x80070057
+copy empty dest ! 0x80070057
+copy onto itself = <null>
+copy readonly target ! 70
+copy to readonly target no overwrite ! 58
+copy keeps attributes = Int32:35
+move = 'False True <T>\m2f.txt m2f.txt'
+move existing ! 58
+move to folder slash = 'True <T>\cdir\m3.txt'
+move to folder no slash ! 58
+move to missing folder ! 76
+move onto itself = <null>
+move across drives ! 76
+delete = False
+delete again ! 53
+props after delete ! 53
+size after delete ! 53
+delete readonly ! 70
+delete readonly force = False
+delete force false = False
+--- FSO file methods
+deletefile missing ! 53
+deletefile missing folder ! 53
+deletefile wildcard none ! 53
+deletefile empty ! 0x80070057
+deletefile folder = True
+deletefile readonly ! 70
+deletefile readonly force = False
+deletefile wildcard = 'False False True'
+deletefile question = 'False True'
+deletefile wildcard readonly mixed = 'False True'
+deletefile star.star = False
+copyfile basic = '63-66'
+copyfile existing default = 'ok'
+copyfile existing no overwrite ! 58
+copyfile missing source ! 53
+copyfile missing src folder ! 76
+copyfile missing dest folder ! 76
+copyfile dest slash = True
+copyfile dest existing folder no slash = True
+copyfile dest folder name no slash ! 70
+copyfile wildcard = 'True True'
+copyfile wildcard to file name ! 76
+copyfile wildcard none ! 53
+copyfile onto itself = <null>
+copyfile folder as source ! 53
+copyfile empty ! 0x80070057
+movefile basic = 'False True'
+movefile existing ! 58
+movefile missing ! 53
+movefile dest slash = True
+movefile wildcard = 'False True'
+movefile missing dest folder ! 76
+movefile onto itself = <null>
+fileexists folder = False
+fileexists wildcard = False
+fileexists empty = False
+fileexists trailing slash = False
+fileexists case = True
+folderexists file = False
+folderexists slash = True
+folderexists empty = False
+folderexists case = True
+folderexists unc = False
+folderexists drive = True
+folderexists root = True
+folderexists dot = True
+--- Folder
+type = obj:IFolder
+Name = 'tree'
+Path = '<T>\tree'
+ShortName = 'tree'
+Type = 'File folder'
+Attributes = Int32:16
+IsRootFolder = False
+Size = Int32:25
+Size type = 'Int32'
+ParentFolder.Path = '<T>'
+Drive = 'C'
+DateCreated = True
+DateLastModified = True
+Files type = obj:IFileCollection
+SubFolders type = obj:IFolderCollection
+Files.Count = Int32:4
+Files names = '.hid|a.txt|B.TXT|c'
+SubFolders.Count = Int32:2
+SubFolders names = 'sub1|Sub2'
+Files.Item name = 'a.txt'
+Files.Item case = 'B.TXT'
+Files.Item missing ! 53
+Files.Item index 1 ! 0x80070057
+Files.Item 0 ! 0x80070057
+Files.Item folder name ! 53
+Files.Item noarg ! 0x8002000E
+Files.Item path = '<T>\tree\a.txt'
+SubFolders.Item name = 'sub1'
+SubFolders.Item missing ! 76
+SubFolders.Item path = '<T>\tree\Sub2'
+Files.Count type = 'Int32'
+Files hidden attr = Int32:2
+Files put count ! 0x8002000E
+Files.Add ! 0x80020006
+SubFolders.Add = 'sub3 3'
+SubFolders.Add existing ! 58
+SubFolders.Add bad ! 0x80070057
+SubFolders.Add path ! 0x80070057
+enum files twice = '.hid|a.txt|B.TXT|c / .hid|a.txt|B.TXT|c'
+files snapshot = '4 5 5'
+files snapshot delete ! 53
+files snapshot delete size ! 53
+files names after = '.hid|a.txt|B.TXT|c'
+sub1 Size = Int32:15
+sub1 Files = 's1.txt'
+sub1 SubFolders = 'deep'
+empty Size = Int32:0
+sub1 ParentFolder = 'tree'
+sub1 Attributes = Int32:16
+getfolder trailing slash Path = '<T>\tree'
+getfolder trailing slash Name = 'tree'
+getfolder slash Path = '<T>\tree'
+getfolder case Path exact = True
+getfolder lower-case tail exact = True
+getfolder case Name exact = 'tree'
+getfile case Path exact = True
+getfile lower folder Path exact = True
+getfolder case Name = 'tree'
+getfolder dotdot Path = '<T>\tree'
+getfolder file ! 76
+getfolder missing ! 76
+getfolder missing parent ! 76
+getfolder wildcard ! 76
+getfolder root = '|C:\|True||22|Local Disk'
+root ParentFolder = <null>
+root Drive = 'C'
+top ParentFolder = 'C:\'
+top ParentFolder IsRoot = True
+top ParentFolder name = <null>
+Windows Attributes = Int32:16
+--- CreateFolder DeleteFolder
+createfolder = 'cf_a|<T>\cf_a|16|IFolder'
+createfolder existing ! 58
+createfolder file name ! 58
+createfolder missing parent ! 76
+createfolder trailing slash = 'cf_b|<T>\cf_b'
+createfolder slash path = 'cf_c|<T>\cf_c'
+createfolder empty ! 0x80070057
+createfolder star ! 52
+createfolder spaces = 'cf d'
+createfolder trailing dot = 'cf_e'
+createfolder case existing ! 58
+folder CreateTextFile = '71'
+folder CreateTextFile existing no overwrite ! 58
+folder CreateTextFile unicode = 'FF-FE'
+folder CreateTextFile path ! 76
+folder CreateTextFile abs ! 52
+folder Delete nonempty = False
+folder props after delete ! 76
+folder Delete again ! 76
+deletefolder missing ! 76
+deletefolder file = True
+deletefolder trailing slash ! 76
+deletefolder empty ! 0x80070057
+deletefolder wildcard = 'False False'
+deletefolder wildcard none ! 76
+deletefolder readonly file inside ! 70
+deletefolder readonly force = False
+deletefolder readonly folder ! 70
+deletefolder in use ! 70
+deletefolder in use after = True
+close in use = 'ok'
+folder rename = 'rn2 <T>\rn2 False True'
+folder rename existing = <null>
+--- Folder copy move
+copyfolder = 'True True .hid|a.txt|B.TXT|c'
+copyfolder existing default = 'ok'
+copyfolder existing no overwrite ! 58
+copyfolder merge keeps extra = True
+copyfolder no overwrite partial = 'False False 09'
+copyfolder dest slash = 'True False'
+copyfolder dest existing no slash = 'False True'
+copyfolder missing ! 76
+copyfolder missing dest parent ! 76
+copyfolder into itself ! 5
+copyfolder into itself 2 ! 5
+copyfolder file source ! 76
+copyfolder wildcard = 'True True'
+copyfolder onto itself = <null>
+folder Copy = True
+folder Copy existing ! 58
+folder Copy slash = True
+movefolder = 'False True'
+movefolder existing ! 58
+movefolder existing empty ! 58
+movefolder dest slash = 'True False'
+movefolder missing ! 76
+movefolder missing dest parent ! 76
+movefolder into itself ! 5
+movefolder onto itself = <null>
+movefolder file ! 76
+folder Move = '<T>\mv2 mv2 True'
+folder Move into holder = '<T>\holder\mv2 True'
+folder Move existing ! 58
+--- Drives and special folders
+GetSpecialFolder 0 = 'C:\Windows'
+GetSpecialFolder 1 = 'C:\Windows\System32'
+GetSpecialFolder 2 is temp = True
+GetSpecialFolder 2 name = 'Temp'
+GetSpecialFolder 3 ! 0x80070057
+GetSpecialFolder -1 ! 0x80070057
+GetSpecialFolder type = obj:IFolder
+GetSpecialFolder windows is C:\Windows = True
+GetSpecialFolder system is System32 = True
+GetDrive type = obj:IDrive
+GetDrive DriveLetter = 'C'
+GetDrive Path = 'C:'
+GetDrive DriveType = Int32:2
+GetDrive IsReady = True
+GetDrive FileSystem = 'NTFS'
+GetDrive RootFolder = 'C:\'
+GetDrive ShareName = <null>
+GetDrive TotalSize positive = True
+GetDrive FreeSpace positive = True
+GetDrive AvailableSpace le Total = True
+GetDrive SerialNumber type = 'Int32'
+GetDrive lowercase = 'C'
+GetDrive backslash = 'C:'
+GetDrive long path ! 0x80070057
+GetDrive missing ! 68
+GetDrive empty ! 0x80070057
+GetDrive unc ! 76
+Drives.Count>0 = True
+Drives has C = True
+DriveExists c = True
+DriveExists c lower = True
+DriveExists long = False
+DriveExists q = False
+fso GetFileVersion = ''
+--- Collections and objects
+Files TypeName = 'IFileCollection'
+SubFolders TypeName = 'IFolderCollection'
+Folder TypeName = 'IFolder'
+File TypeName = 'IFile'
+Drive TypeName = 'IDrive'
+TextStream TypeName = 'ITextStream'
+fso TypeName = 'IFileSystem3'
+fso Drives TypeName = 'IDriveCollection'
+GetTempName shape = True
+GetTempName creates? = False
+bad member ! 0x80020006
+bad member file ! 0x80020006
+bad member ts ! 0x80020006
+bad member coll ! 0x80020006
+File.Delete 3 args ! 0x8002000E
+--- clean up
+removed True

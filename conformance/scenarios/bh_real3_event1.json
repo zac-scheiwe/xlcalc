@@ -1,0 +1,534 @@
+{
+"sheets": [
+"Ev"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Ev!A1",
+"input": "Event"
+},
+{
+"op": "set",
+"cell": "Ev!B1",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "Ev!C1",
+"input": "Days left"
+},
+{
+"op": "set",
+"cell": "Ev!D1",
+"input": "Workdays left"
+},
+{
+"op": "set",
+"cell": "Ev!E1",
+"input": "Status"
+},
+{
+"op": "set",
+"cell": "Ev!F1",
+"input": "Week"
+},
+{
+"op": "set",
+"cell": "Ev!G1",
+"input": "ISO"
+},
+{
+"op": "set",
+"cell": "Ev!H1",
+"input": "Qtr"
+},
+{
+"op": "set",
+"cell": "Ev!A2",
+"input": "Venue"
+},
+{
+"op": "set",
+"cell": "Ev!B2",
+"input": "20/5/2026"
+},
+{
+"op": "set",
+"cell": "Ev!A3",
+"input": "Invites"
+},
+{
+"op": "set",
+"cell": "Ev!B3",
+"input": "1/4/2026"
+},
+{
+"op": "set",
+"cell": "Ev!A4",
+"input": "Catering"
+},
+{
+"op": "set",
+"cell": "Ev!B4",
+"input": "30/4/2026"
+},
+{
+"op": "set",
+"cell": "Ev!A5",
+"input": "Rehearsal"
+},
+{
+"op": "set",
+"cell": "Ev!B5",
+"input": "18/5/2026"
+},
+{
+"op": "set",
+"cell": "Ev!A6",
+"input": "Event"
+},
+{
+"op": "set",
+"cell": "Ev!B6",
+"input": "23/5/2026"
+},
+{
+"op": "set",
+"cell": "Ev!A7",
+"input": "Thank-you"
+},
+{
+"op": "set",
+"cell": "Ev!B7",
+"input": "29/5/2026"
+},
+{
+"op": "set",
+"cell": "Ev!K1",
+"input": "Today"
+},
+{
+"op": "set",
+"cell": "Ev!L1",
+"input": "15/4/2026"
+},
+{
+"op": "set",
+"cell": "Ev!K2",
+"input": "Holidays"
+},
+{
+"op": "set",
+"cell": "Ev!L2",
+"input": "25/4/2026"
+},
+{
+"op": "set",
+"cell": "Ev!L3",
+"input": "26/4/2026"
+},
+{
+"op": "set",
+"cell": "Ev!L4",
+"input": "1/6/2026"
+},
+{
+"op": "set",
+"cell": "Ev!L5",
+"input": "4/5/2026"
+},
+{
+"op": "set",
+"cell": "Ev!C2",
+"input": "=B2-$L$1"
+},
+{
+"op": "set",
+"cell": "Ev!D2",
+"input": "=NETWORKDAYS.INTL($L$1,B2,1,$L$2:$L$5)"
+},
+{
+"op": "set",
+"cell": "Ev!E2",
+"input": "=IF(C2<0,\"Done\",IF(C2<=7,\"This week\",IF(C2<=30,\"Soon\",\"Later\")))"
+},
+{
+"op": "set",
+"cell": "Ev!F2",
+"input": "=WEEKNUM(B2)"
+},
+{
+"op": "set",
+"cell": "Ev!G2",
+"input": "=ISOWEEKNUM(B2)"
+},
+{
+"op": "set",
+"cell": "Ev!H2",
+"input": "=\"Q\"&ROUNDUP(MONTH(B2)/3,0)"
+},
+{
+"op": "set",
+"cell": "Ev!C3",
+"input": "=B3-$L$1"
+},
+{
+"op": "set",
+"cell": "Ev!D3",
+"input": "=NETWORKDAYS.INTL($L$1,B3,1,$L$2:$L$5)"
+},
+{
+"op": "set",
+"cell": "Ev!E3",
+"input": "=IF(C3<0,\"Done\",IF(C3<=7,\"This week\",IF(C3<=30,\"Soon\",\"Later\")))"
+},
+{
+"op": "set",
+"cell": "Ev!F3",
+"input": "=WEEKNUM(B3)"
+},
+{
+"op": "set",
+"cell": "Ev!G3",
+"input": "=ISOWEEKNUM(B3)"
+},
+{
+"op": "set",
+"cell": "Ev!H3",
+"input": "=\"Q\"&ROUNDUP(MONTH(B3)/3,0)"
+},
+{
+"op": "set",
+"cell": "Ev!C4",
+"input": "=B4-$L$1"
+},
+{
+"op": "set",
+"cell": "Ev!D4",
+"input": "=NETWORKDAYS.INTL($L$1,B4,1,$L$2:$L$5)"
+},
+{
+"op": "set",
+"cell": "Ev!E4",
+"input": "=IF(C4<0,\"Done\",IF(C4<=7,\"This week\",IF(C4<=30,\"Soon\",\"Later\")))"
+},
+{
+"op": "set",
+"cell": "Ev!F4",
+"input": "=WEEKNUM(B4)"
+},
+{
+"op": "set",
+"cell": "Ev!G4",
+"input": "=ISOWEEKNUM(B4)"
+},
+{
+"op": "set",
+"cell": "Ev!H4",
+"input": "=\"Q\"&ROUNDUP(MONTH(B4)/3,0)"
+},
+{
+"op": "set",
+"cell": "Ev!C5",
+"input": "=B5-$L$1"
+},
+{
+"op": "set",
+"cell": "Ev!D5",
+"input": "=NETWORKDAYS.INTL($L$1,B5,1,$L$2:$L$5)"
+},
+{
+"op": "set",
+"cell": "Ev!E5",
+"input": "=IF(C5<0,\"Done\",IF(C5<=7,\"This week\",IF(C5<=30,\"Soon\",\"Later\")))"
+},
+{
+"op": "set",
+"cell": "Ev!F5",
+"input": "=WEEKNUM(B5)"
+},
+{
+"op": "set",
+"cell": "Ev!G5",
+"input": "=ISOWEEKNUM(B5)"
+},
+{
+"op": "set",
+"cell": "Ev!H5",
+"input": "=\"Q\"&ROUNDUP(MONTH(B5)/3,0)"
+},
+{
+"op": "set",
+"cell": "Ev!C6",
+"input": "=B6-$L$1"
+},
+{
+"op": "set",
+"cell": "Ev!D6",
+"input": "=NETWORKDAYS.INTL($L$1,B6,1,$L$2:$L$5)"
+},
+{
+"op": "set",
+"cell": "Ev!E6",
+"input": "=IF(C6<0,\"Done\",IF(C6<=7,\"This week\",IF(C6<=30,\"Soon\",\"Later\")))"
+},
+{
+"op": "set",
+"cell": "Ev!F6",
+"input": "=WEEKNUM(B6)"
+},
+{
+"op": "set",
+"cell": "Ev!G6",
+"input": "=ISOWEEKNUM(B6)"
+},
+{
+"op": "set",
+"cell": "Ev!H6",
+"input": "=\"Q\"&ROUNDUP(MONTH(B6)/3,0)"
+},
+{
+"op": "set",
+"cell": "Ev!C7",
+"input": "=B7-$L$1"
+},
+{
+"op": "set",
+"cell": "Ev!D7",
+"input": "=NETWORKDAYS.INTL($L$1,B7,1,$L$2:$L$5)"
+},
+{
+"op": "set",
+"cell": "Ev!E7",
+"input": "=IF(C7<0,\"Done\",IF(C7<=7,\"This week\",IF(C7<=30,\"Soon\",\"Later\")))"
+},
+{
+"op": "set",
+"cell": "Ev!F7",
+"input": "=WEEKNUM(B7)"
+},
+{
+"op": "set",
+"cell": "Ev!G7",
+"input": "=ISOWEEKNUM(B7)"
+},
+{
+"op": "set",
+"cell": "Ev!H7",
+"input": "=\"Q\"&ROUNDUP(MONTH(B7)/3,0)"
+},
+{
+"op": "read",
+"range": "Ev!A1:L7"
+},
+{
+"op": "format",
+"range": "Ev!B2:B7",
+"fmt": "dddd d mmmm"
+},
+{
+"op": "format",
+"range": "Ev!L1:L5",
+"fmt": "dd/mm/yyyy"
+},
+{
+"op": "read",
+"range": "Ev!A1:L7"
+},
+{
+"op": "set",
+"cell": "Ev!J9",
+"input": "=NETWORKDAYS.INTL(L1,B6,\"0000011\",L2:L5)"
+},
+{
+"op": "set",
+"cell": "Ev!J10",
+"input": "=NETWORKDAYS.INTL(L1,B6,\"1000001\",L2:L5)"
+},
+{
+"op": "set",
+"cell": "Ev!J11",
+"input": "=NETWORKDAYS.INTL(L1,B6,11)"
+},
+{
+"op": "set",
+"cell": "Ev!J12",
+"input": "=WORKDAY.INTL(L1,10,1,L2:L5)"
+},
+{
+"op": "set",
+"cell": "Ev!J13",
+"input": "=WORKDAY.INTL(B6,-5,\"0000011\",L2:L5)"
+},
+{
+"op": "set",
+"cell": "Ev!J14",
+"input": "=WORKDAY(L1,15,L2:L5)"
+},
+{
+"op": "set",
+"cell": "Ev!J15",
+"input": "=DATEDIF(L1,B6,\"d\")&\"d \"&DATEDIF(L1,B6,\"md\")&\"md\""
+},
+{
+"op": "set",
+"cell": "Ev!J16",
+"input": "=TEXT(B6-L1,\"0\")&\" days / \"&INT((B6-L1)/7)&\" wks\""
+},
+{
+"op": "set",
+"cell": "Ev!J17",
+"input": "=EDATE(B6,-1)"
+},
+{
+"op": "set",
+"cell": "Ev!J18",
+"input": "=EOMONTH(B6,0)-B6"
+},
+{
+"op": "set",
+"cell": "Ev!J19",
+"input": "=YEARFRAC(L1,B6,1)"
+},
+{
+"op": "set",
+"cell": "Ev!J20",
+"input": "=DAYS360(L1,B6)"
+},
+{
+"op": "set",
+"cell": "Ev!J21",
+"input": "=WEEKDAY(B6)"
+},
+{
+"op": "set",
+"cell": "Ev!J22",
+"input": "=TEXT(B6,\"ddd\")"
+},
+{
+"op": "set",
+"cell": "Ev!J23",
+"input": "=CHOOSE(WEEKDAY(B6,2),\"Mon\",\"Tue\",\"Wed\",\"Thu\",\"Fri\",\"Sat\",\"Sun\")"
+},
+{
+"op": "set",
+"cell": "Ev!J24",
+"input": "=MIN(IF(B2:B7>L1,B2:B7))"
+},
+{
+"op": "set",
+"cell": "Ev!J25",
+"input": "=MINIFS(B2:B7,B2:B7,\">\"&L1)"
+},
+{
+"op": "set",
+"cell": "Ev!J26",
+"input": "=INDEX(A2:A7,MATCH(J25,B2:B7,0))"
+},
+{
+"op": "set",
+"cell": "Ev!J27",
+"input": "=COUNTIFS(B2:B7,\">=\"&L1,B2:B7,\"<=\"&L1+30)"
+},
+{
+"op": "set",
+"cell": "Ev!J28",
+"input": "=SUMPRODUCT((WEEKDAY(B2:B7,2)>5)*1)"
+},
+{
+"op": "set",
+"cell": "Ev!J29",
+"input": "=TEXT(L1,\"yyyy-mm-dd\")"
+},
+{
+"op": "set",
+"cell": "Ev!J30",
+"input": "=DATEVALUE(\"23/5/2026\")-L1"
+},
+{
+"op": "set",
+"cell": "Ev!J31",
+"input": "=TIMEVALUE(\"6:30 PM\")+B6"
+},
+{
+"op": "read",
+"range": "Ev!J9:J31"
+},
+{
+"op": "set",
+"cell": "Ev!L1",
+"input": "1/5/2026"
+},
+{
+"op": "read",
+"range": "Ev!A1:H7"
+},
+{
+"op": "read",
+"range": "Ev!J9:J31"
+},
+{
+"op": "sort",
+"range": "Ev!A2:H7",
+"keys": [
+{
+"key": 2,
+"order": "desc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "Ev!A1:H7"
+},
+{
+"op": "read",
+"range": "Ev!J9:J31"
+},
+{
+"op": "insert_rows",
+"sheet": "Ev",
+"at": 4,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Ev!A4",
+"input": "Photographer"
+},
+{
+"op": "set",
+"cell": "Ev!B4",
+"input": "10/5/2026"
+},
+{
+"op": "autofill",
+"from": "Ev!C3:H3",
+"to": "Ev!C4:H4",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Ev!A1:H8"
+},
+{
+"op": "read",
+"range": "Ev!J9:J31"
+},
+{
+"op": "set",
+"cell": "Ev!L4",
+"input": ""
+},
+{
+"op": "read",
+"range": "Ev!A1:H8"
+},
+{
+"op": "read",
+"range": "Ev!J9:J20"
+}
+]
+}

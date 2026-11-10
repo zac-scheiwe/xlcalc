@@ -39,8 +39,14 @@ pub fn syd(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         }
 
         let l1 = x87::add(life, 1.0);
+
+        let store = |x: f64| if x.is_finite() { x } else { 0.0 };
         let num = x87::mul(x87::sub(cost, salvage), x87::sub(l1, per));
-        finite(x87::div(num, x87::div(x87::mul(life, l1), 2.0))).map(Value::num)
+        let den = x87::div(store(x87::mul(life, l1)), 2.0);
+        if den == 0.0 {
+            return Err(XlError::DIV0);
+        }
+        finite(x87::div(num, den)).map(Value::num)
     })())
 }
 

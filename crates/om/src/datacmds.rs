@@ -1,4 +1,6 @@
-use xlcalc::{CellAddr, DedupSpec, Rect, SheetId, SubFunc, SubtotalSpec, TtcSpec};
+use xlcalc::{
+    AdvancedFilterSpec, CellAddr, DedupSpec, Rect, SheetId, SubFunc, SubtotalSpec, TtcSpec,
+};
 use xlcalc_variant::{change_type, VarType, Variant};
 
 use crate::app::{unsupported, Application, BookId, Object};
@@ -9,7 +11,13 @@ use crate::typelib::Member;
 
 fn int_list(v: &Variant) -> Result<Vec<i32>, OmError> {
     match v {
-        Variant::Array(sa) => sa.data.iter().map(int_of).collect(),
+        Variant::Array(sa) => {
+            let mut out = Vec::new();
+            for e in &sa.data {
+                out.extend(int_list(e)?);
+            }
+            Ok(out)
+        }
         other => Ok(vec![int_of(other)?]),
     }
 }
@@ -26,26 +34,28 @@ fn int_of(v: &Variant) -> Result<i32, OmError> {
 
 fn field_info(v: &Variant) -> Result<Vec<(u32, u32)>, OmError> {
     let Variant::Array(sa) = v else {
-        return Err(OmError::type_mismatch());
+        return Err(OmError::app_defined());
     };
     let pair = |a: i32, b: i32| (a.max(0) as u32, b.max(0) as u32);
     if !sa.data.is_empty() && sa.data.iter().all(|e| matches!(e, Variant::Array(_))) {
         return sa
             .data
             .iter()
-            .map(|e| match int_list(e)?.as_slice() {
-                [a, b] => Ok(pair(*a, *b)),
-                _ => Err(OmError::type_mismatch()),
-            })
+            .map(
+                |e| match int_list(e).map_err(|_| OmError::app_defined())?.as_slice() {
+                    [a, b] => Ok(pair(*a, *b)),
+                    _ => Err(OmError::app_defined()),
+                },
+            )
             .collect();
     }
-    let nums = int_list(v)?;
+    let nums = int_list(v).map_err(|_| OmError::app_defined())?;
     match sa.bounds.as_slice() {
         [(_, rows), (_, 2)] => {
             let n = *rows as usize;
             Ok((0..n).map(|i| pair(nums[i], nums[n + i])).collect())
         }
-        _ => Err(OmError::type_mismatch()),
+        _ => Err(OmError::app_defined()),
     }
 }
 
@@ -71,6 +81,21 @@ fn first_char(s: Option<String>) -> Option<char> {
 }
 
 impl Application<'_> {
+    pub(crate) fn guess_header(&self, book: BookId, sheet: SheetId, rect: Rect) -> bool {
+        let Ok(b) = self.book(book) else {
+            return false;
+        };
+        if rect.rows() < 2 {
+            return false;
+        }
+        (rect.c0..=rect.c1).any(|c| {
+            let top = b.wb.value(CellAddr::new(sheet, rect.r0, c));
+            let next = b.wb.value(CellAddr::new(sheet, rect.r0 + 1, c));
+            matches!(top, xlcalc::Value::Text(_))
+                && !matches!(next, xlcalc::Value::Text(_) | xlcalc::Value::Blank)
+        })
+    }
+
     fn data_range_arg(&self, a: &Args, i: usize) -> Result<Option<(SheetId, Rect)>, OmError> {
         match a.get(i) {
             None => Ok(None),
@@ -91,15 +116,28 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         match m.name {
             "RemoveDuplicates" => {
-                let header = match a.i32(1)? {
-                    Some(1) => true,
-                    Some(2) => false,
-                    _ => return Err(unsupported("Range", m)),
+                let width = rect.cols();
+                let header = match a.i32(1)?.unwrap_or(2) {
+                    1 => true,
+                    2 => false,
+                    0 => self.guess_header(book, sheet, rect),
+                    _ => return Err(OmError::app_defined()),
                 };
-                let columns = match a.get(0) {
+
+                let mut columns: Vec<u32> = match a.get(0) {
+                    Some(Variant::Array(sa)) if sa.bounds.len() > 1 => {
+                        return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+                    }
                     Some(v) => int_list(v)?.into_iter().map(|c| c.max(0) as u32).collect(),
-                    None => return Err(unsupported("Range", m)),
+                    None => Vec::new(),
                 };
+                if rect.cols() > 1 && columns.iter().any(|c| *c > width) {
+                    return Err(OmError::app_defined());
+                }
+                let listed = matches!(a.get(0), Some(Variant::Array(_)));
+                if !listed && (columns.is_empty() || columns == [0]) {
+                    columns = (1..=width).collect();
+                }
                 let spec = DedupSpec { columns, header };
                 self.book_mut(book)?
                     .wb
@@ -109,7 +147,9 @@ impl Application<'_> {
             }
             "TextToColumns" => {
                 let other = if a.bool(8)?.unwrap_or(false) {
-                    first_char(a.string(9)?)
+                    first_char(a.string(9).map_err(|_| {
+                        OmError::app_defined_with("TextToColumns method of Range class failed")
+                    })?)
                 } else {
                     None
                 };
@@ -133,7 +173,11 @@ impl Application<'_> {
                         Some(v) => field_info(v)?,
                         None => Vec::new(),
                     },
-                    decimal: first_char(a.string(11)?),
+
+                    decimal: match a.get(11) {
+                        Some(Variant::Array(_)) => None,
+                        _ => first_char(a.string(11)?),
+                    },
                     thousands: first_char(a.string(12)?),
                     trailing_minus: a.bool(13)?.unwrap_or(false),
                     dest,
@@ -142,7 +186,21 @@ impl Application<'_> {
                     .wb
                     .text_to_columns(sheet, rect, &spec)
                     .map_err(edit_error)?;
-                Ok(Variant::Empty)
+
+                let shaped = [a.get(11), a.get(10)]
+                    .into_iter()
+                    .flatten()
+                    .find(|v| matches!(v, Variant::Array(sa) if sa.bounds.len() == 2));
+                Ok(match shaped {
+                    Some(Variant::Array(sa)) => {
+                        Variant::Array(Box::new(xlcalc_variant::SafeArray {
+                            elem: VarType::Variant,
+                            bounds: sa.bounds.clone(),
+                            data: vec![Variant::Bool(true); sa.data.len()],
+                        }))
+                    }
+                    _ => Variant::Bool(true),
+                })
             }
             "Subtotal" => {
                 let totals = match a.get(2) {
@@ -160,20 +218,42 @@ impl Application<'_> {
                     function: sub_func(a.i32(1)?.ok_or_else(OmError::app_defined)?)?,
                     totals,
                     replace: a.bool(3)?.unwrap_or(true),
+                    page_breaks: a.bool(4)?.unwrap_or(false),
                     below,
                 };
                 self.book_mut(book)?
                     .wb
                     .subtotal(sheet, rect, &spec)
                     .map_err(edit_error)?;
-                Ok(Variant::Empty)
+                Ok(Variant::Bool(true))
             }
+            "AdvancedFilter" => {
+                let copy = match a.i32(0)? {
+                    Some(1) => false,
+                    Some(2) => true,
+                    _ => return Err(OmError::app_defined()),
+                };
+                let criteria = self.data_range_arg(a, 1)?;
+                let copy_to = self.data_range_arg(a, 2)?;
+                let spec = AdvancedFilterSpec {
+                    list: (sheet, rect),
+                    criteria,
+                    copy_to: copy_to.filter(|_| copy),
+                    unique: a.bool(3)?.unwrap_or(false),
+                };
+                self.book_mut(book)?
+                    .wb
+                    .advanced_filter(&spec)
+                    .map_err(edit_error)?;
+                Ok(Variant::Bool(true))
+            }
+            "Consolidate" => self.consolidate(book, sheet, rect, a),
             "RemoveSubtotal" => {
                 self.book_mut(book)?
                     .wb
                     .remove_subtotal(sheet, rect)
                     .map_err(edit_error)?;
-                Ok(Variant::Empty)
+                Ok(Variant::Bool(true))
             }
             "Table" => {
                 let mut cells = [None, None];

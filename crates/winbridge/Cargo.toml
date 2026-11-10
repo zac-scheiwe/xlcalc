@@ -1,0 +1,20 @@
+[package]
+name = "xlcalc-winbridge"
+description = "Opt-in host bridge: real COM servers (IDispatch, IDTExtensibility2, registry add-in discovery) on Windows"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+xlcalc-variant = { path = "../variant" }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_System_Com",
+    "Win32_System_Ole",
+    "Win32_System_Variant",
+    "Win32_System_Registry",
+] }
+windows-core = "=0.62.2"

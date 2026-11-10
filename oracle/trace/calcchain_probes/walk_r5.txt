@@ -1,0 +1,44 @@
+=== 1 array A2:A4 =E4:E6+5
+  @ start 0,0 {A2}:f A2:4 A3:4 A4:4
+  @ end rerun=1 next=0,0 valid=0 st=7 {A2}:0 A2:0 A3:0 A4:0
+  | { }
+=== 2 set2 E3 =D4:E5*2
+  @ start 0,0 {E3}:f {A2}:0 A2:0 A3:0 A4:0
+  @ end rerun=1 next=0,0 valid=0 st=7 {E3}:e {A2}:0 A2:e A3:0 A4:0
+  | { }?0xa71b0008 A2? A3 A4
+  @ start 0,0 {E3}:c {A2}:0 A2:c A3:0 A4:0
+  @ end rerun=0 next=0,3 valid=1 st=7 {A2}:0 A3:0 A4:0 {E3}:c A2:c
+  | { }? +U:{E3} A2? +U:A2
+  @ start 0,3 {A2}:0 A3:0 A4:0 {E3}:c A2:c
+  @ end rerun=0 next=0,3 valid=1 st=7 {A2}:0 A3:0 A4:0 {E3}:c A2:c
+  | { }? +U:{E3} A2? +U:A2
+=== 3 set2 B1 =A4*2+E4
+  @ start 0,0 B1:f {A2}:0 A3:0 A4:0 {E3}:f A2:f
+  @ end rerun=0 next=0,3 valid=1 st=7 {A2}:0 A3:0 A4:0 {E3}:f B1:f A2:f
+  | B1? +S:B1 +S:{E3} { }? +U:{E3} +U:B1 clear:S A2? +U:A2
+  @ start 0,3 {A2}:0 A3:0 A4:0 {E3}:f B1:f A2:f
+  @ end rerun=0 next=0,3 valid=1 st=7 {A2}:0 A3:0 A4:0 {E3}:f B1:f A2:f
+  | { }? +U:{E3} B1? +U:B1 A2? +U:A2
+=== 4 array D5:E6 =B1:B2*2
+  @ start 0,0 {D5}:f D5:4 E5:4 D6:4 E6:4 {A2}:0 A3:f A4:f {E3}:f B1:f A2:f
+  @ end rerun=1 next=0,5 valid=1 st=7 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:f B1:f D5:f E5:f A3:f A2:f
+  | { } D5? +S:D5 +S:B1 B1? +S:A4 A4? +S:E6 ^E6 -S:- A4 ^A4 -S:- B1? +S:{E3} { }? +U:{E3} +U:B1 +U:D5 clear:S E5? +U:E5 A3? +U:A3 move:0xffffffff A2? +U:A2
+  @ start 0,5 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:f B1:f D5:f E5:f A3:f A2:f
+  @ end rerun=0 next=0,5 valid=1 st=7 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:f B1:f D5:f E5:f A3:f A2:f
+  | { }? +U:{E3} B1? +U:B1 D5? +U:D5 E5? +U:E5 A3? +U:A3 move:0xffffffff A2? +U:A2
+  @ start 0,5 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:f B1:f D5:f E5:f A3:f A2:f
+  @ end rerun=0 next=0,5 valid=1 st=7 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:f B1:f D5:f E5:f A3:f A2:f
+  | { }? +U:{E3} B1? +U:B1 D5? +U:D5 E5? +U:E5 A3? +U:A3 move:0xffffffff A2? +U:A2
+=== 5 clear E4
+  @ start 0,0 {D5}:0 E6:0 A4:f D6:0 {A2}:0 {E3}:f B1:f D5:f E5:f A3:f A2:f
+  @ end rerun=1 next=0,0 valid=0 st=7 {D5}:0 E6:e A4:e D6:e {A2}:0 B1:e D5:e E5:e {E3}:e A3:e A2:e
+  | A4 { }? +S:{E3} +S:D5 D5? +S:B1 B1 ^B1 -S:- D5 ^D5 -S:- { }? +S:E5 E5 ^E5 -S:- { }?0xa71b0008 ^? -S:- A3? A2?
+  @ start 0,0 {D5}:0 E6:c A4:c D6:c {A2}:0 B1:c D5:c E5:c {E3}:c A3:c A2:c
+  @ end rerun=1 next=0,5 valid=1 st=7 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:c B1:c D5:c E5:c A3:c A2:c
+  | E6 A4 D6 B1? +S:B1 +S:{E3} { }? +U:{E3} +U:B1 clear:S D5? +U:D5 E5? +U:E5 A3? +U:A3 move:0xffffffff A2? +U:A2
+  @ start 0,5 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:c B1:c D5:c E5:c A3:c A2:c
+  @ end rerun=0 next=0,5 valid=1 st=7 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:c B1:c D5:c E5:c A3:c A2:c
+  | { }? +U:{E3} B1? +U:B1 D5? +U:D5 E5? +U:E5 A3? +U:A3 move:0xffffffff A2? +U:A2
+  @ start 0,5 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:c B1:c D5:c E5:c A3:c A2:c
+  @ end rerun=0 next=0,5 valid=1 st=7 {D5}:0 E6:0 A4:0 D6:0 {A2}:0 {E3}:c B1:c D5:c E5:c A3:c A2:c
+  | { }? +U:{E3} B1? +U:B1 D5? +U:D5 E5? +U:E5 A3? +U:A3 move:0xffffffff A2? +U:A2

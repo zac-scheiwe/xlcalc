@@ -1,0 +1,99 @@
+{
+  "sheets": [
+    "Sheet1"
+  ],
+  "steps": [
+    {
+      "input": "=D1+1",
+      "cell": "Sheet1!E1",
+      "op": "set"
+    },
+    {
+      "input": "=D2+1",
+      "cell": "Sheet1!E2",
+      "op": "set"
+    },
+    {
+      "to": "Sheet1!E4",
+      "from": "Sheet1!E1:E2",
+      "op": "copy"
+    },
+    {
+      "to": "Sheet1!A4:E4",
+      "type": "default",
+      "from": "Sheet1!E4",
+      "op": "autofill"
+    },
+    {
+      "input": "=D7+1",
+      "cell": "Sheet1!E7",
+      "op": "set"
+    },
+    {
+      "input": "=D8+1",
+      "cell": "Sheet1!E8",
+      "op": "set"
+    },
+    {
+      "to": "Sheet1!E7:E10",
+      "type": "default",
+      "from": "Sheet1!E7:E8",
+      "op": "autofill"
+    },
+    {
+      "to": "Sheet1!A9:E9",
+      "type": "default",
+      "from": "Sheet1!E9",
+      "op": "autofill"
+    },
+    {
+      "input": "=D20+1",
+      "cell": "Sheet1!E20",
+      "op": "set"
+    },
+    {
+      "to": "Sheet1!E20:E22",
+      "type": "default",
+      "from": "Sheet1!E20",
+      "op": "autofill"
+    },
+    {
+      "to": "Sheet1!C21",
+      "from": "Sheet1!E21",
+      "op": "copy"
+    },
+    {
+      "to": "Sheet1!A21:C21",
+      "type": "default",
+      "from": "Sheet1!C21",
+      "op": "autofill"
+    },
+    {
+      "input": "=D12+1",
+      "cell": "Sheet1!E12",
+      "op": "set"
+    },
+    {
+      "to": "Sheet1!E12:E14",
+      "type": "default",
+      "from": "Sheet1!E12",
+      "op": "autofill"
+    },
+    {
+      "count": 1,
+      "sheet": "Sheet1",
+      "at": 12,
+      "op": "insert_rows"
+    },
+    {
+      "to": "Sheet1!A14:E14",
+      "type": "default",
+      "from": "Sheet1!E14",
+      "op": "autofill"
+    },
+    {
+      "range": "Sheet1!A1:E23",
+      "op": "read"
+    }
+  ]
+}

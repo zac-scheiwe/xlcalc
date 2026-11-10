@@ -1,0 +1,120 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "name",
+   "name": "n1",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "op": "name",
+   "name": "n2",
+   "refers_to": "=SUM(n1)*2"
+  },
+  {
+   "op": "name",
+   "name": "n3",
+   "refers_to": "=n2+Sheet1!$A$3"
+  },
+  {
+   "op": "name",
+   "name": "n4",
+   "refers_to": "=Sheet2!$A$1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=n3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=n4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=SUM(n1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet2!A1",
+   "input": "9"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!B1:B3"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "insert_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B5"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 1
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B5"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_rows",
+   "sheet": "Sheet1",
+   "at": 1,
+   "count": 3
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B5"
+  },
+  {
+   "op": "names"
+  },
+  {
+   "op": "delete_sheet",
+   "sheet": "Sheet2"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B5"
+  },
+  {
+   "op": "names"
+  }
+ ]
+}

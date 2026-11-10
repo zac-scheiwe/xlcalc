@@ -218,19 +218,13 @@ impl Project {
     ) -> Result<T, VbaError> {
         let mut st = self.shared.take();
         let outer = st.calls == 0;
-        let saved = if outer {
+        if outer {
             st.err = ErrState::default();
-            None
-        } else {
-            Some(st.err.clone())
-        };
+        }
         st.calls += 1;
         let mut ex = Exec::new(&self.code, self.settings, st, Some(&self.shared), host);
         let r = f(&mut ex);
         ex.st.calls -= 1;
-        if let Some(e) = saved {
-            ex.st.err = e;
-        }
         let r = if ex.st.ending {
             Err(super::end_error())
         } else {
@@ -313,6 +307,7 @@ impl Project {
         let ex = Exec::new(&self.code, self.settings, st, Some(&self.shared), &mut host);
         ex.connections(None, Some(source), event)
             .into_iter()
+            .rev()
             .map(|c| {
                 let p = &self.code.procs[c.handler];
                 Sink {
@@ -376,7 +371,7 @@ impl Project {
             name: p.name.clone(),
             module: m.name.clone(),
             kind: p.kind,
-            public: p.public && !m.options.private_module && m.kind == ModuleKind::Standard,
+            public: p.public && m.kind == ModuleKind::Standard,
             params: p
                 .params
                 .iter()

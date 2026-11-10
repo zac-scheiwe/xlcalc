@@ -1,0 +1,807 @@
+{
+"sheets": [
+"Cut",
+"G"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Cut!A1",
+"input": "Min"
+},
+{
+"op": "set",
+"cell": "Cut!B1",
+"input": "Grade"
+},
+{
+"op": "set",
+"cell": "Cut!A2",
+"input": "0"
+},
+{
+"op": "set",
+"cell": "Cut!B2",
+"input": "F"
+},
+{
+"op": "set",
+"cell": "Cut!A3",
+"input": "50"
+},
+{
+"op": "set",
+"cell": "Cut!B3",
+"input": "D"
+},
+{
+"op": "set",
+"cell": "Cut!A4",
+"input": "60"
+},
+{
+"op": "set",
+"cell": "Cut!B4",
+"input": "C"
+},
+{
+"op": "set",
+"cell": "Cut!A5",
+"input": "70"
+},
+{
+"op": "set",
+"cell": "Cut!B5",
+"input": "B"
+},
+{
+"op": "set",
+"cell": "Cut!A6",
+"input": "80"
+},
+{
+"op": "set",
+"cell": "Cut!B6",
+"input": "A"
+},
+{
+"op": "set",
+"cell": "Cut!A7",
+"input": "90"
+},
+{
+"op": "set",
+"cell": "Cut!B7",
+"input": "A+"
+},
+{
+"op": "set",
+"cell": "G!A1",
+"input": "Student"
+},
+{
+"op": "set",
+"cell": "G!B1",
+"input": "HW"
+},
+{
+"op": "set",
+"cell": "G!C1",
+"input": "Quiz"
+},
+{
+"op": "set",
+"cell": "G!D1",
+"input": "Mid"
+},
+{
+"op": "set",
+"cell": "G!E1",
+"input": "Final"
+},
+{
+"op": "set",
+"cell": "G!F1",
+"input": "Weighted"
+},
+{
+"op": "set",
+"cell": "G!G1",
+"input": "Letter"
+},
+{
+"op": "set",
+"cell": "G!H1",
+"input": "Rank"
+},
+{
+"op": "set",
+"cell": "G!I1",
+"input": "Letter2"
+},
+{
+"op": "set",
+"cell": "G!J1",
+"input": "Letter3"
+},
+{
+"op": "set",
+"cell": "G!K1",
+"input": "Pct"
+},
+{
+"op": "set",
+"cell": "G!A2",
+"input": "Amy"
+},
+{
+"op": "set",
+"cell": "G!B2",
+"input": "88"
+},
+{
+"op": "set",
+"cell": "G!C2",
+"input": "92"
+},
+{
+"op": "set",
+"cell": "G!D2",
+"input": "75"
+},
+{
+"op": "set",
+"cell": "G!E2",
+"input": "81"
+},
+{
+"op": "set",
+"cell": "G!A3",
+"input": "Bo"
+},
+{
+"op": "set",
+"cell": "G!B3",
+"input": "55"
+},
+{
+"op": "set",
+"cell": "G!C3",
+"input": "60"
+},
+{
+"op": "set",
+"cell": "G!D3",
+"input": "48"
+},
+{
+"op": "set",
+"cell": "G!E3",
+"input": "52"
+},
+{
+"op": "set",
+"cell": "G!A4",
+"input": "Cai"
+},
+{
+"op": "set",
+"cell": "G!B4",
+"input": "91"
+},
+{
+"op": "set",
+"cell": "G!C4",
+"input": "85"
+},
+{
+"op": "set",
+"cell": "G!D4",
+"input": "90"
+},
+{
+"op": "set",
+"cell": "G!E4",
+"input": "94"
+},
+{
+"op": "set",
+"cell": "G!A5",
+"input": "Dee"
+},
+{
+"op": "set",
+"cell": "G!B5",
+"input": "72"
+},
+{
+"op": "set",
+"cell": "G!C5",
+"input": "72.5"
+},
+{
+"op": "set",
+"cell": "G!D5",
+"input": "69.5"
+},
+{
+"op": "set",
+"cell": "G!E5",
+"input": "80"
+},
+{
+"op": "set",
+"cell": "G!A6",
+"input": "Eli"
+},
+{
+"op": "set",
+"cell": "G!B6",
+"input": "88"
+},
+{
+"op": "set",
+"cell": "G!C6",
+"input": "92"
+},
+{
+"op": "set",
+"cell": "G!D6",
+"input": "75"
+},
+{
+"op": "set",
+"cell": "G!E6",
+"input": "81"
+},
+{
+"op": "set",
+"cell": "G!A7",
+"input": "Fay"
+},
+{
+"op": "set",
+"cell": "G!B7",
+"input": ""
+},
+{
+"op": "set",
+"cell": "G!C7",
+"input": "70"
+},
+{
+"op": "set",
+"cell": "G!D7",
+"input": "65"
+},
+{
+"op": "set",
+"cell": "G!E7",
+"input": "75"
+},
+{
+"op": "set",
+"cell": "G!A8",
+"input": "Gus"
+},
+{
+"op": "set",
+"cell": "G!B8",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "G!C8",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "G!D8",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "G!E8",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "G!M1",
+"input": "Weights"
+},
+{
+"op": "set",
+"cell": "G!M2",
+"input": "20%"
+},
+{
+"op": "set",
+"cell": "G!N2",
+"input": "10%"
+},
+{
+"op": "set",
+"cell": "G!O2",
+"input": "30%"
+},
+{
+"op": "set",
+"cell": "G!P2",
+"input": "40%"
+},
+{
+"op": "set",
+"cell": "G!F2",
+"input": "=ROUND(SUMPRODUCT(B2:E2,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G2",
+"input": "=XLOOKUP(F2,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H2",
+"input": "=RANK.EQ(F2,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F2)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I2",
+"input": "=LOOKUP(F2,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J2",
+"input": "=IF(F2>=90,\"A+\",IF(F2>=80,\"A\",IF(F2>=70,\"B\",IF(F2>=60,\"C\",IF(F2>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K2",
+"input": "=F2/100"
+},
+{
+"op": "set",
+"cell": "G!F3",
+"input": "=ROUND(SUMPRODUCT(B3:E3,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G3",
+"input": "=XLOOKUP(F3,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H3",
+"input": "=RANK.EQ(F3,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F3)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I3",
+"input": "=LOOKUP(F3,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J3",
+"input": "=IF(F3>=90,\"A+\",IF(F3>=80,\"A\",IF(F3>=70,\"B\",IF(F3>=60,\"C\",IF(F3>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K3",
+"input": "=F3/100"
+},
+{
+"op": "set",
+"cell": "G!F4",
+"input": "=ROUND(SUMPRODUCT(B4:E4,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G4",
+"input": "=XLOOKUP(F4,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H4",
+"input": "=RANK.EQ(F4,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F4)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I4",
+"input": "=LOOKUP(F4,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J4",
+"input": "=IF(F4>=90,\"A+\",IF(F4>=80,\"A\",IF(F4>=70,\"B\",IF(F4>=60,\"C\",IF(F4>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K4",
+"input": "=F4/100"
+},
+{
+"op": "set",
+"cell": "G!F5",
+"input": "=ROUND(SUMPRODUCT(B5:E5,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G5",
+"input": "=XLOOKUP(F5,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H5",
+"input": "=RANK.EQ(F5,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F5)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I5",
+"input": "=LOOKUP(F5,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J5",
+"input": "=IF(F5>=90,\"A+\",IF(F5>=80,\"A\",IF(F5>=70,\"B\",IF(F5>=60,\"C\",IF(F5>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K5",
+"input": "=F5/100"
+},
+{
+"op": "set",
+"cell": "G!F6",
+"input": "=ROUND(SUMPRODUCT(B6:E6,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G6",
+"input": "=XLOOKUP(F6,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H6",
+"input": "=RANK.EQ(F6,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F6)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I6",
+"input": "=LOOKUP(F6,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J6",
+"input": "=IF(F6>=90,\"A+\",IF(F6>=80,\"A\",IF(F6>=70,\"B\",IF(F6>=60,\"C\",IF(F6>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K6",
+"input": "=F6/100"
+},
+{
+"op": "set",
+"cell": "G!F7",
+"input": "=ROUND(SUMPRODUCT(B7:E7,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G7",
+"input": "=XLOOKUP(F7,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H7",
+"input": "=RANK.EQ(F7,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F7)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I7",
+"input": "=LOOKUP(F7,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J7",
+"input": "=IF(F7>=90,\"A+\",IF(F7>=80,\"A\",IF(F7>=70,\"B\",IF(F7>=60,\"C\",IF(F7>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K7",
+"input": "=F7/100"
+},
+{
+"op": "set",
+"cell": "G!F8",
+"input": "=ROUND(SUMPRODUCT(B8:E8,$M$2:$P$2),1)"
+},
+{
+"op": "set",
+"cell": "G!G8",
+"input": "=XLOOKUP(F8,Cut!$A$2:$A$7,Cut!$B$2:$B$7,\"?\",-1)"
+},
+{
+"op": "set",
+"cell": "G!H8",
+"input": "=RANK.EQ(F8,$F$2:$F$8)&IF(COUNTIF($F$2:$F$8,F8)>1,\"=\",\"\")"
+},
+{
+"op": "set",
+"cell": "G!I8",
+"input": "=LOOKUP(F8,Cut!$A$2:$A$7,Cut!$B$2:$B$7)"
+},
+{
+"op": "set",
+"cell": "G!J8",
+"input": "=IF(F8>=90,\"A+\",IF(F8>=80,\"A\",IF(F8>=70,\"B\",IF(F8>=60,\"C\",IF(F8>=50,\"D\",\"F\")))))"
+},
+{
+"op": "set",
+"cell": "G!K8",
+"input": "=F8/100"
+},
+{
+"op": "read",
+"range": "G!A1:P8"
+},
+{
+"op": "format",
+"range": "G!F2:F8",
+"fmt": "0.0"
+},
+{
+"op": "format",
+"range": "G!K2:K8",
+"fmt": "0.0%"
+},
+{
+"op": "format",
+"range": "G!M2:P2",
+"fmt": "0%"
+},
+{
+"op": "read",
+"range": "G!A1:P8"
+},
+{
+"op": "set",
+"cell": "G!A10",
+"input": "Mean"
+},
+{
+"op": "set",
+"cell": "G!B10",
+"input": "=AVERAGE(B2:B8)"
+},
+{
+"op": "set",
+"cell": "G!C10",
+"input": "=AVERAGE(C2:C8)"
+},
+{
+"op": "set",
+"cell": "G!D10",
+"input": "=MEDIAN(D2:D8)"
+},
+{
+"op": "set",
+"cell": "G!E10",
+"input": "=STDEV.S(E2:E8)"
+},
+{
+"op": "set",
+"cell": "G!F10",
+"input": "=AVERAGE(F2:F8)"
+},
+{
+"op": "set",
+"cell": "G!A11",
+"input": "Rank avg"
+},
+{
+"op": "set",
+"cell": "G!B11",
+"input": "=RANK.AVG(F2,F2:F8)"
+},
+{
+"op": "set",
+"cell": "G!C11",
+"input": "=PERCENTRANK.INC(F2:F8,F3)"
+},
+{
+"op": "set",
+"cell": "G!D11",
+"input": "=QUARTILE.EXC(F2:F8,1)"
+},
+{
+"op": "set",
+"cell": "G!E11",
+"input": "=PERCENTILE.INC(F2:F8,0.9)"
+},
+{
+"op": "set",
+"cell": "G!F11",
+"input": "=COUNTIF(G2:G8,\"A*\")"
+},
+{
+"op": "set",
+"cell": "G!A12",
+"input": "Dist"
+},
+{
+"op": "set",
+"cell": "G!B12",
+"input": "=FREQUENCY(F2:F8,{49,59,69,79,89})"
+},
+{
+"op": "set",
+"cell": "G!A14",
+"input": "Top"
+},
+{
+"op": "set",
+"cell": "G!B14",
+"input": "=TAKE(SORTBY(A2:F8,F2:F8,-1,A2:A8,1),3)"
+},
+{
+"op": "set",
+"cell": "G!H14",
+"input": "=RANK.EQ(F4,F2:F8,1)"
+},
+{
+"op": "set",
+"cell": "G!H15",
+"input": "=COUNTIFS(F2:F8,\">\"&F2)+1"
+},
+{
+"op": "set",
+"cell": "G!H16",
+"input": "=AVERAGEIF(B2:B8,\">0\")"
+},
+{
+"op": "set",
+"cell": "G!H17",
+"input": "=AVERAGE(B2:B8)"
+},
+{
+"op": "set",
+"cell": "G!H18",
+"input": "=IFERROR(B7/0,\"-\")"
+},
+{
+"op": "set",
+"cell": "G!H19",
+"input": "=SUMPRODUCT(--(B2:E8=\"\"))"
+},
+{
+"op": "set",
+"cell": "G!H20",
+"input": "=COUNTBLANK(B2:E8)"
+},
+{
+"op": "set",
+"cell": "G!H21",
+"input": "=B7+C7"
+},
+{
+"op": "set",
+"cell": "G!H22",
+"input": "=ROUND(F5,0)"
+},
+{
+"op": "set",
+"cell": "G!H23",
+"input": "=ROUND(72.25*0.2+72.5*0.1+69.5*0.3+80*0.4,1)"
+},
+{
+"op": "read",
+"range": "G!A10:F11"
+},
+{
+"op": "read",
+"range": "G!B12:B17"
+},
+{
+"op": "read",
+"range": "G!A14:D16"
+},
+{
+"op": "read",
+"range": "G!H14:H23"
+},
+{
+"op": "set",
+"cell": "G!E3",
+"input": "70"
+},
+{
+"op": "set",
+"cell": "G!B7",
+"input": "60"
+},
+{
+"op": "read",
+"range": "G!A1:K8"
+},
+{
+"op": "read",
+"range": "G!A10:F16"
+},
+{
+"op": "sort",
+"range": "G!A2:K8",
+"keys": [
+{
+"key": 6,
+"order": "desc"
+},
+{
+"key": 1,
+"order": "asc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "G!A1:K8"
+},
+{
+"op": "read",
+"range": "G!A10:F16"
+},
+{
+"op": "insert_rows",
+"sheet": "G",
+"at": 4,
+"count": 1
+},
+{
+"op": "set",
+"cell": "G!A4",
+"input": "Hal"
+},
+{
+"op": "set",
+"cell": "G!B4",
+"input": "79.5"
+},
+{
+"op": "set",
+"cell": "G!C4",
+"input": "80"
+},
+{
+"op": "set",
+"cell": "G!D4",
+"input": "79.5"
+},
+{
+"op": "set",
+"cell": "G!E4",
+"input": "79.5"
+},
+{
+"op": "autofill",
+"from": "G!F3:K3",
+"to": "G!F4:K4",
+"type": "default"
+},
+{
+"op": "read",
+"range": "G!A1:K9"
+},
+{
+"op": "read",
+"range": "G!A11:F17"
+},
+{
+"op": "set",
+"cell": "Cut!A5",
+"input": "75"
+},
+{
+"op": "read",
+"range": "G!G2:J9"
+}
+]
+}

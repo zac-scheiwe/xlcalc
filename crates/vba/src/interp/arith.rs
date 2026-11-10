@@ -20,7 +20,17 @@ fn err(n: i32) -> VbaError {
 fn store_float(f: F80, ty: &VType) -> Result<Variant, VbaError> {
     match ty {
         VType::Single => f.to_f32().map(Variant::R4).ok_or_else(|| err(6)),
-        VType::Date => f.to_f64().map(Variant::Date).ok_or_else(|| err(6)),
+
+        VType::Date => f
+            .to_f64()
+            .map(|x| {
+                if x > -657_435.0 && x < 2_958_466.0 {
+                    Variant::Date(x)
+                } else {
+                    Variant::R8(x)
+                }
+            })
+            .ok_or_else(|| err(6)),
         _ => f.to_f64().map(Variant::R8).ok_or_else(|| err(6)),
     }
 }
@@ -119,10 +129,22 @@ impl Conv {
         };
         match &v {
             Variant::Null => Err(err(94)),
+
+            Variant::Array(arr) if arr.elem == VarType::Ui1 && vt == VarType::Bstr => {
+                Ok(Variant::Bstr(crate::rt::from_bytes(
+                    &arr.data
+                        .iter()
+                        .map(|b| if let Variant::Ui1(b) = b { *b } else { 0 })
+                        .collect::<Vec<_>>(),
+                )))
+            }
             Variant::Error(_) | Variant::Array(_) | Variant::Dispatch(_) | Variant::Unknown(_) => {
                 Err(err(13))
             }
             _ if v.vt() == vt as u16 => Ok(v),
+            Variant::Bstr(_) | Variant::R8(_) | Variant::R4(_) if vt == VarType::Date => {
+                crate::rt::let_date(self.locale, &v)
+            }
             _ => self.change(&v, vt),
         }
     }
@@ -237,10 +259,10 @@ impl Conv {
             Like => {
                 let s = self.to_str(a, at)?;
                 let p = self.to_str(b, bt)?;
-                return Ok(Val::V(Variant::Bool(ops::like(&s, &p, text))));
+                return Ok(Val::V(Variant::Bool(ops::like(&s, &p, text)?)));
             }
             Cat => {
-                let s = self.to_str(a, at)? + &self.to_str(b, bt)?;
+                let s = crate::rt::join(self.to_str(a, at)?, &self.to_str(b, bt)?);
                 return Ok(Val::V(Variant::Bstr(s)));
             }
             Pow => {
@@ -250,7 +272,7 @@ impl Conv {
         }
         match res {
             VType::String => {
-                let s = self.to_str(a, at)? + &self.to_str(b, bt)?;
+                let s = crate::rt::join(self.to_str(a, at)?, &self.to_str(b, bt)?);
                 Ok(Val::V(Variant::Bstr(s)))
             }
             VType::Single | VType::Double | VType::Date => {
@@ -315,6 +337,13 @@ impl Conv {
         Ok(n)
     }
 
+    fn string_as(&self, v: Val, to: &VType) -> Result<Val, VbaError> {
+        match v {
+            Val::V(s @ Variant::Bstr(_)) => self.coerce(s, to).map(Val::V),
+            other => Ok(other),
+        }
+    }
+
     fn order(
         &self,
         (a, at): (Val, &VType),
@@ -326,10 +355,34 @@ impl Conv {
             let o = ops::var_cmp(&Variant::Bstr(x), &Variant::Bstr(y), text, self.locale)?;
             return o.ok_or_else(|| err(94));
         }
+
+        let (mut a, mut at, mut b, mut bt) = (a, at, b, bt);
+        if *at == VType::String && matches!(bt, VType::Boolean | VType::Date) {
+            a = self.string_as(a, bt)?;
+            at = bt;
+        } else if *bt == VType::String && matches!(at, VType::Boolean | VType::Date) {
+            b = self.string_as(b, at)?;
+            bt = at;
+        }
         if !is_float(at) && !is_float(bt) {
             return Ok(self.to_cy(&a)?.cmp(&self.to_cy(&b)?));
         }
-        let (x, y) = (self.to_f80(&a)?, self.to_f80(&b)?);
+        let (mut x, mut y) = (self.to_f80(&a)?, self.to_f80(&b)?);
+
+        let double = |v: F80| v.to_f64().map_or(v, F80::from_f64);
+        if *at == VType::Currency {
+            x = double(x);
+        }
+        if *bt == VType::Currency {
+            y = double(y);
+        }
+
+        let single = |v: F80| v.to_f32().map_or(v, F80::from_f32);
+        if *at == VType::Single && *bt == VType::Double {
+            y = single(y);
+        } else if *at == VType::Double && *bt == VType::Single {
+            x = single(x);
+        }
         x.compare(y).ok_or_else(|| err(6))
     }
 

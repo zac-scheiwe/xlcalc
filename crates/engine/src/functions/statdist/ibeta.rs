@@ -362,6 +362,14 @@ fn basym(a: f64, b: f64, lambda: f64) -> f64 {
     };
     let w0 = x87::div(1.0, x87::sqrt(w0));
     let r0 = x87::div(1.0, x87::add(1.0, h));
+
+    let flagged = |x: f64| {
+        let r = x87::div(x, x87::add(x, 2.0));
+        x != 0.0 && x > -0.99 && x < 1.0 && x87::mul(r, r) < f64::MIN_POSITIVE
+    };
+    if flagged(x87::div(lambda, -a)) || flagged(x87::div(lambda, b)) {
+        return f64::NAN;
+    }
     let fa = x87::mul(xl_log1pmx(x87::div(lambda, -a)), -a);
     let fb = x87::mul(xl_log1pmx(x87::div(lambda, b)), -b);
     let f = x87::add(fa, fb);

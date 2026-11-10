@@ -1,0 +1,640 @@
+{
+"sheets": [
+"Roster"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Roster!A1",
+"input": "Name"
+},
+{
+"op": "set",
+"cell": "Roster!B1",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "Roster!C1",
+"input": "Start"
+},
+{
+"op": "set",
+"cell": "Roster!D1",
+"input": "End"
+},
+{
+"op": "set",
+"cell": "Roster!E1",
+"input": "Hours"
+},
+{
+"op": "set",
+"cell": "Roster!F1",
+"input": "Regular"
+},
+{
+"op": "set",
+"cell": "Roster!G1",
+"input": "OT"
+},
+{
+"op": "set",
+"cell": "Roster!H1",
+"input": "Pay"
+},
+{
+"op": "set",
+"cell": "Roster!I1",
+"input": "Week"
+},
+{
+"op": "set",
+"cell": "Roster!A2",
+"input": "Ana"
+},
+{
+"op": "set",
+"cell": "Roster!B2",
+"input": "2/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C2",
+"input": "9:00"
+},
+{
+"op": "set",
+"cell": "Roster!D2",
+"input": "17:30"
+},
+{
+"op": "set",
+"cell": "Roster!A3",
+"input": "Ana"
+},
+{
+"op": "set",
+"cell": "Roster!B3",
+"input": "3/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C3",
+"input": "22:00"
+},
+{
+"op": "set",
+"cell": "Roster!D3",
+"input": "6:00"
+},
+{
+"op": "set",
+"cell": "Roster!A4",
+"input": "Ben"
+},
+{
+"op": "set",
+"cell": "Roster!B4",
+"input": "2/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C4",
+"input": "14:00"
+},
+{
+"op": "set",
+"cell": "Roster!D4",
+"input": "23:45"
+},
+{
+"op": "set",
+"cell": "Roster!A5",
+"input": "Ben"
+},
+{
+"op": "set",
+"cell": "Roster!B5",
+"input": "4/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C5",
+"input": "23:00"
+},
+{
+"op": "set",
+"cell": "Roster!D5",
+"input": "7:30"
+},
+{
+"op": "set",
+"cell": "Roster!A6",
+"input": "Ana"
+},
+{
+"op": "set",
+"cell": "Roster!B6",
+"input": "9/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C6",
+"input": "8:15"
+},
+{
+"op": "set",
+"cell": "Roster!D6",
+"input": "18:45"
+},
+{
+"op": "set",
+"cell": "Roster!A7",
+"input": "Cy"
+},
+{
+"op": "set",
+"cell": "Roster!B7",
+"input": "9/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C7",
+"input": "18:00"
+},
+{
+"op": "set",
+"cell": "Roster!D7",
+"input": "2:15"
+},
+{
+"op": "set",
+"cell": "Roster!A8",
+"input": "Ben"
+},
+{
+"op": "set",
+"cell": "Roster!B8",
+"input": "10/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C8",
+"input": "7:00"
+},
+{
+"op": "set",
+"cell": "Roster!D8",
+"input": "19:00"
+},
+{
+"op": "set",
+"cell": "Roster!K1",
+"input": "Rate"
+},
+{
+"op": "set",
+"cell": "Roster!L1",
+"input": "$28.50"
+},
+{
+"op": "set",
+"cell": "Roster!K2",
+"input": "OT after"
+},
+{
+"op": "set",
+"cell": "Roster!L2",
+"input": "8"
+},
+{
+"op": "set",
+"cell": "Roster!K3",
+"input": "OT mult"
+},
+{
+"op": "set",
+"cell": "Roster!L3",
+"input": "1.5"
+},
+{
+"op": "set",
+"cell": "Roster!K4",
+"input": "Unpaid break (h)"
+},
+{
+"op": "set",
+"cell": "Roster!L4",
+"input": "0:30"
+},
+{
+"op": "set",
+"cell": "Roster!E2",
+"input": "=MOD(D2-C2,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F2",
+"input": "=MIN(E2*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G2",
+"input": "=MAX(0,E2*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H2",
+"input": "=ROUND(F2*$L$1+G2*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I2",
+"input": "=ISOWEEKNUM(B2)"
+},
+{
+"op": "set",
+"cell": "Roster!E3",
+"input": "=MOD(D3-C3,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F3",
+"input": "=MIN(E3*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G3",
+"input": "=MAX(0,E3*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H3",
+"input": "=ROUND(F3*$L$1+G3*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I3",
+"input": "=ISOWEEKNUM(B3)"
+},
+{
+"op": "set",
+"cell": "Roster!E4",
+"input": "=MOD(D4-C4,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F4",
+"input": "=MIN(E4*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G4",
+"input": "=MAX(0,E4*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H4",
+"input": "=ROUND(F4*$L$1+G4*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I4",
+"input": "=ISOWEEKNUM(B4)"
+},
+{
+"op": "set",
+"cell": "Roster!E5",
+"input": "=MOD(D5-C5,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F5",
+"input": "=MIN(E5*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G5",
+"input": "=MAX(0,E5*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H5",
+"input": "=ROUND(F5*$L$1+G5*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I5",
+"input": "=ISOWEEKNUM(B5)"
+},
+{
+"op": "set",
+"cell": "Roster!E6",
+"input": "=MOD(D6-C6,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F6",
+"input": "=MIN(E6*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G6",
+"input": "=MAX(0,E6*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H6",
+"input": "=ROUND(F6*$L$1+G6*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I6",
+"input": "=ISOWEEKNUM(B6)"
+},
+{
+"op": "set",
+"cell": "Roster!E7",
+"input": "=MOD(D7-C7,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F7",
+"input": "=MIN(E7*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G7",
+"input": "=MAX(0,E7*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H7",
+"input": "=ROUND(F7*$L$1+G7*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I7",
+"input": "=ISOWEEKNUM(B7)"
+},
+{
+"op": "set",
+"cell": "Roster!E8",
+"input": "=MOD(D8-C8,1)"
+},
+{
+"op": "set",
+"cell": "Roster!F8",
+"input": "=MIN(E8*24-$L$4*24,$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!G8",
+"input": "=MAX(0,E8*24-$L$4*24-$L$2)"
+},
+{
+"op": "set",
+"cell": "Roster!H8",
+"input": "=ROUND(F8*$L$1+G8*$L$1*$L$3,2)"
+},
+{
+"op": "set",
+"cell": "Roster!I8",
+"input": "=ISOWEEKNUM(B8)"
+},
+{
+"op": "read",
+"range": "Roster!A1:L8"
+},
+{
+"op": "format",
+"range": "Roster!E2:E8",
+"fmt": "[h]:mm"
+},
+{
+"op": "format",
+"range": "Roster!H2:H8",
+"fmt": "$#,##0.00"
+},
+{
+"op": "format",
+"range": "Roster!F2:G8",
+"fmt": "0.00"
+},
+{
+"op": "read",
+"range": "Roster!A1:L8"
+},
+{
+"op": "set",
+"cell": "Roster!A10",
+"input": "Ana"
+},
+{
+"op": "set",
+"cell": "Roster!B10",
+"input": "=SUMIFS(E2:E8,A2:A8,A10)"
+},
+{
+"op": "set",
+"cell": "Roster!C10",
+"input": "=SUMIFS(H2:H8,A2:A8,A10)"
+},
+{
+"op": "set",
+"cell": "Roster!D10",
+"input": "=SUMPRODUCT((A2:A8=A10)*(I2:I8=11)*E2:E8)*24"
+},
+{
+"op": "set",
+"cell": "Roster!E10",
+"input": "=AVERAGEIFS(E2:E8,A2:A8,A10)"
+},
+{
+"op": "set",
+"cell": "Roster!F10",
+"input": "=TEXT(B10,\"[h]:mm\")"
+},
+{
+"op": "set",
+"cell": "Roster!G10",
+"input": "=TEXT(B10*24,\"0.00\")&\"h\""
+},
+{
+"op": "set",
+"cell": "Roster!H10",
+"input": "=TEXT(E10,\"h:mm AM/PM\")"
+},
+{
+"op": "set",
+"cell": "Roster!I10",
+"input": "=MAXIFS(E2:E8,A2:A8,A10)"
+},
+{
+"op": "set",
+"cell": "Roster!J10",
+"input": "=ROUND(B10*24,1)"
+},
+{
+"op": "read",
+"range": "Roster!A10:J10"
+},
+{
+"op": "format",
+"range": "Roster!B10",
+"fmt": "[h]:mm"
+},
+{
+"op": "format",
+"range": "Roster!E10",
+"fmt": "h:mm"
+},
+{
+"op": "format",
+"range": "Roster!I10",
+"fmt": "hh:mm"
+},
+{
+"op": "read",
+"range": "Roster!A10:J10"
+},
+{
+"op": "set",
+"cell": "Roster!A11",
+"input": "Ben"
+},
+{
+"op": "autofill",
+"from": "Roster!A10:J10",
+"to": "Roster!A10:J12",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Roster!A10:J12"
+},
+{
+"op": "set",
+"cell": "Roster!N1",
+"input": "=SORT(UNIQUE(A2:A8))"
+},
+{
+"op": "set",
+"cell": "Roster!O1",
+"input": "=SUMIFS(E2:E8,A2:A8,N1#)"
+},
+{
+"op": "set",
+"cell": "Roster!P1",
+"input": "=TEXT(O1#*24,\"0.0\")"
+},
+{
+"op": "set",
+"cell": "Roster!N8",
+"input": "=TEXTJOIN(\"|\",,TEXT(E2:E8,\"h:mm\"))"
+},
+{
+"op": "read",
+"range": "Roster!N1:P4"
+},
+{
+"op": "read",
+"range": "Roster!N8"
+},
+{
+"op": "set",
+"cell": "Roster!D3",
+"input": "5:30"
+},
+{
+"op": "set",
+"cell": "Roster!C5",
+"input": "23:30"
+},
+{
+"op": "read",
+"range": "Roster!A1:I8"
+},
+{
+"op": "read",
+"range": "Roster!A10:J12"
+},
+{
+"op": "read",
+"range": "Roster!N1:P4"
+},
+{
+"op": "sort",
+"range": "Roster!A2:I8",
+"keys": [
+{
+"key": 1,
+"order": "asc"
+},
+{
+"key": 2,
+"order": "desc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "Roster!A1:I8"
+},
+{
+"op": "read",
+"range": "Roster!A10:J12"
+},
+{
+"op": "insert_rows",
+"sheet": "Roster",
+"at": 5,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Roster!A5",
+"input": "Cy"
+},
+{
+"op": "set",
+"cell": "Roster!B5",
+"input": "5/3/2026"
+},
+{
+"op": "set",
+"cell": "Roster!C5",
+"input": "0:00"
+},
+{
+"op": "set",
+"cell": "Roster!D5",
+"input": "24:00"
+},
+{
+"op": "autofill",
+"from": "Roster!E4:I4",
+"to": "Roster!E5:I5",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Roster!A1:I9"
+},
+{
+"op": "read",
+"range": "Roster!A11:J13"
+},
+{
+"op": "set",
+"cell": "Roster!L4",
+"input": "0:45"
+},
+{
+"op": "read",
+"range": "Roster!E1:H9"
+}
+]
+}

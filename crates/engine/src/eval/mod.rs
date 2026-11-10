@@ -222,6 +222,10 @@ pub struct EvalCtx<'a> {
 
     pub(crate) in_evaluate: bool,
 
+    pub xlm_vars: Option<std::sync::Arc<crate::xlm::XlmVars>>,
+
+    pub xlm_cells: Option<std::sync::Arc<crate::xlm::XlmCells>>,
+
     pub(crate) circ_sources: Vec<FormulaId>,
 
     pub(crate) circ_lifted: bool,
@@ -256,9 +260,19 @@ pub struct EvalCtx<'a> {
 
     pub(crate) at_call: Option<u32>,
 
+    pub(crate) at_named: bool,
+
     pub(crate) vchain: bool,
 
     pub(crate) parallel: bool,
+
+    pub(crate) walk: bool,
+
+    pub(crate) walk_target: Option<crate::walk::Node>,
+
+    pub(crate) walk_pend: Option<crate::walk::Node>,
+
+    walk_first_pull: Option<bool>,
 }
 
 impl<'a> EvalCtx<'a> {
@@ -275,6 +289,8 @@ impl<'a> EvalCtx<'a> {
             interrupt: None,
             observed: Observed::default(),
             wrap: false,
+            xlm_vars: None,
+            xlm_cells: None,
             depth: 0,
             defer_cycles: false,
             circ_fid: None,
@@ -300,9 +316,14 @@ impl<'a> EvalCtx<'a> {
             fn_depth: 0,
             legacy_form: false,
             at_call: None,
+            at_named: false,
             vchain: true,
             cse_lifted: false,
             parallel: false,
+            walk: false,
+            walk_target: None,
+            walk_pend: None,
+            walk_first_pull: None,
         }
     }
 
@@ -396,6 +417,31 @@ impl<'a> EvalCtx<'a> {
                 v => v,
             };
         }
+        if self.walk {
+            let n = crate::walk::node_at(self.wb, fid, row, col);
+            if let Some((t, pull)) = crate::walk::read_target(self.wb, n) {
+                if self.defer_cycles {
+                    self.walk_first_pull.get_or_insert(pull);
+                    if pull && self.pend_fid.is_none() {
+                        self.walk_pend = Some(t);
+                    }
+                    return self.placeholder(fid, pull);
+                }
+                if self.interrupt.is_none() {
+                    self.interrupt = Some(if pull {
+                        self.walk_target = Some(t);
+                        Interrupt::Pending(fid)
+                    } else {
+                        Interrupt::Cycle(fid)
+                    });
+                }
+                return f.value_at(row, col);
+            }
+            if f.spill_src {
+                self.observed.read_spill = true;
+            }
+            return f.value_at(row, col);
+        }
         if f.dirty {
             match self.mode {
                 ReadMode::Stale => self.observed.read_dirty = true,
@@ -474,7 +520,15 @@ impl<'a> EvalCtx<'a> {
         let Some(sh) = wb.sheet(sheet) else {
             return Value::Error(XlError::REF);
         };
+        if let Some(v) = self
+            .xlm_cells
+            .as_ref()
+            .and_then(|c| c.get(&(sheet, row, col)))
+        {
+            return v.clone();
+        }
         match sh.cells.get(row, col) {
+            Some(Entry::Const(_)) if wb.ext_const_closed(sheet) => Value::Error(XlError::REF),
             Some(Entry::Const(v)) => v.clone(),
             Some(Entry::Formula(fid)) => self.formula_value(*fid, row, col),
             None => match sh.spills.owner_of(row, col) {
@@ -836,7 +890,12 @@ impl<'a> EvalCtx<'a> {
                 let at_call =
                     matches!(x.unwrap_ws(), Node::Func { .. }).then_some(self.fn_depth + 1);
                 let saved_at = std::mem::replace(&mut self.at_call, at_call);
+                let saved_named = std::mem::replace(
+                    &mut self.at_named,
+                    matches!(x.unwrap_ws(), Node::NamedCall { .. }),
+                );
                 let v = self.eval(x);
+                self.at_named = saved_named;
                 self.at_call = saved_at;
                 self.legacy_form = saved;
 
@@ -850,6 +909,23 @@ impl<'a> EvalCtx<'a> {
                     }
                     v => v,
                 };
+
+                if let Operand::Val(Value::Array(a)) = &v {
+                    let ghost_node = matches!(
+                        x.unwrap_ws(),
+                        Node::Ref(crate::formula::SheetRef::Missing(_), _)
+                            | Node::Binary(BinOp::Range, _, _)
+                    );
+                    if ghost_node
+                        && a.rows > 1
+                        && a.cols > 1
+                        && a.data
+                            .iter()
+                            .all(|e| matches!(e, Value::Error(XlError::REF)))
+                    {
+                        return Operand::err(XlError::VALUE);
+                    }
+                }
                 refs::implicit_intersection(self, v)
             }
             Node::Unary(UnaryOp::ArrayZero, x) => {
@@ -1034,11 +1110,20 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
         };
         if used {
             let partial = ctx.allow_partial
-                && ctx.pend_fid.is_none()
+                && (ctx.pend_fid.is_none() || ctx.walk)
                 && ctx.interrupt.is_none()
                 && block.is_some_and(|(r, c)| r * c > 1);
+            let anchor = ctx.walk
+                && block.is_none()
+                && ctx.interrupt.is_none()
+                && matches!(&v, Value::Array(a) if a.rows * a.cols > 1);
             if partial {
                 ctx.observed.partial = true;
+            } else if anchor && ctx.walk_first_pull == Some(true) {
+                ctx.circ_used();
+            } else if anchor {
+                let g = ctx.pend_fid.or(ctx.circ_fid).unwrap_or_default();
+                ctx.interrupt = Some(Interrupt::Cycle(g));
             } else {
                 ctx.circ_used();
             }

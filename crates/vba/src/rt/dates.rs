@@ -62,6 +62,10 @@ fn join(day: i64, secs: i64) -> f64 {
     }
 }
 
+pub(super) fn in_date_range(x: f64) -> bool {
+    x > MIN_DATE - 1.0 && x < MAX_DATE + 1.0
+}
+
 fn in_range(x: f64) -> Result<f64, VbaError> {
     if x > MIN_DATE - 1.0 && x < MAX_DATE + 1.0 {
         Ok(x)
@@ -219,7 +223,7 @@ fn parse_day(ctx: &RtContext, s: &str) -> Option<i64> {
     if let Some(m) = month {
         return match nums.as_slice() {
             [a] if long_year(*a) => valid_day(a.0, m, 1),
-            [(d, _)] => valid_day(year_now, m, *d),
+            [(d, _)] => valid_day(year_now, m, *d).or_else(|| valid_day(year(*d), m, 1)),
             [a, (b, _)] if long_year(*a) => valid_day(a.0, m, *b),
             [(a, _), b] => valid_day(year(b.0), m, *a),
             _ => None,
@@ -232,6 +236,7 @@ fn parse_day(ctx: &RtContext, s: &str) -> Option<i64> {
             valid_day(year(*c), first, second).or_else(|| valid_day(year(*c), second, first))
         }
         [a, (m, _)] if long_year(*a) => valid_day(a.0, *m, 1),
+        [(a, _), b] if long_year(*b) => valid_day(year(b.0), *a, 1),
         [(a, _), (b, _)] => {
             let (first, second) = if mdy { (*a, *b) } else { (*b, *a) };
             valid_day(year_now, first, second).or_else(|| valid_day(year_now, second, first))
@@ -517,4 +522,104 @@ pub(super) fn time_text(ctx: &RtContext, _: &[Variant]) -> R {
 pub(super) fn timer(ctx: &RtContext, _: &[Variant]) -> R {
     let x = (ctx.clock)();
     Ok(Variant::R4(((x - x.floor()) * 86_400.0) as f32))
+}
+
+pub(super) fn date_part(ctx: &RtContext, a: &[Variant]) -> R {
+    let unit = text(ctx, &a[0])?.to_ascii_lowercase();
+
+    if is_null(&a[1]) {
+        return Ok(Variant::Null);
+    }
+    let x = to_date(ctx, &a[1])?;
+    let (day, secs) = split(x);
+    let p = parts(x);
+    let n = match unit.as_str() {
+        "yyyy" => civil(x).0,
+        "q" => (civil(x).1 - 1) / 3 + 1,
+        "m" => civil(x).1,
+        "y" => p.yday,
+        "d" => civil(x).2,
+        "w" => (weekday_sunday(day) - first_day(ctx, a, 2)?).rem_euclid(7) + 1,
+        "ww" => {
+            let first = first_day(ctx, a, 2)?;
+            let rule = match long_or(ctx, a, 3, 1)? {
+                0 | 1 => 1,
+                n @ 2..=3 => i64::from(n),
+                _ => return Err(VbaError::new(5)),
+            };
+            super::format::week_of_year(&p, super::format::Week { first, rule })
+        }
+        "h" => secs / 3600,
+        "n" => secs / 60 % 60,
+        "s" => secs % 60,
+        _ => return Err(VbaError::new(5)),
+    };
+    Ok(Variant::I2(n as i16))
+}
+
+pub(super) fn month_name_fn(ctx: &RtContext, a: &[Variant]) -> R {
+    if a.iter().any(is_null) {
+        return Err(null_error());
+    }
+    let m = match convert(ctx, &a[0], VarType::I2)? {
+        Variant::I2(n) => i64::from(n),
+        _ => return Err(VbaError::new(13)),
+    };
+    let abbreviate = match opt(a, 1) {
+        Some(v) => match convert(ctx, v, VarType::Bool)? {
+            Variant::Bool(b) => b,
+            _ => false,
+        },
+        None => false,
+    };
+    if !(1..=12).contains(&m) {
+        return Err(VbaError::new(5));
+    }
+    let full = month_title(m);
+    text_out(if abbreviate {
+        full[..3].to_string()
+    } else {
+        full
+    })
+}
+
+pub(super) fn weekday_name(ctx: &RtContext, a: &[Variant]) -> R {
+    if a.iter().any(is_null) {
+        return Err(null_error());
+    }
+    let w = match convert(ctx, &a[0], VarType::I2)? {
+        Variant::I2(n) => i64::from(n),
+        _ => return Err(VbaError::new(13)),
+    };
+    let abbreviate = match opt(a, 1) {
+        Some(v) => match convert(ctx, v, VarType::Bool)? {
+            Variant::Bool(b) => b,
+            _ => false,
+        },
+        None => false,
+    };
+    let first = match opt(a, 2) {
+        Some(_) => first_day(ctx, a, 2)?,
+        None => first_day(ctx, &[Variant::I4(0)], 0)?,
+    };
+    if !(1..=7).contains(&w) {
+        return Err(VbaError::new(5));
+    }
+
+    let sunday_based = (first - 1 + w - 1).rem_euclid(7);
+    const DAYS: [&str; 7] = [
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+    ];
+    let full = DAYS[sunday_based as usize];
+    text_out(if abbreviate {
+        full[..3].to_string()
+    } else {
+        full.to_string()
+    })
 }

@@ -95,7 +95,7 @@ pub const DEFS: &[FnDef] = &[
     scalar("CUBERANKEDMEMBER", 3, 4, |c, a| cube_numeric(c, a, 2)),
     scalar_p("CUBESET", 2, 5, "VRV", |c, a| cube_numeric(c, a, 3)),
     scalar("CUBESETCOUNT", 1, 1, |_, a| fixed_err(a, XlError::NA)),
-    scalar("RTD", 3, super::MANY, |_, a| fixed_err(a, XlError::NA)),
+    volatile(scalar("RTD", 3, super::MANY, rtd)),
     scalar("FIELDVALUE", 2, 2, |_, a| match a[1] {
         Value::Error(e) => Value::Error(e),
         _ => err(XlError::FIELD),
@@ -119,34 +119,61 @@ pub const DEFS: &[FnDef] = &[
             })
             .unwrap_or_else(|| err(XlError::VALUE))
     }),
-    args("GETPIVOTDATA", 2, super::MANY, "R", |ctx, o| {
-        for (i, op) in o.iter().enumerate() {
-            let name_slot = i < 2 || i % 2 == 0;
-            let multi =
-                matches!(op, Operand::Ref(r) if r.single().is_none_or(|a| !a.rect.is_cell()));
-            if multi && i >= 2 && name_slot && ctx.legacy_form {
-                return Operand::err(XlError::VALUE);
-            }
+    super::checked(
+        super::volatile(args("GETPIVOTDATA", 2, super::MANY, "R", |ctx, o| {
+            for (i, op) in o.iter().enumerate() {
+                let name_slot = i < 2 || i % 2 == 0;
+                let multi =
+                    matches!(op, Operand::Ref(r) if r.single().is_none_or(|a| !a.rect.is_cell()));
+                if multi && i >= 2 && name_slot && ctx.legacy_form {
+                    return Operand::err(XlError::VALUE);
+                }
 
-            if multi && i >= 2 && name_slot {
-                if let Operand::Ref(r) = op {
-                    if let Some(a) = r.single() {
-                        let (rows, cols) = (a.rect.r1 - a.rect.r0 + 1, a.rect.c1 - a.rect.c0 + 1);
-                        let e = Value::Error(XlError::REF);
-                        return Operand::Val(
-                            crate::value::Array::filled(rows, cols, e).into_value(),
-                        );
+                if multi && i >= 2 && name_slot {
+                    if let Operand::Ref(r) = op {
+                        if let Some(a) = r.single() {
+                            let (rows, cols) =
+                                (a.rect.r1 - a.rect.r0 + 1, a.rect.c1 - a.rect.c0 + 1);
+                            let e = Value::Error(XlError::REF);
+                            return Operand::Val(
+                                crate::value::Array::filled(rows, cols, e).into_value(),
+                            );
+                        }
+                    }
+                }
+                if name_slot && !multi {
+                    if let Operand::Val(Value::Error(e)) = op {
+                        return Operand::err(*e);
                     }
                 }
             }
-            if name_slot && !multi {
-                if let Operand::Val(Value::Error(e)) = op {
-                    return Operand::err(*e);
+            let Operand::Ref(r) = &o[1] else {
+                return Operand::err(XlError::REF);
+            };
+            let Some(a) = r.single() else {
+                return Operand::err(XlError::REF);
+            };
+            let anchor = crate::address::CellAddr::new(a.sheet, a.rect.r0, a.rect.c0);
+            let data = ctx.deref(o[0].clone());
+            let mut pairs = Vec::new();
+            for ch in o[2..].chunks(2) {
+                if ch.len() < 2 {
+                    return Operand::err(XlError::REF);
                 }
+                let f = ctx.deref(ch[0].clone());
+                let i = ctx.deref(ch[1].clone());
+                pairs.push((f, i));
             }
-        }
-        Operand::err(XlError::REF)
-    }),
+            Operand::Val(ctx.wb.get_pivot_data(&data, anchor, &pairs))
+        })),
+        |a| {
+            if a.len() < 5 || a.len() % 2 == 0 {
+                Ok(())
+            } else {
+                Err("field and item come in pairs")
+            }
+        },
+    ),
     args("PHONETIC", 1, 1, "Q", |_, o| {
         Operand::err(match &o[0] {
             Operand::Val(Value::Error(XlError::NAME)) => XlError::NAME,
@@ -228,6 +255,8 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             }
             if sheet == ctx.host.sheet {
                 Value::from(a)
+            } else if let Some(p) = ctx.wb.ext_prefix(sheet) {
+                Value::from(format!("{p}{a}"))
             } else {
                 let name = ctx
                     .wb
@@ -281,9 +310,10 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             })
         }
         "color" | "parentheses" => {
+            let at = crate::address::CellAddr::new(sheet, row, col);
             let i = cell_format_info(
-                ctx.wb
-                    .number_format(crate::address::CellAddr::new(sheet, row, col)),
+                ctx.wb.number_format(at),
+                ctx.wb.cell_style(at).implicit_general,
             );
             Value::Number(f64::from(u8::from(if kind.as_str() == "color" {
                 i.color
@@ -291,10 +321,13 @@ fn cell_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 i.parens
             })))
         }
-        "format" => Value::from(cell_format_code(
-            ctx.wb
-                .number_format(crate::address::CellAddr::new(sheet, row, col)),
-        )),
+        "format" => {
+            let at = crate::address::CellAddr::new(sheet, row, col);
+            Value::from(cell_format_code(
+                ctx.wb.number_format(at),
+                ctx.wb.cell_style(at).implicit_general,
+            ))
+        }
         "filename" => Value::from(""),
 
         "width" => {
@@ -408,7 +441,13 @@ fn type_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 fn sheet_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let id = match ops.first() {
         None | Some(Operand::Missing) => ctx.host.sheet,
-        Some(Operand::Ref(r)) => r.areas()[0].sheet,
+        Some(Operand::Ref(r)) => {
+            let id = r.areas()[0].sheet;
+            if id.0 >= crate::workbook::ext::EXT_BASE {
+                return Operand::err(XlError::NA);
+            }
+            id
+        }
         Some(Operand::Val(Value::Text(name))) => match ctx.wb.sheet_by_name(name) {
             Some(s) => s.id,
             None => return Operand::err(XlError::NA),
@@ -447,6 +486,26 @@ fn cube_numeric(c: &mut EvalCtx, a: &[Value], idx: usize) -> Value {
         None => err(XlError::NA),
     }
 }
+
+fn rtd(c: &mut EvalCtx, a: &[Value]) -> Value {
+    let (Value::Text(prog), Some(source)) = (&a[0], c.wb.rtd_source.as_ref()) else {
+        return fixed_err(a, XlError::NA);
+    };
+    if let Some(Value::Error(e)) = a.iter().find(|v| matches!(v, Value::Error(_))) {
+        return Value::Error(*e);
+    }
+    let text = |v: &Value| match v {
+        Value::Text(t) => t.to_string(),
+        Value::Number(n) => crate::number::format_general(*n),
+        Value::Bool(b) => (if *b { "TRUE" } else { "FALSE" }).to_string(),
+        _ => String::new(),
+    };
+    let topics: Vec<String> = a[2..].iter().map(text).collect();
+    source
+        .topic(prog, &text(&a[1]), &topics)
+        .unwrap_or(Value::Error(XlError::NA))
+}
+
 fn fixed_err(a: &[Value], e: XlError) -> Value {
     a.iter()
         .find_map(|v| match v {
@@ -461,6 +520,12 @@ struct CellFmtInfo {
     color: bool,
     parens: bool,
 }
+
+const LOCALE_MARK: char = '\u{1}';
+
+const A_MARK: char = '\u{2}';
+
+const ELAPSED_MARK: char = '\u{4}';
 
 fn strip_section(sec: &str) -> (String, bool, bool) {
     let mut clean = String::new();
@@ -481,7 +546,14 @@ fn strip_section(sec: &str) -> (String, bool, bool) {
                     clean.push('$');
                 }
             }
-            '\\' | '_' | '*' => {
+            '\\' => {
+                if let Some(d) = chars.next() {
+                    if d.eq_ignore_ascii_case(&'a') {
+                        clean.push(A_MARK);
+                    }
+                }
+            }
+            '_' | '*' => {
                 chars.next();
             }
             '[' => {
@@ -495,10 +567,12 @@ fn strip_section(sec: &str) -> (String, bool, bool) {
                 let l = b.to_ascii_lowercase();
                 if !l.is_empty() && l.chars().all(|c| matches!(c, 'h' | 'm' | 's')) {
                     elapsed = true;
+                    clean.push(ELAPSED_MARK);
                 }
 
-                if l.starts_with("$-") {
+                if l.starts_with('$') && l.contains('-') {
                     locale = true;
+                    clean.push(LOCALE_MARK);
                 }
             }
             c => clean.push(c),
@@ -508,77 +582,129 @@ fn strip_section(sec: &str) -> (String, bool, bool) {
 }
 
 fn date_code(l: &str) -> &'static str {
-    let l = l.replace("am/pm", "p").replace("a/p", "").replace("/p", "");
+    let l = l
+        .replace("am/pm", "p")
+        .replace(&format!("{A_MARK}/p"), "q")
+        .replace("a/p", "q")
+        .replace("/p", "")
+        .replace("b1", &LOCALE_MARK.to_string());
     let mut toks: Vec<(char, usize)> = Vec::new();
-    for c in l.chars() {
-        if matches!(c, 'd' | 'm' | 'y' | 'h' | 's' | 'p') {
+
+    let mut spans: Vec<(usize, usize)> = Vec::new();
+    let mut prev = ' ';
+    for (at, c) in l.chars().enumerate() {
+        if c == LOCALE_MARK {
+            toks.push(('L', 1));
+            spans.push((at, at));
+        } else if c == ELAPSED_MARK {
+            toks.push(('E', 1));
+            spans.push((at, at));
+        } else if matches!(c, 'd' | 'm' | 'y' | 'h' | 's' | 'p' | 'q' | 'e' | 'g' | 'a') {
             match toks.last_mut() {
-                Some((t, n)) if *t == c && c != 'p' => *n += 1,
-                _ => toks.push((c, 1)),
-            }
-        }
-    }
-    let (mut day, mut mon, mut year) = (None, None, None);
-    let (mut hour, mut minute, mut sec, mut ampm) = (false, false, false, false);
-    for (i, &(t, n)) in toks.iter().enumerate() {
-        match t {
-            'd' if n <= 2 => day = day.or(Some(i)),
-            'y' => year = year.or(Some(i)),
-            'h' => hour = true,
-            's' => sec = true,
-            'p' => ampm = true,
-            'm' => {
-                let after_h = i > 0 && toks[i - 1].0 == 'h';
-                let before_s = toks.get(i + 1).is_some_and(|x| x.0 == 's');
-                if after_h || before_s {
-                    minute = true;
-                } else if n <= 4 {
-                    mon = mon.or(Some(i));
+                Some((t, n)) if *t == c && prev == c && c != 'p' && c != 'q' => {
+                    *n += 1;
+                    if let Some(sp) = spans.last_mut() {
+                        sp.1 = at;
+                    }
+                }
+                _ => {
+                    toks.push((c, 1));
+                    spans.push((at, at));
                 }
             }
-            _ => {}
+        }
+        prev = c;
+    }
+    let chars: Vec<char> = l.chars().collect();
+
+    let letter_between = |i: usize| {
+        spans.get(i + 1).is_some_and(|next| {
+            chars[spans[i].1 + 1..next.0]
+                .iter()
+                .any(|c| c.is_alphabetic())
+        })
+    };
+
+    let mut kinds: Vec<char> = Vec::new();
+    let mut elapsed = false;
+    for (i, &(t, n)) in toks.iter().enumerate() {
+        match t {
+            'E' => {
+                elapsed = true;
+
+                if !kinds.is_empty() {
+                    kinds.push('E');
+                }
+            }
+            'm' => {
+                let after_h = i > 0 && toks[i - 1].0 == 'h';
+                let before_s = toks.get(i + 1).is_some_and(|x| x.0 == 's') && !letter_between(i);
+                kinds.push(if (after_h || before_s || elapsed) && n <= 2 {
+                    'n'
+                } else if n <= 5 {
+                    'm'
+                } else {
+                    'x'
+                });
+            }
+            'L' => kinds.push('d'),
+            'a' if n >= 3 => kinds.push('d'),
+            'a' => {}
+            t => kinds.push(t),
         }
     }
-    match (day, mon, year) {
-        (Some(d), Some(m), Some(y)) => {
-            if d < m && d < y {
-                "D1"
-            } else if m < d && m < y {
-                "D4"
-            } else {
-                "G"
-            }
+    let lead: String = kinds
+        .iter()
+        .take_while(|k| matches!(k, 'd' | 'm' | 'y'))
+        .collect();
+    for (shape, code) in [
+        ("dmy", "D1"),
+        ("dm", "D2"),
+        ("my", "D3"),
+        ("mdy", "D4"),
+        ("md", "D5"),
+    ] {
+        if lead.starts_with(shape) {
+            return code;
         }
-        (Some(d), Some(m), None) => {
-            if d < m {
-                "D2"
-            } else {
-                "D5"
-            }
-        }
-        (None, Some(m), Some(y)) => {
-            if m < y {
-                "D3"
-            } else {
-                "G"
-            }
-        }
-        (None, None, None) if hour && minute => match (sec, ampm) {
+    }
+    let has = |c: char| kinds.contains(&c);
+    if kinds.first() == Some(&'h') && !elapsed && has('n') {
+        return match (has('s'), has('p')) {
             (true, true) => "D6",
             (false, true) => "D7",
             (true, false) => "D8",
             (false, false) => "D9",
-        },
-        _ => "G",
+        };
     }
+    "G"
 }
 
-fn cell_format_info(fmt: &str) -> CellFmtInfo {
-    let mut sections = fmt.split(';');
+fn cell_format_info(fmt: &str, implicit_general: bool) -> CellFmtInfo {
+    let mut sections = split_sections(fmt).into_iter();
     let pos = sections.next().unwrap_or("");
     let neg = sections.next();
-    let color = neg.is_some_and(|n| n.to_ascii_lowercase().contains("[red]"));
-    let (lower, elapsed, locale) = strip_section(pos);
+
+    let has_color = |s: &str| {
+        let l = s.to_ascii_lowercase();
+        [
+            "[red]",
+            "[blue]",
+            "[green]",
+            "[black]",
+            "[white]",
+            "[yellow]",
+            "[cyan]",
+            "[magenta]",
+            "[color",
+        ]
+        .iter()
+        .any(|c| l.contains(c))
+    };
+
+    let neg_counts = neg.is_some_and(|n| !n.contains('@') && !(n == "General" && implicit_general));
+    let color = neg_counts && (has_color(pos) || neg.is_some_and(has_color));
+    let (lower, _, _) = strip_section(pos);
 
     let parens = {
         let mut it = pos.chars();
@@ -609,20 +735,18 @@ fn cell_format_info(fmt: &str) -> CellFmtInfo {
         found
     };
     let digits = lower.contains(['0', '#', '?']);
-    let is_sci = lower.contains("e+") || lower.contains("e-");
-    let has_dt = lower.contains(['d', 'm', 'y', 'h', 's']) && !lower.contains("general");
+    let is_sci = (lower.contains("e+") || lower.contains("e-")) && digits;
+    let has_dt = (lower.contains(['d', 'm', 'y', 'h', 's', ELAPSED_MARK])
+        || lower.starts_with("b1")
+        || lower.starts_with("b2"))
+        && !lower.contains("general");
     let mut code = if fmt.contains(';') && pos.is_empty() {
         "H".to_string()
     } else if lower.trim().is_empty() || lower.contains("general") || lower.contains('@') {
         "G".to_string()
     } else if has_dt && !is_sci {
-        if elapsed || locale {
-            "G"
-        } else {
-            date_code(&lower)
-        }
-        .to_string()
-    } else if !digits || lower.contains('/') && lower.contains('?') {
+        date_code(&lower).to_string()
+    } else if !digits || is_fraction(&lower) {
         "G".to_string()
     } else {
         let dec = match lower.find('.') {
@@ -638,24 +762,24 @@ fn cell_format_info(fmt: &str) -> CellFmtInfo {
                 && matches!(b[i - 1], b'0' | b'#' | b'?')
                 && matches!(b[i + 1], b'0' | b'#' | b'?')
         });
-        let kind = if lower.contains('%') {
-            'P'
+        let kind = if lower.contains('$') {
+            'C'
         } else if is_sci {
             'S'
-        } else if lower.contains(['$', '€', '£', '¥']) {
-            'C'
+        } else if lower.contains('%') {
+            'P'
         } else if grouped {
             ','
         } else {
             'F'
         };
-        format!("{kind}{dec}")
+        format!("{kind}{}", dec.min(15))
     };
-    if code != "G" && code != "H" {
+    if code != "H" {
         if color {
             code.push('-');
         }
-        if parens {
+        if parens && code != "G" {
             code.push_str("()");
         }
     }
@@ -666,6 +790,39 @@ fn cell_format_info(fmt: &str) -> CellFmtInfo {
     }
 }
 
-fn cell_format_code(fmt: &str) -> String {
-    cell_format_info(fmt).code
+fn split_sections(fmt: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let (mut start, mut quote, mut bracket, mut skip) = (0, false, false, false);
+    for (i, c) in fmt.char_indices() {
+        if skip {
+            skip = false;
+            continue;
+        }
+        match c {
+            '"' if !bracket => quote = !quote,
+            '[' if !quote => bracket = true,
+            ']' if !quote => bracket = false,
+            '\\' | '_' | '*' if !quote && !bracket => skip = true,
+            ';' if !quote && !bracket => {
+                out.push(&fmt[start..i]);
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    out.push(&fmt[start..]);
+    out
+}
+
+fn is_fraction(lower: &str) -> bool {
+    let b = lower.as_bytes();
+    (1..b.len().saturating_sub(1)).any(|i| {
+        b[i] == b'/'
+            && matches!(b[i - 1], b'0' | b'#' | b'?')
+            && matches!(b[i + 1], b'0'..=b'9' | b'#' | b'?')
+    })
+}
+
+fn cell_format_code(fmt: &str, implicit_general: bool) -> String {
+    cell_format_info(fmt, implicit_general).code
 }

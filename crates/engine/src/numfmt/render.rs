@@ -153,7 +153,7 @@ pub(super) fn render_number(
     loc: &Locale,
     ds: DateSystem,
 ) -> Result<Rendered, XlError> {
-    let tag = f.sections.iter().find_map(|s| s.digit_sys);
+    let tag = f.sections.first().and_then(|s| s.digit_sys);
     let tag_db = tag.filter(|_| f.is_date()).and_then(Db::from_digit_tag);
     let mut r = render_number_plain(f, x, loc, ds, tag_db)?;
 
@@ -173,6 +173,27 @@ pub(super) fn render_number(
     }
     r.text = unshield(&r.text);
     Ok(r)
+}
+
+pub(super) fn digits_of_tag(f: &NumberFormat, text: &str) -> String {
+    let tag = f.sections.first().and_then(|s| s.digit_sys);
+    let cjk_date = tag
+        .filter(|_| f.is_date())
+        .and_then(Db::from_digit_tag)
+        .is_some();
+    match (f.numeric > 0, cjk_date, tag.and_then(digit_system)) {
+        (true, false, Some(d)) => text
+            .chars()
+            .map(|c| {
+                if c.is_ascii_digit() {
+                    d[c as usize - '0' as usize]
+                } else {
+                    c
+                }
+            })
+            .collect(),
+        _ => text.to_string(),
+    }
 }
 
 fn render_number_plain(
@@ -313,6 +334,42 @@ fn render_body(
     db: Option<Db>,
 ) -> Result<(String, bool), XlError> {
     let digits = |(s, z): (String, bool)| (db.map_or(s.clone(), |d| d.positional(&s)), z);
+
+    let has_ampm = |items: &[Item]| items.contains(&Item::Date(DateTok::AmPm));
+    if match body {
+        Body::Number(l) => has_ampm(&l.items),
+        Body::Literal(items) => has_ampm(items),
+        _ => false,
+    } {
+        let probe = DateLayout {
+            items: vec![Item::Date(DateTok::AmPm)],
+            subsec: 0,
+            elapsed: false,
+            needs_date: false,
+            signed: false,
+            lcid: None,
+            hijri: false,
+        };
+        let (mark, _) = render_date(&probe, a, ds, loc, db)?;
+        let swap = |items: &[Item]| -> Vec<Item> {
+            items
+                .iter()
+                .map(|it| match it {
+                    Item::Date(DateTok::AmPm) => Item::Lit(mark.clone()),
+                    other => other.clone(),
+                })
+                .collect()
+        };
+        let body = match body {
+            Body::Number(l) => Body::Number(NumLayout {
+                items: swap(&l.items),
+                ..l.clone()
+            }),
+            Body::Literal(items) => Body::Literal(swap(items)),
+            other => other.clone(),
+        };
+        return render_body(&body, a, negative, loc, ds, db);
+    }
     Ok(match body {
         Body::Literal(items) | Body::Text(items) => {
             let mut out = String::new();
@@ -473,9 +530,10 @@ fn render_sci(l: &SciLayout, a: f64, loc: &Locale) -> String {
     let (mant, exp) = if d.is_zero() {
         (Dec::zero(), 0)
     } else {
-        let mut e = d.exp.div_euclid(g) * g;
+        let off = i32::from(l.n_int == 0);
+        let mut e = d.exp.div_euclid(g) * g + off;
         let mut m = d.clone().shifted(-e).round_to(l.n_frac as i32);
-        if m.exp >= g {
+        if m.exp >= g - off {
             e += g;
             m = d.clone().shifted(-e).round_to(l.n_frac as i32);
         }
@@ -596,7 +654,12 @@ pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)
     }
     if spec < 0 {
         let d = -(spec as i32);
-        let n2 = mp_lfix(x87::mul((2 * d) as f64, x));
+        let prod = x87::mul((2 * d) as f64, x);
+
+        if !prod.is_finite() {
+            return Some((0, d as u32));
+        }
+        let n2 = mp_lfix(prod);
         if n2 as u32 > 0xFFFE {
             return None;
         }
@@ -721,12 +784,33 @@ enum Blank {
     Remove,
 }
 
+fn den_leftover(l: &FracLayout, den_digits: &[u8]) -> (Vec<char>, bool) {
+    let lit_len = l
+        .items
+        .iter()
+        .find_map(|x| match x {
+            Item::DenFixed(s) => Some(s.chars().count()),
+            _ => None,
+        })
+        .unwrap_or(1);
+    if den_digits.len() < lit_len {
+        return (vec!['0'; lit_len - den_digits.len()], true);
+    }
+    (
+        den_digits[lit_len..].iter().map(|d| digit(*d)).collect(),
+        false,
+    )
+}
+
 fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), XlError> {
     let v = if l.scale != 0 {
         x87::mul(10f64.powi(l.scale), a)
     } else {
         a
     };
+    if l.err {
+        return Err(XlError::VALUE);
+    }
     let (num, den) = calc_fraction(v, frac_spec(&l.den), l.has_int).ok_or(XlError::VALUE)?;
     let (int_digits_raw, num) = if l.has_int {
         let dec = Dec::from_f64(v);
@@ -812,6 +896,7 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
     let mut den_i = 0;
     let mut den_dec_i = 0;
     let mut den_q_seen = false;
+    let mut tail_s_done = false;
     let mut tmp = String::new();
     for (i, it) in l.items.iter().enumerate() {
         tmp.clear();
@@ -843,6 +928,52 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
                 if l.num_has_q || l.int_has_q {
                     let k = den_digits.len().min(lit.len());
                     tmp.extend(std::iter::repeat_n(' ', lit.len() - k));
+                }
+            }
+            Item::DenTailPoint => {
+                if (l.num_has_q || l.int_has_q) && !tail_s_done {
+                    tail_s_done = true;
+                    tmp.extend(den_leftover(l, &den_digits).0);
+                }
+                tmp.push('.');
+            }
+            Item::DenTail(_) => {
+                if i == 0 || !matches!(l.items[i - 1], Item::DenTail(_)) {
+                    let run: Vec<Ph> = l.items[i..]
+                        .iter()
+                        .map_while(|x| match x {
+                            Item::DenTail(p) => Some(*p),
+                            _ => None,
+                        })
+                        .collect();
+
+                    if (l.num_has_q || l.int_has_q) && !tail_s_done {
+                        tail_s_done = true;
+                        let (s, short) = den_leftover(l, &den_digits);
+                        if run.iter().all(|p| *p == Ph::Q) {
+                            for j in 0..run.len() {
+                                tmp.push(s.get(j).copied().unwrap_or(' '));
+                            }
+                        } else {
+                            let mut seen = !s.is_empty() || short;
+                            if !short {
+                                tmp.extend(&s);
+                            }
+                            for (j, p) in run.iter().enumerate() {
+                                if short && j == 0 && *p == Ph::Hash {
+                                    continue;
+                                }
+                                tmp.push(if *p == Ph::Q && !seen { ' ' } else { '0' });
+                                seen |= *p != Ph::Q;
+                            }
+                        }
+                    } else {
+                        let mut seen = false;
+                        for p in &run {
+                            tmp.push(if *p == Ph::Q && !seen { ' ' } else { '0' });
+                            seen |= *p != Ph::Q;
+                        }
+                    }
                 }
             }
             other => push_literal(&mut tmp, other),
@@ -1001,7 +1132,7 @@ fn render_date(
             let heads_only = l.subsec == 0
                 && x >= 0.0
                 && l.items.iter().all(|it| {
-                    !matches!(it, Item::Date(d) if !matches!(d, DateTok::ElapsedH(_) | DateTok::ElapsedM(_) | DateTok::ElapsedS(_)))
+                    !matches!(it, Item::Date(d) if !matches!(d, DateTok::ElapsedH(_) | DateTok::ElapsedM(_) | DateTok::ElapsedS(_) | DateTok::LeftH(_) | DateTok::LeftM(_) | DateTok::LeftS(_)))
                 });
             if !heads_only {
                 return Err(XlError::VALUE);
@@ -1050,12 +1181,16 @@ fn render_date(
     };
     let lang = l.lcid.map_or(0, |id| id & 0xFFFF);
     let cal_names = if cal != 0 {
-        calendars::names(cal, lang)
+        calendars::names_tag(cal, lang)
+    } else if l.hijri && lang != 0 {
+        calendars::names(6, lang)
     } else {
         None
     };
     let names = if cal_names.is_some() && (lang == 0 || lang == 0x0409) {
         &super::locales::EN_NZ
+    } else if cal == 0x03 && cal_names.is_none() && lang != 0x0411 && lang != 0 {
+        names_for(None)
     } else {
         names_for(l.lcid)
     };
@@ -1109,7 +1244,7 @@ fn render_date(
         }
     };
 
-    let japanese = l.lcid.is_some_and(|id| id & 0xFFFF == 0x0411);
+    let japanese = l.lcid.is_some_and(|id| id & 0xFFFF == 0x0411) && (cal == 0 || cal == 0x03);
 
     let era_cal = cal == 0x03;
     let (era, era_year) = if (japanese || era_cal) && l.needs_date {
@@ -1125,6 +1260,7 @@ fn render_date(
 
     let stale = || set_num_cascade(x.abs(), l.subsec).stale;
     let left = |unit: u8| elapsed_head(x87::add(stale(), half_unit(l.subsec)), unit);
+    let left_am = |unit: u8| elapsed_head(x87::add(stale(), 0.5), unit);
     let fld = |s: String| db.map_or(s.clone(), |d| d.field(&s));
     let pos = |s: String| db.map_or(s.clone(), |d| d.positional(&s));
     let spell = |s: String| {
@@ -1197,6 +1333,9 @@ fn render_date(
             DateTok::ElapsedS(n) => {
                 out.push_str(&spell(head_text(head(3, total_secs), n as usize)))
             }
+            DateTok::AmH(n) => out.push_str(&spell(head_text(left_am(1), n as usize))),
+            DateTok::AmM(n) => out.push_str(&spell(head_text(left_am(2), n as usize))),
+            DateTok::AmS(n) => out.push_str(&spell(head_text(left_am(3), n as usize))),
             DateTok::LeftH(n) => out.push_str(&spell(head_text(left(1), n as usize))),
             DateTok::LeftM(n) => out.push_str(&spell(head_text(left(2), n as usize))),
             DateTok::LeftS(n) => out.push_str(&spell(head_text(left(3), n as usize))),
@@ -1213,11 +1352,11 @@ fn render_date(
                 if japanese {
                     out.push_str(&num(era_year, n));
                 } else {
-                    out.push_str(&y.to_string());
+                    out.push_str(&(y - calendars::year_offset(cal)).to_string());
                 }
             }
             DateTok::Era(n) => {
-                if japanese {
+                if japanese || era_cal {
                     out.push_str(match n {
                         1 => ["M", "T", "S", "H", "R"][era],
                         2 => ["明", "大", "昭", "平", "令"][era],

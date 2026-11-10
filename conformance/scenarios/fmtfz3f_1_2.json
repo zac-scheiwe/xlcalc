@@ -1,0 +1,437 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "name",
+   "name": "x",
+   "refers_to": "=Sheet1!$C$1"
+  },
+  {
+   "op": "name",
+   "name": "Total",
+   "refers_to": "=Sheet1!$C$2"
+  },
+  {
+   "op": "name",
+   "name": "_a",
+   "refers_to": "=Sheet1!$C$3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=XFE1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(1,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=(0.1234567890123456789 =\nTRUE  <r <>\n1E3\n-STDEV( , R2C3  )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(2,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=CONCAT  ()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(3,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "=1%"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(4,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "=!TODAY(  )#"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(5,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "=A0"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(6,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "=T (CO2\t,#N/A\t,A1 )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(7,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "'=TRUE\t: SWITCH( )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(8,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "=GET.CELL(1:1)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(9,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "=x"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(10,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "=Total"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(11,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A12",
+   "input": "=TODAY\n(   )\t 1:1 *MAP  (\tA1\t, +1)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(12,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A13",
+   "input": "=\"\""
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(13,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A14",
+   "input": "=#N/A&\n1E-3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(14,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A15",
+   "input": "=XLOOKUP\t(#N/A## ,\n ,\n123456789012345678 )<((TRUE"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(15,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A16",
+   "input": "=1E308\t%\n1%%"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(16,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A17",
+   "input": "=R2C3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(17,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A18",
+   "input": "=TEXTSPLIT\n(B2:A1,1E308@,Total )\t:\tTOCOL\n(IMAGE\n(Total\t,{1,2;3,4}  ),\n1:1\t)"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(18,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A19",
+   "input": "=RC[1]"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(19,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A20",
+   "input": "=TOCOL (~a1\t,\t,.5) <>NORM.DIST (SWITCH (\n$A$1),  _a >  1E309  )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(20,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A21",
+   "input": "=#N/A"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(21,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A22",
+   "input": "=B2:A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(22,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A23",
+   "input": "=2:3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(23,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A24",
+   "input": "=!RC[1]"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(24,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A25",
+   "input": "=A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(25,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A26",
+   "input": " =1E-400"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(26,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A27",
+   "input": "=PI()"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(27,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A28",
+   "input": "=\"\""
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(28,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A29",
+   "input": "=-+$A$1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(29,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A30",
+   "input": "=é"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(30,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A31",
+   "input": "=N(1,.5\t%)_a,REGEXTEST (ISOMITTED  (,1E308,(1)\t)\t) )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(31,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A32",
+   "input": "=--c"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(32,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A33",
+   "input": "=if( 1,\n1:1 +  REDUCE\n(\t  ) )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(33,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A34",
+   "input": " ='Sheet1'!A1"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(34,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A35",
+   "input": "=REDUCE (  )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(35,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A36",
+   "input": "=TODAY (  \"\")"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(36,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A37",
+   "input": "=R2C3"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(37,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A38",
+   "input": "=REDUCE ( )"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(38,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A39",
+   "input": "=a.b\t* 0001##  >=\t1E3 <>  c\t=\t0.1234567890123456789 >=\t{1,2;3,4}"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(39,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A40",
+   "input": "=1%%!"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Cells(40,1)",
+   "prop": "FormulaR1C1"
+  },
+  {
+   "op": "read_text",
+   "range": "Sheet1!A1:A40"
+  }
+ ]
+}

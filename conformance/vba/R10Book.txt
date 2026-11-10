@@ -1,0 +1,26 @@
+Option Explicit
+
+Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
+    On Error Resume Next
+    R10Log = R10Log & "[Bchg:" & Sh.Name & ":" & Target.Address(False, False) & "]"
+End Sub
+
+Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Range)
+    On Error Resume Next
+    R10Log = R10Log & "[Bsel:" & Sh.Name & ":" & Target.Address(False, False) & "]"
+End Sub
+
+Private Sub Workbook_SheetCalculate(ByVal Sh As Object)
+    On Error Resume Next
+    R10Log = R10Log & "[Bcalc:" & Sh.Name & "]"
+End Sub
+
+Private Sub Workbook_SheetActivate(ByVal Sh As Object)
+    On Error Resume Next
+    R10Log = R10Log & "[Bact:" & Sh.Name & "]"
+End Sub
+
+Private Sub Workbook_SheetDeactivate(ByVal Sh As Object)
+    On Error Resume Next
+    R10Log = R10Log & "[Bdeact:" & Sh.Name & "]"
+End Sub

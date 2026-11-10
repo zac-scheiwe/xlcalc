@@ -27,6 +27,10 @@ pub(crate) struct BookVba {
     pub workbook_code_name: Option<String>,
 
     pub sheet_code_names: Vec<(SheetId, String)>,
+
+    pub chain: Option<ChainSig>,
+
+    pub renew: bool,
 }
 
 pub(crate) struct ViewState {
@@ -41,6 +45,8 @@ pub struct VbaHost {
     functions: HashMap<String, Signature>,
 
     book_name: String,
+
+    pub(crate) is_addin: bool,
 }
 
 impl VbaHost {
@@ -96,6 +102,7 @@ impl VbaHost {
             project,
             functions,
             book_name: book_name.to_string(),
+            is_addin: false,
         };
         (host, errors)
     }
@@ -187,16 +194,42 @@ impl FunctionHost for VbaHost {
         self.functions.get(name).cloned()
     }
 
+    fn refused_after_host_call(&self, _name: &str) -> bool {
+        false
+    }
+
     fn call(
         &self,
         name: &str,
         args: &[Arg],
         cx: &mut CallContext<'_>,
     ) -> Result<Value, RuntimeError> {
+        self.call_from(name, args, cx, None)
+    }
+}
+
+impl VbaHost {
+    pub(crate) fn call_from(
+        &self,
+        name: &str,
+        args: &[Arg],
+        cx: &mut CallContext<'_>,
+        caller: Option<&str>,
+    ) -> Result<Value, RuntimeError> {
         let view = cx.view();
         let project = &self.project;
-        let mut app = Application::view(view.workbook(), &self.book_name, view.caller());
+        let mut app = Application::view_from(
+            view.workbook(),
+            &self.book_name,
+            caller.filter(|c| !c.eq_ignore_ascii_case(&self.book_name)),
+            view.caller(),
+        );
         let book = app.active.ok_or(RuntimeError)?;
+        if self.is_addin {
+            if let Some(b) = app.books.iter_mut().find(|b| b.id == book) {
+                b.is_addin = true;
+            }
+        }
         let values: Vec<Variant> = args.iter().map(|a| app.arg_variant(book, a)).collect();
         let r = deep(|| project.call(name, &values, &mut Objects::new(&mut app)));
         if let Some(v) = app.view.as_ref().and_then(|v| v.volatile) {
@@ -211,8 +244,21 @@ impl FunctionHost for VbaHost {
 
 impl<'v> Application<'v> {
     pub fn view(wb: &'v Workbook, name: &str, caller: CellAddr) -> Application<'v> {
+        Application::view_from(wb, name, None, caller)
+    }
+
+    fn view_from(
+        wb: &'v Workbook,
+        name: &str,
+        active: Option<&str>,
+        caller: CellAddr,
+    ) -> Application<'v> {
         let mut app = Application::new();
         let id = app.push_book_wb(BookWb::View(wb), name.to_string(), String::new());
+        if let Some(a) = active {
+            let other = app.push_book_wb(BookWb::View(wb), a.to_string(), String::new());
+            app.active = Some(other);
+        }
         app.view = Some(ViewState {
             caller,
             volatile: None,
@@ -246,10 +292,11 @@ impl<'v> Application<'v> {
         book: BookId,
     ) -> Result<Vec<xlcalc_vba::CompileError>, OmError> {
         let b = self.book_mut(book)?;
-        let (host, errors) = VbaHost::compile(&b.vba.modules, &b.name);
+        let (mut host, errors) = VbaHost::compile(&b.vba.modules, &b.name);
+        host.is_addin = b.is_addin;
         let host = Arc::new(host);
-        b.vba.host = Some(host.clone());
-        b.wb.set_function_host(Some(host));
+        b.vba.host = Some(host);
+        self.refresh_chains();
         Ok(errors)
     }
 
@@ -265,7 +312,7 @@ impl<'v> Application<'v> {
         match a {
             Arg::Missing => Variant::Error(HResult::DISP_E_PARAMNOTFOUND.0),
             Arg::Value(v) => value_variant(v),
-            Arg::Ref(areas) => match areas.first() {
+            Arg::Ref(areas) | Arg::XRef(areas) => match areas.first() {
                 Some(area) => self
                     .new_range(book, area.sheet, area.rect, Mode::Cells)
                     .unwrap_or(Variant::Error(error_scode(XlError::REF))),
@@ -274,7 +321,7 @@ impl<'v> Application<'v> {
         }
     }
 
-    fn result_value(&mut self, v: Variant, depth: u32) -> Value {
+    pub(crate) fn result_value(&mut self, v: Variant, depth: u32) -> Value {
         let number = |v: &Variant| match change_type(v, VarType::R8, Locale::EN_US, 0) {
             Ok(Variant::R8(n)) => Value::Number(n),
             _ => Value::Error(XlError::VALUE),
@@ -282,7 +329,7 @@ impl<'v> Application<'v> {
         match v {
             Variant::Empty => Value::Blank,
 
-            Variant::Null => Value::Error(XlError::NA),
+            Variant::Null => Value::Number(0.0),
             Variant::Bstr(s) => Value::Text(s.as_str().into()),
             Variant::Bool(b) => Value::Bool(b),
             Variant::Error(sc) => Value::Error(scode_error(sc).unwrap_or(XlError::VALUE)),
@@ -293,6 +340,39 @@ impl<'v> Application<'v> {
                 }
             }
             Variant::Array(a) if depth < 2 => {
+                if a.data.iter().any(|e| matches!(e, Variant::Null)) {
+                    return Value::Error(XlError::VALUE);
+                }
+                if a.data.iter().any(|e| matches!(e, Variant::Array(_))) {
+                    let inner: Option<Vec<&xlcalc_variant::SafeArray>> = a
+                        .data
+                        .iter()
+                        .map(|e| match e {
+                            Variant::Array(i) if i.bounds.len() == 1 => Some(&**i),
+                            _ => None,
+                        })
+                        .collect();
+                    let n = inner.as_ref().and_then(|v| v.first().map(|f| f.data.len()));
+                    let (Some(inner), Some(n), [_]) = (inner, n, a.bounds.as_slice()) else {
+                        return Value::Error(XlError::VALUE);
+                    };
+                    if n == 0 || inner.iter().any(|i| i.data.len() != n) {
+                        return Value::Error(XlError::VALUE);
+                    }
+                    let mut data = Vec::with_capacity(inner.len() * n);
+                    for i in &inner {
+                        for e in &i.data {
+                            data.push(match e {
+                                Variant::Array(_)
+                                | Variant::Dispatch(_)
+                                | Variant::Unknown(_)
+                                | Variant::Null => Value::Error(XlError::VALUE),
+                                e => self.result_value(e.clone(), depth + 1),
+                            });
+                        }
+                    }
+                    return xlcalc::Array::new(inner.len() as u32, n as u32, data).into_value();
+                }
                 let (rows, cols) = match a.bounds.as_slice() {
                     [(_, n)] => (1, *n),
                     [(_, r), (_, c)] => (*r, *c),
@@ -345,6 +425,9 @@ impl<'v> Application<'v> {
 
     pub(crate) fn app_run(&mut self, a: &crate::conv::Args) -> Result<Variant, OmError> {
         let text = a.string(0)?.ok_or_else(OmError::app_defined)?;
+        if let Some(r) = self.xlm_run(&text, a) {
+            return r;
+        }
         let cannot = || {
             OmError::app_defined_with(&format!(
                 "Cannot run the macro '{text}'. The macro may not be available in this workbook \
@@ -353,6 +436,18 @@ impl<'v> Application<'v> {
         };
         let (book, proc) = match text.rsplit_once('!') {
             Some((b, p)) => {
+                if b.eq_ignore_ascii_case("SOLVER.XLAM") {
+                    if let Some(r) = self.solver_run(p, a) {
+                        return r;
+                    }
+                    return Err(cannot());
+                }
+                if b.eq_ignore_ascii_case("ATPVBAEN.XLAM") {
+                    if let Some(r) = self.atp_run(p, a) {
+                        return r;
+                    }
+                    return Err(cannot());
+                }
                 let quoted = b.len() > 1 && b.starts_with('\'') && b.ends_with('\'');
                 let b = b.trim_matches('\'');
                 let id = self
@@ -363,8 +458,9 @@ impl<'v> Application<'v> {
                 let Some(id) = id else {
                     return Err(if quoted {
                         let dir = self.default_file_path.trim_end_matches(['\\', '/']);
+                        let ext = if b.contains('.') { "" } else { ".xlsx" };
                         OmError::app_defined_with(&format!(
-                            "Sorry, we couldn't find {dir}\\{b}.xlsx. Is it possible it was \
+                            "Sorry, we couldn't find {dir}\\{b}{ext}. Is it possible it was \
                              moved, renamed or deleted?"
                         ))
                     } else {
@@ -373,7 +469,28 @@ impl<'v> Application<'v> {
                 };
                 (id, p.to_string())
             }
-            None => (self.active_book().map_err(|_| cannot())?.id, text.clone()),
+            None => {
+                let active = match self.active_book() {
+                    Ok(b) => Some(b.id),
+                    Err(_) => None,
+                };
+                let has = |app: &Self, id: BookId| {
+                    app.book(id)
+                        .ok()
+                        .and_then(|b| b.vba.host.clone())
+                        .is_some_and(|h| {
+                            matches!(h.project().lookup_macro(&text), MacroLookup::Found(_))
+                        })
+                };
+                let id = active
+                    .into_iter()
+                    .chain(self.installed_addin_books())
+                    .chain(self.books.iter().filter(|b| b.is_addin).map(|b| b.id))
+                    .find(|&id| has(self, id))
+                    .or(active)
+                    .ok_or_else(cannot)?;
+                (id, text.clone())
+            }
         };
         {
             let wb = &self.book(book)?.wb;
@@ -386,6 +503,10 @@ impl<'v> Application<'v> {
                     Ok(Variant::Error(error_scode(XlError::VALUE)))
                 };
             }
+        }
+        #[cfg(windows)]
+        if let Some(r) = self.run_xll_function(book, &proc, a)? {
+            return Ok(r);
         }
         let host = self.book(book)?.vba.host.clone().ok_or_else(cannot)?;
 
@@ -442,6 +563,10 @@ impl Application<'_> {
             None => CellAddr::new(wb.active_sheet(), 0, 0),
         };
         let name = m.name.trim_start_matches('_');
+
+        if raise && name == "CountIf" && matches!(a.values.first(), Some(Some(Variant::Array(_)))) {
+            return Err(OmError::object_required());
+        }
         let r = wb
             .call_function(at, name, &args)
             .ok_or_else(|| crate::app::unsupported("WorksheetFunction", m))?;
@@ -450,10 +575,26 @@ impl Application<'_> {
                 "Unable to get the {name} property of the WorksheetFunction class"
             )));
         }
+
+        if let Value::Array(arr) = &r {
+            if arr.rows == 1
+                && arr.cols > 1
+                && a.values
+                    .iter()
+                    .any(|v| matches!(v, Some(Variant::Array(_))))
+            {
+                let n = arr.data.len();
+                return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
+                    elem: VarType::Variant,
+                    bounds: vec![(1, n as u32)],
+                    data: arr.data.iter().map(value_variant).collect(),
+                })));
+            }
+        }
         Ok(value_variant(&r))
     }
 
-    fn engine_arg(&self, v: &Variant) -> Result<Arg, OmError> {
+    pub(crate) fn engine_arg(&self, v: &Variant) -> Result<Arg, OmError> {
         if let Variant::Dispatch(Some(id)) = v {
             if let Some(crate::app::Object::Range(r)) = self.arena.get(*id) {
                 let (sheet, rect) = self.resolve(r)?;
@@ -473,7 +614,7 @@ impl Application<'_> {
     }
 }
 
-fn variant_value(v: &Variant) -> Result<Value, OmError> {
+pub(crate) fn variant_value(v: &Variant) -> Result<Value, OmError> {
     Ok(match v {
         Variant::Empty => Value::Blank,
         Variant::Bstr(s) => Value::Text(s.as_str().into()),
@@ -484,7 +625,11 @@ fn variant_value(v: &Variant) -> Result<Value, OmError> {
                 crate::conv::array_cells(v).ok_or_else(OmError::type_mismatch)?;
             let data = cells
                 .iter()
-                .map(variant_value)
+                .map(|c| match c {
+                    Variant::Array(_) => Err(OmError::type_mismatch()),
+                    Variant::Date(_) => Ok(Value::Text("".into())),
+                    c => variant_value(c),
+                })
                 .collect::<Result<Vec<_>, _>>()?;
             xlcalc::Array::new(rows, cols, data).into_value()
         }
@@ -529,7 +674,7 @@ pub(crate) fn import_modules(part: &xlcalc_xlsx::VbaPart) -> (Vec<SourceModule>,
     (modules, warnings)
 }
 
-fn value_variant(v: &Value) -> Variant {
+pub(crate) fn value_variant(v: &Value) -> Variant {
     match v {
         Value::Array(a) => {
             array_variant(a.rows, a.cols, a.data.iter().map(value_variant).collect())
@@ -559,6 +704,8 @@ fn vba_error(e: OmError) -> VbaError {
             0x8002_0005 => 13,
             0x8002_000B => 9,
             0x8002_000A => 6,
+            0x8002_000E => 450,
+            0x8002_000F => 449,
             _ => e.number,
         },
         DISP_E_UNKNOWNNAME | DISP_E_MEMBERNOTFOUND => 438,
@@ -591,6 +738,12 @@ impl ObjectHost for Objects<'_, '_> {
         positional: &[Variant],
         named: &[(&str, Variant)],
     ) -> Result<Variant, VbaError> {
+        if crate::comobj::is_com(obj) {
+            if !named.is_empty() {
+                return Err(VbaError::new(448));
+            }
+            return self.app.com_invoke(obj, member, kind, positional);
+        }
         let call = Call {
             flags: match kind {
                 InvokeKind::Get => flags::METHOD | flags::GET,
@@ -599,6 +752,18 @@ impl ObjectHost for Objects<'_, '_> {
             },
             lcid: 0x0409,
         };
+
+        if kind == InvokeKind::Put && obj == self.app.handle() {
+            match (member.to_ascii_lowercase().as_str(), positional.last()) {
+                ("enableevents" | "screenupdating" | "displayalerts", Some(Variant::Null)) => {
+                    return Err(VbaError::new(94));
+                }
+                ("calculation", Some(Variant::Bstr(t))) if t.trim().parse::<f64>().is_err() => {
+                    return Err(VbaError::new(13));
+                }
+                _ => {}
+            }
+        }
         let r = if member.is_empty() {
             if !named.is_empty() {
                 return Err(VbaError::new(448));
@@ -637,7 +802,26 @@ impl ObjectHost for Objects<'_, '_> {
         .map_err(vba_error)
     }
 
+    fn dll_call(&mut self, lib: &str, name: &str, args: &[Variant]) -> Result<Variant, VbaError> {
+        self.app.dll_call(lib, name, args)
+    }
+
+    fn create_object(&mut self, progid: &str) -> Result<ObjectId, VbaError> {
+        self.app.create_com_object(progid)
+    }
+
+    fn get_object(
+        &mut self,
+        path: Option<&str>,
+        class: Option<&str>,
+    ) -> Result<ObjectId, VbaError> {
+        Application::get_com_object(path, class)
+    }
+
     fn type_name(&mut self, obj: ObjectId) -> String {
+        if crate::comobj::is_com(obj) {
+            return self.app.com_type_name(obj).to_string();
+        }
         self.app
             .type_name(obj)
             .map_or("Object", |n| n.trim_start_matches('_'))
@@ -672,6 +856,9 @@ impl ObjectHost for Objects<'_, '_> {
     }
 
     fn enumerate(&mut self, obj: ObjectId) -> Result<Vec<Variant>, VbaError> {
+        if crate::comobj::is_com(obj) {
+            return self.app.com_enumerate(obj);
+        }
         let call = Call {
             flags: flags::METHOD | flags::GET,
             lcid: 0x0409,
@@ -721,6 +908,46 @@ fn strip_class_header(source: &str) -> String {
         out.push_str("\r\n");
     }
     out
+}
+
+pub(crate) struct ChainSig {
+    caller: String,
+    own: Option<Arc<VbaHost>>,
+    others: Vec<(String, Arc<VbaHost>)>,
+}
+
+impl ChainSig {
+    pub(crate) fn new(
+        caller: &str,
+        own: Option<Arc<VbaHost>>,
+        others: Vec<(String, Arc<VbaHost>)>,
+    ) -> ChainSig {
+        ChainSig {
+            caller: caller.to_string(),
+            own,
+            others,
+        }
+    }
+
+    pub(crate) fn same(&self, new: &ChainSig) -> bool {
+        self.caller == new.caller
+            && self.own.as_ref().map(Arc::as_ptr) == new.own.as_ref().map(Arc::as_ptr)
+            && self.others.len() == new.others.len()
+            && self
+                .others
+                .iter()
+                .zip(&new.others)
+                .all(|(x, y)| x.0 == y.0 && Arc::ptr_eq(&x.1, &y.1))
+    }
+
+    pub(crate) fn lost_only(&self, new: &ChainSig) -> bool {
+        self.own.as_ref().map(Arc::as_ptr) == new.own.as_ref().map(Arc::as_ptr)
+            && new.others.iter().all(|o| {
+                self.others
+                    .iter()
+                    .any(|x| x.0 == o.0 && Arc::ptr_eq(&x.1, &o.1))
+            })
+    }
 }
 
 #[cfg(test)]

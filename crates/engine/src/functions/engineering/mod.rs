@@ -50,7 +50,7 @@ pub const DEFS: &[FnDef] = &[
     args("OCT2HEX", 1, 2, "R", |c, o| {
         base::convert(c, o, Radix::Oct, Radix::Hex)
     }),
-    scalar("BASE", 2, 3, base::base_fn),
+    args("BASE", 2, 3, "R", base::base_fn),
     scalar("DECIMAL", 2, 2, base::decimal),
     scalar("ROMAN", 1, 2, base::roman),
     scalar("ARABIC", 1, 1, base::arabic),

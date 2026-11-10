@@ -259,6 +259,14 @@ impl Workbook {
                 }
             }
         }
+
+        if (rect.r0..=rect.r1).any(|r| self.row_outline_level(sheet, r) > 1)
+            || (rect.c0..=rect.c1).any(|c| self.col_outline_level(sheet, c) > 1)
+        {
+            return Err(EditError::Compile(
+                "You cannot remove duplicate information when the range has an outline. To remove duplicates, clear the outline and perform the remove duplicates operation again.".into(),
+            ));
+        }
         let used = self.used_extent(sheet);
         let Some(eff) = used.and_then(|u| rect.intersection(&u)) else {
             return Err(generic_error());
@@ -387,7 +395,7 @@ impl Workbook {
                             to.col as i64 - f.addr.col as i64,
                         );
                         let root = map_refs(&f.formula.root, &mut |s, cref| {
-                            if *s == SheetRef::Current {
+                            if matches!(s, SheetRef::Current | SheetRef::Own) {
                                 Some(move_ref(cref, to))
                             } else {
                                 Some(Some(retarget(cref, dr, dc)))

@@ -788,6 +788,10 @@ pub fn f_dist_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if x < 0.0 {
             return Err(XlError::NUM);
         }
+
+        if (d1 * x).is_infinite() {
+            return Err(XlError::DIV0);
+        }
         Ok(f_tails_xl(x, d1, d2).1)
     })())
 }
@@ -988,7 +992,7 @@ fn inv_ibeta_iter(al: f64, pp: f64, qq: f64, mut x: f64) -> Result<f64, XlError>
     let pp2 = x87::mul(pp, pp);
     let e = x87::sub(x87::add(-13.0, x87::div(-5.0, pp2)), xl_pow(al, -0.2));
     let e2 = x87::mul(2.0, e);
-    if pp2 == 0.0 || !e2.is_finite() {
+    if pp2 == 0.0 || !pp2.is_finite() || !e2.is_finite() {
         return Err(XlError::NUM);
     }
     let acu = xl_pow(10.0, e2.max(-300.0)).min(4.930380657631324e-32);
@@ -1004,6 +1008,9 @@ fn inv_ibeta_iter(al: f64, pp: f64, qq: f64, mut x: f64) -> Result<f64, XlError>
         }
         evals += 1;
         let i = super::ibeta::xl_ibeta(x, x87::sub(1.0, x), pp, qq).0;
+        if i.is_nan() {
+            return Err(XlError::NUM);
+        }
         let r = x87::sub(i, al);
         if r.abs() < best.0 {
             best = (r.abs(), x);
@@ -1227,12 +1234,12 @@ pub fn binom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
         let k = num(ctx, &a[0])?;
         let n = num(ctx, &a[1])?;
+        let p = num(ctx, &a[2])?;
+        let cum = flag(a, 3)?;
         if k < 0.0 || n < 0.0 {
             return Err(XlError::NUM);
         }
         let (k, n) = (k.trunc(), n.trunc());
-        let p = num(ctx, &a[2])?;
-        let cum = flag(a, 3)?;
         if k < 0.0 || n < 0.0 || k > n || !(0.0..=1.0).contains(&p) || n >= MAX_TRIALS {
             return Err(XlError::NUM);
         }
@@ -1442,7 +1449,8 @@ fn hypgeom(k: f64, n: f64, kk: f64, nn: f64, cum: bool) -> R<f64> {
         }
         return Ok(hypgeom_pmf(k, n, kk, nn));
     }
-    if k >= hi {
+
+    if k >= hi && !(k == 0.0 && kk == 0.0 && n > 0.0) {
         return Ok(1.0);
     }
     if k < lo {

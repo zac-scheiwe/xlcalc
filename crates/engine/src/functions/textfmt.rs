@@ -3,7 +3,7 @@ use super::text::{left_right, map_case, mid, replace};
 use super::{args, scalar, FnDef};
 use crate::eval::{EvalCtx, Operand};
 use crate::number::format_general;
-use crate::numfmt::{decimal::Dec, fixed_text, NumberFormat};
+use crate::numfmt::{decimal::Dec, fixed_text, typed_elapsed_ok, NumberFormat};
 use crate::text::{utf16_len, Wildcard};
 use crate::value::{Array, Value, XlError, MAX_TEXT_LEN};
 
@@ -71,9 +71,23 @@ fn text_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         Value::Error(e) => return err(*e),
         _ => return err(XlError::VALUE),
     };
-    let f = match NumberFormat::parse(&code) {
+    let f = match NumberFormat::parse(&code)
+        .and_then(|f| typed_elapsed_ok(&code).then_some(f).ok_or(XlError::VALUE))
+    {
         Ok(f) => f,
         Err(e) => return err(e),
+    };
+
+    let lower = code.to_ascii_lowercase();
+    let spelled = crate::numfmt::readback_spelling(&code);
+    let f = if lower.contains("am/pm")
+        && lower.contains('[')
+        && !lower.contains("hhh")
+        && spelled != crate::numfmt::spelled_for_parse(&code)
+    {
+        NumberFormat::parse(&spelled).unwrap_or(f)
+    } else {
+        f
     };
     match f.format(&v, &ctx.wb.locale, ctx.wb.settings.date_system) {
         Ok(r) => limited(r.text, MAX_FORMATTED, XlError::VALUE),

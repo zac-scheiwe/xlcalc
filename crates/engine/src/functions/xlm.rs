@@ -4,6 +4,8 @@ use crate::eval::{EvalCtx, Operand};
 use crate::formula::Node;
 use crate::value::{Value, XlError};
 
+pub const SHADOWING: &[&str] = &["SORT", "FILTER"];
+
 pub const NAME_ONLY: &[&str] = &["GET.CELL", "EVALUATE"];
 
 pub const DEFS: &[FnDef] = &[
@@ -558,6 +560,8 @@ pub const XLM_ONLY: &[&str] = &[
     "RUN",
     "SAVE",
     "SAVE.AS",
+    "SORT",
+    "FILTER",
     "SAVE.TOOLBAR",
     "SAVE.WORKBOOK",
     "SAVE.WORKSPACE",

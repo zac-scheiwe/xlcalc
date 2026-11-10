@@ -1,0 +1,455 @@
+{
+"sheets": [
+"Inv"
+],
+"steps": [
+{
+"op": "set",
+"cell": "Inv!A1",
+"input": "Invoice"
+},
+{
+"op": "set",
+"cell": "Inv!B1",
+"input": "INV-0042"
+},
+{
+"op": "set",
+"cell": "Inv!A2",
+"input": "Date"
+},
+{
+"op": "set",
+"cell": "Inv!B2",
+"input": "12/3/2026"
+},
+{
+"op": "set",
+"cell": "Inv!A3",
+"input": "Terms (days)"
+},
+{
+"op": "set",
+"cell": "Inv!B3",
+"input": "14"
+},
+{
+"op": "set",
+"cell": "Inv!A4",
+"input": "Due"
+},
+{
+"op": "set",
+"cell": "Inv!B4",
+"input": "=WORKDAY(B2,B3)"
+},
+{
+"op": "set",
+"cell": "Inv!A5",
+"input": "GST"
+},
+{
+"op": "set",
+"cell": "Inv!B5",
+"input": "15%"
+},
+{
+"op": "set",
+"cell": "Inv!A6",
+"input": "Discount"
+},
+{
+"op": "set",
+"cell": "Inv!B6",
+"input": "10%"
+},
+{
+"op": "set",
+"cell": "Inv!A7",
+"input": "Customer"
+},
+{
+"op": "set",
+"cell": "Inv!B7",
+"input": "Acme Ltd"
+},
+{
+"op": "set",
+"cell": "Inv!A9",
+"input": "Item"
+},
+{
+"op": "set",
+"cell": "Inv!B9",
+"input": "Qty"
+},
+{
+"op": "set",
+"cell": "Inv!C9",
+"input": "Unit"
+},
+{
+"op": "set",
+"cell": "Inv!D9",
+"input": "Disc?"
+},
+{
+"op": "set",
+"cell": "Inv!E9",
+"input": "Line"
+},
+{
+"op": "set",
+"cell": "Inv!F9",
+"input": "GST"
+},
+{
+"op": "set",
+"cell": "Inv!G9",
+"input": "Total"
+},
+{
+"op": "set",
+"cell": "Inv!A10",
+"input": "Widget"
+},
+{
+"op": "set",
+"cell": "Inv!B10",
+"input": "12"
+},
+{
+"op": "set",
+"cell": "Inv!C10",
+"input": "$4.99"
+},
+{
+"op": "set",
+"cell": "Inv!D10",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "Inv!A11",
+"input": "Gadget"
+},
+{
+"op": "set",
+"cell": "Inv!B11",
+"input": "3"
+},
+{
+"op": "set",
+"cell": "Inv!C11",
+"input": "$129.95"
+},
+{
+"op": "set",
+"cell": "Inv!D11",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "Inv!A12",
+"input": "Service hr"
+},
+{
+"op": "set",
+"cell": "Inv!B12",
+"input": "7.5"
+},
+{
+"op": "set",
+"cell": "Inv!C12",
+"input": "$85"
+},
+{
+"op": "set",
+"cell": "Inv!D12",
+"input": "Y"
+},
+{
+"op": "set",
+"cell": "Inv!A13",
+"input": "Freight"
+},
+{
+"op": "set",
+"cell": "Inv!B13",
+"input": "1"
+},
+{
+"op": "set",
+"cell": "Inv!C13",
+"input": "$22.5"
+},
+{
+"op": "set",
+"cell": "Inv!D13",
+"input": "N"
+},
+{
+"op": "set",
+"cell": "Inv!E10",
+"input": "=ROUND(B10*C10*IF(D10=\"Y\",1-$B$6,1),2)"
+},
+{
+"op": "set",
+"cell": "Inv!F10",
+"input": "=ROUND(E10*$B$5,2)"
+},
+{
+"op": "set",
+"cell": "Inv!G10",
+"input": "=E10+F10"
+},
+{
+"op": "set",
+"cell": "Inv!E11",
+"input": "=ROUND(B11*C11*IF(D11=\"Y\",1-$B$6,1),2)"
+},
+{
+"op": "set",
+"cell": "Inv!F11",
+"input": "=ROUND(E11*$B$5,2)"
+},
+{
+"op": "set",
+"cell": "Inv!G11",
+"input": "=E11+F11"
+},
+{
+"op": "set",
+"cell": "Inv!E12",
+"input": "=ROUND(B12*C12*IF(D12=\"Y\",1-$B$6,1),2)"
+},
+{
+"op": "set",
+"cell": "Inv!F12",
+"input": "=ROUND(E12*$B$5,2)"
+},
+{
+"op": "set",
+"cell": "Inv!G12",
+"input": "=E12+F12"
+},
+{
+"op": "set",
+"cell": "Inv!E13",
+"input": "=ROUND(B13*C13*IF(D13=\"Y\",1-$B$6,1),2)"
+},
+{
+"op": "set",
+"cell": "Inv!F13",
+"input": "=ROUND(E13*$B$5,2)"
+},
+{
+"op": "set",
+"cell": "Inv!G13",
+"input": "=E13+F13"
+},
+{
+"op": "set",
+"cell": "Inv!A15",
+"input": "Subtotal"
+},
+{
+"op": "set",
+"cell": "Inv!E15",
+"input": "=SUM(E10:E13)"
+},
+{
+"op": "set",
+"cell": "Inv!F15",
+"input": "=SUM(F10:F13)"
+},
+{
+"op": "set",
+"cell": "Inv!G15",
+"input": "=SUM(G10:G13)"
+},
+{
+"op": "set",
+"cell": "Inv!A16",
+"input": "GST on subtotal"
+},
+{
+"op": "set",
+"cell": "Inv!E16",
+"input": "=ROUND(E15*B5,2)"
+},
+{
+"op": "set",
+"cell": "Inv!A17",
+"input": "Diff"
+},
+{
+"op": "set",
+"cell": "Inv!E17",
+"input": "=F15-E16"
+},
+{
+"op": "set",
+"cell": "Inv!A18",
+"input": "Round to 5c"
+},
+{
+"op": "set",
+"cell": "Inv!E18",
+"input": "=MROUND(G15,0.05)"
+},
+{
+"op": "set",
+"cell": "Inv!A19",
+"input": "Words"
+},
+{
+"op": "set",
+"cell": "Inv!E19",
+"input": "=TEXT(G15,\"$#,##0.00\")&\" due \"&TEXT(B4,\"dd/mm/yyyy\")"
+},
+{
+"op": "set",
+"cell": "Inv!A20",
+"input": "Days late"
+},
+{
+"op": "set",
+"cell": "Inv!E20",
+"input": "=MAX(0,DATE(2026,4,20)-B4)"
+},
+{
+"op": "set",
+"cell": "Inv!A21",
+"input": "Late fee"
+},
+{
+"op": "set",
+"cell": "Inv!E21",
+"input": "=ROUND(G15*0.015*ROUNDUP(E20/30,0),2)"
+},
+{
+"op": "read",
+"range": "Inv!A1:G21"
+},
+{
+"op": "format",
+"range": "Inv!B2",
+"fmt": "dd/mm/yyyy"
+},
+{
+"op": "format",
+"range": "Inv!B4",
+"fmt": "ddd dd mmm yyyy"
+},
+{
+"op": "format",
+"range": "Inv!C10:C13",
+"fmt": "$#,##0.00"
+},
+{
+"op": "format",
+"range": "Inv!E10:G18",
+"fmt": "$#,##0.00"
+},
+{
+"op": "format",
+"range": "Inv!B5:B6",
+"fmt": "0%"
+},
+{
+"op": "read",
+"range": "Inv!A1:G21"
+},
+{
+"op": "set",
+"cell": "Inv!B6",
+"input": "12.5%"
+},
+{
+"op": "set",
+"cell": "Inv!B3",
+"input": "30"
+},
+{
+"op": "read",
+"range": "Inv!A1:G21"
+},
+{
+"op": "insert_rows",
+"sheet": "Inv",
+"at": 12,
+"count": 1
+},
+{
+"op": "set",
+"cell": "Inv!A12",
+"input": "Bolt"
+},
+{
+"op": "set",
+"cell": "Inv!B12",
+"input": "100"
+},
+{
+"op": "set",
+"cell": "Inv!C12",
+"input": "$0.115"
+},
+{
+"op": "set",
+"cell": "Inv!D12",
+"input": "Y"
+},
+{
+"op": "autofill",
+"from": "Inv!E11:G11",
+"to": "Inv!E12:G12",
+"type": "default"
+},
+{
+"op": "read",
+"range": "Inv!A9:G22"
+},
+{
+"op": "sort",
+"range": "Inv!A10:G14",
+"keys": [
+{
+"key": 7,
+"order": "desc"
+}
+],
+"header": false
+},
+{
+"op": "read",
+"range": "Inv!A9:G22"
+},
+{
+"op": "copy_sheet",
+"sheet": "Inv",
+"name": "Inv2",
+"after": "Inv"
+},
+{
+"op": "set",
+"cell": "Inv!B1",
+"input": "INV-0043"
+},
+{
+"op": "set",
+"cell": "Inv2!B2",
+"input": "1/4/2026"
+},
+{
+"op": "set",
+"cell": "Inv2!B1",
+"input": "INV-0043"
+},
+{
+"op": "read",
+"range": "Inv2!A1:G22"
+}
+]
+}

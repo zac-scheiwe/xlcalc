@@ -1,0 +1,5 @@
+set D1 =B1*0+F1
+set C1 =A1+D1
+set A1 =B1+1
+set B1 =A1+1
+const F1 2

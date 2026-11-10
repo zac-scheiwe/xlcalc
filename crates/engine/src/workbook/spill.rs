@@ -17,6 +17,17 @@ pub struct SpillIndex {
     stale: FxHashMap<FormulaId, u32>,
 
     rw: u32,
+
+    carry: FxHashMap<FormulaId, Carry>,
+
+    outside: FxHashMap<FormulaId, FxHashMap<(u32, u32), Value>>,
+}
+
+#[derive(Debug, Clone)]
+struct Carry {
+    live: Vec<(u32, u32)>,
+    outside: FxHashMap<(u32, u32), Value>,
+    rw: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -73,7 +84,41 @@ pub enum SpillSource {
 impl SpillIndex {
     pub fn set_active(&mut self, fid: FormulaId, rect: Rect) {
         self.blocked.remove(&fid);
-        if let Some(rw) = self.cut_kept.remove(&fid) {
+        if let Some(c) = self.carry.remove(&fid) {
+            self.holed.remove(&fid);
+
+            if let Some(r) = self.stale.get_mut(&fid) {
+                *r = c.rw;
+            }
+            let live: Vec<(u32, u32)> = c
+                .live
+                .into_iter()
+                .filter(|&(r, col)| rect.contains(r, col))
+                .collect();
+            let full = (rect.r0..=rect.r1)
+                .all(|r| (rect.c0..=rect.c1).all(|col| live.contains(&(r, col))));
+            if !full {
+                self.holed.insert(
+                    fid,
+                    Holed {
+                        live,
+                        fresh: Vec::new(),
+                        rw: c.rw,
+                        revived: false,
+                        snap: FxHashMap::default(),
+                        frozen: FxHashMap::default(),
+                    },
+                );
+                let out: FxHashMap<(u32, u32), Value> = c
+                    .outside
+                    .into_iter()
+                    .filter(|&((r, col), _)| !rect.contains(r, col))
+                    .collect();
+                if !out.is_empty() {
+                    self.outside.insert(fid, out);
+                }
+            }
+        } else if let Some(rw) = self.cut_kept.remove(&fid) {
             self.layout(fid, rect, rw);
         } else if let (Some(h), Some(&prev)) = (self.holed.get_mut(&fid), self.active.get(&fid)) {
             if prev == rect {
@@ -81,6 +126,7 @@ impl SpillIndex {
                 return;
             }
             h.frozen.clear();
+            self.outside.remove(&fid);
 
             let fresh = std::mem::take(&mut h.fresh);
             h.live.extend(fresh);
@@ -159,6 +205,8 @@ impl SpillIndex {
         self.holed.remove(&fid);
         self.cut_kept.remove(&fid);
         self.stale.remove(&fid);
+        self.carry.remove(&fid);
+        self.outside.remove(&fid);
         self.active.remove(&fid)
     }
 
@@ -166,6 +214,8 @@ impl SpillIndex {
         *self = Self {
             cut_kept: std::mem::take(&mut self.cut_kept),
             stale: std::mem::take(&mut self.stale),
+            carry: std::mem::take(&mut self.carry),
+            outside: std::mem::take(&mut self.outside),
             rw: self.rw,
             ..Self::default()
         };
@@ -177,6 +227,28 @@ impl SpillIndex {
             self.cut_kept.insert(fid, rw);
         }
         self.stale.insert(fid, rw);
+    }
+
+    pub fn carry_cut(&mut self, fid: FormulaId, from: (u32, u32), to: (u32, u32)) {
+        let Some(h) = self.holed.get(&fid) else {
+            return;
+        };
+        let mut live: Vec<(u32, u32)> = h.live.iter().copied().filter(|&p| p != from).collect();
+        live.push(to);
+        live.sort_unstable();
+        let outside = h
+            .snap
+            .iter()
+            .map(|(&p, v)| (p, v.clone()))
+            .collect::<FxHashMap<_, _>>();
+        self.carry.insert(
+            fid,
+            Carry {
+                live,
+                outside,
+                rw: h.rw,
+            },
+        );
     }
 
     pub fn touch(&mut self) {
@@ -241,6 +313,9 @@ impl SpillIndex {
     }
 
     pub fn source(&self, fid: FormulaId, row: u32, col: u32) -> Option<SpillSource> {
+        if let Some(v) = self.outside.get(&fid).and_then(|m| m.get(&(row, col))) {
+            return Some(SpillSource::Value(v.clone()));
+        }
         let h = self.holed.get(&fid)?;
         let rect = self.active.get(&fid)?;
         if let Some(v) = h.frozen.get(&(row, col)) {
@@ -284,7 +359,13 @@ impl SpillIndex {
     pub fn owner_of(&self, row: u32, col: u32) -> Option<FormulaId> {
         self.active
             .iter()
-            .find(|(f, r)| r.contains(row, col) && !self.is_hole(**f, row, col))
+            .find(|(f, r)| {
+                (r.contains(row, col) && !self.is_hole(**f, row, col))
+                    || self
+                        .outside
+                        .get(*f)
+                        .is_some_and(|m| m.contains_key(&(row, col)))
+            })
             .map(|(f, _)| *f)
     }
 

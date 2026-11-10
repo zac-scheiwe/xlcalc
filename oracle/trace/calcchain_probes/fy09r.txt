@@ -1,0 +1,7 @@
+array A2:B4 =E4:E6+5
+set C1 =COUNT(B2:D3)
+set2 E3 =D4:E5*2
+set B1 =A4*2+E4
+array E5:E6 =C1:C2*2
+array D5:E6 =B1:B2*2
+clear E4

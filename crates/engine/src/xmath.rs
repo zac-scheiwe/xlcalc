@@ -112,7 +112,7 @@ fn powi_squaring(x: f64, n: f64) -> f64 {
 }
 
 pub fn pow(x: f64, y: f64) -> f64 {
-    if y.fract() == 0.0 && y.abs() < 9.007_199_254_740_992e15 {
+    if y.fract() == 0.0 && y.abs() < 4_294_967_295.0 {
         if x == 10.0 && y.abs() <= 400.0 {
             return format!("1e{}", y as i32).parse().unwrap_or(f64::INFINITY);
         }

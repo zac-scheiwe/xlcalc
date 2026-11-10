@@ -18,6 +18,8 @@ fn numeric_grid(ctx: &mut EvalCtx, op: &Operand) -> R<(usize, usize, Vec<f64>)> 
 
 struct Design {
     row: bool,
+
+    dims: (usize, usize),
     y: Vec<f64>,
 
     x: Vec<Vec<f64>>,
@@ -68,6 +70,7 @@ fn design(
         let y = to_numbers(yv)?;
         return Ok(Design {
             row,
+            dims: (ry, cy),
             y,
             x: vec![(1..=n).map(|i| i as f64).collect()],
         });
@@ -99,7 +102,12 @@ fn design(
             .map(|j| (0..n).map(|i| xv[j * cx + i]).collect())
             .collect()
     };
-    Ok(Design { row, y, x })
+    Ok(Design {
+        row,
+        dims: (ry, cy),
+        y,
+        x,
+    })
 }
 
 struct Fit {
@@ -378,6 +386,7 @@ pub fn fit_line(xs: &[f64], ys: &[f64], log: bool) -> Option<(f64, f64)> {
     }
     let d = Design {
         row: false,
+        dims: (y.len(), 1),
         y,
         x: vec![xs.to_vec()],
     };
@@ -510,11 +519,7 @@ pub fn trend(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
                 None => {
                     let n = d.y.len();
                     let v: Vec<f64> = (1..=n).map(|i| i as f64).collect();
-                    if d.row {
-                        (1, n, v)
-                    } else {
-                        (n, 1, v)
-                    }
+                    (d.dims.0, d.dims.1, v)
                 }
             },
         };

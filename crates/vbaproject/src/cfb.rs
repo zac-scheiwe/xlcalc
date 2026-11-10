@@ -227,6 +227,34 @@ impl Cfb {
         None
     }
 
+    pub fn streams(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut stack = vec![(0usize, String::new())];
+        let mut guard = 0usize;
+        while let Some((parent, prefix)) = stack.pop() {
+            let mut sib = vec![self.entries[parent].child];
+            while let Some(i) = sib.pop() {
+                guard += 1;
+                if i == NOSTREAM || guard > 4 * self.entries.len() + 16 {
+                    continue;
+                }
+                let Some(e) = self.entries.get(i as usize) else {
+                    continue;
+                };
+                let path = format!("{prefix}{}", e.name);
+                match e.kind {
+                    2 => out.push(path),
+                    1 => stack.push((i as usize, format!("{path}/"))),
+                    _ => {}
+                }
+                sib.push(e.left);
+                sib.push(e.right);
+            }
+        }
+        out.sort();
+        out
+    }
+
     pub fn read_stream(&self, path: &str) -> Result<Vec<u8>, VbaError> {
         let mut cur = 0usize;
         for part in path.split('/') {

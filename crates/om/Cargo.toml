@@ -13,3 +13,8 @@ xlcalc-xlsx = { path = "../xlsx" }
 xlcalc-vba = { path = "../vba" }
 stacker = "0.1"
 xlcalc-vbaproject = { path = "../vbaproject" }
+
+[target.'cfg(windows)'.dependencies]
+xlcalc-winbridge = { path = "../winbridge" }
+xlcalc-xll = { path = "../xll" }
+windows = { version = "=0.62.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_Com", "Win32_System_Time"] }

@@ -1,0 +1,30 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "vba_module",
+   "file": "vba_declare.bas"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "=DeclT1()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "=DeclT2()"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "=DeclT3()"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A3"
+  }
+ ]
+}
