@@ -15,9 +15,13 @@ impl Workbook {
                 (f, self.formula(f).addr)
             }
         };
+        let root = &self.formula(fid).formula.root;
+        if !crate::formula_print::printable(root) {
+            return Some(String::new());
+        }
         Some(format!(
             "={}",
-            crate::formula_print::print_node_r1c1(self, &self.formula(fid).formula.root, host)
+            crate::formula_print::print_node_r1c1(self, root, host)
         ))
     }
 

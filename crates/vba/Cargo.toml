@@ -10,6 +10,7 @@ publish = false
 xlcalc.workspace = true
 xlcalc-variant = { path = "../variant" }
 stacker = "0.1"
+chrono.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

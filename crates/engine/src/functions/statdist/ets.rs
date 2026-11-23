@@ -109,7 +109,11 @@ pub(super) fn round_one(x: f64) -> f64 {
 fn int_arg(ctx: &EvalCtx, o: Option<&Operand>, optional: bool, lo: i64, hi: i64) -> R<Option<i64>> {
     let v = match o {
         None | Some(Operand::Missing) => {
-            return if optional { Ok(None) } else { Err(XlError::NA) };
+            return if optional {
+                Ok(None)
+            } else {
+                Err(XlError::NUM)
+            };
         }
         Some(Operand::Val(v)) => ctx.to_number(v)?,
         Some(Operand::Ref(_)) => return Err(XlError::VALUE),
@@ -133,22 +137,21 @@ fn series(ctx: &mut EvalCtx, o: Option<&Operand>) -> R<Vec<Value>> {
 
 pub fn ets(ctx: &mut EvalCtx, o: &[Operand], kind: Kind) -> Operand {
     let r = (|| -> R<f64> {
-        for op in o {
-            if let Operand::Val(Value::Error(e)) = op {
-                return Err(*e);
-            }
-        }
-
         let first_scalar = if matches!(kind, Kind::Value | Kind::Confint) {
             3
         } else {
             2
         };
-        for op in o.iter().skip(first_scalar) {
-            if let Operand::Val(v) = op {
-                if !matches!(v, Value::Array(_)) {
+        for (k, op) in o.iter().enumerate() {
+            match op {
+                Operand::Val(Value::Error(e)) => return Err(*e),
+                Operand::Val(v)
+                    if (k == 0 && first_scalar == 3 || k >= first_scalar)
+                        && !matches!(v, Value::Array(_)) =>
+                {
                     ctx.to_number(v)?;
                 }
+                _ => {}
             }
         }
         let mut i = 0;
@@ -1240,6 +1243,10 @@ impl Forecaster {
     fn value(&self, target: f64) -> R<f64> {
         let (off, frac) = self.offset(target);
         let h = fix(off);
+
+        if !(i64::from(i32::MIN)..=i64::from(i32::MAX)).contains(&h) {
+            return Err(XlError::NUM);
+        }
         if h <= -(self.count as i64) {
             return Err(XlError::NUM);
         }
@@ -1262,6 +1269,9 @@ impl Forecaster {
     fn confidence(&self, target: f64) -> R<f64> {
         let (off, frac) = self.offset(target);
         let h = fix(off);
+        if h > i64::from(i32::MAX) {
+            return Err(XlError::NUM);
+        }
         if h < 0 || (h == 0 && !frac) {
             return Err(XlError::NUM);
         }

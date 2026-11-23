@@ -1,13 +1,11 @@
 #![allow(clippy::needless_range_loop)]
 
 use crate::error::OmError;
-use crate::solver_grg::{Ev, Eval, Prob, Status};
+use crate::solver_grg::{conv, tol, Ev, Eval, Prob, Status};
 
 const EPSX: f64 = 1e-15;
 const BIG: f64 = 1e30;
 const TINY: f64 = 1e-30;
-const TOL: f64 = 1e-8;
-const CONV: f64 = 1e-5;
 const CONV_N: u32 = 5;
 const HDER: f64 = 1e-6;
 const NMAX: usize = 100;
@@ -25,6 +23,8 @@ struct St<'a, 'b> {
     ev: &'a mut Ev<'b>,
     x: Vec<f64>,
     last: Option<Eval>,
+
+    cells: Vec<f64>,
 
     list: Vec<usize>,
     stat: Vec<i32>,
@@ -47,6 +47,8 @@ impl St<'_, '_> {
     fn f(&mut self, x: &[f64]) -> Result<f64, OmError> {
         let e = (self.ev)(x)?;
         let o = if self.p.max { -e.obj } else { e.obj };
+        self.cells.clear();
+        self.cells.extend_from_slice(x);
         self.last = Some(e);
         Ok(o)
     }
@@ -243,7 +245,7 @@ impl St<'_, '_> {
         let mut t0 = if maxd == 0.0 {
             tmax
         } else {
-            (TOL / maxd).max(prev_t)
+            (tol() / maxd).max(prev_t)
         };
         let mut cap = tmax;
         for k in 1..=nsb {
@@ -358,7 +360,7 @@ impl St<'_, '_> {
 }
 
 pub(crate) fn applies(p: &Prob, n: usize) -> bool {
-    p.rel.is_empty() && p.val.is_none() && !p.central && n <= NMAX && n > 0
+    p.rel.is_empty() && p.val.is_none() && n <= NMAX && n > 0
 }
 
 pub(crate) fn grg_q(
@@ -373,6 +375,7 @@ pub(crate) fn grg_q(
         ev,
         x: x0.clone(),
         last: None,
+        cells: Vec::new(),
         list: vec![0; n + 2],
         stat: vec![0; n + 2],
         nsb: 0,
@@ -413,7 +416,7 @@ pub(crate) fn grg_q(
             let a = p.hi[j] - xcur[j];
             let b = xcur[j] - p.lo[j];
             let mut m = if a >= b { b } else { a };
-            if TOL >= m {
+            if tol() >= m {
                 m = 0.0;
             }
             dist[j] = m.min(1e10);
@@ -434,10 +437,10 @@ pub(crate) fn grg_q(
         for k in 1..=n {
             let v = s.list[k];
             let mut st = 0;
-            if TOL >= (xcur[v] - p.hi[v]).abs() {
+            if tol() >= (xcur[v] - p.hi[v]).abs() {
                 st = 1;
             }
-            if TOL >= (xcur[v] - p.lo[v]).abs() {
+            if tol() >= (xcur[v] - p.lo[v]).abs() {
                 st = -1;
             }
             s.stat[k] = st;
@@ -445,16 +448,41 @@ pub(crate) fn grg_q(
         let a4 = !(nsb == old_list.len()
             && nsb != 0
             && (1..=nsb).all(|k| old_list.contains(&s.list[k])));
-        let fbase = s.f(&xcur)?;
+
+        let fbase = if p.central { fcur } else { s.f(&xcur)? };
+        let mut prev = 0usize;
         for j in 0..n {
             if p.lo[j] == p.hi[j] {
                 gobj[j] = 0.0;
                 continue;
             }
-            let mut h = (xcur[j].abs() + 1.0) * HDER;
-            if h + xcur[j] > p.hi[j] {
-                h = -h;
+            let h = (xcur[j].abs() + 1.0) * HDER;
+            if p.central {
+                let hp = if h + xcur[j] > p.hi[j] {
+                    p.hi[j] - xcur[j]
+                } else {
+                    h
+                }
+                .max(0.0);
+                let hm = if p.lo[j] > -h + xcur[j] {
+                    p.lo[j] - xcur[j]
+                } else {
+                    -h
+                }
+                .min(0.0);
+
+                let mut xp = s.cells.clone();
+                xp[prev] = xcur[prev];
+                xp[j] = xcur[j] + hp;
+                let fp = s.f(&xp)?;
+                xp[j] = xcur[j] + hm;
+                let fm = s.f(&xp)?;
+                prev = j;
+                let d = hp - hm;
+                gobj[j] = if d == 0.0 { 0.0 } else { f32q((fp - fm) / d) };
+                continue;
             }
+            let h = if h + xcur[j] > p.hi[j] { -h } else { h };
             let mut xp = xcur.clone();
             xp[j] = xcur[j] + h;
             let f1 = s.f(&xp)?;
@@ -472,11 +500,11 @@ pub(crate) fn grg_q(
             dxmax = dxmax.max((xcur[j] - xprev[j]).abs());
             xprev[j] = xcur[j];
         }
-        let sq = TOL.sqrt();
+        let sq = tol().sqrt();
         if (xmax + 1.0) * sq > dxmax {
             let gmax = gobj.iter().take(n).fold(0.0f64, |a, v| a.max(v.abs()));
             let mut conv = true;
-            if gmax > TOL {
+            if gmax > tol() {
                 let thr2 = sq * gmax;
                 for k in 1..=n {
                     let gk = s.g[k];
@@ -498,7 +526,7 @@ pub(crate) fn grg_q(
             }
         }
         {
-            let a = (fref - f_start) * CONV;
+            let a = (fref - f_start) * conv();
             let b = fcur - fref;
             if b.abs() > a.abs() {
                 fref = fcur;
@@ -607,7 +635,7 @@ pub(crate) fn grg_q(
             let (mut cntg, mut sumsq) = (0usize, 0.0);
             for k in 1..=s.nsb {
                 let gk = s.g[k];
-                if gk.abs() > TOL {
+                if gk.abs() > tol() {
                     sumsq += gk * gk;
                     cntg += 1;
                 }
@@ -662,12 +690,14 @@ pub(crate) fn grg_q(
 
         s.d0 = false;
         s.search(fcur)?;
+        fcur = s.t_best_f;
         xcur = s.x.clone();
         for v in &mut xcur {
             if EPSX > v.abs() {
                 *v = 0.0;
             }
         }
+        crate::solver_grg::canon(&mut xcur);
         s.x = xcur.clone();
         it += 1;
         if s.cc {
@@ -677,7 +707,7 @@ pub(crate) fn grg_q(
             while r14 <= nsb0 {
                 let k = nsb0 - r14 + 1;
                 let v = s.list[k];
-                let at = TOL >= (xcur[v] - p.lo[v]).abs() || TOL >= (xcur[v] - p.hi[v]).abs();
+                let at = tol() >= (xcur[v] - p.lo[v]).abs() || tol() >= (xcur[v] - p.hi[v]).abs();
                 if at {
                     esi -= 1;
                     s.delcol(k);

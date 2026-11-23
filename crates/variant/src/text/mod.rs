@@ -20,7 +20,7 @@ pub(crate) fn to_bstr(src: &Variant, locale: Locale, flags: u16) -> Result<Strin
     Ok(match src {
         Variant::Empty => String::new(),
         Variant::I2(v) => v.to_string(),
-        Variant::I4(v) => v.to_string(),
+        Variant::I4(v) | Variant::Int(v) => v.to_string(),
         Variant::I8(v) => v.to_string(),
         Variant::Ui1(v) => v.to_string(),
         Variant::Bool(b) if flags & (flags::ALPHABOOL | flags::LOCALBOOL) != 0 => {
@@ -78,6 +78,7 @@ pub(crate) fn from_bstr(s: &str, to: VarType, locale: Locale) -> Result<Variant,
         VarType::Bstr => Variant::Bstr(s.to_string()),
         VarType::I2 => Variant::I2(number::i2(&parsed(12)?)?),
         VarType::I4 => Variant::I4(number::i4(&parsed(11)?)?),
+        VarType::Int => Variant::Int(number::i4(&parsed(11)?)?),
         VarType::I8 => Variant::I8(number::i8(&parsed(21)?)?),
         VarType::Ui1 => Variant::Ui1(number::ui1(&parsed(12)?)?),
         VarType::R4 => Variant::R4(number::r4(&parsed(12)?)?),

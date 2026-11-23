@@ -516,9 +516,9 @@ pub fn expm1(x: f64) -> f64 {
 }
 
 #[derive(Default)]
-pub struct MpFlag(pub u8);
+pub struct MathFlag(pub u8);
 
-impl MpFlag {
+impl MathFlag {
     fn ovf(&mut self, v: f64) -> f64 {
         if v.is_finite() {
             v

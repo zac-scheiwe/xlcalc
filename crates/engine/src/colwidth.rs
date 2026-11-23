@@ -1,7 +1,10 @@
 use crate::address::{CellAddr, Rect, SheetId};
+use crate::fontwidth::FontMeasure;
 use crate::numfmt::{
-    format_general_cell, NumberFormat, FILL_MARK, GENERAL_MARK, SPACE_MARK, TEXT_GENERAL_WIDTH,
+    format_general_cell, format_general_cell_by, general_best_fit, general_display_flag,
+    NumberFormat, FILL_MARK, GENERAL_MARK, SPACE_MARK, TEXT_GENERAL_WIDTH,
 };
+use crate::style::HAlign;
 use crate::value::Value;
 use crate::workbook::Workbook;
 
@@ -10,29 +13,24 @@ pub const STANDARD_PX: u32 = 96;
 const DIGIT_PX: u32 = 11;
 const PAD_PX: u32 = 7;
 
-const WIDEN_PX: u32 = 9;
+const INDENT_PX: u32 = 12;
 
-pub(crate) fn fit_px(s: u32) -> u32 {
-    (s + WIDEN_PX).max(s * 45 / 44 + PAD_PX)
+fn indent_px(level: u8, h: HAlign) -> u32 {
+    let one = INDENT_PX * u32::from(level);
+    if h == HAlign::Distributed {
+        2 * one
+    } else {
+        one
+    }
 }
 
-pub fn digit_px(name: &str, size_twips: u32) -> u32 {
-    use crate::colwidth_data::DIGIT_ROWS;
-    let table = DIGIT_ROWS
-        .iter()
-        .find(|(n, _)| n.eq_ignore_ascii_case(name))
-        .or_else(|| DIGIT_ROWS.iter().find(|(n, _)| *n == "Arial"))
-        .map_or(&[][..], |(_, t)| *t);
+pub(crate) fn fit_px(s: u32, normal_d: u32) -> u32 {
+    s + crate::fontwidth::best_fit_growth(s, normal_d) + PAD_PX
+}
 
-    let halves = ((size_twips + 5) / 10).max(10) as usize;
-    let i = halves - 10;
-    match table.get(i) {
-        Some(&d) => u32::from(d),
-        None => {
-            let last = table.last().map_or(11, |&d| u32::from(d));
-            last + ((i + 1 - table.len()) / 2) as u32
-        }
-    }
+pub fn digit_px(name: &str, size_twips: u32, bold: bool, italic: bool) -> u32 {
+    let ppem = (size_twips + 5) / 10;
+    crate::gdi_metrics::digit_width(name, bold, italic, ppem)
 }
 
 fn pad_for(d: u32) -> u32 {
@@ -44,9 +42,6 @@ pub fn standard_px_for(d: u32) -> u32 {
 }
 
 pub fn px_to_width_d(px: u32, d: u32) -> f64 {
-    if d == DIGIT_PX {
-        return px_to_width(px);
-    }
     let pad = pad_for(d);
     let w = if px >= d + pad {
         f64::from(px - pad) / f64::from(d)
@@ -170,8 +165,37 @@ pub fn char_px(c: char) -> u32 {
     }
 }
 
-pub fn text_px(s: &str) -> u32 {
-    s.chars().map(char_px).sum()
+fn char_run(c: char, m: Option<&FontMeasure>) -> Option<u32> {
+    match m {
+        Some(m) => m.advance(c),
+        None => Some(char_px(c)),
+    }
+}
+
+fn general_run(text: &str, m: Option<&FontMeasure>) -> Option<u32> {
+    let digit = m.map_or(DIGIT_PX, |m| m.digit);
+    let mut px = m.map_or(0, |m| m.c);
+    let body = match text.strip_prefix('-') {
+        Some(rest) => {
+            px += char_run('-', m)?;
+            rest
+        }
+        None => text,
+    };
+    let n = body.chars().count() as u32;
+    px += n * digit;
+    if body.contains('E') {
+        px = (px + char_run('E', m)? + char_run('+', m)?).saturating_sub(2 * digit);
+    }
+    Some(px)
+}
+
+fn text_run(s: &str, m: Option<&FontMeasure>) -> Option<u32> {
+    let mut px = m.map_or(0, |m| m.c);
+    for c in s.chars() {
+        px += char_run(c, m)?;
+    }
+    Some(px)
 }
 
 pub fn file_width_to_px(w: f64) -> u32 {
@@ -225,8 +249,42 @@ fn parts(s: &str) -> Vec<Part> {
     out
 }
 
-fn hashes(avail: u32) -> String {
-    "#".repeat((avail / DIGIT_PX) as usize)
+struct ShownFont<'a>(Option<&'a FontMeasure>);
+
+impl ShownFont<'_> {
+    fn digit(&self) -> u32 {
+        self.0.map_or(DIGIT_PX, |m| m.digit)
+    }
+
+    fn room(&self, px: u32) -> u32 {
+        match self.0 {
+            Some(m) => px.saturating_sub(2 * m.g + 1 + m.c),
+            None => px.saturating_sub(PAD_PX),
+        }
+    }
+
+    fn char_px(&self, c: char) -> u32 {
+        char_run(c, self.0).unwrap_or_else(|| self.digit())
+    }
+
+    fn general_px(&self, s: &str) -> u32 {
+        s.chars()
+            .map(|c| {
+                if c.is_ascii_digit() || c == '.' {
+                    self.digit()
+                } else {
+                    self.char_px(c)
+                }
+            })
+            .sum()
+    }
+
+    fn hashes(&self, room: u32) -> String {
+        let w = self
+            .0
+            .map_or(DIGIT_PX, |m| m.advance('#').unwrap_or(m.digit));
+        "#".repeat((room / w.max(1)) as usize)
+    }
 }
 
 impl Workbook {
@@ -238,16 +296,18 @@ impl Workbook {
     }
 
     pub fn sheet_std_px(&self, sheet: SheetId) -> u32 {
-        self.views
-            .get(&sheet)
-            .and_then(|v| v.std_px)
-            .unwrap_or_else(|| self.standard_px())
+        self.views.get(&sheet).and_then(|v| v.std_cw).map_or_else(
+            || self.standard_px(),
+            |cw| width_to_px_d(cw, self.digit_px()),
+        )
     }
 
     pub fn set_sheet_standard_width(&mut self, sheet: SheetId, cw: f64) {
         let px = width_to_px_d(cw, self.digit_px());
         let default = self.standard_px();
-        self.view_mut(sheet).std_px = (px != default).then_some(px);
+
+        let kept = px_to_width_d(px, self.digit_px());
+        self.view_mut(sheet).std_cw = (px != default).then_some(kept);
     }
 
     pub fn sheet_standard_width(&self, sheet: SheetId) -> f64 {
@@ -256,7 +316,12 @@ impl Workbook {
 
     pub fn digit_px(&self) -> u32 {
         let f = &self.base_style().font;
-        digit_px(&f.name, f.size_twips)
+        digit_px(&f.name, f.size_twips, f.bold, f.italic)
+    }
+
+    pub fn max_px(&self) -> u32 {
+        let d = self.digit_px();
+        255 * d + pad_for(d)
     }
 
     pub fn standard_px(&self) -> u32 {
@@ -331,9 +396,10 @@ impl Workbook {
     }
 
     pub fn set_column_px(&mut self, sheet: SheetId, c0: u32, c1: u32, px: u32, by_hand: bool) {
+        let max_px = self.max_px();
         let v = self.view_mut(sheet);
         for c in c0..=c1 {
-            v.col_px.insert(c, (px.min(MAX_PX), by_hand));
+            v.col_px.insert(c, (px.min(max_px), by_hand));
         }
     }
 
@@ -345,10 +411,14 @@ impl Workbook {
         let mut need: Vec<(u32, u32)> = Vec::new();
         for (r, c) in cells {
             let addr = CellAddr::new(sheet, r, c);
-            if let Some(px) = self.text_px_for_widen(addr) {
-                need.push((c, fit_px(px)));
+            let al = &self.cell_style(addr).alignment;
+            let indent = indent_px(al.indent, al.horizontal);
+            if let Some(px) = self.fit_cell(addr, indent, &|m| self.text_px_for_widen(addr, m)) {
+                need.push((c, px));
             }
         }
+
+        let mut fitted = Vec::new();
         for (c, px) in need {
             let set = self
                 .views
@@ -359,9 +429,190 @@ impl Workbook {
                 continue;
             }
             if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+                if fitted.is_empty() {
+                    fitted = (rect.r0..=rect.r1)
+                        .filter(|&r| self.row_custom_h8(sheet, r).is_none())
+                        .map(|r| (r, self.row_fit_tenths(sheet, r)))
+                        .collect();
+                }
+                let max_px = self.max_px();
                 self.view_mut(sheet)
                     .col_px
-                    .insert(c, (px.min(MAX_PX), false));
+                    .insert(c, (px.min(max_px), false));
+            }
+        }
+    }
+
+    pub fn widen_for_font(&mut self, sheet: SheetId, rect: Rect) {
+        let Some(sh) = self.sheet(sheet) else {
+            return;
+        };
+        let cells: Vec<(u32, u32)> = sh.cells.iter_rect(rect).map(|(r, c, _)| (r, c)).collect();
+        let mut flag = self.general_flag.load(std::sync::atomic::Ordering::Relaxed);
+        for (r, c) in cells {
+            let addr = CellAddr::new(sheet, r, c);
+            let Value::Number(x) = self.value(addr) else {
+                continue;
+            };
+            if self.cell_style(addr).alignment.indent != 0 {
+                continue;
+            }
+            let Ok(f) = NumberFormat::parse(self.number_format(addr)) else {
+                continue;
+            };
+            let Ok(out) = f.format_cell_number(x, &self.locale, self.settings.date_system) else {
+                continue;
+            };
+            let (need, px) = if matches!(
+                parts(&out.text).as_slice(),
+                [Part::General] | [Part::Char('-'), Part::General]
+            ) {
+                let m = self.cell_measure(addr);
+                let sf = ShownFont(m.as_ref());
+
+                let px = self.cell_room_px(addr);
+                let avail = sf
+                    .room(px.saturating_sub(crate::fontwidth::best_fit_room(px, self.digit_px())));
+                let start = if x < 0.0 {
+                    avail.saturating_sub(sf.char_px('-')) / sf.digit()
+                } else {
+                    avail / sf.digit()
+                };
+                let text = general_best_fit(x, start as i32, &mut flag);
+
+                match self.fit_cell(addr, 0, &|m| general_run(&text, m)) {
+                    Some(px) => (px - 1, px),
+                    None => continue,
+                }
+            } else {
+                match self.fit_cell(addr, 0, &|m| self.text_px_for_widen(addr, m)) {
+                    Some(px) => (px, px),
+                    None => continue,
+                }
+            };
+            let set = self
+                .views
+                .get(&sheet)
+                .and_then(|v| v.col_px.get(&c))
+                .copied();
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+                continue;
+            }
+            if need > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+                let max_px = self.max_px();
+                self.view_mut(sheet)
+                    .col_px
+                    .insert(c, (px.min(max_px), false));
+            }
+        }
+    }
+
+    pub fn note_text_read(&self, addr: CellAddr) {
+        let Value::Number(x) = self.value(addr) else {
+            return;
+        };
+        if self.col_hidden(addr.sheet, addr.col) {
+            return;
+        }
+        let Ok(f) = NumberFormat::parse(self.number_format(addr)) else {
+            return;
+        };
+        let Ok(out) = f.format_cell_number(x, &self.locale, self.settings.date_system) else {
+            return;
+        };
+        if !matches!(
+            parts(&out.text).as_slice(),
+            [Part::General] | [Part::Char('-'), Part::General]
+        ) {
+            return;
+        }
+        let m = self.cell_measure(addr);
+        let sf = ShownFont(m.as_ref());
+        let avail = sf.room(self.cell_room_px(addr));
+        let w = if x < 0.0 {
+            avail.checked_sub(sf.char_px('-')).map(|a| a / sf.digit())
+        } else {
+            Some(avail / sf.digit())
+        };
+        let Some(w) = w else {
+            return;
+        };
+        let mut flag = self.general_flag.load(std::sync::atomic::Ordering::Relaxed);
+        general_display_flag(x, w as i32, &mut flag);
+        self.general_flag
+            .store(flag, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    pub fn widen_for_indent(&mut self, sheet: SheetId, rect: Rect) -> Vec<(u32, u32)> {
+        let Some(sh) = self.sheet(sheet) else {
+            return Vec::new();
+        };
+        let cells: Vec<(u32, u32)> = sh.cells.iter_rect(rect).map(|(r, c, _)| (r, c)).collect();
+        let mut need: Vec<(u32, u32)> = Vec::new();
+        for (r, c) in cells {
+            let addr = CellAddr::new(sheet, r, c);
+            let al = &self.cell_style(addr).alignment;
+            let n = u32::from(al.indent);
+
+            if n == 0
+                || al.shrink
+                || al.rotation != 0
+                || !matches!(self.value(addr), Value::Number(_))
+            {
+                continue;
+            }
+            let indent = indent_px(al.indent, al.horizontal);
+            if let Some(px) = self.fit_cell(addr, indent, &|m| self.full_text_px(addr, m)) {
+                need.push((c, px));
+            }
+        }
+
+        let mut fitted = Vec::new();
+        for (c, px) in need {
+            let set = self
+                .views
+                .get(&sheet)
+                .and_then(|v| v.col_px.get(&c))
+                .copied();
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+                continue;
+            }
+            if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+                if fitted.is_empty() {
+                    fitted = (rect.r0..=rect.r1)
+                        .filter(|&r| self.row_custom_h8(sheet, r).is_none())
+                        .map(|r| (r, self.row_fit_tenths(sheet, r)))
+                        .collect();
+                }
+                let max_px = self.max_px();
+                self.view_mut(sheet)
+                    .col_px
+                    .insert(c, (px.min(max_px), false));
+            }
+        }
+        fitted
+    }
+
+    pub(crate) fn widen_for_new_table(&mut self, sheet: SheetId, rect: Rect) {
+        for c in rect.c0..=rect.c1 {
+            let Value::Text(t) = self.value(CellAddr::new(sheet, rect.r0, c)) else {
+                continue;
+            };
+
+            let px = t.chars().map(bold_char_px).sum::<u32>() + FILTER_BUTTON_PX + 6;
+            let set = self
+                .views
+                .get(&sheet)
+                .and_then(|v| v.col_px.get(&c))
+                .copied();
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+                continue;
+            }
+            if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+                let max_px = self.max_px();
+                self.view_mut(sheet)
+                    .col_px
+                    .insert(c, (px.min(max_px), false));
             }
         }
     }
@@ -378,24 +629,35 @@ impl Workbook {
             let hdr = headers
                 .iter()
                 .find(|h| h.row == r && (h.c0..=h.c1).contains(&c));
+            let button = hdr.map_or(0, |h| h.button);
             let px = match (self.value(addr), hdr) {
-                (Value::Text(t), Some(h)) if h.bold => {
-                    Some(t.chars().map(bold_char_px).sum::<u32>())
+                (Value::Text(t), Some(h)) if h.bold => Some(fit_px(
+                    t.chars().map(bold_char_px).sum::<u32>() + button,
+                    self.digit_px(),
+                )),
+                _ => {
+                    let al = &self.cell_style(addr).alignment;
+                    let indent = if al.shrink || al.rotation != 0 {
+                        0
+                    } else {
+                        indent_px(al.indent, al.horizontal)
+                    };
+                    self.fit_cell(addr, indent + button, &|m| self.full_text_px(addr, m))
                 }
-                _ => self.full_text_px(addr),
             };
             if let Some(px) = px {
                 let w = widest.entry(c).or_default();
-                *w = (*w).max(fit_px(px + hdr.map_or(0, |h| h.button)));
+                *w = (*w).max(px);
             }
         }
         for (c, px) in widest {
             if self.col_hidden(sheet, c) {
                 self.set_cols_hidden(sheet, c, 1, false);
             }
+            let max_px = self.max_px();
             self.view_mut(sheet)
                 .col_px
-                .insert(c, (px.min(MAX_PX), false));
+                .insert(c, (px.min(max_px), false));
         }
     }
 
@@ -449,51 +711,89 @@ impl Workbook {
             let at = by_cell.get(&(r, c)).copied();
             let px = match (self.value(addr), at) {
                 (Value::Text(t), Some(a)) if a.bold => Some(t.chars().map(bold_char_px).sum()),
-                _ => self.full_text_px(addr),
+                _ => self.full_text_px(addr, None),
             };
             if let Some(px) = px {
                 let w = widest.entry(c).or_default();
-                *w = (*w).max(fit_px(px) + at.map_or(0, |a| a.extra));
+                *w = (*w).max(fit_px(px, self.digit_px()) + at.map_or(0, |a| a.extra));
             }
         }
         for (c, px) in plan.groups(rect.c0, rect.c1, &widest) {
             if !self.col_hidden(sheet, c) {
+                let max_px = self.max_px();
                 self.view_mut(sheet)
                     .col_px
-                    .insert(c, (px.min(MAX_PX), false));
+                    .insert(c, (px.min(max_px), false));
             }
         }
     }
 
-    fn full_text_px(&self, addr: CellAddr) -> Option<u32> {
+    fn cell_measure(&self, addr: CellAddr) -> Option<FontMeasure> {
+        let f = &self.cell_style(addr).font;
+        let reference = f.name.eq_ignore_ascii_case("Aptos Narrow")
+            && f.size_twips == 220
+            && !f.bold
+            && !f.italic
+            && !f.superscript
+            && !f.subscript;
+        if reference {
+            None
+        } else {
+            FontMeasure::new(f)
+        }
+    }
+
+    fn fit_cell(
+        &self,
+        addr: CellAddr,
+        indent: u32,
+        measure: &dyn Fn(Option<&FontMeasure>) -> Option<u32>,
+    ) -> Option<u32> {
+        if let Some(m) = self.cell_measure(addr) {
+            if let Some(run) = measure(Some(&m)) {
+                return Some(m.fit(run + indent, self.digit_px()));
+            }
+        }
+        measure(None).map(|run| fit_px(run + indent, self.digit_px()))
+    }
+
+    fn full_text_px(&self, addr: CellAddr, m: Option<&FontMeasure>) -> Option<u32> {
         let x = match self.value(addr) {
             Value::Number(x) => x,
             Value::Blank => return None,
-            _ => return Some(text_px(&self.display_text(addr))),
+            _ => return text_run(&self.display_text(addr), m),
         };
         let f = NumberFormat::parse(self.number_format(addr)).ok()?;
         let out = f
             .format_cell_number(x, &self.locale, self.settings.date_system)
             .ok()?;
-        let mut px = 0;
+        let mut px = m.map_or(0, |m| m.c);
         for p in parts(&out.text) {
             px += match p {
-                Part::Char(c) | Part::Space(c) => char_px(c),
+                Part::Char(c) | Part::Space(c) => char_run(c, m)?,
                 Part::Fill(_) => 0,
 
                 Part::General => {
                     let g = format_general_cell(x.abs(), TEXT_GENERAL_WIDTH).unwrap_or_default();
-                    g.chars().count() as u32 * DIGIT_PX
+                    let n = g.chars().count() as u32;
+                    match m {
+                        None => n * DIGIT_PX,
+                        Some(m) if g.contains('E') => {
+                            (n * m.digit + m.advance('E')? + m.advance('+')?)
+                                .saturating_sub(2 * m.digit)
+                        }
+                        Some(m) => n * m.digit,
+                    }
                 }
             };
         }
         Some(px)
     }
 
-    fn text_px_for_widen(&self, addr: CellAddr) -> Option<u32> {
+    fn text_px_for_widen(&self, addr: CellAddr, m: Option<&FontMeasure>) -> Option<u32> {
         let x = match self.value(addr) {
             Value::Number(x) => x,
-            Value::Bool(_) => return Some(text_px(&self.display_text(addr))),
+            Value::Bool(_) => return text_run(&self.display_text(addr), m),
             _ => return None,
         };
         let f = NumberFormat::parse(self.number_format(addr)).ok()?;
@@ -501,11 +801,11 @@ impl Workbook {
             .format_cell_number(x, &self.locale, self.settings.date_system)
             .ok()?;
         let parts = parts(&out.text);
-        let mut px = 0;
+        let mut px = m.map_or(0, |m| m.c);
         let mut general = false;
         for p in &parts {
             match p {
-                Part::Char(c) | Part::Space(c) => px += char_px(*c),
+                Part::Char(c) | Part::Space(c) => px += char_run(*c, m)?,
                 Part::Fill(_) => {}
                 Part::General => general = true,
             }
@@ -519,7 +819,7 @@ impl Workbook {
                 return None;
             }
             let g = (1..=TEXT_GENERAL_WIDTH).find_map(|k| format_general_cell(x.abs(), k))?;
-            px += text_px(&g);
+            px += text_run(&g, None)?;
         }
         Some(px)
     }
@@ -534,6 +834,10 @@ impl Workbook {
     }
 
     fn cell_room(&self, addr: CellAddr) -> u32 {
+        self.cell_room_px(addr).saturating_sub(PAD_PX)
+    }
+
+    fn cell_room_px(&self, addr: CellAddr) -> u32 {
         let (c0, c1) = self
             .merge_at(addr)
             .map_or((addr.col, addr.col), |m| (m.c0, m.c1));
@@ -541,23 +845,69 @@ impl Workbook {
             .filter(|&c| !self.col_hidden(addr.sheet, c))
             .map(|c| self.col_px(addr.sheet, c))
             .sum();
-        px.saturating_sub(PAD_PX)
+        px
+    }
+
+    fn filled_text(&self, addr: CellAddr) -> String {
+        let shown = self.display_text(addr);
+        let Value::Text(t) = self.value(addr) else {
+            return shown;
+        };
+        if self.col_hidden(addr.sheet, addr.col) {
+            return shown;
+        }
+        let Ok(f) = NumberFormat::parse(self.number_format(addr)) else {
+            return shown;
+        };
+        let Ok(out) = f.format_cell_text(&t, &self.locale) else {
+            return shown;
+        };
+        let parts = parts(&out.text);
+        if !parts.iter().any(|p| matches!(p, Part::Fill(_))) {
+            return shown;
+        }
+        let avail = self.cell_room(addr);
+        let used: u32 = parts
+            .iter()
+            .map(|p| match p {
+                Part::Char(c) => char_px(*c),
+                Part::Space(_) => char_px(' '),
+                _ => 0,
+            })
+            .sum();
+        let mut s = String::new();
+        let mut filled = false;
+        for p in parts {
+            match p {
+                Part::Char(c) => s.push(c),
+                Part::Space(_) => s.push(' '),
+                Part::Fill(c) if !filled => {
+                    filled = true;
+                    let n = avail.saturating_sub(used) / char_px(c).max(1);
+                    s.extend(std::iter::repeat_n(c, n as usize));
+                }
+                _ => {}
+            }
+        }
+        s
     }
 
     pub fn shown_text(&self, addr: CellAddr) -> String {
         let Value::Number(x) = self.value(addr) else {
-            return self.display_text(addr);
+            return self.filled_text(addr);
         };
         if self.col_hidden(addr.sheet, addr.col) {
             return self.display_text(addr);
         }
-        let avail = self.cell_room(addr);
+        let m = self.cell_measure(addr);
+        let sf = ShownFont(m.as_ref());
+        let avail = sf.room(self.cell_room_px(addr));
         let code = self.number_format(addr);
         let Some(f) = NumberFormat::parse(code).ok() else {
             return self.display_text(addr);
         };
         let Ok(out) = f.format_cell_number(x, &self.locale, self.settings.date_system) else {
-            return hashes(avail);
+            return sf.hashes(avail);
         };
         let parts = parts(&out.text);
 
@@ -565,14 +915,16 @@ impl Workbook {
             [Part::General] | [Part::Char('-'), Part::General] => {
                 let neg = parts.len() == 2;
                 let g = x.abs() * if neg { -1.0 } else { 1.0 };
-                let chars = if neg && avail >= char_px('-') {
-                    (avail - char_px('-')) / DIGIT_PX + 1
+                let dash = sf.char_px('-');
+                let chars = if neg && avail >= dash {
+                    (avail - dash) / sf.digit() + 1
                 } else {
-                    avail / DIGIT_PX
+                    avail / sf.digit()
                 };
-                return format_general_cell(g, chars as usize)
+                let fits = |s: &str| sf.general_px(s) <= avail;
+                return format_general_cell_by(g, chars as usize, Some(&fits))
                     .map(|t| f.digits_of_tag(&t))
-                    .unwrap_or_else(|| hashes(avail));
+                    .unwrap_or_else(|| sf.hashes(avail));
             }
             _ => {}
         }
@@ -580,26 +932,26 @@ impl Workbook {
         let mut fill = None;
         for p in &parts {
             match p {
-                Part::Char(c) => used += char_px(*c),
-                Part::Space(_) => used += char_px(' '),
+                Part::Char(c) => used += sf.char_px(*c),
+                Part::Space(_) => used += sf.char_px(' '),
                 Part::Fill(c) if fill.is_none() => fill = Some(*c),
                 _ => {}
             }
         }
         let general = if parts.iter().any(|p| matches!(p, Part::General)) {
-            let room = avail.saturating_sub(used) / DIGIT_PX;
+            let room = avail.saturating_sub(used) / sf.digit();
             match format_general_cell(x.abs(), room as usize) {
                 Some(g) => {
-                    used += text_px(&g);
+                    used += sf.general_px(&g);
                     f.digits_of_tag(&g)
                 }
-                None => return hashes(avail),
+                None => return sf.hashes(avail),
             }
         } else {
             String::new()
         };
         if used > avail {
-            return hashes(avail);
+            return sf.hashes(avail);
         }
         let mut s = String::new();
         let mut filled = false;
@@ -610,7 +962,7 @@ impl Workbook {
                 Part::General => s.push_str(&general),
                 Part::Fill(c) if !filled => {
                     filled = true;
-                    let n = (avail - used) / char_px(c).max(1);
+                    let n = (avail - used) / sf.char_px(c).max(1);
                     s.extend(std::iter::repeat_n(c, n as usize));
                 }
                 Part::Fill(_) => {}
@@ -634,6 +986,14 @@ mod tests {
         for px in [1, 17, 18, 96, 111, 2812] {
             assert_eq!(file_width_to_px(px_to_file_width(px)), px);
         }
+    }
+
+    #[test]
+    fn standard_width_put_keeps_the_read_back_value() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        wb.set_sheet_standard_width(s, 12.5);
+        assert_eq!(wb.views.get(&s).and_then(|v| v.std_cw), Some(12.55));
     }
 
     #[test]

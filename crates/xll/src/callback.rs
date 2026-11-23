@@ -37,7 +37,12 @@ pub unsafe extern "system" fn MdCallBack12(
     } else {
         Vec::new()
     };
-    let outcome = std::panic::catch_unwind(|| dispatch(xlfn, &args));
+
+    let outcome = if xlfn == 0x4005 && !args.is_empty() {
+        Ok((RET_INV_XLOPER, Reply::Error(ERR_VALUE)))
+    } else {
+        std::panic::catch_unwind(|| dispatch(xlfn, &args))
+    };
     let (code, value) = outcome.unwrap_or((RET_FAILED, Reply::Error(ERR_VALUE)));
     if !result.is_null() {
         *result = reply_oper(value);
@@ -132,12 +137,7 @@ pub(crate) fn dispatch(xlfn: i32, a: &[*mut Xloper12]) -> (i32, Reply) {
     unsafe {
         match xlfn {
             XL_FREE => (RET_SUCCESS, Reply::Nothing),
-            XL_GET_NAME => {
-                if !a.is_empty() {
-                    return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
-                }
-                (RET_SUCCESS, text_oper(&ctx.inner.path))
-            }
+            XL_GET_NAME => (RET_SUCCESS, text_oper(&ctx.inner.path)),
             XLF_CALLER => {
                 if !a.is_empty() {
                     return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
@@ -180,7 +180,28 @@ pub(crate) fn dispatch(xlfn: i32, a: &[*mut Xloper12]) -> (i32, Reply) {
             XL_SHEET_ID => sheet_id(&ctx, a),
             XL_ASYNC_RETURN => async_return(&ctx, a),
             XL_EVENT_REGISTER => event_register(&ctx, a),
-            0..=0x0FFF => call_function(&ctx, xlfn, a),
+            0x4001 => (RET_SUCCESS, int_reply(STACK_HEADROOM)),
+
+            0x4003 => (RET_SUCCESS, bool_reply(false)),
+            0x4005 => sheet_name(&ctx, a),
+            0x4006 => abort(a),
+
+            0x4007 => (RET_FAILED, Reply::Error(ERR_VALUE)),
+
+            0x4008 => (RET_SUCCESS, int_reply(0)),
+            0x400a | 0x400b => (RET_SUCCESS, Reply::Nothing),
+            0x400c => define_binary_name(&ctx, a),
+            0x400d => get_binary_name(&ctx, a),
+
+            0x4012 => (RET_SUCCESS, int_reply(0)),
+
+            0x4013 => (
+                RET_SUCCESS,
+                Reply::Oper(Xloper12::with(Val { int: 0 }, xloper::BIGDATA), None),
+            ),
+            0x4014 if a.len() != 1 => (RET_INV_COUNT, Reply::Error(ERR_VALUE)),
+            0x4014 => (RET_FAILED, Reply::Error(ERR_VALUE)),
+            n if n >= 0 && n & 0x4000 == 0 => call_function(&ctx, xlfn, a),
             _ => (RET_INV_XLFN, Reply::Error(ERR_VALUE)),
         }
     }
@@ -322,6 +343,8 @@ unsafe fn evaluate(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
     let one = |v: &Value| match v {
         Value::Text(text) if ctx.macro_sheet && has_reference(text) => Value::Error(XlError::REF),
         Value::Text(text) => (*wb).cfv_eval(text, caller, caller),
+
+        Value::Blank => Value::Error(XlError::VALUE),
         other => other.clone(),
     };
     let v = match &arg {
@@ -488,19 +511,24 @@ unsafe fn coerce(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
 }
 
 unsafe fn sheet_id(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
-    if a.len() != 1 {
-        return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
-    }
-    let Some(name) = text_arg(ctx, a[0]) else {
-        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
-    };
     let Some(wb) = ctx.wb else {
         return (RET_FAILED, Reply::Error(ERR_VALUE));
     };
-    let found = (*wb)
-        .sheets()
-        .find(|s| s.name.eq_ignore_ascii_case(&name.replace('\'', "")))
-        .map(|s| s.id.0 as usize);
+
+    let omitted = a
+        .first()
+        .is_none_or(|&p| !p.is_null() && (*p).kind() == xloper::MISSING);
+    let found = if omitted {
+        Some((*wb).active_sheet().0 as usize)
+    } else {
+        let Some(name) = text_arg(ctx, a[0]) else {
+            return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+        };
+        (*wb)
+            .sheets()
+            .find(|s| s.name.eq_ignore_ascii_case(&name.replace('\'', "")))
+            .map(|s| s.id.0 as usize)
+    };
     match found {
         Some(i) => (
             RET_SUCCESS,
@@ -519,6 +547,83 @@ unsafe fn sheet_id(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
         ),
         None => (RET_FAILED, Reply::Error(ERR_VALUE)),
     }
+}
+
+const STACK_HEADROOM: i32 = 0x0010_0000;
+
+fn int_reply(n: i32) -> Reply {
+    Reply::Oper(Xloper12::with(Val { int: n }, xloper::INT), None)
+}
+
+fn bool_reply(b: bool) -> Reply {
+    Reply::Oper(
+        Xloper12::with(
+            Val {
+                boolean: i32::from(b),
+            },
+            xloper::BOOL,
+        ),
+        None,
+    )
+}
+
+unsafe fn sheet_name(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
+    let Some(&p) = a.first() else {
+        return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
+    };
+    let (Some(wb), Some(caller)) = (ctx.wb, ctx.caller) else {
+        return (RET_FAILED, Reply::Error(ERR_VALUE));
+    };
+    if p.is_null() {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    }
+    let sheet = match (*p).kind() {
+        SREF => caller.sheet,
+        REF => match (*p).val.mref.sheet.checked_sub(1) {
+            Some(i) => xlcalc::SheetId(i as u32),
+            None => return (RET_INV_XLOPER, Reply::Error(ERR_VALUE)),
+        },
+        _ => return (RET_INV_XLOPER, Reply::Error(ERR_VALUE)),
+    };
+    match (*wb).sheets().find(|s| s.id == sheet) {
+        Some(s) => (
+            RET_SUCCESS,
+            text_oper(&format!("[{}]{}", (*wb).book_name(), s.name)),
+        ),
+        None => (RET_FAILED, Reply::Error(ERR_VALUE)),
+    }
+}
+
+unsafe fn abort(a: &[*mut Xloper12]) -> (i32, Reply) {
+    if let Some(&p) = a.first() {
+        if !p.is_null() && (*p).kind() != xloper::MISSING && (*p).kind() != xloper::BOOL {
+            return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+        }
+    }
+    (RET_SUCCESS, bool_reply(false))
+}
+
+unsafe fn define_binary_name(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
+    if a.is_empty() || a.len() > 2 {
+        return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
+    }
+    if text_arg(ctx, a[0]).is_none() {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    }
+    if a.len() == 2 && (a[1].is_null() || (*a[1]).kind() != xloper::BIGDATA) {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    }
+    (RET_FAILED, Reply::Error(ERR_VALUE))
+}
+
+unsafe fn get_binary_name(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
+    if a.len() != 1 {
+        return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
+    }
+    if text_arg(ctx, a[0]).is_none() {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    }
+    (RET_FAILED, Reply::Error(ERR_VALUE))
 }
 
 unsafe fn async_return(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
@@ -566,12 +671,17 @@ unsafe fn async_return_foreign(a: &[*mut Xloper12]) -> (i32, Reply) {
 }
 
 unsafe fn event_register(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
-    if a.len() != 2 {
+    if a.len() < 2 {
         return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
     }
-    let (Some(name), Some(Value::Number(event))) = (text_arg(ctx, a[0]), arg_value(ctx, a[1]))
-    else {
+    let Some(Value::Number(event)) = arg_value(ctx, a[1]) else {
         return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    };
+    if event != 1.0 && event != 2.0 {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    }
+    let Some(name) = text_arg(ctx, a[0]) else {
+        return (RET_SUCCESS, int_reply(0));
     };
     let Some(address) = ctx.inner.symbol(&name) else {
         return (RET_SUCCESS, Reply::Error(ERR_NA));

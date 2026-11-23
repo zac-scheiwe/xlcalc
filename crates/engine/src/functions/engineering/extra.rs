@@ -142,21 +142,31 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
             return Err(XlError::NA);
         }
         let mut sum = 0.0;
-        let mut any = false;
-        for (x, y) in gx.data.iter().zip(gy.data.iter()) {
-            for v in [x, y] {
-                if let Value::Error(e) = v {
-                    return Err(if matches!(*e, XlError::SPILL | XlError::CALC) {
-                        XlError::VALUE
-                    } else {
-                        *e
-                    });
-                }
+
+        let (mut any_x, mut any_y) = (false, false);
+
+        let mut deferred: Option<XlError> = None;
+
+        let elem_err = |e: XlError| {
+            if matches!(e, XlError::SPILL | XlError::CALC) {
+                XlError::VALUE
+            } else {
+                e
             }
+        };
+        for (x, y) in gx.data.iter().zip(gy.data.iter()) {
+            if let Value::Error(e) = x {
+                return Err(elem_err(*e));
+            }
+            if let Value::Error(e) = y {
+                deferred.get_or_insert(elem_err(*e));
+                continue;
+            }
+            any_x |= matches!(x, Value::Number(_));
+            any_y |= matches!(y, Value::Number(_));
             let (Value::Number(x), Value::Number(y)) = (x, y) else {
                 continue;
             };
-            any = true;
 
             let (x, y) = (*x, *y);
             sum = x87::add(
@@ -171,7 +181,10 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
                 },
             );
         }
-        if !any {
+        if let Some(e) = deferred {
+            return Err(e);
+        }
+        if !(any_x && any_y) {
             return Err(XlError::DIV0);
         }
         Ok(sum)

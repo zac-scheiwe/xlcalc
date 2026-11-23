@@ -235,6 +235,40 @@ impl Workbook {
         insert: bool,
         limit: Option<(u32, u32)>,
     ) {
+        if rows && limit.is_none() {
+            let old = self
+                .cellfmt
+                .row_marks
+                .get(&sheet)
+                .cloned()
+                .unwrap_or_default();
+            let mut new = std::collections::BTreeMap::new();
+            for (r, hard) in old {
+                let to = if insert {
+                    if r >= at {
+                        r + count
+                    } else {
+                        r
+                    }
+                } else if r >= at + count {
+                    r - count
+                } else {
+                    r
+                };
+                let e: &mut bool = new.entry(to).or_insert(hard);
+                *e |= hard;
+            }
+            if insert {
+                for r in at.saturating_sub(1)..(at + count).min(MAX_ROWS) {
+                    new.insert(r, true);
+                }
+            }
+            if new.is_empty() {
+                self.cellfmt.row_marks.remove(&sheet);
+            } else {
+                self.cellfmt.row_marks.insert(sheet, new);
+            }
+        }
         if !self.cellfmt.any() {
             return;
         }
@@ -288,12 +322,17 @@ impl Workbook {
                         .collect();
                     let above: Vec<_> = above
                         .into_iter()
-                        .map(|(k, v)| (k, f.borderless(v)))
+                        .map(|(k, v)| {
+                            let after = f.map.get(&place(&k, at + count)).cloned();
+                            (k, f.inherited(v, after.as_ref(), rows))
+                        })
                         .collect();
-                    let line = (if rows { &f.rows } else { &f.cols })
+                    let lines = if rows { &f.rows } else { &f.cols };
+                    let after = lines.get(&(sheet, at + count)).map(|(_, v)| v.clone());
+                    let line = lines
                         .get(&(sheet, at - 1))
                         .cloned()
-                        .map(|(seq, v)| (seq, f.borderless(v)));
+                        .map(|(seq, v)| (seq, f.inherited(v, after.as_ref(), rows)));
                     for j in 0..count.min(max - at) {
                         for (k, v) in &above {
                             f.map.insert(place(k, at + j), v.clone());
@@ -363,10 +402,11 @@ impl Workbook {
         }
         let above: Vec<Option<Sty>> = (l0..=l1)
             .map(|x| {
+                let after = self.fmt_at(cell(at, x));
                 (insert && at > 0)
                     .then(|| self.fmt_at(cell(at - 1, x)))
                     .flatten()
-                    .map(|v| self.cellfmt.borderless(v))
+                    .map(|v| self.cellfmt.inherited(v, after.as_ref(), rows))
             })
             .collect();
 

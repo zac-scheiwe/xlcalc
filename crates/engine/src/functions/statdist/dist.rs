@@ -480,6 +480,14 @@ fn chi_df(ctx: &EvalCtx, a: &[Value], i: usize) -> R<f64> {
     Ok(df)
 }
 
+fn chi_df_rt(ctx: &EvalCtx, a: &[Value], i: usize) -> R<f64> {
+    let df = int(ctx, a, i)?;
+    if df < 1.0 || !df.is_finite() {
+        return Err(XlError::NUM);
+    }
+    Ok(df)
+}
+
 fn gamma_pdf(x: f64, k: f64, theta: f64) -> R<f64> {
     if x == 0.0 {
         return if k <= 1.0 { Err(XlError::NUM) } else { Ok(0.0) };
@@ -605,6 +613,10 @@ fn gamma_inv_halley(t: f64, upper: bool, a: f64, mut x: f64) -> f64 {
     } else {
         (t, upper)
     };
+
+    if x87::mul(std::f64::consts::TAU, a).is_infinite() {
+        return f64::NEG_INFINITY;
+    }
     let am1 = x87::sub(a, 1.0);
     let mut best = (f64::INFINITY, x);
     for _ in 0..106 {
@@ -675,7 +687,7 @@ pub fn chisq_inv_rt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
         coerce_all(ctx, a, "nn")?;
         let p = num(ctx, &a[0])?;
-        let df = chi_df(ctx, a, 1)?;
+        let df = chi_df_rt(ctx, a, 1)?;
         if p <= 0.0 || p > 1.0 {
             return Err(XlError::NUM);
         }
@@ -1528,10 +1540,16 @@ fn xl_atanh(v: f64) -> f64 {
 }
 
 pub(crate) fn xl_log1p(y: f64) -> f64 {
-    if y.abs() < 0.375 {
-        x87::mul(xl_atanh(x87::div(y, x87::add(y, 2.0))), 2.0)
-    } else {
+    if y == 0.0 {
+        return 0.0;
+    }
+    let a = y.abs();
+    if a >= 0.375 {
         x87::ln(x87::add(1.0, y))
+    } else if a <= 2f64.powi(-51) {
+        x87::mul(x87::add(x87::mul(y, -0.5), 1.0), y)
+    } else {
+        x87::mul(xl_atanh(x87::div(y, x87::add(y, 2.0))), 2.0)
     }
 }
 
@@ -1655,10 +1673,20 @@ pub(super) fn xl_pow(x: f64, y: f64) -> f64 {
 }
 
 pub(crate) fn xl_expm1(v: f64) -> f64 {
-    if v.abs() < 1.0 {
-        x87::expm1(v)
-    } else {
+    let a = v.abs();
+    if a > 1.0 {
         x87::add(x87::exp(v), -1.0)
+    } else if a > 2f64.powi(-52) {
+        let u = x87::exp(v);
+        let d = x87::add(u, -1.0);
+        let b = x87::sub(d, u);
+        let t = x87::sub(d, b);
+        let c = x87::sub(-1.0, b);
+        let err = x87::add(x87::sub(u, t), c);
+        let s = x87::add(d, err);
+        x87::div(x87::mul(s, v), x87::ln(u))
+    } else {
+        v
     }
 }
 

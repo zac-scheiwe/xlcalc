@@ -1,16 +1,19 @@
+use std::sync::Arc;
+use xlcalc::style::Style;
 use xlcalc::{CellAddr, DateSystem, EditError, Notice, Rect, SheetId, Value, Workbook, XlError};
 use xlcalc_variant::{change_type, HResult, Locale, VarType, Variant};
 
 use crate::addr::{
-    external_prefix, parse_range_text, range_text, AddressStyle, MAX_COLS, MAX_ROWS,
+    external_prefix, max_cols, max_rows, parse_areas_text, range_text, AddressStyle,
 };
 use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef};
 use crate::conv::{
     array_cells, array_variant, cell_variant, currency_overflow, date_overflow, input_locale,
-    scode_error, Args, Flavour, HOST_LCID,
+    is_missing, scode_error, variant_locale, Args, Flavour, HOST_LCID,
 };
 use crate::error::{vba_scode, OmError, DISP_E_TYPEMISMATCH};
 use crate::objects::{edit_error, whole_sheet};
+use crate::style::StyleOwner;
 use crate::typelib::{InvokeKind, Member};
 
 fn mergeable(a: &Rect, b: &Rect) -> bool {
@@ -31,6 +34,81 @@ fn union_add(mut list: Vec<Rect>, area: Rect) -> Vec<Rect> {
     }
     list.push(cur);
     list
+}
+
+fn header_class(wb: &Workbook, at: CellAddr) -> Option<(u8, Style)> {
+    let kind = match wb.value(at) {
+        Value::Blank => return None,
+        Value::Number(_) => 1,
+        Value::Text(_) => 2,
+        Value::Bool(_) => 3,
+        Value::Error(_) => 4,
+        Value::Array(_) | Value::Lambda(_) => 5,
+    };
+    let mut st = wb.cell_style(at).clone();
+    st.locked = true;
+    st.formula_hidden = false;
+    st.named = Arc::from("");
+    st.custom_code = false;
+    st.implicit_general = false;
+
+    st.borders = xlcalc::style::Borders {
+        bottom: wb.shown_border(at, xlcalc::style::Edge::Bottom),
+        ..Default::default()
+    };
+    Some((kind, st))
+}
+
+fn header_row_count(wb: &Workbook, sheet: SheetId, rect: Rect) -> i32 {
+    if rect.r0 == rect.r1 || (rect.c0 == 0 && rect.c1 == max_cols() - 1) {
+        return 0;
+    }
+    let row = |r: u32| -> Vec<Option<(u8, Style)>> {
+        (rect.c0..=rect.c1)
+            .map(|c| header_class(wb, CellAddr::new(sheet, r, c)))
+            .collect()
+    };
+    let mut reference: Vec<Option<(u8, Style)>> = vec![None; (rect.c1 - rect.c0 + 1) as usize];
+    let mut seen = false;
+    let mut run = 0;
+    let mut r = rect.r0;
+    while r < max_rows() && run < 3 {
+        let cur = row(r);
+        if cur.iter().all(Option::is_none) {
+            if seen {
+                return 0;
+            }
+        } else {
+            let mut differs = false;
+            for (have, new) in reference.iter_mut().zip(cur) {
+                match (&*have, new) {
+                    (_, None) => {}
+                    (None, n) => *have = n,
+                    (Some(h), Some(n)) => differs |= *h != n,
+                }
+            }
+            if differs && seen {
+                if run == 2 && rect.r0 > 0 {
+                    let above = row(rect.r0 - 1);
+                    let alike = above
+                        .iter()
+                        .zip(reference.iter())
+                        .all(|(x, y)| match (x, y) {
+                            (Some(x), Some(y)) => x == y,
+                            _ => true,
+                        });
+                    if !alike && above.iter().any(Option::is_some) {
+                        return 0;
+                    }
+                }
+                return run;
+            }
+            seen = true;
+        }
+        run += 1;
+        r += 1;
+    }
+    0
 }
 
 const MAX_READ_CELLS: u64 = 4_000_000;
@@ -201,7 +279,7 @@ fn parse_r1c1_ref(s: &[char], row: u32, col: u32) -> Result<Option<(R1c1Tok, usi
             None => Ok(Some((host, false))),
             Some(Part::Abs(0)) => Ok(None),
 
-            Some(Part::Abs(n)) if n > i64::from(max) && max == MAX_COLS => Err(()),
+            Some(Part::Abs(n)) if n > i64::from(max) && max == max_cols() => Err(()),
             Some(Part::Abs(n)) if n > i64::from(max) => Ok(None),
             Some(Part::Abs(n)) => Ok(Some((n as u32 - 1, true))),
             Some(Part::Rel(d)) if d.unsigned_abs() >= u64::from(max) => Err(()),
@@ -227,11 +305,11 @@ fn parse_r1c1_ref(s: &[char], row: u32, col: u32) -> Result<Option<(R1c1Tok, usi
         }
     };
     let row_txt = |p: Option<Part>| -> Result<Option<String>, ()> {
-        Ok(resolve(p, row, MAX_ROWS)?
+        Ok(resolve(p, row, max_rows())?
             .map(|(n, abs)| format!("{}{}", if abs { "$" } else { "" }, n + 1)))
     };
     let col_txt = |p: Option<Part>| -> Result<Option<String>, ()> {
-        Ok(resolve(p, col, MAX_COLS)?.map(|(n, abs)| {
+        Ok(resolve(p, col, max_cols())?.map(|(n, abs)| {
             format!(
                 "{}{}",
                 if abs { "$" } else { "" },
@@ -251,6 +329,94 @@ fn parse_r1c1_ref(s: &[char], row: u32, col: u32) -> Result<Option<(R1c1Tok, usi
 }
 
 impl Application<'_> {
+    pub(crate) fn convert_formula(&mut self, a: &Args) -> Result<Variant, OmError> {
+        use crate::convertformula::{convert, Style};
+        let err = || Ok(Variant::Error(-2_146_826_273));
+
+        let given = |i: usize| match a.get(i) {
+            None | Some(Variant::Null | Variant::Empty) => None,
+            Some(v) => Some(v),
+        };
+        let formula = match a.get(0) {
+            Some(Variant::Bstr(s)) => s.clone(),
+            Some(Variant::Bool(true)) => "TRUE".to_string(),
+            Some(Variant::Bool(false)) => "FALSE".to_string(),
+            Some(v @ (Variant::I2(_) | Variant::I4(_) | Variant::R4(_) | Variant::R8(_))) => {
+                match change_type(v, VarType::Bstr, Locale::EN_US, 0) {
+                    Ok(Variant::Bstr(s)) => s,
+                    _ => return err(),
+                }
+            }
+            _ => return err(),
+        };
+        let style_of = |v: &Variant| -> Option<Style> {
+            match v {
+                Variant::Bstr(_) | Variant::Dispatch(_) | Variant::Array(_) => None,
+                v => match change_type(v, VarType::I4, Locale::EN_US, 0) {
+                    Ok(Variant::I4(-4150)) => Some(Style::R1c1),
+                    Ok(_) => Some(Style::A1),
+                    Err(_) => None,
+                },
+            }
+        };
+
+        let from = match given(1) {
+            None => Style::R1c1,
+            Some(v) => match style_of(v) {
+                Some(s) => s,
+                None => return err(),
+            },
+        };
+        let to = match given(2) {
+            None => None,
+            Some(v) => match style_of(v) {
+                Some(s) => Some(s),
+                None => return err(),
+            },
+        };
+        let mode = match given(3) {
+            None => None,
+            Some(v @ (Variant::I2(_) | Variant::I4(_) | Variant::Bool(_))) => {
+                match change_type(v, VarType::I4, Locale::EN_US, 0) {
+                    Ok(Variant::I4(-1 | 1)) => Some(1),
+                    Ok(Variant::I4(0 | 4)) => Some(4),
+                    Ok(Variant::I4(n @ (2 | 3))) => Some(n),
+                    _ => return err(),
+                }
+            }
+            Some(_) => return err(),
+        };
+
+        if a.get(1).is_none() && to.is_none() && mode.is_none() {
+            return err();
+        }
+        let (row, col) = match a.get(4) {
+            None => (1, 1),
+            Some(v @ Variant::Dispatch(_)) => match self.range_areas(Some(v)) {
+                Ok((_, _, rects)) => (rects[0].r0 + 1, rects[0].c0 + 1),
+                Err(_) => return err(),
+            },
+            Some(_) => return err(),
+        };
+
+        if to.is_none() && mode.is_none() {
+            return Ok(Variant::Bstr(formula));
+        }
+        let book = self.active_book()?.name.clone();
+        match convert(
+            &formula,
+            from,
+            to.unwrap_or(Style::R1c1),
+            mode,
+            &book,
+            row,
+            col,
+        ) {
+            Some(t) => Ok(Variant::Bstr(t)),
+            None => err(),
+        }
+    }
+
     fn rect_cells(sheet: SheetId, rect: Rect) -> impl Iterator<Item = CellAddr> {
         (rect.r0..=rect.r1)
             .flat_map(move |r| (rect.c0..=rect.c1).map(move |c| CellAddr::new(sheet, r, c)))
@@ -344,15 +510,63 @@ impl Application<'_> {
         self.new_range(r.book, sheet, rect, mode)
     }
 
-    fn index_arg(a: &Args, i: usize, column: bool) -> Result<Option<i64>, OmError> {
-        if column {
-            if let Some(Variant::Bstr(t)) = a.get(i) {
-                if let Some(c) = xlcalc::letters_to_col(t.trim()) {
-                    return Ok(Some(c as i64 + 1));
-                }
+    fn variant_operand(&self, v: &Variant) -> Result<Variant, OmError> {
+        let Variant::Dispatch(Some(_)) = v else {
+            return Ok(v.clone());
+        };
+        let (book, sheet, rects) = self.range_areas(Some(v))?;
+        match rects.as_slice() {
+            [rect] if rect.is_cell() => {
+                let wb = &self.book(book)?.wb;
+                Ok(Self::value_variant(
+                    wb,
+                    CellAddr::new(sheet, rect.r0, rect.c0),
+                    Flavour::Value,
+                ))
             }
+            _ => Err(OmError::type_mismatch()),
         }
-        Ok(a.i32(i)?.map(i64::from))
+    }
+
+    fn coerce_variant_to_int(
+        &self,
+        a: &Args,
+        i: usize,
+        lo: i64,
+        hi: i64,
+        default: i64,
+    ) -> Result<i64, OmError> {
+        let Some(v) = a.get(i).filter(|v| !is_missing(v)) else {
+            return Ok(default);
+        };
+        let v = self.variant_operand(v)?;
+        match change_type(&v, VarType::I4, variant_locale(a.lcid), 0) {
+            Ok(Variant::I4(n)) if (lo..hi).contains(&i64::from(n)) => Ok(i64::from(n)),
+            Ok(_) => Err(OmError::app_defined()),
+            Err(HResult::DISP_E_OVERFLOW) => {
+                Err(OmError::exception(HResult::DISP_E_OVERFLOW.0, None))
+            }
+            Err(_) => Err(OmError::type_mismatch()),
+        }
+    }
+
+    fn coerce_variant_to_number(&self, a: &Args, i: usize) -> Result<f64, OmError> {
+        let invalid = || OmError::exception(HResult::E_INVALIDARG.0, None);
+        let Some(v) = a.get(i) else {
+            return Err(invalid());
+        };
+        match self.variant_operand(v)? {
+            Variant::Empty => Ok(0.0),
+            Variant::I2(n) => Ok(f64::from(n)),
+            Variant::I4(n) | Variant::Int(n) => Ok(f64::from(n)),
+            Variant::I8(n) => Ok(n as f64),
+            Variant::Ui1(n) => Ok(f64::from(n)),
+            Variant::R4(x) => Ok(f64::from(x)),
+            Variant::R8(x) | Variant::Date(x) => Ok(x),
+            Variant::Cy(n) => Ok(n as f64 / 10_000.0),
+            Variant::Bool(b) => Ok(if b { -1.0 } else { 0.0 }),
+            _ => Err(invalid()),
+        }
     }
 
     fn item(
@@ -361,113 +575,159 @@ impl Application<'_> {
         sheet: SheetId,
         rect: Rect,
         a: &Args,
-        direct: bool,
     ) -> Result<Variant, OmError> {
-        if let (Some(Variant::Bstr(t)), None, Mode::Rows | Mode::Columns) =
-            (a.get(0), a.get(1), r.mode)
-        {
-            if t.contains(':') && rect == whole_sheet() {
-                let (s, found) = parse_range_text(&self.book(r.book)?.wb, sheet, t)
-                    .ok_or_else(OmError::app_defined)?;
-                let mut found_ref = self.track_ref(r.book, s, found, Mode::Cells)?;
-                found_ref.axis = Some(r.mode);
-                return Ok(self.alloc(Object::Range(found_ref)));
-            }
-        }
-
-        let index = |i: usize, column: bool| {
-            Application::index_arg(a, i, column).map_err(|e| match a.get(i) {
-                Some(Variant::Bstr(_))
-                    if direct
-                        && r.mode == Mode::Cells
-                        && rect != whole_sheet()
-                        && a.get(1).is_none() =>
-                {
-                    OmError::exception(HResult::E_INVALIDARG.0, None)
-                }
-                Some(Variant::Bstr(_)) if direct => OmError::app_defined(),
-
-                Some(Variant::R8(_) | Variant::I8(_)) => OmError::app_defined(),
-                _ => e,
-            })
-        };
-
-        if let (Some(Variant::Bstr(t)), None, Mode::Rows | Mode::Columns) =
-            (a.get(0), a.get(1), r.mode)
-        {
-            let columns = r.mode == Mode::Columns;
-            let axis = |part: &str| -> Option<i64> {
-                let part = part.trim();
-                if columns {
-                    xlcalc::letters_to_col(part).map(|c| i64::from(c) + 1)
-                } else {
-                    part.parse::<i64>().ok()
-                }
-            };
-            let (lo, hi) = match t.split_once(':') {
-                Some((x, y)) => (axis(x), axis(y)),
-                None => (axis(t), axis(t)),
-            };
-            let (Some(lo), Some(hi)) = (lo, hi) else {
-                let letters = |p: &str| {
-                    let p = p.trim();
-                    !p.is_empty() && p.chars().all(|c| c.is_ascii_alphabetic())
-                };
-                let all_letters = t.split(':').all(letters);
-                return Err(if columns && all_letters {
-                    OmError::type_mismatch()
-                } else {
-                    OmError::app_defined()
-                });
-            };
-            let (lo, hi) = (lo.min(hi), lo.max(hi));
-            let (r0, c0) = (i64::from(rect.r0), i64::from(rect.c0));
-            let found = if columns {
-                grid_rect(r0, c0 + lo - 1, i64::from(rect.r1), c0 + hi - 1)
-            } else {
-                grid_rect(r0 + lo - 1, c0, r0 + hi - 1, i64::from(rect.c1))
-            };
-            let found = found.ok_or_else(OmError::app_defined)?;
-            return self.sub_range(r, sheet, found, r.mode);
-        }
-
-        if direct && a.get(1).is_some() && r.mode != Mode::Cells {
-            return Err(OmError::app_defined());
-        }
-        let first = index(0, false)?;
-        let second = index(1, true)?;
-
+        let (rw_max, col_max) = (i64::from(max_rows()), i64::from(max_cols()));
+        let given = |i: usize| a.get(i).is_some_and(|v| !is_missing(v));
         let (r0, c0) = (i64::from(rect.r0), i64::from(rect.c0));
-        let target = match (first, second, r.mode) {
-            (None, _, _) => return Err(OmError::app_defined()),
-            (Some(n), None, Mode::Rows) => {
-                grid_rect(r0 + n - 1, c0, r0 + n - 1, i64::from(rect.c1))
-            }
-            (Some(n), None, Mode::Columns) => {
-                grid_rect(r0, c0 + n - 1, i64::from(rect.r1), c0 + n - 1)
-            }
-            (Some(n), None, Mode::Cells) => {
-                let cols = i64::from(rect.cols());
-                let (row, col) = (r0 + (n - 1) / cols, c0 + (n - 1) % cols);
-                grid_rect(row, col, row, col)
-            }
-            (Some(i), Some(j), _) => grid_rect(r0 + i - 1, c0 + j - 1, r0 + i - 1, c0 + j - 1),
+        let (r1, c1) = (i64::from(rect.r1), i64::from(rect.c1));
+        let text_ref = |i: usize| match a.get(i) {
+            Some(Variant::Bstr(t)) => crate::addr::sz_to_ref(t, true),
+            _ => None,
         };
-        let rect = target.ok_or_else(OmError::app_defined)?;
-        let mode = if second.is_some() {
-            Mode::Cells
+        let whole_rows = |f: &Rect| f.c0 == 0 && i64::from(f.c1) == col_max - 1;
+        let whole_cols = |f: &Rect| f.r0 == 0 && i64::from(f.r1) == rw_max - 1;
+
+        let (mut height, mut width) = (r1 - r0, c1 - c0);
+        let (ro, co);
+        let mode;
+        if given(1) {
+            if r.mode != Mode::Cells {
+                return Err(OmError::app_defined());
+            }
+            ro = self.coerce_variant_to_int(a, 0, -rw_max, rw_max + 1, 1)? - 1;
+            co = match text_ref(1) {
+                Some(f) => {
+                    if !whole_cols(&f) || f.c0 != f.c1 {
+                        return Err(OmError::app_defined());
+                    }
+                    i64::from(f.c0)
+                }
+                None => self.coerce_variant_to_int(a, 1, -col_max, col_max + 1, 1)? - 1,
+            };
+            (height, width) = (0, 0);
+            mode = Mode::Cells;
         } else {
-            r.mode
-        };
-        let mode = if mode == Mode::Cells || second.is_some() {
-            Mode::Cells
-        } else {
-            mode
-        };
-        self.sub_range(r, sheet, rect, mode)
+            mode = r.mode;
+            match r.mode {
+                Mode::Cells => {
+                    let columns = width + 1;
+                    match self.coerce_variant_to_int(a, 0, -0x7fff_ffff, 0x7fff_ffff, 1) {
+                        Ok(n) => {
+                            ro = (n - 1) / columns;
+                            co = (n - 1) % columns;
+                        }
+                        Err(_) => {
+                            let x = self.coerce_variant_to_number(a, 0)?;
+                            if x.abs() > (rw_max * col_max) as f64 {
+                                return Err(OmError::app_defined());
+                            }
+                            let q = ((x - 1.0) / columns as f64).trunc();
+                            ro = q as i64;
+                            co = (x - 1.0 - q * columns as f64).trunc() as i64;
+                        }
+                    }
+                    (height, width) = (0, 0);
+                }
+                Mode::Rows => {
+                    co = 0;
+                    match text_ref(0) {
+                        Some(f) => {
+                            if !whole_rows(&f) {
+                                return Err(OmError::app_defined());
+                            }
+                            ro = i64::from(f.r0);
+                            height = i64::from(f.r1 - f.r0);
+                        }
+                        None => {
+                            ro = self.coerce_variant_to_int(a, 0, -rw_max, rw_max + 1, 1)? - 1;
+                            height = 0;
+                        }
+                    }
+                }
+                Mode::Columns => {
+                    ro = 0;
+                    match text_ref(0) {
+                        Some(f) => {
+                            if !whole_cols(&f) {
+                                return Err(OmError::app_defined());
+                            }
+                            co = i64::from(f.c0);
+                            width = i64::from(f.c1 - f.c0);
+                        }
+                        None => {
+                            co = self.coerce_variant_to_int(a, 0, -col_max, col_max + 1, 1)? - 1;
+                            width = 0;
+                        }
+                    }
+                }
+            }
+
+            if r0 + height < 0 || r0 + height >= rw_max || c0 + width < 0 || c0 + width >= col_max {
+                return Err(OmError::app_defined());
+            }
+        }
+
+        let found = grid_rect(r0 + ro, c0 + co, r0 + ro + height, c0 + co + width)
+            .ok_or_else(OmError::app_defined)?;
+        self.sub_range(r, sheet, found, mode)
     }
 
     pub(crate) fn range_member(
+        &mut self,
+        r: &RangeRef,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        use InvokeKind::*;
+
+        let empties = matches!(
+            (m.name, m.kind),
+            (
+                "Value" | "Value2" | "_Default" | "Formula" | "Formula2",
+                Put
+            ) | ("ClearContents", Func)
+        );
+        let held: Vec<(SheetId, u32, u32)> = if empties {
+            self.resolve(r)
+                .ok()
+                .and_then(|(sheet, rect)| {
+                    let sh = self.book(r.book).ok()?.wb.sheet(sheet)?;
+                    Some(
+                        sh.entries_in(rect)
+                            .map(|(row, col, _)| (sheet, row, col))
+                            .collect(),
+                    )
+                })
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+
+        if matches!((m.name, m.kind), ("Clear", Func)) && !self.emptied.is_empty() {
+            if let Ok((sheet, rect)) = self.resolve(r) {
+                let book = r.book;
+                self.emptied.retain(|&(b, s, row, col)| {
+                    !(b == book && s == sheet && rect.contains(row, col))
+                });
+            }
+        }
+        let out = self.range_member_inner(r, m, a);
+        if !held.is_empty() {
+            if let Ok(b) = self.book(r.book) {
+                let gone: Vec<_> = held
+                    .into_iter()
+                    .filter(|&(s, row, col)| {
+                        matches!(b.wb.value(CellAddr::new(s, row, col)), Value::Blank)
+                    })
+                    .collect();
+                self.emptied
+                    .extend(gone.into_iter().map(|(s, row, col)| (r.book, s, row, col)));
+            }
+        }
+        out
+    }
+
+    fn range_member_inner(
         &mut self,
         r: &RangeRef,
         m: &'static Member,
@@ -490,24 +750,16 @@ impl Application<'_> {
             return Err(e);
         }
 
-        match (m.name, m.kind) {
-            (
-                "Value" | "Value2" | "_Default" | "Formula" | "FormulaLocal" | "Formula2"
-                | "Formula2Local" | "FormulaR1C1" | "FormulaR1C1Local" | "Formula2R1C1"
-                | "Formula2R1C1Local",
-                Put,
-            )
-            | ("ClearContents" | "Clear", Func) => {
-                self.book_mut(book)?.wb.note_cell_format(top_left)
+        if let Ok(b) = self.book_mut(book) {
+            match vifmt_effect(m.name, m.kind) {
+                Vifmt::Exact => b.wb.note_exact_cell_format(top_left),
+                Vifmt::Meets => b.wb.note_cell_format(top_left),
+                Vifmt::Reset => b.wb.note_number_format(None),
+                Vifmt::Leaves => {}
             }
-
-            ("NumberFormat" | "NumberFormatLocal" | "Text", Get) => {
-                if let Ok(b) = self.book_mut(book) {
-                    let f = b.wb.number_format(top_left).to_string();
-                    b.wb.note_number_format(Some(&f));
-                }
-            }
-            _ => {}
+        }
+        if (m.name, m.kind) == ("Value", Put) {
+            self.value_put_kind(a, 1)?;
         }
         match (m.name, m.kind) {
             ("Select" | "Activate", Func) => self.range_select(book, sheet, &[rect], m),
@@ -535,7 +787,7 @@ impl Application<'_> {
                 };
                 if a.get(0).is_some() || a.get(1).is_some() {
                     let moded = RangeRef { mode, ..*r };
-                    return self.item(&moded, sheet, rect, a, false);
+                    return self.item(&moded, sheet, rect, a);
                 }
                 self.sub_range(r, sheet, rect, mode)
             }
@@ -549,15 +801,37 @@ impl Application<'_> {
             }
             ("Insert", Func) | ("Delete", Func) => {
                 let insert = m.name == "Insert";
-                let shift = a.i32(0)?;
-                let whole_rows = rect.c0 == 0 && rect.c1 == MAX_COLS - 1;
-                let whole_cols = rect.r0 == 0 && rect.r1 == MAX_ROWS - 1;
-                if whole_rows && whole_cols {
-                    return Err(OmError::app_defined());
+
+                let shift = if matches!(a.get(0), Some(Variant::Bool(true))) {
+                    Some(1)
+                } else {
+                    a.i32(0)?
+                };
+                let shift = {
+                    shift.map(|s| match (s, insert) {
+                        (1, true) => -4161,
+                        (2, true) => -4121,
+                        (1, false) => -4159,
+                        (2, false) => -4162,
+                        _ => s,
+                    })
+                };
+                if matches!(a.get(1), Some(Variant::Bstr(_))) {
+                    a.i32(1)?;
                 }
+                let whole_rows = shift == Some(3) || rect.c0 == 0 && rect.c1 == max_cols() - 1;
+                let whole_cols =
+                    !whole_rows && (shift == Some(4) || rect.r0 == 0 && rect.r1 == max_rows() - 1);
                 let below = insert && (whole_rows || whole_cols) && a.i32(1)? == Some(1);
                 let wb = &mut self.book_mut(book)?.wb;
                 wb.insert_format_below = below;
+                let band = if whole_rows {
+                    Some((true, rect.r0, rect.rows()))
+                } else if whole_cols {
+                    Some((false, rect.c0, rect.cols()))
+                } else {
+                    None
+                };
                 let done = if whole_rows {
                     let n = rect.rows();
                     if insert {
@@ -593,14 +867,27 @@ impl Application<'_> {
                 };
                 wb.insert_format_below = false;
                 done.map_err(edit_error)?;
+                if let Some((rows, at, n)) = band {
+                    self.follow_source_shift(book, sheet, rows, at, n, insert);
+                }
                 Ok(Variant::Bool(true))
             }
             ("Cut", Func) | ("Copy", Func) => {
 
                 let Some(Variant::Dispatch(Some(id))) = a.get(0) else {
-                    if m.name == "Copy" {
-                        self.clip = Some((book, sheet, rect));
+
+                    if m.name == "Copy" && a.get(0).is_some() {
+                        self.clip = None;
                         self.clip_more.0.clear();
+                        return Err(OmError::app_defined_with(
+                            "Copy method of Range class failed",
+                        ));
+                    }
+                    if m.name == "Copy" || a.get(0).is_none() {
+                        self.clip = Some((book, sheet, rect));
+                        self.clip_cut = m.name == "Cut";
+                        self.clip_more.0.clear();
+                        self.book_mut(book)?.wb.mark_copy(Some((sheet, rect)));
                         return Ok(Variant::Bool(true));
                     }
                     return Err(unsupported("Range", m));
@@ -610,6 +897,9 @@ impl Application<'_> {
                 };
                 let dest = *dest;
                 let (ds, dr) = self.resolve(&dest)?;
+
+                self.clip = None;
+                self.clip_more.0.clear();
                 self.paste_copy(book, (sheet, rect), (ds, dr), m.name == "Cut")?;
                 Ok(Variant::Bool(true))
             }
@@ -618,12 +908,67 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
 
+            ("FillDown" | "FillUp" | "FillRight" | "FillLeft", Func)
+                if (rect.r1 > rect.r0 || matches!(m.name, "FillRight" | "FillLeft"))
+                    && self.book(book).is_ok_and(|b| {
+                        b.wb.filter_mode(sheet)
+                            && (rect.r0..=rect.r1).any(|r| !b.wb.row_hidden(sheet, r))
+                    }) =>
+            {
+                let name = m.name;
+                let book_ref = self.book_mut(book)?;
+                let visible: Vec<u32> = (rect.r0..=rect.r1)
+                    .filter(|&r| !book_ref.wb.row_hidden(sheet, r))
+                    .collect();
+                let vcols: Vec<u32> = (rect.c0..=rect.c1)
+                    .filter(|&c| !book_ref.wb.col_hidden(sheet, c))
+                    .collect();
+                let mut jobs: Vec<(Rect, Rect)> = Vec::new();
+                match name {
+                    "FillDown" | "FillUp" => {
+                        if let (Some(&first), Some(&last)) = (visible.first(), visible.last()) {
+                            let s = if name == "FillDown" { first } else { last };
+                            for &r in visible.iter().filter(|&&r| r != s) {
+                                jobs.push((
+                                    Rect::new(s, rect.c0, s, rect.c1),
+                                    Rect::new(r, rect.c0, r, rect.c1),
+                                ));
+                            }
+                        }
+                    }
+                    _ => {
+
+                        if let (Some(&first), Some(&last)) = (vcols.first(), vcols.last()) {
+                            let s = if name == "FillRight" { first } else { last };
+                            for &r in &visible {
+                                for &c in vcols.iter().filter(|&&c| c != s) {
+                                    jobs.push((Rect::new(r, s, r, s), Rect::new(r, c, r, c)));
+                                }
+                            }
+                        }
+                    }
+                }
+                book_ref
+                    .wb
+                    .command(xlcalc::Command::Fill, |wb| {
+                        wb.note_changed(sheet, &[rect]);
+
+                        wb.creating_formulas(|wb| {
+                            for (src, dst) in &jobs {
+                                wb.fill(sheet, *src, *dst)?;
+                            }
+                            Ok(())
+                        })
+                    })
+                    .map_err(edit_error)?;
+                Ok(Variant::Bool(true))
+            }
             ("FillUp" | "FillLeft", Func) => {
                 let up = m.name == "FillUp";
                 let (src, dst) = if up {
                     let single = rect.r1 == rect.r0;
                     let s = if single { rect.r1 + 1 } else { rect.r1 };
-                    if s >= MAX_ROWS {
+                    if s >= max_rows() {
                         return Err(OmError::app_defined_with(&format!(
                             "{} method of Range class failed",
                             m.name
@@ -636,7 +981,7 @@ impl Application<'_> {
                 } else {
                     let single = rect.c1 == rect.c0;
                     let s = if single { rect.c1 + 1 } else { rect.c1 };
-                    if s >= MAX_COLS {
+                    if s >= max_cols() {
                         return Err(OmError::app_defined_with(&format!(
                             "{} method of Range class failed",
                             m.name
@@ -723,17 +1068,18 @@ impl Application<'_> {
                     .map_err(|_| OmError::exception(HResult::DISP_E_OVERFLOW.0, None))
             }
             ("EntireRow", Get) => {
-                let whole = Rect::new(rect.r0, 0, rect.r1, MAX_COLS - 1);
+                let whole = Rect::new(rect.r0, 0, rect.r1, max_cols() - 1);
                 self.sub_range(r, sheet, whole, Mode::Rows)
             }
             ("EntireColumn", Get) => {
-                let whole = Rect::new(0, rect.c0, MAX_ROWS - 1, rect.c1);
+                let whole = Rect::new(0, rect.c0, max_rows() - 1, rect.c1);
                 self.sub_range(r, sheet, whole, Mode::Columns)
             }
             ("Worksheet" | "Parent", Get) => Ok(self.alloc(Object::Worksheet(book, sheet))),
             ("Application", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
             ("Comment", Get) => self.range_comment(book, sheet, rect),
             ("AddComment", Func) => self.range_add_comment(book, sheet, rect, a),
+            ("AddCommentThreaded", Func) => self.range_add_thread(book, sheet, rect, a),
             ("NoteText", Func) => self.range_note_text(book, sheet, rect, a),
             ("ClearComments" | "ClearNotes", Func) => {
                 self.range_clear_notes(book, sheet, &[rect], m)
@@ -745,43 +1091,48 @@ impl Application<'_> {
                     .current_region(sheet, Rect::cell(rect.r0, rect.c0));
                 self.sub_range(r, sheet, region, Mode::Cells)
             }
-            ("Next", Get) if rect.c0 + 1 < MAX_COLS => {
+
+            ("Next" | "Previous", Get)
+                if !rect.is_cell() && self.sheet_prot(book, sheet).contents =>
+            {
+                self.sub_range(r, sheet, Rect::cell(rect.r0, rect.c0), Mode::Cells)
+            }
+            ("Next", Get) if rect.c0 + 1 < max_cols() => {
                 self.sub_range(r, sheet, Rect::cell(rect.r0, rect.c0 + 1), Mode::Cells)
             }
             ("Offset", Get) => {
-                let dr = i64::from(a.i32(0)?.unwrap_or(0));
-                let dc = i64::from(a.i32(1)?.unwrap_or(0));
-                let moved = (|| {
-                    let r0 = u32::try_from(i64::from(rect.r0) + dr).ok()?;
-                    let r1 = u32::try_from(i64::from(rect.r1) + dr).ok()?;
-                    let c0 = u32::try_from(i64::from(rect.c0) + dc).ok()?;
-                    let c1 = u32::try_from(i64::from(rect.c1) + dc).ok()?;
-                    (r1 < MAX_ROWS && c1 < MAX_COLS).then(|| Rect::new(r0, c0, r1, c1))
-                })();
-                let moved = moved.ok_or_else(OmError::app_defined)?;
-                self.sub_range(r, sheet, moved, r.mode)
+                let moved = self.offset_areas(book, sheet, &[rect], a)?;
+                self.sub_range(r, sheet, moved[0], r.mode)
             }
+
             ("Resize", Get) => {
-                let rows = a.i32(0)?.map_or(i64::from(rect.rows()), i64::from);
-                let cols = a.i32(1)?.map_or(i64::from(rect.cols()), i64::from);
+                let rows = self
+                    .coerce_variant_to_int(a, 0, 0, i64::from(max_rows()) + 1, i64::from(rect.rows()))
+                    .map_err(|_| OmError::app_defined())?;
+                let cols = self
+                    .coerce_variant_to_int(a, 1, 0, i64::from(max_cols()) + 1, i64::from(rect.cols()))
+                    .map_err(|_| OmError::app_defined())?;
                 let r1 = i64::from(rect.r0) + rows - 1;
                 let c1 = i64::from(rect.c0) + cols - 1;
-                if rows < 1 || cols < 1 || r1 >= i64::from(MAX_ROWS) || c1 >= i64::from(MAX_COLS) {
+                if rows < 1 || cols < 1 || r1 >= i64::from(max_rows()) || c1 >= i64::from(max_cols()) {
                     return Err(OmError::app_defined());
                 }
                 let resized = Rect::new(rect.r0, rect.c0, r1 as u32, c1 as u32);
                 self.sub_range(r, sheet, resized, r.mode)
             }
             ("Item" | "_Default", Get) if a.get(0).is_some() || a.get(1).is_some() => {
-                self.item(r, sheet, rect, a, m.name == "Item")
+                self.item(r, sheet, rect, a)
             }
-            ("Item", Get) => Err(OmError::app_defined()),
-            ("Value" | "_Default", Get) => {
+            ("Item", Get) if r.mode != Mode::Cells && a.get(0).is_none() && a.get(1).is_none() => {
+                Err(OmError::exception(0x8007_000E_u32 as i32, None))
+            }
+
+            ("Value" | "Item" | "_Default", Get) => {
 
                 if m.name == "Value" {
-                    match a.i32(0)? {
-                        None | Some(10) => {}
-                        Some(kind @ (11 | 12)) => {
+                    match self.value_index(a)? {
+                        10 => {}
+                        kind @ (11 | 12) => {
                             let wb = &self.book(book)?.wb;
                             let text = if kind == 11 {
                                 crate::xmlvalue::spreadsheet(wb, &|x| spill_of(wb, x), sheet, rect)
@@ -792,7 +1143,7 @@ impl Application<'_> {
                                 .map(Variant::Bstr)
                                 .ok_or_else(|| unsupported("Range", m));
                         }
-                        Some(_) => return Err(OmError::app_defined()),
+                        _ => return Err(OmError::app_defined()),
                     }
                 }
                 if rect.is_cell() {
@@ -828,6 +1179,15 @@ impl Application<'_> {
                     Application::formula_variant(wb, x, true, false)
                 })
             }
+
+            ("FormulaArray", Get)
+                if !rect.is_cell()
+                    && self.book(book)?.wb.current_array(top_left) != Some(rect) =>
+            {
+                self.same_or_null(book, sheet, rect, |wb, x| {
+                    Application::formula_variant(wb, x, false, true)
+                })
+            }
             ("FormulaArray", Get) => Ok(Application::formula_variant(
                 &self.book(book)?.wb,
                 CellAddr::new(sheet, rect.r0, rect.c0),
@@ -842,7 +1202,7 @@ impl Application<'_> {
                     .book(book)?
                     .wb
                     .current_array(CellAddr::new(sheet, rect.r0, rect.c0))
-                    .ok_or_else(OmError::app_defined)?;
+                    .ok_or_else(crate::rangefind::no_cells)?;
                 self.sub_range(r, sheet, block, Mode::Cells)
             }
             ("MergeCells", Get) => self.same_or_null(book, sheet, rect, |wb, x| {
@@ -907,21 +1267,24 @@ impl Application<'_> {
                 | "ServerActions" | "Summary" | "LocationInTable",
                 Get,
             ) => Err(OmError::app_defined()),
-            ("XPath", Get) if rect.is_cell() => Ok(self.alloc(Object::Stub("XPath"))),
+            ("XPath", Get) if rect.c0 == rect.c1 => Ok(self.alloc(Object::Stub("XPath"))),
             ("XPath", Get) => Err(OmError::exception(
                 HResult::E_INVALIDARG.0,
                 Some(XPATH_RANGE_INVALID),
             )),
             ("Errors", Get) if rect.is_cell() => Ok(self.alloc(Object::Stub("Errors"))),
-            ("ID", Get) if rect.is_cell() => Ok(Variant::BstrNull),
-            ("Errors" | "CellControl", Get) if !rect.is_cell() => Err(OmError::app_defined()),
-            ("CommentThreaded", Get) => {
-                if rect.is_cell() {
-                    Ok(Variant::Dispatch(None))
-                } else {
-                    Err(OmError::exception(HResult::E_INVALIDARG.0, None))
-                }
+            ("ID", Get) if rect.r0 == rect.r1 => Ok(self
+                .range_ids
+                .get(&(book, sheet, rect.r0, rect.c0))
+                .map_or(Variant::BstrNull, |t| Variant::Bstr(t.clone()))),
+            ("ID", Put) if rect.r0 == rect.r1 => {
+                let t = self.put_string_alpha(a)?;
+                self.range_ids.insert((book, sheet, rect.r0, rect.c0), t);
+                Ok(Variant::Empty)
             }
+            ("FormulaLabel", Get | Put) => Err(OmError::app_defined()),
+            ("Errors" | "CellControl", Get) if !rect.is_cell() => Err(OmError::app_defined()),
+            ("CommentThreaded", Get) => self.range_thread(book, sheet, rect),
             ("MDX", Get) => {
                 if rect.is_cell() {
                     Ok(Variant::Bstr(String::new()))
@@ -929,31 +1292,100 @@ impl Application<'_> {
                     Err(OmError::app_defined())
                 }
             }
-            ("ListHeaderRows" | "LinkedDataTypeState", Get) => Ok(Variant::I4(0)),
-            ("AllowEdit", Get) => Ok(Variant::Bool(true)),
+            ("ListHeaderRows", Get) => {
+                let wb = &self.book(book)?.wb;
+                Ok(Variant::I4(header_row_count(wb, sheet, rect)))
+            }
+            ("LinkedDataTypeState", Get) => Ok(Variant::I4(0)),
+            ("AllowEdit", Get) => Ok(Variant::Bool(
+                !(self.sheet_prot(book, sheet).contents && self.any_locked(book, sheet, rect)),
+            )),
             ("HasRichDataType" | "SavedAsArray", Get) => Ok(Variant::Bool(false)),
 
-            ("PageBreak", Get) if rect.is_cell() || !(rect.rows() == 1 && rect.cols() == MAX_COLS || rect.cols() == 1 && rect.rows() == MAX_ROWS) => {
-                Err(OmError::app_defined())
-            }
+            ("PageBreak", Get) if r.eff_mode() == Mode::Cells => Err(OmError::app_defined()),
             ("PageBreak", Get) => {
-                let rows = rect.cols() == MAX_COLS;
+                let rows = match r.eff_mode() {
+                    Mode::Rows => true,
+                    Mode::Columns => false,
+                    Mode::Cells => unreachable!("refused above"),
+                };
                 let at = if rows { rect.r0 } else { rect.c0 };
-                let has = self.book(book)?.wb.page_breaks(sheet, rows).contains(&at);
+                let has = self
+                    .book(book)?
+                    .wb
+                    .all_page_breaks(sheet, rows)
+                    .contains(&at);
                 Ok(Variant::I4(if has { -4135 } else { -4142 }))
             }
             ("ID", Get | Put) => Err(OmError::app_defined()),
-            ("PageBreak", Put) => match Application::put_value(a).get(0) {
-                Some(Variant::Bool(_)) => Ok(Variant::Empty),
-                Some(Variant::I4(0 | 1)) => Ok(Variant::Empty),
-                _ => Err(OmError::app_defined()),
-            },
+
+            ("PageBreak", Put) => {
+                let manual = match Application::put_value(a).get(0) {
+                    Some(Variant::Bool(b)) => *b,
+                    Some(Variant::Empty) | None => false,
+                    Some(v) => {
+                        let n = match v {
+                            Variant::I2(n) => Some(f64::from(*n)),
+                            Variant::I4(n) => Some(f64::from(*n)),
+                            Variant::R4(n) => Some(f64::from(*n)),
+                            Variant::R8(n) => Some(*n),
+
+                            Variant::Bstr(t) => t.trim().parse::<f64>().ok().filter(|n| *n >= 0.0),
+                            _ => None,
+                        };
+                        match n {
+                            Some(-4142.0) => false,
+                            Some(-4135.0) => true,
+                            Some(n) if n >= 0.0 && n.trunc() == 0.0 => false,
+                            Some(n) if n >= 0.0 && n.trunc() == 1.0 => true,
+                            _ => return Err(OmError::app_defined()),
+                        }
+                    }
+                };
+                let mode = r.eff_mode();
+                let wb = &mut self.book_mut(book)?.wb;
+                if !manual && rect.is_full_rows() && rect.is_full_columns() {
+                    for at in wb.all_page_breaks(sheet, true) {
+                        wb.delete_page_break(sheet, true, at);
+                    }
+                    return Ok(Variant::Empty);
+                }
+                let (rows, cols) = match (manual, mode) {
+                    (true, Mode::Rows) => (true, false),
+                    (true, Mode::Columns) => (false, true),
+                    _ => (true, true),
+                };
+                let sides: Vec<(bool, u32)> = [(true, rect.r0, rows), (false, rect.c0, cols)]
+                    .into_iter()
+                    .filter(|(_, at, on)| *on && *at > 0)
+                    .map(|(is_rows, at, _)| (is_rows, at))
+                    .collect();
+                if sides.is_empty() || (rect.r0 == 0 && rect.c0 == 0) {
+                    return Err(OmError::app_defined());
+                }
+                for (is_rows, at) in sides {
+                    if manual {
+                        wb.add_page_break(sheet, is_rows, at);
+                    } else {
+                        wb.delete_page_break(sheet, is_rows, at);
+                    }
+                }
+                Ok(Variant::Empty)
+            }
             ("UseStandardWidth", Get) => {
                 let wb = &self.book(book)?.wb;
                 let std = wb.sheet_standard_width(sheet);
-                Ok(Variant::Bool(
-                    (rect.c0..=rect.c1).all(|c| wb.column_width(sheet, c) == std),
-                ))
+                let pop = wb.populated_lines(sheet, false);
+                let mut ws = pop
+                    .range(rect.c0..=rect.c1)
+                    .map(|c| wb.column_width(sheet, *c));
+                let all = wb.column_width(sheet, rect.c0) == std && ws.all(|w| w == std);
+
+                Ok(if all || wb.column_width(sheet, rect.c0) != std {
+                    Variant::Bool(all)
+                } else {
+                    Variant::Null
+                })
             }
             ("UseStandardWidth", Put) => {
                 if matches!(a.put, Some(Variant::Bstr(_))) {
@@ -1000,23 +1432,70 @@ impl Application<'_> {
                 }
                 Ok(Variant::Empty)
             }
+
             ("Range", Get) => {
-                let Some(Variant::Bstr(text)) = a.get(0) else {
+                let wb = &self.book(book)?.wb;
+                let moved_by = |rel: Rect| -> Result<Rect, OmError> {
+                    let moved = Rect::new(
+                        rect.r0 + rel.r0,
+                        rect.c0 + rel.c0,
+                        rect.r0 + rel.r1,
+                        rect.c0 + rel.c1,
+                    );
+                    if moved.r1 >= max_rows() || moved.c1 >= max_cols() {
+                        return Err(OmError::app_defined());
+                    }
+                    Ok(moved)
+                };
+                let given = |i: usize| a.get(i).filter(|v| !is_missing(v));
+                let Some(first) = given(0) else {
                     return Err(OmError::app_defined());
                 };
-                let wb = &self.book(book)?.wb;
-                let (_, rel) =
-                    parse_range_text(wb, sheet, text).ok_or_else(OmError::app_defined)?;
-                let moved = Rect::new(
-                    rect.r0 + rel.r0,
-                    rect.c0 + rel.c0,
-                    rect.r0 + rel.r1,
-                    rect.c0 + rel.c1,
-                );
-                if moved.r1 >= MAX_ROWS || moved.c1 >= MAX_COLS {
+                if let Some(second) = given(1) {
+                    let part = |v: &Variant| -> Result<(Rect, Mode, SheetId), OmError> {
+                        match v {
+                            Variant::Bstr(t) => crate::addr::sz_to_ref(t, false)
+                                .map(|b| (b, Mode::Cells, sheet))
+                                .ok_or_else(OmError::app_defined),
+                            Variant::Dispatch(Some(id)) => {
+                                let mode = match self.arena.get(*id) {
+                                    Some(Object::Range(x)) => x.mode,
+                                    _ => Mode::Cells,
+                                };
+                                let (_, s, rects) = self.range_areas(Some(v))?;
+                                Ok((rects[0], mode, s))
+                            }
+                            _ => Err(OmError::app_defined()),
+                        }
+                    };
+                    let (b1, m1, s1) = part(first)?;
+                    let (b2, m2, s2) = part(second)?;
+                    if s1 != s2 || s1 != sheet {
+                        return Err(OmError::app_defined());
+                    }
+                    let both = moved_by(b1.union_bounds(&b2))?;
+                    return self.sub_range(r, sheet, both, if m1 == m2 { m1 } else { Mode::Cells });
+                }
+                let Variant::Bstr(text) = first else {
+                    return Err(OmError::app_defined());
+                };
+                if text.chars().count() > 255 {
                     return Err(OmError::app_defined());
                 }
-                self.sub_range(r, sheet, moved, Mode::Cells)
+                let text = text.strip_prefix('=').unwrap_or(text);
+                let (found, rels) =
+                    parse_areas_text(wb, sheet, text).ok_or_else(OmError::app_defined)?;
+                if found != sheet {
+                    return Err(OmError::app_defined());
+                }
+                let moved = rels
+                    .into_iter()
+                    .map(moved_by)
+                    .collect::<Result<Vec<_>, _>>()?;
+                match moved.as_slice() {
+                    [one] => self.sub_range(r, sheet, *one, Mode::Cells),
+                    _ => self.new_multi(book, sheet, &moved, Mode::Cells),
+                }
             }
 
             ("NumberFormatLocal", Get) => self.same_or_null(book, sheet, rect, |wb, x| {
@@ -1051,10 +1530,28 @@ impl Application<'_> {
                 }
                 Ok(self.alloc_enumerator(items))
             }
-            ("Value", Put) | ("_Default", Put) => {
-                self.put_values(r, sheet, rect, a, Flavour::Value)
+
+            ("Item", Put) if a.get(0).is_some() || a.get(1).is_some() => {
+                let Variant::Dispatch(Some(id)) = self.item(r, sheet, rect, a)? else {
+                    return Err(OmError::app_defined());
+                };
+                let Some(Object::Range(cell)) = self.arena.get(id) else {
+                    return Err(OmError::app_defined());
+                };
+                let cell = *cell;
+                let (cs, crect) = self.resolve(&cell)?;
+                self.put_values(&cell, cs, crect, a, Flavour::Value)
             }
-            ("Value2", Put) => self.put_values(r, sheet, rect, a, Flavour::Value2),
+            ("Value", Put) | ("_Default", Put) => {
+                let out = self.put_values(r, sheet, rect, a, Flavour::Value)?;
+                self.hyperlink_formula_style(book, sheet, rect, a)?;
+                Ok(out)
+            }
+            ("Value2", Put) => {
+                let out = self.put_values(r, sheet, rect, a, Flavour::Value2)?;
+                self.hyperlink_formula_style(book, sheet, rect, a)?;
+                Ok(out)
+            }
             ("Formula" | "FormulaLocal", Put) => {
                 let local = m.name == "FormulaLocal";
                 self.put_formulas(book, sheet, rect, a, Entry::Legacy, local)
@@ -1073,6 +1570,10 @@ impl Application<'_> {
                 let lcid = if m.name == "NumberFormat" { a.lcid } else { 0 };
 
                 let value = a.put.clone().unwrap_or(Variant::Empty);
+
+                if matches!(value, Variant::Null) {
+                    return Ok(Variant::Empty);
+                }
                 let (rows, cols, items) = array_cells(&value).ok_or_else(OmError::app_defined)?;
                 let mut codes = Vec::with_capacity(items.len());
                 for item in &items {
@@ -1158,6 +1659,8 @@ impl Application<'_> {
                 Ok(Variant::Bool(true))
             }
             ("ClearOutline", Func) => {
+
+                let rect = if rect.is_cell() { whole_sheet() } else { rect };
                 self.book_mut(book)?.wb.clear_outline(sheet, rect);
                 Ok(Variant::Bool(true))
             }
@@ -1179,6 +1682,7 @@ impl Application<'_> {
             }
             ("ClearFormats", Func) | ("Clear", Func) => {
                 let wb = &mut self.book_mut(book)?.wb;
+                wb.cfv_clear(sheet, rect, m.name == "Clear");
                 if m.name == "Clear" {
                     wb.hl_clear(sheet, &rect);
                     wb.notes_clear(sheet, &rect);
@@ -1210,6 +1714,31 @@ impl Application<'_> {
                         .put_bool(a)
                         .map_err(|_| OmError::unable_to_set("MergeCells", "Range"))?,
                 };
+
+                let rows = (on && rect.is_full_rows() && !rect.is_full_columns())
+                    .then(|| self.whole_row_plan(book, sheet, rect))
+                    .transpose()?
+                    .flatten();
+                let before: Vec<(u32, u32, xlcalc::style::Style)> = if on
+                    && rows.is_none()
+                    && u64::from(rect.rows()) * u64::from(rect.cols()) <= 1 << 16
+                {
+                        let wb = &self.book(book)?.wb;
+                        (rect.r0..=rect.r1)
+                            .flat_map(|row| (rect.c0..=rect.c1).map(move |col| (row, col)))
+                            .map(|(row, col)| {
+                                (row, col, wb.cell_style(CellAddr::new(sheet, row, col)).clone())
+                            })
+                            .collect()
+                    } else {
+                        Vec::new()
+                    };
+                let whole = if on && before.is_empty() && rows.is_none() {
+                    self.whole_line_edges(book, sheet, rect)?
+                } else {
+                    None
+                };
+
                 if on && self.merge_keeps_top_left_only(book, sheet) {
                     let wb = &mut self.book_mut(book)?.wb;
                     if rect.r1 > rect.r0 {
@@ -1221,20 +1750,19 @@ impl Application<'_> {
                         wb.clear_range(sheet, right).map_err(edit_error)?;
                     }
                 }
-                let before: Vec<(u32, u32, xlcalc::style::Style)> =
-                    if on && u64::from(rect.rows()) * u64::from(rect.cols()) <= 1 << 16 {
-                        let wb = &self.book(book)?.wb;
-                        (rect.r0..=rect.r1)
-                            .flat_map(|row| (rect.c0..=rect.c1).map(move |col| (row, col)))
-                            .map(|(row, col)| {
-                                (row, col, wb.cell_style(CellAddr::new(sheet, row, col)).clone())
-                            })
-                            .collect()
-                    } else {
-                        Vec::new()
-                    };
+                let outline = if before.is_empty() {
+                    None
+                } else {
+                    Some(self.merge_outline(book, sheet, rect)?)
+                };
                 let v = self.range_view_member(r, sheet, rect, m, a)?;
-                self.merge_resets_others(book, sheet, rect, &before)?;
+                self.merge_resets_others(book, sheet, rect, &before, outline)?;
+                if let Some(whole) = whole {
+                    self.merge_resets_whole_lines(book, sheet, rect, &whole)?;
+                }
+                if let Some((area, plan)) = rows {
+                    self.merge_resets_whole_rows(book, sheet, area, &plan)?;
+                }
 
                 if on && self.contents_protected(book, sheet) {
                     let rest: Vec<Rect> = (rect.r0..=rect.r1)
@@ -1298,6 +1826,84 @@ impl Application<'_> {
         }
     }
 
+    fn value_index(&self, a: &Args) -> Result<i64, OmError> {
+        if matches!(a.get(0), Some(Variant::Empty)) {
+            return Ok(10);
+        }
+        self.coerce_variant_to_int(a, 0, 10, 13, 10)
+            .map_err(|mut e| {
+                if e.scode == crate::error::SCODE_TYPE_MISMATCH {
+                    e.detail = Some(crate::app::INDEX_MISMATCH.into());
+                }
+                e
+            })
+    }
+
+    fn value_put_kind(&self, a: &Args, areas: usize) -> Result<i64, OmError> {
+        let kind = self.value_index(a)?;
+        match kind {
+            10 => Ok(10),
+            11 => {
+                if areas != 1 {
+                    return Err(OmError::app_defined());
+                }
+                match &a.put {
+                    None => Err(OmError::exception(0x8007_0057_u32 as i32, None)),
+                    Some(v) if is_missing(v) => {
+                        Err(OmError::exception(0x8007_0057_u32 as i32, None))
+                    }
+                    Some(Variant::Bstr(t)) if t.contains("<Workbook") => Err(OmError::exception(
+                        crate::error::E_NOTIMPL.0,
+                        Some("Range.Value(xlRangeValueXMLSpreadsheet) of a workbook is not ported"),
+                    )),
+                    Some(_) => Err(OmError::app_defined()),
+                }
+            }
+            12 => Err(OmError::exception(crate::error::E_NOTIMPL.0, None)),
+            _ => Err(OmError::app_defined()),
+        }
+    }
+
+    fn offset_areas(
+        &self,
+        book: BookId,
+        sheet: SheetId,
+        areas: &[Rect],
+        a: &Args,
+    ) -> Result<Vec<Rect>, OmError> {
+        let (rows, cols) = (i64::from(max_rows()), i64::from(max_cols()));
+        let mut dr = self.coerce_variant_to_int(a, 0, -rows, rows, 0)?;
+        let mut dc = self.coerce_variant_to_int(a, 1, -cols, cols, 0)?;
+        let mut areas = areas.to_vec();
+        let first = areas[0];
+        let wb = &self.book(book)?.wb;
+        if let Some(mc) = wb.merge_at(CellAddr::new(sheet, first.r0, first.c0)) {
+            if first.is_cell() || first == mc {
+                let (mut r0, mut c0) = (first.r0, first.c0);
+                if dc > 0 {
+                    c0 = mc.c1 + 1;
+                    dc -= 1;
+                }
+                if dr > 0 {
+                    r0 = mc.r1 + 1;
+                    dr -= 1;
+                }
+                areas[0] = Rect::new(r0, c0, r0, c0);
+            }
+        }
+        areas
+            .iter()
+            .map(|rect| {
+                let r0 = u32::try_from(i64::from(rect.r0) + dr).ok()?;
+                let r1 = u32::try_from(i64::from(rect.r1) + dr).ok()?;
+                let c0 = u32::try_from(i64::from(rect.c0) + dc).ok()?;
+                let c1 = u32::try_from(i64::from(rect.c1) + dc).ok()?;
+                (r1 < max_rows() && c1 < max_cols()).then(|| Rect::new(r0, c0, r1, c1))
+            })
+            .collect::<Option<Vec<_>>>()
+            .ok_or_else(OmError::app_defined)
+    }
+
     fn address_text(
         &self,
         book: BookId,
@@ -1306,7 +1912,7 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         let flag = |i| a.bool(i).ok().flatten().unwrap_or(true);
         let r1c1 = a.i32(2)?.unwrap_or(1) != 1;
-        let external = a.bool(3)?.unwrap_or(false);
+        let external = a.bool(3).ok().flatten().unwrap_or(false);
         let host = match a.get(4) {
             Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
                 Some(Object::Range(h)) => {
@@ -1323,11 +1929,8 @@ impl Application<'_> {
             r1c1,
             relative_to: host,
         };
-        let mut text = parts
-            .iter()
-            .map(|&(_, rect)| range_text(rect, &style))
-            .collect::<Vec<_>>()
-            .join(",");
+
+        let mut prefix = String::new();
         if external {
             let sheet = parts
                 .first()
@@ -1338,8 +1941,23 @@ impl Application<'_> {
                 b.wb.sheet(sheet)
                     .map(|s| s.name.clone())
                     .unwrap_or_default();
-            text = format!("{}{text}", external_prefix(&b.name, &name));
+            prefix = external_prefix(&b.name, &name);
         }
+        let mut room = 257usize.saturating_sub(prefix.chars().count());
+        let mut text = String::new();
+        for (i, &(_, rect)) in parts.iter().enumerate() {
+            let one: String = range_text(rect, &style).chars().take(255).collect();
+            let need = one.chars().count() + usize::from(i > 0);
+            if need > room {
+                break;
+            }
+            room -= need;
+            if i > 0 {
+                text.push(',');
+            }
+            text.push_str(&one);
+        }
+        text.insert_str(0, &prefix);
         Ok(Variant::Bstr(text))
     }
 
@@ -1418,6 +2036,7 @@ impl Application<'_> {
             ));
         }
         self.clip = Some((book, sheet, rects[0]));
+        self.clip_cut = false;
         self.clip_more = (rects[1..].to_vec(), stacked);
         let Some(Variant::Dispatch(Some(id))) = a.get(0) else {
             return Ok(Variant::Bool(true));
@@ -1461,6 +2080,17 @@ impl Application<'_> {
         match (m.name, m.kind) {
             ("Select" | "Activate", Func) => self.range_select(book, sheet, &rects, m),
 
+            ("Insert" | "Delete", Func) => {
+                let mut order: Vec<(RangeRef, Rect)> =
+                    areas.iter().copied().zip(rects.iter().copied()).collect();
+                order.sort_by_key(|(_, r)| std::cmp::Reverse((r.r0, r.c0)));
+                let mut res = Variant::Bool(true);
+                for (area, _) in &order {
+                    res = self.range_member(area, m, a)?;
+                }
+                Ok(res)
+            }
+
             ("PasteSpecial", Func) => {
                 for area in &areas {
                     self.range_member(area, m, a)?;
@@ -1478,6 +2108,20 @@ impl Application<'_> {
             }
             ("SpecialCells", Func) => self.special_cells_member(book, sheet, &rects, m, a),
             ("CurrentRegion", Get) => self.range_member(&first, m, a),
+            ("XPath", Get) => Err(OmError::exception(
+                HResult::E_INVALIDARG.0,
+                Some(XPATH_RANGE_INVALID),
+            )),
+
+            ("Font", Get) => Ok(self.alloc(Object::Font(StyleOwner::Areas(areas.clone())))),
+            ("Interior", Get) => Ok(self.alloc(Object::Interior(StyleOwner::Areas(areas.clone())))),
+            ("Borders", Get) if !indexed => {
+                Ok(self.alloc(Object::Borders(StyleOwner::Areas(areas.clone()))))
+            }
+            ("Borders", Get) => {
+                let i = a.i32(0)?.ok_or_else(OmError::app_defined)?;
+                Ok(self.alloc(Object::Border(StyleOwner::Areas(areas.clone()), i)))
+            }
             ("DisplayFormat", Get) => Ok(self.alloc(Object::DisplayFormat(first))),
             ("Phonetic", Get) => Ok(self.alloc(Object::Phonetic(first))),
             ("Phonetics", Get) => Ok(Variant::Dispatch(None)),
@@ -1485,7 +2129,7 @@ impl Application<'_> {
             ("UseStandardHeight" | "UseStandardWidth", _) | ("Summary", Get) => {
                 self.use_standard_member(book, sheet, &rects, m, a)
             }
-            ("TextToColumns", Func) => Err(OmError::app_defined_with(
+            ("TextToColumns" | "Sort", Func) => Err(OmError::app_defined_with(
                 "This can't be done on a multiple range selection.\n\nSelect a single range and try again.",
             )),
 
@@ -1505,7 +2149,9 @@ impl Application<'_> {
                 ))
             }
             ("Comment", Get) => Ok(Variant::Dispatch(None)),
-            ("AddComment", Func) => Err(OmError::exception(HResult::E_INVALIDARG.0, None)),
+            ("AddComment" | "AddCommentThreaded", Func) => {
+                Err(OmError::exception(HResult::E_INVALIDARG.0, None))
+            }
             ("NoteText", Func) => self.range_member(&first, m, a),
             ("ClearComments" | "ClearNotes", Func) => {
                 self.range_clear_notes(book, sheet, &rects, m)
@@ -1543,9 +2189,9 @@ impl Application<'_> {
                     .iter()
                     .map(|r| {
                         if rows {
-                            Rect::new(r.r0, 0, r.r1, MAX_COLS - 1)
+                            Rect::new(r.r0, 0, r.r1, max_cols() - 1)
                         } else {
-                            Rect::new(0, r.c0, MAX_ROWS - 1, r.c1)
+                            Rect::new(0, r.c0, max_rows() - 1, r.c1)
                         }
                     })
                     .collect();
@@ -1553,20 +2199,12 @@ impl Application<'_> {
                 self.new_multi(book, sheet, &whole, to)
             }
             ("Offset", Get) => {
-                let dr = i64::from(a.i32(0)?.unwrap_or(0));
-                let dc = i64::from(a.i32(1)?.unwrap_or(0));
-                let moved: Option<Vec<Rect>> = rects
-                    .iter()
-                    .map(|rect| {
-                        let r0 = u32::try_from(i64::from(rect.r0) + dr).ok()?;
-                        let r1 = u32::try_from(i64::from(rect.r1) + dr).ok()?;
-                        let c0 = u32::try_from(i64::from(rect.c0) + dc).ok()?;
-                        let c1 = u32::try_from(i64::from(rect.c1) + dc).ok()?;
-                        (r1 < MAX_ROWS && c1 < MAX_COLS).then(|| Rect::new(r0, c0, r1, c1))
-                    })
-                    .collect();
-                let moved = moved.ok_or_else(OmError::app_defined)?;
+                let moved = self.offset_areas(book, sheet, &rects, a)?;
                 self.new_multi(book, sheet, &moved, mode)
+            }
+
+            ("Item", Get) if a.get(0).is_none() && a.get(1).is_none() => {
+                self.range_member(&first, m, a)
             }
             ("Resize" | "Item" | "ID", Get) => Err(OmError::app_defined()),
             ("Previous", Get) => Err(OmError::app_defined_with(
@@ -1576,7 +2214,7 @@ impl Application<'_> {
 
             ("Validation", Get) => {
                 if self.validation_exists(&first) {
-                    return Err(OmError::app_defined());
+                    return Ok(self.alloc(Object::ValidationMulti(first)));
                 }
                 self.range_member(&first, m, a)
             }
@@ -1584,12 +2222,52 @@ impl Application<'_> {
                 "Left" | "Top" | "Next" | "ListHeaderRows" | "LinkedDataTypeState"
                 | "HasRichDataType" | "AllowEdit" | "PivotTable" | "PivotField" | "PivotItem"
                 | "LocationInTable" | "QueryTable" | "PivotCell" | "ServerActions" | "CellControl"
-                | "MDX" | "Errors" | "XPath" | "CommentThreaded" | "Style",
+                | "MDX" | "CommentThreaded",
                 Get,
             ) => self.range_member(&first, m, a),
+
+            ("Style", Get) => {
+                let mut name: Option<Option<String>> = None;
+                let mut v = Variant::Dispatch(None);
+                for area in &areas {
+                    let got = self.range_member(area, m, a)?;
+                    let n = match &got {
+                        Variant::Dispatch(Some(id)) => match self.arena.get(*id) {
+                            Some(Object::Style(_, n)) => Some(n.to_string()),
+                            _ => None,
+                        },
+                        _ => None,
+                    };
+                    if n.is_none() || name.as_ref().is_some_and(|p| *p != n) {
+                        return Ok(Variant::Dispatch(None));
+                    }
+                    if name.is_none() {
+                        v = got;
+                    }
+                    name = Some(n);
+                }
+                Ok(v)
+            }
+            ("Errors" | "FormulaLabel", Get) => Err(OmError::app_defined()),
             ("FormulaArray", Get) => Ok(Variant::Null),
 
-            ("HorizontalAlignment" | "VerticalAlignment", Get) => Ok(Variant::Null),
+            (
+                "ColumnWidth" | "HorizontalAlignment" | "VerticalAlignment" | "Locked" | "FormulaHidden"
+                | "NumberFormatLocal" | "IndentLevel" | "Orientation" | "ShrinkToFit" | "WrapText"
+                | "RowHeight",
+                Get,
+            ) => {
+                let mut seen: Option<Variant> = None;
+                for area in &areas {
+                    let v = self.range_member(area, m, a)?;
+                    match &seen {
+                        None => seen = Some(v),
+                        Some(p) if *p == v => {}
+                        Some(_) => return Ok(Variant::Null),
+                    }
+                }
+                Ok(seen.unwrap_or(Variant::Null))
+            }
             ("ReadingOrder" | "ListObject", Get) => self.range_member(&first, m, a),
             ("HasSpill" | "SpillingToRange" | "SpillParent", Get) => Err(OmError::app_defined()),
             ("CountLarge", Get) => {
@@ -1605,10 +2283,7 @@ impl Application<'_> {
             }
             ("Hidden" | "MergeArea" | "Name" | "CurrentArray", Get) => Err(OmError::app_defined()),
             (
-                "AddIndent" | "Borders" | "Characters" | "ColumnWidth" | "Font" | "FormulaHidden"
-                | "Height" | "IndentLevel" | "Interior" | "Locked" | "NumberFormatLocal"
-                | "Orientation" | "PrefixCharacter" | "RowHeight" | "ShrinkToFit" | "Width"
-                | "WrapText",
+                "AddIndent" | "Characters" | "Height" | "PrefixCharacter" | "Width",
                 Get,
             ) => self.range_member(&first, m, a),
             ("Range", Get) if a.get(0).is_some() => Err(OmError::app_defined()),
@@ -1624,9 +2299,17 @@ impl Application<'_> {
             ("HasArray", Get) => self.same_or_null_in(book, &parts, |wb, x| {
                 Variant::Bool(wb.current_array(x).is_some())
             }),
-            ("MergeCells", Get) => self.same_or_null_in(book, &parts, |wb, x| {
-                Variant::Bool(wb.merge_at(x).is_some())
-            }),
+
+            ("MergeCells", Get) => {
+                let got = self.same_or_null_in(book, &parts, |wb, x| match wb.merge_at(x) {
+                    Some(m) => Variant::Bstr(format!("{m:?}")),
+                    None => Variant::Bool(false),
+                })?;
+                Ok(match got {
+                    Variant::Bstr(_) => Variant::Bool(true),
+                    v => v,
+                })
+            }
             ("HasFormula", Get) => self.same_or_null_in(book, &parts, |wb, x| {
                 Variant::Bool(wb.formula_text(x).is_some())
             }),
@@ -1675,8 +2358,16 @@ impl Application<'_> {
                 self.put_formulas_in(book, &parts, a, Entry::DynamicR1C1, false)
             }
 
+            ("Value" | "Value2" | "_Default", Put)
+                if matches!(&a.put, Some(Variant::Bstr(t)) if t.starts_with('=')) =>
+            {
+                self.put_formulas_in(book, &parts, a, Entry::Legacy, false)
+            }
             ("Value" | "Value2" | "_Default" | "NumberFormat", Put)
             | ("ClearContents" | "ClearFormats" | "Clear", Func) => {
+                if (m.name, m.kind) == ("Value", Put) {
+                    self.value_put_kind(a, areas.len())?;
+                }
                 let mut last = Variant::Empty;
                 let from = self.book_mut(book)?.wb.notices().len();
                 for area in &areas {
@@ -1685,6 +2376,30 @@ impl Application<'_> {
                 if m.name != "NumberFormat" && m.kind == Put {
                     let wb = &mut self.book_mut(book)?.wb;
                     merge_changes(wb, from, sheet, &rects);
+                }
+                Ok(last)
+            }
+
+            ("PageBreak", Put) => self.range_member(&first, m, a),
+
+            (
+                "AddIndent" | "HorizontalAlignment" | "ID" | "IndentLevel" | "NumberFormatLocal"
+                | "Orientation" | "ReadingOrder" | "ShrinkToFit" | "VerticalAlignment"
+                | "WrapText" | "Style" | "Locked" | "FormulaHidden" | "MergeCells" | "RowHeight"
+                | "ColumnWidth" | "Hidden",
+                Put,
+            ) => {
+
+                if let ("Style", Some(Variant::Bstr(name))) = (m.name, &a.put) {
+                    if self.book(book)?.wb.style_table().get(name).is_none() {
+                        return Err(OmError::app_defined_with(&format!(
+                            "Style '{name}' not found."
+                        )));
+                    }
+                }
+                let mut last = Variant::Empty;
+                for area in &areas {
+                    last = self.range_member(area, m, a)?;
                 }
                 Ok(last)
             }
@@ -1728,6 +2443,10 @@ impl Application<'_> {
         let union = m.name == "Union";
         let failed =
             || OmError::app_defined_with(&format!("{} method of Application class failed", m.name));
+
+        if a.get(0).is_none() {
+            return Err(failed());
+        }
         let mut args = Vec::new();
         for v in a.values.iter().flatten() {
             let (book, sheet, rects) = self.range_areas(Some(v)).map_err(|_| failed())?;
@@ -1791,8 +2510,18 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         let value = a.put.clone().unwrap_or(Variant::Empty);
         let value = self.range_object_value(value)?;
+
+        if let Variant::Bstr(t) = &value {
+            if !skip_locked && t.starts_with('=') && rect.cell_count() > 1 {
+                return self.put_formulas_in(r.book, &[(sheet, rect)], a, Entry::Legacy, false);
+            }
+        }
         let (rows, cols, items) = array_cells(&value).ok_or_else(OmError::app_defined)?;
         let scalar = !matches!(value, Variant::Array(_));
+
+        if !scalar && items.is_empty() {
+            return Ok(Variant::Empty);
+        }
 
         let target = rect;
         let lcid = a.lcid;
@@ -1851,7 +2580,31 @@ impl Application<'_> {
         entry: Entry,
         local: bool,
     ) -> Result<Variant, OmError> {
-        self.put_formulas_in(book, &[(sheet, rect)], a, entry, local)
+        let out = self.put_formulas_in(book, &[(sheet, rect)], a, entry, local)?;
+        self.hyperlink_formula_style(book, sheet, rect, a)?;
+        Ok(out)
+    }
+
+    fn hyperlink_formula_style(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+        a: &Args,
+    ) -> Result<(), OmError> {
+        let Some(Variant::Bstr(t)) = &a.put else {
+            return Ok(());
+        };
+        let head: String = t
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .take(11)
+            .collect::<String>()
+            .to_ascii_uppercase();
+        if head == "=HYPERLINK(" {
+            self.hyperlink_style(book, sheet, rect)?;
+        }
+        Ok(())
     }
 
     fn put_formulas_in(
@@ -1865,28 +2618,62 @@ impl Application<'_> {
         let value = self.range_object_value(a.put.clone().unwrap_or(Variant::Empty))?;
         let (rows, cols, items) = array_cells(&value).ok_or_else(OmError::app_defined)?;
         let scalar = !matches!(value, Variant::Array(_));
+
+        if !scalar && items.is_empty() {
+            return Ok(Variant::Empty);
+        }
         let lcid = if local { HOST_LCID } else { a.lcid };
         let wb = &mut self.book_mut(book)?.wb;
-        let &(sheet, rect) = parts.first().ok_or_else(OmError::app_defined)?;
+        let &(sheet, _) = parts.first().ok_or_else(OmError::app_defined)?;
         let from = wb.notices().len();
-        if scalar {
-            let first = CellAddr::new(sheet, rect.r0, rect.c0);
-            put_formula_cell(wb, first, &items[0], entry, lcid)?;
-            let src = Rect::cell(rect.r0, rect.c0);
-            let is_text = matches!(items[0], Variant::Bstr(_));
-            for &(sheet, rect) in parts {
-                for addr in Application::rect_cells(sheet, rect) {
-                    if addr == first {
-                        continue;
-                    }
-                    if is_text {
-                        wb.copy_range(sheet, src, addr).map_err(edit_error)?;
-                    } else {
-                        put_formula_cell(wb, addr, &items[0], entry, lcid)?;
-                    }
+
+        wb.creating_formulas(|wb| {
+            put_formula_cells(wb, parts, &items, (rows, cols), scalar, entry, lcid)
+        })?;
+        let rects: Vec<Rect> = parts.iter().map(|p| p.1).collect();
+        merge_formula_changes(wb, from, sheet, &rects);
+        Ok(Variant::Empty)
+    }
+}
+
+fn put_formula_cells(
+    wb: &mut Workbook,
+    parts: &[(SheetId, Rect)],
+    items: &[Variant],
+    (rows, cols): (u32, u32),
+    scalar: bool,
+    entry: Entry,
+    lcid: u32,
+) -> Result<(), OmError> {
+    let &(sheet, rect) = parts.first().ok_or_else(OmError::app_defined)?;
+    if scalar {
+        let first = CellAddr::new(sheet, rect.r0, rect.c0);
+        put_formula_cell(wb, first, &items[0], entry, lcid)?;
+        let src = Rect::cell(rect.r0, rect.c0);
+        let is_text = matches!(items[0], Variant::Bstr(_));
+        for &(sheet, rect) in parts {
+            for addr in Application::rect_cells(sheet, rect) {
+                if addr == first {
+                    continue;
+                }
+                if is_text {
+                    let before = wb.cell_style(addr).clone();
+                    wb.copy_range(sheet, src, addr).map_err(edit_error)?;
+                    let copied = wb.cell_style(addr).clone();
+                    let kept = xlcalc::style::Style {
+                        number_format: copied.number_format,
+                        custom_code: copied.custom_code,
+                        implicit_general: copied.implicit_general,
+                        ..before
+                    };
+                    wb.set_style_with(sheet, Rect::cell(addr.row, addr.col), &|_| kept.clone());
+                } else {
+                    put_formula_cell(wb, addr, &items[0], entry, lcid)?;
                 }
             }
-        } else {
+        }
+    } else {
+        wb.bulk_entry(|wb| -> Result<(), OmError> {
             for &(sheet, rect) in parts {
                 for (i, row) in (rect.r0..rect.r0 + rows).enumerate() {
                     for (j, col) in (rect.c0..rect.c0 + cols).enumerate() {
@@ -1894,15 +2681,21 @@ impl Application<'_> {
                             continue;
                         }
                         let addr = CellAddr::new(sheet, row, col);
-                        put_formula_cell(wb, addr, &items[i * cols as usize + j], entry, lcid)?;
+                        let item = &items[i * cols as usize + j];
+
+                        let blank = matches!(item, Variant::Bstr(s) if s.is_empty())
+                            && !wb.has_own_entry(addr);
+                        if blank {
+                            continue;
+                        }
+                        put_formula_cell(wb, addr, item, entry, lcid)?;
                     }
                 }
             }
-        }
-        let rects: Vec<Rect> = parts.iter().map(|p| p.1).collect();
-        merge_formula_changes(wb, from, sheet, &rects);
-        Ok(Variant::Empty)
+            Ok(())
+        })?;
     }
+    Ok(())
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -1953,6 +2746,9 @@ fn put_formula_cell(
 ) -> Result<(), OmError> {
     match v {
         Variant::Bstr(t) => {
+            if t.starts_with('=') && t.chars().count() > 8192 {
+                return Err(OmError::exception(crate::error::vba_scode(7), None));
+            }
             let text = if matches!(entry, Entry::R1C1 | Entry::DynamicR1C1) && t.starts_with('=') {
                 r1c1_to_a1(t, addr.row, addr.col).ok_or_else(OmError::app_defined)?
             } else {
@@ -1966,6 +2762,8 @@ fn put_formula_cell(
                 lcid,
             )
         }
+
+        Variant::Cy(_) => put_cell(wb, addr, v, Flavour::Value, lcid),
         other => put_cell(wb, addr, other, Flavour::Value2, lcid),
     }
 }
@@ -1983,7 +2781,7 @@ fn us_names(lcid: u32) -> bool {
     lcid == xlcalc_variant::Locale::EN_US.0
 }
 
-fn date_format(d: f64) -> &'static str {
+pub(crate) fn date_format(d: f64) -> &'static str {
     if d.abs() < 1.0 {
         "h:mm:ss AM/PM"
     } else if d.fract() == 0.0 {
@@ -2167,7 +2965,8 @@ fn put_cell(
             wb.set_text_prefixed(addr, &t[1..])
                 .map_err(|e| OmError::app_defined().with_detail(e.to_string()))?;
         }
-        Variant::Bstr(t) => enter_text(wb, addr, t, false, lcid)?,
+
+        Variant::Bstr(t) => enter_text(wb, addr, t, true, lcid)?,
         Variant::Date(d) => {
             let serial = if d1904 { d - 1462.0 } else { *d };
             if flavour == Flavour::Value && wb.number_format(addr) == "@" {
@@ -2204,11 +3003,8 @@ fn put_cell(
             }
             number(wb, rounded);
             if format_replaced(wb.number_format(addr), false, true) {
-                wb.set_number_format_stored(
-                    addr.sheet,
-                    Rect::cell(addr.row, addr.col),
-                    CURRENCY_FORMAT,
-                );
+                let fmt = engine_format(wb, CURRENCY_FORMAT);
+                wb.set_number_format_stored(addr.sheet, Rect::cell(addr.row, addr.col), &fmt);
             }
         }
         Variant::Cy(c) => number(wb, *c as f64 / 10_000.0),
@@ -2218,9 +3014,11 @@ fn put_cell(
             }
             None => return Err(OmError::app_defined()),
         },
-        Variant::Dispatch(_) | Variant::Unknown(_) | Variant::Array(_) => {
-            return Err(OmError::app_defined())
+
+        Variant::Array(_) => {
+            wb.clear(addr);
         }
+        Variant::Dispatch(_) | Variant::Unknown(_) => return Err(OmError::app_defined()),
         other => match change_type(other, VarType::R8, Locale::EN_US, 0) {
             Ok(Variant::R8(n)) => number(wb, n),
             _ => return Err(OmError::type_mismatch()),
@@ -2230,8 +3028,8 @@ fn put_cell(
 }
 
 fn grid_rect(r0: i64, c0: i64, r1: i64, c1: i64) -> Option<Rect> {
-    let rows = 0..i64::from(MAX_ROWS);
-    let cols = 0..i64::from(MAX_COLS);
+    let rows = 0..i64::from(max_rows());
+    let cols = 0..i64::from(max_cols());
     (rows.contains(&r0) && rows.contains(&r1) && cols.contains(&c0) && cols.contains(&c1))
         .then(|| Rect::new(r0 as u32, c0 as u32, r1 as u32, c1 as u32))
 }
@@ -2256,6 +3054,8 @@ fn render_us(code: &str, x: f64, ds: DateSystem) -> String {
 
 fn cell_text_capped(wb: &xlcalc::Workbook, at: CellAddr) -> String {
     let mut s = wb.shown_text(at);
+
+    wb.note_text_read(at);
     if let Some((i, _)) = s.char_indices().nth(8221) {
         s.truncate(i);
     }
@@ -2325,18 +3125,411 @@ fn merge_formula_changes(wb: &mut Workbook, from: usize, sheet: SheetId, rects: 
 
 const XPATH_RANGE_INVALID: &str = "The specified range is invalid due to one or more of the following reasons:\n\n\u{2022}The range refers to cells in more than one column.\n\u{2022}The range contains mapped cells from more than one XML map.\n\u{2022}The range contains both mapped and unmapped cells.\n\u{2022}The range contains both table and non-table cells.\n\u{2022}The range is not contiguous.";
 
+struct WholeLineEdges {
+    anchor: xlcalc::style::Style,
+    cells: Vec<(u32, u32, xlcalc::style::Style)>,
+    line_diagonals: Vec<Option<(xlcalc::style::Border, bool, bool)>>,
+
+    last_row: Option<u32>,
+}
+
+struct WholeRowPlan {
+    anchor: xlcalc::style::Style,
+
+    extent: u32,
+    diagonal: Option<(xlcalc::style::Border, bool, bool)>,
+
+    edge: Vec<(u32, u32, xlcalc::style::Style)>,
+
+    keep_right: bool,
+}
+
 impl Application<'_> {
+    fn whole_line_edges(
+        &self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Result<Option<WholeLineEdges>, OmError> {
+        if rect.is_full_columns() == rect.is_full_rows() {
+            return Ok(None);
+        }
+        let wb = &self.book(book)?.wb;
+        let mut at: Vec<(u32, u32)> = wb
+            .formatted_cells(sheet)
+            .into_iter()
+            .filter(|&(r, c)| rect.contains(r, c))
+            .collect();
+        if let Some(sh) = wb.sheet(sheet) {
+            at.extend(
+                sh.entries()
+                    .map(|(r, c, _)| (r, c))
+                    .filter(|&(r, c)| rect.contains(r, c)),
+            );
+        }
+        at.sort_unstable();
+        at.dedup();
+        let last_row = wb
+            .used_range_with_formats(sheet)
+            .map(|u| u.r1)
+            .into_iter()
+            .chain(at.iter().map(|&(r, _)| r))
+            .max();
+        let cells = at
+            .into_iter()
+            .map(|(r, c)| (r, c, wb.cell_style(CellAddr::new(sheet, r, c)).clone()))
+            .collect();
+        let line_diagonals = if rect.is_full_columns() {
+            (rect.c0..=rect.c1)
+                .map(|c| {
+                    let b = &wb.line_style(sheet, false, c).borders;
+                    (b.diagonal.line != xlcalc::style::BorderLine::None).then_some((
+                        b.diagonal,
+                        b.diagonal_down,
+                        b.diagonal_up,
+                    ))
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+        Ok(Some(WholeLineEdges {
+            anchor: wb
+                .cell_style(CellAddr::new(sheet, rect.r0, rect.c0))
+                .clone(),
+            cells,
+            line_diagonals,
+            last_row,
+        }))
+    }
+
+    fn merge_resets_whole_lines(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+        whole: &WholeLineEdges,
+    ) -> Result<(), OmError> {
+        use xlcalc::style::{Border, BorderLine, Style};
+        let cols = rect.is_full_columns();
+        let wb = &mut self.book_mut(book)?.wb;
+        let anchor_alignment = whole.anchor.alignment.clone();
+
+        let line_diagonal = |col: u32| {
+            whole
+                .line_diagonals
+                .get((col - rect.c0) as usize)
+                .copied()
+                .flatten()
+        };
+        let diagonal_uniform = whole.anchor.borders.diagonal.line != BorderLine::None
+            && whole.cells.iter().all(|(_, _, s)| {
+                s.borders.diagonal.line == BorderLine::None
+                    || (s.borders.diagonal == whole.anchor.borders.diagonal
+                        && s.borders.diagonal_down == whole.anchor.borders.diagonal_down
+                        && s.borders.diagonal_up == whole.anchor.borders.diagonal_up)
+            });
+        let lines = if cols {
+            rect.c0..=rect.c1
+        } else {
+            rect.r0..=rect.r1
+        };
+        for i in lines {
+            let slice = if cols {
+                Rect::new(rect.r0, i, rect.r1, i)
+            } else {
+                Rect::new(i, rect.c0, i, rect.c1)
+            };
+            wb.set_style_with(sheet, slice, &|old: &Style| {
+                let mut s = Style::default();
+                if old.alignment == anchor_alignment {
+                    s.alignment = old.alignment.clone();
+                }
+                s
+            });
+        }
+        if let Some(last) = whole.last_row.filter(|&l| cols && l >= rect.r0) {
+            for c in rect.c0..=rect.c1 {
+                if let Some((d, down, up)) = line_diagonal(c) {
+                    wb.set_style_with(sheet, Rect::new(rect.r0, c, last, c), &|s: &Style| {
+                        let mut s = s.clone();
+                        s.borders.diagonal = d;
+                        s.borders.diagonal_down = down;
+                        s.borders.diagonal_up = up;
+                        s
+                    });
+                }
+            }
+        }
+        for (row, col, old) in &whole.cells {
+            let none = Border::default();
+            let keep = |edge: bool, b: Border| if edge { b } else { none };
+            let side_line = [
+                old.borders.left,
+                old.borders.right,
+                old.borders.top,
+                old.borders.bottom,
+            ]
+            .iter()
+            .any(|b| b.line != BorderLine::None);
+            wb.set_style_with(sheet, Rect::cell(*row, *col), &|s: &Style| {
+                let mut s = s.clone();
+                if let Some((d, down, up)) = line_diagonal(*col) {
+                    s.borders.diagonal = d;
+                    s.borders.diagonal_down = down;
+                    s.borders.diagonal_up = up;
+                } else if diagonal_uniform && side_line {
+                    s.borders.diagonal = old.borders.diagonal;
+                    s.borders.diagonal_down = old.borders.diagonal_down;
+                    s.borders.diagonal_up = old.borders.diagonal_up;
+                }
+                s.borders.left = keep(*col == rect.c0, old.borders.left);
+                s.borders.right = keep(*col == rect.c1, old.borders.right);
+                s.borders.top = keep(*row == rect.r0, old.borders.top);
+                s.borders.bottom = keep(*row == rect.r1, old.borders.bottom);
+                s
+            });
+        }
+
+        let mut anchor = whole.anchor.clone();
+        let anchor_side = [
+            anchor.borders.left,
+            anchor.borders.right,
+            anchor.borders.top,
+            anchor.borders.bottom,
+        ]
+        .iter()
+        .any(|b| b.line != BorderLine::None);
+        if let Some((d, down, up)) = line_diagonal(rect.c0) {
+            anchor.borders.diagonal = d;
+            anchor.borders.diagonal_down = down;
+            anchor.borders.diagonal_up = up;
+        } else if !(diagonal_uniform && anchor_side) {
+            anchor.borders.diagonal = Border::default();
+            anchor.borders.diagonal_down = false;
+            anchor.borders.diagonal_up = false;
+        }
+        if rect.c1 > rect.c0 {
+            anchor.borders.right = Border::default();
+        }
+        if rect.r1 > rect.r0 {
+            anchor.borders.bottom = Border::default();
+        }
+        wb.set_style_with(sheet, Rect::cell(rect.r0, rect.c0), &|_| anchor.clone());
+        Ok(())
+    }
+
+    fn whole_row_plan(
+        &self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Result<Option<(Rect, WholeRowPlan)>, OmError> {
+        use xlcalc::style::BorderLine;
+        let wb = &self.book(book)?.wb;
+        let mut grown = rect;
+        loop {
+            let next = wb
+                .merges(sheet)
+                .into_iter()
+                .filter(|m| m.intersects(&grown))
+                .fold(grown, |x, m| x.union_bounds(&m));
+            if next == grown {
+                break;
+            }
+            grown = next;
+        }
+        if grown != rect {
+            return Ok(grown.is_full_columns().then(|| {
+                (
+                    grown,
+                    WholeRowPlan {
+                        anchor: wb.cell_style(CellAddr::new(sheet, 0, 0)).clone(),
+                        extent: 0,
+                        diagonal: None,
+                        edge: Vec::new(),
+                        keep_right: false,
+                    },
+                )
+            }));
+        }
+        let (b0, b1) = (rect.r0 / 16 * 16, rect.r1 / 16 * 16 + 15);
+        let mut records: Vec<(u32, u32)> = wb
+            .formatted_cells(sheet)
+            .into_iter()
+            .filter(|&(r, _)| (b0..=b1).contains(&r))
+            .collect();
+        let mut has_value = false;
+        records.extend(
+            self.emptied
+                .iter()
+                .filter(|&&(b, s, r, _)| b == book && s == sheet && (b0..=b1).contains(&r))
+                .map(|&(_, _, r, c)| (r, c)),
+        );
+        if let Some(sh) = wb.sheet(sheet) {
+            for (r, c, _) in sh.entries() {
+                if (b0..=b1).contains(&r) {
+                    records.push((r, c));
+                    has_value |= (rect.r0..=rect.r1).contains(&r);
+                }
+            }
+        }
+        let extent = if has_value {
+            records.iter().map(|&(_, c)| c).max().unwrap_or(0)
+        } else {
+            0
+        };
+        let diag = |b: &xlcalc::style::Borders| (b.diagonal, b.diagonal_down, b.diagonal_up);
+        let line = diag(&wb.line_style(sheet, true, rect.r0).borders);
+        let uniform = line.0.line != BorderLine::None
+            && (rect.r0..=rect.r1).all(|r| diag(&wb.line_style(sheet, true, r).borders) == line)
+            && records
+                .iter()
+                .filter(|&&(r, _)| (rect.r0..=rect.r1).contains(&r))
+                .all(|&(r, c)| {
+                    let b = &wb.cell_style(CellAddr::new(sheet, r, c)).borders;
+                    b.diagonal.line == BorderLine::None || diag(b) == line
+                });
+        let style = |r: u32, c: u32| (r, c, wb.cell_style(CellAddr::new(sheet, r, c)).clone());
+        let mut edge: Vec<_> = (rect.r0..=rect.r1)
+            .flat_map(|r| [style(r, 0), style(r, extent)])
+            .chain((0..=extent).flat_map(|c| [style(rect.r0, c), style(rect.r1, c)]))
+            .collect();
+        edge.sort_by_key(|&(r, c, _)| (r, c));
+        edge.dedup_by_key(|e| (e.0, e.1));
+        Ok(Some((
+            rect,
+            WholeRowPlan {
+                anchor: wb.cell_style(CellAddr::new(sheet, rect.r0, 0)).clone(),
+                extent,
+                diagonal: uniform.then_some(line),
+                edge,
+                keep_right: wb.ever_used(sheet).is_none_or(|u| u.c1 <= extent),
+            },
+        )))
+    }
+
+    fn merge_resets_whole_rows(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+        plan: &WholeRowPlan,
+    ) -> Result<(), OmError> {
+        use xlcalc::style::{Border, Style};
+        let wb = &mut self.book_mut(book)?.wb;
+        let align = plan.anchor.alignment.clone();
+        let reset = |old: &Style| {
+            let mut s = Style::default();
+            if old.alignment == align {
+                s.alignment = old.alignment.clone();
+            }
+            s
+        };
+        wb.set_style_with(sheet, rect, &reset);
+        if let Some((d, down, up)) = plan.diagonal {
+            wb.set_style_with(
+                sheet,
+                Rect::new(rect.r0, 0, rect.r1, plan.extent),
+                &|s: &Style| {
+                    let mut s = s.clone();
+                    s.borders.diagonal = d;
+                    s.borders.diagonal_down = down;
+                    s.borders.diagonal_up = up;
+                    s
+                },
+            );
+        }
+        for (r, c, old) in &plan.edge {
+            wb.set_style_with(sheet, Rect::cell(*r, *c), &|s: &Style| {
+                let mut s = s.clone();
+                if *c == 0 {
+                    s.borders.left = old.borders.left;
+                }
+                if *c == plan.extent && plan.keep_right {
+                    s.borders.right = old.borders.right;
+                }
+                if *r == rect.r0 {
+                    s.borders.top = old.borders.top;
+                }
+                if *r == rect.r1 {
+                    s.borders.bottom = old.borders.bottom;
+                }
+                s
+            });
+        }
+        let mut anchor = plan.anchor.clone();
+        anchor.borders.right = Border::default();
+        if rect.r1 > rect.r0 {
+            anchor.borders.bottom = Border::default();
+        }
+        let (d, down, up) = plan.diagonal.unwrap_or_default();
+        anchor.borders.diagonal = d;
+        anchor.borders.diagonal_down = down;
+        anchor.borders.diagonal_up = up;
+        wb.set_style_with(sheet, Rect::cell(rect.r0, 0), &|_| anchor.clone());
+        Ok(())
+    }
+
+    fn merge_outline(
+        &self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Result<[xlcalc::style::Border; 4], OmError> {
+        use xlcalc::style::{Border, Edge};
+        let wb = &self.book(book)?.wb;
+        let side = |edge: Edge, cells: &mut dyn Iterator<Item = (u32, u32)>| -> Border {
+            let mut lines = cells.map(|(r, c)| wb.shown_border(CellAddr::new(sheet, r, c), edge));
+            let first = lines.next().unwrap_or_default();
+            if lines.all(|b| b == first) {
+                first
+            } else {
+                Border::default()
+            }
+        };
+        Ok([
+            side(Edge::Left, &mut (rect.r0..=rect.r1).map(|r| (r, rect.c0))),
+            side(Edge::Right, &mut (rect.r0..=rect.r1).map(|r| (r, rect.c1))),
+            side(Edge::Top, &mut (rect.c0..=rect.c1).map(|c| (rect.r0, c))),
+            side(Edge::Bottom, &mut (rect.c0..=rect.c1).map(|c| (rect.r1, c))),
+        ])
+    }
+
     fn merge_resets_others(
         &mut self,
         book: BookId,
         sheet: SheetId,
         rect: Rect,
         before: &[(u32, u32, xlcalc::style::Style)],
+        outline: Option<[xlcalc::style::Border; 4]>,
     ) -> Result<(), OmError> {
         let Some((_, _, anchor)) = before.first() else {
             return Ok(());
         };
         let anchor_alignment = anchor.alignment.clone();
+        let diagonal_uniform = anchor.borders.diagonal.line != xlcalc::style::BorderLine::None
+            && before.iter().all(|(_, _, s)| {
+                s.borders.diagonal == anchor.borders.diagonal
+                    && s.borders.diagonal_down == anchor.borders.diagonal_down
+                    && s.borders.diagonal_up == anchor.borders.diagonal_up
+            });
+
+        let has_side_line: Vec<bool> = {
+            use xlcalc::style::Edge;
+            let wb = &self.book(book)?.wb;
+            before
+                .iter()
+                .map(|(row, col, _)| {
+                    [Edge::Left, Edge::Right, Edge::Top, Edge::Bottom]
+                        .into_iter()
+                        .any(|e| {
+                            wb.shown_border(CellAddr::new(sheet, *row, *col), e).line
+                                != xlcalc::style::BorderLine::None
+                        })
+                })
+                .collect()
+        };
         let wb = &mut self.book_mut(book)?.wb;
         for (i, (row, col, old)) in before.iter().enumerate() {
             let mut new = if i == 0 {
@@ -2349,32 +3542,104 @@ impl Application<'_> {
                 s
             };
             let none = xlcalc::style::Border::default();
-            new.borders.left = if *col == rect.c0 {
-                old.borders.left
-            } else {
-                none
-            };
-            new.borders.right = if *col == rect.c1 {
-                old.borders.right
-            } else {
-                none
-            };
-            new.borders.top = if *row == rect.r0 {
-                old.borders.top
-            } else {
-                none
-            };
-            new.borders.bottom = if *row == rect.r1 {
-                old.borders.bottom
-            } else {
-                none
-            };
+
+            let [out_l, out_r, out_t, out_b] = outline.unwrap_or([
+                old.borders.left,
+                old.borders.right,
+                old.borders.top,
+                old.borders.bottom,
+            ]);
+            new.borders.left = if *col == rect.c0 { out_l } else { none };
+            new.borders.right = if *col == rect.c1 { out_r } else { none };
+            new.borders.top = if *row == rect.r0 { out_t } else { none };
+            new.borders.bottom = if *row == rect.r1 { out_b } else { none };
             if i == 0 {
                 new.borders.diagonal = old.borders.diagonal;
+            } else if diagonal_uniform && has_side_line[i] {
+                new.borders.diagonal = old.borders.diagonal;
+                new.borders.diagonal_down = old.borders.diagonal_down;
+                new.borders.diagonal_up = old.borders.diagonal_up;
             }
             wb.set_style_with(sheet, Rect::cell(*row, *col), &|_| new.clone());
         }
         Ok(())
+    }
+}
+
+pub(crate) enum Vifmt {
+    Exact,
+
+    Meets,
+
+    Reset,
+    Leaves,
+}
+
+pub(crate) fn vifmt_effect(name: &str, kind: InvokeKind) -> Vifmt {
+    use InvokeKind::*;
+    match (name, kind) {
+        (
+            "NumberFormat"
+            | "NumberFormatLocal"
+            | "HorizontalAlignment"
+            | "VerticalAlignment"
+            | "WrapText"
+            | "IndentLevel"
+            | "Orientation"
+            | "ShrinkToFit"
+            | "Locked"
+            | "FormulaHidden"
+            | "MergeCells"
+            | "Style",
+            Get,
+        )
+        | (
+            "HorizontalAlignment"
+            | "VerticalAlignment"
+            | "WrapText"
+            | "IndentLevel"
+            | "Orientation"
+            | "ShrinkToFit"
+            | "Locked"
+            | "FormulaHidden",
+            Put,
+        ) => Vifmt::Exact,
+
+        (
+            "Replace" | "TextToColumns" | "GoalSeek" | "AutoFilter" | "FormulaArray" | "Insert",
+            _,
+        ) => Vifmt::Reset,
+        (
+            "Value" | "Value2" | "_Default" | "Formula" | "FormulaLocal" | "Formula2"
+            | "Formula2Local" | "FormulaR1C1" | "FormulaR1C1Local" | "Formula2R1C1"
+            | "Formula2R1C1Local" | "Text",
+            Get | Put,
+        )
+        | (
+            "Clear" | "ClearContents" | "ClearFormats" | "Copy" | "Cut" | "PasteSpecial"
+            | "AutoFill" | "DataSeries" | "FillDown" | "FillUp" | "FillLeft" | "FillRight"
+            | "Merge" | "UnMerge" | "Delete" | "Select" | "Sort" | "RemoveDuplicates",
+            Func,
+        ) => Vifmt::Meets,
+        _ => Vifmt::Leaves,
+    }
+}
+
+impl Application<'_> {
+    pub(crate) fn note_style_owner_format(&mut self, o: &crate::style::StyleOwner) {
+        let r = match o {
+            crate::style::StyleOwner::Range(r) => r,
+            crate::style::StyleOwner::Areas(rs) => match rs.first() {
+                Some(r) => r,
+                None => return,
+            },
+            _ => return,
+        };
+        if let Ok((sheet, rect)) = self.resolve(r) {
+            if let Ok(b) = self.book_mut(r.book) {
+                b.wb.note_exact_cell_format(CellAddr::new(sheet, rect.r0, rect.c0));
+            }
+        }
     }
 }
 

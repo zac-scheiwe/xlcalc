@@ -65,3 +65,22 @@ fn extreme_arguments_terminate() {
         let _ = eval(f);
     }
 }
+
+#[test]
+fn mode_scalar_error_against_union() {
+    use crate::XlError;
+    for f in ["MODE", "MODE.SNGL", "MODE.MULT"] {
+        assert!(matches!(
+            eval(&format!("={f}(#N/A,(B1:B2,D1:D2))")),
+            Value::Error(XlError::NA)
+        ));
+        assert!(matches!(
+            eval(&format!("={f}(#DIV/0!,#N/A,(B1:B2,D1:D2))")),
+            Value::Error(XlError::DIV0)
+        ));
+        assert!(matches!(
+            eval(&format!("={f}((B1:B2,D1:D2),#N/A)")),
+            Value::Error(XlError::VALUE)
+        ));
+    }
+}

@@ -1,0 +1,153 @@
+# CELL("format") classes: number kinds, currency and locale tags, fractions, scientific, text, dates
+0
+00
+0.0
+0.00
+#,##0
+#,##0.00
+#,###
+#,##0,
+#,##0,,
+0.0,,
+0,0
+0,.0
+#
+#.#
+.00
+#.
+0.
+0.00%
+0%
+0.0%%
+%
+%0.00
+0.0E+00
+0E+0
+##0.0E+0
+0.0E-00
+0.0e+00
+0.00E+00;0.00E+00
+#,##0.00E+00
+$#,##0.00
+$#,##0
+$0
+$ 0
+0 $
+"$"#,##0
+\$#,##0
+[$$-409]#,##0.00
+[$$-409]0
+[$-409]$0.00
+[$€-407] #,##0.00
+#,##0.00 [$€-407]
+[$USD] 0.00
+[$kr-41D]0
+[$-409]0.00
+[$-F800]
+[$-409]General
+€#,##0.00
+£#,##0.00
+¥#,##0
+"Fr."0
+0 "kr"
+$#,##0.00;($#,##0.00)
+$* #,##0.00
+_($* #,##0.00_)
+# ?/?
+# ??/??
+?/?
+# ?/8
+# ?/16
+0/0
+#/#
+0 ?/?
+$# ?/?
+0.0 ?/?
+# ?/?E+0
+General
+General 0
+0 General
+@
+"a"@
+[Red]General
+[Blue]#,##0
+[Green]0.00%
+[<=100]0;0.00
+[>100]0.0;[<=100]0.00;0
+[=0]"zero";0
+[<1]0.0;0
+[<1]0%
+[<1]$0
+[<1]d-mmm
+[<1]h:mm
+[<1]0E+0
+[<1]# ?/?
+[<1]General
+[<1]@
+[h]:mm:ss.00
+yyyy/mm/dd
+d/m/yy
+m/d/yyyy hh:mm:ss
+dd-mmm
+mmm d
+mmmm d, yyyy
+h:mm:ss AM/PM
+d-mmm-yy
+d-mmm
+mmm-yy
+m/d/yy
+m/d/yy h:mm
+mm/dd/yy
+mm-dd
+h:mm
+h:mm:ss
+h:mm AM/PM
+h:mm:ss AM/PM
+hh:mm:ss
+mm:ss
+mm:ss.0
+[h]:mm
+[mm]:ss
+[s]
+dddd
+mmmm
+yyyy
+yy
+d
+h
+h AM/PM
+d-mmm-yy h:mm
+h:mm d-mmm-yy
+yyyy-mm-dd
+yyyy-mm-dd h:mm
+yyyy;0
+0;yyyy
+h:mm;0
+0;h:mm
+$0;h:mm
+mmm-yy;mmm-yy
+d-mmm-yy;d-mmm
+[$-409]d-mmm-yy
+[$-409]h:mm:ss
+[$-409]mmm-yy
+[$-409]mm/dd
+[$-407]d-mmm-yy
+[$-40C]d mmmm yyyy
+[$-411]yyyy/m/d
+[$-409]#,##0
+[$-409]0%
+[$-409]0.0E+00
+[$-409]@
+[$-409]# ?/?
+0 0
+0 00
+0-0
+000-00-0000
+(000) 000-0000
+0000"-"00
+0.00.00
+0.00_)
+0_)
+0_
+0 _)
+0*-

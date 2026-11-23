@@ -50,7 +50,11 @@ fn row_col(ctx: &mut EvalCtx, ops: &[Operand], row: bool) -> Operand {
         (rect.c0, rect.cols())
     };
 
-    if n == 1 && (matches!(ctx.arr_ctx, 0 | 3) || crate::legacy::host_may_array(ctx.wb, ctx.host)) {
+    if n == 1
+        && (ctx.node_cls == crate::eval::ptgclass::Class::Val
+            || ctx.in_lambda
+            || crate::eval::fdyn::cached(ctx.wb, ctx.host))
+    {
         return Operand::Val(Value::Number(start as f64 + 1.0));
     }
     let data: Vec<Value> = (0..n)
@@ -863,7 +867,7 @@ fn offset_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     }
 }
 
-fn parse_r1c1(s: &str, host_row: u32, host_col: u32) -> Option<Rect> {
+pub(crate) fn parse_r1c1(s: &str, host_row: u32, host_col: u32) -> Option<Rect> {
     fn part(s: &str, letter: u8, host: u32, max: u32) -> Option<(u32, usize)> {
         let b = s.as_bytes();
         if b.first()?.to_ascii_uppercase() != letter {
@@ -1116,39 +1120,10 @@ fn indirect_at(ctx: &mut EvalCtx, a1: bool, sheet: crate::SheetId, body: &str) -
                 }
             }
 
-            let (tname, inner) = match body.find('[') {
-                Some(i) if body.ends_with(']') => (&body[..i], Some(&body[i + 1..body.len() - 1])),
-                _ => (body, None),
-            };
-            if let Some(t) = ctx.wb.table_by_name(tname.trim()) {
-                let spec = match inner {
-                    None => Some(crate::workbook::tables::Spec {
-                        items: crate::workbook::tables::Items::DATA,
-                        ..Default::default()
-                    }),
-                    Some(i) => crate::workbook::tables::parse_spec(i).ok(),
-                };
-                let mut spec = spec;
-                let cols = spec.as_ref().and_then(|s| s.cols.clone());
-                if let (Some(sp), Some((a, b))) = (spec.as_mut(), cols) {
-                    let canon = |c: &str| {
-                        t.columns
-                            .iter()
-                            .find(|x| crate::text::eq_ordinal_ci(x, c))
-                            .cloned()
-                    };
-                    match (canon(&a), canon(&b)) {
-                        (Some(a), Some(b)) => sp.cols = Some((a, b)),
-                        _ => spec = None,
-                    }
-                }
-                if let Some(sp) = spec {
-                    let tn = t.name.clone();
-                    return match crate::eval::refs::struct_rect(ctx.wb, &tn, &sp, ctx.host) {
-                        Ok(a) => Operand::Ref(Reference::Area(a)),
-                        Err(e) => Operand::err(e),
-                    };
-                }
+            match ctx.wb.table_text_area(body, ctx.host) {
+                Some(Ok(a)) => return Operand::Ref(Reference::Area(a)),
+                Some(Err(e)) => return Operand::err(e),
+                None => {}
             }
             Operand::err(XlError::REF)
         }

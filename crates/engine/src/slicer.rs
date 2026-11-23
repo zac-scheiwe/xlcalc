@@ -790,6 +790,7 @@ impl Workbook {
             op: Some("values".into()),
             c2: None,
             op_code: 7,
+            month_first: false,
         };
         let v = self.view_mut(sheet);
         if let Some(f) = v
@@ -801,6 +802,7 @@ impl Workbook {
         } else {
             v.filters.push(crate::view::Filter {
                 rect,
+                anchor_r1: rect.r1,
                 table: Some(name),
                 crit: std::iter::once((col, crit)).collect(),
                 total_row: false,

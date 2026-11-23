@@ -48,6 +48,16 @@ pub struct SaveOptions {
     pub controls: Vec<(SheetId, Vec<crate::ctrlprops::Control>)>,
 
     pub dir: String,
+
+    pub read_only_recommended: bool,
+
+    pub protection: Option<Protection>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Protection {
+    pub book: Option<String>,
+    pub sheets: Vec<(SheetId, Option<String>, Option<String>)>,
 }
 
 #[derive(Clone, Debug)]
@@ -1001,7 +1011,7 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
                 format!(
                     "{}{}",
                     rawxml::DECL,
-                    crate::pivot::table_xml(wb, ti, (t.cache + 1) as u32)
+                    crate::pivot::table_xml(wb, ti, (t.cache + 1) as u32, &mut styles)
                 )
                 .into_bytes(),
                 Some(&format!("{CT}pivotTable+xml")),
@@ -1034,6 +1044,16 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
         split.put("scenarios", scenarios::write(wb.scenarios(id)), SHEET_ORDER);
         split.put("mergeCells", crate::merges::write(wb, id), SHEET_ORDER);
         split.put("dataValidations", crate::dvs::write(wb, id), SHEET_ORDER);
+        if let Some(prot) = &opts.protection {
+            let (sp, pr) = prot
+                .sheets
+                .iter()
+                .find(|x| x.0 == id)
+                .map(|x| (x.1.clone(), x.2.clone()))
+                .unwrap_or_default();
+            split.put("sheetProtection", sp, SHEET_ORDER);
+            split.put("protectedRanges", pr, SHEET_ORDER);
+        }
         let cf_src: Vec<crate::xml::Node> = split
             .kids
             .iter()
@@ -1330,6 +1350,21 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
             .collect::<String>()
     );
     book.put("sheets", Some(sheets_xml), BOOK_ORDER);
+    if let Some(prot) = &opts.protection {
+        book.put("workbookProtection", prot.book.clone(), BOOK_ORDER);
+    }
+    let sharing = book.kids.iter().find(|k| k.name == "fileSharing");
+    if opts.read_only_recommended {
+        if !sharing.is_some_and(|k| k.raw.contains("readOnlyRecommended")) {
+            book.put(
+                "fileSharing",
+                Some("<fileSharing readOnlyRecommended=\"1\"/>".to_string()),
+                BOOK_ORDER,
+            );
+        }
+    } else if sharing.is_some_and(|k| k.raw.contains("readOnlyRecommended")) {
+        book.put("fileSharing", None, BOOK_ORDER);
+    }
     let ext_links = wb.ext_file_links();
     let ext_xml = if ext_links.is_empty() {
         None
@@ -2038,6 +2073,21 @@ fn table_xml(
         None
     };
     split.put("autoFilter", af, TABLE_ORDER);
+
+    let look = {
+        let mut si = Tag::new("tableStyleInfo");
+        si.set("name", t.style.as_deref());
+        for (k, on) in [
+            ("showFirstColumn", t.stripes[2]),
+            ("showLastColumn", t.stripes[3]),
+            ("showRowStripes", t.stripes[0]),
+            ("showColumnStripes", t.stripes[1]),
+        ] {
+            si.set(k, Some(if on { "1" } else { "0" }));
+        }
+        si.empty()
+    };
+    split.put("tableStyleInfo", Some(look), TABLE_ORDER);
     let mut next_id = src_cols
         .iter()
         .filter_map(|(_, raw)| Tag::parse(raw).ok()?.get("id")?.parse::<u32>().ok())
@@ -2124,8 +2174,8 @@ fn totals_column(
             .and_then(|(n, rest)| {
                 let code = n.trim().parse::<u32>().ok()?;
                 let arg = rest.trim_end_matches(')');
-                let simple =
-                    arg.starts_with(&format!("{}[", t.name)) && arg.matches('[').count() == 1;
+                let simple = arg.starts_with(&format!("{}[", display_name(&t.name)))
+                    && arg.matches('[').count() == 1;
                 let name = match code {
                     101 => "average",
                     102 => "countNums",
@@ -2271,7 +2321,8 @@ fn defined_names(
             source.push((name.to_lowercase(), scope, s.root, text));
         }
     }
-    let mut items: Vec<(String, String)> = Vec::new();
+
+    let mut items: Vec<(String, bool, String, String)> = Vec::new();
     let local = |scope: Option<SheetId>| scope.and_then(|id| wb.sheet_position(id));
     for d in wb.names().iter() {
         if d.name.starts_with(crate::ftext::ALIAS) {
@@ -2308,17 +2359,26 @@ fn defined_names(
         let ls = local(d.scope).map(|i| i.to_string());
         tag.set("localSheetId", ls.as_deref());
         let mt = wb.names().macro_type(&d.name.to_uppercase(), d.scope);
+        tag.set(
+            "hidden",
+            (!wb.names().is_visible(&d.name.to_uppercase(), d.scope)).then_some("1"),
+        );
         tag.set("function", (mt == Some(1)).then_some("1"));
         tag.set("xlm", matches!(mt, Some(1 | 2)).then_some("1"));
         tag.set("functionGroupId", matches!(mt, Some(1 | 2)).then_some("14"));
         let text = formula_xml(&wb.file_name_formula(d));
         items.push((
             file_name.to_lowercase(),
+            d.scope.is_none(),
+            d.scope
+                .and_then(|s| wb.sheet(s))
+                .map(|s| s.name.to_lowercase())
+                .unwrap_or_default(),
             format!("{}{text}</definedName>", tag.open()),
         ));
     }
     for (n, scope, tag, text) in &source {
-        if !n.starts_with("_xlnm.") || items.iter().any(|(m, _)| m == n && scope.is_none()) {
+        if !n.starts_with("_xlnm.") || items.iter().any(|(m, ..)| m == n && scope.is_none()) {
             continue;
         }
         if scope.is_some() && local(*scope).is_none() {
@@ -2328,15 +2388,20 @@ fn defined_names(
         tag.empty = false;
         let ls = local(*scope).map(|i| i.to_string());
         tag.set("localSheetId", ls.as_deref());
-        items.push((n.clone(), format!("{}{text}</definedName>", tag.open())));
+        items.push((
+            n.clone(),
+            scope.is_none(),
+            String::new(),
+            format!("{}{text}</definedName>", tag.open()),
+        ));
     }
     if items.is_empty() {
         return Ok(None);
     }
-    items.sort_by(|a, b| a.0.cmp(&b.0));
+    items.sort_by(|a, b| (&a.0, a.1, &a.2).cmp(&(&b.0, b.1, &b.2)));
     Ok(Some(format!(
         "<definedNames>{}</definedNames>",
-        items.into_iter().map(|x| x.1).collect::<String>()
+        items.into_iter().map(|x| x.3).collect::<String>()
     )))
 }
 
@@ -2480,11 +2545,7 @@ mod tests {
 }
 
 pub(crate) fn display_name(name: &str) -> String {
-    if is_cell_like(name) {
-        format!("{name}_")
-    } else {
-        name.to_string()
-    }
+    xlcalc::table_display_name(name)
 }
 
 pub(crate) fn is_cell_like(name: &str) -> bool {

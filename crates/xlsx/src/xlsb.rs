@@ -412,6 +412,8 @@ impl Ctx<'_> {
             .iter()
             .find(|t| t.id == list)
             .ok_or("structured reference to an unknown table")?;
+
+        let tn = crate::write::display_name(&t.name);
         let cname = |i: u32| -> Result<String, String> {
             let n = t
                 .columns
@@ -444,15 +446,15 @@ impl Ctx<'_> {
         };
         let mut parts: Vec<String> = rows.iter().map(|r| format!("[{r}]")).collect();
         match (&cols, parts.len()) {
-            (None, 0) => return Ok(format!("{}[]", t.name)),
-            (None, 1) => return Ok(format!("{}[{}]", t.name, rows[0])),
-            (Some((a, None)), 0) => return Ok(format!("{}[{a}]", t.name)),
-            (Some((a, Some(b))), 0) => return Ok(format!("{}[[{a}]:[{b}]]", t.name)),
+            (None, 0) => return Ok(format!("{}[]", tn)),
+            (None, 1) => return Ok(format!("{}[{}]", tn, rows[0])),
+            (Some((a, None)), 0) => return Ok(format!("{}[{a}]", tn)),
+            (Some((a, Some(b))), 0) => return Ok(format!("{}[[{a}]:[{b}]]", tn)),
             (Some((a, None)), _) => parts.push(format!("[{a}]")),
             (Some((a, Some(b))), _) => parts.push(format!("[{a}]:[{b}]")),
             (None, _) => {}
         }
-        Ok(format!("{}[{}]", t.name, parts.join(",")))
+        Ok(format!("{}[{}]", tn, parts.join(",")))
     }
 }
 
@@ -739,8 +741,9 @@ pub(crate) fn decode(
                 push(&mut st, format!("{pre}{t}"), &mut space);
             }
             0x3C | 0x5C | 0x7C => {
-                rd.take(8)?;
-                push(&mut st, "#REF!".into(), &mut space);
+                let pre = ctx.sheet_prefix(rd.u16()?)?;
+                rd.take(6)?;
+                push(&mut st, format!("{pre}#REF!"), &mut space);
             }
             0x3D | 0x5D | 0x7D => {
                 rd.take(14)?;
@@ -2065,10 +2068,15 @@ pub fn to_xlsx(zip: &mut Zip) -> Result<(Vec<u8>, Vec<String>), String> {
         x.push_str("</tableColumns>");
         if let Some((fl, name)) = &t.style {
             let b = |bit: u16| u8::from(fl & bit != 0);
+
+            let name_attr = if name.is_empty() {
+                String::new()
+            } else {
+                format!("name=\"{}\" ", esc(name))
+            };
             let _ = write!(
                 x,
-                "<tableStyleInfo name=\"{}\" showFirstColumn=\"{}\" showLastColumn=\"{}\" showRowStripes=\"{}\" showColumnStripes=\"{}\"/>",
-                esc(name),
+                "<tableStyleInfo {name_attr}showFirstColumn=\"{}\" showLastColumn=\"{}\" showRowStripes=\"{}\" showColumnStripes=\"{}\"/>",
                 b(1),
                 b(2),
                 b(4),

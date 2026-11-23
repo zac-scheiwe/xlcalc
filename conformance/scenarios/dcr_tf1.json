@@ -1,0 +1,134 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "v"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "6"
+  },
+  {
+   "op": "autofilter",
+   "range": "Sheet1!A1:B7",
+   "field": 1,
+   "criteria1": "a"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1')",
+   "prop": "FilterMode"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1')",
+   "prop": "AutoFilterMode"
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 10
+  },
+  {
+   "op": "table",
+   "name": "T1",
+   "range": "Sheet1!A1:B7"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1')",
+   "prop": "FilterMode"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1')",
+   "prop": "AutoFilterMode"
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 10
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').ListObjects(1)",
+   "prop": "ShowAutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').ListObjects(1).Range",
+   "prop": "Address"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').ListObjects(1).AutoFilter",
+   "prop": "FilterMode"
+  }
+ ]
+}

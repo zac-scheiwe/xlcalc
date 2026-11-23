@@ -1,6 +1,8 @@
 pub mod call;
+pub(crate) mod fdyn;
 pub mod lambda;
 pub mod ops;
+pub(crate) mod ptgclass;
 pub mod refs;
 
 use std::sync::Arc;
@@ -13,6 +15,32 @@ use crate::formula::Node;
 use crate::parser::ast::{BinOp, UnaryOp};
 use crate::value::{Array, Value, XlError, MAX_TEXT_LEN};
 use crate::workbook::{Entry, FormulaId, Workbook};
+
+#[derive(Clone, Copy)]
+pub(crate) struct ArgFrame {
+    pub(crate) lo: usize,
+    pub(crate) hi: usize,
+    pub(crate) ftab: Option<&'static crate::legacy_ftab::Ftab>,
+}
+
+fn ptgclass_kind(node: &Node) -> ptgclass::Kind {
+    match node {
+        Node::Func { id, .. } => ptgclass::Kind::Call(ptgclass::ftab_of(*id)),
+        Node::Unary(UnaryOp::Implicit | UnaryOp::ImplicitQuiet, _) => {
+            ptgclass::Kind::Call(ptgclass::ftab_of_name("SINGLE"))
+        }
+        Node::Spill(_) => ptgclass::Kind::Call(ptgclass::ftab_of_name("ANCHORARRAY")),
+        Node::NamedCall { .. } | Node::Call { .. } => ptgclass::Kind::Call(ptgclass::ftab_call()),
+        Node::Let { .. } => ptgclass::Kind::Call(ptgclass::ftab_of_name("LET")),
+        Node::Name { .. }
+        | Node::Ref(..)
+        | Node::StructRef { .. }
+        | Node::DeadRef(_)
+        | Node::Unsupported { .. } => ptgclass::Kind::RefToken { array_const: false },
+        Node::Lit(Value::Array(_)) => ptgclass::Kind::RefToken { array_const: true },
+        _ => ptgclass::Kind::Other,
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct Area {
@@ -194,6 +222,8 @@ pub struct Observed {
 
 pub struct EvalCtx<'a> {
     pub wb: &'a Workbook,
+
+    pub(crate) locale: &'a crate::Locale,
     pub host: CellAddr,
 
     mode: ReadMode,
@@ -216,11 +246,15 @@ pub struct EvalCtx<'a> {
 
     pub(crate) circ_args: bool,
 
+    pub(crate) lambda_name_abort: bool,
+
     pub(crate) allow_partial: bool,
 
     pub(crate) forced_partial: bool,
 
     pub(crate) in_evaluate: bool,
+
+    pub(crate) xlm_entry: bool,
 
     pub xlm_vars: Option<std::sync::Arc<crate::xlm::XlmVars>>,
 
@@ -234,21 +268,27 @@ pub struct EvalCtx<'a> {
 
     pub(crate) name_scope: Option<Option<crate::address::SheetId>>,
 
-    pub(crate) arr_ctx: u8,
+    pub(crate) node_cls: ptgclass::Class,
+
+    pub(crate) node_mask: u32,
+
+    pub(crate) slot: Option<u32>,
+
+    pub(crate) anc: Vec<ptgclass::Anc>,
+
+    pub(crate) frames: Vec<ArgFrame>,
 
     pub(crate) name_key: Option<crate::value::Text>,
 
-    pub(crate) arr_direct: bool,
-
     pub(crate) name_first: bool,
+
+    pub(crate) in_lambda: bool,
 
     pub(crate) name_keep: bool,
 
     pub(crate) let_names: Vec<(u32, crate::value::Text, Node)>,
 
     pub(crate) name_ref_root: Option<u32>,
-
-    pub(crate) arr_slot: bool,
 
     pub(crate) dyn_reduce: bool,
 
@@ -283,6 +323,7 @@ impl<'a> EvalCtx<'a> {
     pub fn with_mode(wb: &'a Workbook, host: CellAddr, mode: ReadMode) -> EvalCtx<'a> {
         EvalCtx {
             wb,
+            locale: &wb.locale,
             host,
             mode,
             env: Vec::new(),
@@ -297,21 +338,26 @@ impl<'a> EvalCtx<'a> {
             pend_fid: None,
             circ_live: 0,
             circ_args: false,
+            lambda_name_abort: false,
             allow_partial: false,
             forced_partial: false,
             in_evaluate: false,
+            xlm_entry: false,
             circ_sources: Vec::new(),
             circ_lifted: false,
             own: None,
             name_scope: None,
-            arr_ctx: 0,
+            node_cls: ptgclass::Class::Val,
+            node_mask: ptgclass::MASK_OPERATOR,
+            slot: None,
+            anc: Vec::new(),
+            frames: Vec::new(),
             name_key: None,
-            arr_direct: false,
             name_first: false,
+            in_lambda: false,
             name_keep: false,
             let_names: Vec::new(),
             name_ref_root: None,
-            arr_slot: false,
             dyn_reduce: false,
             fn_depth: 0,
             legacy_form: false,
@@ -376,7 +422,7 @@ impl<'a> EvalCtx<'a> {
 
     pub fn parse_env(&self) -> ParseEnv<'a> {
         ParseEnv {
-            locale: &self.wb.locale,
+            locale: self.locale,
             date_system: self.wb.settings.date_system,
             current_year: self.wb.calc.current_year,
             iso_t: false,
@@ -440,6 +486,10 @@ impl<'a> EvalCtx<'a> {
             if f.spill_src {
                 self.observed.read_spill = true;
             }
+            return f.value_at(row, col);
+        }
+        if f.dirty && self.mode == ReadMode::Calc && crate::calc::out_of_bound(self.wb, fid) {
+            self.observed.read_dirty = true;
             return f.value_at(row, col);
         }
         if f.dirty {
@@ -717,11 +767,10 @@ impl<'a> EvalCtx<'a> {
                 Node::Binary(_, a, b) => lifts_ref(a, false) || lifts_ref(b, false),
                 Node::Func { id, args } => {
                     let name = crate::functions::def(*id).name;
-                    crate::legacy_classes::legacy_array_args(name).is_some_and(|cl| {
-                        let n = cl.len() / 4;
-                        args.iter().enumerate().any(|(i, a)| {
-                            cl.as_bytes()[4 * i.min(n - 1)] == b'1' && lifts_ref(a, false)
-                        })
+                    let argc = args.len();
+                    args.iter().enumerate().any(|(i, a)| {
+                        crate::legacy_classes::class_of_n(name, i, argc) == Some(b'V')
+                            && lifts_ref(a, false)
                     })
                 }
                 _ => false,
@@ -764,6 +813,10 @@ impl<'a> EvalCtx<'a> {
             || f.partial
                 .as_deref()
                 .is_some_and(|p| p.pass == self.wb.calc.pass)
+    }
+
+    pub(crate) fn array_entry(&self) -> bool {
+        self.in_array_block() || fdyn::cached(self.wb, self.host)
     }
 
     pub(crate) fn in_array_block(&self) -> bool {
@@ -816,7 +869,59 @@ impl<'a> EvalCtx<'a> {
         if self.interrupt.is_some() {
             return Operand::err(XlError::CALC);
         }
-        stacker::maybe_grow(64 * 1024, 2 * 1024 * 1024, || self.eval_inner(node))
+
+        let mask = self.slot_of(node);
+        let paren = matches!(node, Node::Paren(_) | Node::Ws { .. });
+        let cls = if paren {
+            self.node_cls
+        } else {
+            let kind = ptgclass_kind(node);
+            let cls = ptgclass::classify(kind, mask, &self.anc, self.array_entry());
+
+            let cls = if matches!(kind, ptgclass::Kind::Call(_))
+                && cls == ptgclass::Class::Val
+                && (self.in_array_block() || self.in_lambda)
+            {
+                ptgclass::Class::Arr
+            } else {
+                cls
+            };
+            self.anc.push(ptgclass::Anc::of(kind, mask));
+            cls
+        };
+        let saved = (self.node_cls, self.node_mask);
+        (self.node_cls, self.node_mask) = (cls, mask);
+        let out = stacker::maybe_grow(64 * 1024, 2 * 1024 * 1024, || self.eval_inner(node));
+        (self.node_cls, self.node_mask) = saved;
+        if !paren {
+            self.anc.pop();
+        }
+        out
+    }
+
+    fn in_call_frame<T>(&mut self, args: &[Node], f: impl FnOnce(&mut Self) -> T) -> T {
+        let lo = args.as_ptr() as usize;
+        self.frames.push(ArgFrame {
+            lo,
+            hi: lo + std::mem::size_of_val(args),
+            ftab: ptgclass::ftab_call(),
+        });
+        let out = f(self);
+        self.frames.pop();
+        out
+    }
+
+    fn slot_of(&mut self, node: &Node) -> u32 {
+        if let Some(m) = self.slot.take() {
+            return m;
+        }
+        if let Some(f) = self.frames.last() {
+            let p = node as *const Node as usize;
+            if p >= f.lo && p < f.hi {
+                return ptgclass::arg_mask(f.ftab, (p - f.lo) / std::mem::size_of::<Node>());
+            }
+        }
+        ptgclass::MASK_OPERATOR
     }
 
     fn eval_operand(&mut self, node: &Node) -> Operand {
@@ -831,35 +936,44 @@ impl<'a> EvalCtx<'a> {
         ) = (node.unwrap_ws(), self.name_scope, self.name_key.as_ref())
         {
             if self.wb.names.is_copy_stale(scope, name, key) {
-                self.arr_direct = false;
+                self.slot = None;
                 self.name_first = false;
                 self.name_keep = false;
                 return Operand::err(XlError::VALUE);
             }
         }
-        self.eval(node)
+        let v = self.eval(node);
+
+        if self.xlm_vars.is_some()
+            && matches!(&v, Operand::Ref(r) if r.single().is_some_and(|x| !x.rect.is_cell()))
+        {
+            return refs::implicit_intersection(self, v);
+        }
+        v
     }
 
     fn eval_inner(&mut self, node: &Node) -> Operand {
-        let direct = std::mem::replace(&mut self.arr_direct, false);
+        let mask = self.node_mask;
         let first = std::mem::replace(&mut self.name_first, false);
         let keep = std::mem::replace(&mut self.name_keep, false);
         match node {
             Node::Lit(v) => Operand::Val(v.clone()),
             Node::Ref(sheet, cref) => refs::resolve(self, sheet, cref),
             Node::Name { key, sheet, .. } => {
-                let inner = if self.arr_ctx == 2 || (self.arr_ctx == 1 && direct) {
-                    2
-                } else {
-                    0
+                let array_frame = match self.node_cls {
+                    ptgclass::Class::Arr => true,
+                    ptgclass::Class::Ref => mask & 7 == 0,
+                    ptgclass::Class::Val => false,
                 };
-                let saved = std::mem::replace(&mut self.arr_ctx, inner);
+                let saved_anc = std::mem::take(&mut self.anc);
+                self.slot = array_frame.then_some(ptgclass::MASK_REF_ARRAY);
 
                 let root = (first || keep || self.legacy_form).then_some(self.fn_depth + 1);
                 let saved_root = std::mem::replace(&mut self.name_ref_root, root);
                 let out = refs::eval_name(self, key, sheet.as_ref());
                 self.name_ref_root = saved_root;
-                self.arr_ctx = saved;
+                self.slot = None;
+                self.anc = saved_anc;
                 match out {
                     Operand::Ref(Reference::Grid(g)) if first || self.legacy_form => {
                         match g.items.first() {
@@ -875,7 +989,7 @@ impl<'a> EvalCtx<'a> {
                 let n = self.let_name(*slot, name).cloned().unwrap_or(Node::Missing);
                 self.name_first = first;
                 self.name_keep = keep;
-                self.arr_direct = direct;
+                self.slot = Some(mask);
                 self.eval(&n)
             }
             Node::Local { slot, .. } => self
@@ -894,6 +1008,7 @@ impl<'a> EvalCtx<'a> {
                     &mut self.at_named,
                     matches!(x.unwrap_ws(), Node::NamedCall { .. }),
                 );
+                self.slot = Some(ptgclass::arg_mask(ptgclass::ftab_of_name("SINGLE"), 0));
                 let v = self.eval(x);
                 self.at_named = saved_named;
                 self.at_call = saved_at;
@@ -937,6 +1052,7 @@ impl<'a> EvalCtx<'a> {
             }
             Node::Unary(op, x) => {
                 let saved = std::mem::replace(&mut self.dyn_reduce, false);
+                self.slot = Some(ptgclass::MASK_OPERATOR);
                 let v = self.eval_operand(x);
                 self.dyn_reduce = saved;
 
@@ -958,23 +1074,29 @@ impl<'a> EvalCtx<'a> {
             }
             Node::Percent(x) => {
                 let saved = std::mem::replace(&mut self.dyn_reduce, false);
+                self.slot = Some(ptgclass::MASK_OPERATOR);
                 let v = self.eval_operand(x);
                 self.dyn_reduce = saved;
                 let v = self.deref(v);
                 Operand::Val(ops::percent(self, v))
             }
             Node::Spill(x) => {
+                self.slot = Some(ptgclass::arg_mask(ptgclass::ftab_of_name("ANCHORARRAY"), 0));
                 let v = self.eval(x);
                 refs::spill_ref(self, v)
             }
             Node::Binary(op, a, b) => match op {
                 BinOp::Range | BinOp::Intersect | BinOp::Union => {
+                    self.slot = Some(ptgclass::MASK_RANGE);
                     let l = self.eval(a);
+                    self.slot = Some(ptgclass::MASK_RANGE);
                     let r = self.eval(b);
 
                     let dead = |n: &Node, o: &Operand| {
-                        matches!(n, Node::Ref(crate::formula::SheetRef::Missing(_), _))
-                            && matches!(o, Operand::Val(Value::Error(XlError::REF)))
+                        matches!(
+                            n.unwrap_ws(),
+                            Node::Ref(crate::formula::SheetRef::Missing(_), _)
+                        ) && matches!(o, Operand::Val(Value::Error(XlError::REF)))
                     };
                     if *op == BinOp::Range
                         && (dead(a, &l) && matches!(r, Operand::Ref(_))
@@ -986,11 +1108,13 @@ impl<'a> EvalCtx<'a> {
                 }
                 _ => {
                     let saved = std::mem::replace(&mut self.dyn_reduce, false);
+                    self.slot = Some(ptgclass::MASK_OPERATOR);
                     let l = self.eval_operand(a);
                     self.dyn_reduce = saved;
                     let l = self.cse_value_grid(l, self.vchain);
                     let l = self.deref(l);
                     let saved = std::mem::replace(&mut self.dyn_reduce, false);
+                    self.slot = Some(ptgclass::MASK_OPERATOR);
                     let r = self.eval_operand(b);
                     self.dyn_reduce = saved;
                     let r = self.cse_value_grid(r, self.vchain);
@@ -999,18 +1123,21 @@ impl<'a> EvalCtx<'a> {
                 }
             },
             Node::Paren(x) => {
-                self.arr_direct = direct;
+                self.slot = Some(mask);
                 self.eval(x)
             }
             Node::Func { id, args } => call::call_builtin(self, *id, args),
-            Node::NamedCall { key, args, .. } => lambda::call_named(self, key, args),
+            Node::NamedCall { key, args, .. } => {
+                self.in_call_frame(args, |c| lambda::call_named(c, key, args))
+            }
             Node::Call { callee, args } => {
+                self.slot = Some(ptgclass::callee_mask());
                 let f = self.eval(callee);
                 if matches!(f, Operand::Ref(_)) {
                     return Operand::err(XlError::REF);
                 }
                 let f = self.deref(f);
-                lambda::call_value(self, f, args)
+                self.in_call_frame(args, |c| lambda::call_value(c, f, args))
             }
             Node::Let {
                 names,
@@ -1018,11 +1145,12 @@ impl<'a> EvalCtx<'a> {
                 body,
                 base,
             } => {
-                let saved = std::mem::replace(&mut self.arr_ctx, 0);
+                let let_mask = ptgclass::arg_mask(ptgclass::ftab_of_name("LET"), 1);
                 let base = *base as usize;
                 self.env.truncate(base);
                 let aliases = self.let_names.len();
                 for (k, v) in values.iter().enumerate() {
+                    self.slot = Some(let_mask);
                     let x = self.eval(v);
                     self.env.push(x);
                     if let (Node::Name { .. }, Some(var)) = (v.unwrap_ws(), names.get(k)) {
@@ -1033,25 +1161,36 @@ impl<'a> EvalCtx<'a> {
                         ));
                     }
                 }
+                self.slot = Some(let_mask);
                 let out = self.eval(body);
                 self.let_names.truncate(aliases);
                 self.env.truncate(base);
-                self.arr_ctx = saved;
                 out
             }
             Node::Lambda(def) => {
                 let captured = self.env[..(def.base as usize).min(self.env.len())].to_vec();
+
+                if captured.iter().any(|o| matches!(o, Operand::Ref(_)))
+                    && def
+                        .params
+                        .iter()
+                        .any(|p| crate::address::parse_a1_cell(p).is_some())
+                {
+                    self.lambda_name_abort = true;
+                    return Operand::err(XlError::NAME);
+                }
                 Operand::Val(Value::Lambda(Arc::new(lambda::LambdaValue {
                     def: def.clone(),
                     captured,
                 })))
             }
-            Node::Missing => Operand::Missing,
+
+            Node::Missing | Node::Unwritten => Operand::Missing,
             Node::Unsupported { error, .. } => Operand::err(*error),
             Node::DeadRef(_) => Operand::err(XlError::REF),
             Node::StructRef { table, spec, .. } => refs::struct_ref(self, table, spec),
             Node::Ws { node, .. } => {
-                self.arr_direct = direct;
+                self.slot = Some(mask);
                 self.eval(node)
             }
         }
@@ -1059,6 +1198,14 @@ impl<'a> EvalCtx<'a> {
 }
 
 pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
+    finalize(eval_formula_raw(ctx, root))
+}
+
+pub(crate) fn eval_formula_raw(ctx: &mut EvalCtx, root: &Node) -> Value {
+    let macro_host = ctx
+        .wb
+        .sheet(ctx.host.sheet)
+        .is_some_and(|s| s.kind.is_macro());
     let v = match root.unwrap_ws() {
         Node::Binary(op @ (BinOp::Add | BinOp::Sub), a, b) => {
             let l = ctx.eval(a);
@@ -1069,6 +1216,12 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
         }
         _ => {
             let op = ctx.eval(root);
+
+            let op = if macro_host && matches!(op, Operand::Ref(_)) {
+                refs::implicit_intersection(ctx, op)
+            } else {
+                op
+            };
 
             match &op {
                 Operand::Ref(Reference::Grid(g)) if ctx.in_array_block() => {
@@ -1098,6 +1251,18 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
                 _ => ctx.deref(op),
             }
         }
+    };
+    let v = if std::mem::take(&mut ctx.lambda_name_abort) {
+        Value::Error(XlError::NAME)
+    } else {
+        v
+    };
+
+    let v = match v {
+        Value::Array(a) if macro_host && !a.data.is_empty() && !ctx.in_array_block() => {
+            a.data[0].clone()
+        }
+        v => v,
     };
     if ctx.has_placeholders() && contains_circ(&v) {
         let block = ctx
@@ -1132,7 +1297,7 @@ pub fn eval_formula(ctx: &mut EvalCtx, root: &Node) -> Value {
     if ctx.observed.abandoned {
         return Value::Number(0.0);
     }
-    finalize(v)
+    v
 }
 
 pub(crate) fn contains_circ(v: &Value) -> bool {

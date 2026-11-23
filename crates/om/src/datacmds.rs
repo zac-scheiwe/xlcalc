@@ -9,6 +9,8 @@ use crate::error::OmError;
 use crate::objects::edit_error;
 use crate::typelib::Member;
 
+const SEEK_FAILED: &str = "GoalSeek method of Range class failed";
+
 fn int_list(v: &Variant) -> Result<Vec<i32>, OmError> {
     match v {
         Variant::Array(sa) => {
@@ -82,23 +84,13 @@ fn first_char(s: Option<String>) -> Option<char> {
 
 impl Application<'_> {
     pub(crate) fn guess_header(&self, book: BookId, sheet: SheetId, rect: Rect) -> bool {
-        let Ok(b) = self.book(book) else {
-            return false;
-        };
-        if rect.rows() < 2 {
-            return false;
-        }
-        (rect.c0..=rect.c1).any(|c| {
-            let top = b.wb.value(CellAddr::new(sheet, rect.r0, c));
-            let next = b.wb.value(CellAddr::new(sheet, rect.r0 + 1, c));
-            matches!(top, xlcalc::Value::Text(_))
-                && !matches!(next, xlcalc::Value::Text(_) | xlcalc::Value::Blank)
-        })
+        self.book(book)
+            .is_ok_and(|b| b.wb.guess_list_header(sheet, rect, false) == Some(rect.r0))
     }
 
     fn data_range_arg(&self, a: &Args, i: usize) -> Result<Option<(SheetId, Rect)>, OmError> {
         match a.get(i) {
-            None => Ok(None),
+            None | Some(Variant::Empty) => Ok(None),
             Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
                 Some(Object::Range(r)) => Ok(Some(self.resolve(&r.clone())?)),
                 _ => Err(OmError::app_defined()),
@@ -117,6 +109,7 @@ impl Application<'_> {
         match m.name {
             "RemoveDuplicates" => {
                 let width = rect.cols();
+                let guessed = a.i32(1)?.unwrap_or(2) == 0;
                 let header = match a.i32(1)?.unwrap_or(2) {
                     1 => true,
                     2 => false,
@@ -138,7 +131,16 @@ impl Application<'_> {
                 if !listed && (columns.is_empty() || columns == [0]) {
                     columns = (1..=width).collect();
                 }
-                let spec = DedupSpec { columns, header };
+                let header_above = guessed
+                    && !header
+                    && self
+                        .book(book)
+                        .is_ok_and(|b| b.wb.guess_header_above(sheet, rect));
+                let spec = DedupSpec {
+                    columns,
+                    header,
+                    header_above,
+                };
                 self.book_mut(book)?
                     .wb
                     .remove_duplicates(sheet, rect, &spec)
@@ -235,6 +237,10 @@ impl Application<'_> {
                 };
                 let criteria = self.data_range_arg(a, 1)?;
                 let copy_to = self.data_range_arg(a, 2)?;
+
+                if copy && copy_to.is_none() {
+                    return Err(OmError::app_defined());
+                }
                 let spec = AdvancedFilterSpec {
                     list: (sheet, rect),
                     criteria,
@@ -270,19 +276,25 @@ impl Application<'_> {
                     .wb
                     .add_data_table(sheet, rect, cells[0], cells[1])
                     .map_err(edit_error)?;
-                Ok(Variant::Empty)
+
+                Ok(Variant::Bool(true))
             }
             "GoalSeek" => {
                 let goal = match a.get(0) {
                     Some(v) => match change_type(v, VarType::R8, variant_locale(a.lcid), 0) {
                         Ok(Variant::R8(n)) => n,
-                        _ => return Err(OmError::type_mismatch()),
+
+                        _ => return Err(OmError::app_defined_with(SEEK_FAILED)),
                     },
                     None => return Err(OmError::app_defined()),
                 };
                 let (cs, cr) = self
                     .data_range_arg(a, 1)?
                     .ok_or_else(OmError::app_defined)?;
+
+                if !cr.is_cell() {
+                    return Err(OmError::app_defined_with("Reference isn't valid."));
+                }
                 let target = CellAddr::new(sheet, rect.r0, rect.c0);
                 let changing = CellAddr::new(cs, cr.r0, cr.c0);
                 let got = self

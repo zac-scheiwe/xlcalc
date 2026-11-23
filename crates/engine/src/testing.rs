@@ -52,7 +52,7 @@ pub fn open_like_excel(
             .names
             .iter()
             .filter(|d| d.formula.volatile)
-            .map(|d| d.name.to_uppercase())
+            .map(|d| crate::text::name_key(&d.name))
             .collect();
         let mut users = Vec::new();
         for key in names {

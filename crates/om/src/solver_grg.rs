@@ -18,6 +18,34 @@ pub(crate) struct Prob<'a> {
     pub(crate) central: bool,
 
     pub(crate) val: Option<f64>,
+
+    pub(crate) tol: f64,
+    pub(crate) conv: f64,
+
+    pub(crate) scaling: bool,
+}
+
+thread_local! {
+
+    static SCALE: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static LIMITS: std::cell::Cell<(f64, f64)> = const { std::cell::Cell::new((1e-8, 1e-5)) };
+}
+
+pub(crate) fn canon(x: &mut [f64]) {
+    SCALE.with(|c| {
+        let c = c.borrow();
+        for (v, s) in x.iter_mut().zip(c.iter()) {
+            *v = (*v * s) / s;
+        }
+    });
+}
+
+pub(crate) fn tol() -> f64 {
+    LIMITS.with(|l| l.get().0)
+}
+
+pub(crate) fn conv() -> f64 {
+    LIMITS.with(|l| l.get().1)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -591,6 +619,82 @@ pub(crate) fn grg(
     pre: usize,
     ev: &mut Ev,
 ) -> Result<(Vec<f64>, Eval, Status), OmError> {
+    if !p.scaling {
+        let x0 = x0
+            .iter()
+            .zip(p.lo.iter().zip(p.hi))
+            .map(|(v, (l, h))| v.max(*l).min(*h))
+            .collect();
+        return grg_run(p, x0, pre, ev);
+    }
+    let c: Vec<f64> = x0
+        .iter()
+        .map(|v| if *v == 0.0 { 1.0 } else { v.abs() })
+        .collect();
+    let lo: Vec<f64> = p.lo.iter().zip(&c).map(|(v, s)| v / s).collect();
+    let hi: Vec<f64> = p.hi.iter().zip(&c).map(|(v, s)| v / s).collect();
+    let scaled = Prob {
+        max: p.max,
+        lo: &lo,
+        hi: &hi,
+        rel: p.rel,
+        central: p.central,
+        val: p.val,
+        tol: p.tol,
+        conv: p.conv,
+        scaling: false,
+    };
+    let e0 = ev(&x0)?;
+    let f0 = e0.obj;
+    let sf = if f0 == 0.0 { 1.0 } else { f0.abs() };
+    let rs: Vec<f64> = e0
+        .lhs
+        .iter()
+        .map(|v| if *v == 0.0 { 1.0 } else { v.abs() })
+        .collect();
+
+    let xs0: Vec<f64> = x0
+        .iter()
+        .zip(&c)
+        .zip(lo.iter().zip(&hi))
+        .map(|((v, s), (l, h))| (v / s).max(*l).min(*h))
+        .collect();
+    let mut ev2 = |xs: &[f64]| {
+        let x: Vec<f64> = xs.iter().zip(&c).map(|(v, s)| v * s).collect();
+        let mut e = ev(&x)?;
+        e.obj /= sf;
+        for (i, r) in rs.iter().enumerate() {
+            e.lhs[i] /= r;
+            e.rhs[i] /= r;
+            if let Some(v) = e.v.get_mut(i) {
+                *v /= r;
+            }
+        }
+        Ok(e)
+    };
+    SCALE.with(|s| *s.borrow_mut() = c.clone());
+    let r = grg_run(&scaled, xs0, pre, &mut ev2);
+    SCALE.with(|s| s.borrow_mut().clear());
+    let (xs, mut e, st) = r?;
+    e.obj *= sf;
+    for (i, r) in rs.iter().enumerate() {
+        e.lhs[i] *= r;
+        e.rhs[i] *= r;
+        if let Some(v) = e.v.get_mut(i) {
+            *v *= r;
+        }
+    }
+    let x: Vec<f64> = xs.iter().zip(&c).map(|(v, s)| v * s).collect();
+    Ok((x, e, st))
+}
+
+fn grg_run(
+    p: &Prob,
+    x0: Vec<f64>,
+    pre: usize,
+    ev: &mut Ev,
+) -> Result<(Vec<f64>, Eval, Status), OmError> {
+    LIMITS.with(|l| l.set((p.tol, p.conv)));
     if crate::solver_grg_q::applies(p, x0.len()) {
         return crate::solver_grg_q::grg_q(p, x0, pre, ev);
     }

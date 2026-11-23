@@ -73,6 +73,20 @@ impl Workbook {
         }
         let before: Vec<crate::address::Rect> = self.tables.iter().map(|t| t.rect).collect();
         let cleared = matches!(edit.kind, EditKind::Clear);
+
+        if cleared
+            && self.formula_at(edit.addr).is_none()
+            && self.sheet(edit.addr.sheet).is_some_and(|sh| {
+                sh.spills.active_overlapping(crate::address::Rect::new(
+                    edit.addr.row,
+                    edit.addr.col,
+                    edit.addr.row,
+                    edit.addr.col,
+                ))
+            })
+        {
+            self.calc.spill_resized = true;
+        }
         self.edit_apply(edit.addr, plan);
         if cleared {
             self.sbr_unknown();
@@ -160,8 +174,16 @@ impl Workbook {
         if let Some((ti, old)) = widened {
             self.tables[ti].rect = old;
         }
-        if let Err(EditError::Parse(e)) = &compiled {
-            self.note_rejected_names(body, e.pos, addr);
+        match &compiled {
+            Err(EditError::Parse(e)) => self.note_rejected_names(body, e.pos, addr),
+
+            Err(EditError::Compile(m)) if m.contains("has no column") => {
+                if let Some(pos) = body.find('[') {
+                    let pos = body[..pos].chars().count();
+                    self.note_rejected_names(body, pos, addr);
+                }
+            }
+            _ => {}
         }
         let (formula, body) = compiled?;
 
@@ -306,6 +328,18 @@ impl Workbook {
 
     fn edit_after(&mut self, edit: &Edit) -> RecalcReport {
         let report = self.after_edit(vec![edit.addr]);
+
+        if matches!(edit.kind, EditKind::Formula(_))
+            && self.settings.mode == CalcMode::Manual
+            && self.calc.cmd_manual
+        {
+            if let Some(fid) = self.formula_at(edit.addr) {
+                if !self.formula(fid).dirty {
+                    self.set_dirty(fid, true);
+                    self.calc.dirty_list.push(fid);
+                }
+            }
+        }
 
         if matches!(edit.kind, EditKind::Formula(_))
             && !self.tables.is_empty()

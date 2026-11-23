@@ -1,8 +1,10 @@
 pub mod ast;
 pub mod lexer;
-mod namech;
+pub(crate) mod namech;
 pub mod print;
 pub mod r1c1;
+pub(crate) mod r1c1name;
+pub mod wild;
 
 use std::fmt;
 
@@ -30,6 +32,18 @@ pub fn parse(src: &str) -> Result<Expr, ParseError> {
 }
 
 pub fn parse_with(src: &str, sheet_exists: &dyn Fn(&str) -> bool) -> Result<Expr, ParseError> {
+    parse_entry(src, sheet_exists, false)
+}
+
+pub fn parse_typed(src: &str, sheet_exists: &dyn Fn(&str) -> bool) -> Result<Expr, ParseError> {
+    parse_entry(src, sheet_exists, true)
+}
+
+fn parse_entry(
+    src: &str,
+    sheet_exists: &dyn Fn(&str) -> bool,
+    typed: bool,
+) -> Result<Expr, ParseError> {
     let body = src.strip_prefix('=').unwrap_or(src);
     if src.encode_utf16().count() > MAX_FORMULA_CHARS {
         return Err(ParseError {
@@ -37,8 +51,9 @@ pub fn parse_with(src: &str, sheet_exists: &dyn Fn(&str) -> bool) -> Result<Expr
             message: "formula is too long".into(),
         });
     }
-    let tokens = Lexer::new(body, sheet_exists).tokenize()?;
+    let tokens = Lexer::new(body, sheet_exists).typed(typed).tokenize()?;
     let mut p = Parser {
+        sheet_exists,
         toks: tokens,
         i: 0,
         funcs: 0,
@@ -64,6 +79,9 @@ pub fn parse_with(src: &str, sheet_exists: &dyn Fn(&str) -> bool) -> Result<Expr
         };
     }
     match &p.cur().tok {
+        Tok::End if matches!(e.unwrap_ws(), Expr::Unwritten) => {
+            Err(p.err("expected a reference after sheet name"))
+        }
         Tok::End => {
             let mut trailing = p.cur().ws.clone();
             if let Some(i) = trailing.find('\n') {
@@ -90,7 +108,8 @@ fn describe(t: &Tok) -> String {
     }
 }
 
-struct Parser {
+struct Parser<'a> {
+    sheet_exists: &'a dyn Fn(&str) -> bool,
     toks: Vec<Token>,
     i: usize,
     funcs: u32,
@@ -170,12 +189,15 @@ fn demote_field(e: Expr) -> Expr {
         }
         match base {
             Expr::Ref {
-                sheet: None,
+                sheet,
                 kind: RefKind::Cell { .. },
             } => {
                 let mut name = String::new();
-                print::write_expr(&mut name, &e);
-                return Expr::Name { sheet: None, name };
+                print::write_expr(&mut name, &strip_sheet(&e));
+                return Expr::Name {
+                    sheet: sheet.clone(),
+                    name,
+                };
             }
             Expr::Ref {
                 sheet,
@@ -215,6 +237,31 @@ fn demote_field(e: Expr) -> Expr {
     e
 }
 
+fn strip_sheet(e: &Expr) -> Expr {
+    match e {
+        Expr::Field { expr, field } => Expr::Field {
+            expr: Box::new(strip_sheet(expr)),
+            field: field.clone(),
+        },
+        Expr::Ref { kind, .. } => Expr::Ref {
+            sheet: None,
+            kind: *kind,
+        },
+        other => other.clone(),
+    }
+}
+
+fn chain_names(left: Expr, right: Expr) -> (Expr, Expr) {
+    if matches!(left, Expr::Field { .. }) || matches!(right, Expr::Field { .. }) {
+        (
+            cell_to_name(demote_field(left)),
+            cell_to_name(demote_field(right)),
+        )
+    } else {
+        (left, right)
+    }
+}
+
 fn cell_to_name(e: Expr) -> Expr {
     if let Expr::Ref {
         sheet: None,
@@ -252,7 +299,7 @@ fn wrap_fields(mut e: Expr, segs: &[String]) -> Expr {
     e
 }
 
-impl Parser {
+impl Parser<'_> {
     fn cur(&self) -> &Token {
         &self.toks[self.i]
     }
@@ -298,7 +345,7 @@ impl Parser {
 
     fn binary_level(
         &mut self,
-        next: fn(&mut Parser) -> Result<Expr, ParseError>,
+        next: fn(&mut Self) -> Result<Expr, ParseError>,
         ops: &[(&str, BinOp)],
     ) -> Result<Expr, ParseError> {
         let mut left = next(self)?;
@@ -383,7 +430,7 @@ impl Parser {
             return Ok(());
         }
         let base = match (self.peek_tok(n), self.peek_tok(n + 1)) {
-            (Tok::Number { .. }, _) => 0,
+            (Tok::Number { .. }, _) if !matches!(self.peek_tok(n - 1), Tok::Op("@")) => 0,
             (Tok::Op("("), _) | (Tok::Ident(_), Tok::Op("(")) => 2,
             _ => 1,
         };
@@ -449,17 +496,23 @@ impl Parser {
     fn union_tail(&mut self, mut left: Expr) -> Result<Expr, ParseError> {
         while self.union_ok && self.is_op(",") {
             let ws = self.cur().ws.clone();
-            left = left.with_ws("", &ws);
             self.bump();
+            let before_ws = if self.is_op("@") {
+                String::new()
+            } else {
+                self.cur().ws.clone()
+            };
             let right = if self.is_op("@") {
                 let saved = std::mem::replace(&mut self.union_ok, false);
                 let r = self.prefix();
                 self.union_ok = saved;
                 r?
             } else {
-                let before = self.cur().ws.clone();
-                self.intersection_inner()?.with_ws(&before, "")
+                self.intersection_inner()?
             };
+            let (l, right) = chain_names(left, right);
+            left = l.with_ws("", &ws);
+            let right = right.with_ws(&before_ws, "");
             left = Expr::Binary {
                 op: BinOp::Union,
                 left: Box::new(left),
@@ -476,9 +529,9 @@ impl Parser {
             if ws.contains('\n') {
                 ws = linebreak_operator(&ws).ok_or_else(|| self.err("unexpected blank"))?;
             }
-            left = left.with_ws("", &ws);
 
-            let right = if self.is_op("@") {
+            let at = self.is_op("@");
+            let right = if at {
                 match self.prefix()? {
                     Expr::Ws { after, expr, .. } if after.is_empty() => *expr,
                     Expr::Ws { after, expr, .. } => Expr::Ws {
@@ -491,6 +544,12 @@ impl Parser {
             } else {
                 self.range()?
             };
+            let (l, right) = if at {
+                (left, right)
+            } else {
+                chain_names(left, right)
+            };
+            left = l.with_ws("", &ws);
             left = Expr::Binary {
                 op: BinOp::Intersect,
                 left: Box::new(left),
@@ -507,22 +566,41 @@ impl Parser {
             left = demote_field(left);
             self.names_mode |= demoted;
 
-            let keep_ws = matches!(left.unwrap_ws(), Expr::Name { .. } | Expr::StructRef { .. });
-            let (ws_before, ws_after) = if keep_ws {
+            let (ws_before, ws_after) = {
                 let b = self.cur().ws.clone();
                 self.bump();
                 (b, self.cur().ws.clone())
-            } else {
-                self.bump();
-                (String::new(), String::new())
             };
-            left = left.with_ws("", &ws_before);
 
             let right_op = if self.is_op("@") {
                 self.prefix()?
             } else {
                 self.postfix()?
             };
+
+            let lone_cell = matches!(
+                left.unwrap_ws(),
+                Expr::Ref {
+                    kind: RefKind::Cell { .. },
+                    ..
+                }
+            );
+            let fuses = lone_cell
+                && matches!(
+                    right_op.unwrap_ws(),
+                    Expr::Ref {
+                        sheet: None,
+                        kind: RefKind::Cell { .. } | RefKind::Area { .. },
+                    }
+                );
+            let (ws_before, ws_after) = if fuses {
+                (String::new(), String::new())
+            } else if lone_cell {
+                (format!("{ws_before}{ws_after}"), ws_after)
+            } else {
+                (ws_before, ws_after)
+            };
+            left = left.with_ws("", &ws_before);
             let mut right = right_op.with_ws(&ws_after, "");
             if demoted {
                 right = cell_to_name(right);
@@ -552,7 +630,12 @@ impl Parser {
         let mut e = self.primary()?;
         loop {
             if self.is_op("#") {
+                let ws = self.cur().ws.clone();
                 self.bump();
+                if !ws.is_empty() && !matches!(self.toks[self.i].tok, Tok::End) {
+                    let next = &mut self.toks[self.i];
+                    next.ws = format!("{ws}{}", next.ws);
+                }
                 e = Expr::Spill(Box::new(demote_field(e)));
             } else if let Tok::Field(f) = &self.cur().tok {
                 let field = f.clone();
@@ -638,9 +721,9 @@ impl Parser {
                 if let Some(w) = var {
                     self.bump();
                     if binder == 2 {
-                        self.locals.push(w.to_uppercase());
+                        self.locals.push(crate::text::name_key(&w));
                     } else {
-                        pending = Some(w.to_uppercase());
+                        pending = Some(crate::text::name_key(&w));
                     }
                     args.push(Expr::Name {
                         sheet: None,
@@ -721,7 +804,7 @@ impl Parser {
             }
             Tok::Op("{") => self.array_constant(),
 
-            Tok::StructRef { table, .. } if table.as_deref().is_some_and(|t| !is_valid_name(t)) => {
+            Tok::StructRef { table, .. } if table.as_deref().is_some_and(|t| !is_table_name(t)) => {
                 self.i = self.i.saturating_sub(1);
                 Err(self.err("table name is not a valid name"))
             }
@@ -736,7 +819,10 @@ impl Parser {
     }
 
     fn row_after_colon(&mut self) -> Option<Coord> {
-        if !self.is_op(":") {
+        if !self.is_op(":")
+            || self.cur().space_before
+            || self.toks[(self.i + 1).min(self.toks.len() - 1)].space_before
+        {
             return None;
         }
         let r1 = match self.peek_tok(1) {
@@ -749,10 +835,15 @@ impl Parser {
         Some(r1)
     }
 
-    fn after_sheet(&mut self, spec: SheetSpec) -> Result<Expr, ParseError> {
+    fn after_sheet(&mut self, sheet: SheetSpec) -> Result<Expr, ParseError> {
+        if let SheetSpec::Range(a, b) = &sheet {
+            if self.cur().ws.starts_with(' ') && (self.sheet_exists)(a) && (self.sheet_exists)(b) {
+                return Ok(Expr::Unwritten);
+            }
+        }
         let t = self.bump();
         match t.tok {
-            Tok::Ident(name) => self.after_ident(Some(spec), name),
+            Tok::Ident(name) => self.after_ident(Some(sheet), name),
             Tok::Number { raw, .. } => {
                 if self.names_mode {
                     return Err(self.err("expected a name after sheet name"));
@@ -763,19 +854,38 @@ impl Parser {
                     .row_after_colon()
                     .ok_or_else(|| self.err("expected a row range"))?;
                 Ok(Expr::Ref {
-                    sheet: Some(spec),
+                    sheet: Some(sheet),
                     kind: RefKind::Rows { r0, r1 },
                 })
             }
+            Tok::Error(crate::XlError::REF) => Ok(Expr::DeadRef(sheet)),
             Tok::Error(e) => Ok(Expr::Error(e)),
 
             Tok::StructRef {
                 table: Some(table),
                 spec,
-            } if is_valid_name(&table) => Ok(Expr::StructRef {
-                table: Some(table),
-                spec,
-            }),
+            } if is_table_name(&table) => {
+                let missing = match &sheet {
+                    SheetSpec::Single(n) => !n.is_empty() && !(self.sheet_exists)(n),
+                    SheetSpec::Range(..) => true,
+                    SheetSpec::External { .. } => true,
+                };
+                if missing {
+                    let inner = if spec.is_empty() {
+                        "#Data"
+                    } else {
+                        spec.as_str()
+                    };
+                    return Ok(Expr::DeadTable {
+                        sheet,
+                        text: format!("{table}[{inner}]"),
+                    });
+                }
+                Ok(Expr::StructRef {
+                    table: Some(table),
+                    spec,
+                })
+            }
             _ => {
                 self.i = self.i.saturating_sub(1);
                 Err(self.err("expected a reference after sheet name"))
@@ -789,6 +899,22 @@ impl Parser {
                 sheet,
                 name: n.to_string(),
             });
+        }
+
+        if let (Some(_), Some((r, c, ra, ca))) = (&sheet, crate::address::parse_a1_cell(&name)) {
+            if !self.names_mode && self.is_op("(") && !self.cur().space_before {
+                let args = self.args()?;
+                return Ok(Expr::Call {
+                    callee: Box::new(Expr::Ref {
+                        sheet,
+                        kind: RefKind::Cell {
+                            row: Coord { index: r, abs: ra },
+                            col: Coord { index: c, abs: ca },
+                        },
+                    }),
+                    args,
+                });
+            }
         }
 
         let name = match &sheet {
@@ -812,6 +938,10 @@ impl Parser {
         }
 
         if sheet.is_none() && self.is_op("(") && !self.cur().space_before {
+            if name.contains('$') && crate::address::parse_a1_cell(&name).is_none() {
+                return Err(self.err("a name cannot contain '$'"));
+            }
+
             if name
                 .split_once('.')
                 .is_some_and(|(base, _)| cell_part(base).is_some() && reads_as_r1c1(base))
@@ -910,7 +1040,7 @@ impl Parser {
         if let Some((row, col)) = cell_part(&name) {
             if sheet.is_none()
                 && !self.locals.is_empty()
-                && self.locals.contains(&name.to_uppercase())
+                && self.locals.contains(&crate::text::name_key(&name))
                 && !self.is_op(":")
                 && !self.is_op("(")
                 && !(self.i >= 2 && matches!(self.toks[self.i - 2].tok, Tok::Op(":")))
@@ -953,7 +1083,9 @@ impl Parser {
             });
         }
         if let Some(c0) = col_part(&name) {
-            if self.is_op(":") {
+            let tight = !self.cur().space_before
+                && !self.toks[(self.i + 1).min(self.toks.len() - 1)].space_before;
+            if self.is_op(":") && tight {
                 if let Tok::Ident(second) = self.peek_tok(1) {
                     if let Some(c1) = col_part(second) {
                         self.bump();
@@ -1041,59 +1173,7 @@ impl Parser {
     }
 }
 
-pub fn reads_as_r1c1(name: &str) -> bool {
-    let b = name.as_bytes();
-    let up = |i: usize| b.get(i).map(|c| c.to_ascii_uppercase());
-    let digits = |i: usize| {
-        let mut j = i;
-        let mut v = 0u64;
-        while j < b.len() && b[j].is_ascii_digit() {
-            v = v
-                .saturating_mul(10)
-                .saturating_add((b[j] - b'0') as u64)
-                .min(u64::MAX / 20);
-            j += 1;
-        }
-        (j, j - i, v)
-    };
-
-    let col = |i: usize| {
-        let (j, d, v) = digits(i);
-        if d == 0 {
-            return j >= b.len();
-        }
-        if v == 0 {
-            return false;
-        }
-        if j >= b.len() {
-            return true;
-        }
-        v <= 16384 && b[j] != b'.'
-    };
-    match up(0) {
-        Some(b'R') => {
-            let (j, d, v) = digits(1);
-            if d > 0 {
-                if v == 0 || v > 1_048_576 {
-                    return false;
-                }
-                return match up(j) {
-                    None => true,
-                    Some(b'C') => true,
-                    Some(b'.') => up(j + 1) == Some(b'C'),
-                    Some(_) => true,
-                };
-            }
-            match up(1) {
-                None => true,
-                Some(b'C') => col(2),
-                _ => false,
-            }
-        }
-        Some(b'C') => col(1),
-        _ => false,
-    }
-}
+pub use r1c1name::reads_as_r1c1;
 
 pub fn r1c1_pair_with_tail(name: &str) -> bool {
     let b = name.as_bytes();
@@ -1143,6 +1223,13 @@ pub fn is_workbook_reserved_name(name: &str) -> bool {
         || name.len() > 3
             && name.get(..3).is_some_and(|p| p.eq_ignore_ascii_case("_xl"))
             && name.contains('.')
+}
+
+fn is_table_name(name: &str) -> bool {
+    is_valid_name(name)
+        || (crate::workbook::tables::table_display_name(name) == name
+            && !name.eq_ignore_ascii_case("TRUE")
+            && !name.eq_ignore_ascii_case("FALSE"))
 }
 
 pub fn is_valid_name(name: &str) -> bool {
@@ -1288,6 +1375,137 @@ mod tests {
         ] {
             assert!(parse(src).is_err(), "{src} should not parse");
         }
+    }
+
+    #[test]
+    fn national_digits_and_signs() {
+        assert_eq!(rt("=\u{663}.\u{665}"), "3.5");
+        assert_eq!(rt("=x\u{660}\u{661}\u{663}\u{669}"), "X139");
+
+        assert_eq!(rt("=A\u{660}:A\u{669}"), "A\u{660}:A9");
+
+        assert!(parse("=\u{ff10}").is_ok());
+        for src in ["=-\u{ff10}", "=+\u{b2}", "=2^-\u{b2}", "=SUM(-\u{b2})"] {
+            assert!(parse(src).is_err(), "{src}");
+        }
+        assert!(parse("=1-\u{b2}").is_ok());
+        assert!(parse("=- \u{b2}").is_ok());
+    }
+
+    #[test]
+    fn unary_chain_at_sign() {
+        let chain = |op: &str, n: usize| format!("={}1", op.repeat(n));
+        assert!(parse(&chain("-", 1024)).is_ok());
+        assert!(parse(&chain("@", 1023)).is_ok());
+        assert!(parse(&chain("@", 1024)).is_err());
+        assert!(parse(&format!("={}@1", "-".repeat(1023))).is_err());
+    }
+
+    #[test]
+    fn blanks_before_spill_move_after_it() {
+        assert_eq!(rt("=SUM(A1 #)"), "SUM(A1# )");
+        assert_eq!(rt("=A1 #+1"), "A1# +1");
+        assert_eq!(rt("=A1 # +1"), "A1#  +1");
+        assert_eq!(rt("=SUM(A1 #,1)"), "SUM(A1#,1)");
+        assert_eq!(rt("=A1 #"), "A1#");
+    }
+
+    #[test]
+    fn dollar_callee_is_a_reference_or_refused() {
+        assert!(parse("=$A$1()").is_ok());
+
+        assert!(matches!(
+            parse("=Data!$A$1()"),
+            Ok(Expr::Call { callee, .. }) if matches!(*callee, Expr::Ref { .. })
+        ));
+        assert!(parse("=$A()").is_err());
+        assert!(parse("=$$A$1()").is_err());
+        assert!(parse("=A$()").is_err());
+    }
+
+    #[test]
+    fn bare_dot_after_an_r1c1_axis_word_is_refused() {
+        assert!(parse("=C1.").is_err());
+        assert!(parse("=(C1.)").is_err());
+        assert!(parse("=SUM(C1.)").is_err());
+        assert!(parse("=A1.").is_ok());
+        assert!(parse("=C1.x").is_ok());
+    }
+
+    #[test]
+    fn file_name_characters_in_a_quoted_prefix() {
+        assert!(parse("='a*b'! C1").is_ok());
+        assert!(parse("='a?b'!#REF!").is_ok());
+        assert!(parse("='a]b'!A1").is_err());
+        assert!(parse("='a/b'!A1").is_ok());
+        assert!(parse("='a|b'!A1").is_ok());
+    }
+
+    #[test]
+    fn a_span_and_a_blank_write_no_operand() {
+        let sheets = |n: &str| n == "Data" || n == "S";
+        for f in ["='Data:S'! B2", "=S:Data! B2:C3", "='Data':S!  $B$2"] {
+            let e = parse_with(f, &sheets).unwrap();
+            assert!(
+                matches!(e.unwrap_ws(), Expr::Binary { op: BinOp::Intersect, left, .. }
+                    if matches!(left.unwrap_ws(), Expr::Unwritten)),
+                "{f}: {e:?}"
+            );
+        }
+
+        assert!(parse_with("='Data:S'! ", &sheets).is_err());
+
+        assert!(!matches!(
+            parse_with("='Data:Nope'! B2", &sheets).unwrap().unwrap_ws(),
+            Expr::Binary { .. }
+        ));
+    }
+
+    #[test]
+    fn table_after_a_missing_sheet_is_a_dead_reference() {
+        let only_data = |n: &str| n == "Data";
+        let dead = parse_with("=Nope!Tb[a]", &only_data).unwrap();
+        assert!(matches!(dead, Expr::DeadTable { .. }));
+        assert_eq!(print(&dead), "Nope!Tb[a]");
+        let dead = parse_with("=C1!Tb[a]", &only_data).unwrap();
+        assert_eq!(print(&dead), "'C1'!Tb[a]");
+        assert!(matches!(
+            parse_with("=''!Tb[a]", &only_data).unwrap(),
+            Expr::StructRef { .. }
+        ));
+        let kept = parse_with("=Data!Tb[a]", &only_data).unwrap();
+        assert!(matches!(kept, Expr::StructRef { .. }));
+    }
+
+    #[test]
+    fn r1c1_word_before_bang_is_a_sheet() {
+        assert_eq!(r1c1::rewrite("=C1!RC", 5, 5).unwrap(), "=C1!F6");
+        assert_eq!(r1c1::rewrite("=R1C1!R[1]C", 5, 5).unwrap(), "=R1C1!F7");
+        assert_eq!(r1c1::rewrite("=C1!R1C1", 5, 5).unwrap(), "=C1!$A$1");
+        assert_eq!(r1c1::rewrite("=RC.", 5, 5).unwrap(), "=RC.");
+        assert_eq!(r1c1::rewrite("=R1C1.x", 5, 5).unwrap(), "=$A$1.x");
+        assert!(r1c1::rewrite("=RC[1].", 5, 5).is_err());
+        assert!(r1c1::rewrite("=R1C1.", 5, 5).is_err());
+    }
+
+    #[test]
+    fn let_binders_stay_names_and_free_words_become_references() {
+        assert_eq!(r1c1::rewrite("=LET(x,1,c)", 5, 5).unwrap(), "=LET(x,1,F:F)");
+        assert_eq!(r1c1::rewrite("=LET(x,1,RC)", 5, 5).unwrap(), "=LET(x,1,F6)");
+        assert_eq!(r1c1::rewrite("=LET(c,1,c)", 5, 5).unwrap(), "=LET(c,1,c)");
+        let file_form = "=_xlfn.LET(_xlpm.r,1,_xlpm.r+c)";
+        assert_eq!(
+            r1c1::rewrite(file_form, 5, 5).unwrap(),
+            "=_xlfn.LET(_xlpm.r,1,_xlpm.r+F:F)"
+        );
+        assert_eq!(
+            r1c1::rewrite("=LAMBDA(a,[c],c+a)", 5, 5).unwrap(),
+            "=LAMBDA(a,[c],c+a)"
+        );
+        assert_eq!(
+            r1c1::rewrite("=LET(x,1,LET(rc,2,rc+x))", 5, 5).unwrap(),
+            "=LET(x,1,LET(rc,2,rc+x))"
+        );
     }
 
     #[test]

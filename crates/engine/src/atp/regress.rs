@@ -1,4 +1,7 @@
-use super::{abs_ref, eval, flag, input, number, output, Arg, AtpError, Out, Run, Src};
+use super::{
+    abs_ref, eval, flag, input, number, output, Arg, AtpError, ChartSpec, Out, Ref, Run,
+    SeriesSpec, Src,
+};
 use crate::address::Rect;
 use crate::style::Edge;
 use crate::value::Value;
@@ -19,6 +22,19 @@ fn label(wb: &Workbook, s: &Src, i: u32) -> Option<String> {
     }
 }
 
+fn block_lines(o: &mut Out, r0: u32, c0: u32, w: u32, n: u32) {
+    let c1 = c0 + w - 1;
+    o.line(Rect::new(r0 + 1, c0, r0 + 1, c1), Edge::Bottom, true);
+    o.header(Rect::new(r0 + 2, c0, r0 + 2, c1), false);
+    o.line(Rect::new(r0 + 2, c0, r0 + 2, c1), Edge::Top, true);
+    o.line(Rect::new(r0 + 2, c0, r0 + 2, c1), Edge::Bottom, false);
+    o.line(
+        Rect::new(r0 + 2 + n, c0, r0 + 2 + n, c1),
+        Edge::Bottom,
+        true,
+    );
+}
+
 pub(super) fn regress(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
     let ys = input(args, 0)?;
     let xs = input(args, 1)?;
@@ -27,6 +43,9 @@ pub(super) fn regress(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
     let conf = number(args, 4).unwrap_or(95.0);
     let want_res = flag(args, 6);
     let want_std = flag(args, 7);
+    let plot_res = flag(args, 8);
+    let plot_line = flag(args, 9);
+    let want_prob = flag(args, 11);
     let lab = u32::from(labels);
     let n = ys.rows() - lab;
     let k = xs.cols();
@@ -117,8 +136,15 @@ pub(super) fn regress(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
     }
     let last = 16 + k;
 
-    if want_res || want_std {
-        let r0 = last + 4;
+    let r0 = last + 4;
+    let table = want_res || want_std || plot_res || plot_line;
+    let ylabel = if labels {
+        label(wb, &ys, 0).unwrap_or_else(|| "Y".into())
+    } else {
+        "Y".into()
+    };
+    let rw = 3 + u32::from(want_std);
+    if table {
         let std_col = want_std;
         let ycell = |i: u32| num(&wb.value(ys.at(lab + i, 0)));
         let coef: Vec<f64> = (0..=k)
@@ -138,11 +164,6 @@ pub(super) fn regress(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
         let ss: f64 = res.iter().map(|r| r * r).sum();
         let sd = (ss / (nf - f64::from(u8::from(!zero)))).sqrt();
         o.text(r0, 0, "RESIDUAL OUTPUT");
-        let ylabel = if labels {
-            label(wb, &ys, 0).unwrap_or_else(|| "Y".into())
-        } else {
-            "Y".into()
-        };
         o.text(r0 + 2, 0, "Observation");
         o.text(r0 + 2, 1, &format!("Predicted {ylabel}"));
         o.text(r0 + 2, 2, "Residuals");
@@ -158,13 +179,105 @@ pub(super) fn regress(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
                 o.num(row, 3, res[i as usize] / sd);
             }
         }
-        let rw = 3 + u32::from(std_col);
-        o.line(Rect::new(r0 + 1, 0, r0 + 1, rw - 1), Edge::Bottom, true);
-        o.header(Rect::new(r0 + 2, 0, r0 + 2, rw - 1), false);
-        o.line(Rect::new(r0 + 2, 0, r0 + 2, rw - 1), Edge::Top, true);
-        o.line(Rect::new(r0 + 2, 0, r0 + 2, rw - 1), Edge::Bottom, false);
-        let end = r0 + 2 + n;
-        o.line(Rect::new(end, 0, end, rw - 1), Edge::Bottom, true);
+        block_lines(&mut o, r0, 0, rw, n);
+    }
+
+    let pcol = if table { rw + 1 } else { 0 };
+    if want_prob {
+        let mut sorted: Vec<f64> = (0..n).map(|i| num(&wb.value(ys.at(lab + i, 0)))).collect();
+        sorted.sort_by(f64::total_cmp);
+        let nf = f64::from(n);
+        o.text(r0, pcol, "PROBABILITY OUTPUT");
+        o.text(r0 + 2, pcol, "Percentile");
+        o.text(r0 + 2, pcol + 1, &ylabel);
+        for (i, y) in sorted.iter().enumerate() {
+            let row = r0 + 3 + i as u32;
+            o.num(row, pcol, i as f64 * (100.0 / nf) + 50.0 / nf);
+            o.num(row, pcol + 1, *y);
+        }
+        block_lines(&mut o, r0, pcol, 2, n);
+    }
+
+    let xname = |v: u32| {
+        if labels {
+            label(wb, &xs, v).unwrap_or_else(|| format!("X Variable {}", v + 1))
+        } else {
+            format!("X Variable {}", v + 1)
+        }
+    };
+    let xdata = |v: u32| {
+        Ref::Abs(
+            xs.sheet,
+            Rect::new(xs.rect.r0 + lab, xs.rect.c0 + v, xs.rect.r1, xs.rect.c0 + v),
+        )
+    };
+    let tcol = |c: u32| Ref::Rel(Rect::new(r0 + 3, c, r0 + 2 + n, c));
+    let mut charts = Vec::new();
+    let scatter = -4169;
+    if plot_res {
+        for v in 0..k {
+            charts.push((
+                format!("{}  Residual Plot", xname(v)),
+                false,
+                [xname(v), "Residuals".to_string()],
+                vec![SeriesSpec {
+                    name: Ref::None,
+                    x: xdata(v),
+                    values: tcol(2),
+                    chart_type: scatter,
+                    axis_group: 1,
+                }],
+            ));
+        }
+    }
+    if plot_line {
+        for v in 0..k {
+            let line = |name: String, values: Ref| SeriesSpec {
+                name: Ref::Text(name),
+                x: xdata(v),
+                values,
+                chart_type: scatter,
+                axis_group: 1,
+            };
+            let yrange = Ref::Abs(
+                ys.sheet,
+                Rect::new(ys.rect.r0 + lab, ys.rect.c0, ys.rect.r1, ys.rect.c0),
+            );
+            charts.push((
+                format!("{} Line Fit  Plot", xname(v)),
+                true,
+                [xname(v), ylabel.clone()],
+                vec![
+                    line(ylabel.clone(), yrange),
+                    line(format!("Predicted {ylabel}"), tcol(1)),
+                ],
+            ));
+        }
+    }
+    if want_prob {
+        charts.push((
+            "Normal Probability Plot".to_string(),
+            false,
+            ["Sample Percentile".to_string(), ylabel.clone()],
+            vec![SeriesSpec {
+                name: Ref::None,
+                x: tcol(pcol),
+                values: tcol(pcol + 1),
+                chart_type: scatter,
+                axis_group: 1,
+            }],
+        ));
+    }
+    for (i, (title, legend, axis_titles, series)) in charts.into_iter().enumerate() {
+        o.charts.push(ChartSpec {
+            row: 2 * i as u32,
+            col: 9 + i as u32,
+            chart_type: scatter,
+            title,
+            legend,
+            axis_titles,
+            series,
+        });
     }
     o.line(Rect::new(1, 0, 1, 1), Edge::Bottom, true);
     o.header(Rect::new(2, 0, 2, 1), true);

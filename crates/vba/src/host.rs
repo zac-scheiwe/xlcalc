@@ -22,6 +22,10 @@ pub trait ObjectHost {
         named: &[(&str, Variant)],
     ) -> Result<Variant, VbaError>;
 
+    fn expression_call(&mut self, on: bool) {
+        let _ = on;
+    }
+
     fn type_name(&mut self, obj: ObjectId) -> String {
         let _ = obj;
         "Object".to_string()

@@ -11,7 +11,8 @@ pub fn load_golden(path: &Path) -> J {
 
 pub fn load_golden_text(path: &Path, text: &str) -> J {
     let v: J = serde_json::from_str(text).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
-    let mut g = expand_golden(&v).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+
+    let mut g = expand_golden_owned(v).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
 
     let (native, fwd) = (root_str(), root_fwd());
     map_strings(&mut g, &|s| {
@@ -221,9 +222,15 @@ fn unslim_nums(v: &mut J) {
 }
 
 pub fn expand_golden(g: &J) -> Result<J, String> {
-    let mut out = g.as_object().ok_or("golden is not an object")?.clone();
+    expand_golden_owned(g.clone())
+}
+
+pub fn expand_golden_owned(g: J) -> Result<J, String> {
+    let J::Object(mut out) = g else {
+        return Err("golden is not an object".into());
+    };
     match out.remove("enc") {
-        None => return Ok(g.clone()),
+        None => return Ok(J::Object(out)),
         Some(e) if e.as_u64() == Some(ENC) => {}
         Some(e) => return Err(format!("unknown golden encoding {e}")),
     }

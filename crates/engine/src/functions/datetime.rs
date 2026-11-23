@@ -53,7 +53,10 @@ fn time(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let h = num(ctx, &a[0])?;
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
-        if h > 32767.0 || m > 32767.0 || s > 32767.0 {
+        if [h, m, s]
+            .iter()
+            .any(|&x| !(-32768.0..=32767.0).contains(&x))
+        {
             return Err(XlError::NUM);
         }
         dt::time_fraction(h, m, s)

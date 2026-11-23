@@ -59,7 +59,11 @@ pub(crate) struct WalkState {
 
     pub(crate) dirtied: Vec<FormulaId>,
 
+    pub(crate) renamed: Vec<(FormulaId, FormulaId)>,
+
     spill_nodes: Vec<Node>,
+
+    lifted: FxHashMap<FormulaId, Vec<(Node, St)>>,
 }
 
 type Ident = (i64, i64, Option<(u32, u32)>);
@@ -94,6 +98,42 @@ impl WalkState {
         self.epoch = epoch;
     }
 
+    pub(crate) fn rekey(&mut self, fids: &[FormulaId]) {
+        if !self.valid {
+            return;
+        }
+        let set: FxHashSet<FormulaId> = fids.iter().copied().collect();
+        let (mine, rest): (Vec<Node>, Vec<Node>) =
+            self.chain.iter().partition(|n| set.contains(&n.fid));
+        self.chain = rest;
+        for n in mine {
+            let s = self.state(n);
+            self.lifted.entry(n.fid).or_default().push((n, s));
+            self.ident.remove(&n.fid);
+        }
+    }
+
+    pub(crate) fn raise(&mut self, fid: FormulaId) {
+        if !self.valid {
+            return;
+        }
+        let (mine, rest): (Vec<Node>, Vec<Node>) = self.chain.iter().partition(|n| n.fid == fid);
+        self.chain = mine.into_iter().chain(rest).collect();
+    }
+
+    pub(crate) fn settle(&mut self, calculated: impl Fn(FormulaId) -> bool) {
+        self.dirtied.retain(|&f| !calculated(f));
+        if !self.valid {
+            return;
+        }
+        let nodes: Vec<Node> = self.st.keys().copied().collect();
+        for n in nodes {
+            if calculated(n.fid) {
+                self.set(n, St::Clean);
+            }
+        }
+    }
+
     pub(crate) fn invalidate(&mut self) {
         if self.valid {
             *self = WalkState::default();
@@ -102,7 +142,7 @@ impl WalkState {
 }
 
 pub(crate) fn active(wb: &Workbook) -> bool {
-    !wb.settings.multi_threaded && !wb.settings.iteration && wb.settings.mode == CalcMode::Automatic
+    !wb.settings.multi_threaded && (wb.settings.mode == CalcMode::Automatic || wb.calc.manual_walk)
 }
 
 fn live(wb: &Workbook, fid: FormulaId) -> bool {
@@ -235,6 +275,21 @@ fn sync(wb: &mut Workbook) {
     if rebuild {
         wb.calc.walk = WalkState::default();
     } else {
+        for (old, new) in std::mem::take(&mut wb.calc.walk.renamed) {
+            if !live(wb, new) || members(wb, new).is_some() {
+                continue;
+            }
+            let id = ident(wb, new);
+            let w = &mut wb.calc.walk;
+            if let Some(pos) = w.chain.iter().position(|n| n.fid == old) {
+                w.chain[pos] = Node::head(new);
+                w.st.remove(&Node::head(old));
+                w.st.insert(Node::head(new), St::Edited);
+                w.ident.remove(&old);
+                w.ident.insert(new, id);
+            }
+        }
+
         let ok: FxHashSet<FormulaId> = wb
             .calc
             .walk
@@ -262,12 +317,14 @@ fn sync(wb: &mut Workbook) {
         .map(|(_, &g)| g)
         .collect();
     let mut front = Vec::new();
+    let mut lifted = std::mem::take(&mut wb.calc.walk.lifted);
     for g in order {
         if wb.calc.walk.ident.contains_key(&g) {
             continue;
         }
         let id = ident(wb, g);
-        for (n, s) in initial(wb, g) {
+        let nodes = lifted.remove(&g).unwrap_or_else(|| initial(wb, g));
+        for (n, s) in nodes {
             front.push(n);
             wb.calc.walk.set(n, s);
         }

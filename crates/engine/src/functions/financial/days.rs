@@ -50,6 +50,10 @@ pub fn days360_us(sys: DateSystem, a: i64, b: i64, both: bool) -> i64 {
     days360_us_with(sys, a, b, both, false)
 }
 
+pub fn days360_us_exact(sys: DateSystem, a: i64, b: i64, both: bool) -> i64 {
+    days360_us_with(sys, a, b, both, true)
+}
+
 fn days360_us_with(sys: DateSystem, a: i64, b: i64, both: bool, exact_feb: bool) -> i64 {
     let s = ymd(sys, a);
     let e = ymd(sys, b);

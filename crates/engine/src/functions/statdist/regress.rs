@@ -41,18 +41,6 @@ fn to_numbers(vals: Vec<Value>) -> R<Vec<f64>> {
         .collect()
 }
 
-fn to_numbers_e(vals: Vec<Value>) -> R<Vec<f64>> {
-    let mut out = Vec::with_capacity(vals.len());
-    for v in vals {
-        match v {
-            Value::Number(n) => out.push(n),
-            Value::Error(e) => return Err(e),
-            _ => return Err(XlError::VALUE),
-        }
-    }
-    Ok(out)
-}
-
 fn design(
     ctx: &mut EvalCtx,
     yo: &Operand,
@@ -420,7 +408,10 @@ fn flags_first_cell(ctx: &mut EvalCtx, ops: &[Operand], flags: &[usize]) -> Vec<
     for &i in flags {
         if let Some(Operand::Ref(r)) = ops.get(i) {
             if let Some(a) = r.single() {
-                let v = ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0);
+                let v = match ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0) {
+                    Value::Error(_) => Value::Error(XlError::VALUE),
+                    v => v,
+                };
                 ops[i] = Operand::Val(v);
             }
         }
@@ -512,7 +503,7 @@ pub fn trend(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
                 if k > 1 && (if d.row { r != k } else { c != k }) {
                     return Err(XlError::REF);
                 }
-                (r, c, to_numbers_e(vals)?)
+                (r, c, to_numbers(vals)?)
             }
             None => match xo {
                 Some(op) => numeric_grid(ctx, op)?,

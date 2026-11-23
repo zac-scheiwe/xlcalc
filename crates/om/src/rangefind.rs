@@ -44,7 +44,9 @@ impl FindState {
                 _ => return Err(OmError::bad_index()),
             };
         }
-        if let Some(v) = a.i32(look_at)? {
+        if let Some(Variant::Bool(b)) = a.get(look_at) {
+            self.whole = *b;
+        } else if let Some(v) = a.i32(look_at)? {
             self.whole = match v {
                 1 => true,
                 2 => false,
@@ -101,14 +103,27 @@ impl Application<'_> {
                 let find = m.name == "Find";
                 let mut st = self.find.clone();
                 if find {
-                    st.what = Some(a.string(0)?.ok_or_else(OmError::type_mismatch)?);
+                    if matches!(a.get(0), Some(Variant::Null)) {
+                        st.what = None;
+                    } else if a.get(0).is_some() {
+                        st.what = Some(a.string(0)?.ok_or_else(OmError::type_mismatch)?);
+                    }
                     st.take(a, 2, 3, 4, 6)?;
+                    if a.get(6).is_none() {
+                        st.match_case = false;
+                    }
                 }
                 let after = match a.get(usize::from(find)) {
                     None => (first.r0, first.c0),
                     Some(v) => {
-                        let (s, r) = self.range_arg(Some(v))?;
-                        let inside = s == sheet
+                        let (s, r) = self.range_arg(Some(v)).map_err(|e| {
+                            if find {
+                                OmError::type_mismatch()
+                            } else {
+                                e
+                            }
+                        })?;
+                        let inside = (s == sheet || !find)
                             && r.is_cell()
                             && (rects.iter().any(|x| x.contains(r.r0, r.c0))
                                 || (rects.len() == 1 && first.is_cell()));
@@ -116,7 +131,10 @@ impl Application<'_> {
                             return Err(if find {
                                 OmError::type_mismatch()
                             } else {
-                                OmError::app_defined()
+                                OmError::app_defined_with(&format!(
+                                    "Unable to get the {} property of the Range class",
+                                    m.name
+                                ))
                             });
                         }
                         (r.r0, r.c0)
@@ -137,6 +155,7 @@ impl Application<'_> {
                     by_columns: st.by_columns,
                     backward,
                     match_case: st.match_case,
+                    in_macro: self.in_vba,
                 };
                 let found = self.book(book)?.wb.find_cell(sheet, rects, after, &spec);
                 match found {
@@ -156,7 +175,12 @@ impl Application<'_> {
                     3 => SpecialKind::Formulas(mask),
                     7 => SpecialKind::Differences { by_col: false },
                     8 => SpecialKind::Differences { by_col: true },
-                    _ => return Err(no_cells()),
+                    1..=16 | -4175..=-4123 => return Err(no_cells()),
+                    _ => {
+                        return Err(OmError::app_defined_with(
+                            "Unable to get the SpecialCells property of the Range class",
+                        ))
+                    }
                 };
                 let found = self.book(book)?.wb.special_cells(sheet, rects, kind);
                 if found.is_empty() {
@@ -178,6 +202,17 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         let ty = a.i32(0)?.ok_or_else(OmError::app_defined)?;
+
+        if (-4175..=-4172).contains(&ty) && a.get(1).is_some_and(|v| !matches!(v, Variant::Empty)) {
+            return Err(OmError::app_defined());
+        }
+
+        let p = self.sheet_prot(book, sheet);
+        if matches!(ty, -4175 | -4174 | 15) && p.contents && !p.ui_only {
+            let mut e = OmError::app_defined_with(crate::sheetprot::PROTECTED_COMMAND);
+            e.error_info = true;
+            return Err(e);
+        }
         let wb = &self.book(book)?.wb;
         let found = match ty {
             -4175..=-4172 => wb.cfv_special_cells(sheet, rects, ty),
@@ -205,7 +240,7 @@ impl Application<'_> {
     }
 }
 
-fn no_cells() -> OmError {
+pub(crate) fn no_cells() -> OmError {
     let mut e = OmError::app_defined_with("No cells were found.");
     e.error_info = true;
     e

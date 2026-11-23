@@ -25,6 +25,10 @@ pub(super) struct Pending {
     pub preset: Option<String>,
 
     pub metro_name: Option<String>,
+
+    pub link: Option<(String, String)>,
+
+    pub tip: Option<String>,
 }
 
 #[derive(Default)]
@@ -127,6 +131,14 @@ fn opt(b: &[u8], n: usize, cur: &mut Pending) {
             complex += v as usize;
             if data.starts_with(b"PK") {
                 (cur.preset, cur.metro_name) = metro_info(data);
+            }
+            if pid == 0x382 {
+                if let Ok(l) = super::rextras::shape_link(data) {
+                    cur.link = Some((l.target.unwrap_or_default(), l.location.unwrap_or_default()));
+                }
+            }
+            if pid == 0x38D {
+                cur.tip = Some(super::rextras::utf16_nul(data));
             }
             if pid == 0x380 {
                 let u: Vec<u16> = data
@@ -356,13 +368,43 @@ const REL_NS: &str = "http://schemas.openxmlformats.org/officeDocument/2006/rela
 
 impl Env<'_> {
     fn rel(&mut self, kind: &str, target: &str) -> String {
+        self.rel_mode(kind, target, "")
+    }
+
+    fn rel_mode(&mut self, kind: &str, target: &str, mode: &str) -> String {
         self.nrel += 1;
         let id = format!("rId{}", self.nrel);
         let _ = write!(
             self.rels,
-            "<Relationship Id=\"{id}\" Type=\"{REL_NS}/{kind}\" Target=\"{target}\"/>"
+            "<Relationship Id=\"{id}\" Type=\"{REL_NS}/{kind}\" Target=\"{}\"{mode}/>",
+            esc(target)
         );
         id
+    }
+
+    fn c_nv_pr(&mut self, i: usize, id: u16, name: &str) -> String {
+        let s = &self.shapes[i];
+        let (Some((target, loc)), tip) = (s.p.link.clone(), s.p.tip.clone()) else {
+            return format!("<xdr:cNvPr id=\"{id}\" name=\"{}\"/>", esc(name));
+        };
+        let rid = if target.is_empty() {
+            self.rel_mode("hyperlink", &format!("#{loc}"), "")
+        } else if loc.is_empty() {
+            self.rel_mode("hyperlink", &target, " TargetMode=\"External\"")
+        } else {
+            self.rel_mode(
+                "hyperlink",
+                &format!("{target}#{loc}"),
+                " TargetMode=\"External\"",
+            )
+        };
+        let tip = tip
+            .filter(|t| !t.is_empty())
+            .map_or(String::new(), |t| format!(" tooltip=\"{}\"", esc(&t)));
+        format!(
+            "<xdr:cNvPr id=\"{id}\" name=\"{}\"><a:hlinkClick xmlns:r=\"{REL_NS}\" r:id=\"{rid}\"{tip}/></xdr:cNvPr>",
+            esc(name)
+        )
     }
 
     fn object(
@@ -373,7 +415,8 @@ impl Env<'_> {
         warnings: &mut Vec<String>,
     ) -> Option<String> {
         let top = parent.is_none();
-        let s = &self.shapes[i];
+        let shapes = self.shapes;
+        let s = &shapes[i];
         let sheet = self.sheet;
         let is_group = s.p.flags & 1 != 0;
         let line = s.ot == 1;
@@ -466,6 +509,7 @@ impl Env<'_> {
             "<a:xfrm{flips}><a:off x=\"{}\" y=\"{}\"/><a:ext cx=\"{}\" cy=\"{}\"/></a:xfrm>",
             off.0, off.1, ext.0, ext.1
         );
+        let cnv = self.c_nv_pr(i, id, &name);
         if s.ot == 8 {
             let Some(b) = self
                 .blips
@@ -482,8 +526,7 @@ impl Env<'_> {
             }
             let rid = self.rel("image", &format!("../media/{file}"));
             return Some(format!(
-                "<xdr:pic><xdr:nvPicPr><xdr:cNvPr id=\"{id}\" name=\"{}\"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r=\"{REL_NS}\" r:embed=\"{rid}\"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr>{xfrm}<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>",
-                esc(&name)
+                "<xdr:pic><xdr:nvPicPr>{cnv}<xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r=\"{REL_NS}\" r:embed=\"{rid}\"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr>{xfrm}<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic>"
             ));
         }
         let prst = if line {
@@ -532,8 +575,7 @@ impl Env<'_> {
             ))
         } else if line {
             Some(format!(
-                "<xdr:cxnSp macro=\"\"><xdr:nvCxnSpPr><xdr:cNvPr id=\"{id}\" name=\"{}\"/><xdr:cNvCxnSpPr/></xdr:nvCxnSpPr><xdr:spPr>{sp_pr}</xdr:spPr></xdr:cxnSp>",
-                esc(&name)
+                "<xdr:cxnSp macro=\"\"><xdr:nvCxnSpPr>{cnv}<xdr:cNvCxnSpPr/></xdr:nvCxnSpPr><xdr:spPr>{sp_pr}</xdr:spPr></xdr:cxnSp>"
             ))
         } else {
             let tb = if s.ot == 6 { " txBox=\"1\"" } else { "" };
@@ -546,8 +588,7 @@ impl Env<'_> {
                 body.push_str("</xdr:txBody>");
             }
             Some(format!(
-                "<xdr:sp macro=\"\" textlink=\"\"><xdr:nvSpPr><xdr:cNvPr id=\"{id}\" name=\"{}\"/><xdr:cNvSpPr{tb}/></xdr:nvSpPr><xdr:spPr>{sp_pr}</xdr:spPr>{body}</xdr:sp>",
-                esc(&name)
+                "<xdr:sp macro=\"\" textlink=\"\"><xdr:nvSpPr>{cnv}<xdr:cNvSpPr{tb}/></xdr:nvSpPr><xdr:spPr>{sp_pr}</xdr:spPr>{body}</xdr:sp>"
             ))
         }
     }
@@ -583,7 +624,12 @@ pub(super) fn drawing_xml(
             continue;
         };
         any = true;
-        x.push_str("<xdr:twoCellAnchor>");
+
+        if shapes[i].ot == 5 && shapes[i].chart.is_some() {
+            x.push_str("<xdr:twoCellAnchor halfPt=\"1\">");
+        } else {
+            x.push_str("<xdr:twoCellAnchor>");
+        }
         corner(&mut x, "from", dims, a[0], a[1], a[2], a[3]);
         corner(&mut x, "to", dims, a[4], a[5], a[6], a[7]);
         x.push_str(&obj);
@@ -593,7 +639,7 @@ pub(super) fn drawing_xml(
     let Env {
         mut extra, rels, ..
     } = env;
-    if !extra.is_empty() {
+    if !extra.is_empty() || !rels.is_empty() {
         extra.push((
             format!("xl/drawings/_rels/drawing{n}.xml.rels"),
             format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">{rels}</Relationships>").into_bytes(),

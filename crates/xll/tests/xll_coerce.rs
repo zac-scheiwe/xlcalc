@@ -95,12 +95,26 @@ fn argument_coercion_follows_excel() {
 
 #[test]
 fn reference_kinds_follow_excel() {
+    check_reference_kinds(
+        include_str!("../../../conformance/com/xll_probe7.golden.txt"),
+        60,
+    );
+}
+
+#[test]
+fn index_with_array_indexes_follows_excel() {
+    check_reference_kinds(
+        include_str!("../../../conformance/com/xll_probe14.golden.txt"),
+        40,
+    );
+}
+
+fn check_reference_kinds(golden: &str, min: usize) {
     let Some(path) = testxll() else {
         eprintln!("skipped: xlc_testxll.dll is not built");
         return;
     };
     let host = XllHost::load(&path).expect("the test XLL loads");
-    let golden = include_str!("../../../conformance/com/xll_probe7.golden.txt");
     let mut bad = Vec::new();
     let mut n = 0;
     for line in golden.lines() {
@@ -132,7 +146,7 @@ fn reference_kinds_follow_excel() {
             bad.push(format!("{form} {formula}: got [{got}], Excel [{want}]"));
         }
     }
-    assert!(n > 60, "the golden has its lines ({n})");
+    assert!(n > min, "the golden has its lines ({n})");
     assert!(
         bad.is_empty(),
         "{} differ:

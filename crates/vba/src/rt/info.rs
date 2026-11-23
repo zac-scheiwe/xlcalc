@@ -11,6 +11,7 @@ pub(super) fn is_numeric(ctx: &RtContext, a: &[Variant]) -> R {
         Variant::Date(_)
         | Variant::Null
         | Variant::Error(_)
+        | Variant::Int(_)
         | Variant::Array(_)
         | Variant::Dispatch(_)
         | Variant::Unknown(_) => false,

@@ -15,6 +15,8 @@ enum Key {
     Int(i64),
     Float(u64),
     Bool(bool),
+    Null,
+    Empty,
 }
 
 #[derive(Debug, Default)]
@@ -84,7 +86,8 @@ impl Dict {
             Variant::Ui1(n) => Key::Int(n.into()),
             Variant::R4(x) => Self::number(f64::from(x)),
             Variant::R8(x) | Variant::Date(x) => Self::number(x),
-            Variant::Empty => Key::Text(String::new()),
+            Variant::Empty => Key::Empty,
+            Variant::Null => Key::Null,
             _ => return Err(VbaError::new(5)),
         })
     }
@@ -178,6 +181,7 @@ impl Dict {
                 self.entries.clear();
                 Ok(Variant::Empty)
             }
+            ("keys" | "items", 1) if get => Err(VbaError::new(451)),
             ("keys", 0) if get => Ok(Dict::array(
                 self.entries.iter().map(|e| e.0.clone()).collect(),
             )),

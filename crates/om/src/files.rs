@@ -19,6 +19,14 @@ pub trait FileSystem: Send {
     fn exists(&self, path: &str) -> bool;
 
     fn full_path(&self, path: &str) -> Option<String>;
+
+    fn save_folder(&self, full: &str) -> String {
+        xlcalc::split_path(&self.expand(full)).0.to_string()
+    }
+
+    fn expand(&self, path: &str) -> String {
+        path.to_string()
+    }
 }
 
 pub struct RealFs;
@@ -178,6 +186,13 @@ fn cannot_access(path: &str) -> OmError {
 }
 
 fn not_found(file: &str) -> OmError {
+    let dir_named;
+    let file = if file.ends_with(['\\', '/']) {
+        dir_named = format!("{file}.xlsx");
+        dir_named.as_str()
+    } else {
+        file
+    };
     OmError {
         error_info: true,
         ..OmError::app_defined_with(&format!(
@@ -319,9 +334,7 @@ impl Application<'_> {
                 id
             }
 
-            Some(Variant::Bool(true)) => self.plain_workbook(),
             Some(Variant::Bstr(s)) if s.is_empty() => self.plain_workbook(),
-            Some(Variant::R8(f)) if f.fract() != 0.0 && f.abs() < 1e9 => self.plain_workbook(),
             Some(Variant::Bstr(file)) => {
                 let file = file.clone();
                 let full = self
@@ -345,8 +358,13 @@ impl Application<'_> {
                 id
             }
             Some(v) => {
+                let v = match v {
+                    Variant::Bool(true) => Variant::I4(1),
+                    Variant::R8(f) if f.abs() < 1e9 => Variant::I4(f.trunc() as i32),
+                    v => v.clone(),
+                };
                 let n = Args {
-                    values: vec![Some(v.clone())],
+                    values: vec![Some(v)],
                     put: None,
                     lcid: a.lcid,
                 }
@@ -354,7 +372,36 @@ impl Application<'_> {
                 .map_err(|_| failed())?
                 .unwrap_or(0);
                 match n {
-                    -4167 => {
+                    5 => self.plain_workbook(),
+
+                    6 => {
+                        let name = format!("Book{}", self.next_book_number());
+                        let mut wb = Workbook::new();
+                        let first = wb.sheet_at(0).id;
+                        let module = wb
+                            .add_legacy_sheet_before(
+                                "Module1",
+                                xlcalc::SheetKind::Module,
+                                Some(first),
+                            )
+                            .map_err(|_| failed())?;
+                        wb.set_sheet_state(module, xlcalc::SheetState::VeryHidden)
+                            .map_err(|_| failed())?;
+                        let _ = wb.set_active_sheet(first);
+                        let id = self.open_new(wb, name, String::new());
+                        self.book_mut(id)?.saved = true;
+                        id
+                    }
+                    7 => {
+                        let name = format!("Book{}", self.next_book_number());
+                        let mut wb = Workbook::empty();
+                        wb.add_legacy_sheet_before("Dialog1", xlcalc::SheetKind::Dialog, None)
+                            .map_err(|_| failed())?;
+                        let id = self.open_new(wb, name, String::new());
+                        self.book_mut(id)?.saved = true;
+                        id
+                    }
+                    -4167 | 1 => {
                         let c = self.template_counts.entry("\u{0}sheet".into()).or_insert(0);
                         *c += 1;
                         let name = format!("Sheet{c}");
@@ -362,7 +409,7 @@ impl Application<'_> {
                         self.book_mut(id)?.saved = true;
                         id
                     }
-                    -4109 => {
+                    -4109 | 2 => {
                         let c = self.template_counts.entry("\u{0}chart".into()).or_insert(0);
                         *c += 1;
                         let name = format!("Chart{c}");
@@ -521,8 +568,10 @@ impl Application<'_> {
                 }
             }
         }
+        self.protection_from_file(id, &imp.package);
         let b = self.book_mut(id)?;
         b.warnings = warnings;
+        b.compat = content == Content::Xls;
         b.file_format = match (content, ext.as_str()) {
             (Content::Xlsb, _) => 50,
             (Content::Xls, _) => 56,
@@ -538,6 +587,10 @@ impl Application<'_> {
                 b.controls.insert(sh, crate::controls::from_file(list));
             }
         }
+        b.ro_recommended = imp
+            .package
+            .part("xl/workbook.xml")
+            .is_some_and(|x| String::from_utf8_lossy(x).contains("readOnlyRecommended=\"1\""));
         b.package = Some(imp.package);
         let dir = match folder(&self.book(id)?.path) {
             d if d.is_empty() => d,
@@ -588,12 +641,15 @@ impl Application<'_> {
                     _ => None,
                 };
                 let controls = self.controls_for_save(b);
+                let protection = self.protection_for_save(b);
                 let bk = self.book(b)?;
                 let opts = SaveOptions {
                     kind: Some(kind),
                     vba,
                     controls,
                     dir: xlcalc::split_path(file).0.to_string(),
+                    read_only_recommended: bk.ro_recommended,
+                    protection,
                     ..SaveOptions::default()
                 };
                 let saved = xlcalc_xlsx::save(&bk.wb, bk.package.as_ref(), &opts)
@@ -645,6 +701,30 @@ impl Application<'_> {
             .ok_or_else(|| cannot_access(&filename))?;
         let name = file_name(&full);
 
+        let settings = self.book(b)?.wb.settings();
+        if self.calculate_before_save
+            && (settings.mode != xlcalc::CalcMode::Automatic
+                || settings.except_tables
+                || self.book(b)?.wb.save_calculates())
+        {
+            self.book_mut(b)?.wb.recalc_before_save();
+            self.sync_links();
+        }
+
+        let dir = self.fs.save_folder(&full);
+        let expanded: std::collections::HashMap<String, String> = self
+            .book(b)?
+            .wb
+            .hyperlink_addresses()
+            .into_iter()
+            .map(|a| {
+                let e = self.fs.expand(&a);
+                (a, e)
+            })
+            .collect();
+        let expand = |a: &str| expanded.get(a).cloned().unwrap_or_else(|| a.to_string());
+        self.book_mut(b)?.wb.hyperlinks_save_relative(&dir, &expand);
+
         let bytes = self.file_bytes(b, format, &name, !copy)?;
         self.fs
             .write(&full, &bytes)
@@ -653,12 +733,37 @@ impl Application<'_> {
             return Ok(());
         }
         let csv = matches!(format_of(format), Some((_, Writes::Csv)));
+
+        let bi = self.book_index(b);
+        let follow: Vec<(usize, usize)> = (0..self.books.len())
+            .filter(|&i| i != bi)
+            .flat_map(|i| {
+                let links = match &self.books[i].wb {
+                    crate::app::BookWb::Own(w) => w.ext_links(),
+                    _ => Vec::new(),
+                };
+                links
+                    .into_iter()
+                    .enumerate()
+                    .filter(|(_, l)| !l.broken && self.link_source(l, i) == Some(bi))
+                    .map(move |(li, _)| (i, li))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        for (i, li) in follow {
+            if let crate::app::BookWb::Own(w) = &mut self.books[i].wb {
+                if w.ext_rename_link(li, &full) {
+                    w.recalc();
+                }
+            }
+        }
         let bk = self.book_mut(b)?;
         bk.wb.set_book_name(&name);
         bk.name = name;
         bk.path = full;
         bk.file_format = format;
         bk.read_only = false;
+        bk.wb.recompute_used_range();
 
         bk.saved = !csv || bk.wb.sheet_count() == 1;
         Ok(())
@@ -717,13 +822,28 @@ impl Application<'_> {
         }
         let file = a.string(0)?.unwrap_or_default();
         let format = a.i32(1)?;
+
+        if let Some(ro) = a.bool(4)? {
+            self.book_mut(b)?.ro_recommended = ro;
+        }
         self.save_book_as(b, &file, format, false)?;
         Ok(Variant::Bool(true))
+    }
+
+    pub(crate) fn has_vba_content(&self, b: BookId) -> Result<bool, OmError> {
+        let bk = self.book(b)?;
+        Ok(!bk.vba.modules.is_empty()
+            || bk.ide.opened
+            || bk
+                .package
+                .as_ref()
+                .is_some_and(|p| p.part("/xl/vbaProject.bin").is_some()))
     }
 
     pub(crate) fn has_vb_project(&self, b: BookId) -> Result<bool, OmError> {
         let bk = self.book(b)?;
         Ok(!bk.vba.modules.is_empty()
+            || bk.wb.sheets().any(|s| s.kind == xlcalc::SheetKind::Module)
             || bk
                 .package
                 .as_ref()

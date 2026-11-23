@@ -29,6 +29,8 @@ pub struct FindSpec {
     pub by_columns: bool,
     pub backward: bool,
     pub match_case: bool,
+
+    pub in_macro: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -82,13 +84,15 @@ impl Workbook {
         }
     }
 
-    fn find_text(&self, addr: CellAddr, look_in: LookIn) -> String {
+    fn find_text(&self, addr: CellAddr, look_in: LookIn, in_macro: bool) -> String {
         match look_in {
             LookIn::Comments => self
                 .note_at(addr.sheet, addr.row, addr.col)
                 .map(|n| n.text.clone())
                 .unwrap_or_default(),
-            LookIn::Values => self.display_text(addr),
+
+            LookIn::Values if in_macro => self.display_text(addr),
+            LookIn::Values => self.shown_text(addr),
             LookIn::Formulas => match self
                 .sheet(addr.sheet)
                 .and_then(|s| s.cells.get(addr.row, addr.col))
@@ -180,7 +184,7 @@ impl Workbook {
             {
                 continue;
             }
-            let text = self.find_text(CellAddr::new(sheet, r, c), spec.look_in);
+            let text = self.find_text(CellAddr::new(sheet, r, c), spec.look_in, spec.in_macro);
 
             let hit = if spec.what.is_empty() || text.is_empty() {
                 spec.what.is_empty() && text.is_empty()
@@ -197,9 +201,13 @@ impl Workbook {
     pub fn special_cells(&self, sheet: SheetId, areas: &[Rect], kind: SpecialKind) -> Vec<Rect> {
         let used = self.used_range(sheet);
         if kind == SpecialKind::LastCell {
-            return self
-                .ever_used(sheet)
-                .or(used)
+            let marked = self.used_range_with_formats(sheet);
+            let base = self.ever_used(sheet).or(used);
+            let last = match (base, marked) {
+                (Some(a), Some(b)) => Some(a.union_bounds(&b)),
+                (a, b) => a.or(b),
+            };
+            return last
                 .map(|u| vec![Rect::cell(u.r1, u.c1)])
                 .unwrap_or_else(|| vec![Rect::cell(0, 0)]);
         }
@@ -207,7 +215,7 @@ impl Workbook {
             [one] if one.is_cell() && kind == SpecialKind::Comments => {
                 vec![Rect::new(0, 0, MAX_ROWS - 1, MAX_COLS - 1)]
             }
-            [one] if one.is_cell() => used.into_iter().collect(),
+            [one] if one.is_cell() => self.ever_used(sheet).or(used).into_iter().collect(),
             _ => areas.to_vec(),
         };
         if kind == SpecialKind::Visible {
@@ -220,7 +228,11 @@ impl Workbook {
         for a in &scope {
             match kind {
                 SpecialKind::Blanks => {
-                    let Some(a) = used.and_then(|u| a.intersection(&u)) else {
+                    let Some(a) = self
+                        .ever_used(sheet)
+                        .or(used)
+                        .and_then(|u| a.intersection(&u))
+                    else {
                         continue;
                     };
                     for r in a.r0..=a.r1 {
@@ -265,7 +277,7 @@ impl Workbook {
                 SpecialKind::Differences { .. } | SpecialKind::LastCell | SpecialKind::Visible => {}
             }
         }
-        crate::trace::coalesce(cells, true)
+        crate::trace::coalesce(cells)
     }
 
     fn same_content(&self, sheet: SheetId, a: (u32, u32), b: (u32, u32)) -> bool {
@@ -319,7 +331,7 @@ impl Workbook {
                 }
             }
         }
-        crate::trace::coalesce(cells, true)
+        crate::trace::coalesce(cells)
     }
 
     fn visible_pieces(&self, sheet: SheetId, areas: &[Rect]) -> Vec<Rect> {

@@ -4,7 +4,7 @@ use crate::coerce::parse_number_text;
 use crate::eval::{EvalCtx, Operand};
 use crate::functions::args::val;
 use crate::value::{Value, XlError};
-use crate::x87::MpFlag;
+use crate::x87::MathFlag;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct C {
@@ -492,7 +492,7 @@ pub fn imcos(z: C) -> R<C> {
 
 fn sinh_cosh(z: C, cosh: bool) -> R<C> {
     let (x, y) = (z.re, z.im);
-    let mut f = MpFlag::default();
+    let mut f = MathFlag::default();
     let num = |_| XlError::NUM;
     if y == 0.0 {
         let v = if cosh {
@@ -501,7 +501,7 @@ fn sinh_cosh(z: C, cosh: bool) -> R<C> {
             sinh2n(&mut f, -x)
         };
         let r = f.div(v, 2.0);
-        return mp_done(&f, C::new(r, 0.0));
+        return finish_complex(&f, C::new(r, 0.0));
     }
     let (s, c) = (trig_sin(y).map_err(num)?, trig_cos(y).map_err(num)?);
     if x > 709.0 || x < -708.0 {
@@ -521,7 +521,7 @@ fn sinh_cosh(z: C, cosh: bool) -> R<C> {
                 re = -re;
             }
         }
-        return mp_done(&f, C::new(re, im));
+        return finish_complex(&f, C::new(re, im));
     }
     let sh = sinh2n(&mut f, -x);
     let ch = cosh2(&mut f, -x);
@@ -530,7 +530,7 @@ fn sinh_cosh(z: C, cosh: bool) -> R<C> {
     let re = f.mul(c2, a);
     let s2 = f.div(s, 2.0);
     let im = f.mul(s2, b);
-    mp_done(&f, C::new(re, im))
+    finish_complex(&f, C::new(re, im))
 }
 
 pub fn imsinh(z: C) -> R<C> {
@@ -553,7 +553,7 @@ fn tan_cot(z: C, cot: bool) -> Option<R<C>> {
     use crate::x87::{add, div, mul, sub};
     let (s, c) = (trig_sin(z.re).ok()?, trig_cos(z.re).ok()?);
     let b = mul(z.im, 2.0);
-    let mut f = MpFlag::default();
+    let mut f = MathFlag::default();
     let sh2 = -sinh2n(&mut f, b);
     let ch2 = cosh2(&mut f, b);
     let (t, u) = if cot { (c, s) } else { (s, c) };
@@ -587,7 +587,7 @@ fn recip(z: C) -> R<C> {
     Ok(C::new(1.0, 0.0).div(z))
 }
 
-fn sinh2n(f: &mut MpFlag, t: f64) -> f64 {
+fn sinh2n(f: &mut MathFlag, t: f64) -> f64 {
     let a = t.abs();
     if a > 20.0 {
         let e = f.exp(a);
@@ -609,7 +609,7 @@ fn sinh2n(f: &mut MpFlag, t: f64) -> f64 {
     f.add(a5, s)
 }
 
-fn cosh2(f: &mut MpFlag, t: f64) -> f64 {
+fn cosh2(f: &mut MathFlag, t: f64) -> f64 {
     let a = t.abs();
     if a > 20.0 {
         return f.exp(a);
@@ -636,7 +636,7 @@ fn hyp_band(v: f64) -> u8 {
     }
 }
 
-fn mp_done(f: &MpFlag, w: C) -> R<C> {
+fn finish_complex(f: &MathFlag, w: C) -> R<C> {
     if f.0 != 0 {
         Err(XlError::NUM)
     } else {
@@ -646,12 +646,12 @@ fn mp_done(f: &MpFlag, w: C) -> R<C> {
 
 fn sec_csc(z: C, csc: bool) -> R<C> {
     let (x, y) = (z.re, z.im);
-    let mut f = MpFlag::default();
+    let mut f = MathFlag::default();
     let num = |_| XlError::NUM;
     if y == 0.0 {
         let t = if csc { trig_sin(x) } else { trig_cos(x) }.map_err(num)?;
         let r = f.div(1.0, t);
-        return mp_done(&f, C::new(r, 0.0));
+        return finish_complex(&f, C::new(r, 0.0));
     }
     let band = hyp_band(y);
     if band == 2 {
@@ -668,7 +668,7 @@ fn sec_csc(z: C, csc: bool) -> R<C> {
     let ch = cosh2(&mut f, y);
     if band == 1 {
         let w = C::new(f.div(m1, ch), f.div(m2, sh));
-        return mp_done(&f, w);
+        return finish_complex(&f, w);
     }
     let y2 = f.mul(y, 2.0);
     let ch2 = cosh2(&mut f, y2);
@@ -679,7 +679,7 @@ fn sec_csc(z: C, csc: bool) -> R<C> {
     let re = f.mul(re, m1);
     let im = f.div(sh, d);
     let im = f.mul(im, m2);
-    mp_done(&f, C::new(re, im))
+    finish_complex(&f, C::new(re, im))
 }
 
 pub fn imsec(z: C) -> R<C> {
@@ -701,6 +701,8 @@ pub fn imcot(z: C) -> R<C> {
     if z.re.abs() < TRIG_LIMIT {
         match tan_cot(z, true) {
             Some(Ok(w)) if w.finite() => return Ok(w),
+
+            None if z.re == 0.0 => return Err(XlError::NUM),
             _ => {}
         }
     }
@@ -709,7 +711,7 @@ pub fn imcot(z: C) -> R<C> {
 
 fn sech_csch(z: C, csch: bool) -> R<C> {
     let (x, y) = (z.re, z.im);
-    let mut f = MpFlag::default();
+    let mut f = MathFlag::default();
     let num = |_| XlError::NUM;
     if y == 0.0 {
         let h = if csch {
@@ -721,7 +723,7 @@ fn sech_csch(z: C, csch: bool) -> R<C> {
             return Ok(C::new(0.0, 0.0));
         }
         let r = f.div(2.0, h);
-        return mp_done(&f, C::new(r, 0.0));
+        return finish_complex(&f, C::new(r, 0.0));
     }
     match hyp_band(x) {
         2 => Ok(C::new(0.0, 0.0)),
@@ -732,7 +734,7 @@ fn sech_csch(z: C, csch: bool) -> R<C> {
             let re = f.div(c2, if csch { sh } else { ch });
             let s2 = f.mul(trig_sin(y).map_err(num)?, 2.0);
             let im = f.div(s2, if csch { ch } else { sh });
-            mp_done(&f, C::new(re, im))
+            finish_complex(&f, C::new(re, im))
         }
         _ => {
             let sh = sinh2n(&mut f, -x);
@@ -755,7 +757,7 @@ fn sech_csch(z: C, csch: bool) -> R<C> {
                 d = f.add(a, cc);
             }
             let w = C::new(f.div(re_n, d), f.div(im_n, d));
-            mp_done(&f, w)
+            finish_complex(&f, w)
         }
     }
 }

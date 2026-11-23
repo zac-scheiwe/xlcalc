@@ -18,6 +18,12 @@ pub fn print_node(wb: &Workbook, node: &Node, host: CellAddr) -> String {
     s
 }
 
+pub fn printable(node: &Node) -> bool {
+    let mut ok = true;
+    crate::formula::walk(node, &mut |n| ok &= !matches!(n, Node::Unwritten));
+    ok
+}
+
 pub fn print_node_r1c1(wb: &Workbook, node: &Node, host: CellAddr) -> String {
     R1C1.with(|f| f.set(true));
     let s = print_node(wb, node, host);
@@ -207,6 +213,10 @@ fn sheet_prefix(wb: &Workbook, sheet: &SheetRef) -> String {
         }
 
         SheetRef::Missing(n) if n.contains(":[") => format!("'{}'!", n.replace('\x27', "''")),
+
+        SheetRef::Missing(n) if &**n == "#REF!" => "#REF!".into(),
+
+        SheetRef::Missing(n) if n.starts_with('\u{3}') => format!("[{}]", &n[1..]),
         SheetRef::Missing(n) => format!("{}!", sheet_name_text(n)),
     }
 }
@@ -291,10 +301,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
             match wb.names.lookup(key, host.sheet) {
                 Some(def) => s.push_str(&def.name),
                 None => {
-                    let t = wb
-                        .names
-                        .placeholder(&display.to_uppercase())
-                        .map_or(&**display, |p| &**p);
+                    let t = wb.names.placeholder(display).map_or(&**display, |p| &**p);
 
                     let odd = |c: char| {
                         c.is_ascii()
@@ -370,7 +377,9 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                 s.push_str(op.symbol());
             }
 
+            let blanks = typed || matches!(&**b, Node::Ws { before, .. } if !before.is_empty());
             let column_name = *op == BinOp::Range
+                && !blanks
                 && matches!(a.unwrap_ws(), Node::Name { .. })
                 && matches!(b.unwrap_ws(), Node::Name { sheet: None, display, .. }
                     if crate::address::letters_to_col(display).is_some());
@@ -440,11 +449,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                 args(wb, a, host, s);
                 return;
             }
-            s.push_str(
-                wb.names
-                    .placeholder(&display.to_uppercase())
-                    .map_or(&**display, |p| &**p),
-            );
+            s.push_str(wb.names.placeholder(display).map_or(&**display, |p| &**p));
             args(wb, a, host, s);
         }
         Node::Call { callee, args: a } => {
@@ -498,7 +503,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
             write(wb, &def.body, host, s);
             s.push(')');
         }
-        Node::Missing => {}
+        Node::Missing | Node::Unwritten => {}
         Node::Unsupported { text, .. } => s.push_str(text),
         Node::Ws {
             before,
@@ -512,7 +517,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         } => {
             let name = wb
                 .table_by_name(table)
-                .map(|t| t.name.clone())
+                .map(|t| crate::workbook::tables::table_display_name(&t.name))
                 .unwrap_or_else(|| table.to_string());
 
             let whole = spec.cols.is_none() && spec.items == crate::workbook::tables::Items::DATA;

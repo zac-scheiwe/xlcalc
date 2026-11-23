@@ -1,14 +1,12 @@
 #![allow(clippy::needless_range_loop)]
 
 use crate::error::OmError;
-use crate::solver_grg::{Ev, Eval, Prob, Status};
+use crate::solver_grg::{conv, tol, Ev, Eval, Prob, Status};
 use crate::solver_grg_q::{delcol, pos, r1mod};
 
 const EPSX: f64 = 1e-15;
 const BIG: f64 = 1e30;
 const TINY: f64 = 1e-30;
-const TOL: f64 = 1e-8;
-const CONV: f64 = 1e-5;
 const CONV_N: u32 = 5;
 const HDER: f64 = 1e-6;
 const PIVTOL: f64 = 1e-4;
@@ -82,7 +80,12 @@ impl C<'_, '_> {
 
     fn eval_at(&mut self, alt: Option<(usize, usize, f64)>) -> Result<Eval, OmError> {
         match alt {
-            None => self.cells.copy_from_slice(&self.x[1..=self.n]),
+            None => {
+                self.cells.copy_from_slice(&self.x[1..=self.n]);
+
+                let n = self.n;
+                crate::solver_grg::canon(&mut self.x[1..=n]);
+            }
             Some((j, prev, v)) => {
                 self.cells[prev - 1] = self.x[prev];
                 self.cells[j - 1] = v;
@@ -127,12 +130,12 @@ impl C<'_, '_> {
             let s = n + row;
             let gv = self.g[row];
             let lo = self.lb[s] - gv;
-            if lo > TOL {
+            if lo > tol() {
                 sum += lo;
                 self.d24 += 1;
             } else {
                 let hi = gv - self.ub[s];
-                if hi > TOL {
+                if hi > tol() {
                     sum += hi;
                     self.d24 += 1;
                 }
@@ -232,10 +235,10 @@ impl C<'_, '_> {
             let s = n + i;
             let gi = self.g[i];
             let mut val = None;
-            if self.typ[i] == 2 && (gi - self.ub[s]).abs() < TOL {
+            if self.typ[i] == 2 && (gi - self.ub[s]).abs() < tol() {
                 val = Some(self.ub[s]);
             }
-            if val.is_none() && (gi - self.lb[s]).abs() < TOL {
+            if val.is_none() && (gi - self.lb[s]).abs() < tol() {
                 val = Some(self.lb[s]);
             }
             match val {
@@ -271,7 +274,7 @@ impl C<'_, '_> {
             let a = self.ub[k] - self.x[k];
             let b = self.x[k] - self.lb[k];
             let mut dd = if a >= b { b } else { a };
-            if TOL >= dd {
+            if tol() >= dd {
                 dd = 0.0;
             }
             dist[k] = if 1e10 < dd { 1e10 } else { dd };
@@ -370,7 +373,7 @@ impl C<'_, '_> {
                     } else {
                         let mut best = 0.0f64;
                         for c in 1..=n {
-                            if elig[c] == c && TOL * 10.0 <= dist[c] && piv[c] > best {
+                            if elig[c] == c && tol() * 10.0 <= dist[c] && piv[c] > best {
                                 best = piv[c];
                                 esi = c;
                             }
@@ -496,10 +499,10 @@ impl C<'_, '_> {
         for k in 1..=n {
             let v = self.list[k];
             let mut st = 0;
-            if TOL >= (self.x[v] - self.ub[v]).abs() {
+            if tol() >= (self.x[v] - self.ub[v]).abs() {
                 st = 1;
             }
-            if TOL >= (self.x[v] - self.lb[v]).abs() {
+            if tol() >= (self.x[v] - self.lb[v]).abs() {
                 st = -1;
             }
             self.stat[k] = st;
@@ -563,7 +566,7 @@ impl C<'_, '_> {
                         let a = rk[k].abs();
                         rmax = if a > rmax { a } else { rmax };
                     }
-                    if TOL > rmax {
+                    if tol() > rmax {
                         ok = true;
                         break;
                     }
@@ -628,11 +631,11 @@ impl C<'_, '_> {
                             continue;
                         }
                         let lb = self.lb[v];
-                        let r = if TOL < lb - cur {
+                        let r = if tol() < lb - cur {
                             (lb - self.s38[i]) / diff
                         } else {
                             let ub = self.ub[v];
-                            if TOL >= cur - ub {
+                            if tol() >= cur - ub {
                                 continue;
                             }
                             (ub - self.s38[i]) / diff
@@ -651,11 +654,11 @@ impl C<'_, '_> {
                         if EPSX >= diff.abs() {
                             continue;
                         }
-                        let lbt = self.lb[v] - TOL;
+                        let lbt = self.lb[v] - tol();
                         let r = if prev >= lbt && lbt > cur {
                             (lbt - prev) / diff
                         } else {
-                            let ubt = TOL + self.ub[v];
+                            let ubt = tol() + self.ub[v];
                             if ubt < prev || cur <= ubt {
                                 continue;
                             }
@@ -751,7 +754,7 @@ impl C<'_, '_> {
                     let row = self.inact[k];
                     let gr = self.g[row];
                     let s = n + row;
-                    if TOL > (gr - self.lb[s]).abs() || TOL > (gr - self.ub[s]).abs() {
+                    if tol() > (gr - self.lb[s]).abs() || tol() > (gr - self.ub[s]).abs() {
                         r14 = nb + k;
                     }
                 }
@@ -823,7 +826,7 @@ impl C<'_, '_> {
         let mut t0 = if maxd == 0.0 {
             self.tmax
         } else {
-            let a = TOL / maxd;
+            let a = tol() / maxd;
             if a > tprev {
                 a
             } else {
@@ -1129,9 +1132,9 @@ pub(crate) fn grg_c(
                         let row = c.inact[k];
                         let gv = c.g[row];
                         let sl = n + row;
-                        if c.lb[sl] - TOL > gv {
+                        if c.lb[sl] - tol() > gv {
                             s -= f64::from(c.jac[row][j]);
-                        } else if gv > TOL + c.ub[sl] {
+                        } else if gv > tol() + c.ub[sl] {
                             s += f64::from(c.jac[row][j]);
                         }
                     }
@@ -1175,14 +1178,14 @@ pub(crate) fn grg_c(
                     dxmax = dxmax.max((xj - xprev[j]).abs());
                     xprev[j] = xj;
                 }
-                let sq = TOL.sqrt();
+                let sq = tol().sqrt();
                 if (xmax + 1.0) * sq > dxmax {
                     let mut gmax = 0.0f64;
                     for j in 1..=n {
                         gmax = gmax.max(f64::from(c.jac[m][j]).abs());
                     }
                     let mut conv = true;
-                    if gmax > TOL {
+                    if gmax > tol() {
                         let thr = sq * gmax;
                         for pp in 1..=n {
                             let v = c.list[pp];
@@ -1210,7 +1213,7 @@ pub(crate) fn grg_c(
             }
 
             if !e4 {
-                let a = (fref - gstart) * CONV;
+                let a = (fref - gstart) * conv();
                 let b = c.g[m] - fref;
                 if b.abs() > a.abs() {
                     c.a8 = false;
@@ -1312,7 +1315,7 @@ pub(crate) fn grg_c(
                 let (mut cntg, mut sumsq) = (0usize, 0.0);
                 for k in 1..=c.nsb {
                     let gk = c.rg[k];
-                    if gk.abs() > TOL {
+                    if gk.abs() > tol() {
                         sumsq += gk * gk;
                         cntg += 1;
                     }
@@ -1399,9 +1402,9 @@ pub(crate) fn grg_c(
                     let b = c.bas[i];
                     let xb = c.x[b];
                     let r = if 0.0 > mv {
-                        (xb - c.ub[b] - TOL) / mv
+                        (xb - c.ub[b] - tol()) / mv
                     } else {
-                        (xb - c.lb[b] + TOL) / mv
+                        (xb - c.lb[b] + tol()) / mv
                     };
                     if r < best {
                         best = r;
@@ -1547,10 +1550,10 @@ pub(crate) fn grg_c(
                 }
                 c.stat[nsb] = 0;
                 c.pos41[nsb + nb] = r10;
-                if TOL >= (c.x[lv] - c.ub[lv]).abs() {
+                if tol() >= (c.x[lv] - c.ub[lv]).abs() {
                     c.stat[nsb] = 1;
                 }
-                if TOL >= (c.x[lv] - c.lb[lv]).abs() {
+                if tol() >= (c.x[lv] - c.lb[lv]).abs() {
                     c.stat[nsb] = -1;
                 }
                 c.list[nsb] = lv;
@@ -1574,6 +1577,7 @@ pub(crate) fn grg_c(
                 c.x[j] = 0.0;
             }
         }
+        crate::solver_grg::canon(&mut c.x[1..=n]);
         c.d50 += 1;
         if c.cc {
             let mut esi = c.nsb;
@@ -1581,7 +1585,7 @@ pub(crate) fn grg_c(
             for r14 in 1..=nsb0 {
                 let k = nsb0 - r14 + 1;
                 let v = c.list[k];
-                let at = (c.x[v] - c.lb[v]).abs() <= TOL || (c.x[v] - c.ub[v]).abs() <= TOL;
+                let at = (c.x[v] - c.lb[v]).abs() <= tol() || (c.x[v] - c.ub[v]).abs() <= tol();
                 if at {
                     esi -= 1;
                     let nsbv = c.nsb;

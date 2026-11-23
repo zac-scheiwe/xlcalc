@@ -528,7 +528,7 @@ fn write_style_body(xml: &mut Xml, wb: &Workbook, s: &Style, f: Facets, with_emp
                 at("ss:LineStyle", ls),
                 at("ss:Weight", w),
             ];
-            if e.color != CellColor::Auto {
+            if !e.color.is_auto() {
                 a.push(at("ss:Color", color_hex(wb, e.color, 0)));
             }
             xml.tag(4, "Border", &a, "/>", "");
@@ -831,6 +831,7 @@ pub(crate) fn spreadsheet(
         data: Option<(String, String)>,
         names: Vec<String>,
         width: u32,
+        ticked: bool,
     }
     let mut rows: BTreeMap<u32, Vec<Cell>> = BTreeMap::new();
     let mut used_xf: BTreeMap<u32, StyleDef> = BTreeMap::new();
@@ -872,19 +873,27 @@ pub(crate) fn spreadsheet(
             let anchor_cell = spill_of(src);
             let legacy = wb.current_array(src);
             let is_formula = wb.formula_text(src).is_some();
-            if is_formula {
-                let is_child = match (&anchor_cell, &legacy) {
-                    (Some((an, _)), _) => *an != src,
-                    (None, Some(l)) => (l.r0, l.c0) != (src.row, src.col),
-                    _ => false,
-                };
-                if !is_child {
-                    if let Some(f) = wb.formula_text_r1c1(src) {
-                        if all_inside(&f, host, &sheet_name, rect) {
-                            if let Some((_, block)) = &anchor_cell {
-                                attrs.push(at("ss:ArrayRange", array_range(host, *block)));
-                            } else if let Some(l) = &legacy {
-                                attrs.push(at("ss:ArrayRange", array_range(host, *l)));
+            let spilled_child = anchor_cell.as_ref().is_some_and(|(an, _)| *an != src);
+            if is_formula || spilled_child {
+                let block = anchor_cell.as_ref().map(|(an, b)| (*an, *b)).or_else(|| {
+                    legacy
+                        .as_ref()
+                        .map(|l| (CellAddr::new(sheet, l.r0, l.c0), *l))
+                });
+                let anchor = block.map_or(src, |(an, _)| an);
+                let anchor_in = rect.contains(anchor.row, anchor.col);
+                if anchor == src || !anchor_in {
+                    let f_host = (anchor.row, anchor.col);
+                    if let Some(f) = wb.formula_text_r1c1(anchor) {
+                        if all_inside(&f, f_host, &sheet_name, rect) {
+                            if let Some((_, b)) = &block {
+                                let clipped = Rect::new(
+                                    b.r0.max(rect.r0),
+                                    b.c0.max(rect.c0),
+                                    b.r1.min(rect.r1),
+                                    b.c1.min(rect.c1),
+                                );
+                                attrs.push(at("ss:ArrayRange", array_range(host, clipped)));
                             }
                             attrs.push(at("ss:Formula", f));
                         }
@@ -927,6 +936,7 @@ pub(crate) fn spreadsheet(
                 data,
                 names,
                 width: across + 1,
+                ticked: wb.has_apostrophe(src),
             });
         }
     }
@@ -1091,7 +1101,8 @@ pub(crate) fn spreadsheet(
                 } else {
                     let mut tail = String::new();
                     if let Some((ty, text)) = &cell.data {
-                        let _ = write!(tail, "<Data ss:Type=\"{ty}\">{}</Data>", esc(text));
+                        let tick = if cell.ticked { " x:Ticked=\"1\"" } else { "" };
+                        let _ = write!(tail, "<Data ss:Type=\"{ty}\"{tick}>{}</Data>", esc(text));
                     }
                     for n in &cell.names {
                         let _ = write!(tail, "<NamedCell ss:Name=\"{}\"/>", esc(n));
@@ -1438,8 +1449,12 @@ pub(crate) fn rowset(wb: &Workbook, sheet: SheetId, rect: Rect) -> Option<String
             let v = wb.value(a);
             let text = match (&v, *ty) {
                 (Value::Blank, _) => continue,
+                (Value::Text(t), _) if t.is_empty() => continue,
                 (Value::Bool(b), _) => if *b { "TRUE" } else { "FALSE" }.to_string(),
                 (Value::Number(x), Ty::Int | Ty::Float) => xml_number(*x),
+                (Value::Number(x), Ty::Date) if *x < 1.0 => {
+                    iso(*x + 1.0, false)?.replacen("1900-01-01", "1899-12-30", 1)
+                }
                 (Value::Number(x), Ty::Date) => iso(*x, false)?,
                 (Value::Error(e), _) => e.as_str().to_string(),
                 _ => wb.shown_text(a),

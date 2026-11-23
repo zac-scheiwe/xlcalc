@@ -104,6 +104,7 @@ pub(crate) fn adopt(
     wb: &mut Workbook,
     ids: &[SheetId],
     defs: &[PivotDef],
+    styles: &crate::styles::Styles,
     warnings: &mut Vec<String>,
 ) {
     let mut caches: Vec<(String, usize)> = Vec::new();
@@ -324,6 +325,7 @@ pub(crate) fn adopt(
                 continue;
             }
             let mut items = Vec::new();
+            let mut xs: Vec<usize> = Vec::new();
             if let Some(its) = node.child("items") {
                 for it in its.children("item") {
                     if it.attr("t").is_some() || it.attr("f") == Some("1") {
@@ -333,6 +335,7 @@ pub(crate) fn adopt(
                         continue;
                     };
                     if let Some(v) = shared.get(f).and_then(|s| s.get(x)) {
+                        xs.push(x);
                         items.push(xlcalc::pivot::Item {
                             value: v.clone(),
                             label: String::new(),
@@ -340,7 +343,16 @@ pub(crate) fn adopt(
                     }
                 }
             }
-            if node.attr("sortType") == Some("descending") && node.child("autoSortScope").is_none()
+
+            let renamed = node
+                .child("items")
+                .is_some_and(|i| i.children("item").any(|x| x.attr("n").is_some()));
+            if renamed {
+                let mut keyed: Vec<_> = xs.into_iter().zip(items).collect();
+                keyed.sort_by_key(|k| k.0);
+                items = keyed.into_iter().map(|k| k.1).collect();
+            } else if node.attr("sortType") == Some("descending")
+                && node.child("autoSortScope").is_none()
             {
                 items.reverse();
             }
@@ -382,10 +394,7 @@ pub(crate) fn adopt(
                     continue;
                 }
                 if let (Some(v), Some(fm)) = (shared[e].get(x), ci_.attr("formula")) {
-                    t.fields[e].calc_items.push(xlcalc::pivot::CalcItem {
-                        name: value_label(v),
-                        formula: item_formula_in(fm),
-                    });
+                    t.push_calc_item(e, value_label(v), item_formula_in(fm));
                 }
             }
         }
@@ -538,7 +547,10 @@ pub(crate) fn adopt(
                     src,
                     caption: x.attr("name").unwrap_or("").to_string(),
                     func: func_of(x.attr("subtotal")),
-                    numfmt: None,
+                    numfmt: x
+                        .attr("numFmtId")
+                        .and_then(|i| i.parse::<u32>().ok())
+                        .and_then(|i| styles.code_of(i)),
                     show: {
                         let name = x.attr("showDataAs");
                         let kind = if name == Some("percentOfParent") {
@@ -554,7 +566,11 @@ pub(crate) fn adopt(
                                 .then(|| x.attr("baseItem")?.parse::<usize>().ok())
                                 .flatten()
                                 .zip(base_field)
-                                .and_then(|(p, bf)| display_order(&t, &gcache, bf).get(p).copied()),
+                                .and_then(|(p, bf)| match p {
+                                    1_048_828 => Some(xlcalc::pivot::BASE_PREVIOUS),
+                                    1_048_829 => Some(xlcalc::pivot::BASE_NEXT),
+                                    _ => display_order(&t, &gcache, bf).get(p).copied(),
+                                }),
                         }
                     },
                 });
@@ -1086,7 +1102,12 @@ pub(crate) fn cache_xml(wb: &Workbook, ci: usize, records_rid: &str) -> (String,
     (def, records)
 }
 
-pub(crate) fn table_xml(wb: &Workbook, ti: usize, cache_id: u32) -> String {
+pub(crate) fn table_xml(
+    wb: &Workbook,
+    ti: usize,
+    cache_id: u32,
+    styles: &mut crate::styles::StyleWriter,
+) -> String {
     let pv = wb.pivots();
     let t = &pv.tables[ti];
     let r = render(t, &pv.caches[t.cache]);
@@ -1296,10 +1317,21 @@ pub(crate) fn table_xml(wb: &Workbook, ti: usize, cache_id: u32) -> String {
             let bi = d
                 .show
                 .base_item
-                .and_then(|p| display_order(t, c, bf).iter().position(|&o| o == p))
+                .and_then(|p| match p {
+                    xlcalc::pivot::BASE_PREVIOUS => Some(1_048_828),
+                    xlcalc::pivot::BASE_NEXT => Some(1_048_829),
+                    _ => display_order(t, c, bf).iter().position(|&o| o == p),
+                })
                 .unwrap_or(0);
+            let nf = d
+                .numfmt
+                .as_deref()
+                .map(|f| styles.fmt_id(f))
+                .filter(|&i| i != 0)
+                .map(|i| format!(" numFmtId=\"{i}\""))
+                .unwrap_or_default();
             s.push_str(&format!(
-                "<dataField name=\"{}\" fld=\"{}\"{sub}{show} baseField=\"{bf}\" baseItem=\"{bi}\"/>",
+                "<dataField name=\"{}\" fld=\"{}\"{sub}{show} baseField=\"{bf}\" baseItem=\"{bi}\"{nf}/>",
                 escape_attr(&d.caption),
                 d.src
             ));

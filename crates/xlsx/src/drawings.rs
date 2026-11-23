@@ -192,6 +192,16 @@ fn anchor_pos(wb: &Workbook, sheet: SheetId, n: &Node) -> Option<Pos> {
         "twoCellAnchor" => {
             let from = anchor_of(n.child("from")?);
             let to = anchor_of(n.child("to")?);
+            let (from, to) = if n.attr("halfPt") == Some("1") {
+                let snap = |a: &Anchor| {
+                    let (x, y) = wb.anchor_xy(sheet, a);
+                    let s = |v: i64| (v as f64 / 6350.0).round() as i64 * 6350;
+                    wb.xy_anchor(sheet, s(x), s(y))
+                };
+                (snap(&from), snap(&to))
+            } else {
+                (from, to)
+            };
             let both = Pos::Both { from, to };
             match n.attr("editAs") {
                 Some("oneCell") => {
@@ -387,6 +397,7 @@ fn build_shape(
     } else {
         None
     };
+    let text = body_text(obj);
     Some((
         Shape {
             id,
@@ -394,7 +405,7 @@ fn build_shape(
             kind,
             pos,
             visible: c.attr("hidden") != Some("1"),
-            text: body_text(obj),
+            text: text.clone(),
             chart,
             flip_h: flip("flipH"),
             flip_v: flip("flipV"),
@@ -404,7 +415,30 @@ fn build_shape(
             parent,
             lock_aspect: lock_aspect(obj),
             image,
-            props: ShapeProps::default(),
+            props: ShapeProps {
+                tf: crate::drawings_text::read_frame(obj, &text),
+                hlink: c.child("hlinkClick").and_then(|h| {
+                    let rel = h.attr("id").and_then(|id| rels.iter().find(|r| r.id == id));
+                    let target = rel.map(|r| r.target.as_str());
+                    let (mut address, mut sub_address) =
+                        crate::hyperlinks::decode_target(target, None);
+
+                    if sub_address.is_empty() {
+                        if let Some((a, f)) = address.split_once('#') {
+                            (address, sub_address) = (a.to_string(), f.to_string());
+                        }
+                    }
+                    (!address.is_empty() || !sub_address.is_empty()).then(|| {
+                        xlcalc::drawing::ShapeLink {
+                            address,
+                            sub_address,
+                            screen_tip: Some(h.attr("tooltip").unwrap_or("").to_string()),
+                            rid: h.attr("id").unwrap_or("").to_string(),
+                        }
+                    })
+                }),
+                ..ShapeProps::default()
+            },
         },
         chart_ref,
     ))
@@ -717,6 +751,10 @@ fn axis_of(ax: &Node, value_axis: bool) -> ChartAxis {
             .child("majorUnit")
             .and_then(|c| c.attr("val"))
             .and_then(|x| x.parse().ok());
+        a.minor = ax
+            .child("minorUnit")
+            .and_then(|c| c.attr("val"))
+            .and_then(|x| x.parse().ok());
     }
     a
 }
@@ -728,12 +766,32 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
     let chart_el = space.child("chart")?;
     let plot = chart_el.child("plotArea")?;
     let mut c = Chart::new();
+    let xls_style = space
+        .child("style")
+        .and_then(|s| s.attr("val"))
+        .and_then(|s| s.parse().ok());
     let mut first = true;
+
+    let ax_ids = |el: &Node| -> Vec<String> {
+        el.children("axId")
+            .filter_map(|a| a.attr("val").map(str::to_string))
+            .collect()
+    };
+    let mut primary_ids: Vec<String> = Vec::new();
+    let mut secondary_ids: Vec<String> = Vec::new();
+
+    let mut ordered: Vec<(i64, Series)> = Vec::new();
     for el in plot.kids.iter().filter(|k| k.name.ends_with("Chart")) {
         let t = plot_type(el);
+        let ids = ax_ids(el);
         if first {
             c.chart_type = t;
             first = false;
+            primary_ids = ids.clone();
+        }
+        let group = if ids == primary_ids { 1 } else { 2 };
+        if group == 2 && secondary_ids.is_empty() {
+            secondary_ids = ids.clone();
         }
         for s in el.children("ser") {
             let tx = s.child("tx");
@@ -749,16 +807,26 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
                     s.child("val").map_or(Part::None, |n| series_part(wb, n)),
                 )
             };
-            c.series.push(Series {
-                name,
-                x,
-                values: v,
-                chart_type: t,
-                axis_group: 1,
-                fmt: crate::serfmt_xml::read_fmt(s, &el.name, t),
-            });
+            let order = s
+                .child("order")
+                .and_then(|o| o.attr("val"))
+                .and_then(|o| o.parse().ok())
+                .unwrap_or(ordered.len() as i64);
+            ordered.push((
+                order,
+                Series {
+                    name,
+                    x,
+                    values: v,
+                    chart_type: t,
+                    axis_group: group,
+                    fmt: crate::serfmt_xml::read_fmt(s, &el.name, t),
+                },
+            ));
         }
     }
+    ordered.sort_by_key(|x| x.0);
+    c.series = ordered.into_iter().map(|x| x.1).collect();
     if let Some(t) = chart_el.child("title") {
         c.has_title = true;
         if let Some(f) = find(t, "f") {
@@ -783,25 +851,102 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
         .iter()
         .filter(|k| matches!(k.name.as_str(), "catAx" | "valAx" | "dateAx" | "serAx"))
         .collect();
+    let id_of = |a: &Node| {
+        a.child("axId")
+            .and_then(|i| i.attr("val"))
+            .map(str::to_string)
+    };
+    let (prim, sec): (Vec<&Node>, Vec<&Node>) = axes.iter().partition(|a| {
+        secondary_ids.is_empty() || !id_of(a).is_some_and(|i| secondary_ids.contains(&i))
+    });
+
+    if let Some(a) = sec
+        .iter()
+        .find(|a| id_of(a).as_ref() == secondary_ids.get(1))
+        .or_else(|| sec.iter().find(|a| a.name == "valAx"))
+    {
+        c.axes[2] = axis_of(a, true);
+
+        c.bag.insert(
+            xlcalc::drawing::SECONDARY_ZERO.into(),
+            xlcalc::drawing::BagVal::I(1),
+        );
+    }
+    let axes = prim;
+
+    c.bag.insert(
+        xlcalc::drawing::CAT_CROSS.into(),
+        xlcalc::drawing::BagVal::I(1),
+    );
+
+    for (k, other) in [(0, "Axis2"), (1, "Axis1")] {
+        let Some(a) = axes.get(k) else { continue };
+        let (crosses, at) = if let Some(v) = a
+            .child("crossesAt")
+            .and_then(|x| x.attr("val"))
+            .and_then(|x| x.parse::<f64>().ok())
+        {
+            (-4114, Some(v))
+        } else {
+            match a.child("crosses").and_then(|x| x.attr("val")) {
+                Some("max") => (2, None),
+                Some("min") => (4, None),
+                _ => continue,
+            }
+        };
+        c.bag.insert(
+            format!("{other}.Crosses"),
+            xlcalc::drawing::BagVal::I(crosses),
+        );
+        if let Some(v) = at {
+            c.bag
+                .insert(format!("{other}.CrossesAt"), xlcalc::drawing::BagVal::D(v));
+        }
+    }
     if let Some(a) = axes.first() {
         c.axes[0] = axis_of(a, a.name == "valAx");
     }
     if let Some(a) = axes.get(1) {
         c.axes[1] = axis_of(a, true);
     } else if axes.is_empty() {
-        c.axes = [ChartAxis::new(false), ChartAxis::new(true)];
+        c.axes = [
+            ChartAxis::new(false),
+            ChartAxis::new(true),
+            ChartAxis::new(true),
+        ];
     }
-    c.plot_by = match c.series.first().map(|s| &s.values) {
-        Some(Part::Refs(v)) if v.len() == 1 => {
-            let r = v[0].1;
-            if r.rows() == 1 && r.cols() > 1 {
-                1
-            } else {
-                2
+
+    c.style = xls_style.unwrap_or(match c.chart_type {
+        4 => 227,
+        5 => 251,
+        57 => 216,
+        65 => 332,
+        _ => 0,
+    });
+
+    c.plot_by = match c.series.as_slice() {
+        [s] => match &s.values {
+            Part::Refs(r) if r.len() == 1 && r[0].1.rows() == 1 && r[0].1.cols() > 1 => {
+                if s.name == Part::None {
+                    1
+                } else {
+                    0
+                }
             }
-        }
-        _ => 2,
+            _ => 2,
+        },
+        _ => 0,
     };
+
+    if chart_el.child("title").is_none()
+        && c.series.len() == 1
+        && chart_el
+            .child("autoTitleDeleted")
+            .and_then(|a| a.attr("val"))
+            .is_none_or(|v| v == "0")
+    {
+        c.has_title = true;
+    }
     Some(c)
 }
 

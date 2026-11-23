@@ -66,7 +66,7 @@ fn irr_secant(values: &[f64], guess: f64) -> R<Option<f64>> {
     use crate::x87;
     let div0 = std::cell::Cell::new(false);
     let npv = |w: f64| {
-        let mut mp = x87::MpFlag::default();
+        let mut mp = x87::MathFlag::default();
         let b = mp.div(1.0, x87::add(w, 1.0));
         let mut d = 1.0;
         let mut acc = values[0];
@@ -84,7 +84,7 @@ fn irr_secant(values: &[f64], guess: f64) -> R<Option<f64>> {
             _ => f64::NAN,
         }
     };
-    let w = fn_iter(x87::div(guess, x87::sub(-1.0, guess)), npv);
+    let w = secant_solve(x87::div(guess, x87::sub(-1.0, guess)), npv);
     if div0.get() {
         return Err(XlError::DIV0);
     }
@@ -97,7 +97,7 @@ fn irr_secant(values: &[f64], guess: f64) -> R<Option<f64>> {
     Ok(r.is_finite().then_some(r))
 }
 
-pub(super) fn fn_iter_start(x0: f64) -> R<f64> {
+pub(super) fn secant_start(x0: f64) -> R<f64> {
     let s = crate::x87::add(x0, 1.0);
     let b = s.to_bits();
     if b >> 48 == 0 || !s.is_finite() || (b as i64) <= 0 {
@@ -106,7 +106,7 @@ pub(super) fn fn_iter_start(x0: f64) -> R<f64> {
     Ok(x0)
 }
 
-pub(super) fn fn_iter(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
+pub(super) fn secant_solve(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
     use crate::x87;
     let npv = f;
     let mut x0 = x0;
@@ -166,17 +166,21 @@ fn irr_of(values: &[f64], guess: Option<f64>) -> R<f64> {
 
 pub fn irr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     opval((|| {
+        if matches!(ops[0], Operand::Missing) {
+            return Err(XlError::VALUE);
+        }
         if let Operand::Val(Value::Error(e)) = &ops[0] {
             return Err(*e);
         }
-        let values = flow_values(ctx, &ops[0]).map_err(|_| XlError::VALUE)?;
         let guess = match ops.get(1) {
             None => None,
 
             Some(op) => Some(scalar_num(ctx, op, 0.0)?),
         };
+
+        let values = flow_values(ctx, &ops[0]).map_err(|_| XlError::VALUE)?;
         if let Some(g) = guess {
-            fn_iter_start(crate::x87::div(g, crate::x87::sub(-1.0, g)))?;
+            secant_start(crate::x87::div(g, crate::x87::sub(-1.0, g)))?;
         }
 
         let lead = values.iter().take_while(|v| v.to_bits() >> 48 == 0).count();
@@ -184,41 +188,86 @@ pub fn irr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     })())
 }
 
+fn power_signed(x: f64, y: f64) -> R<f64> {
+    use crate::x87;
+    if x >= 0.0 || y.fract() == 0.0 || y == 0.5 {
+        let p = crate::xmath::pow(x, y);
+        return if p.is_nan() { Err(XlError::NUM) } else { Ok(p) };
+    }
+    let k: f64 = format!("{:.14e}", x87::div(1.0, y))
+        .parse()
+        .unwrap_or(f64::NAN);
+    if k.fract() != 0.0 || k.abs() >= 2147483647.0 || (k as i64) & 1 == 0 {
+        return Err(XlError::NUM);
+    }
+    Ok(-x87::exp(x87::mul(x87::ln(-x), y)))
+}
+
 pub fn mirr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     opval((|| {
         if matches!(ops[0], Operand::Missing) {
             return Err(XlError::VALUE);
         }
-        let values = flow_values(ctx, &ops[0])?;
+
+        if let Operand::Val(Value::Error(e)) = &ops[0] {
+            return Err(*e);
+        }
         let fr = scalar_num(ctx, &ops[1], 0.0)?;
         let rr = scalar_num(ctx, &ops[2], 0.0)?;
+        let values = flow_values(ctx, &ops[0])?;
 
-        use crate::x87;
         let n = values.len() as f64;
-        let (rr1, fr1) = (x87::add(1.0, rr), x87::add(1.0, fr));
+        let mut f = x87::MathFlag::default();
+        let (rr1, fr1) = (f.add(1.0, rr), f.add(1.0, fr));
         let (mut prr, mut pfr) = (1.0, 1.0);
         let mut pos = 0.0;
         let mut neg = 0.0;
         for &v in &values {
-            if v > 0.0 {
-                pos = x87::add(pos, x87::div(v, prr));
-            } else if v < 0.0 {
-                if pfr == 0.0 {
-                    return Err(XlError::DIV0);
-                }
-                neg = x87::add(neg, x87::div(v, pfr));
+            if v.to_bits() >> 63 == 1 {
+                let t = f.div(v, pfr);
+                neg = f.add(neg, t);
+            } else {
+                let t = f.div(v, prr);
+                pos = f.add(pos, t);
             }
-            prr = x87::mul(prr, rr1);
-            pfr = x87::mul(pfr, fr1);
+            prr = f.mul(prr, rr1);
+            pfr = f.mul(pfr, fr1);
         }
-        if neg == 0.0 || n <= 1.0 || rr1 == 0.0 {
+        if f.0 != 0 {
+            return Err(if f.0 & 4 != 0 {
+                XlError::DIV0
+            } else {
+                XlError::NUM
+            });
+        }
+        if n <= 1.0 {
             return Err(XlError::DIV0);
         }
-        let fv = x87::div(x87::mul(pos, prr), rr1);
-        let ratio = x87::div(fv, -neg);
-        let y = x87::div(1.0, n - 1.0);
+        let scaled = f.mul(pos, prr);
+        let fv = f.div(scaled, rr1);
 
-        let x = crate::xmath::pow(ratio, y);
+        let fv = if fv.to_bits() >> 48 != 0 { -fv } else { fv };
+        let ratio = f.div(fv, neg);
+        let y = f.div(1.0, n - 1.0);
+
+        let x = match power_signed(ratio, y) {
+            Ok(p) if p.is_finite() => p,
+            Ok(_) => {
+                f.0 = 1;
+                0.0
+            }
+            Err(_) => {
+                f.0 = 8;
+                0.0
+            }
+        };
+        if f.0 != 0 {
+            return Err(if f.0 & 4 != 0 {
+                XlError::DIV0
+            } else {
+                XlError::NUM
+            });
+        }
         finite(x87::sub(x, 1.0)).map(Value::num)
     })())
 }
@@ -247,12 +296,21 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
     let classify_v = |i: usize, x: &Value| match x {
         Value::Number(n) => Ok(*n),
         Value::Error(e) => Err(*e),
+
+        Value::Text(_) if xirr => ctx.to_number_atp(x).map_err(|_| XlError::VALUE),
+        Value::Text(_) | Value::Bool(_) if !xirr && i == 0 => Err(XlError::VALUE),
         Value::Text(_) | Value::Bool(_) => Err(text_err(false)),
         Value::Blank if xirr || !v_arr => Ok(0.0),
         Value::Blank if i == 0 => Err(XlError::VALUE),
         _ => Err(XlError::NUM),
     };
     let classify_d = |i: usize, x: &Value| match x {
+        Value::Text(_) if xirr => ctx
+            .to_number_atp(x)
+            .map_err(|_| XlError::VALUE)
+            .and_then(|n| atp::check_date(ctx, n))
+            .map(|d| d as f64),
+
         Value::Number(n) => atp::check_date(ctx, *n).map(|d| d as f64).and_then(|d| {
             if !xirr && d == 0.0 {
                 Err(XlError::NUM)
@@ -268,7 +326,10 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
     };
 
     if !v_arr {
-        if let Some(x) = a[vi].as_ref().filter(|x| !matches!(x, Value::Blank)) {
+        if let Some(x) = a[vi]
+            .as_ref()
+            .filter(|x| !matches!(x, Value::Blank) && (xirr || !matches!(x, Value::Text(_))))
+        {
             classify_v(0, x)?;
         }
     }
@@ -277,8 +338,9 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
             classify_d(0, x)?;
         }
     }
-    if xirr {
-        atp::opt(ctx, a, 2, 0.1)?;
+
+    if xirr && atp::opt(ctx, a, 2, 0.1)? <= -1.0 {
+        return Err(XlError::NUM);
     }
 
     if vals.len() != dates.len() {
@@ -310,22 +372,27 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
         return Err(XlError::NUM);
     }
 
-    for (i, &x) in d.iter().enumerate().skip(1) {
-        if x < d[0] && !(xirr && v[i] == 0.0) {
+    for &x in d.iter().skip(1) {
+        if !xirr && x < d[0] {
             return Err(XlError::NUM);
         }
     }
     Ok((v, d))
 }
 
-fn xnpv_of(rate: f64, v: &[f64], d: &[f64]) -> f64 {
+fn xnpv_of(rate: f64, v: &[f64], d: &[f64]) -> R<f64> {
     let b = x87::add(1.0, rate);
     let mut acc = 0.0;
     for (x, t) in v.iter().zip(d) {
         let e = x87::div(x87::sub(*t, d[0]), 365.0);
-        acc = x87::add(acc, x87::div(*x, xmath::pow(b, e)));
+        let p = xmath::pow(b, e);
+
+        if !p.is_finite() {
+            return Err(XlError::NUM);
+        }
+        acc = x87::add(acc, x87::div(*x, p));
     }
-    acc
+    Ok(acc)
 }
 
 pub fn xnpv(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
@@ -335,76 +402,92 @@ pub fn xnpv(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if rate <= 0.0 {
             return Err(XlError::NUM);
         }
-        finite(xnpv_of(rate, &v, &d))
+        finite(xnpv_of(rate, &v, &d)?)
     })())
 }
 
 fn xirr_bisect(v: &[f64], d: &[f64], guess: f64) -> R<f64> {
-    let sign = if v[0] < 0.0 { 1.0 } else { -1.0 };
-    let h = |x: f64| -> R<f64> {
-        let b = x87::add(1.0, x);
+    let v0 = v[0];
+    let later = &v[1..];
+    let exps: Vec<f64> = d[1..]
+        .iter()
+        .map(|t| x87::div(x87::sub(*t, d[0]), 365.0))
+        .collect();
+
+    let npv = |r: f64| -> R<f64> {
+        let b = x87::add(r, 1.0);
         if b <= 0.0 {
             return Err(XlError::NUM);
         }
-
         let mut acc = 0.0;
-        for (a, t) in v.iter().zip(d).skip(1) {
-            let e = x87::div(x87::sub(*t, d[0]), 365.0);
-            acc = x87::add(acc, x87::div(*a, xmath::pow(b, e)));
-        }
-        acc = x87::add(v[0], acc);
-        finite(x87::mul(acc, sign))
-    };
-    let g = if guess == 0.0 { 1e-5 } else { guess };
-    let h0 = h(0.0)?;
-
-    let cap = 98usize;
-    let mut iters = 0usize;
-    let (mut lo, mut hi);
-    let up = h0 > 0.0;
-    if up {
-        lo = 0.0;
-        hi = g;
-        while h(hi)? > 0.0 {
-            lo = hi;
-            hi *= 2.0;
-            iters += 1;
-            if iters > cap {
+        for (x, e) in later.iter().zip(&exps) {
+            let p = xmath::pow(b, *e);
+            if !p.is_finite() || p == 0.0 {
                 return Err(XlError::NUM);
             }
+            acc = x87::add(x87::div(*x, p), acc);
         }
-    } else if h0 < 0.0 {
-        hi = 0.0;
-        lo = -g.abs();
-        if h(lo)? <= 0.0 {
-            hi = lo;
-            lo = -1.0;
-        }
-    } else if g > 0.0 {
-        lo = 0.0;
-        hi = g;
-    } else {
-        lo = g;
-        hi = 0.0;
-    }
-    loop {
-        iters += 1;
-        if iters > cap {
-            return Err(XlError::NUM);
-        }
-        let mid = hi - (hi - lo) / 2.0;
-        let hm = h(mid)?;
+        finite(acc)
+    };
 
-        if (hi - lo).abs() <= 1e-8 * (1.0 + 2.0 * mid.abs()) && (up || hm.abs() < 2e-8 * v[0].abs())
-        {
-            return Ok(mid);
+    let opposite = |h: f64| (v0 > 0.0 && h < 0.0) || (v0 < 0.0 && h > 0.0);
+    let half_way = |a: f64, b: f64| x87::add(x87::div(x87::sub(a, b), 2.0), b);
+    let narrow = |a: f64, b: f64| {
+        let tol = x87::mul(x87::add(x87::add(b, a).abs(), 1.0), 1e-8);
+        x87::sub(a, b).abs() < tol
+    };
+    const STEPS: usize = 100;
+
+    let mut rate = if guess == 0.0 { 1e-5 } else { guess };
+    let sum = later.iter().fold(0.0, |s, &x| x87::add(x, s));
+
+    if sum.abs() < v0.abs() && rate > 0.0 && rate.to_bits() & 0xffff_0000_0000_0000 != 0 {
+        rate = -rate;
+    }
+    let mut n = npv(rate)?;
+    if rate < 0.0 {
+        let (mut a, mut b) = (-1.0, 0.0);
+        for _ in 0..STEPS {
+            let h = x87::add(v0, n);
+            let htol = x87::mul(x87::add(n.abs(), v0.abs()), 1e-8);
+            if h.abs() < htol && narrow(a, b) {
+                return Ok(rate);
+            }
+            if opposite(h) {
+                a = rate;
+            } else {
+                b = rate;
+            }
+            rate = half_way(a, b);
+            n = npv(rate)?;
         }
-        if hm > 0.0 {
-            lo = mid;
-        } else {
-            hi = mid;
+    } else {
+        let (mut a, mut b) = (0.0, 0.0);
+        let mut bracketed = false;
+        for _ in 0..STEPS {
+            if bracketed && narrow(a, b) {
+                return Ok(rate);
+            }
+            let h = x87::add(v0, n);
+            if !opposite(h) {
+                a = rate;
+                rate = if bracketed {
+                    half_way(a, b)
+                } else {
+                    bracketed = true;
+                    b = 0.0;
+                    x87::div(rate, 2.0)
+                };
+            } else if bracketed {
+                b = rate;
+                rate = half_way(a, b);
+            } else {
+                rate = x87::mul(rate, 2.0);
+            }
+            n = npv(rate)?;
         }
     }
+    Err(XlError::NUM)
 }
 
 pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
@@ -420,4 +503,54 @@ pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
         finite(xirr_bisect(&v, &d, guess)?)
     })())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const D: [f64; 3] = [43831.0, 43831.0, 44196.0];
+
+    #[test]
+    fn zero_first_flow_halves_the_guess_to_zero() {
+        let v = [0.0, -1000.0, 1100.0];
+        assert_eq!(xirr_bisect(&v, &D, 0.1), Ok(0.1 / 33554432.0));
+        assert_eq!(xirr_bisect(&v, &D, 0.0), Ok(4.8828125e-9));
+
+        assert_eq!(
+            xirr_bisect(&[0.0, 1000.0, -1100.0], &D, 0.1),
+            Ok(0.1 / 33554432.0)
+        );
+    }
+
+    #[test]
+    fn zero_first_flow_with_negative_guess_never_converges() {
+        let v = [0.0, -1000.0, 900.0];
+        assert_eq!(xirr_bisect(&v, &D, -0.2), Err(XlError::NUM));
+    }
+
+    #[test]
+    fn small_later_sum_negates_the_guess() {
+        let d = [43831.0, 44196.0];
+        let r = xirr_bisect(&[-1000.0, 900.0], &d, 0.5).unwrap();
+        assert!((r + 0.1).abs() < 1e-6, "{r}");
+
+        assert_eq!(
+            xirr_bisect(&[-1000.0, 1000.0], &d, 0.1),
+            Ok(0.1 / 33554432.0)
+        );
+    }
+
+    #[test]
+    fn constant_npv_hits_the_step_cap() {
+        let d = [43831.0, 43831.0];
+        assert_eq!(xirr_bisect(&[-1000.0, 1100.0], &d, 0.1), Err(XlError::NUM));
+    }
+
+    #[test]
+    fn positive_root_from_a_positive_guess() {
+        let d = [43831.0, 44196.0];
+        let r = xirr_bisect(&[-1000.0, 1100.0], &d, 0.1).unwrap();
+        assert!((r - 0.1).abs() < 1e-7, "{r}");
+    }
 }

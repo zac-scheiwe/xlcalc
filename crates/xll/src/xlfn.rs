@@ -1,86 +1,8 @@
 use crate::macro_table::{Code, MACRO_ANSWERS};
+use crate::xlfn_ftab::{CETAB, FTAB};
 use xlcalc::{CellAddr, Value, Workbook, XlError};
 
-const MACRO_ONLY: &[u16] = &[
-    53, 54, 55, 79, 80, 81, 84, 85, 87, 88, 90, 91, 92, 93, 94, 95, 96, 103, 104, 106, 107, 108,
-    110, 122, 123, 132, 133, 134, 135, 136, 137, 138, 139, 145, 146, 147, 149, 150, 151, 152, 153,
-    154, 155, 156, 157, 158, 159, 160, 161, 166, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179,
-    180, 181, 182, 185, 186, 187, 188, 191, 192, 200, 201, 202, 203, 217, 218, 223, 224, 225, 226,
-    236, 237, 238, 239, 240, 241, 242, 243, 245, 246, 248, 249, 250, 251, 253, 254, 256, 258, 259,
-    260, 262, 263, 264, 265, 266, 267, 268, 333, 334, 335, 338, 339, 340, 341, 348, 349, 355, 356,
-    357,
-];
-
 const XLF_USER: i32 = 255;
-
-const MACRO_ZERO_OK: &[i32] = &[
-    54, 81, 84, 85, 87, 91, 93, 94, 95, 96, 103, 122, 123, 151, 157, 166, 170, 180, 181, 182, 191,
-    192, 237, 238, 239, 240, 245, 248, 251,
-];
-
-const MACRO_COUNTS: &[(i32, u8)] = &[
-    (53, 0b00010),
-    (54, 0b00010),
-    (55, 0b00010),
-    (79, 0b00100),
-    (80, 0b00100),
-    (81, 0b01110),
-    (84, 0b00110),
-    (85, 0b00000),
-    (87, 0b00010),
-    (90, 0b00010),
-    (91, 0b00111),
-    (93, 0b00111),
-    (94, 0b00000),
-    (95, 0b00000),
-    (96, 0b00010),
-    (103, 0b00110),
-    (106, 0b00010),
-    (107, 0b00110),
-    (122, 0b01110),
-    (123, 0b00010),
-    (145, 0b01110),
-    (146, 0b00110),
-    (147, 0b00110),
-    (166, 0b00110),
-    (170, 0b00110),
-    (171, 0b11000),
-    (172, 0b00010),
-    (173, 0b00000),
-    (174, 0b00000),
-    (180, 0b00010),
-    (182, 0b11110),
-    (185, 0b00110),
-    (186, 0b00010),
-    (187, 0b00110),
-    (188, 0b00110),
-    (191, 0b01110),
-    (223, 0b00000),
-    (224, 0b00010),
-    (225, 0b00000),
-    (226, 0b01110),
-    (237, 0b00010),
-    (238, 0b00000),
-    (241, 0b11100),
-    (242, 0b11100),
-    (245, 0b00000),
-    (246, 0b11110),
-    (248, 0b00010),
-    (251, 0b00010),
-    (258, 0b00110),
-    (259, 0b01110),
-    (262, 0b00010),
-    (263, 0b00010),
-    (268, 0b00110),
-    (333, 0b11110),
-    (335, 0b01100),
-    (339, 0b00110),
-    (340, 0b01110),
-    (341, 0b11110),
-    (348, 0b00110),
-    (349, 0b00010),
-    (357, 0b00110),
-];
 
 pub enum Outcome {
     Value(Value),
@@ -126,9 +48,78 @@ fn literal(v: &Value, out: &mut String) {
     }
 }
 
-const LIFTED: &[u16] = &[8, 9, 75, 125, 216, 344, 345, 346, 347, 358, 360, 480];
+const ARRAY_RESULT: &[u16] = &[
+    8, 9, 29, 50, 661, 52, 164, 165, 497, 582, 614, 615, 616, 625, 626, 630, 632, 634, 635, 636,
+    650, 651, 652, 660,
+];
 
-const ARRAY_RESULT: &[u16] = &[8, 9, 50, 52, 164, 165];
+const MOVES_OPERAND: &[u16] = &[615, 616];
+
+fn arg_mask(id: u16, i: usize) -> Option<u32> {
+    if matches!(id, 480 | 590) {
+        Some(0x800017)
+    } else {
+        xlcalc::ifunc_arg_mask(id, i)
+    }
+}
+
+fn operand_bit(v: &Value) -> u32 {
+    match v {
+        Value::Number(_) => 1,
+        Value::Text(_) => 2,
+        Value::Bool(_) => 4,
+        _ => 0,
+    }
+}
+
+fn coerces_to(v: &Value) -> u32 {
+    match v {
+        Value::Number(_) => 2 | 0x800 | 4 | 0x40,
+        Value::Bool(_) => 1 | 2 | 0x800 | 0x40,
+        _ => 1 | 0x800 | 4 | 0x40,
+    }
+}
+
+fn eval_one(
+    wb: &Workbook,
+    caller: CellAddr,
+    id: u16,
+    name: &str,
+    args: &[Option<Value>],
+    refs: &[Option<String>],
+) -> Value {
+    let mut coerced: Option<Vec<Option<Value>>> = None;
+    for (i, a) in args.iter().enumerate() {
+        let Some(mask) = arg_mask(id, i) else {
+            continue;
+        };
+        match a {
+            Some(Value::Error(e)) if mask & 0x10 == 0 => return Value::Error(*e),
+
+            Some(v @ (Value::Number(_) | Value::Bool(_) | Value::Text(_)))
+                if !matches!(refs.get(i), Some(Some(_)))
+                    && mask & operand_bit(v) == 0
+                    && mask & coerces_to(v) == 0 =>
+            {
+                return Value::Error(XlError::VALUE);
+            }
+            Some(Value::Blank) if mask & 0x100 == 0 && !matches!(refs.get(i), Some(Some(_))) => {
+                let v = if mask & 0x801 != 0 {
+                    Value::Number(0.0)
+                } else if mask & 2 != 0 {
+                    Value::Text("".into())
+                } else if mask & 4 != 0 {
+                    Value::Bool(false)
+                } else {
+                    return Value::Error(XlError::VALUE);
+                };
+                coerced.get_or_insert_with(|| args.to_vec())[i] = Some(v);
+            }
+            _ => {}
+        }
+    }
+    eval(wb, caller, name, coerced.as_deref().unwrap_or(args), refs)
+}
 
 fn id_of(xlfn: i32) -> Option<u16> {
     u16::try_from(xlfn).ok()
@@ -141,19 +132,26 @@ fn eval(
     args: &[Option<Value>],
     refs: &[Option<String>],
 ) -> Value {
-    let mut text = format!("{name}(");
-    for (i, a) in args.iter().enumerate() {
-        if i > 0 {
-            text.push(',');
-        }
-        if let Some(Some(r)) = refs.get(i) {
-            text.push_str(r);
-        } else if let Some(v) = a {
-            literal(v, &mut text);
-        }
-    }
-    text.push(')');
-    match wb.cfv_eval(&text, caller, caller) {
+    let v = wb
+        .eval_function_values(name, args, refs, caller, caller)
+        .unwrap_or_else(|| {
+            let mut text = format!("{name}(");
+            for (i, a) in args.iter().enumerate() {
+                if i > 0 {
+                    text.push(',');
+                }
+                if let Some(Some(r)) = refs.get(i) {
+                    text.push_str(r);
+                } else if let Some(Value::Blank) = a {
+                    text.push_str("XFD1048576");
+                } else if let Some(v) = a {
+                    literal(v, &mut text);
+                }
+            }
+            text.push(')');
+            wb.cfv_eval(&text, caller, caller)
+        });
+    match v {
         Value::Lambda(_) => Value::Error(XlError::VALUE),
         v => v,
     }
@@ -172,11 +170,6 @@ fn macro_call(
     else {
         return Outcome::Invalid;
     };
-    if let Some((_, mask)) = MACRO_COUNTS.iter().find(|(n, _)| *n == xlfn) {
-        if args.len() <= 4 && mask >> args.len() & 1 == 0 {
-            return Outcome::BadCount;
-        }
-    }
     let kinds = args
         .iter()
         .map(|a| match a {
@@ -316,33 +309,28 @@ fn macro_value(
     }
 }
 
-fn call_if(args: &[Option<Value>]) -> Outcome {
-    let first = |v: &Option<Value>| match v {
-        Some(Value::Array(a)) => a.data.first().cloned().unwrap_or(Value::Blank),
-        Some(v) => v.clone(),
-        None => Value::Blank,
-    };
-    let err = Value::Error(XlError::VALUE);
-    Outcome::Value(match args {
-        [] => return Outcome::BadCount,
-        [_] => err,
-        [cond, rest @ ..] => match first(cond) {
-            Value::Number(_) | Value::Bool(_) | Value::Blank => {
-                let truthy = match first(cond) {
-                    Value::Number(n) => n != 0.0,
-                    Value::Bool(b) => b,
-                    _ => false,
-                };
-                match (truthy, rest) {
-                    (true, [yes, ..]) => first(yes),
-                    (false, [_, no, ..]) => first(no),
-                    (false, _) => Value::Bool(false),
-                    (true, []) => err,
-                }
-            }
-            _ => xlcalc::Array::new(1, 1, vec![err]).into_value(),
-        },
-    })
+const FLIGHTED_ON: &[u16] = &[
+    609, 611, 612, 613, 614, 615, 616, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634,
+    635, 636, 637, 638, 639, 640, 641, 647, 648, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659,
+    660, 661, 664, 686,
+];
+
+fn gate(ifunc: u16, macro_sheet: bool) -> Option<&'static (u16, u16, u8, u8)> {
+    let row = FTAB.get(usize::from(ifunc))?;
+
+    if ifunc >= 0x2c9 || (ifunc >= 0x25b && row.3 & 0x10 == 0) {
+        return None;
+    }
+    if ifunc >= 0x25b && row.3 & 4 != 0 && !FLIGHTED_ON.contains(&ifunc) {
+        return None;
+    }
+    if row.1 & 0x400 != 0 {
+        return None;
+    }
+    if row.1 & 0x800 != 0 && !macro_sheet && ifunc != 89 && ifunc != 257 {
+        return None;
+    }
+    Some(row)
 }
 
 pub fn call(
@@ -356,14 +344,38 @@ pub fn call(
     if xlfn == XLF_USER {
         return match args.first() {
             None => Outcome::BadCount,
-            Some(Some(Value::Text(_))) => Outcome::BadOperand,
+            Some(Some(Value::Text(_) | Value::Error(_))) => Outcome::BadOperand,
             Some(_) => Outcome::Value(Value::Error(XlError::VALUE)),
         };
     }
-    if macro_sheet && u16::try_from(xlfn).is_ok_and(|n| MACRO_ONLY.contains(&n)) {
-        return if args.is_empty() && !MACRO_ZERO_OK.contains(&xlfn) {
-            Outcome::BadCount
-        } else if xlfn == 149 {
+
+    if args.len() >= 0x100 {
+        return Outcome::BadCount;
+    }
+    if xlfn & 0x8000 != 0 {
+        let idx = usize::try_from(xlfn & 0xfff).unwrap_or(usize::MAX);
+        return match CETAB.get(idx) {
+            Some(&max1) if macro_sheet && idx <= 0x5fb => {
+                if args.len() >= usize::from(max1) {
+                    Outcome::BadCount
+                } else {
+                    Outcome::Invalid
+                }
+            }
+            _ => Outcome::Invalid,
+        };
+    }
+
+    let xlfn = xlfn & !0x2000;
+    let Some(&(max1, flags, min, _)) = u16::try_from(xlfn).ok().and_then(|n| gate(n, macro_sheet))
+    else {
+        return Outcome::Invalid;
+    };
+    if args.len() < usize::from(min) || args.len() >= usize::from(max1) {
+        return Outcome::BadCount;
+    }
+    if flags & 0x800 != 0 && xlfn != 89 && xlfn != 257 {
+        return if xlfn == 149 {
             Outcome::Value(Value::Error(XlError::VALUE))
         } else if xlfn == 256 {
             Outcome::Value(Value::Bool(false))
@@ -374,49 +386,104 @@ pub fn call(
     if macro_sheet && xlfn == 1 && args.len() == 1 {
         return Outcome::Invalid;
     }
-    let Some(name) = u16::try_from(xlfn)
-        .ok()
-        .filter(|n| !MACRO_ONLY.contains(n))
-        .and_then(xlcalc_xlsx::function_name)
+    let Some(name) =
+        xlcalc_xlsx::function_name(xlfn as u16).or_else(|| xlcalc::ifunc_name(xlfn as u16))
     else {
         return Outcome::Invalid;
     };
-    if id_of(xlfn) == Some(1) {
-        return call_if(args);
+
+    if matches!(id_of(xlfn), Some(639 | 640)) {
+        return Outcome::Value(Value::Error(XlError::NA));
     }
-    let Some(info) = xlcalc::function_info(name) else {
-        return Outcome::Invalid;
-    };
-    if args.len() < usize::from(info.min_args) || args.len() > usize::from(info.max_args) {
-        return Outcome::BadCount;
+
+    if id_of(xlfn) == Some(609) {
+        return Outcome::Value(match args.first() {
+            Some(Some(Value::Array(a))) => a.data.first().cloned().unwrap_or(Value::Blank),
+            Some(Some(v)) => v.clone(),
+            _ => Value::Blank,
+        });
     }
     let id = xlfn as u16;
+
+    if id == 1 && args.len() == 1 {
+        return Outcome::Value(Value::Error(XlError::VALUE));
+    }
     let is_ref = |i: usize| matches!(refs.get(i), Some(Some(_)));
-    let array_arg = args
-        .iter()
-        .enumerate()
-        .filter(|(i, _)| !is_ref(*i))
-        .filter_map(|(_, v)| v.as_ref())
-        .find(|v| matches!(v, Value::Array(_)));
-    let v = match array_arg {
-        Some(Value::Array(shape)) if LIFTED.contains(&id) => {
-            let (rows, cols) = (shape.rows, shape.cols);
-            let mut data = Vec::new();
-            for r in 0..rows {
-                for c in 0..cols {
-                    let at = |v: &Option<Value>| match v {
-                        Some(Value::Array(a)) if a.rows == rows && a.cols == cols => {
-                            Some(a.get(r, c).clone())
+
+    let if_lift = id == 1 && matches!(args.first(), Some(Some(Value::Array(_)))) && !is_ref(0);
+    let lifted = |i: usize, v: &Option<Value>| {
+        matches!(v, Some(Value::Array(_)))
+            && !is_ref(i)
+            && (if_lift || arg_mask(id, i).is_some_and(|m| m & 0x40 == 0))
+    };
+    let (mut rows, mut cols) = (0, 0);
+    for (i, v) in args.iter().enumerate() {
+        if let (true, Some(Value::Array(a))) = (lifted(i, v), v) {
+            rows = rows.max(a.rows);
+            cols = cols.max(a.cols);
+        }
+    }
+    let v = if rows > 0 {
+        let mut data = Vec::new();
+        for r in 0..rows {
+            for c in 0..cols {
+                let one: Vec<Option<Value>> = args
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| match v {
+                        Some(Value::Array(a)) if lifted(i, v) => {
+                            let rr = if a.rows == 1 { 0 } else { r };
+                            let cc = if a.cols == 1 { 0 } else { c };
+                            Some(if rr < a.rows && cc < a.cols {
+                                a.get(rr, cc).clone()
+                            } else {
+                                Value::Error(XlError::NA)
+                            })
                         }
                         other => other.clone(),
-                    };
-                    let one: Vec<Option<Value>> = args.iter().map(at).collect();
-                    data.push(eval(wb, caller, name, &one, refs));
+                    })
+                    .collect();
+
+                if MOVES_OPERAND.contains(&id)
+                    && (r, c) != (0, 0)
+                    && !is_ref(0)
+                    && args[0].is_some()
+                {
+                    data.push(
+                        one.iter()
+                            .skip(1)
+                            .find_map(|o| match o {
+                                Some(Value::Error(e)) => Some(Value::Error(*e)),
+                                Some(Value::Text(t))
+                                    if !t.eq_ignore_ascii_case("true")
+                                        && !t.eq_ignore_ascii_case("false") =>
+                                {
+                                    Some(Value::Error(XlError::VALUE))
+                                }
+                                _ => None,
+                            })
+                            .unwrap_or(Value::Blank),
+                    );
+                    continue;
                 }
+
+                data.push(match eval_one(wb, caller, id, name, &one, refs) {
+                    Value::Array(a) => a.data.first().cloned().unwrap_or(Value::Blank),
+                    v => v,
+                });
             }
-            xlcalc::Array::new(rows, cols, data).into_value()
         }
-        _ => eval(wb, caller, name, args, refs),
+        xlcalc::Array::new(rows, cols, data).into_value()
+    } else {
+        match eval_one(wb, caller, id, name, args, refs) {
+            Value::Array(a) if id == 1 => a.data.first().cloned().unwrap_or(Value::Blank),
+            Value::Error(XlError::VALUE)
+                if id == 1 && matches!(args.first(), Some(Some(Value::Text(_)))) =>
+            {
+                xlcalc::Array::new(1, 1, vec![Value::Error(XlError::VALUE)]).into_value()
+            }
+            v => v,
+        }
     };
     match v {
         v @ Value::Array(_) => Outcome::Value(v),

@@ -40,6 +40,48 @@ fn root() -> PathBuf {
     }
 }
 
+fn warn_stale_binary() {
+    fn newest(dir: &Path, best: &mut std::time::SystemTime) {
+        let Ok(rd) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for e in rd.flatten() {
+            let p = e.path();
+            if p.is_dir() {
+                newest(&p, best);
+            } else if matches!(
+                p.extension().and_then(|x| x.to_str()),
+                Some("rs" | "bin" | "toml")
+            ) {
+                if let Ok(t) = e.metadata().and_then(|m| m.modified()) {
+                    *best = (*best).max(t);
+                }
+            }
+        }
+    }
+    let Ok(exe_time) = std::env::current_exe().and_then(|p| std::fs::metadata(p)?.modified())
+    else {
+        return;
+    };
+    let mut best = std::time::UNIX_EPOCH;
+    newest(&root().join("crates"), &mut best);
+    if best > exe_time {
+        eprintln!(
+            "warning: conform is older than the sources in {} (a stale or other worktree's binary              from the shared target/?); rebuild with `cargo build --release --bin conform` first",
+            root().display()
+        );
+    }
+    if let Ok(cwd) = std::env::current_dir() {
+        if !cwd.starts_with(root()) {
+            eprintln!(
+                "warning: conform works on {} but runs in {}",
+                root().display(),
+                cwd.display()
+            );
+        }
+    }
+}
+
 fn conf_dir() -> PathBuf {
     root().join("conformance")
 }
@@ -635,7 +677,16 @@ impl Tally {
             return;
         }
         let s = if s.chars().count() > 240 && std::env::var_os("CONFORM_FULL").is_none() {
-            format!("{}…", s.chars().take(240).collect::<String>())
+            format!(
+                "{}…",
+                s.chars()
+                    .take(if std::env::var_os("CONFORM_FULL").is_some() {
+                        4000
+                    } else {
+                        240
+                    })
+                    .collect::<String>()
+            )
         } else {
             s
         };
@@ -670,6 +721,40 @@ fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool, sel: &SuiteSel
     wb.set_mode(xlcalc::CalcMode::Manual);
     let mut tally = Tally::new();
     let mut occ = minimize::OccCounter::default();
+
+    let items = golden["items"].as_array().unwrap();
+    let batch_layout = items.iter().enumerate().all(|(i, it)| {
+        it["host"]
+            .as_str()
+            .is_some_and(|h| h == "S!A1" || h == format!("T!A{}", i + 1))
+    });
+    let whole = batch_layout.then(|| {
+        let mut bw = Workbook::empty();
+        xlcalc::testing::set_fixed_now(&mut bw, None);
+        load_fixture(&mut bw);
+        let bt = bw.add_sheet("T").unwrap();
+        bw.add_sheet("S").unwrap();
+        if golden["date1904"].as_bool().unwrap_or(false) {
+            bw.set_date_system(xlcalc::DateSystem::D1904);
+        }
+        bw.set_mode(xlcalc::CalcMode::Manual);
+        bw.bulk_entry(|bw| {
+            for (i, it) in items.iter().enumerate() {
+                if it["invalid"].as_bool().unwrap_or(false) {
+                    continue;
+                }
+                let f = it["formula"].as_str().unwrap();
+                let at = xlcalc::CellAddr::new(bt, i as u32, 0);
+                let _ = if !f.starts_with('=') || f == "=" {
+                    bw.set_input(at, f)
+                } else {
+                    bw.set_formula(at, f)
+                };
+            }
+        });
+        bw.full_recalc();
+        bw
+    });
     for (idx, it) in golden["items"].as_array().unwrap().iter().enumerate() {
         let formula = it["formula"].as_str().unwrap();
         if grep.is_some_and(|g| !formula.to_lowercase().contains(&g.to_lowercase())) {
@@ -726,7 +811,10 @@ fn run_formulas(golden: &J, grep: Option<&str>, check_text: bool, sel: &SuiteSel
                 });
             }
             Ok(_) => {
-                let got = cell_result(&wb, host);
+                let got = match &whole {
+                    Some(bw) if host.sheet == t_id => cell_result(bw, host),
+                    _ => cell_result(&wb, host),
+                };
                 let o = if it["nondeterministic"].as_bool().unwrap_or(false) {
                     if same_type(&it["value"], &got) {
                         Outcome::Exact
@@ -787,6 +875,9 @@ fn run_scenario(golden: &J, suite: &str) -> Tally {
     let uses_clock = steps_text.contains("NOW(") || steps_text.contains("TODAY(");
     let mut typed: BTreeMap<String, String> = BTreeMap::new();
     omsteps::OmSession::set_sheets_in_new(sc["sheets_in_new_workbook"].as_u64().unwrap_or(1) as u32);
+    omsteps::OmSession::set_fresh_sheet_base(
+        sc["sheets_in_new_workbook"].as_u64().unwrap_or(2) as u32
+    );
     let mut om: Option<omsteps::OmSession> = None;
     if sc["fresh_excel"].as_bool().unwrap_or(false) {
         om = Some(omsteps::OmSession::fresh(&mut wb));
@@ -1054,7 +1145,7 @@ fn run_scenario(golden: &J, suite: &str) -> Tally {
                 let last = at + step["count"].as_u64().unwrap() - 1;
                 let path = if op.ends_with("rows") {
                     format!(
-                        "Worksheets({sheet}).Rows({})",
+                        "Workbooks(1).Worksheets({sheet}).Rows({})",
                         omsteps::quote(&format!("{at}:{last}"))
                     )
                 } else {
@@ -1063,7 +1154,7 @@ fn run_scenario(golden: &J, suite: &str) -> Tally {
                     };
                     let text = format!("{}1:{}1", letters(at), letters(last));
                     format!(
-                        "Worksheets({sheet}).Range({}).EntireColumn",
+                        "Workbooks(1).Worksheets({sheet}).Range({}).EntireColumn",
                         omsteps::quote(&text)
                     )
                 };
@@ -1223,11 +1314,46 @@ fn run_suite(
         None => SuiteSel::All,
     };
     let t0 = std::time::Instant::now();
+    let weight = if matches!(sel, SuiteSel::Skip) {
+        0
+    } else {
+        bytes.len() as u64
+    };
+    let _held = GoldenBudget::acquire(weight);
     let mut t = run_suite_bytes(n, &path, &bytes, grep, check_text, &sel, false);
     if let Some(t) = t.as_mut() {
         t.secs = t0.elapsed().as_secs_f64();
     }
     t
+}
+
+const GOLDEN_BUDGET: u64 = 400_000_000;
+
+static GOLDEN_IN_FLIGHT: (Mutex<u64>, std::sync::Condvar) =
+    (Mutex::new(0), std::sync::Condvar::new());
+
+struct GoldenBudget(u64);
+
+impl GoldenBudget {
+    fn acquire(weight: u64) -> GoldenBudget {
+        let (m, cv) = &GOLDEN_IN_FLIGHT;
+        let mut used = m.lock().unwrap();
+        while *used > 0 && *used + weight > GOLDEN_BUDGET {
+            used = cv.wait(used).unwrap();
+        }
+        *used += weight;
+        GoldenBudget(weight)
+    }
+}
+
+impl Drop for GoldenBudget {
+    fn drop(&mut self) {
+        let (m, cv) = &GOLDEN_IN_FLIGHT;
+
+        let mut used = m.lock().unwrap_or_else(|e| e.into_inner());
+        *used -= self.0;
+        cv.notify_all();
+    }
 }
 
 fn run_suite_bytes(
@@ -2130,6 +2256,9 @@ fn scored_items(sc: &J, golden: Vec<J>, fresh: Vec<J>) -> (Vec<J>, Vec<J>) {
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if matches!(args.first().map(String::as_str), Some("run" | "record")) {
+        warn_stale_binary();
+    }
 
     let child = std::thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
@@ -2202,5 +2331,44 @@ mod vba_code_tests {
         assert_eq!(vba_code(with), vba_code(without));
         assert_eq!(vba_code(without), without);
         assert_eq!(vba_code("Remark = 1"), "Remark = 1");
+    }
+}
+
+#[cfg(test)]
+mod golden_budget_tests {
+    use super::{GoldenBudget, GOLDEN_BUDGET};
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::time::Duration;
+
+    #[test]
+    fn two_huge_goldens_never_load_together() {
+        let big = GOLDEN_BUDGET / 2 + 1;
+        let first = GoldenBudget::acquire(big);
+
+        drop(GoldenBudget::acquire(1_000));
+        let second_in = AtomicBool::new(false);
+        std::thread::scope(|s| {
+            s.spawn(|| {
+                let _g = GoldenBudget::acquire(big);
+                second_in.store(true, Ordering::SeqCst);
+            });
+            std::thread::sleep(Duration::from_millis(200));
+            assert!(!second_in.load(Ordering::SeqCst));
+            drop(first);
+        });
+        assert!(second_in.load(Ordering::SeqCst));
+
+        drop(GoldenBudget::acquire(GOLDEN_BUDGET * 2));
+    }
+
+    #[test]
+    fn owned_expansion_matches_the_borrowed_one() {
+        let g = serde_json::json!({"kind": "formulas", "items": [
+            {"formula": "=1", "host": "T!A1", "format": "General",
+             "value": {"t": "n", "bits": "3FF0000000000000", "v": 1.0}}
+        ]});
+        let c = crate::golden::compact_golden(&g);
+        assert_eq!(crate::golden::expand_golden_owned(c.clone()), Ok(g.clone()));
+        assert_eq!(crate::golden::expand_golden(&c), Ok(g));
     }
 }

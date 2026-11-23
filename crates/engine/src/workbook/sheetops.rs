@@ -259,6 +259,7 @@ impl Workbook {
         let roots = self.cfv_roots();
         self.calc.dead_pending = true;
         self.sheets[pos].name = new.to_string();
+        self.drawing_hide_live();
         self.cfv_apply_roots(roots, &mut |n| n.clone());
         self.reprint_all();
 
@@ -457,29 +458,9 @@ impl Workbook {
         let mut cross = |sr: &SheetRef| span_after_move(sr, &old, &new, id);
         let plan = self.rewrite_all(&mut |n| remap_sheet(n, &mut cross));
 
-        let mut listed: rustc_hash::FxHashSet<FormulaId> =
+        let listed: rustc_hash::FxHashSet<FormulaId> =
             plan.formulas.iter().map(|(f, ..)| *f).collect();
-        let ids: Vec<FormulaId> = self.formula_ids().collect();
-        let by_position = ["SHEET", "SHEETS"].map(crate::functions::lookup);
-        for f in ids {
-            let mut span = false;
-            crate::structure::map_refs(&self.formula(f).formula.root, &mut |sr, _| {
-                span |= matches!(sr, SheetRef::Span(..));
-                None
-            });
-
-            crate::formula::walk(&self.formula(f).formula.root, &mut |n| {
-                span |= matches!(n, crate::formula::Node::Func { id, .. } if by_position.contains(&Some(*id)));
-            });
-
-            let c = self.formula(f);
-            let named = c.precedents.iter().any(|p| {
-                matches!(p, crate::graph::Prec::Name(k) if self.names.lookup(k, c.addr.sheet).is_some())
-            });
-            if span || named {
-                listed.insert(f);
-            }
-        }
+        let forced: rustc_hash::FxHashSet<FormulaId> = self.span_users().into_iter().collect();
         let snapshot = self.formula_snapshot();
         let sheet = self.sheets.remove(from);
         let to = match before {
@@ -497,6 +478,7 @@ impl Workbook {
         self.calc.relink_scope = Some(crate::structure::DirtyScope {
             listed: true,
             moved: listed,
+            forced,
             ..crate::structure::DirtyScope::new(id, snapshot)
         });
         Ok(self.relink_and_recalc())
@@ -602,6 +584,79 @@ impl Workbook {
         }
     }
 
+    fn span_users(&self) -> Vec<FormulaId> {
+        use crate::formula::Node;
+        let has_span = |root: &Node| {
+            let mut span = false;
+            crate::structure::map_refs(root, &mut |sr, _| {
+                span |= matches!(sr, SheetRef::Span(a, b) if a != b);
+                None
+            });
+            span
+        };
+        let name_def = |key: &str, scope: Option<SheetId>, sheet: &Option<SheetRef>| {
+            let at = match sheet {
+                Some(SheetRef::Sheet(s)) => Some(*s),
+                _ => scope,
+            };
+            match at {
+                Some(s) => self.names.lookup(key, s),
+                None => self.names.get(key, None),
+            }
+            .map(|d| (d.scope, crate::text::name_key(&d.name)))
+        };
+
+        let mut spanning: rustc_hash::FxHashSet<(Option<SheetId>, String)> = self
+            .names
+            .iter()
+            .filter(|d| has_span(&d.formula.root))
+            .map(|d| (d.scope, crate::text::name_key(&d.name)))
+            .collect();
+        loop {
+            let more: Vec<_> = self
+                .names
+                .iter()
+                .filter(|d| !spanning.contains(&(d.scope, crate::text::name_key(&d.name))))
+                .filter(|d| {
+                    let mut hit = false;
+                    crate::formula::walk(&d.formula.root, &mut |n| {
+                        if let Node::Name { key, sheet, .. } = n {
+                            hit |= name_def(key, d.scope, sheet)
+                                .is_some_and(|k| spanning.contains(&k));
+                        }
+                    });
+                    hit
+                })
+                .map(|d| (d.scope, crate::text::name_key(&d.name)))
+                .collect();
+            if more.is_empty() {
+                break;
+            }
+            spanning.extend(more);
+        }
+
+        let by_position = ["SHEET", "SHEETS"].map(crate::functions::lookup);
+        self.formula_ids()
+            .filter(|&f| {
+                let c = self.formula(f);
+                if has_span(&c.formula.root) {
+                    return true;
+                }
+                let mut hit = false;
+                crate::formula::walk(&c.formula.root, &mut |n| {
+                    if let Node::Func { id, .. } = n {
+                        hit |= by_position.contains(&Some(*id));
+                    }
+                    if let Node::Name { key, sheet, .. } = n {
+                        hit |= name_def(key, Some(c.addr.sheet), sheet)
+                            .is_some_and(|k| spanning.contains(&k));
+                    }
+                });
+                hit
+            })
+            .collect()
+    }
+
     pub fn copy_sheet(
         &mut self,
         src: SheetId,
@@ -619,13 +674,14 @@ impl Workbook {
         self.release_stale_copies();
 
         if self.settings.mode == crate::CalcMode::Automatic
-            && !(self.calc.volatile.is_empty()
-                && self.calc.host_volatile.is_empty()
+            && !(self.calc.host_volatile.is_empty()
                 && crate::calc::dead_host_formulas(self).is_empty())
         {
             self.calc.dead_pending = true;
-            self.silently(|wb| wb.recalc_point());
+
+            self.silently(|wb| wb.with_op(super::Op::HoldIter, true, |wb| wb.recalc_point()));
         }
+        let snapshot = self.formula_snapshot();
         let has_tables = self.tables.iter().any(|t| t.sheet == src);
         let at = match before {
             Some(b) => self.sheet_position(b).ok_or(EditError::NoSuchSheet)?,
@@ -832,6 +888,11 @@ impl Workbook {
                                 copied_globals.contains(key) || self.names.get(key, None).is_none();
                             None
                         }
+
+                        Node::StructRef { .. } => {
+                            hit = true;
+                            None
+                        }
                         _ => None,
                     };
                     hit |= match sr {
@@ -981,6 +1042,10 @@ impl Workbook {
                     volatile: def.formula.volatile,
                 }),
             });
+
+            if !self.names.is_visible(&k, def.scope) {
+                self.names.set_visible(&k, Some(new), false);
+            }
             self.names.mark_copy_stale(new, k, stale);
         }
 
@@ -1034,32 +1099,28 @@ impl Workbook {
             .filter(|&f| self.formula(f).addr.sheet == new)
             .collect();
         if auto {
-            let cycles: rustc_hash::FxHashSet<(u32, u32)> = self
-                .calc
-                .circular
-                .iter()
-                .map(|&f| self.formula(f).addr)
-                .filter(|a| a.sheet == src)
-                .map(|a| (a.row, a.col))
+            let forced = self
+                .span_users()
+                .into_iter()
+                .filter(|f| self.formula(*f).addr.sheet != new)
                 .collect();
             self.calc.relink_scope = Some(crate::structure::DirtyScope {
-                except: true,
-                moved: copied
-                    .iter()
-                    .copied()
-                    .filter(|&f| {
-                        let a = self.formula(f).addr;
-                        cycles.contains(&(a.row, a.col))
-                    })
-                    .collect(),
-                ..crate::structure::DirtyScope::new(new, Default::default())
+                listed: true,
+                moved: copied.iter().copied().collect(),
+                forced,
+                ..crate::structure::DirtyScope::new(new, snapshot)
             });
         }
 
         self.calc.skip_host_volatile = true;
+        let stores_before = self.calc.stores;
+        self.calc.defer_host = auto;
+
         self.silently(|wb| {
             wb.relink_and_recalc();
+            wb.calc.defer_host = false;
             if has_tables && auto {
+                wb.calc.skip_host_volatile = false;
                 wb.dirty_all(&copied);
                 wb.notify_cell_change(new);
             }
@@ -1073,7 +1134,14 @@ impl Workbook {
             );
             self.dirty_all(&dirty);
         }
-        self.calc.no_empty_call = true;
+
+        self.calc.no_empty_call = copied.iter().any(|&f| {
+            self.formulas.get(f as usize).is_some_and(|c| {
+                c.as_ref().is_some_and(|c| {
+                    c.stored > stores_before && crate::host::calls_host(self, &c.formula.root)
+                })
+            })
+        });
         self.recalc_point();
         self.calc.no_empty_call = false;
         for (from, to) in stale {
@@ -1150,17 +1218,4 @@ fn span_after_move(
     } else {
         SheetRef::Span(a, b)
     })
-}
-
-impl Workbook {
-    pub(crate) fn reads_volatile_cell(&self, fid: FormulaId) -> bool {
-        self.formula(fid).precedents.iter().any(|p| match p {
-            crate::graph::Prec::Cell(s, r, c) => {
-                self.formula_at(CellAddr::new(*s, *r, *c)).is_some_and(|g| {
-                    self.calc.volatile.contains(&g) || self.calc.host_volatile.contains(&g)
-                })
-            }
-            _ => false,
-        })
-    }
 }

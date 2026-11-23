@@ -1,4 +1,4 @@
-use xlcalc::Workbook;
+use xlcalc::{Rect, Workbook};
 use xlcalc_variant::{HResult, ObjectId, Variant};
 
 use crate::app::{flags, Application, Call, DISPID_VALUE};
@@ -624,4 +624,128 @@ fn external_names_follow_open_source() {
     let r2 = range(&mut a, "A2");
     put(&mut a, r2, "Value2", Variant::R8(9.0));
     assert_eq!(get(&mut a, d, "Value2", &[]), Variant::R8(9.0));
+}
+
+#[test]
+fn range_of_range_counts_from_the_first_cell() {
+    let mut a = app();
+    let r = range(&mut a, "Sheet1!C3:E5");
+    let two = |a: &mut Application, x: &str, y: &str| {
+        let v = a
+            .invoke(
+                r,
+                "Range",
+                Call::VB,
+                &[Variant::Bstr(x.into()), Variant::Bstr(y.into())],
+                &[],
+            )
+            .unwrap();
+        get(a, obj(v), "Address", &[])
+    };
+    assert_eq!(two(&mut a, "A1", "B2"), Variant::Bstr("$C$3:$D$4".into()));
+    assert_eq!(two(&mut a, "B2", "A1"), Variant::Bstr("$C$3:$D$4".into()));
+    let union = a
+        .invoke(r, "Range", Call::VB, &[Variant::Bstr("A1,B2".into())], &[])
+        .unwrap();
+    assert_eq!(
+        get(&mut a, obj(union), "Address", &[]),
+        Variant::Bstr("$C$3,$D$4".into())
+    );
+    for bad in ["Sheet2!A1", "", "A1,C3"] {
+        assert!(a
+            .invoke(
+                r,
+                "Range",
+                Call::VB,
+                &[Variant::Bstr("A1".into()), Variant::Bstr(bad.into())],
+                &[]
+            )
+            .is_err());
+    }
+}
+
+#[test]
+fn value_put_of_formula_text_is_legacy_and_fills_relative() {
+    let mut a = app();
+    let r = range(&mut a, "Sheet1!K1:K2");
+    put(&mut a, r, "Value2", Variant::Bstr("=ROW(1:2)".into()));
+    let k2 = range(&mut a, "Sheet1!K2");
+    assert_eq!(
+        get(&mut a, k2, "Formula", &[]),
+        Variant::Bstr("=ROW(2:3)".into())
+    );
+
+    let k4 = range(&mut a, "Sheet1!K4");
+    put(&mut a, k4, "Value2", Variant::Bstr("=A1:A2".into()));
+    assert!(matches!(get(&mut a, k4, "Value2", &[]), Variant::Error(_)));
+}
+
+#[test]
+fn r1c1_address_of_whole_row_and_column_is_one_part() {
+    let mut a = app();
+    let col = range(&mut a, "Sheet1!A:A");
+    let f = Variant::Bool(false);
+    assert_eq!(
+        get(
+            &mut a,
+            col,
+            "Address",
+            &[f.clone(), f.clone(), Variant::I4(2)]
+        ),
+        Variant::Bstr("C".into())
+    );
+    let row = range(&mut a, "Sheet1!1:1");
+    assert_eq!(
+        get(&mut a, row, "Address", &[f.clone(), f, Variant::I4(2)]),
+        Variant::Bstr("R".into())
+    );
+}
+
+#[test]
+fn range_item_text_and_value_index_follow_the_hr_chains() {
+    let mut a = app();
+    let r = range(&mut a, "B2:D5");
+
+    let c = obj(get(
+        &mut a,
+        r,
+        "Item",
+        &[Variant::I4(2), Variant::Bstr("B".into())],
+    ));
+    assert_eq!(get(&mut a, c, "Address", &[]), Variant::Bstr("$C$3".into()));
+
+    assert!(a
+        .invoke(
+            r,
+            "Item",
+            Call::VB,
+            &[Variant::I4(1), Variant::Bstr("B:C".into())],
+            &[]
+        )
+        .is_err());
+
+    assert!(a
+        .invoke(r, "Value", Call::VB, &[Variant::I4(13)], &[])
+        .is_err());
+    let h = range(&mut a, "H1");
+    let e = a
+        .invoke(
+            h,
+            "Value",
+            Call::PUT,
+            &[Variant::I4(12), Variant::R8(1.0)],
+            &[],
+        )
+        .unwrap_err();
+    assert_eq!(e.scode, crate::error::E_NOTIMPL.0);
+}
+
+#[test]
+fn sz_to_ref_reads_one_block_and_allows_leading_spaces_only() {
+    use crate::addr::sz_to_ref;
+    assert_eq!(sz_to_ref("B", true), Some(Rect::new(0, 1, 1_048_575, 1)));
+    assert_eq!(sz_to_ref(" 2:3", true), Some(Rect::new(1, 0, 2, 16_383)));
+    assert_eq!(sz_to_ref("2: 3", true), None);
+    assert_eq!(sz_to_ref("A1", false), Some(Rect::cell(0, 0)));
+    assert_eq!(sz_to_ref("A1", true), Some(Rect::cell(0, 0)));
 }

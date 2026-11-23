@@ -48,6 +48,23 @@ fn is_ident_char(c: char) -> bool {
     }
 }
 
+fn path_name_ok(s: &str) -> bool {
+    let sep = |c: char| c == '\\' || c == '/';
+    let body = s.strip_prefix("\\\\").unwrap_or(s);
+    let cs: Vec<char> = body.chars().collect();
+    !cs.iter()
+        .enumerate()
+        .any(|(i, &c)| sep(c) && cs.get(i + 1).is_none_or(|&n| sep(n)))
+}
+
+pub(super) fn is_ident_start_no_dollar(c: char) -> bool {
+    c != '$' && is_ident_start(c)
+}
+
+pub(super) fn is_ident_char_no_dollar(c: char) -> bool {
+    c != '$' && is_ident_char(c)
+}
+
 fn looks_like_ref_part(s: &str) -> bool {
     let bare = s.trim_start_matches('$');
     crate::address::parse_a1_cell(s).is_some()
@@ -61,6 +78,8 @@ fn looks_like_ref_part(s: &str) -> bool {
 
 pub struct Lexer<'a> {
     chars: Vec<char>,
+
+    orig: Vec<char>,
     i: usize,
     after_sheet: bool,
 
@@ -69,18 +88,110 @@ pub struct Lexer<'a> {
     after_colon: bool,
 
     sheet_exists: &'a dyn Fn(&str) -> bool,
+
+    typed: bool,
+}
+
+const DIGIT_LIKE: [(u32, u32); 48] = [
+    (0xB2, 0xB3),
+    (0xB9, 0xB9),
+    (0x7C0, 0x7C9),
+    (0x9F4, 0x9F9),
+    (0xB72, 0xB77),
+    (0xBF0, 0xBF2),
+    (0xC78, 0xC7E),
+    (0xD58, 0xD5E),
+    (0xD70, 0xD78),
+    (0xDE6, 0xDEF),
+    (0xF2A, 0xF33),
+    (0x1090, 0x1099),
+    (0x1369, 0x137C),
+    (0x17F0, 0x17F9),
+    (0x1946, 0x194F),
+    (0x19D0, 0x19DA),
+    (0x1A80, 0x1A89),
+    (0x1A90, 0x1A99),
+    (0x1B50, 0x1B59),
+    (0x1BB0, 0x1BB9),
+    (0x1C40, 0x1C49),
+    (0x1C50, 0x1C59),
+    (0x2070, 0x2070),
+    (0x2075, 0x2079),
+    (0x2080, 0x2080),
+    (0x2085, 0x2089),
+    (0x2150, 0x2152),
+    (0x2155, 0x215A),
+    (0x215F, 0x215F),
+    (0x2189, 0x2189),
+    (0x24EA, 0x24FF),
+    (0x2776, 0x2793),
+    (0x2CFD, 0x2CFD),
+    (0x3192, 0x3195),
+    (0x3248, 0x324F),
+    (0x3251, 0x325F),
+    (0x3280, 0x3289),
+    (0x32B1, 0x32BF),
+    (0xA620, 0xA629),
+    (0xA6E6, 0xA6EF),
+    (0xA830, 0xA835),
+    (0xA8D0, 0xA8D9),
+    (0xA900, 0xA909),
+    (0xA9D0, 0xA9D9),
+    (0xA9F0, 0xA9F9),
+    (0xAA50, 0xAA59),
+    (0xABF0, 0xABF9),
+    (0xFF10, 0xFF19),
+];
+
+fn digit_like(c: char) -> bool {
+    let u = c as u32;
+    DIGIT_LIKE.iter().any(|&(a, b)| (a..=b).contains(&u))
+}
+
+fn ascii_digits(src: &str) -> Vec<char> {
+    if src.is_ascii() {
+        return src.chars().collect();
+    }
+    let mut quote: Option<char> = None;
+    let mut depth = 0usize;
+    src.chars()
+        .map(|c| {
+            match (quote, c) {
+                (Some(q), _) if c == q => quote = None,
+                (Some(_), _) => {}
+                (None, '"' | '\'') => quote = Some(c),
+                (None, '[') => depth += 1,
+                (None, ']') => depth = depth.saturating_sub(1),
+                _ => {
+                    if depth == 0 {
+                        if let Some(d) = crate::coerce::national_digit(c) {
+                            return d;
+                        }
+                    }
+                }
+            }
+            c
+        })
+        .collect()
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(src: &str, sheet_exists: &'a dyn Fn(&str) -> bool) -> Self {
         Lexer {
-            chars: src.chars().collect(),
+            chars: ascii_digits(src),
+            orig: src.chars().collect(),
             i: 0,
             after_sheet: false,
             parens: Vec::new(),
             after_colon: false,
             sheet_exists,
+            typed: false,
         }
+    }
+
+    pub fn typed(mut self, typed: bool) -> Self {
+        self.typed = typed;
+        self
     }
 
     fn span_ok(&self, a: &str, b: &str, after: usize) -> bool {
@@ -88,7 +199,7 @@ impl<'a> Lexer<'a> {
         (digit || ((self.sheet_exists)(a) && (self.sheet_exists)(b)))
             && !self.after_colon
             && self.parens.last() != Some(&false)
-            && self.ref_follows(after)
+            && (self.ref_follows(after) || self.chars.get(after) == Some(&' '))
     }
 
     fn ref_follows(&self, at: usize) -> bool {
@@ -104,6 +215,27 @@ impl<'a> Lexer<'a> {
 
     fn peek(&self, k: usize) -> Option<char> {
         self.chars.get(self.i + k).copied()
+    }
+
+    fn cell_address_follows(&self, k: usize) -> bool {
+        let mut j = self.i + k;
+        let at = |j: usize| self.chars.get(j).copied();
+        if at(j) == Some('$') {
+            j += 1;
+        }
+        let letters = (0..).take_while(|d| at(j + d).is_some_and(|c| c.is_ascii_alphabetic()));
+        let nl = letters.count();
+        if !(1..=3).contains(&nl) {
+            return false;
+        }
+        j += nl;
+        if at(j) == Some('$') {
+            j += 1;
+        }
+        let nd = (0..)
+            .take_while(|d| at(j + d).is_some_and(|c| c.is_ascii_digit()))
+            .count();
+        nd > 0 && !at(j + nd).is_some_and(is_ident_char)
     }
 
     fn err(&self, msg: impl Into<String>) -> ParseError {
@@ -200,7 +332,17 @@ impl<'a> Lexer<'a> {
                         ..
                     })
                 );
-                self.ident()?
+                let start = self.i;
+                let t = self.ident()?;
+                match t {
+                    Tok::Ident(s)
+                        if self.orig.get(start..self.i) != Some(&self.chars[start..self.i])
+                            && crate::address::parse_a1_cell(&s).is_none() =>
+                    {
+                        Tok::Ident(self.orig[start..self.i].iter().collect())
+                    }
+                    t => t,
+                }
             } else if c == '@' {
                 self.i += 1;
                 Tok::Op("@")
@@ -215,6 +357,16 @@ impl<'a> Lexer<'a> {
                 }
                 match found {
                     Some(op) => {
+                        if matches!(op, "-" | "+")
+                            && !after_operand
+                            && !matches!(
+                                out.last().map(|t| &t.tok),
+                                Some(Tok::Number { .. } | Tok::Op("%"))
+                            )
+                            && self.peek(1).is_some_and(digit_like)
+                        {
+                            return Err(self.err("a sign cannot be followed by this digit"));
+                        }
                         self.i += op.chars().count();
                         Tok::Op(op)
                     }
@@ -438,6 +590,14 @@ impl<'a> Lexer<'a> {
             return Err(self.err("expected '!' after quoted sheet name"));
         }
         self.i += 1;
+
+        if !s.contains('[') && s.contains(']') {
+            return Err(self.err("not a valid sheet or file name"));
+        }
+
+        if s.ends_with(':') && !s.eq_ignore_ascii_case("c:") {
+            return Err(self.err("not a valid file name"));
+        }
         let spec = if let Some((dir, rest)) = s.split_once('[').filter(|(d, _)| !d.contains('!')) {
             let (book, sheet) = rest
                 .split_once(']')
@@ -447,6 +607,10 @@ impl<'a> Lexer<'a> {
                 sheet: Some(sheet.to_string()),
             }
         } else if s.contains(['\\', '/']) {
+            if !path_name_ok(&s) {
+                return Err(self.err("not a valid file name"));
+            }
+
             SheetSpec::Single(s)
         } else if let Some((a, b)) = s.rsplit_once(':') {
             if self.parens.last() == Some(&false) {
@@ -520,6 +684,13 @@ impl<'a> Lexer<'a> {
                 }
             }
             if self.peek(0) == Some('!') {
+                if name.is_empty()
+                    && !inner.is_empty()
+                    && inner.bytes().all(|b| b.is_ascii_digit())
+                    && (self.typed || self.cell_address_follows(1))
+                {
+                    return Err(self.err("link index with '!' and no sheet"));
+                }
                 self.i += 1;
                 return Ok(Tok::Sheet(SheetSpec::External {
                     book: inner,
@@ -527,6 +698,16 @@ impl<'a> Lexer<'a> {
                 }));
             }
             self.i = save;
+
+            if !inner.is_empty()
+                && inner.bytes().all(|b| b.is_ascii_digit())
+                && self.peek(0).is_some_and(is_ident_start)
+            {
+                return Ok(Tok::Sheet(SheetSpec::External {
+                    book: inner,
+                    sheet: None,
+                }));
+            }
         }
         Ok(Tok::StructRef { table, spec: inner })
     }
@@ -617,12 +798,27 @@ impl<'a> Lexer<'a> {
         if super::r1c1_pair_with_tail(&name) {
             return Err(self.err("not a valid name"));
         }
+
+        if name
+            .strip_suffix('.')
+            .is_some_and(|base| super::r1c1_axis(base).is_some())
+        {
+            return Err(self.err("not a valid name"));
+        }
         if name.encode_utf16().count() > 255 {
             return Err(self.err("names are at most 255 characters"));
         }
+
+        if self.peek(0) == Some('(') && super::starts_like_r1c1(&name) {
+            return Err(self.err("not a valid function name"));
+        }
         match self.peek(0) {
             Some('!') => {
-                if !super::print::bare_sheet_name_ok(&name) {
+                let path = name.contains('\\');
+                if !(super::print::bare_sheet_name_ok(&name)
+                    || (path && super::print::bare_sheet_name_ok(&name.replace('\\', "_"))))
+                    || (path && !path_name_ok(&name))
+                {
                     return Err(self.err("not a valid sheet name"));
                 }
                 self.i += 1;

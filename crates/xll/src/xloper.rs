@@ -13,6 +13,7 @@ pub const MISSING: u32 = 0x0080;
 pub const NIL: u32 = 0x0100;
 pub const SREF: u32 = 0x0400;
 pub const INT: u32 = 0x0800;
+pub const BIGDATA: u32 = 0x0802;
 
 pub const TYPE_MASK: u32 = 0x0FFF;
 pub const BIT_XLFREE: u32 = 0x1000;

@@ -12,6 +12,8 @@ pub struct Hyperlink {
     pub screen_tip: Option<String>,
 
     pub name: Option<String>,
+
+    pub shape: Option<u32>,
 }
 
 impl Hyperlink {
@@ -57,7 +59,92 @@ pub fn normalize_address(raw: &str) -> (String, bool) {
     if lower.starts_with("mailto:") {
         return (t.to_string(), false);
     }
+
+    let owned = if matches!(drive_of(t), Some(('@', _))) {
+        t.replace('/', "\\")
+    } else {
+        t.to_string()
+    };
+    let t = owned.as_str();
+    match drive_of(t) {
+        Some((_, n)) if !t.contains('/') && !lower.starts_with("file://") => {
+            let mut out: Vec<&str> = Vec::new();
+            for c in t[n..].split('\\').skip(1) {
+                match c {
+                    "." => {}
+                    ".." => {
+                        out.pop();
+                    }
+                    c => out.push(c),
+                }
+            }
+            return (format!("{}\\{}", &t[..n], out.join("\\")), false);
+        }
+        Some(_) if t.contains('/') => {
+            return (format!("file://{}", t.replace('/', "\\")), false);
+        }
+        _ => {}
+    }
     (percent_decode(t), false)
+}
+
+fn drive_of(a: &str) -> Option<(char, usize)> {
+    let a = a.strip_prefix("file://").unwrap_or(a);
+    let b = a.as_bytes();
+    let sep = |c: u8| c == b'\\' || c == b'/';
+    if b.len() >= 4 && a[..4].eq_ignore_ascii_case("@out") && b.get(4).is_none_or(|c| sep(*c)) {
+        return Some(('@', 4));
+    }
+    (b.len() >= 3 && b[0].is_ascii_alphabetic() && b[1] == b':' && sep(b[2]))
+        .then(|| (b[0] as char, 2))
+}
+
+pub fn relative_to_dir(address: &str, dir: &str) -> Option<String> {
+    let (d, _) = drive_of(address)?;
+    if !drive_of(dir)?.0.eq_ignore_ascii_case(&d) {
+        return None;
+    }
+    let comps = |p: &str| -> Vec<String> {
+        let p = p.strip_prefix("file://").unwrap_or(p);
+        let mut out: Vec<String> = Vec::new();
+        for c in p[drive_of(p).map_or(2, |d| d.1)..]
+            .split(['\\', '/'])
+            .skip(1)
+        {
+            match c {
+                "." => {}
+                ".." => {
+                    out.pop();
+                }
+                c => out.push(c.to_string()),
+            }
+        }
+        out
+    };
+    let mut base = comps(dir);
+    base.retain(|c| !c.is_empty());
+    let mut path = comps(address);
+    let folder = path.last().is_some_and(String::is_empty);
+    if folder {
+        path.pop();
+    }
+    let dirs = if folder {
+        path.len()
+    } else {
+        path.len().saturating_sub(1)
+    };
+    let common = base
+        .iter()
+        .zip(&path[..dirs])
+        .take_while(|(a, b)| a == b)
+        .count();
+    let mut parts: Vec<&str> = vec![".."; base.len() - common];
+    parts.extend(path[common..].iter().map(String::as_str));
+    Some(if parts.is_empty() {
+        ".".to_string()
+    } else {
+        parts.join("/")
+    })
 }
 
 pub fn split_fragment(address: &str) -> (String, Option<String>) {
@@ -98,17 +185,31 @@ impl Workbook {
         h.id = self.hl_next;
         let id = h.id;
 
-        if let Some(old) = self
-            .hyperlinks
-            .get_mut(&sheet)
-            .and_then(|v| v.iter_mut().find(|o| o.rect == h.rect))
-        {
+        if let Some(old) = self.hyperlinks.get_mut(&sheet).and_then(|v| {
+            v.iter_mut()
+                .find(|o| o.shape == h.shape && (h.shape.is_some() || o.rect == h.rect))
+        }) {
             *old = h;
             return id;
         }
-        self.hl_clear(sheet, &h.rect);
         self.hyperlinks.entry(sheet).or_default().push(h);
         id
+    }
+
+    pub fn hyperlink_addresses(&self) -> Vec<String> {
+        self.hyperlinks
+            .values()
+            .flatten()
+            .map(|h| h.address.clone())
+            .collect()
+    }
+
+    pub fn hyperlinks_save_relative(&mut self, dir: &str, expand: &dyn Fn(&str) -> String) {
+        for h in self.hyperlinks.values_mut().flatten() {
+            if let Some(r) = relative_to_dir(&expand(&h.address), dir) {
+                h.address = r;
+            }
+        }
     }
 
     pub fn hyperlink_mut(&mut self, sheet: SheetId, id: u32) -> Option<&mut Hyperlink> {
@@ -128,7 +229,12 @@ impl Workbook {
 
     pub fn hl_clear(&mut self, sheet: SheetId, r: &Rect) {
         if let Some(v) = self.hyperlinks.get_mut(&sheet) {
-            v.retain(|h| h.rect.intersection(r).is_none());
+            v.retain(|h| {
+                h.shape.is_some()
+                    || h.rect
+                        .intersection(r)
+                        .is_none_or(|i| i != h.rect && i != *r)
+            });
         }
     }
 
@@ -136,8 +242,14 @@ impl Workbook {
         let inside: Vec<Hyperlink> = self
             .hyperlinks(ss)
             .iter()
-            .filter(|h| src.intersection(&h.rect).is_some_and(|i| i == h.rect))
-            .cloned()
+            .filter(|h| h.shape.is_none())
+            .filter_map(|h| {
+                let i = src.intersection(&h.rect)?;
+                (i == h.rect || !cut).then(|| Hyperlink {
+                    rect: i,
+                    ..h.clone()
+                })
+            })
             .collect();
         if cut {
             let ids: Vec<u32> = inside.iter().map(|h| h.id).collect();
@@ -145,7 +257,9 @@ impl Workbook {
                 v.retain(|h| !ids.contains(&h.id));
             }
         }
-        self.hl_clear(ds, &pasted);
+        if let Some(v) = self.hyperlinks.get_mut(&ds) {
+            v.retain(|h| h.shape.is_some() || h.rect.intersection(&pasted).is_none());
+        }
         let (rows, cols) = (src.rows(), src.cols());
         let mut r = pasted.r0;
         while r + rows - 1 <= pasted.r1 {
@@ -171,12 +285,51 @@ impl Workbook {
         }
     }
 
+    pub(crate) fn hl_sort_pairs(&mut self, pairs: &[(crate::CellAddr, crate::CellAddr)]) {
+        let Some(first) = pairs.first() else {
+            return;
+        };
+        let sheet = first.0.sheet;
+        let Some(v) = self.hyperlinks.get_mut(&sheet) else {
+            return;
+        };
+        let map: rustc_hash::FxHashMap<(u32, u32), (u32, u32)> = pairs
+            .iter()
+            .map(|(f, t)| ((f.row, f.col), (t.row, t.col)))
+            .collect();
+        for h in v.iter_mut().filter(|h| h.shape.is_none()) {
+            let (Some(a), Some(b)) = (
+                map.get(&(h.rect.r0, h.rect.c0)),
+                map.get(&(h.rect.r1, h.rect.c1)),
+            ) else {
+                continue;
+            };
+            let dr = i64::from(a.0) - i64::from(h.rect.r0);
+            let dc = i64::from(a.1) - i64::from(h.rect.c0);
+            let same = i64::from(b.0) - i64::from(h.rect.r1) == dr
+                && i64::from(b.1) - i64::from(h.rect.c1) == dc;
+            let whole = (h.rect.r0..=h.rect.r1).all(|r| {
+                (h.rect.c0..=h.rect.c1).all(|c| {
+                    map.get(&(r, c)).is_some_and(|t| {
+                        i64::from(t.0) - i64::from(r) == dr && i64::from(t.1) - i64::from(c) == dc
+                    })
+                })
+            });
+            if same && whole {
+                h.rect = Rect::new(a.0, a.1, b.0, b.1);
+            }
+        }
+    }
+
     pub(crate) fn hl_shift(&mut self, s: &Shift) {
         let rows = s.axis == Axis::Rows;
         let Some(v) = self.hyperlinks.get_mut(&s.sheet) else {
             return;
         };
         v.retain_mut(|h| {
+            if h.shape.is_some() {
+                return true;
+            }
             if let Some((p0, p1)) = s.limit {
                 let (a, b) = if rows {
                     (h.rect.c0, h.rect.c1)

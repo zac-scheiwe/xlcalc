@@ -89,6 +89,26 @@ impl FileSystem for OutFs {
         }
         Some(format!("@out\\{}", parts.join("\\")))
     }
+
+    fn expand(&self, path: &str) -> String {
+        match OutFs::rest(path) {
+            Some(rest) => {
+                let mut full = std::env::temp_dir()
+                    .join("xlcalc-oracle-out")
+                    .join("suite")
+                    .join(rest)
+                    .to_string_lossy()
+                    .trim_end_matches('\\')
+                    .to_string();
+
+                if path.ends_with(['\\', '/']) {
+                    full.push('\\');
+                }
+                full
+            }
+            None => path.to_string(),
+        }
+    }
 }
 
 struct Reader<'a> {

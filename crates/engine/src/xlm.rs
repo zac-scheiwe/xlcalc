@@ -42,6 +42,8 @@ pub trait XlmEnv {
 thread_local! {
 
     static PENDING: std::cell::RefCell<Vec<(CellAddr, Value)>> = const { std::cell::RefCell::new(Vec::new()) };
+
+    static PENDING_NAMES: std::cell::RefCell<Vec<(SheetId, String, String)>> = const { std::cell::RefCell::new(Vec::new()) };
 }
 
 impl Workbook {
@@ -52,6 +54,150 @@ impl Workbook {
                 self.set_value(a, v);
             }
         }
+        let names = PENDING_NAMES.with(|p| std::mem::take(&mut *p.borrow_mut()));
+        for (sheet, name, text) in names {
+            let _ = self.define_name(&name, &text, Some(sheet));
+        }
+    }
+}
+
+pub const INFO_FUNCTIONS: &[&str] = &[
+    "GET.WORKSPACE",
+    "GET.DOCUMENT",
+    "GET.WORKBOOK",
+    "GET.FORMULA",
+    "GET.NAME",
+    "GET.DEF",
+];
+
+#[derive(Clone, Debug)]
+pub struct XlmInfoAsk {
+    pub host: CellAddr,
+
+    pub name: String,
+
+    pub args: Vec<Operand>,
+    key: String,
+}
+
+#[derive(Default)]
+pub struct XlmInfo {
+    answers: FxHashMap<String, Value>,
+    asked: Vec<XlmInfoAsk>,
+}
+
+pub(crate) fn info_call(ctx: &EvalCtx, name: &str, args: Vec<Operand>) -> Value {
+    let key = format!("{name}|{:?}|{args:?}", ctx.host);
+    let Ok(mut st) = ctx.wb.xlm_info.lock() else {
+        return Value::Bool(false);
+    };
+    if let Some(v) = st.answers.get(&key) {
+        return v.clone();
+    }
+    if !st.asked.iter().any(|a| a.key == key) {
+        st.asked.push(XlmInfoAsk {
+            host: ctx.host,
+            name: name.to_string(),
+            args,
+            key,
+        });
+    }
+    Value::Bool(false)
+}
+
+impl Workbook {
+    pub fn xlm_info_take(&mut self) -> Vec<XlmInfoAsk> {
+        self.xlm_info
+            .get_mut()
+            .map(|st| std::mem::take(&mut st.asked))
+            .unwrap_or_default()
+    }
+
+    pub fn xlm_info_answer(&mut self, answers: Vec<(XlmInfoAsk, Value)>) {
+        let mut hosts = Vec::new();
+        if let Ok(st) = self.xlm_info.get_mut() {
+            for (a, v) in answers {
+                if !hosts.contains(&a.host) {
+                    hosts.push(a.host);
+                }
+                st.answers.insert(a.key, v);
+            }
+        }
+        for &h in &hosts {
+            if let Some(fid) = self.formula_at(h) {
+                crate::calc::mark_dirty(self, fid);
+            }
+        }
+        if self.settings.mode == crate::workbook::CalcMode::Automatic {
+            crate::calc::recalc(self);
+        } else {
+            crate::calc::recalc_only(self, &hosts);
+        }
+    }
+
+    pub fn xlm_info_forget(&mut self) {
+        if let Ok(st) = self.xlm_info.get_mut() {
+            st.answers.clear();
+            st.asked.clear();
+        }
+    }
+}
+
+pub fn const_text(v: &Value) -> Option<String> {
+    fn item(v: &Value) -> Option<String> {
+        Some(match v {
+            Value::Number(n) => format!("{n}"),
+            Value::Text(t) => format!("\"{}\"", t.replace('"', "\"\"")),
+            Value::Bool(b) => (if *b { "TRUE" } else { "FALSE" }).to_string(),
+            Value::Error(e) => format!("{e}"),
+            _ => return None,
+        })
+    }
+    match v {
+        Value::Array(a) => {
+            let rows: Option<Vec<String>> = (0..a.rows)
+                .map(|r| {
+                    let cells: Option<Vec<String>> = (0..a.cols)
+                        .map(|c| item(&a.data[(r * a.cols + c) as usize]))
+                        .collect();
+                    cells.map(|c| c.join(","))
+                })
+                .collect();
+            Some(format!("={{{}}}", rows?.join(";")))
+        }
+        v => item(v).map(|t| format!("={t}")),
+    }
+}
+
+pub fn var_text(wb: &Workbook, op: &Operand) -> Option<String> {
+    match op {
+        Operand::Val(v) => const_text(v),
+        Operand::Ref(r) if !r.areas().is_empty() => {
+            let parts: Vec<String> = r
+                .areas()
+                .iter()
+                .map(|a| {
+                    let sn = wb
+                        .sheet(a.sheet)
+                        .map(|s| s.name.clone())
+                        .unwrap_or_default();
+                    let x = a.rect;
+                    let end = if x.r0 == x.r1 && x.c0 == x.c1 {
+                        String::new()
+                    } else {
+                        format!(":R{}C{}", x.r1 + 1, x.c1 + 1)
+                    };
+                    format!(
+                        "'{}'!R{}C{}{end}",
+                        sn.replace('\'', "''"),
+                        x.r0 + 1,
+                        x.c0 + 1
+                    )
+                })
+                .collect();
+            Some(format!("={}", parts.join(",")))
+        }
+        _ => None,
     }
 }
 
@@ -106,6 +252,20 @@ impl XlmEnv for ReadOnlyEnv<'_> {
         }
         Ok(Value::Bool(false))
     }
+    fn persist(&mut self, vars: &XlmVars, names: &XlmNames) {
+        let defs: Vec<(SheetId, String, String)> = vars
+            .iter()
+            .filter_map(|((sheet, key), op)| {
+                let text = var_text(self.wb, op)?;
+                let shown = names
+                    .get(&(*sheet, key.clone()))
+                    .cloned()
+                    .unwrap_or_else(|| key.to_string());
+                Some((*sheet, shown, text))
+            })
+            .collect();
+        PENDING_NAMES.with(|p| p.borrow_mut().extend(defs));
+    }
     fn overlay(&self) -> Option<Arc<XlmCells>> {
         Some(self.cells.clone())
     }
@@ -157,6 +317,8 @@ pub struct Interp<'e> {
     steps: u64,
     depth: u32,
     halted: bool,
+
+    whole_array: bool,
 }
 
 pub fn run(env: &mut dyn XlmEnv, start: CellAddr, args: Vec<Operand>) -> Result<Value, XlmError> {
@@ -167,8 +329,13 @@ pub fn run(env: &mut dyn XlmEnv, start: CellAddr, args: Vec<Operand>) -> Result<
         steps: 0,
         depth: 0,
         halted: false,
+        whole_array: false,
     };
-    let r = it.call(start, args);
+
+    let r = it.call(start, args).map(|v| match v {
+        Value::Array(a) if !it.whole_array => a.data.first().cloned().unwrap_or(Value::Blank),
+        v => v,
+    });
     let vars = std::mem::take(&mut it.vars);
     let names = std::mem::take(&mut it.names);
     it.env.persist(&vars, &names);
@@ -202,6 +369,15 @@ impl Interp<'_> {
         let wb = self.env.wb();
         let fid = wb.formula_at(a)?;
         Some(wb.formula(fid).formula.clone())
+    }
+
+    fn next_filled(&self, a: CellAddr) -> Option<CellAddr> {
+        let wb = self.env.wb();
+        let s = wb.sheet(a.sheet)?;
+        let last = s.cells.bounds()?.r1;
+        (a.row + 1..=last)
+            .find(|&r| s.cells.get(r, a.col).is_some())
+            .map(|r| CellAddr::new(a.sheet, r, a.col))
     }
 
     fn cell_is_blank(&self, a: CellAddr) -> bool {
@@ -259,25 +435,75 @@ impl Interp<'_> {
     }
 
     fn convert_result(&mut self, v: Value, ty: Option<i64>, host: CellAddr) -> Value {
+        self.whole_array = ty.is_some_and(|t| t & 64 != 0);
         let Some(ty) = ty else { return v };
-        if matches!(v, Value::Error(_)) && ty & 16 != 0 {
+        let v = match v {
+            Value::Array(_) if ty & 64 != 0 => return v,
+
+            Value::Array(a) => a.data.first().cloned().unwrap_or(Value::Blank),
+            v => v,
+        };
+
+        if matches!(v, Value::Error(_)) && (ty & 64 == 0 || ty & 7 != 0) {
             return v;
         }
-        let ctx = EvalCtx::new(self.env.wb(), host);
-        match (ty, &v) {
-            (2, Value::Number(_) | Value::Bool(_)) => {
-                crate::coerce::to_text(&v).map_or(v, Value::Text)
-            }
-            (1, Value::Text(_) | Value::Bool(_)) => match ctx.to_number(&v) {
-                Ok(n) => Value::Number(n),
-                Err(e) => Value::Error(e),
+        self.coerce_to(v, ty, host)
+            .unwrap_or(Value::Error(XlError::VALUE))
+    }
+
+    fn coerce_to(&mut self, v: Value, ty: i64, host: CellAddr) -> Option<Value> {
+        let v = match v {
+            Value::Blank => Value::Number(0.0),
+
+            Value::Array(a) if ty & 64 == 0 => match a.data.first() {
+                Some(Value::Blank) | None => Value::Number(0.0),
+                Some(x) => x.clone(),
             },
-            (4, Value::Number(n)) => Value::Bool(*n != 0.0),
-            (4, Value::Text(t)) if t.eq_ignore_ascii_case("TRUE") => Value::Bool(true),
-            (4, Value::Text(t)) if t.eq_ignore_ascii_case("FALSE") => Value::Bool(false),
-            (4, Value::Text(_)) => Value::Error(XlError::VALUE),
-            _ => v,
+            v => v,
+        };
+        let bit = match &v {
+            Value::Number(_) => 1,
+            Value::Text(_) => 2,
+            Value::Bool(_) => 4,
+            Value::Error(_) => 16,
+            Value::Array(_) => 64,
+            _ => 0,
+        };
+        if bit & ty != 0 {
+            return Some(v);
         }
+        let ctx = EvalCtx::new(self.env.wb(), host);
+        if ty & 1 != 0 {
+            match &v {
+                Value::Bool(b) => return Some(Value::Number(f64::from(u8::from(*b)))),
+                Value::Text(_) => {
+                    if let Ok(n) = ctx.to_number(&v) {
+                        return Some(Value::Number(n));
+                    }
+                }
+                _ => {}
+            }
+        }
+        if ty & 2 != 0 && matches!(v, Value::Number(_) | Value::Bool(_)) {
+            if let Ok(t) = crate::coerce::to_text(&v) {
+                return Some(Value::Text(t));
+            }
+        }
+        if ty & 4 != 0 {
+            match &v {
+                Value::Number(n) => return Some(Value::Bool(*n != 0.0)),
+                Value::Text(t) if t.eq_ignore_ascii_case("TRUE") => return Some(Value::Bool(true)),
+                Value::Text(t) if t.eq_ignore_ascii_case("FALSE") => {
+                    return Some(Value::Bool(false))
+                }
+                _ => {}
+            }
+        }
+        if ty & 64 != 0 {
+            return Some(crate::value::Array::new(1, 1, vec![v]).into_value());
+        }
+
+        (ty & 16 != 0).then_some(Value::Error(XlError::VALUE))
     }
 
     fn number(&mut self, op: Operand, host: CellAddr) -> Option<f64> {
@@ -291,12 +517,17 @@ impl Interp<'_> {
 
     fn needs(&self, node: &Node, sheet: SheetId) -> bool {
         let mut found = false;
-        crate::formula::walk(node, &mut |n| {
-            if let Node::NamedCall { key, .. } = n {
+        crate::formula::walk(node, &mut |n| match n {
+            Node::NamedCall { key, .. } => {
                 if is_cmd(key) || self.macro_target(key, sheet).is_some() {
                     found = true;
                 }
             }
+
+            Node::Call { callee, .. } if matches!(strip(callee), Node::Ref(..)) => {
+                found = true;
+            }
+            _ => {}
         });
         found
     }
@@ -333,7 +564,13 @@ impl Interp<'_> {
             }
             let pc = fr.pc;
             if self.cell_is_blank(pc) {
-                return Err(XlmError::NoReturn);
+                match self.next_filled(pc) {
+                    Some(a) => {
+                        fr.pc = a;
+                        continue;
+                    }
+                    None => return Err(XlmError::NoReturn),
+                }
             }
             let Some(f) = self.root_at(pc) else {
                 fr.pc.row += 1;
@@ -499,6 +736,12 @@ impl Interp<'_> {
                 let val = match given {
                     Some(Operand::Missing) | None => Operand::Val(Value::Error(XlError::NA)),
 
+                    Some(Operand::Val(Value::Error(e)))
+                        if ty.is_some_and(|t| t & (16 | 64) == 0) =>
+                    {
+                        return Ok(Some(Flow::Return(Value::Error(e))));
+                    }
+
                     Some(Operand::Val(_)) if ty == Some(8) => {
                         Operand::Val(Value::Error(XlError::VALUE))
                     }
@@ -509,7 +752,24 @@ impl Interp<'_> {
                     {
                         Operand::Val(Value::Error(XlError::VALUE))
                     }
-                    Some(o) => o,
+
+                    Some(o) => match ty {
+                        Some(t) if t & 8 == 0 => {
+                            let v = self.deref(o, host);
+                            if let Value::Error(e) = v {
+                                if t & (16 | 64) == 0 {
+                                    return Ok(Some(Flow::Return(Value::Error(e))));
+                                }
+                            }
+                            match self.coerce_to(v, t, host) {
+                                Some(v) => Operand::Val(v),
+                                None => {
+                                    return Ok(Some(Flow::Return(Value::Error(XlError::VALUE))))
+                                }
+                            }
+                        }
+                        _ => o,
+                    },
                 };
                 if let Value::Text(t) = n {
                     if let Some(r) = args.get(2) {
@@ -544,7 +804,13 @@ impl Interp<'_> {
                     None => Value::Blank,
                 };
                 if let (Value::Text(t), Some(vn)) = (n, args.get(1)) {
-                    let op = self.expr(fr, vn, host)?;
+                    let mut op = self.expr(fr, vn, host)?;
+
+                    if let Operand::Val(Value::Array(a)) = &op {
+                        if !matches!(strip(vn), Node::Lit(_)) {
+                            op = Operand::Val(a.data.first().cloned().unwrap_or(Value::Blank));
+                        }
+                    }
                     self.set_var(host, &t, op);
                 }
                 self.env.store(host, Value::Bool(true));
@@ -595,12 +861,19 @@ impl Interp<'_> {
                         }
                         None => false,
                     };
+
+                    self.env.store(a, Value::Bool(true));
                     if ok {
                         return Flow::Jump(CellAddr::new(a.sheet, a.row + 1, a.col));
                     }
                     at = a;
                 }
-                Some((a, _)) => return Flow::Jump(CellAddr::new(a.sheet, a.row + 1, a.col)),
+                Some((a, n)) => {
+                    if n == "ELSE" {
+                        self.env.store(a, Value::Bool(true));
+                    }
+                    return Flow::Jump(CellAddr::new(a.sheet, a.row + 1, a.col));
+                }
                 None => return Flow::Next,
             }
         }
@@ -826,6 +1099,20 @@ impl Interp<'_> {
                     None => Ok(Operand::Val(Value::Bool(false))),
                 }
             }
+            Node::Call { callee, args } if matches!(strip(callee), Node::Ref(..)) => {
+                let target = self.eval_node(callee, host);
+                let mut ops = Vec::with_capacity(args.len());
+                for a in args {
+                    ops.push(self.expr(fr, a, host)?);
+                }
+                match self.first_cell(&target) {
+                    Some(a) => {
+                        let v = self.call(a, ops)?;
+                        Ok(Operand::Val(v))
+                    }
+                    None => Ok(Operand::Val(Value::Error(XlError::REF))),
+                }
+            }
             Node::NamedCall { key, args, .. } => {
                 let key = key.to_string();
                 let mut ops = Vec::with_capacity(args.len());
@@ -885,16 +1172,39 @@ impl Interp<'_> {
                 Ok(n.clone())
             }
         };
+
+        let early = |this: &mut Self, n: &Node| -> Node {
+            if matches!(
+                strip(n),
+                Node::Name { .. } | Node::Ref(..) | Node::Lit(_) | Node::Local { .. }
+            ) {
+                return n.clone();
+            }
+            match this.eval_node(n, host) {
+                Operand::Ref(_) | Operand::Missing => n.clone(),
+                op => Node::Lit(this.deref(op, host)),
+            }
+        };
         Ok(match node {
             Node::Func { id, args } => {
+                let last = args.iter().rposition(|a| self.needs(a, host.sheet));
                 let mut out = Vec::with_capacity(args.len());
-                for a in args {
-                    out.push(sub(self, fr, a)?);
+                for (i, a) in args.iter().enumerate() {
+                    if last.is_some_and(|l| i < l) && !self.needs(a, host.sheet) {
+                        let lazy = matches!(functions::def(*id).imp, functions::Imp::Lazy(_));
+                        out.push(if lazy { a.clone() } else { early(self, a) });
+                    } else {
+                        out.push(sub(self, fr, a)?);
+                    }
                 }
                 Node::Func { id: *id, args: out }
             }
             Node::Binary(op, a, b) => {
-                let a = sub(self, fr, a)?;
+                let a = if self.needs(b, host.sheet) && !self.needs(a, host.sheet) {
+                    early(self, a)
+                } else {
+                    sub(self, fr, a)?
+                };
                 let b = sub(self, fr, b)?;
                 Node::Binary(*op, Box::new(a), Box::new(b))
             }
@@ -964,6 +1274,7 @@ pub fn eval_expression(
         steps: 0,
         depth: 0,
         halted: false,
+        whole_array: false,
     };
     let mut fr = Frame {
         pc: host,
@@ -1021,4 +1332,8 @@ pub fn name_target(wb: &Workbook, key: &str, sheet: SheetId) -> Option<CellAddr>
     wb.sheet(a.sheet)
         .is_some_and(|s| s.kind.is_macro())
         .then(|| CellAddr::new(a.sheet, a.rect.r0, a.rect.c0))
+}
+
+pub fn r1c1_rect(text: &str, row: u32, col: u32) -> Option<crate::address::Rect> {
+    functions::lookup::parse_r1c1(text, row, col)
 }

@@ -21,17 +21,15 @@ fn store_float(f: F80, ty: &VType) -> Result<Variant, VbaError> {
     match ty {
         VType::Single => f.to_f32().map(Variant::R4).ok_or_else(|| err(6)),
 
-        VType::Date => f
-            .to_f64()
-            .map(|x| {
-                if x > -657_435.0 && x < 2_958_466.0 {
-                    Variant::Date(x)
-                } else {
-                    Variant::R8(x)
-                }
-            })
-            .ok_or_else(|| err(6)),
+        VType::Date => f.to_f64().map(Variant::Date).ok_or_else(|| err(6)),
         _ => f.to_f64().map(Variant::R8).ok_or_else(|| err(6)),
+    }
+}
+
+fn date_range(r: F80) -> Result<(), VbaError> {
+    match r.to_f64() {
+        Some(x) if x > -657_435.0 && x < 2_958_466.0 => Ok(()),
+        _ => Err(err(6)),
     }
 }
 
@@ -163,6 +161,8 @@ impl Conv {
                 Variant::Cy(c) => F80::from_i64(*c) / F80::from_i64(10_000),
                 Variant::Empty => F80::from_i64(0),
                 Variant::Null => return Err(err(94)),
+
+                Variant::Int(_) => return Err(err(458)),
                 Variant::Bstr(_) | Variant::BstrNull | Variant::Decimal(_) => {
                     match self.change(v, VarType::R8)? {
                         Variant::R8(x) => F80::from_f64(x),
@@ -276,6 +276,11 @@ impl Conv {
                 Ok(Val::V(Variant::Bstr(s)))
             }
             VType::Single | VType::Double | VType::Date => {
+                let (a, b) = if *res == VType::Date {
+                    (self.string_as(a, res)?, self.string_as(b, res)?)
+                } else {
+                    (a, b)
+                };
                 let (x, y) = (self.to_f80(&a)?, self.to_f80(&b)?);
                 let r = match op {
                     Add => x + y,
@@ -290,6 +295,9 @@ impl Conv {
                 };
                 if r.is_nan() || r.is_infinite() {
                     return Err(err(6));
+                }
+                if *res == VType::Date && *at == VType::Date {
+                    date_range(r)?;
                 }
                 Ok(Val::X(r))
             }
@@ -364,6 +372,15 @@ impl Conv {
             b = self.string_as(b, at)?;
             bt = at;
         }
+
+        let byte = |v: Val| -> Result<Val, VbaError> {
+            Ok(Val::V(Variant::Ui1(if self.truth(v)? { 255 } else { 0 })))
+        };
+        if *at == VType::Byte && *bt == VType::Boolean {
+            b = byte(b)?;
+        } else if *at == VType::Boolean && *bt == VType::Byte {
+            a = byte(a)?;
+        }
         if !is_float(at) && !is_float(bt) {
             return Ok(self.to_cy(&a)?.cmp(&self.to_cy(&b)?));
         }
@@ -388,9 +405,12 @@ impl Conv {
 
     pub fn unary(self, op: UnOp, res: &VType, a: Val) -> Result<Val, VbaError> {
         match (op, res) {
-            (UnOp::Neg, VType::Single | VType::Double | VType::Date) => {
-                Ok(Val::X(-self.to_f80(&a)?))
+            (UnOp::Neg, VType::Date) => {
+                let r = -self.to_f80(&a)?;
+                date_range(r)?;
+                Ok(Val::X(r))
             }
+            (UnOp::Neg, VType::Single | VType::Double) => Ok(Val::X(-self.to_f80(&a)?)),
             (UnOp::Neg, VType::Currency) => {
                 let c = -self.to_cy(&a)?;
                 Ok(Val::V(Variant::Cy(i64::try_from(c).map_err(|_| err(6))?)))

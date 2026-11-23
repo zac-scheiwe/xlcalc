@@ -210,6 +210,75 @@ fn matching_paren(chars: &[char], open: usize) -> Option<usize> {
     None
 }
 
+fn cell_text_len(chars: &[char], i: usize) -> usize {
+    let cell = |mut k: usize| -> usize {
+        let start = k;
+        if chars.get(k) == Some(&'$') {
+            k += 1;
+        }
+        let letters = chars[k.min(chars.len())..]
+            .iter()
+            .take_while(|c| c.is_ascii_alphabetic())
+            .count();
+        if letters == 0 || letters > 3 {
+            return 0;
+        }
+        k += letters;
+        if chars.get(k) == Some(&'$') {
+            k += 1;
+        }
+        let digits = chars[k.min(chars.len())..]
+            .iter()
+            .take_while(|c| c.is_ascii_digit())
+            .count();
+        if digits == 0 {
+            return 0;
+        }
+        k + digits - start
+    };
+    let first = cell(i);
+    if first == 0 {
+        return 0;
+    }
+    if chars.get(i + first) == Some(&':') {
+        let second = cell(i + first + 1);
+        if second > 0 {
+            return first + 1 + second;
+        }
+    }
+    first
+}
+
+pub fn dead_refs(text: &str, in_name: bool) -> String {
+    let chars: Vec<char> = text.chars().collect();
+    let mut s = String::with_capacity(text.len());
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '"' || chars[i] == '\'' {
+            i = skip_quoted(&chars, i, &mut s);
+        } else if starts_with_at(&chars, i, "#REF!") {
+            let after = i + 5;
+            let tail = if starts_with_at(&chars, after, "#REF!") {
+                5
+            } else {
+                cell_text_len(&chars, after)
+            };
+            if tail == 0 {
+                s.push_str("#REF!");
+            } else if in_name {
+                s.push_str("'#REF!'!#REF!");
+            } else {
+                s.push_str("#REF!");
+            }
+            i = after + tail;
+        } else {
+            s.push(chars[i]);
+            i += 1;
+        }
+    }
+    s
+}
+
 pub fn prepare(text: &str, aliases: &mut BTreeSet<String>) -> String {
     let chars: Vec<char> = text.chars().collect();
     let mut s = String::with_capacity(text.len());
@@ -309,6 +378,12 @@ pub fn file_meaning(text: &str, tables: &[String]) -> String {
     })
 }
 
+pub fn unqualify_table(text: &str, file_name: &str) -> String {
+    map_tokens(text, |tok, _, next| {
+        (next == Some('[') && tok.eq_ignore_ascii_case(file_name)).then(String::new)
+    })
+}
+
 pub fn unescape_xstring(s: &str) -> String {
     if !s.contains("_x") {
         return s.to_string();
@@ -391,6 +466,15 @@ pub fn ext_index(text: &str, keys: &[String]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn dead_references() {
+        assert_eq!(dead_refs("SUM(#REF!B2:C3,1)", false), "SUM(#REF!,1)");
+        assert_eq!(dead_refs("#REF!#REF!+1", false), "#REF!+1");
+        assert_eq!(dead_refs("#REF!$B$2", true), "'#REF!'!#REF!");
+        assert_eq!(dead_refs("\"#REF!A1\"", true), "\"#REF!A1\"");
+        assert_eq!(dead_refs("#REF!", true), "#REF!");
+    }
 
     #[test]
     fn shifts() {

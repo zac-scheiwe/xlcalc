@@ -1745,7 +1745,6 @@
 {"op":"om","path":"Worksheets('Sheet1').Scenarios","call":"Item"},
 {"op":"om","path":"Worksheets('Sheet1').Scenarios","call":"Merge"},
 {"op":"om_get","path":"Worksheets('Sheet1').Scenarios(1)","prop":"ChangingCells"},
-{"op":"om_get","path":"Worksheets('Sheet1').Scenarios(1)","prop":"Comment"},
 {"op":"om_put","path":"Worksheets('Sheet1').Scenarios(1)","prop":"Comment","value":""},
 {"op":"om_get","path":"Worksheets('Sheet1').Scenarios(1)","prop":"Comment"},
 {"op":"om_put","path":"Worksheets('Sheet1').Scenarios(1)","prop":"Comment","value":"x"},

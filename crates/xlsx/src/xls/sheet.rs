@@ -51,6 +51,8 @@ pub(super) struct Cell {
 #[derive(Default)]
 struct RowInfo {
     height: Option<f64>,
+
+    auto_height: Option<f64>,
     hidden: bool,
     level: u8,
     collapsed: bool,
@@ -213,6 +215,8 @@ pub(super) fn read_sheet(
                 let info = rows.entry(row).or_default();
                 if flags & 0x40 != 0 && ht & 0x8000 == 0 {
                     info.height = Some(f64::from(ht & 0x7FFF) / 20.0);
+                } else if flags & 0x40 == 0 && ht & 0x8000 == 0 {
+                    info.auto_height = Some(f64::from(ht & 0x7FFF) / 20.0);
                 }
                 info.hidden = flags & 0x20 != 0;
                 info.level = (flags & 7) as u8;
@@ -806,7 +810,13 @@ pub(super) fn read_sheet(
         let info = rows.get(&r);
         let list = cells.get(&r);
         let plain = info.is_none_or(|i| {
-            i.height.is_none() && !i.hidden && i.level == 0 && !i.collapsed && i.xf.is_none()
+            i.height.is_none()
+                && i.auto_height
+                    .is_none_or(|h| def_row_h.is_some_and(|d| (d.1 - h).abs() < 0.01))
+                && !i.hidden
+                && i.level == 0
+                && !i.collapsed
+                && i.xf.is_none()
         });
         if list.is_none() && plain {
             continue;
@@ -818,6 +828,11 @@ pub(super) fn read_sheet(
             }
             if let Some(h) = i.height {
                 let _ = write!(a, " ht=\"{h}\" customHeight=\"1\"");
+            } else if let Some(h) = i
+                .auto_height
+                .filter(|h| def_row_h.is_none_or(|d| (d.1 - h).abs() >= 0.01))
+            {
+                let _ = write!(a, " ht=\"{h}\"");
             }
             if i.hidden {
                 a.push_str(" hidden=\"1\"");

@@ -338,6 +338,12 @@ impl Workbook {
         self.guard_arrays_rect(sheet, rect)?;
         self.guard_merges_rect(sheet, rect)?;
 
+        let table_rects: Vec<Rect> = self
+            .data_tables
+            .iter()
+            .filter(|t| t.sheet == sheet)
+            .map(|t| t.rect)
+            .collect();
         self.data_tables_overwritten(sheet, rect)?;
         let mut report = RecalcReport::default();
 
@@ -365,11 +371,15 @@ impl Workbook {
             for (i, (r, c)) in visit.into_iter().enumerate() {
                 let a = CellAddr::new(sheet, r, c);
 
+                let in_table = table_rects.iter().any(|t| t.contains(r, c));
                 if i + 1 < n
                     && wb.formula_at(a).is_none()
-                    && matches!(wb.value(a), crate::value::Value::Blank)
+                    && (in_table || matches!(wb.value(a), crate::value::Value::Blank))
                 {
-                    if wb.ever_used(sheet).is_some_and(|u| u.contains(r, c)) {
+                    if in_table {
+                        wb.clear_core(a);
+                    }
+                    if in_table || wb.ever_used(sheet).is_some_and(|u| u.contains(r, c)) {
                         calc::cell_changed(wb, a);
                     }
                     continue;

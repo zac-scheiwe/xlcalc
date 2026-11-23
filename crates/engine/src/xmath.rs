@@ -114,7 +114,8 @@ fn powi_squaring(x: f64, n: f64) -> f64 {
 pub fn pow(x: f64, y: f64) -> f64 {
     if y.fract() == 0.0 && y.abs() < 4_294_967_295.0 {
         if x == 10.0 && y.abs() <= 400.0 {
-            return format!("1e{}", y as i32).parse().unwrap_or(f64::INFINITY);
+            let t = crate::number::tento(y.abs() as u32);
+            return if y < 0.0 { crate::x87::div(1.0, t) } else { t };
         }
         return powi_squaring(x, y);
     }
@@ -147,5 +148,9 @@ mod tests {
         assert_eq!(pow(2.0, 0.5), std::f64::consts::SQRT_2);
         assert_eq!(pow(1.1, 10.0).to_bits(), 0x4004BFFC0C03023D);
         assert_eq!(pow(10.0, 308.0).to_bits(), 0x7FE1CCF385EBC8A0);
+
+        assert_eq!(pow(10.0, 126.0).to_bits(), 1e126f64.to_bits() + 1);
+        assert_eq!(pow(10.0, -23.0), 1.0 / 1e23);
+        assert_ne!(pow(10.0, -23.0), 1e-23);
     }
 }

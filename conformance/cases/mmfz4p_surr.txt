@@ -1,0 +1,54 @@
+=LEN(LEFT("😀 smile",1))
+=UNICODE(LEFT("😀 smile",1))
+=UNICODE(MID("😀 smile",2,1))
+=CODE(LEFT("😀 smile",1))
+=LEFT("😀 smile",1)&MID("😀 smile",2,12)="😀 smile"
+=EXACT(LEFT("😀 smile",1)&MID("😀 smile",2,12),"😀 smile")
+=LEN(LEFT("😀 smile",1)&MID("😀 smile",2,12))
+=UNICODE(LEFT("😀 smile",1)&MID("😀 smile",2,12))
+=LEFT("😀 smile",1)&MID("😀 smile",2,12)
+=LEFT("😀 smile",2)="😀"
+=LEFT("😀 smile",1)=LEFT("😁 smile",1)
+=LEFT("😀 smile",1)=MID("😀 smile",2,1)
+=LEFT("😀 smile",1)=""
+=LEFT("😀 smile",1)=LEFT("😀 smile",2)
+=MID("😀 smile",2,1)=UNICHAR(65533)
+=LEFT("😀 smile",1)=UNICHAR(65533)
+="😀"="😁"
+="😀"=UNICHAR(65533)
+="😀"=""
+="😀"="😀"
+="a😀"="a😁"
+="😀"<"😁"
+="😀">"😁"
+="𠀀"="𠀁"
+="𠀀"<"𠀁"
+="𐌀"="𐌁"
+="😀"="x"
+=EXACT("😀","😁")
+=EXACT("😀",UNICHAR(65533))
+=COUNTIF({"😀";"😁";"😀"},"😀")
+=MATCH("😁",{"😀";"😁"},0)
+=XLOOKUP("😁",{"😀";"😁"},{1;2})
+=SORT({"😁";"😀";"a"})
+=UNIQUE({"😀";"😁";"😀"})
+=ROWS(UNIQUE({"😀";"😁";"😀"}))
+=UNICODE(UNICHAR(128512))
+=UNICODE(RIGHT("a😀",1))
+=LEN(RIGHT("a😀",1))
+=RIGHT("a😀",1)=UNICHAR(65533)
+=RIGHT("a😀",1)&LEFT("😀b",1)
+=REPLACE("😀 smile",1,1,"x")
+=REPLACE("😀 smile",2,1,"x")
+=SUBSTITUTE("😀 smile",LEFT("😀 smile",1),"x")
+=FIND(LEFT("😀 smile",1),"😀 smile")
+=MID("a😀b",3,1)&MID("a😀b",2,1)
+=LEFT("😀😁",1)=LEFT("😁😀",1)
+=LEFT("😀😁",1)&MID("😀😁",2,3)="😀😁"
+=LEFT("😀😁",3)&MID("😀😁",4,3)="😀😁"
+=LEFT("😀😁",3)&MID("😀😁",4,3)
+=LEN(LEFT("😀😁",3)&MID("😀😁",4,3))
+=UPPER(LEFT("😀 smile",1))=LEFT("😀 smile",1)
+=LEN(TEXTJOIN("",,MID("😀 smile",SEQUENCE(8),1)))
+=TEXTJOIN("",,MID("😀 smile",SEQUENCE(8),1))="😀 smile"
+=TEXTJOIN("",,MID("😀 smile",SEQUENCE(8),1))

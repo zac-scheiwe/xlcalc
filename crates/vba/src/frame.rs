@@ -34,12 +34,12 @@ pub(crate) fn frame_units(
         n += if ret.array || ret.ty != VType::Variant {
             1
         } else {
-            9
+            7
         };
     }
     for p in params {
         n += if p.by_val && !p.array && p.ty == VType::Variant {
-            3
+            6
         } else {
             1
         };
@@ -55,7 +55,7 @@ fn op_temps(op: &Op) -> u32 {
     match op {
         Op::Let(p, e) | Op::Set(p, e) => place_temps(p, true).max(temps(e)),
         Op::Bind(_, e) | Op::Eval(e) | Op::JumpIfNot(e, _) | Op::JumpIf(e, _) => temps(e),
-        Op::ErrRaise(_) => 25,
+        Op::ErrRaise(_) => 28,
         Op::ErrClear => 1,
         _ => 0,
     }
@@ -96,9 +96,18 @@ fn temps(e: &CExpr) -> u32 {
         EK::Binary(BinOp::Cat, ..) => {
             let mut ops = Vec::new();
             flatten_cat(e, &mut ops);
-            let inner = ops.iter().map(|o| temps(o)).max().unwrap_or(0);
+
+            let mut err = 0;
+            let mut inner = 0;
+            for o in &ops {
+                match &o.kind {
+                    EK::Err(crate::ir::ErrProp::Number) => err += 3,
+                    EK::Err(crate::ir::ErrProp::Description) => err += 2,
+                    _ => inner = inner.max(temps(o)),
+                }
+            }
             let base = (ops.len() as u32).saturating_sub(2);
-            base + inner + u32::from(inner > 0)
+            base + err + inner + u32::from(inner > 0)
         }
         EK::Binary(_, l, r) => temps(l).max(temps(r)),
         EK::Unary(_, x) => temps(x),

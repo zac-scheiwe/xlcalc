@@ -1,0 +1,10 @@
+{"sheets":["Sheet1"],"fresh_excel":true,"steps":[{"op":"om_put","path":"ActiveWindow","prop":"Zoom","value":50},
+{"op":"om_get","path":"ActiveWindow.VisibleRange","prop":"Address"},
+{"op":"om_put","path":"ActiveWindow","prop":"Zoom","value":75},
+{"op":"om_get","path":"ActiveWindow.VisibleRange","prop":"Address"},
+{"op":"om_put","path":"ActiveWindow","prop":"Zoom","value":100},
+{"op":"om_get","path":"ActiveWindow.VisibleRange","prop":"Address"},
+{"op":"om_put","path":"ActiveWindow","prop":"Zoom","value":150},
+{"op":"om_get","path":"ActiveWindow.VisibleRange","prop":"Address"},
+{"op":"om_put","path":"ActiveWindow","prop":"Zoom","value":200},
+{"op":"om_get","path":"ActiveWindow.VisibleRange","prop":"Address"}]}

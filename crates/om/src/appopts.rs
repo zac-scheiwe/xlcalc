@@ -58,7 +58,7 @@ fn default_of(scope: &str, name: &str) -> Option<Variant> {
         }
         ("wb", "PersonalViewListSettings" | "PersonalViewPrintSettings") => Bool(true),
         ("wb", "AcceptLabelsInFormulas" | "Final") => Bool(false),
-        ("wb", "ListChangesOnNewSheet" | "MultiUserEditing" | "ReadOnlyRecommended") => Bool(false),
+        ("wb", "ListChangesOnNewSheet" | "MultiUserEditing") => Bool(false),
         ("wb", "RemovePersonalInformation" | "ShowConflictHistory" | "TemplateRemoveExtData") => {
             Bool(false)
         }
@@ -75,7 +75,8 @@ fn default_of(scope: &str, name: &str) -> Option<Variant> {
             Bool(true)
         }
         ("wb", "PasswordEncryptionKeyLength") => I4(0),
-        ("wb", "PasswordEncryptionAlgorithm") => Bstr(String::new()),
+        ("wb", "PasswordEncryptionAlgorithm" | "PasswordEncryptionProvider") => Bstr(String::new()),
+        ("wb", "DoNotPromptForConvert") => Bool(true),
         ("app", "ChartDataPointTrack" | "EnableAnimations" | "CanPlaySounds") => Bool(true),
         ("app", "DisplayNoteIndicator" | "DisplayRecentFiles" | "CopyObjectsWithCells") => {
             Bool(true)
@@ -118,9 +119,36 @@ fn default_of(scope: &str, name: &str) -> Option<Variant> {
         ("app", "MergeInstances" | "EnableCheckFileExtensions" | "ShowConvertToDataType") => {
             Bool(true)
         }
+
+        (
+            "app",
+            "CSVDisplayNumberConversionWarning"
+            | "ColorButtons"
+            | "ConvertNumbersWithECharacter"
+            | "SaveISO8601Dates"
+            | "ShowWindowsInTaskbar"
+            | "TruncateLargeNumbers"
+            | "TruncateLeadingZeros",
+        ) => Bool(true),
+        (
+            "app",
+            "CSVKeepColumnAsTextIfMultipleEntriesAreText"
+            | "DisplayInfoWindow"
+            | "EnableTipWizard"
+            | "LargeButtons"
+            | "Quitting",
+        ) => Bool(false),
+        (
+            "app",
+            "OnCalculate" | "OnData" | "OnDoubleClick" | "OnEntry" | "OnSheetActivate"
+            | "OnSheetDeactivate",
+        ) => Variant::Empty,
+        ("wb", "HasMailer" | "HasRoutingSlip" | "Routed" | "_ReadOnlyRecommended") => Bool(false),
+        ("wb", "OnSave" | "OnSheetActivate" | "OnSheetDeactivate") => Variant::Empty,
+        ("wb", "_DisplayRightToLeft") => Bool(false),
         ("wb", "RevisionNumber") => I4(0),
         ("wb", "WriteReservedBy") => Bstr("zac".into()),
-        ("app", "CommandUnderlines") => I4(-4105),
+        ("app", "CommandUnderlines") => I4(1),
         ("app", "DataEntryMode") => I4(-4146),
         ("app", "EnableCancelKey") => I4(1),
         ("app", "ODBCTimeout") => I4(45),
@@ -140,7 +168,6 @@ fn default_of(scope: &str, name: &str) -> Option<Variant> {
         ("app", "_Default" | "Value") => Bstr("Microsoft Excel".into()),
         ("wb", "AutoUpdateFrequency" | "ChangeHistoryDuration") => I4(0),
         ("wb", "ConflictResolution" | "UpdateLinks") => I4(1),
-        ("wb", "DisplayDrawingObjects") => I4(-4104),
         ("wb", "CalculationVersion") => I4(191_029),
         (_, "Creator") => I4(1_480_803_660),
         _ => return None,
@@ -157,11 +184,24 @@ impl Application<'_> {
         if let Some(r) = self.host_state_member(book, m, a) {
             return Some(r);
         }
+        if let (Some(b), "Excel8CompatibilityMode", InvokeKind::Get) = (book, m.name, m.kind) {
+            let on = self.book(b).is_ok_and(|b| b.compat);
+            return Some(Ok(Variant::Bool(on)));
+        }
+        if book.is_none() && m.name == "CalculationState" && m.kind == InvokeKind::Get {
+            let pending = self
+                .books
+                .iter()
+                .any(|b| matches!(&b.wb, crate::app::BookWb::Own(wb) if wb.calc_pending()));
+            return Some(Ok(Variant::I4(if pending { 2 } else { 0 })));
+        }
         let scope = if book.is_some() { "wb" } else { "app" };
         let def = default_of(scope, m.name)?;
         let key = format!("{}:{}", book.map_or(0, |b| b.0 + 1), m.name);
         if m.kind == InvokeKind::Put {
-            if book.is_some() {
+            if book.is_some()
+                && !matches!(m.name, "HasMailer" | "PrecisionAsDisplayed" | "Date1904")
+            {
                 if let Err(e) = self.coerce_wb_put(m, a) {
                     return Some(Err(e));
                 }
@@ -188,11 +228,88 @@ impl Application<'_> {
                     _ => Err(OmError::unable_to_set("SheetsInNewWorkbook", "Application")),
                 });
             }
+
+            if book.is_some() {
+                let wb_name = m.name;
+                match wb_name {
+                    "HasMailer" | "HasRoutingSlip" | "ShowConflictHistory" => {
+                        return Some(Err(OmError::unable_to_set(wb_name, "Workbook")));
+                    }
+                    "HighlightChangesOnScreen" | "EnvelopeVisible" | "AutoUpdateFrequency" => {
+                        return Some(Err(OmError::app_defined()));
+                    }
+                    "ListChangesOnNewSheet" => return Some(Err(OmError::app_defined())),
+                    "ChangeHistoryDuration" => return Some(Ok(Variant::Empty)),
+                    "AcceptLabelsInFormulas"
+                        if !matches!(a.put, Some(Variant::Bool(false)))
+                            && self.put_f64(a).is_ok_and(|x| x != 0.0) =>
+                    {
+                        return Some(Err(OmError::app_defined()));
+                    }
+                    "UpdateLinks" => {
+                        return match self.put_f64(a).map(f64::round_ties_even) {
+                            Ok(n) if (1.0..=3.0).contains(&n) => {
+                                self.opts.insert(key, Variant::I4(n as i32));
+                                Some(Ok(Variant::Empty))
+                            }
+                            _ => Some(Err(OmError::app_defined())),
+                        };
+                    }
+                    "PrecisionAsDisplayed" | "Date1904"
+                        if matches!(a.put, Some(Variant::Bstr(_))) =>
+                    {
+                        return Some(Err(OmError::unable_to_set(wb_name, "Workbook")));
+                    }
+                    _ => {}
+                }
+            }
+
+            let refuse = || Some(Err(OmError::app_defined()));
+            match m.name {
+                "DefaultSaveFormat" => match self.put_i32(a) {
+                    Ok(n) if !(-5000..=100).contains(&n) => return refuse(),
+                    Err(_) => return refuse(),
+                    _ => {}
+                },
+                "FormulaBarHeight" => match self.put_i32(a) {
+                    Ok(n) if n < 1 => return refuse(),
+                    Err(_) => return refuse(),
+                    _ => {}
+                },
+
+                "DisplayCommentIndicator" => {
+                    if !matches!(self.put_i32(a), Ok(-4142 | -1 | 1)) {
+                        return Some(Ok(Variant::Empty));
+                    }
+                }
+
+                "DisplayInfoWindow" => {
+                    return Some(self.put_bool(a).map(|_| Variant::Empty));
+                }
+
+                "MoveAfterReturnDirection" => {
+                    return Some(self.put_i32(a).map(|n| {
+                        let v = if matches!(n, -4121 | -4159 | -4161 | -4162) {
+                            Variant::I4(n)
+                        } else {
+                            Variant::R8(f64::from(n as u16))
+                        };
+                        self.opts.insert(key, v);
+                        Variant::Empty
+                    }));
+                }
+                _ => {}
+            }
             let v = match &def {
                 Variant::Bool(_) => self.put_bool(a).map(Variant::Bool),
                 Variant::I4(_) => self.put_i32(a).map(Variant::I4),
                 Variant::R8(_) => self.put_f64(a).map(Variant::R8),
-                _ => self.put_string(a).map(Variant::Bstr),
+                _ => match a.put {
+                    Some(Variant::Bool(t)) => {
+                        Ok(Variant::Bstr(if t { "TRUE" } else { "FALSE" }.to_string()))
+                    }
+                    _ => self.put_string(a).map(Variant::Bstr),
+                },
             };
             return Some(v.map(|v| {
                 self.opts.insert(key, v);
@@ -222,12 +339,21 @@ impl Application<'_> {
         Some(match (book.is_some(), m.name) {
             (false, "FileConverters" | "MailSession" | "RegisteredFunctions") => Ok(Null),
             (false, "OnWindow") => Ok(Variant::Empty),
+
+            (false, "ClipboardFormats") => Ok(list(vec![R8(-1.0)])),
+            (false, "ShortcutMenus") => match a.i32(0) {
+                Ok(Some(i)) if (1..=60).contains(&i) => Ok(self.alloc(Object::Stub("Menu"))),
+                Ok(_) => Err(OmError::bad_index()),
+                Err(e) => Err(e),
+            },
             (false, "PreviousSelections") => Ok(Variant::Dispatch(None)),
             (false, "Hinstance") => Err(OmError::exception(0x8000_FFFF_u32 as i32, None)),
             (false, "ActiveEncryptionSession") => {
                 Err(OmError::exception(0x8007_0057_u32 as i32, None))
             }
-            (false, "DecimalSeparator" | "ThousandsSeparator") => Ok(Bstr(",".into())),
+
+            (false, "DecimalSeparator") => Ok(Bstr(if self.in_vba { "," } else { "." }.into())),
+            (false, "ThousandsSeparator") => Ok(Bstr(",".into())),
 
             (false, "FileDialog") => a
                 .i32(0)
@@ -254,6 +380,7 @@ impl Application<'_> {
                 })
             }
             (true, "Container") => Err(OmError::app_defined()),
+            (true, "SmartTagOptions") => Ok(Variant::Dispatch(None)),
             (true, "CreateBackup") => Ok(Bool(false)),
             (true, "PivotTables") => Ok(self.alloc(Object::Stub("PivotTables"))),
             (true, "Colors") => {
@@ -285,7 +412,11 @@ impl Application<'_> {
             | "EnableAutoFilter"
             | "TransitionFormEntry"
             | "TransitionExpEval"
+            | "DisplayAutomaticPageBreaks"
+            | "_DisplayRightToLeft"
             | "DisplayRightToLeft" => (Bool(false), true),
+            "OnCalculate" | "OnData" | "OnDoubleClick" | "OnEntry" | "OnSheetActivate"
+            | "OnSheetDeactivate" => (Variant::Empty, false),
             "DisplayPageBreaks" => (Bool(false), false),
             "EnableFormatConditionsCalculation" | "EnableCalculation" => (Bool(true), false),
             "ScrollArea" => (Bstr(String::new()), true),
@@ -309,7 +440,22 @@ impl Application<'_> {
             }
             _ => return None,
         };
-        let key = format!("ws{}:{}:{}", book.0, sheet.0, m.name);
+
+        let shown = m.name == "DisplayPageBreaks"
+            && self.book(book).ok().is_some_and(|b| {
+                b.wb.sheet_state(sheet)
+                    .is_some_and(|st| st == xlcalc::SheetState::Visible)
+            });
+        let key = if shown {
+            format!("ws{}:{}", book.0, m.name)
+        } else {
+            format!(
+                "ws{}:{}:{}",
+                book.0,
+                sheet.0,
+                m.name.trim_start_matches('_')
+            )
+        };
         if m.kind != InvokeKind::Put {
             return Some(Ok(self.opts.get(&key).cloned().unwrap_or(def)));
         }

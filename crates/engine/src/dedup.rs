@@ -15,6 +15,8 @@ pub struct DedupSpec {
     pub columns: Vec<u32>,
 
     pub header: bool,
+
+    pub header_above: bool,
 }
 
 enum Key {
@@ -184,7 +186,17 @@ impl Workbook {
         spec: &DedupSpec,
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::RemoveDuplicates, |wb| {
-            wb.remove_duplicates_run(sheet, rect, spec)
+            let r = wb.remove_duplicates_run(sheet, rect, spec);
+
+            if r.is_ok()
+                && wb.views.get(&sheet).is_some_and(|v| v.adv.is_some())
+                && wb
+                    .table_at(CellAddr::new(sheet, rect.r0, rect.c0))
+                    .is_some()
+            {
+                wb.view_sorted(sheet, rect);
+            }
+            r
         })
     }
 
@@ -301,8 +313,6 @@ impl Workbook {
             return Ok(RecalcReport::default());
         }
 
-        self.note_changed(sheet, &[Rect::new(first, rect.c0, rect.r1, rect.c1)]);
-
         let sh = self.sheet(sheet).unwrap();
         let mut end = last;
         let total = (c0..=c1).any(|c| match sh.cells.get(last, c) {
@@ -358,9 +368,11 @@ impl Workbook {
             }
         }
         if kept.len() == rows.len() {
-            return Ok(RecalcReport::default());
+            return Ok(crate::calc::finish_report(self.recalc_point()));
         }
         let removed = (rows.len() - kept.len()) as u32;
+
+        self.note_changed(sheet, &[Rect::new(first, rect.c0, rect.r1, rect.c1)]);
 
         let band = Rect::new(first, c0, end, c1);
         let entries: Vec<(u32, u32, Entry)> = self
@@ -489,8 +501,35 @@ impl Workbook {
             table_name = Some(name);
         }
 
-        let lost = table_end.map(|e| (e - removed + 1, e));
-        self.view_dedup_refilter(sheet, area, lost);
+        let lost = table.map(|ti| {
+            let t = &self.tables[ti];
+            let end = table_end.map_or(0, |e| e - removed - u32::from(t.totals));
+            let filtered = self.views.get(&sheet).is_some_and(|v| {
+                v.filters
+                    .iter()
+                    .any(|f| f.table.as_deref() == Some(&t.name))
+            });
+            let last = if filtered {
+                table_end.map_or(end, |e| e.max(end))
+            } else {
+                end
+            };
+            (t.rect.r0 + 1, last)
+        });
+        let lost = lost.filter(|&(a, b)| a <= b);
+
+        let gave_up = table.map(|ti| {
+            let t = &self.tables[ti];
+            let end = table_end.map_or(0, |e| e - removed - u32::from(t.totals));
+            (end + 1, end + removed)
+        });
+
+        let list = if spec.header_above && area.r0 > 0 {
+            Rect::new(area.r0 - 1, area.c0, area.r1, area.c1)
+        } else {
+            area
+        };
+        self.view_dedup_refilter(sheet, area, list, lost, gave_up);
         self.settings.mode = mode;
         if let Some(e) = refused {
             return Err(e);
@@ -530,5 +569,45 @@ mod tests {
         assert!(!has_total_call("=\"SUM(\"&A1"));
         assert!(!has_total_call("=MYSUM(1)"));
         assert!(!has_total_call("=ABS(A1)"));
+    }
+
+    #[test]
+    fn filter_gives_up_rows_only_for_its_own_range() {
+        use crate::address::{CellAddr, Rect};
+        use crate::value::Value;
+        use crate::view::FilterSpec;
+        let run = |dedup: Rect, header: bool, header_above: bool| {
+            let mut wb = Workbook::new();
+            let s = wb.sheet_at(0).id;
+            let rows = [("k", 0.0), ("a", 1.0), ("b", 2.0), ("a", 1.0), ("b", 2.0)];
+            for (r, (t, n)) in rows.into_iter().enumerate() {
+                wb.set_value(CellAddr::new(s, r as u32, 0), Value::text(t));
+                let v = if r == 0 {
+                    Value::text("n")
+                } else {
+                    Value::Number(n)
+                };
+                wb.set_value(CellAddr::new(s, r as u32, 1), v);
+            }
+            let spec = FilterSpec {
+                field: 1,
+                criteria1: Some("a"),
+                ..FilterSpec::default()
+            };
+            wb.autofilter(s, Rect::new(0, 0, 4, 1), None, spec).unwrap();
+            let spec = DedupSpec {
+                columns: vec![1, 2],
+                header,
+                header_above,
+            };
+            wb.remove_duplicates(s, dedup, &spec).unwrap();
+            wb.hidden_rows(s)
+        };
+
+        assert_eq!(run(Rect::new(0, 0, 4, 1), true, false), vec![2]);
+
+        assert_eq!(run(Rect::new(1, 0, 4, 1), false, false), vec![2, 3, 4]);
+
+        assert_eq!(run(Rect::new(1, 0, 4, 1), false, true), vec![2]);
     }
 }

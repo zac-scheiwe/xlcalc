@@ -178,6 +178,7 @@ fn visit_kind(k: &mut Node, pre: &mut Text, o: &mut String) {
         | Node::Name { .. }
         | Node::Local { .. }
         | Node::Missing
+        | Node::Unwritten
         | Node::Unsupported { .. }
         | Node::DeadRef(_)
         | Node::StructRef { .. } => land(pre, o),

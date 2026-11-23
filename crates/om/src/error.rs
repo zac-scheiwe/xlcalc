@@ -3,6 +3,7 @@ use xlcalc_variant::HResult;
 pub const DISP_E_MEMBERNOTFOUND: HResult = HResult(0x8002_0003_u32 as i32);
 pub const DISP_E_PARAMNOTFOUND: HResult = HResult(0x8002_0004_u32 as i32);
 pub const DISP_E_UNKNOWNNAME: HResult = HResult(0x8002_0006_u32 as i32);
+pub const DISP_E_OVERFLOW: HResult = HResult(0x8002_000A_u32 as i32);
 pub const DISP_E_EXCEPTION: HResult = HResult(0x8002_0009_u32 as i32);
 pub const E_NOTIMPL: HResult = HResult(0x8000_4001_u32 as i32);
 pub const DISP_E_BADPARAMCOUNT: HResult = HResult(0x8002_000E_u32 as i32);

@@ -226,6 +226,10 @@ fn convert(wb: &Workbook, sheet: SheetId, defs: &[CfDef]) -> Vec<CfRule> {
                     spec.max = cv(hi);
                 }
                 spec.show_value = flag(db, "showValue", true);
+                let len =
+                    |a: &str, d: i32| db.attr(a).and_then(|v| v.parse::<i32>().ok()).unwrap_or(d);
+                spec.percent_min = len("minLength", 0);
+                spec.percent_max = len("maxLength", 100);
                 if db.child("color").is_some() {
                     spec.bar = BarColor::new(argb(db.child("color")));
                     spec.neg = spec.bar;
@@ -283,7 +287,18 @@ fn convert(wb: &Workbook, sheet: SheetId, defs: &[CfDef]) -> Vec<CfRule> {
             dxf,
         });
     }
+
+    let mut seen = std::collections::HashSet::new();
+    let mut top = 0;
+    for r in &mut out {
+        if !seen.insert(r.prio) {
+            r.prio = top + 1;
+            seen.insert(r.prio);
+        }
+        top = top.max(r.prio);
+    }
     out.sort_by_key(|r| r.prio);
+    xlcalc::cfv::load_order(&mut out);
     out
 }
 
@@ -465,6 +480,10 @@ fn rule_xml(r: &CfRule, cell: &str, styles: &mut StyleWriter) -> String {
         CfKind::DataBar(d) => {
             ty = "dataBar";
             body.push_str("<dataBar");
+            body.push_str(&format!(
+                " minLength=\"{}\" maxLength=\"{}\"",
+                d.percent_min, d.percent_max
+            ));
             if !d.show_value {
                 body.push_str(" showValue=\"0\"");
             }
@@ -530,6 +549,8 @@ pub(crate) fn write(
             None => groups.push((r.applies.clone(), vec![r])),
         }
     }
+
+    groups.sort_by_key(|(_, rs)| rs.iter().map(|r| r.seq).min());
     let mut x = String::new();
     for (applies, rs) in groups {
         let sqref: Vec<String> = applies.iter().map(crate::write::rect_text).collect();

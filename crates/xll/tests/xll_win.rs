@@ -170,6 +170,8 @@ const VOLATILE_IDS: &[u32] = &[63, 74, 221, 464];
 
 const OPEN_IDS: &[u32] = &[429];
 
+const FUNCTION_GAPS: &[u32] = &[522, 607, 612, 618, 619, 620, 626, 662, 686, 701];
+
 #[test]
 fn function_numbers_follow_excel() {
     let Some(path) = testxll() else {
@@ -473,12 +475,18 @@ fn macro_functions_list_the_open_books() {
             "one" | "closed" => (&["Book2"], &["Book2"]),
             "two-first" | "two-second" => (&["Book2", "Book3"], &["Book3", "Book2"]),
             "two-saved" => (&["Book2", "second one.xlsx"], &["second one.xlsx", "Book2"]),
+            "three-newwindow" => (
+                &["Book2", "second one.xlsx", "Book4"],
+                &["Book4  -  2", "Book4  -  1", "second one.xlsx", "Book2"],
+            ),
             _ => continue,
         };
         let own = if label == "two-first" || label == "one" || label == "closed" {
             "Book2"
         } else if label == "two-saved" {
             "second one.xlsx"
+        } else if label == "three-newwindow" {
+            "Book4"
         } else {
             "Book3"
         };
@@ -498,4 +506,200 @@ fn macro_functions_list_the_open_books() {
         eprintln!("{b}");
     }
     assert!(bad.is_empty(), "{} macro answers differ", bad.len());
+}
+
+#[test]
+fn dispatch_classes_follow_excel() {
+    let Some(path) = testxll() else {
+        eprintln!("skipped: xlc_testxll.dll is not built");
+        return;
+    };
+    let host = XllHost::load(&path).expect("the test XLL loads");
+    let mut wb = Workbook::new();
+    wb.set_function_host(Some(Arc::new(host.clone())));
+    let first = wb.active_sheet();
+
+    wb.add_sheet("Sheet2").expect("a second sheet");
+    let at = a1(first.0);
+    for (row, col, v) in [
+        (0, 1, Value::Number(1.5)),
+        (1, 1, Value::Number(4.0)),
+        (0, 2, Value::Number(10.0)),
+        (1, 2, Value::Text("x".into())),
+    ] {
+        wb.set_value(
+            CellAddr {
+                sheet: first,
+                row,
+                col,
+            },
+            v,
+        );
+    }
+    let golden = include_str!("../../../conformance/com/xll_probe15.golden.txt");
+    let mut lines: Vec<String> = Vec::new();
+    for l in golden.lines() {
+        match lines.last_mut() {
+            Some(prev) if !l.starts_with("=XlcCallN") => {
+                prev.push('\n');
+                prev.push_str(l);
+            }
+            _ => lines.push(l.to_string()),
+        }
+    }
+    let mut bad = Vec::new();
+    let mut seen = 0;
+    for line in lines.iter().filter(|l| l.starts_with("=XlcCallN")) {
+        let Some((formula, want)) = line.split_once(" -> [") else {
+            continue;
+        };
+        let id: u32 = formula
+            .trim_start_matches("=XlcCallNM(")
+            .trim_start_matches("=XlcCallN(")
+            .split([',', ')'])
+            .next()
+            .and_then(|n| n.parse().ok())
+            .unwrap_or(0);
+
+        if VOLATILE_IDS.contains(&id)
+            || [631, 0x4001, 0x4008, 0x4009].contains(&id)
+            || FUNCTION_GAPS.contains(&id)
+        {
+            continue;
+        }
+        let want = want.strip_suffix(']').unwrap_or(want);
+        seen += 1;
+        let got: String = shown(&mut wb, at, formula)
+            .chars()
+            .map(|c| if c.is_ascii() { c } else { '?' })
+            .collect();
+        if got != want {
+            bad.push(format!("{formula}: got [{got}], Excel [{want}]"));
+        }
+    }
+    assert!(seen > 8000, "the golden is read: {seen} lines");
+    eprintln!("{} of {seen} differ", bad.len());
+    for b in &bad {
+        eprintln!("{b}");
+    }
+    assert!(bad.is_empty(), "{} dispatch answers differ", bad.len());
+}
+
+#[test]
+fn operand_kinds_follow_excel() {
+    let Some(path) = testxll() else {
+        eprintln!("skipped: xlc_testxll.dll is not built");
+        return;
+    };
+    let host = XllHost::load(&path).expect("the test XLL loads");
+    let mut wb = Workbook::new();
+    wb.set_function_host(Some(Arc::new(host.clone())));
+    let first = wb.active_sheet();
+
+    wb.add_sheet("Sheet2").expect("a second sheet");
+    let at = a1(first.0);
+    for (row, col, v) in [
+        (0, 1, Value::Number(1.5)),
+        (1, 1, Value::Number(4.0)),
+        (0, 2, Value::Number(10.0)),
+        (1, 2, Value::Text("x".into())),
+        (0, 3, Value::Bool(true)),
+        (1, 4, Value::Number(2.0)),
+    ] {
+        wb.set_value(
+            CellAddr {
+                sheet: first,
+                row,
+                col,
+            },
+            v,
+        );
+    }
+    let golden = include_str!("../../../conformance/com/xll_probe17.golden.txt");
+    let mut bad = Vec::new();
+    let mut seen = 0;
+    for line in golden.lines().filter(|l| l.starts_with("=XlcCallN(")) {
+        let Some((formula, want)) = line.split_once(" -> [") else {
+            continue;
+        };
+        let id: u32 = formula["=XlcCallN(".len()..]
+            .split([',', ')'])
+            .next()
+            .and_then(|n| n.parse().ok())
+            .unwrap_or(0);
+
+        if VOLATILE_IDS.contains(&id) || [368, 631].contains(&id) || FUNCTION_GAPS.contains(&id) {
+            continue;
+        }
+        let want = want.strip_suffix(']').unwrap_or(want);
+        seen += 1;
+        let got: String = shown(&mut wb, at, formula)
+            .chars()
+            .map(|c| if c.is_ascii() { c } else { '?' })
+            .collect();
+        if got != want {
+            bad.push(format!("{formula}: got [{got}], Excel [{want}]"));
+        }
+    }
+    assert!(seen > 10000, "the golden is read: {seen} lines");
+    eprintln!("{} of {seen} differ", bad.len());
+    for b in &bad {
+        eprintln!("{b}");
+    }
+    assert!(bad.is_empty(), "{} answers differ", bad.len());
+}
+
+#[test]
+fn sheet_name_follows_excel() {
+    let Some(path) = testxll() else {
+        eprintln!("skipped: xlc_testxll.dll is not built");
+        return;
+    };
+    let host = XllHost::load(&path).expect("the test XLL loads");
+    let mut wb = Workbook::new();
+    wb.set_function_host(Some(Arc::new(host.clone())));
+    let first = wb.active_sheet();
+    let at = a1(first.0);
+    let golden = include_str!("../../../conformance/com/xll_probe16.golden.txt");
+    let mut bad = Vec::new();
+    let mut seen = 0;
+    for line in golden.lines().filter(|l| l.contains(" =Xlc4Call(")) {
+        let Some((head, want)) = line.split_once(" -> [") else {
+            continue;
+        };
+        let (label, formula) = head.split_once(' ').unwrap();
+        match label {
+            "new" => wb.set_book_name("Book5"),
+            "saved" => wb.set_book_name("pbook.xlsx"),
+            "xlsm" => wb.set_book_name("other book.xlsm"),
+            "renamed" => {
+                wb.rename_sheet(first, "My Sheet").unwrap();
+            }
+            "second" => {
+                wb.rename_sheet(first, "Sheet1").unwrap();
+                wb.set_book_name("Book6");
+            }
+            _ => unreachable!("{label}"),
+        }
+
+        let want = want.strip_suffix(']').unwrap_or(want);
+        seen += 1;
+        let got = shown(&mut wb, at, formula);
+        let (g, w) = if want.starts_with("ret=0;") {
+            (got.as_str(), want)
+        } else {
+            (
+                got.split(';').next().unwrap_or(""),
+                want.split(';').next().unwrap_or(""),
+            )
+        };
+        if g != w {
+            bad.push(format!("{label} {formula}: got [{got}], Excel [{want}]"));
+        }
+    }
+    assert!(seen > 30, "the golden is read: {seen} lines");
+    for b in &bad {
+        eprintln!("{b}");
+    }
+    assert!(bad.is_empty(), "{} sheet-name answers differ", bad.len());
 }

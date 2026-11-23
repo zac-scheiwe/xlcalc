@@ -2,6 +2,15 @@ use std::collections::BTreeMap;
 
 use super::{FormulaId, Workbook};
 
+#[derive(Default)]
+pub(crate) struct Creation {
+    keys: Vec<i64>,
+
+    resolved: usize,
+
+    order: Vec<FormulaId>,
+}
+
 const GAP: i64 = 1 << 24;
 
 impl Workbook {
@@ -25,7 +34,93 @@ impl Workbook {
     pub(crate) fn chain_top(&mut self) -> i64 {
         let key = self.calc.next_new_seq;
         self.calc.next_new_seq -= GAP;
+        if let Some(scope) = &mut self.calc.creation {
+            scope.keys.push(key);
+        }
         key
+    }
+
+    pub fn creating_formulas<R>(&mut self, f: impl FnOnce(&mut Workbook) -> R) -> R {
+        if self.calc.creation.is_some() || self.passes.notifying {
+            return f(self);
+        }
+        self.calc.creation = Some(Creation::default());
+        let r = f(self);
+        self.order_creation();
+        self.calc.creation = None;
+        r
+    }
+
+    pub(crate) fn outside_creation<R>(&mut self, f: impl FnOnce(&mut Workbook) -> R) -> R {
+        if self.calc.creation.is_none() {
+            return f(self);
+        }
+        self.order_creation();
+        let scope = self.calc.creation.take();
+        let r = f(self);
+        self.calc.creation = scope;
+        r
+    }
+
+    pub(crate) fn flush_creation(&mut self) {
+        self.order_creation();
+    }
+
+    fn order_creation(&mut self) {
+        let Some(mut scope) = self.calc.creation.take() else {
+            return;
+        };
+
+        for &k in &scope.keys[scope.resolved..] {
+            if let Some(&g) = self.calc.chain.get(&k) {
+                if self.chain_holds(k, g) {
+                    scope.order.retain(|&o| o != g);
+                    scope.order.push(g);
+                }
+            }
+        }
+        scope.resolved = scope.keys.len();
+        let pool: rustc_hash::FxHashSet<i64> = scope.keys.iter().copied().collect();
+        let fids: Vec<FormulaId> = scope
+            .order
+            .iter()
+            .copied()
+            .filter(|&g| {
+                self.formulas
+                    .get(g as usize)
+                    .and_then(|f| f.as_ref())
+                    .is_some_and(|f| pool.contains(&f.seq) && self.chain_holds(f.seq, g))
+            })
+            .collect();
+        scope.order.clone_from(&fids);
+        self.calc.creation = Some(scope);
+        if fids.len() < 2 {
+            return;
+        }
+        let mut keys: Vec<i64> = fids.iter().map(|&g| self.formula(g).seq).collect();
+        keys.sort_unstable();
+        let mut moved = false;
+        for (&k, &g) in keys.iter().zip(&fids) {
+            if self.formula(g).seq != k {
+                self.calc.chain.insert(k, g);
+                self.formula_mut(g).seq = k;
+                moved = true;
+            }
+        }
+        if moved {
+            self.calc.walk.rekey(&fids);
+        }
+    }
+
+    pub(crate) fn chain_set_seq(&mut self, fid: FormulaId, seq: i64) {
+        let cur = self.formula(fid).seq;
+        if cur == seq {
+            return;
+        }
+        self.calc.chain.remove(&cur);
+        self.calc.chain.insert(seq, fid);
+        self.formula_mut(fid).seq = seq;
+        self.calc.chain_epoch += 1;
     }
 
     pub(crate) fn chain_to_top(&mut self, fid: FormulaId) {
@@ -198,6 +293,46 @@ impl Workbook {
             let key = self.chain_top();
             self.formula_mut(fid).seq = key;
             self.calc.chain.insert(key, fid);
+            self.calc.walk.raise(fid);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::address::{CellAddr, Rect};
+    use crate::Workbook;
+
+    #[test]
+    fn a_creation_scope_enters_its_block_in_order() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let a = |r, c| CellAddr::new(s, r, c);
+        wb.set_input(a(0, 0), "=1").unwrap();
+        wb.set_input(a(1, 0), "=2").unwrap();
+        assert_eq!(wb.debug_chain(), "A2 A1");
+        wb.creating_formulas(|wb| {
+            wb.set_input(a(0, 1), "=3").unwrap();
+            wb.creating_formulas(|wb| wb.set_input(a(1, 1), "=4").unwrap());
+            wb.set_input(a(2, 1), "=5").unwrap();
+        });
+        assert_eq!(wb.debug_chain(), "B1 B2 B3 A2 A1");
+
+        wb.creating_formulas(|wb| {
+            wb.set_input(a(0, 0), "=6").unwrap();
+            wb.set_input(a(0, 2), "=7").unwrap();
+        });
+        assert_eq!(wb.debug_chain(), "A1 C1 B1 B2 B3 A2");
+    }
+
+    #[test]
+    fn a_fill_enters_its_copies_in_order() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let a = |r, c| CellAddr::new(s, r, c);
+        wb.set_input(a(0, 0), "=ROW()").unwrap();
+        wb.fill(s, Rect::new(0, 0, 0, 0), Rect::new(1, 0, 3, 0))
+            .unwrap();
+        assert_eq!(wb.debug_chain(), "A2 A3 A4 A1");
     }
 }

@@ -1,10 +1,11 @@
 use super::calendars;
 use super::dbnum::Db;
 use super::decimal::{uint_digits, Dec};
+use super::fracden::{self, DenOp};
 use super::general::{format_general_width, TEXT_GENERAL_WIDTH};
 use super::locales::names_for;
 use super::parse::{
-    Body, DateLayout, DateTok, Den, FracLayout, Item, NumLayout, Ph, SciLayout, Section,
+    Body, DateLayout, DateTok, FracLayout, Item, NumLayout, Ph, SciLayout, Section,
 };
 use super::{Cmp, NumberFormat, Rendered};
 use crate::datetime::{self, DateSystem};
@@ -601,14 +602,7 @@ fn render_sci(l: &SciLayout, a: f64, loc: &Locale) -> String {
     out
 }
 
-pub(super) fn frac_spec(den: &Den) -> i16 {
-    match *den {
-        Den::Max(n) => n.min(i16::MAX as u32) as i16,
-        Den::Fixed(v) => (v as i32).wrapping_neg() as i16,
-    }
-}
-
-fn mp_lfix(x: f64) -> i32 {
+fn trunc_to_i32(x: f64) -> i32 {
     let t = x.trunc();
     if t > -2_147_483_649.0 && t < 2_147_483_648.0 {
         t as i32
@@ -617,7 +611,7 @@ fn mp_lfix(x: f64) -> i32 {
     }
 }
 
-fn mp_fix(x: f64) -> u32 {
+fn trunc_to_u32(x: f64) -> u32 {
     let t = x.abs().trunc();
     if t < 4_294_967_296.0 {
         t as u32
@@ -635,7 +629,7 @@ fn muldiv1(a: i32, b: i32) -> i32 {
     }
 }
 
-pub(super) fn mp_frac(x: f64) -> f64 {
+pub(super) fn fractional_part(x: f64) -> f64 {
     let d = x87::sub(x.trunc(), x);
     if d.to_bits() & 0xFFFF_0000_0000_0000 != 0 {
         -d
@@ -645,12 +639,12 @@ pub(super) fn mp_frac(x: f64) -> f64 {
 }
 
 pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)> {
-    let mut x = if mixed { mp_frac(x) } else { x };
+    let mut x = if mixed { fractional_part(x) } else { x };
     if spec < 0 && x < 137_438_953_472.0 {
         x = x87::mul(x, f64::from_bits(0x3FF0_0000_0000_0001));
     }
     if mixed {
-        x = mp_frac(x);
+        x = fractional_part(x);
     }
     if spec < 0 {
         let d = -(spec as i32);
@@ -659,7 +653,7 @@ pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)
         if !prod.is_finite() {
             return Some((0, d as u32));
         }
-        let n2 = mp_lfix(prod);
+        let n2 = trunc_to_i32(prod);
         if n2 as u32 > 0xFFFE {
             return None;
         }
@@ -676,7 +670,7 @@ pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)
     };
     let mut b = x;
     let mut bi = b.trunc();
-    let mut a = mp_fix(b);
+    let mut a = trunc_to_u32(b);
     if a > 0x7FFF_FFFE {
         return None;
     }
@@ -703,7 +697,7 @@ pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)
         }
         b = x87::div(1.0, -diff);
         bi = b.trunc();
-        a = mp_fix(b);
+        a = trunc_to_u32(b);
         if (a as i32) < 0 {
             break;
         }
@@ -712,94 +706,6 @@ pub(super) fn calc_fraction(x: f64, spec: i16, mixed: bool) -> Option<(u32, u32)
         return Some((1, 1));
     }
     Some((n as u32, d as u32))
-}
-
-fn den_layout(kinds: &[Ph], digits: &[u8]) -> Vec<String> {
-    let mut cells = vec![String::new(); kinds.len()];
-    let mut p = kinds.len() as i64;
-    let mut d = digits.len() as i64;
-    let mut buf = digits.iter().copied();
-    let mut i = 0;
-    while i < kinds.len() {
-        let kind = kinds[i];
-        let mut j = i;
-        while j < kinds.len() && kinds[j] == kind {
-            j += 1;
-        }
-        let run = (j - i) as i64;
-        let mut pos = i;
-        if kind == Ph::Q {
-            let mut r = run;
-            if d < 0 {
-                let z = r.min(-d);
-                for _ in 0..z {
-                    cells[pos].push('0');
-                    pos += 1;
-                }
-                d += z;
-                r -= z;
-            }
-            for _ in 0..r {
-                cells[pos].push(buf.next().map_or(' ', digit));
-                pos += 1;
-            }
-            p -= r;
-            d -= r;
-        } else {
-            let mut r = run;
-            if p > d {
-                let e = r.min(p - d);
-                for _ in 0..e {
-                    if kind == Ph::Zero {
-                        cells[pos].push('0');
-                    }
-                    pos += 1;
-                }
-                p -= e;
-                r -= e;
-            } else {
-                r += d - p;
-                p = d;
-            }
-
-            let extra = r - (j - pos) as i64;
-            for k in 0..r {
-                cells[pos].push(buf.next().map_or('0', digit));
-                if k >= extra {
-                    pos += 1;
-                }
-                p -= 1;
-                d -= 1;
-            }
-        }
-        i = j;
-    }
-    cells
-}
-
-#[derive(PartialEq)]
-enum Blank {
-    Show,
-    Spaces,
-    Remove,
-}
-
-fn den_leftover(l: &FracLayout, den_digits: &[u8]) -> (Vec<char>, bool) {
-    let lit_len = l
-        .items
-        .iter()
-        .find_map(|x| match x {
-            Item::DenFixed(s) => Some(s.chars().count()),
-            _ => None,
-        })
-        .unwrap_or(1);
-    if den_digits.len() < lit_len {
-        return (vec!['0'; lit_len - den_digits.len()], true);
-    }
-    (
-        den_digits[lit_len..].iter().map(|d| digit(*d)).collect(),
-        false,
-    )
 }
 
 fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), XlError> {
@@ -811,7 +717,7 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
     if l.err {
         return Err(XlError::VALUE);
     }
-    let (num, den) = calc_fraction(v, frac_spec(&l.den), l.has_int).ok_or(XlError::VALUE)?;
+    let (num, den) = calc_fraction(v, l.den_field, l.has_int).ok_or(XlError::VALUE)?;
     let (int_digits_raw, num) = if l.has_int {
         let dec = Dec::from_f64(v);
         if num == den || num == 0 {
@@ -823,192 +729,101 @@ fn render_frac(l: &FracLayout, a: f64, loc: &Locale) -> Result<(String, bool), X
         (Vec::new(), num as f64)
     };
     let den = den as f64;
-    let int = if int_digits_raw.is_empty() { 0.0 } else { 1.0 };
 
-    let blank = if l.has_int && num == 0.0 {
-        if l.num_has_zero {
-            Blank::Show
-        } else if l.int_has_q || l.num_has_q || l.den_left {
-            Blank::Spaces
-        } else {
-            Blank::Remove
+    let shown = !(l.has_int && num == 0.0);
+    let num_digits = uint_digits(num as u64);
+    let den_digits = uint_digits(den as u64);
+    let to_chars = |d: &[u8]| -> Vec<char> { d.iter().map(|d| digit(*d)).collect() };
+    let whole: Vec<char> = to_chars(&int_digits_raw);
+    let (num_chars, den_chars) = (to_chars(&num_digits), to_chars(&den_digits));
+
+    let mut ops: Vec<DenOp> = Vec::new();
+    let push_run = |ops: &mut Vec<DenOp>, k: Ph| match ops.last_mut() {
+        Some(DenOp::Run(p, n)) if *p == k => *n += 1,
+        _ => ops.push(DenOp::Run(k, 1)),
+    };
+    let mut tmp = String::new();
+    let mut first_tail = true;
+    let mut past_den = false;
+    let mut after_slash = false;
+    let mut int_started = false;
+    let mut last_kind_int = false;
+    for it in &l.items {
+        match it {
+            Item::Int(k) => {
+                if !int_started && l.grouping {
+                    ops.push(DenOp::Group);
+                }
+                int_started = true;
+                if !last_kind_int {
+                    ops.push(DenOp::Run(*k, 1));
+                } else {
+                    push_run(&mut ops, *k);
+                }
+                last_kind_int = true;
+                continue;
+            }
+            Item::Num(k) => {
+                if last_kind_int {
+                    ops.push(DenOp::Run(*k, 1));
+                } else {
+                    push_run(&mut ops, *k);
+                }
+                last_kind_int = false;
+                continue;
+            }
+            _ => last_kind_int = false,
         }
-    } else {
-        Blank::Show
-    };
-    let all_zero = int == 0.0 && num == 0.0;
-    let last_int = l.items.iter().rev().find_map(|it| match it {
-        Item::Int(k) => Some(*k),
-        _ => None,
-    });
-    let first_num = l.items.iter().find_map(|it| match it {
-        Item::Num(k) => Some(*k),
-        _ => None,
-    });
-
-    let int_digits: Vec<u8> = if int > 0.0 {
-        int_digits_raw
-    } else if all_zero
-        && (blank != Blank::Show || last_int == Some(Ph::Q) || first_num != Some(Ph::Zero))
-    {
-        vec![0]
-    } else {
-        Vec::new()
-    };
-
-    let int_empty = int_digits.is_empty() && last_int != Some(Ph::Zero);
-
-    if l.has_int && l.n_num == 0 && int_empty {
+        match it {
+            Item::Slash => {
+                after_slash = true;
+                ops.push(DenOp::Slash);
+            }
+            Item::Den(k) => {
+                if past_den && first_tail && l.grouping {
+                    ops.push(DenOp::Group);
+                }
+                if past_den {
+                    first_tail = false;
+                }
+                push_run(&mut ops, *k);
+            }
+            Item::DenFixed(s) => ops.push(DenOp::Literal(s.clone())),
+            Item::DenPoint => ops.push(DenOp::Point),
+            other => {
+                if after_slash && matches!(ops.last(), Some(DenOp::Run(..) | DenOp::Literal(_))) {
+                    past_den = true;
+                }
+                tmp.clear();
+                push_literal(&mut tmp, other);
+                if !tmp.is_empty() {
+                    ops.push(DenOp::Text(tmp.clone()));
+                }
+            }
+        }
+    }
+    let spec = l.den_field as u16 as i64;
+    let laid = fracden::lay_out(
+        &ops,
+        &fracden::Start {
+            whole: &whole,
+            n_int: l.n_int as i64,
+            num: &num_chars,
+            n_num: l.n_num as i64,
+            den: &den_chars,
+            spec,
+            shown,
+            point: false,
+            q: false,
+            decimal: loc.decimal_sep,
+            group: loc.thousands_sep,
+        },
+    );
+    if laid.overflow {
         return Err(XlError::VALUE);
     }
-
-    let num_digits = if blank == Blank::Show {
-        uint_digits(num as u64)
-    } else {
-        vec![0]
-    };
-    let den_digits = uint_digits(den as u64);
-    let sep_as_spaces = num != 0.0 && (l.int_has_q || l.num_first_q);
-    let mut out = String::new();
-    let mut il = IntLayout {
-        digits: &int_digits,
-        n: l.n_int,
-        grouping: l.grouping,
-        sep: loc.thousands_sep,
-        idx: 0,
-    };
-    let mut nl = IntLayout {
-        digits: &num_digits,
-        n: l.n_num,
-        grouping: false,
-        sep: ',',
-        idx: 0,
-    };
-    let den_kinds: Vec<Ph> = l
-        .items
-        .iter()
-        .filter_map(|it| match it {
-            Item::Den(k) => Some(*k),
-            _ => None,
-        })
-        .collect();
-    let den_cells = den_layout(&den_kinds, &den_digits);
-    let mut den_i = 0;
-    let mut den_dec_i = 0;
-    let mut den_q_seen = false;
-    let mut tail_s_done = false;
-    let mut tmp = String::new();
-    for (i, it) in l.items.iter().enumerate() {
-        tmp.clear();
-        match it {
-            Item::Int(k) => il.placeholder(&mut tmp, *k),
-            Item::Num(k) => nl.placeholder(&mut tmp, *k),
-            Item::NumAll => tmp.extend(num_digits.iter().map(|d| digit(*d))),
-            Item::DenDec(k) => {
-                match den_digits.get(den_dec_i) {
-                    Some(d) => tmp.push(digit(*d)),
-                    None => tmp.extend(pad(*k)),
-                }
-                den_dec_i += 1;
-            }
-            Item::Slash => tmp.push('/'),
-            Item::Den(_) => {
-                tmp.push_str(&den_cells[den_i]);
-                den_i += 1;
-            }
-            Item::DenFixed(s) => {
-                let lit: Vec<char> = s.chars().collect();
-                for (j, d) in den_digits.iter().enumerate() {
-                    match lit.get(j) {
-                        Some(c) => tmp.push(*c),
-                        None if !(l.num_has_q || l.int_has_q) => tmp.push(digit(*d)),
-                        None => {}
-                    }
-                }
-                if l.num_has_q || l.int_has_q {
-                    let k = den_digits.len().min(lit.len());
-                    tmp.extend(std::iter::repeat_n(' ', lit.len() - k));
-                }
-            }
-            Item::DenTailPoint => {
-                if (l.num_has_q || l.int_has_q) && !tail_s_done {
-                    tail_s_done = true;
-                    tmp.extend(den_leftover(l, &den_digits).0);
-                }
-                tmp.push('.');
-            }
-            Item::DenTail(_) => {
-                if i == 0 || !matches!(l.items[i - 1], Item::DenTail(_)) {
-                    let run: Vec<Ph> = l.items[i..]
-                        .iter()
-                        .map_while(|x| match x {
-                            Item::DenTail(p) => Some(*p),
-                            _ => None,
-                        })
-                        .collect();
-
-                    if (l.num_has_q || l.int_has_q) && !tail_s_done {
-                        tail_s_done = true;
-                        let (s, short) = den_leftover(l, &den_digits);
-                        if run.iter().all(|p| *p == Ph::Q) {
-                            for j in 0..run.len() {
-                                tmp.push(s.get(j).copied().unwrap_or(' '));
-                            }
-                        } else {
-                            let mut seen = !s.is_empty() || short;
-                            if !short {
-                                tmp.extend(&s);
-                            }
-                            for (j, p) in run.iter().enumerate() {
-                                if short && j == 0 && *p == Ph::Hash {
-                                    continue;
-                                }
-                                tmp.push(if *p == Ph::Q && !seen { ' ' } else { '0' });
-                                seen |= *p != Ph::Q;
-                            }
-                        }
-                    } else {
-                        let mut seen = false;
-                        for p in &run {
-                            tmp.push(if *p == Ph::Q && !seen { ' ' } else { '0' });
-                            seen |= *p != Ph::Q;
-                        }
-                    }
-                }
-            }
-            other => push_literal(&mut tmp, other),
-        }
-        let width = tmp.chars().count();
-        let in_span = l.has_int && i >= l.sep_start && i < l.den_end;
-        if in_span && blank != Blank::Show {
-            if matches!(it, Item::Den(Ph::Q) | Item::DenDec(Ph::Q)) {
-                den_q_seen = true;
-            }
-            let shown = match blank {
-                Blank::Spaces => true,
-                _ => {
-                    matches!(
-                        it,
-                        Item::Num(Ph::Q) | Item::Den(Ph::Q) | Item::DenDec(Ph::Q)
-                    ) || (den_q_seen && matches!(it, Item::Den(Ph::Zero) | Item::DenDec(Ph::Zero)))
-                }
-            };
-            if shown {
-                out.extend(std::iter::repeat_n(' ', width));
-            }
-            continue;
-        }
-        let in_sep = l.has_int && i >= l.sep_start && i < l.num_start;
-        if in_sep && int_empty {
-            if sep_as_spaces {
-                out.extend(std::iter::repeat_n(' ', width));
-            }
-            continue;
-        }
-        out.push_str(&tmp);
-    }
     let zero = if l.has_int { false } else { num == 0.0 };
-    Ok((out, zero))
+    Ok((laid.text, zero))
 }
 
 fn japanese_era(y: i64, m: u32, d: u32) -> (usize, i64) {
@@ -1260,7 +1075,6 @@ fn render_date(
 
     let stale = || set_num_cascade(x.abs(), l.subsec).stale;
     let left = |unit: u8| elapsed_head(x87::add(stale(), half_unit(l.subsec)), unit);
-    let left_am = |unit: u8| elapsed_head(x87::add(stale(), 0.5), unit);
     let fld = |s: String| db.map_or(s.clone(), |d| d.field(&s));
     let pos = |s: String| db.map_or(s.clone(), |d| d.positional(&s));
     let spell = |s: String| {
@@ -1333,9 +1147,6 @@ fn render_date(
             DateTok::ElapsedS(n) => {
                 out.push_str(&spell(head_text(head(3, total_secs), n as usize)))
             }
-            DateTok::AmH(n) => out.push_str(&spell(head_text(left_am(1), n as usize))),
-            DateTok::AmM(n) => out.push_str(&spell(head_text(left_am(2), n as usize))),
-            DateTok::AmS(n) => out.push_str(&spell(head_text(left_am(3), n as usize))),
             DateTok::LeftH(n) => out.push_str(&spell(head_text(left(1), n as usize))),
             DateTok::LeftM(n) => out.push_str(&spell(head_text(left(2), n as usize))),
             DateTok::LeftS(n) => out.push_str(&spell(head_text(left(3), n as usize))),
@@ -1375,5 +1186,5 @@ fn render_date(
             }
         }
     }
-    Ok((out, l.signed && total == 0))
+    Ok((out, false))
 }

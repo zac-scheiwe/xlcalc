@@ -5,6 +5,7 @@ use std::sync::Arc;
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::datetime::{days_in_month, serial_from_ymd, weekday_from_serial, ymd_from_serial};
+use crate::numfmt::fillfmt::{compatible, join, Fm};
 use crate::value::Value;
 use crate::workbook::{CalcMode, EditError, Entry, Op, Workbook};
 
@@ -269,247 +270,6 @@ fn ordinal_suffix(n: u64) -> &'static str {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-enum FmtKind {
-    Number,
-    Date { time: bool },
-
-    Time(bool),
-}
-
-fn fmt_kind(fmt: &str) -> FmtKind {
-    let f = fmt.to_ascii_lowercase();
-
-    let mut sect = String::new();
-    let mut in_q = false;
-    let mut chars = f.chars().peekable();
-
-    let mut toks: Vec<char> = Vec::new();
-    let mut has_hour = false;
-    while let Some(c) = chars.next() {
-        if in_q {
-            if c == '"' {
-                in_q = false;
-            }
-            continue;
-        }
-        match c {
-            '"' => in_q = true,
-            ';' => sect.push(' '),
-            '\\' | '_' | '*' => {
-                chars.next();
-            }
-            '[' => {
-                let mut inner = String::new();
-                for d in chars.by_ref() {
-                    if d == ']' {
-                        break;
-                    }
-                    inner.push(d);
-                }
-                let t = inner.trim_start_matches(['h', 'm', 's']);
-                if t.is_empty() && !inner.is_empty() {
-                    has_hour |= inner.starts_with('h');
-                    toks.push(inner.chars().next().unwrap());
-                    sect.push('x');
-                }
-            }
-            'a' | 'p' => {
-                let rest: String = std::iter::once(c).chain(chars.clone()).take(5).collect();
-                if rest.starts_with("am/pm") {
-                    for _ in 0..4 {
-                        chars.next();
-                    }
-                } else if rest.starts_with("a/p") {
-                    for _ in 0..2 {
-                        chars.next();
-                    }
-                }
-            }
-            'd' | 'y' | 'm' | 'h' | 's' => {
-                has_hour |= c == 'h';
-                if toks.last() != Some(&c) || sect.ends_with(|x: char| !x.is_alphabetic()) {
-                    toks.push(c);
-                }
-                sect.push(c);
-            }
-            _ => sect.push(' '),
-        }
-    }
-
-    let mut has_date = false;
-    let mut has_time = false;
-    let mut i = 0;
-
-    let runs: Vec<char> = {
-        let mut r = Vec::new();
-        let mut prev = ' ';
-        for c in sect.chars() {
-            if "dymhs".contains(c) {
-                if prev != c {
-                    r.push(c);
-                }
-            } else if c == 'x' {
-                r.push('x');
-            }
-            prev = c;
-        }
-        r
-    };
-    while i < runs.len() {
-        match runs[i] {
-            'd' | 'y' => has_date = true,
-            'h' | 's' | 'x' => has_time = true,
-            'm' => {
-                let after_h = i > 0 && matches!(runs[i - 1], 'h' | 'x');
-                let before_s = i + 1 < runs.len() && runs[i + 1] == 's';
-                if after_h || before_s {
-                    has_time = true;
-                } else {
-                    has_date = true;
-                }
-            }
-            _ => {}
-        }
-        i += 1;
-    }
-    if has_date {
-        FmtKind::Date { time: has_time }
-    } else if has_time {
-        FmtKind::Time(has_hour)
-    } else {
-        FmtKind::Number
-    }
-}
-
-const CLASS_DATE: u8 = 9;
-
-fn section_for(fmt: &str, n: f64) -> &str {
-    let mut secs: Vec<&str> = Vec::new();
-    let (mut start, mut in_q, mut esc) = (0, false, false);
-    for (i, c) in fmt.char_indices() {
-        if esc {
-            esc = false;
-        } else if in_q {
-            in_q = c != '"';
-        } else if c == '"' {
-            in_q = true;
-        } else if matches!(c, '\\' | '_' | '*') {
-            esc = true;
-        } else if c == ';' {
-            secs.push(&fmt[start..i]);
-            start = i + 1;
-        }
-    }
-    secs.push(&fmt[start..]);
-    let cond = |sec: &str| -> Option<bool> {
-        let mut rest = sec;
-        while let Some(rem) = rest.strip_prefix('[') {
-            let end = rem.find(']')?;
-            let tag = &rem[..end];
-            rest = &rem[end + 1..];
-            let op_len = tag.chars().take_while(|c| "<>=".contains(*c)).count();
-            if op_len == 0 {
-                continue;
-            }
-            let lim: f64 = tag[op_len..].trim().parse().ok()?;
-            return Some(match &tag[..op_len] {
-                "<" => n < lim,
-                "<=" => n <= lim,
-                ">" => n > lim,
-                ">=" => n >= lim,
-                "<>" => n != lim,
-                _ => n == lim,
-            });
-        }
-        None
-    };
-    let conds: Vec<Option<bool>> = secs.iter().map(|s| cond(s)).collect();
-    let any_cond = conds.iter().any(Option::is_some);
-    for (i, sec) in secs.iter().enumerate() {
-        let hit = match conds[i] {
-            Some(b) => b,
-            None if i + 1 == secs.len() => true,
-            None if any_cond => i > 0 && conds[0].is_some() || i == 0,
-            None => match (i, secs.len()) {
-                (0, 2) => n >= 0.0,
-                (0, _) => n > 0.0,
-                (1, _) => n < 0.0,
-                _ => true,
-            },
-        };
-        if hit {
-            return sec;
-        }
-    }
-    secs[0]
-}
-
-fn num_class(fmt: &str, n: f64) -> u8 {
-    let f = fmt.trim();
-    if f.eq_ignore_ascii_case("general") {
-        return 0;
-    }
-    let first = section_for(f, n);
-    if first.to_ascii_lowercase().ends_with("]general") && first.starts_with("[$-") {
-        return 8;
-    }
-
-    let mut plain = String::new();
-    let mut currency = false;
-    let mut chars = first.chars().peekable();
-    while let Some(c) = chars.next() {
-        match c {
-            '"' => {
-                for d in chars.by_ref() {
-                    if d == '"' {
-                        break;
-                    }
-                }
-            }
-            '\\' | '_' => {
-                chars.next();
-            }
-            '[' => {
-                let mut tag = String::new();
-                for d in chars.by_ref() {
-                    if d == ']' {
-                        break;
-                    }
-                    tag.push(d);
-                }
-                if let Some(rest) = tag.strip_prefix('$') {
-                    let sym = rest.split('-').next().unwrap_or("");
-                    if !sym.is_empty() {
-                        currency = true;
-                    }
-                }
-            }
-            c => plain.push(c),
-        }
-    }
-    let lower = plain.to_ascii_lowercase();
-    if plain.contains('*') {
-        7
-    } else if let Some(slash) = plain.find('/') {
-        if plain[..slash].contains(['#', '0']) {
-            5
-        } else {
-            1
-        }
-    } else if plain.contains('%') {
-        2
-    } else if lower.contains("e+") || lower.contains("e-") {
-        4
-    } else if currency || plain.contains('$') {
-        3
-    } else if plain.contains('@') {
-        6
-    } else {
-        1
-    }
-}
-
 fn is_month_fmt(fmt: &str) -> bool {
     let f = fmt.to_ascii_lowercase();
     f == "mmm-yy" || f == "mmm-yyyy"
@@ -521,19 +281,32 @@ enum Kind {
 
     Other,
 
-    Num(f64, u8),
-    Date { v: f64, time: bool, months: bool },
+    Num(f64, Fm),
 
-    Time(f64, bool),
+    Date {
+        v: f64,
+        time: bool,
+        months: bool,
+        fm: Fm,
+    },
+
+    Time(f64, Fm),
     Text(TextNum),
     List(ListItem),
 }
 
+fn kind_fm(k: &Kind) -> Option<&Fm> {
+    match k {
+        Kind::Num(_, f) | Kind::Time(_, f) | Kind::Date { fm: f, .. } => Some(f),
+        _ => None,
+    }
+}
+
 fn same_group(a: &Kind, b: &Kind) -> bool {
     match (a, b) {
-        (Kind::Num(..), Kind::Num(..)) => true,
-        (Kind::Date { .. }, Kind::Date { .. }) => true,
-        (Kind::Time(_, a), Kind::Time(_, b)) => a == b,
+        (Kind::Num(..), Kind::Num(..))
+        | (Kind::Date { .. }, Kind::Date { .. })
+        | (Kind::Time(..), Kind::Time(..)) => true,
         (Kind::Text(x), Kind::Text(y)) => {
             x.prefix == y.prefix && x.suffix == y.suffix && x.ordinal == y.ordinal
         }
@@ -764,9 +537,24 @@ pub(crate) fn date_in_month(sys: crate::datetime::DateSystem, mi: i64, dom: u32,
     serial_from_ymd(sys, y, m as i64, d as i64)
 }
 
-fn line_shared(l: u32, nlines: u32, len: u32, numeric_at: &dyn Fn(u32, u32) -> bool) -> Vec<bool> {
-    (0..len)
-        .map(|s| (l > 0 && numeric_at(l - 1, s)) || (l + 1 < nlines && numeric_at(l + 1, s)))
+fn line_shared(
+    l: u32,
+    nlines: u32,
+    items: &[Kind],
+    kind_at: &dyn Fn(u32, u32) -> Kind,
+) -> Vec<bool> {
+    let shares = |seed: &Kind, other: &Kind| match (seed, other) {
+        (Kind::Num(_, a), Kind::Num(_, b))
+        | (Kind::Time(_, a), Kind::Time(_, b))
+        | (Kind::Date { fm: a, .. }, Kind::Date { fm: b, .. }) => compatible(b, a),
+        _ => false,
+    };
+    (0..items.len() as u32)
+        .map(|s| {
+            let seed = &items[s as usize];
+            (l > 0 && shares(seed, &kind_at(l - 1, s)))
+                || (l + 1 < nlines && shares(seed, &kind_at(l + 1, s)))
+        })
         .collect()
 }
 
@@ -1483,7 +1271,7 @@ fn plan_terms(ctx: &Ctx, items: &[Kind], total: usize) -> Vec<Act> {
 
     let mut groups: Vec<Vec<usize>> = Vec::new();
     let mut group_of: Vec<Option<(usize, usize)>> = vec![None; len];
-    let mut group_class: Vec<Option<u8>> = Vec::new();
+    let mut group_fm: Vec<Option<Fm>> = Vec::new();
     let mut cur: Option<usize> = None;
     for (s, kind) in items.iter().enumerate() {
         match kind {
@@ -1495,22 +1283,19 @@ fn plan_terms(ctx: &Ctx, items: &[Kind], total: usize) -> Vec<Act> {
             _ => {}
         }
 
-        let join = cur.is_some_and(|g| match (&items[groups[g][0]], kind) {
-            (Kind::Num(..), Kind::Num(_, c)) => {
-                let ok = *c == 0 || group_class[g].is_none_or(|gc| gc == *c);
-                if ok && *c != 0 && group_class[g].is_none() {
-                    group_class[g] = Some(*c);
-                }
-                ok
+        let join_ok = cur.is_some_and(|g| {
+            let (a, b) = (&items[groups[g][0]], kind);
+            if !same_group(a, b) {
+                return false;
             }
-            (a, b) => same_group(a, b),
+            match (kind_fm(b), group_fm[g].as_mut()) {
+                (Some(nf), Some(sf)) => join(sf, nf),
+                _ => true,
+            }
         });
-        if !join {
+        if !join_ok {
             groups.push(Vec::new());
-            group_class.push(match kind {
-                Kind::Num(_, c) if *c != 0 => Some(*c),
-                _ => None,
-            });
+            group_fm.push(kind_fm(kind).cloned());
             cur = Some(groups.len() - 1);
         }
         let g = cur.unwrap();
@@ -1546,20 +1331,22 @@ impl Workbook {
                 Value::Blank => Kind::Blank,
                 Value::Number(n) => {
                     let fmt = self.number_format(addr);
-                    match fmt_kind(fmt) {
-                        FmtKind::Date { .. }
-                            if *n < 0.0 || *n >= self.settings.date_system.max_serial() + 1.0 =>
-                        {
-                            Kind::Num(*n, CLASS_DATE)
+                    let fm = Fm::of(fmt, !self.is_builtin_format(fmt));
+                    if fm.has_date {
+                        if *n < 0.0 || *n >= self.settings.date_system.max_serial() + 1.0 {
+                            Kind::Num(*n, fm)
+                        } else {
+                            Kind::Date {
+                                v: *n,
+                                time: fm.has_time,
+                                months: is_month_fmt(fmt),
+                                fm,
+                            }
                         }
-                        FmtKind::Time(_) if *n < 0.0 => Kind::Num(*n, CLASS_DATE),
-                        FmtKind::Number => Kind::Num(*n, num_class(fmt, *n)),
-                        FmtKind::Time(h) => Kind::Time(*n, h),
-                        FmtKind::Date { time } => Kind::Date {
-                            v: *n,
-                            time,
-                            months: is_month_fmt(fmt),
-                        },
+                    } else if fm.has_time && *n >= 0.0 {
+                        Kind::Time(*n, fm)
+                    } else {
+                        Kind::Num(*n, fm)
                     }
                 }
                 Value::Text(t) => {
@@ -1585,7 +1372,8 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Fill, |wb| {
             wb.note_changed(sheet, &notice::fill_rest(src, dst));
-            wb.autofill_run(sheet, src, dst, ty)
+
+            wb.creating_formulas(|wb| wb.autofill_run(sheet, src, dst, ty))
         })
     }
 
@@ -1787,17 +1575,8 @@ impl Workbook {
         self.remove_arrays_in(sheet, corner);
         let (h, w) = (src.rows(), src.cols());
         let (rows, cols) = (corner.rows(), corner.cols());
-        let numeric_at = |l: u32, s: u32| -> bool {
-            matches!(
-                self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)),
-                Kind::Num(..)
-            )
-        };
-        let time_at = |l: u32, s: u32| -> bool {
-            matches!(
-                self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)),
-                Kind::Date { .. } | Kind::Time(..)
-            )
+        let kind_at = |l: u32, s: u32| -> Kind {
+            self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l))
         };
         let ctx = Ctx {
             ty,
@@ -1817,8 +1596,8 @@ impl Workbook {
                     .map(|s| self.fill_kind(CellAddr::new(sheet, src.r0 + s, src.c0 + l)))
                     .collect();
                 let ctx = Ctx {
-                    shared: line_shared(l, w, h, &numeric_at),
-                    shared_time: line_shared(l, w, h, &time_at),
+                    shared: line_shared(l, w, &items, &kind_at),
+                    shared_time: line_shared(l, w, &items, &kind_at),
                     ..ctx.clone()
                 };
                 if !lone {
@@ -2110,26 +1889,14 @@ impl Workbook {
         {
             return self.autofill_arrays(sheet, src, dest_part, dir, count);
         }
-        let numeric_at = |l: u32, s: u32| -> bool {
+        let kind_at = |l: u32, s: u32| -> Kind {
             let (r, c) = match dir {
                 Dir::Down => (src.r0 + s, src.c0 + l),
                 Dir::Up => (src.r1 - s, src.c0 + l),
                 Dir::Right => (src.r0 + l, src.c0 + s),
                 Dir::Left => (src.r0 + l, src.c1 - s),
             };
-            matches!(self.fill_kind(CellAddr::new(sheet, r, c)), Kind::Num(..))
-        };
-        let time_at = |l: u32, s: u32| -> bool {
-            let (r, c) = match dir {
-                Dir::Down => (src.r0 + s, src.c0 + l),
-                Dir::Up => (src.r1 - s, src.c0 + l),
-                Dir::Right => (src.r0 + l, src.c0 + s),
-                Dir::Left => (src.r0 + l, src.c1 - s),
-            };
-            matches!(
-                self.fill_kind(CellAddr::new(sheet, r, c)),
-                Kind::Date { .. } | Kind::Time(..)
-            )
+            self.fill_kind(CellAddr::new(sheet, r, c))
         };
         let ctx = Ctx {
             ty,
@@ -2158,13 +1925,14 @@ impl Workbook {
                 })
                 .collect();
             let ctx = Ctx {
-                shared_time: line_shared(l, nlines, len, &time_at),
-                shared: line_shared(l, nlines, len, &numeric_at),
+                shared_time: line_shared(l, nlines, &items, &kind_at),
+                shared: line_shared(l, nlines, &items, &kind_at),
                 ..ctx.clone()
             };
             plans.push(plan_line(&ctx, &items, count as usize));
         }
-        if dir == Dir::Down {
+
+        if dir == Dir::Down && ty != FillType::Formats {
             self.fill_grow_tables(sheet, dst.r0, dest_part, &[dest_part]);
         }
         let mode = self.settings.mode;
@@ -2188,43 +1956,53 @@ impl Workbook {
             })
             .collect();
 
+        let mut order: Vec<(u32, u32, usize, usize)> = plans
+            .iter()
+            .enumerate()
+            .flat_map(|(l, plan)| {
+                (0..plan.len()).map(move |j| {
+                    let (dr, dc) = at(l as u32, len + j as u32);
+                    (dr, dc, l, j)
+                })
+            })
+            .collect();
+        order.sort_unstable();
+
         self.with_shares(&pairs, true, |wb| {
             wb.with_op(Op::NoAutoExpand, true, |this| {
-                'outer: for (l, plan) in plans.iter().enumerate() {
-                    for (j, act) in plan.iter().enumerate() {
-                        let (slot, _) = match act {
-                            Act::Copy(s) | Act::FormatOnly(s) | Act::Set(s, _) => (*s as u32, ()),
-                        };
-                        let (sr, sc) = at(l as u32, slot);
-                        let (dr, dc) = at(l as u32, len + j as u32);
-                        let to = CellAddr::new(sheet, dr, dc);
-                        let from = Rect::cell(sr, sc);
-                        match act {
-                            Act::FormatOnly(_) => this.fmt_copy_block(sheet, from, to),
-                            Act::Copy(_) | Act::Set(..) => {
-                                let old_fmt = (ty == FillType::Values).then(|| {
-                                    (
-                                        this.number_format(to).to_string(),
-                                        this.cell_style(to).clone(),
-                                    )
-                                });
-                                match this.copy_range_with(sheet, from, to, true) {
-                                    Ok(r) => {
-                                        report.add_sheets(&r);
-                                        report.changed.extend(r.changed)
-                                    }
-                                    Err(e) => {
-                                        failed = Some(e);
-                                        break 'outer;
-                                    }
+                for &(dr, dc, l, j) in &order {
+                    let act = &plans[l][j];
+                    let (slot, _) = match act {
+                        Act::Copy(s) | Act::FormatOnly(s) | Act::Set(s, _) => (*s as u32, ()),
+                    };
+                    let (sr, sc) = at(l as u32, slot);
+                    let to = CellAddr::new(sheet, dr, dc);
+                    let from = Rect::cell(sr, sc);
+                    match act {
+                        Act::FormatOnly(_) => this.fmt_copy_block(sheet, from, to),
+                        Act::Copy(_) | Act::Set(..) => {
+                            let old_fmt = (ty == FillType::Values).then(|| {
+                                (
+                                    this.number_format(to).to_string(),
+                                    this.cell_style(to).clone(),
+                                )
+                            });
+                            match this.copy_range_with(sheet, from, to, true) {
+                                Ok(r) => {
+                                    report.add_sheets(&r);
+                                    report.changed.extend(r.changed)
                                 }
-                                if let Act::Set(_, v) = act {
-                                    this.set_value_exact(to, v.clone());
+                                Err(e) => {
+                                    failed = Some(e);
+                                    break;
                                 }
-                                if let Some((f, style)) = old_fmt {
-                                    this.store_style(to, style);
-                                    this.set_number_format(sheet, Rect::cell(dr, dc), &f);
-                                }
+                            }
+                            if let Act::Set(_, v) = act {
+                                this.set_value_exact(to, v.clone());
+                            }
+                            if let Some((f, style)) = old_fmt {
+                                this.store_style(to, style);
+                                this.set_number_format(sheet, Rect::cell(dr, dc), &f);
                             }
                         }
                     }

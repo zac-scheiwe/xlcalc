@@ -1,3 +1,5 @@
+mod show;
+
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -173,6 +175,9 @@ pub struct DataField {
     pub show: ShowAs,
 }
 
+pub const BASE_PREVIOUS: u32 = u32::MAX - 3;
+pub const BASE_NEXT: u32 = u32::MAX - 4;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct ShowAs {
     pub kind: i32,
@@ -236,6 +241,10 @@ pub struct PtField {
     pub item_caps: Vec<(u32, String)>,
 
     pub group_order: Vec<String>,
+
+    pub collapsed: Vec<u32>,
+
+    pub show_all: bool,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -272,6 +281,8 @@ pub struct CalcItem {
     pub name: String,
 
     pub formula: String,
+
+    pub seq: u64,
 }
 
 impl Default for PtField {
@@ -295,11 +306,25 @@ impl Default for PtField {
             caption: None,
             item_caps: Vec::new(),
             group_order: Vec::new(),
+            collapsed: Vec::new(),
+            show_all: false,
         }
     }
 }
 
 impl PivotTable {
+    pub fn push_calc_item(&mut self, f: usize, name: String, formula: String) {
+        let seq = self
+            .fields
+            .iter()
+            .flat_map(|pf| pf.calc_items.iter().map(|c| c.seq + 1))
+            .max()
+            .unwrap_or(0);
+        self.fields[f]
+            .calc_items
+            .push(CalcItem { name, formula, seq });
+    }
+
     pub fn field_name<'a>(&'a self, c: &'a PivotCache, f: usize) -> &'a str {
         self.fields[f]
             .caption
@@ -686,6 +711,22 @@ pub struct Rendered {
     pub(crate) col_levels: Vec<u8>,
 
     pub(crate) compact: bool,
+
+    pub(crate) sel_rows: Vec<SelLine>,
+    pub(crate) sel_cols: Vec<SelLine>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct SelLine {
+    pub at: u32,
+
+    pub items: Vec<u32>,
+
+    pub level: usize,
+
+    pub kind: u16,
+
+    pub data: Option<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -774,6 +815,9 @@ fn exact_literal(v: f64) -> String {
     if !v.is_finite() {
         return format!("{v:?}");
     }
+    if v.abs() >= 1e307 {
+        return format!("({}*16)", exact_literal(v / 16.0));
+    }
     let head: f64 = format!("{v:.14e}").parse().unwrap_or(v);
     let rest = v - head;
     if rest == 0.0 {
@@ -845,28 +889,65 @@ pub fn calc_formula_valid(c: &PivotCache, formula: &str) -> bool {
     wb.compile_normalized(&text, at).is_ok()
 }
 
+fn sx_snap(x: f64, acc: f64) -> f64 {
+    let exp = |v: f64| ((v.to_bits() >> 52) & 0x7ff) as i32;
+    if exp(x) - exp(acc) >= 50 {
+        0.0
+    } else {
+        acc
+    }
+}
+
+fn partition(mut arr: Vec<usize>, pass: impl Fn(usize) -> bool) -> Vec<usize> {
+    let (mut i, mut j) = (0, arr.len());
+    while i < j {
+        if pass(arr[i]) {
+            i += 1;
+        } else {
+            j -= 1;
+            arr.swap(i, j);
+        }
+    }
+    arr.truncate(i);
+    arr
+}
+
 pub fn aggregate(func: Func, vals: &[&Value]) -> Value {
     if vals.iter().all(|v| matches!(v, Value::Blank)) {
         return Value::Blank;
     }
     let n = nums(vals);
     let count = n.len() as f64;
+
+    if !matches!(func, Func::Count | Func::CountNums) {
+        if let Some(Value::Error(e)) = vals.iter().find(|v| matches!(v, Value::Error(_))) {
+            return Value::Error(*e);
+        }
+    }
+
+    let fold =
+        |step: fn(f64, f64) -> f64| n.iter().skip(1).fold(n[0], |a, &x| sx_snap(x, step(a, x)));
+    let sum = || n.iter().fold(0.0, |a, &x| sx_snap(x, a + x));
     match func {
-        Func::Sum => Value::Number(n.iter().fold(0.0, |a, b| a + b)),
+        Func::Sum => Value::Number(sum()),
         Func::Count => {
             Value::Number(vals.iter().filter(|v| !matches!(v, Value::Blank)).count() as f64)
         }
         Func::CountNums => Value::Number(count),
         Func::Average => {
+            if let Some(Value::Error(e)) = vals.iter().find(|v| matches!(v, Value::Error(_))) {
+                return Value::Error(*e);
+            }
             if n.is_empty() {
                 Value::Error(XlError::DIV0)
             } else {
-                Value::Number(n.iter().fold(0.0, |a, b| a + b) / count)
+                Value::Number(sum() / count)
             }
         }
-        Func::Max => Value::Number(n.iter().copied().fold(f64::NEG_INFINITY, f64::max)).or_zero(&n),
-        Func::Min => Value::Number(n.iter().copied().fold(f64::INFINITY, f64::min)).or_zero(&n),
-        Func::Product => Value::Number(n.iter().fold(1.0, |a, b| a * b)).or_zero(&n),
+        Func::Max | Func::Min | Func::Product if n.is_empty() => Value::Number(0.0),
+        Func::Max => Value::Number(fold(f64::max)),
+        Func::Min => Value::Number(fold(f64::min)),
+        Func::Product => Value::Number(fold(|a, x| a * x)),
         Func::StdDev | Func::Var | Func::StdDevP | Func::VarP => {
             let pop = matches!(func, Func::StdDevP | Func::VarP);
             let min = if pop { 1 } else { 2 };
@@ -908,53 +989,207 @@ fn pivot_var(v: &[f64], sample: bool) -> f64 {
     pivot_var_sq(v.len() as f64, s, q, sample)
 }
 
-pub fn aggregate_merged(func: Func, groups: &[Vec<&Value>]) -> Value {
-    let flat: Vec<&Value> = groups.iter().flatten().copied().collect();
-    if matches!(func, Func::Sum) && groups.len() > 1 {
-        if flat.iter().all(|v| matches!(v, Value::Blank)) {
+struct FormBuf {
+    slots: Vec<(usize, FormSlot)>,
+    err: Option<XlError>,
+}
+
+#[derive(Clone, Copy, Default)]
+struct FormSlot {
+    sum: f64,
+    err: Option<XlError>,
+    ovf: bool,
+}
+
+impl FormSlot {
+    fn add(&mut self, v: &Value) {
+        match v {
+            Value::Number(x) => {
+                self.sum = sx_snap(*x, self.sum + x);
+                self.ovf |= !self.sum.is_finite();
+            }
+            Value::Error(e) => self.err = Some(*e),
+            _ => {}
+        }
+    }
+
+    fn merge(&mut self, o: &FormSlot) {
+        if o.ovf {
+            self.ovf = true;
+        } else if let Some(e) = o.err {
+            self.err = Some(e);
+        } else {
+            self.sum += o.sum;
+            self.ovf |= !self.sum.is_finite();
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+struct SxBuf {
+    fresh: bool,
+
+    nums: u32,
+
+    all: u32,
+
+    err: Option<XlError>,
+    sum: f64,
+    max: f64,
+    min: f64,
+    prod: f64,
+    sq: f64,
+
+    adj: f64,
+}
+
+impl SxBuf {
+    const SUM: u32 = 1;
+    const NUMS: u32 = 2;
+    const MAX: u32 = 8;
+    const MIN: u32 = 0x10;
+    const PROD: u32 = 0x20;
+    const SQ: u32 = 0x40;
+
+    fn new() -> SxBuf {
+        SxBuf {
+            fresh: true,
+            nums: 0,
+            all: 0,
+            err: None,
+            sum: 0.0,
+            max: 0.0,
+            min: 0.0,
+            prod: 0.0,
+            sq: 0.0,
+            adj: 0.0,
+        }
+    }
+
+    fn mask(func: Func) -> u32 {
+        match func {
+            Func::Sum => SxBuf::SUM,
+            Func::Count => 4,
+            Func::Average => SxBuf::SUM | SxBuf::NUMS,
+            Func::Max => SxBuf::MAX,
+            Func::Min => SxBuf::MIN,
+            Func::Product => SxBuf::PROD,
+            Func::CountNums => SxBuf::NUMS,
+            Func::StdDev | Func::StdDevP | Func::Var | Func::VarP => {
+                SxBuf::SUM | SxBuf::NUMS | SxBuf::SQ
+            }
+        }
+    }
+
+    fn add(&mut self, v: &Value, mask: u32, gen: bool) {
+        if matches!(v, Value::Blank) || self.err.is_some() {
+            return;
+        }
+        let was_fresh = self.fresh;
+        self.fresh = false;
+        match v {
+            Value::Error(e) if gen || mask & 0x79 != 0 => self.err = Some(*e),
+            Value::Number(x) => {
+                let x = *x;
+                if gen && mask & (SxBuf::NUMS | 4) != 0 {
+                    self.adj = self.adj + x - 1.0;
+                }
+                if mask & SxBuf::SUM != 0 {
+                    self.sum = sx_snap(x, self.sum + x);
+                }
+                self.all += 1;
+                if mask & SxBuf::NUMS != 0 {
+                    self.nums += 1;
+                }
+                if mask & SxBuf::MAX != 0 {
+                    self.max = sx_snap(x, if was_fresh { x } else { self.max.max(x) });
+                }
+                if mask & SxBuf::MIN != 0 {
+                    self.min = sx_snap(x, if was_fresh { x } else { self.min.min(x) });
+                }
+                if mask & SxBuf::PROD != 0 {
+                    self.prod = sx_snap(x, if was_fresh { x } else { self.prod * x });
+                }
+                if mask & SxBuf::SQ != 0 {
+                    self.sq = sx_snap(x, crate::x87::add(crate::x87::mul(x, x), self.sq));
+                }
+            }
+            _ => {
+                self.all += 1;
+
+                if was_fresh && mask & (SxBuf::MAX | SxBuf::MIN | SxBuf::PROD) != 0 {
+                    self.fresh = true;
+                }
+            }
+        }
+    }
+
+    fn merge(&mut self, o: &SxBuf, mask: u32) {
+        if o.fresh || self.err.is_some() {
+            return;
+        }
+        let was_fresh = self.fresh;
+        self.fresh = false;
+        if let Some(e) = o.err {
+            self.err = Some(e);
+            return;
+        }
+        if mask & SxBuf::SUM != 0 {
+            self.sum += o.sum;
+        }
+        if mask & SxBuf::NUMS != 0 {
+            self.nums += o.nums;
+        }
+        self.all += o.all;
+        if mask & (SxBuf::NUMS | 4) != 0 {
+            self.adj += o.adj;
+        }
+        if mask & SxBuf::MAX != 0 && (was_fresh || o.max > self.max) {
+            self.max = o.max;
+        }
+        if mask & SxBuf::MIN != 0 && (was_fresh || o.min < self.min) {
+            self.min = o.min;
+        }
+        if mask & SxBuf::PROD != 0 {
+            self.prod = if was_fresh {
+                o.prod
+            } else {
+                self.prod * o.prod
+            };
+        }
+        if mask & SxBuf::SQ != 0 {
+            self.sq = crate::x87::add(self.sq, o.sq);
+        }
+    }
+
+    fn get(&self, func: Func) -> Value {
+        if let Some(e) = self.err {
+            return Value::Error(e);
+        }
+        if self.all == 0 {
             return Value::Blank;
         }
-        let mut total = 0.0;
-        for g in groups {
-            total += nums(g).iter().fold(0.0, |a, b| a + b);
-        }
-        return Value::Number(total);
-    }
-    if !matches!(func, Func::StdDev | Func::Var | Func::StdDevP | Func::VarP) || groups.len() < 2 {
-        return aggregate(func, &flat);
-    }
-    if flat.iter().all(|v| matches!(v, Value::Blank)) {
-        return Value::Blank;
-    }
-    let pop = matches!(func, Func::StdDevP | Func::VarP);
-    let total: usize = groups.iter().map(|g| nums(g).len()).sum();
-    if total < if pop { 1 } else { 2 } {
-        return Value::Error(XlError::DIV0);
-    }
-    let (mut ts, mut tq) = (0.0f64, 0.0f64);
-    for g in groups {
-        let (s, q) = pivot_sq(&nums(g));
-        ts = crate::x87::add(ts, s);
-        tq = crate::x87::add(tq, q);
-    }
-    let var = pivot_var_sq(total as f64, ts, tq, !pop);
-    if matches!(func, Func::StdDev | Func::StdDevP) {
-        Value::Number(crate::x87::sqrt(var))
-    } else {
-        Value::Number(var)
-    }
-}
-
-trait OrZero {
-    fn or_zero(self, n: &[f64]) -> Value;
-}
-
-impl OrZero for Value {
-    fn or_zero(self, n: &[f64]) -> Value {
-        if n.is_empty() {
-            Value::Number(0.0)
-        } else {
-            self
+        match func {
+            Func::Sum => Value::Number(self.sum),
+            Func::Count => Value::Number(f64::from(self.all) + self.adj),
+            Func::CountNums => Value::Number(f64::from(self.nums) + self.adj),
+            Func::Average if self.nums == 0 => Value::Error(XlError::DIV0),
+            Func::Average => Value::Number(self.sum / f64::from(self.nums)),
+            Func::Max => Value::Number(self.max),
+            Func::Min => Value::Number(self.min),
+            Func::Product => Value::Number(self.prod),
+            Func::StdDev | Func::Var | Func::StdDevP | Func::VarP => {
+                let pop = matches!(func, Func::StdDevP | Func::VarP);
+                if self.nums < if pop { 1 } else { 2 } {
+                    return Value::Error(XlError::DIV0);
+                }
+                let var = pivot_var_sq(f64::from(self.nums), self.sum, self.sq, !pop);
+                if matches!(func, Func::StdDev | Func::StdDevP) {
+                    Value::Number(crate::x87::sqrt(var))
+                } else {
+                    Value::Number(var)
+                }
+            }
         }
     }
 }
@@ -975,6 +1210,59 @@ impl PivotCache {
                 }
             }
         }
+    }
+
+    pub fn from_records(
+        source: &str,
+        sheet: SheetId,
+        names: Vec<String>,
+        rows: Vec<Vec<Value>>,
+        label: impl Fn(&Value) -> String,
+    ) -> PivotCache {
+        let mut fields: Vec<CacheField> = names
+            .into_iter()
+            .map(|name| CacheField {
+                name,
+                items: Vec::new(),
+                formula: None,
+            })
+            .collect();
+        let mut maps: Vec<HashMap<Key, u32>> = fields.iter().map(|_| HashMap::new()).collect();
+        let mut idx = Vec::with_capacity(rows.len());
+        for rec in &rows {
+            let ix = rec
+                .iter()
+                .enumerate()
+                .map(|(i, v)| {
+                    *maps[i].entry(key_of(v)).or_insert_with(|| {
+                        fields[i].items.push(Item {
+                            value: v.clone(),
+                            label: label(v),
+                        });
+                        (fields[i].items.len() - 1) as u32
+                    })
+                })
+                .collect();
+            idx.push(ix);
+        }
+        let mut c = PivotCache {
+            source: source.to_string(),
+            sheet,
+            rect: Rect::new(
+                0,
+                0,
+                rows.len() as u32,
+                fields.len().saturating_sub(1) as u32,
+            ),
+            fields,
+            records: rows,
+            idx,
+            orphaned: false,
+            missing_limit: -1,
+            refresh_open: false,
+        };
+        c.sort_items();
+        c
     }
 
     pub fn read(wb: &Workbook, source: &str, sheet: SheetId, rect: Rect) -> Option<PivotCache> {
@@ -1201,6 +1489,10 @@ struct Line {
     func: Option<Func>,
 
     depth: u8,
+
+    kind: u16,
+
+    top: bool,
 }
 
 struct Ctx<'a> {
@@ -1213,9 +1505,55 @@ struct Ctx<'a> {
 
     scratch: std::cell::OnceCell<Workbook>,
 
-    func_ovr: std::cell::Cell<Option<Func>>,
-
     hide: Hide,
+
+    sorted: std::cell::OnceCell<Vec<usize>>,
+
+    gens: std::cell::OnceCell<Vec<GenRec>>,
+}
+
+struct GenRec {
+    idx: Vec<u32>,
+    src: usize,
+    val: Value,
+
+    pass: bool,
+}
+
+enum GenState {
+    Busy,
+    Done(Value),
+}
+
+impl<'a> Ctx<'a> {
+    fn new(
+        t: &'a PivotTable,
+        c: &'a PivotCache,
+        hide: Hide,
+        live: Vec<usize>,
+        live_exist: Vec<usize>,
+    ) -> Ctx<'a> {
+        Ctx {
+            t,
+            c,
+            live,
+            live_exist,
+            scratch: Default::default(),
+            hide,
+            sorted: Default::default(),
+            gens: Default::default(),
+        }
+    }
+
+    fn of(t: &'a PivotTable, c: &'a PivotCache) -> Ctx<'a> {
+        let hide = effective_hidden(t, c);
+        let live: Vec<usize> = pass_hidden(c, &hide.all)
+            .into_iter()
+            .filter(|&r| !hide.hides_record(c, r))
+            .collect();
+        let live_exist = pass_hidden(c, &hide.hard);
+        Ctx::new(t, c, hide, live, live_exist)
+    }
 }
 
 impl Ctx<'_> {
@@ -1231,32 +1569,74 @@ impl Ctx<'_> {
             }
     }
 
-    fn calc(&self, field: usize, keys: &[(usize, u32)], depth: u8) -> Value {
+    fn calc(&self, field: usize, keys: &[(usize, u32)]) -> Value {
+        let recs = self.ordered_recs(keys);
+        let mut fields = Vec::new();
+        self.form_fields(field, &mut fields, 0);
+        let buf = self.form_buf(field, &fields, keys, &recs);
+        if let Some(e) = buf.err {
+            return Value::Error(e);
+        }
+        match self.form_eval(field, &buf, 0) {
+            Value::Number(_) if recs.is_empty() && self.t.data.len() < 2 => Value::Blank,
+            v => v,
+        }
+    }
+
+    fn form_fields(&self, field: usize, out: &mut Vec<usize>, depth: u8) {
+        let Some(formula) = &self.c.fields[field].formula else {
+            return;
+        };
+        if depth > 8 {
+            return;
+        }
+        map_idents(formula, |name| {
+            let f = self
+                .c
+                .fields
+                .iter()
+                .position(|f| f.name.eq_ignore_ascii_case(name))?;
+            if self.c.fields[f].formula.is_some() {
+                self.form_fields(f, out, depth + 1);
+            } else if !out.contains(&f) {
+                out.push(f);
+            }
+            Some(String::new())
+        });
+    }
+
+    fn form_eval(&self, field: usize, buf: &FormBuf, depth: u8) -> Value {
         let Some(formula) = &self.c.fields[field].formula else {
             return Value::Blank;
         };
         if depth > 8 {
             return Value::Error(XlError::REF);
         }
-        let recs = self.ordered_recs(keys);
-        if recs.is_empty() {
-            return Value::Blank;
-        }
-        let text = subst_fields(self.c, formula, |f| {
+        let text = map_idents(formula, |name| {
+            let f = self
+                .c
+                .fields
+                .iter()
+                .position(|f| f.name.eq_ignore_ascii_case(name))?;
             if self.c.fields[f].formula.is_some() {
-                match self.calc(f, keys, depth + 1) {
-                    Value::Number(n) => Some(n),
-                    _ => None,
-                }
-            } else {
-                let mut s = 0.0;
-                for &r in &recs {
-                    if let Value::Number(n) = &self.c.records[r][f] {
-                        s += n;
-                    }
-                }
-                Some(s)
+                return Some(match self.form_eval(f, buf, depth + 1) {
+                    Value::Number(x) => exact_literal(x),
+                    Value::Error(e) => e.as_str().to_string(),
+                    _ => XlError::VALUE.as_str().to_string(),
+                });
             }
+            let slot = buf
+                .slots
+                .iter()
+                .find(|s| s.0 == f)
+                .map_or_else(FormSlot::default, |s| s.1);
+            Some(if slot.ovf {
+                XlError::NUM.as_str().to_string()
+            } else if let Some(e) = slot.err {
+                e.as_str().to_string()
+            } else {
+                exact_literal(slot.sum)
+            })
         });
         let Some(text) = text else {
             return Value::Error(XlError::VALUE);
@@ -1270,521 +1650,654 @@ impl Ctx<'_> {
         }
     }
 
-    fn agg(&self, d: usize, keys: &[(usize, u32)]) -> Value {
-        self.agg_depth(d, keys, 0)
+    fn form_buf(
+        &self,
+        field: usize,
+        fields: &[usize],
+        keys: &[(usize, u32)],
+        recs: &[usize],
+    ) -> FormBuf {
+        let new = || FormBuf {
+            slots: fields.iter().map(|&f| (f, FormSlot::default())).collect(),
+            err: None,
+        };
+        let feed = |buf: &mut FormBuf, cell: &[usize], _mask: u32| {
+            for &r in cell {
+                for (f, slot) in &mut buf.slots {
+                    slot.add(self.rv(r, *f));
+                }
+            }
+        };
+        if self.leaf_cell(keys) {
+            let mut buf = new();
+            feed(&mut buf, recs, 0);
+            return buf;
+        }
+        let merge = |buf: &mut FormBuf, o: &FormBuf, _mask: u32| {
+            if buf.err.is_some() {
+                return;
+            }
+            let line = o
+                .err
+                .map_or_else(|| self.form_eval(field, o, 0), Value::Error);
+            if let Value::Error(e) = line {
+                buf.err = Some(e);
+                return;
+            }
+            for (s, t) in buf.slots.iter_mut().zip(&o.slots) {
+                s.1.merge(&t.1);
+            }
+        };
+        self.accumulate(keys, recs, new, feed, merge)
     }
 
-    fn agg_depth(&self, d: usize, keys: &[(usize, u32)], depth: u8) -> Value {
-        if let Some(pos) = keys
-            .iter()
-            .position(|&(f, it)| it as usize >= self.c.fields[f].items.len())
-        {
-            return self.calc_item(d, keys, pos, depth);
+    fn agg(&self, d: usize, keys: &[(usize, u32)]) -> Value {
+        let df = &self.t.data[d];
+        if self.c.fields[df.src].formula.is_some() {
+            return self.calc(df.src, keys);
         }
-        let base = self.agg_plain(d, keys);
+        self.agg_func(df.func, d, keys)
+    }
 
-        if depth > 6 || !matches!(self.t.data[d].func, Func::Sum | Func::Count) {
+    fn ix(&self, r: usize, f: usize) -> u32 {
+        let n = self.c.records.len();
+        if r < n {
+            self.c.idx[r][f]
+        } else {
+            self.gens()[r - n].idx[f]
+        }
+    }
+
+    fn rv(&self, r: usize, f: usize) -> &Value {
+        let n = self.c.records.len();
+        if r < n {
+            &self.c.records[r][f]
+        } else {
+            let g = &self.gens()[r - n];
+            if g.src == f {
+                &g.val
+            } else {
+                &Value::Blank
+            }
+        }
+    }
+
+    fn is_gen(&self, r: usize) -> bool {
+        r >= self.c.records.len()
+    }
+
+    fn agg_recs(&self, func: Func, src: usize, recs: &[usize]) -> Value {
+        let vals: Vec<&Value> = recs.iter().map(|&r| self.rv(r, src)).collect();
+        let base = aggregate(func, &vals);
+        if !matches!(func, Func::Count | Func::CountNums) {
             return base;
         }
-        let mut sum = match &base {
-            Value::Number(n) => Some(*n),
-            _ => None,
-        };
-        let mut extra = false;
-        for (f, pf) in self.t.fields.iter().enumerate() {
-            if pf.calc_items.is_empty()
-                || !matches!(pf.orient, Orient::Row | Orient::Column)
-                || keys.iter().any(|k| k.0 == f)
-            {
-                continue;
-            }
-            let n = self.c.fields[f].items.len();
-            for j in 0..pf.calc_items.len() {
-                if self.hide.all[f].contains(&(n + j)) {
-                    continue;
-                }
-                let mut ks = keys.to_vec();
-                ks.push((f, (n + j) as u32));
-                match self.agg_depth(d, &ks, depth + 1) {
-                    Value::Number(x) => {
-                        sum = Some(sum.unwrap_or(0.0) + x);
-                        extra = true;
-                    }
-                    Value::Error(e) => return Value::Error(e),
-                    _ => {}
-                }
+        let mut adj = 0.0;
+        for &r in recs.iter().filter(|&&r| self.is_gen(r)) {
+            match self.rv(r, src) {
+                Value::Number(v) => adj = adj + v - 1.0,
+                Value::Error(e) => return Value::Error(*e),
+                _ => {}
             }
         }
-        if extra {
-            sum.map_or(base, Value::Number)
-        } else {
-            base
+        match base {
+            Value::Number(n) if adj != 0.0 => Value::Number(n + adj),
+            v => v,
         }
     }
 
-    fn calc_item(&self, d: usize, keys: &[(usize, u32)], pos: usize, depth: u8) -> Value {
-        let (f, it) = keys[pos];
-        let n = self.c.fields[f].items.len();
-        let ci = &self.t.fields[f].calc_items[it as usize - n];
-        if depth > 8 {
-            return Value::Error(XlError::REF);
+    fn gens(&self) -> &[GenRec] {
+        self.gens.get_or_init(|| self.generate())
+    }
+
+    fn generate(&self) -> Vec<GenRec> {
+        let nf = self.c.fields.len().min(self.t.fields.len());
+        let ncalc_of = |f: usize| self.t.fields[f].calc_items.len();
+        let mut env: Vec<usize> = (0..nf)
+            .filter(|&f| matches!(self.t.fields[f].orient, Orient::Row | Orient::Column))
+            .collect();
+        let ncalc = env.iter().filter(|&&f| ncalc_of(f) > 0).count();
+        if ncalc == 0 {
+            return Vec::new();
         }
-        if ci.formula.trim().is_empty() {
-            return Value::Blank;
+        for i in 0..ncalc {
+            if ncalc_of(env[i]) == 0 {
+                if let Some(j) = (ncalc..env.len()).find(|&j| ncalc_of(env[j]) > 0) {
+                    env.swap(i, j);
+                }
+            }
         }
-        let mut bad = false;
-        let text = subst_idents(&ci.formula, |name| {
-            let target = self.c.fields[f]
+
+        let mut marked = vec![false; nf];
+        fn mark(c: &PivotCache, f: usize, marked: &mut [bool], depth: u8) {
+            match &c.fields[f].formula {
+                None => {
+                    if let Some(m) = marked.get_mut(f) {
+                        *m = true;
+                    }
+                }
+                Some(formula) if depth < 8 => {
+                    let _ = subst_fields(c, formula, |g| {
+                        mark(c, g, marked, depth + 1);
+                        Some(0.0)
+                    });
+                }
+                Some(_) => {}
+            }
+        }
+        for d in &self.t.data {
+            if d.src < nf {
+                mark(self.c, d.src, &mut marked, 0);
+            }
+        }
+        let targets: Vec<(usize, Func)> = (0..nf)
+            .filter(|&f| {
+                marked[f]
+                    && self.c.fields[f].formula.is_none()
+                    && !matches!(
+                        self.t.fields[f].orient,
+                        Orient::Row | Orient::Column | Orient::Page
+                    )
+            })
+            .map(|f| {
+                let func = self
+                    .t
+                    .data
+                    .iter()
+                    .find(|d| d.src == f)
+                    .map_or(Func::Sum, |d| d.func);
+                (f, func)
+            })
+            .collect();
+
+        let mut pass = vec![false; self.c.records.len()];
+        for &r in &self.live {
+            pass[r] = true;
+        }
+        let src_recs = partition((0..self.c.records.len()).collect(), |r| pass[r]);
+        let mut combos: Vec<Vec<u32>> = Vec::new();
+        let mut cur = vec![0u32; env.len()];
+        self.combos(&env, 0, ncalc as i64, &mut cur, &mut combos);
+        let mut base = vec![u32::MAX; self.c.fields.len()];
+        for &f in &self.t.pages {
+            if let Some(it) = self.t.fields.get(f).and_then(|pf| pf.page_item) {
+                base[f] = it;
+            }
+        }
+        let mut out: Vec<GenRec> = Vec::new();
+        for &(src, func) in &targets {
+            let mut memo: std::collections::HashMap<Vec<u32>, GenState> = Default::default();
+            let mut order: Vec<Vec<u32>> = Vec::new();
+            let g = GenEval {
+                cx: self,
+                env: &env,
+                src,
+                func,
+                src_recs: &src_recs,
+            };
+            for combo in &combos {
+                let _ = g.eval(combo, &mut memo, &mut order);
+            }
+            for combo in order {
+                let Some(GenState::Done(val)) = memo.get(&combo) else {
+                    continue;
+                };
+                if matches!(val, Value::Blank) {
+                    continue;
+                }
+                let mut idx = base.clone();
+                for (k, &f) in env.iter().enumerate() {
+                    idx[f] = combo[k];
+                }
+                let pass =
+                    idx.iter().enumerate().all(|(f, &it)| {
+                        it == u32::MAX || !self.hide.all[f].contains(&(it as usize))
+                    }) && !self.hide.hides_items(&idx);
+                out.push(GenRec {
+                    idx,
+                    src,
+                    val: val.clone(),
+                    pass,
+                });
+            }
+        }
+        out
+    }
+
+    fn combos(
+        &self,
+        env: &[usize],
+        level: usize,
+        budget: i64,
+        cur: &mut Vec<u32>,
+        out: &mut Vec<Vec<u32>>,
+    ) {
+        if budget == 0 {
+            return;
+        }
+        if level == env.len() {
+            out.push(cur.clone());
+            return;
+        }
+        let f = env[level];
+        let nreal = self.c.fields[f].items.len();
+        let n = nreal + self.t.fields[f].calc_items.len();
+        for it in (0..n).rev() {
+            cur[level] = it as u32;
+            let b = if it >= nreal { -1 } else { budget - 1 };
+            self.combos(env, level + 1, b, cur, out);
+        }
+    }
+}
+
+struct GenEval<'c, 'a> {
+    cx: &'c Ctx<'a>,
+    env: &'c [usize],
+    src: usize,
+    func: Func,
+    src_recs: &'c [usize],
+}
+
+impl GenEval<'_, '_> {
+    fn eval(
+        &self,
+        combo: &[u32],
+        memo: &mut std::collections::HashMap<Vec<u32>, GenState>,
+        order: &mut Vec<Vec<u32>>,
+    ) -> Result<Value, ()> {
+        match memo.get(combo) {
+            Some(GenState::Done(v)) => return Ok(v.clone()),
+            Some(GenState::Busy) => return Err(()),
+            None => {}
+        }
+        let cx = self.cx;
+
+        let Some((pos, ci)) = self
+            .env
+            .iter()
+            .enumerate()
+            .filter_map(|(k, &f)| {
+                let n = cx.c.fields[f].items.len();
+                let ci = cx.t.fields[f]
+                    .calc_items
+                    .get((combo[k] as usize).checked_sub(n)?)?;
+                Some((k, ci))
+            })
+            .max_by_key(|(_, ci)| ci.seq)
+        else {
+            return Ok(Value::Blank);
+        };
+        memo.insert(combo.to_vec(), GenState::Busy);
+        let val = if ci.formula.trim().is_empty() {
+            Ok(Value::Blank)
+        } else {
+            self.formula(combo, pos, &ci.formula, memo, order)
+        };
+        let done = match &val {
+            Ok(v) => v.clone(),
+            Err(()) => Value::Error(XlError::REF),
+        };
+        memo.insert(combo.to_vec(), GenState::Done(done));
+        order.push(combo.to_vec());
+        val
+    }
+
+    fn formula(
+        &self,
+        combo: &[u32],
+        pos: usize,
+        formula: &str,
+        memo: &mut std::collections::HashMap<Vec<u32>, GenState>,
+        order: &mut Vec<Vec<u32>>,
+    ) -> Result<Value, ()> {
+        let cx = self.cx;
+        let f = self.env[pos];
+        let n = cx.c.fields[f].items.len();
+        let mut cycle = false;
+        let text = map_idents(formula, |name| {
+            let target = cx.c.fields[f]
                 .items
                 .iter()
                 .position(|x| x.label.eq_ignore_ascii_case(name))
                 .or_else(|| {
-                    self.t.fields[f]
+                    cx.t.fields[f]
                         .calc_items
                         .iter()
                         .position(|x| x.name.eq_ignore_ascii_case(name))
                         .map(|j| n + j)
                 });
             let Some(target) = target else {
-                bad = true;
-                return None;
+                return Some(XlError::NAME.as_str().to_string());
             };
-            let mut ks = keys.to_vec();
-            ks[pos] = (f, target as u32);
-            match self.agg_depth(d, &ks, depth + 1) {
-                Value::Number(x) => Some(x),
-                Value::Blank => Some(0.0),
-                _ => None,
-            }
+            let mut at = combo.to_vec();
+            at[pos] = target as u32;
+            let v = self.operand(&at, memo, order);
+            Some(match v {
+                Ok(Value::Number(x)) => exact_literal(x),
+                Ok(Value::Error(e)) => e.as_str().to_string(),
+                Ok(_) => exact_literal(0.0),
+                Err(()) => {
+                    cycle = true;
+                    XlError::REF.as_str().to_string()
+                }
+            })
         });
+        if cycle {
+            return Err(());
+        }
         let Some(text) = text else {
-            return Value::Error(if bad { XlError::NAME } else { XlError::VALUE });
+            return Ok(Value::Error(XlError::VALUE));
         };
-        let wb = self.scratch.get_or_init(Workbook::new);
+        let wb = cx.scratch.get_or_init(Workbook::new);
         let at = CellAddr::new(wb.active_sheet(), 0, 0);
-        match wb.cfv_eval(&text, at, at) {
+        Ok(match wb.cfv_eval(&text, at, at) {
             Value::Number(x) => Value::Number(x),
             Value::Error(e) => Value::Error(e),
             _ => Value::Error(XlError::VALUE),
-        }
+        })
     }
 
-    fn agg_plain(&self, d: usize, keys: &[(usize, u32)]) -> Value {
-        let df = &self.t.data[d];
-        if self.c.fields[df.src].formula.is_some() {
-            return self.calc(df.src, keys, 0);
-        }
-        self.agg_func(self.func_ovr.get().unwrap_or(df.func), df.src, keys)
-    }
-
-    fn detail_recs(&self, keys: &[(usize, u32)]) -> Vec<usize> {
-        let mut arr: Vec<usize> = self.live.clone();
-        let hit = |r: usize| keys.iter().all(|&(f, i)| self.c.idx[r][f] == i);
-        let (mut i, mut j) = (0usize, arr.len());
-        loop {
-            while i < j && hit(arr[i]) {
-                i += 1;
-            }
-            while j > i && !hit(arr[j - 1]) {
-                j -= 1;
-            }
-            if j <= i + 1 {
-                break;
-            }
-            arr.swap(i, j - 1);
-            i += 1;
-            j -= 1;
-        }
-        arr.truncate(arr.iter().filter(|&&r| hit(r)).count());
-        let (rax, cax) = self.t.axes();
-        let order: Vec<usize> = rax
+    fn operand(
+        &self,
+        at: &[u32],
+        memo: &mut std::collections::HashMap<Vec<u32>, GenState>,
+        order: &mut Vec<Vec<u32>>,
+    ) -> Result<Value, ()> {
+        let cx = self.cx;
+        let on_calc = self
+            .env
             .iter()
-            .chain(cax.iter())
-            .filter_map(|a| match a {
-                Ax::Field(f) => Some(*f),
-                Ax::Values => None,
-            })
-            .collect();
-        arr.sort_by_key(|&r| {
+            .enumerate()
+            .any(|(k, &f)| at[k] as usize >= cx.c.fields[f].items.len());
+        let v = if on_calc {
+            let v = self.eval(at, memo, order)?;
+            if matches!(v, Value::Blank) {
+                Value::Blank
+            } else {
+                let r = [&v];
+                let base = aggregate(self.func, &r);
+                match (self.func, &v, base) {
+                    (Func::Count | Func::CountNums, Value::Number(x), _) => Value::Number(*x),
+                    (Func::Count | Func::CountNums, Value::Error(e), _) => Value::Error(*e),
+                    (_, _, b) => b,
+                }
+            }
+        } else {
+            let recs: Vec<&Value> = self
+                .src_recs
+                .iter()
+                .filter(|&&r| {
+                    self.env
+                        .iter()
+                        .enumerate()
+                        .all(|(k, &f)| cx.c.idx[r][f] == at[k])
+                })
+                .map(|&r| &cx.c.records[r][self.src])
+                .collect();
+            aggregate(self.func, &recs)
+        };
+        Ok(v)
+    }
+}
+
+impl Ctx<'_> {
+    fn detail_recs(&self, keys: &[(usize, u32)]) -> Vec<usize> {
+        let mut live = vec![false; self.c.records.len()];
+        for &r in &self.live {
+            live[r] = true;
+        }
+        let hit = |r: usize| live[r] && keys.iter().all(|&(f, i)| self.c.idx[r][f] == i);
+        let mut arr = partition((0..self.c.records.len()).collect(), hit);
+        let (rows, cols) = self.axis_fields();
+        let open = |fs: &[usize]| -> Vec<usize> {
+            fs.iter()
+                .rev()
+                .copied()
+                .filter(|f| !keys.iter().any(|k| k.0 == *f))
+                .collect()
+        };
+        let order: Vec<usize> = open(&rows).into_iter().chain(open(&cols)).collect();
+        let rank = self.ranks(&order);
+        arr.sort_by_cached_key(|&r| {
             order
                 .iter()
-                .map(|&f| self.c.idx[r][f])
+                .zip(&rank)
+                .map(|(&f, rk)| {
+                    rk.get(self.c.idx[r][f] as usize)
+                        .copied()
+                        .unwrap_or(u32::MAX)
+                })
                 .collect::<Vec<u32>>()
         });
         arr
     }
 
-    fn ordered_recs(&self, keys: &[(usize, u32)]) -> Vec<usize> {
-        let (rax, cax) = self.t.axes();
-        let order: Vec<usize> = rax
+    fn ranks(&self, order: &[usize]) -> Vec<Vec<u32>> {
+        order
             .iter()
-            .chain(cax.iter())
-            .filter_map(|a| match a {
-                Ax::Field(f) => Some(*f),
-                Ax::Values => None,
+            .map(|&f| {
+                let n = self.c.fields[f].items.len() + self.t.fields[f].calc_items.len();
+                let mut rank = vec![u32::MAX; n + 1];
+                let mut order = display_order(self.t, self.c, f);
+                if matches!(self.t.fields[f].sort, Sort::Name(_)) {
+                    let shown = self.children(f, &[]);
+                    order.retain(|i| !shown.contains(i));
+                    order.splice(0..0, shown);
+                }
+                for (pos, i) in order.into_iter().enumerate() {
+                    if let Some(x) = rank.get_mut(i as usize) {
+                        *x = pos as u32;
+                    }
+                }
+                rank
             })
-            .collect();
-        let mut recs: Vec<usize> = self
-            .live
+            .collect()
+    }
+
+    fn axis_fields(&self) -> (Vec<usize>, Vec<usize>) {
+        let (rax, cax) = self.t.axes();
+        let fields = |ax: &[Ax]| -> Vec<usize> {
+            ax.iter()
+                .filter_map(|a| match a {
+                    Ax::Field(f) => Some(*f),
+                    Ax::Values => None,
+                })
+                .collect()
+        };
+        (fields(&rax), fields(&cax))
+    }
+
+    fn line_key(&self, r: usize, fields: &[usize], ax: &[Ax]) -> Vec<u32> {
+        let mut k = Vec::with_capacity(fields.len());
+        for &f in fields {
+            let it = self.ix(r, f);
+            k.push(it);
+            if self.collapses(f, it, ax) {
+                break;
+            }
+        }
+        k
+    }
+
+    fn collapses(&self, f: usize, it: u32, ax: &[Ax]) -> bool {
+        self.t.fields[f].collapsed.contains(&it)
+            && ax
+                .iter()
+                .position(|a| *a == Ax::Field(f))
+                .is_some_and(|p| !ax[p + 1..].contains(&Ax::Values))
+    }
+
+    fn sorted_recs(&self) -> &[usize] {
+        self.sorted.get_or_init(|| {
+            let mut pass = vec![false; self.c.records.len()];
+            for &r in &self.live {
+                pass[r] = true;
+            }
+            let n = self.c.records.len();
+            let mut arr = partition((0..n).collect(), |r| pass[r]);
+
+            let gens = self.gens();
+            arr.extend(n..n + gens.len());
+            let mut arr = partition(arr, |r| r < n || gens[r - n].pass);
+            let (rax, cax) = self.t.axes();
+            let (rows, cols) = self.axis_fields();
+            let order: Vec<usize> = rows.iter().chain(cols.iter()).copied().collect();
+            let rank = self.ranks(&order);
+            let pos = |f: usize| order.iter().position(|&g| g == f).unwrap_or(0);
+            arr.sort_by_cached_key(|&r| {
+                let mut k: Vec<u32> = Vec::with_capacity(order.len());
+                for (fs, ax) in [(&rows, &rax), (&cols, &cax)] {
+                    let line = self.line_key(r, fs, ax);
+                    for (n, &f) in fs.iter().enumerate() {
+                        k.push(match line.get(n) {
+                            Some(&it) => rank[pos(f)].get(it as usize).copied().unwrap_or(u32::MAX),
+                            None => 0,
+                        });
+                    }
+                }
+                k
+            });
+            arr
+        })
+    }
+
+    fn ordered_recs(&self, keys: &[(usize, u32)]) -> Vec<usize> {
+        self.sorted_recs()
             .iter()
             .copied()
-            .filter(|&r| keys.iter().all(|&(f, i)| self.c.idx[r][f] == i))
-            .collect();
-        recs.sort_by_key(|&r| {
-            let mut key: Vec<u32> = Vec::new();
-            for &f in &order {
-                key.push(self.c.idx[r][f]);
-            }
-            key
-        });
-        recs
+            .filter(|&r| keys.iter().all(|&(f, i)| self.ix(r, f) == i))
+            .collect()
     }
 
-    fn agg_func(&self, func: Func, src: usize, keys: &[(usize, u32)]) -> Value {
-        let recs = if !keys.is_empty()
-            && matches!(func, Func::Var | Func::VarP | Func::StdDev | Func::StdDevP)
-            && self.live.len() < self.c.idx.len()
-        {
-            self.detail_recs(keys)
-        } else {
-            self.ordered_recs(keys)
+    fn entry_mask(&self, fields: &[usize], other: &[usize], keys: &[(usize, u32)]) -> u32 {
+        let custom = |f: usize| {
+            self.t.fields[f]
+                .custom
+                .iter()
+                .fold(0, |m, &ix| m | SxBuf::mask(sub_func(ix).0))
         };
-        let (rax, cax) = self.t.axes();
-        let has_cols = cax.iter().any(|a| matches!(a, Ax::Field(_)));
-        let row_fields: Vec<usize> = rax
-            .iter()
-            .filter_map(|a| match a {
-                Ax::Field(f) => Some(*f),
-                Ax::Values => None,
-            })
-            .collect();
-
-        let group_by: &[usize] = if has_cols {
-            row_fields.get(..1).unwrap_or(&[])
-        } else if matches!(func, Func::Sum) {
-            &row_fields
-        } else {
-            &[]
-        };
-
-        let sum_levels = matches!(func, Func::Sum) && !has_cols;
-
-        let col_fields: Vec<usize> = cax
-            .iter()
-            .filter_map(|a| match a {
-                Ax::Field(f) => Some(*f),
-                Ax::Values => None,
-            })
-            .collect();
-
-        let row_total = matches!(func, Func::Sum)
-            && self.t.data.len() == 1
-            && !keys.is_empty()
-            && !col_fields.is_empty()
-            && keys.len() == row_fields.len()
-            && keys.iter().all(|k| row_fields.contains(&k.0));
-
-        let col_total = matches!(func, Func::Sum)
-            && !keys.is_empty()
-            && !row_fields.is_empty()
-            && keys.len() == col_fields.len()
-            && keys.iter().all(|k| col_fields.contains(&k.0));
-        let group_by: &[usize] = if row_total {
-            &col_fields
-        } else if col_total {
-            &row_fields
-        } else {
-            group_by
-        };
-        if (keys.is_empty() || sum_levels || row_total || col_total) && !group_by.is_empty() {
-            let mut groups: Vec<Vec<&Value>> = Vec::new();
-            let mut last = None;
-            for &r in &recs {
-                let k: Vec<u32> = group_by.iter().map(|&f| self.c.idx[r][f]).collect();
-                if last.as_ref() != Some(&k) {
-                    groups.push(Vec::new());
-                    last = Some(k);
-                }
-                if let Some(g) = groups.last_mut() {
-                    g.push(&self.c.records[r][src]);
-                }
+        let level = fields.iter().rposition(|f| keys.iter().any(|k| k.0 == *f));
+        match level.map(|l| fields[l]) {
+            Some(f) if !self.t.fields[f].custom.is_empty() => custom(f),
+            _ => {
+                self.t.data.iter().fold(0, |m, d| m | SxBuf::mask(d.func))
+                    | other.iter().fold(0, |m, &f| m | custom(f))
             }
-            return aggregate_merged(func, &groups);
-        }
-        let vals: Vec<&Value> = recs.iter().map(|&r| &self.c.records[r][src]).collect();
-        aggregate(func, &vals)
-    }
-
-    fn show_denominator_error(
-        &self,
-        d: usize,
-        rk: &[(usize, u32)],
-        ck: &[(usize, u32)],
-        empty: bool,
-    ) -> Option<Value> {
-        let sh = &self.t.data[d].show;
-        match sh.kind {
-            6..=8 => {
-                let keys: &[(usize, u32)] = match sh.kind {
-                    8 => &[],
-                    7 => ck,
-                    _ => rk,
-                };
-                match self.agg(d, keys) {
-                    Value::Error(e) => Some(Value::Error(e)),
-                    Value::Blank => Some(Value::Error(XlError::DIV0)),
-                    _ => None,
-                }
-            }
-            3 | 4 => {
-                let (rax, cax) = self.t.axes();
-                let bf = sh.base_field.or_else(|| {
-                    rax.iter().chain(cax.iter()).find_map(|a| match a {
-                        Ax::Field(f) => Some(*f),
-                        Ax::Values => None,
-                    })
-                })?;
-                if !rax.contains(&Ax::Field(bf)) && !cax.contains(&Ax::Field(bf)) {
-                    return None;
-                }
-                let all: Vec<(usize, u32)> = rk.iter().chain(ck.iter()).copied().collect();
-                all.iter().find(|k| k.0 == bf)?;
-                let bi = sh
-                    .base_item
-                    .or_else(|| self.children(bf, &[]).first().copied())?;
-
-                let first = sh
-                    .base_item
-                    .or_else(|| (0..self.c.records.len()).map(|r| self.c.idx[r][bf]).min());
-                if empty && first.is_some_and(|f| self.children(bf, &[]).contains(&f)) {
-                    let mine = all.iter().find(|k| k.0 == bf)?.1;
-                    return (Some(mine) != first).then_some(Value::Error(XlError::NULL));
-                }
-                let ks: Vec<(usize, u32)> = all
-                    .iter()
-                    .map(|&(f, i)| if f == bf { (f, bi) } else { (f, i) })
-                    .collect();
-                match self.agg(d, &ks) {
-                    Value::Number(_) => None,
-                    _ => Some(Value::Error(XlError::NA)),
-                }
-            }
-            _ => None,
         }
     }
 
-    fn show_as(&self, d: usize, rk: &[(usize, u32)], ck: &[(usize, u32)], v: f64) -> Value {
-        let sh = &self.t.data[d].show;
-        let num = |x: Value| match x {
-            Value::Number(n) => Some(n),
-            _ => None,
-        };
-        let ratio = |a: f64, b: f64| {
-            if b == 0.0 {
-                Value::Error(crate::value::XlError::DIV0)
-            } else {
-                Value::Number(a / b)
-            }
-        };
-        let all: Vec<(usize, u32)> = rk.iter().chain(ck.iter()).copied().collect();
-        match sh.kind {
-            8 => num(self.agg(d, &[])).map_or(Value::Blank, |t| ratio(v, t)),
-            7 => num(self.agg(d, ck)).map_or(Value::Blank, |t| ratio(v, t)),
-            6 => num(self.agg(d, rk)).map_or(Value::Blank, |t| ratio(v, t)),
-            9 => {
-                let (Some(g), Some(r), Some(c)) = (
-                    num(self.agg(d, &[])),
-                    num(self.agg(d, rk)),
-                    num(self.agg(d, ck)),
-                ) else {
-                    return Value::Blank;
-                };
-                ratio(v * g / r, c)
-            }
-            12 => {
-                let (rax, cax) = self.t.axes();
-                let bf = sh.base_field.or_else(|| {
-                    rax.iter().chain(cax.iter()).find_map(|a| match a {
-                        Ax::Field(f) => Some(*f),
-                        Ax::Values => None,
-                    })
-                });
-                let Some(bf) = bf else { return Value::Blank };
-                if !rax.contains(&Ax::Field(bf)) && !cax.contains(&Ax::Field(bf)) {
-                    return Value::Error(XlError::NA);
-                }
-                if !all.iter().any(|k| k.0 == bf) {
-                    return Value::Blank;
-                }
-
-                let axis = if rax.contains(&Ax::Field(bf)) {
-                    &rax
+    fn cells_feed_totals(&self) -> bool {
+        let (rows, cols) = self.axis_fields();
+        let custom_ok = |fs: &[usize]| {
+            fs.iter().enumerate().all(|(n, &f)| {
+                let custom = &self.t.fields[f].custom;
+                if n + 1 == fs.len() {
+                    custom.is_empty()
                 } else {
-                    &cax
-                };
-                let pos = axis.iter().position(|x| *x == Ax::Field(bf)).unwrap_or(0);
-                let above: Vec<usize> = axis[..pos]
-                    .iter()
-                    .filter_map(|x| match x {
-                        Ax::Field(f) => Some(*f),
-                        Ax::Values => None,
-                    })
-                    .collect();
-                if above.is_empty() {
-                    return if v == 0.0 {
-                        Value::Blank
-                    } else {
-                        Value::Number(1.0)
-                    };
+                    custom.iter().all(|&ix| matches!(sub_func(ix).0, Func::Sum))
                 }
-                let below: Vec<usize> = axis[pos..]
-                    .iter()
-                    .filter_map(|x| match x {
-                        Ax::Field(f) => Some(*f),
-                        Ax::Values => None,
-                    })
-                    .collect();
-                let keys: Vec<(usize, u32)> = all
-                    .iter()
-                    .copied()
-                    .filter(|k| !below.contains(&k.0))
-                    .collect();
-                num(self.agg(d, &keys)).map_or(Value::Blank, |t| ratio(v, t))
-            }
-            10 => {
-                let mut up = rk.to_vec();
-                up.pop();
-                up.extend(ck.iter().copied());
-                num(self.agg(d, &up)).map_or(Value::Blank, |t| ratio(v, t))
-            }
-            11 => {
-                let mut left = ck.to_vec();
-                left.pop();
-                let mut ks = rk.to_vec();
-                ks.extend(left);
-                num(self.agg(d, &ks)).map_or(Value::Blank, |t| ratio(v, t))
-            }
-            2..=5 | 13..=15 => {
-                let (rax, cax) = self.t.axes();
-                let first = |a: &[Ax], b: &[Ax]| {
-                    a.iter().chain(b.iter()).find_map(|a| match a {
-                        Ax::Field(f) => Some(*f),
-                        Ax::Values => None,
-                    })
-                };
-                let bf = sh.base_field.or_else(|| {
-                    if sh.kind >= 14 {
-                        first(&cax, &rax)
-                    } else {
-                        first(&rax, &cax)
-                    }
-                });
+            })
+        };
+        self.t.data.iter().all(|d| matches!(d.func, Func::Sum))
+            && custom_ok(&rows)
+            && custom_ok(&cols)
+    }
 
-                let Some(bf) = bf else { return Value::Blank };
-                if !rax.contains(&Ax::Field(bf)) && !cax.contains(&Ax::Field(bf)) {
-                    return Value::Error(XlError::NA);
-                }
-
-                if matches!(sh.kind, 3 | 4) {
-                    let first = sh
-                        .base_item
-                        .or_else(|| (0..self.c.records.len()).map(|r| self.c.idx[r][bf]).min());
-                    if first.is_some_and(|f| !self.children(bf, &[]).contains(&f)) {
-                        return Value::Error(XlError::NA);
-                    }
-                }
-                let Some(mine) = all.iter().find(|k| k.0 == bf).map(|k| k.1) else {
-                    return Value::Blank;
-                };
-                let order = self.children(bf, &[]);
-                let with = |it: u32| -> Vec<(usize, u32)> {
-                    all.iter()
-                        .map(|&(f, i)| if f == bf { (f, it) } else { (f, i) })
-                        .collect()
-                };
-                if sh.kind >= 14 {
-                    let mut mine_v = None;
-                    let mut vals: Vec<f64> = Vec::new();
-                    for it in &order {
-                        if let Some(x) = num(self.agg(d, &with(*it))) {
-                            vals.push(x);
-                            if *it == mine {
-                                mine_v = Some(x);
-                            }
-                        }
-                    }
-                    let Some(x) = mine_v else { return Value::Blank };
-                    let better = vals
-                        .iter()
-                        .filter(|y| if sh.kind == 14 { **y < x } else { **y > x })
-                        .count();
-                    return Value::Number((better + 1) as f64);
-                }
-                if sh.kind == 13 {
-                    let mut sum = 0.0;
-                    let mut total = 0.0;
-                    let mut seen = false;
-                    for it in &order {
-                        total += num(self.agg(d, &with(*it))).unwrap_or(0.0);
-                        if !seen {
-                            sum = total;
-                        }
-                        if *it == mine {
-                            seen = true;
-                        }
-                    }
-                    return ratio(sum, total);
-                }
-                if sh.kind == 5 {
-                    let mut sum = 0.0;
-
-                    for it in order {
-                        sum += num(self.agg(d, &with(it))).unwrap_or(0.0);
-                        if it == mine {
-                            break;
-                        }
-                    }
-                    return Value::Number(sum);
-                }
-                let Some(bi) = sh.base_item.or_else(|| order.first().copied()) else {
-                    return Value::Blank;
-                };
-                let Some(rf) = num(self.agg(d, &with(bi))).or((sh.kind == 2).then_some(0.0)) else {
-                    let axis = if rax.contains(&Ax::Field(bf)) {
-                        &rax
-                    } else {
-                        &cax
-                    };
-                    let pos = axis.iter().position(|x| *x == Ax::Field(bf)).unwrap_or(0);
-                    let up: Vec<(usize, u32)> = all
-                        .iter()
-                        .copied()
-                        .filter(|k| axis[..pos].contains(&Ax::Field(k.0)))
-                        .collect();
-                    return if sh.kind == 3
-                        && !up.is_empty()
-                        && !self.children(bf, &up).contains(&bi)
-                    {
-                        Value::Error(XlError::NA)
-                    } else {
-                        Value::Blank
-                    };
-                };
-                match sh.kind {
-                    2 if mine != bi => Value::Number(v - rf),
-                    4 if mine != bi => {
-                        if rf == 0.0 {
-                            Value::Error(crate::value::XlError::DIV0)
-                        } else {
-                            Value::Number((v - rf) / rf)
-                        }
-                    }
-                    3 => ratio(v, rf),
-                    _ => Value::Blank,
-                }
-            }
-            _ => Value::Number(v),
+    fn agg_func(&self, func: Func, d: usize, keys: &[(usize, u32)]) -> Value {
+        let src = self.t.data[d].src;
+        let dfunc = self.t.data[d].func;
+        let recs = self.ordered_recs(keys);
+        if self.leaf_cell(keys) {
+            return self.agg_recs(func, src, &recs);
         }
+        let cells_feed = self.cells_feed_totals();
+
+        let feed = |buf: &mut SxBuf, cell: &[usize], mask: u32| {
+            if cells_feed {
+                buf.add(&self.agg_recs(dfunc, src, cell), mask, false);
+                return;
+            }
+            for &r in cell {
+                let v = self.rv(r, src);
+                let gen = self.is_gen(r);
+                buf.add(v, mask, gen);
+                if matches!(v, Value::Error(_))
+                    && (gen || !matches!(dfunc, Func::Count | Func::CountNums))
+                {
+                    break;
+                }
+            }
+        };
+        self.accumulate(keys, &recs, SxBuf::new, feed, SxBuf::merge)
+            .get(func)
+    }
+
+    fn leaf_cell(&self, keys: &[(usize, u32)]) -> bool {
+        let (rax, cax) = self.t.axes();
+        let (rows, cols) = self.axis_fields();
+        self.is_leaf(keys, &rows, &rax) && self.is_leaf(keys, &cols, &cax)
+    }
+
+    fn is_leaf(&self, keys: &[(usize, u32)], fs: &[usize], ax: &[Ax]) -> bool {
+        fs.iter().all(|f| keys.iter().any(|k| k.0 == *f))
+            || fs.iter().rev().find_map(|f| {
+                keys.iter()
+                    .find(|k| k.0 == *f)
+                    .map(|k| self.collapses(*f, k.1, ax))
+            }) == Some(true)
+    }
+
+    fn accumulate<B>(
+        &self,
+        keys: &[(usize, u32)],
+        recs: &[usize],
+        new: impl Fn() -> B,
+        feed: impl Fn(&mut B, &[usize], u32),
+        merge: impl Fn(&mut B, &B, u32),
+    ) -> B {
+        let (rax, cax) = self.t.axes();
+        let (rows, cols) = self.axis_fields();
+        let (r_leaf, c_leaf) = (
+            self.is_leaf(keys, &rows, &rax),
+            self.is_leaf(keys, &cols, &cax),
+        );
+
+        let mut lines: Vec<Vec<&[usize]>> = Vec::new();
+        let mut i = 0;
+        while i < recs.len() {
+            let rk = self.line_key(recs[i], &rows, &rax);
+            let mut cells: Vec<&[usize]> = Vec::new();
+            while i < recs.len() && self.line_key(recs[i], &rows, &rax) == rk {
+                let ck = self.line_key(recs[i], &cols, &cax);
+                let start = i;
+                while i < recs.len()
+                    && self.line_key(recs[i], &rows, &rax) == rk
+                    && self.line_key(recs[i], &cols, &cax) == ck
+                {
+                    i += 1;
+                }
+                cells.push(&recs[start..i]);
+            }
+            lines.push(cells);
+        }
+        let row_mask = self.entry_mask(&rows, &cols, keys);
+        let col_mask = self.entry_mask(&cols, &rows, keys);
+        let mut buf = new();
+        if r_leaf || c_leaf {
+            let mask = if r_leaf { col_mask } else { row_mask };
+            for cell in lines.iter().flatten() {
+                feed(&mut buf, cell, mask);
+            }
+        } else {
+            for line in &lines {
+                let mut sub = new();
+                for cell in line {
+                    feed(&mut sub, cell, col_mask);
+                }
+                merge(&mut buf, &sub, row_mask);
+            }
+        }
+        buf
     }
 
     fn children(&self, field: usize, keys: &[(usize, u32)]) -> Vec<u32> {
@@ -1799,10 +2312,22 @@ impl Ctx<'_> {
         }
         seen.sort_unstable();
         let nreal = self.c.fields[field].items.len();
+
+        let other = match self.t.fields[field].orient {
+            Orient::Row => Some(Orient::Column),
+            Orient::Column => Some(Orient::Row),
+            _ => None,
+        };
+        let calc_beside = self.t.fields.iter().enumerate().any(|(g, pf)| {
+            g != field
+                && Some(pf.orient) == other
+                && (0..pf.calc_items.len())
+                    .any(|j| !self.hide.all[g].contains(&(self.c.fields[g].items.len() + j)))
+        });
         let under_calc = keys
             .iter()
             .any(|&(f, i)| i as usize >= self.c.fields[f].items.len());
-        if under_calc {
+        if under_calc || calc_beside || self.t.fields[field].show_all {
             seen = (0..nreal as u32)
                 .filter(|&i| !self.hide.all[field].contains(&(i as usize)))
                 .collect();
@@ -1813,7 +2338,9 @@ impl Ctx<'_> {
             .collect();
         let placed = matches!(self.t.fields[field].sort, Sort::Manual)
             && self.t.fields[field].manual.is_some();
-        if placed || matches!(self.t.fields[field].sort, Sort::Data(..)) {
+
+        let sorted = matches!(self.t.fields[field].sort, Sort::Data(..) | Sort::Name(_));
+        if placed || sorted {
             seen.extend(calc_items.iter().copied());
         }
         match self.t.fields[field].sort {
@@ -1824,36 +2351,33 @@ impl Ctx<'_> {
                 }
             }
             Sort::Name(desc) => {
-                if !self.t.fields[field].item_caps.is_empty() {
-                    let cap = |i: u32| Value::text(self.label(field, i).1.as_str());
-                    seen.sort_by(|a, b| item_cmp(&cap(*a), &cap(*b)));
-                }
+                let cap = |i: u32| {
+                    if self.t.fields[field].item_caps.is_empty() && (i as usize) < nreal {
+                        self.c.fields[field].items[i as usize].value.clone()
+                    } else {
+                        Value::text(self.label(field, i).1.as_str())
+                    }
+                };
+                seen.sort_by(|a, b| item_cmp(&cap(*a), &cap(*b)));
                 if desc {
                     seen.reverse();
                 }
             }
             Sort::Data(desc, d) => {
-                let key = |it: u32| {
-                    let mut ks = keys.to_vec();
-                    ks.push((field, it));
-                    match self.agg(d, &ks) {
-                        Value::Number(n) => n,
-                        _ => f64::NEG_INFINITY,
-                    }
-                };
-                let mut v: Vec<(u32, f64)> = seen.iter().map(|&i| (i, key(i))).collect();
-                v.sort_by(|a, b| {
-                    let o = a.1.total_cmp(&b.1);
-                    if desc {
-                        o.reverse()
-                    } else {
-                        o
-                    }
-                });
+                let mut v: Vec<(u32, Value)> = seen
+                    .iter()
+                    .map(|&it| {
+                        let mut ks = keys.to_vec();
+                        ks.push((field, it));
+                        (it, self.agg(d, &ks))
+                    })
+                    .collect();
+                let hi = v.len() as isize - 1;
+                qsort_item_group(&mut v, 0, hi, !desc);
                 seen = v.into_iter().map(|x| x.0).collect();
             }
         }
-        if !placed && !matches!(self.t.fields[field].sort, Sort::Data(..)) {
+        if !placed && !sorted {
             seen.extend(calc_items);
         }
         seen
@@ -1874,9 +2398,7 @@ impl Ctx<'_> {
         match &it.value {
             Value::Blank => (Value::text("(blank)"), "(blank)".to_string()),
             Value::Text(t) if t.is_empty() => (Value::text("(blank)"), "(blank)".to_string()),
-            Value::Number(_) | Value::Bool(_) | Value::Error(_) => {
-                (it.value.clone(), it.label.clone())
-            }
+            Value::Number(_) => (it.value.clone(), it.label.clone()),
             _ => (Value::text(it.label.as_str()), it.label.clone()),
         }
     }
@@ -1891,6 +2413,8 @@ impl Ctx<'_> {
                 values: true,
                 func: None,
                 depth: 0,
+                kind: show::DATA,
+                top: false,
             });
             return out;
         }
@@ -1935,6 +2459,8 @@ impl Ctx<'_> {
                         values: true,
                         func: Some(func),
                         depth: ax.len() as u8,
+                        kind: u16::from(ix),
+                        top: false,
                     });
                 }
             }
@@ -1978,7 +2504,11 @@ impl Ctx<'_> {
                 st.keys.push((f, i));
             }
             let nodata = d.or(data);
-            if last {
+            if last
+                || (matches!((item, ax[level]), (Some(i), Ax::Field(f))
+                    if self.t.fields[f].collapsed.contains(&i))
+                    && !ax[level + 1..].contains(&Ax::Values))
+            {
                 st.out.push(Line {
                     labels: st.cur.clone(),
                     keys: st.keys.clone(),
@@ -1986,6 +2516,8 @@ impl Ctx<'_> {
                     values: true,
                     func: None,
                     depth: (level + 1) as u8,
+                    kind: show::DATA,
+                    top: false,
                 });
                 for (k, l) in st.cur.iter_mut().enumerate().take(level + 1) {
                     if self.repeats(ax[k], st.is_row) {
@@ -2000,28 +2532,42 @@ impl Ctx<'_> {
                     Ax::Values => false,
                 };
 
-                let deeper = !next_values && ax[level + 1..].contains(&Ax::Values);
+                let deeper = ax[level + 1..].contains(&Ax::Values)
+                    && !(next_values && level + 2 == ax.len());
 
-                let header_fn =
+                let header_ix =
                     (st.is_row && !tabular && !sub_on && !next_values && !deeper && sub_top)
                         .then(|| match ax[level] {
                             Ax::Field(f) if self.t.fields[f].custom.len() == 1 => {
-                                Some(sub_func(self.t.fields[f].custom[0]).0)
+                                Some(self.t.fields[f].custom[0])
                             }
                             _ => None,
                         })
                         .flatten();
+                let header_fn = header_ix.map(|ix| sub_func(ix).0);
                 let top = st.is_row && !tabular;
                 if top {
+                    let values =
+                        ((sub_on && sub_top) || header_fn.is_some()) && !next_values && !deeper;
+
+                    let hidden_total = !values
+                        && sub_top
+                        && !next_values
+                        && !deeper
+                        && matches!(ax[level], Ax::Field(f) if !self.t.fields[f].custom.is_empty());
                     st.out.push(Line {
                         labels: st.cur.clone(),
                         keys: st.keys.clone(),
                         data: nodata,
-                        values: ((sub_on && sub_top) || header_fn.is_some())
-                            && !next_values
-                            && !deeper,
+                        values,
                         func: header_fn,
                         depth: (level + 1) as u8,
+                        kind: match header_ix {
+                            Some(ix) => u16::from(ix),
+                            None if values || hidden_total => show::AUTO_SUB,
+                            None => show::NON_VALUE,
+                        },
+                        top: true,
                     });
                     for (k, l) in st.cur.iter_mut().enumerate().take(level + 1) {
                         if self.repeats(ax[k], st.is_row) {
@@ -2044,6 +2590,8 @@ impl Ctx<'_> {
                                 values: true,
                                 func: Some(func),
                                 depth: (level + 1) as u8,
+                                kind: u16::from(ix),
+                                top: false,
                             });
                         }
                     }
@@ -2059,6 +2607,8 @@ impl Ctx<'_> {
                             values: true,
                             func: None,
                             depth: (level + 1) as u8,
+                            kind: show::AUTO_SUB,
+                            top: false,
                         });
                     }
                 } else if !(top && sub_top)
@@ -2067,6 +2617,11 @@ impl Ctx<'_> {
                     && !matches!(ax[level], Ax::Values)
                 {
                     let mut sl = vec![None; ax.len()];
+                    for k in 0..level {
+                        if self.repeats(ax[k], st.is_row) {
+                            sl[k] = st.cur[k].clone();
+                        }
+                    }
                     sl[level] = Some(Value::text(format!("{text} Total")));
                     st.out.push(Line {
                         labels: sl,
@@ -2075,6 +2630,8 @@ impl Ctx<'_> {
                         values: !next_values,
                         func: None,
                         depth: (level + 1) as u8,
+                        kind: show::AUTO_SUB,
+                        top: false,
                     });
                 }
                 if st.is_row && matches!(ax[level], Ax::Field(f) if self.t.fields[f].blank_line) {
@@ -2085,6 +2642,8 @@ impl Ctx<'_> {
                         values: false,
                         func: None,
                         depth: 0,
+                        kind: show::DATA,
+                        top: false,
                     });
                 }
             }
@@ -2103,6 +2662,75 @@ struct Walk<'a> {
     out: &'a mut Vec<Line>,
 }
 
+pub const DEFAULT_BASE: usize = 0;
+
+pub fn default_group_step(start: f64, end: f64) -> f64 {
+    let n = ((end - start) / 3.0).log10();
+    if !n.is_finite() || n < -2147483648.0 {
+        return 1.0;
+    }
+    let p = 10f64.powi(n.floor() as i32);
+    if p.is_finite() && p != 0.0 {
+        p
+    } else {
+        1.0
+    }
+}
+
+fn qsort_item_group(v: &mut [(u32, Value)], mut lo: isize, mut hi: isize, asc: bool) {
+    let is_err = |x: &Value| matches!(x, Value::Error(_));
+    while lo < hi && lo >= 0 && hi >= 0 {
+        v.swap(lo as usize, ((lo + hi) / 2) as usize);
+        let mut last = lo;
+        for i in lo + 1..=hi {
+            let (p, e) = (&v[lo as usize].1, &v[i as usize].1);
+            let before = if is_err(p) == is_err(e) {
+                asc == (compare_pivot_values(p, e) > 0)
+            } else {
+                is_err(p)
+            };
+            if before {
+                last += 1;
+                v.swap(last as usize, i as usize);
+            }
+        }
+        v.swap(lo as usize, last as usize);
+        if hi - last < last - lo {
+            qsort_item_group(v, last + 1, hi, asc);
+            hi = last - 1;
+        } else {
+            qsort_item_group(v, lo, last - 1, asc);
+            lo = last + 1;
+        }
+    }
+}
+
+fn compare_pivot_values(a: &Value, b: &Value) -> i32 {
+    let ty = |x: &Value| -> i32 {
+        match x {
+            Value::Number(_) => 1,
+            Value::Text(_) => 2,
+            Value::Bool(_) => 4,
+            Value::Error(_) => 0x10,
+            _ => 0x100,
+        }
+    };
+    match (a, b) {
+        (Value::Number(x), Value::Number(y)) => {
+            let d = (x - y).to_bits();
+            let top = d & 0xffff_0000_0000_0000;
+            if top == 0 || d & 0x7ff0_0000_0000_0000 == 0x7ff0_0000_0000_0000 {
+                0
+            } else if d >> 63 == 0 {
+                1
+            } else {
+                -1
+            }
+        }
+        _ => (ty(a) - ty(b)).signum(),
+    }
+}
+
 pub fn sub_func(ix: u8) -> (Func, &'static str) {
     match ix {
         2 => (Func::Sum, "Sum"),
@@ -2119,6 +2747,104 @@ pub fn sub_func(ix: u8) -> (Func, &'static str) {
     }
 }
 
+fn grid_lines<'l>(lines: &'l [Line], hidden: &'l [Line]) -> Vec<(Option<usize>, &'l Line)> {
+    let mut out = Vec::new();
+    let mut pending: Vec<(usize, &Line)> = Vec::new();
+    for (i, l) in lines.iter().enumerate() {
+        while pending.last().is_some_and(|p| l.depth <= p.1.depth) {
+            let (pi, pl) = pending.pop().expect("pending line");
+            out.push(((pi != usize::MAX).then_some(pi), pl));
+        }
+        if l.top && l.values {
+            pending.push((i, l));
+        } else if l.top && l.kind == show::AUTO_SUB {
+            pending.push((usize::MAX, l));
+        } else if l.values {
+            out.push((Some(i), l));
+        }
+    }
+    while let Some((pi, pl)) = pending.pop() {
+        out.push(((pi != usize::MAX).then_some(pi), pl));
+    }
+    out.extend(hidden.iter().map(|l| (None, l)));
+    out
+}
+
+fn sxli_of(l: &Line, ax: &[Ax]) -> show::Sxli {
+    if l.kind == show::GRAND {
+        return show::Sxli {
+            items: vec![show::NO_ITEM],
+            kind: l.kind,
+            data: l.data.unwrap_or(0),
+            level: 0,
+        };
+    }
+    let mut items = ax
+        .iter()
+        .take(l.depth as usize)
+        .map(|a| match a {
+            Ax::Field(f) => l
+                .keys
+                .iter()
+                .find(|k| k.0 == *f)
+                .map_or(show::NO_ITEM, |k| k.1),
+            Ax::Values => l.data.map_or(show::NO_ITEM, |d| d as u32),
+        })
+        .collect::<Vec<u32>>();
+
+    if !l.top && (2..=12).contains(&l.kind) {
+        items.push(show::NO_ITEM);
+    }
+    show::Sxli {
+        items,
+        kind: l.kind,
+        data: l.data.unwrap_or(0),
+        level: l.depth as usize,
+    }
+}
+
+fn show_spec(cx: &Ctx, rax: &[Ax], cax: &[Ax], d: usize) -> show::Spec {
+    let sh = &cx.t.data[d].show;
+    let kind = if (2..=15).contains(&sh.kind) {
+        sh.kind - 1
+    } else {
+        0
+    };
+    let bf = sh.base_field.unwrap_or(DEFAULT_BASE);
+    let (mut axis, dim) = match (
+        rax.iter().position(|a| *a == Ax::Field(bf)),
+        cax.iter().position(|a| *a == Ax::Field(bf)),
+    ) {
+        (Some(p), _) => (1, p),
+        (_, Some(p)) => (2, p),
+        _ => (0, 0),
+    };
+    let base = match sh.base_item {
+        Some(BASE_PREVIOUS) => show::BaseItem::Prev,
+        Some(BASE_NEXT) => show::BaseItem::Next,
+        Some(i) => show::BaseItem::Item(i),
+
+        None => show::BaseItem::Item(
+            (0..cx.c.records.len())
+                .map(|r| cx.c.idx[r][bf])
+                .min()
+                .unwrap_or(0),
+        ),
+    };
+
+    if let show::BaseItem::Item(i) = base {
+        if matches!(kind, 1..=3) && axis != 0 && cx.t.fields[bf].hidden.contains(&(i as usize)) {
+            axis = 0;
+        }
+    }
+    show::Spec {
+        kind,
+        axis,
+        dim,
+        base,
+    }
+}
+
 pub fn render(t: &PivotTable, c: &PivotCache) -> Rendered {
     let grouped;
     let c = if t.fields.iter().any(|f| f.group.is_some()) {
@@ -2128,21 +2854,7 @@ pub fn render(t: &PivotTable, c: &PivotCache) -> Rendered {
         c
     };
     let (rax, cax) = t.axes();
-    let hide = effective_hidden(t, c);
-    let live: Vec<usize> = pass_hidden(c, &hide.all)
-        .into_iter()
-        .filter(|&r| !hide.hides_record(c, r))
-        .collect();
-    let live_exist = pass_hidden(c, &hide.hard);
-    let cx = Ctx {
-        t,
-        c,
-        live,
-        live_exist,
-        scratch: Default::default(),
-        func_ovr: Default::default(),
-        hide,
-    };
+    let cx = Ctx::of(t, c);
     let nd = t.data.len();
     let empty = rax.is_empty() && cax.is_empty() && nd == 0;
     let mut out = Rendered::default();
@@ -2167,59 +2879,42 @@ pub fn render(t: &PivotTable, c: &PivotCache) -> Rendered {
 
     let row_vals = rax.contains(&Ax::Values);
     let col_vals = cax.contains(&Ax::Values);
-    if t.col_grand && (!rax.is_empty() || nd > 0) {
-        if row_vals {
-            for d in 0..nd {
-                let mut labels = vec![None; rax.len()];
-                labels[0] = Some(Value::text(format!("Total {}", t.data[d].caption)));
-                rlines.push(Line {
-                    labels,
-                    keys: vec![],
-                    data: Some(d),
-                    values: true,
-                    func: None,
-                    depth: 0,
-                });
-            }
-        } else if !rax.is_empty() {
-            let mut labels = vec![None; rax.len()];
-            labels[0] = Some(Value::text("Grand Total"));
-            rlines.push(Line {
+    let grand_lines = |n: usize, vals: bool| -> Vec<Line> {
+        let line = |data: Option<usize>, text: String| {
+            let mut labels = vec![None; n];
+            labels[0] = Some(Value::text(text));
+            Line {
                 labels,
                 keys: vec![],
-                data: None,
+                data,
                 values: true,
                 func: None,
                 depth: 0,
-            });
-        }
-    }
-    if t.row_grand && cax.iter().any(|a| matches!(a, Ax::Field(_))) {
-        if col_vals {
-            for d in 0..nd {
-                let mut labels = vec![None; cax.len()];
-                labels[0] = Some(Value::text(format!("Total {}", t.data[d].caption)));
-                clines.push(Line {
-                    labels,
-                    keys: vec![],
-                    data: Some(d),
-                    values: true,
-                    func: None,
-                    depth: 0,
-                });
+                kind: show::GRAND,
+                top: false,
             }
+        };
+        if vals {
+            (0..nd)
+                .map(|d| line(Some(d), format!("Total {}", t.data[d].caption)))
+                .collect()
         } else {
-            let mut labels = vec![None; cax.len()];
-            labels[0] = Some(Value::text("Grand Total"));
-            clines.push(Line {
-                labels,
-                keys: vec![],
-                data: None,
-                values: true,
-                func: None,
-                depth: 0,
-            });
+            vec![line(None, "Grand Total".into())]
         }
+    };
+
+    let mut hidden_rgrand = Vec::new();
+    let mut hidden_cgrand = Vec::new();
+    if t.col_grand && (!rax.is_empty() || nd > 0) && (row_vals || !rax.is_empty()) {
+        rlines.extend(grand_lines(rax.len(), row_vals));
+    } else if rax.iter().any(|a| matches!(a, Ax::Field(_))) {
+        hidden_rgrand = grand_lines(rax.len(), row_vals);
+    }
+    let real_col_field = cax.iter().any(|a| matches!(a, Ax::Field(_)));
+    if t.row_grand && real_col_field {
+        clines.extend(grand_lines(cax.len(), col_vals));
+    } else if real_col_field {
+        hidden_cgrand = grand_lines(cax.len(), col_vals);
     }
 
     let virtual_col = cax.is_empty() && nd > 0;
@@ -2270,7 +2965,11 @@ pub fn render(t: &PivotTable, c: &PivotCache) -> Rendered {
     if left_cols > 0 && !caption_col {
         if per_field {
             for j in 0..left_cols {
-                let name = if j == 0 {
+                let compact_col = compact
+                    || rax
+                        .iter()
+                        .any(|a| matches!(a, Ax::Field(f) if t.eff_form(*f) == Form::Compact));
+                let name = if j == 0 && (compact_col || t.row_caption.is_some()) {
                     t.row_caption.as_deref().unwrap_or("Row Labels").to_string()
                 } else {
                     match rax.get(row_col.iter().position(|c| *c == j).unwrap_or(0)) {
@@ -2303,7 +3002,8 @@ pub fn render(t: &PivotTable, c: &PivotCache) -> Rendered {
             }
         }
     }
-    if virtual_col {
+    if virtual_col && rax.contains(&Ax::Values) {
+    } else if virtual_col {
         put(last_hdr, left_cols, txt(&t.data[0].caption));
         hdr_cells.push((top + last_hdr, left_cols, 1));
         fit.push(PivotFit::header(top + last_hdr, left_cols, 0));
@@ -2411,85 +3111,106 @@ pub fn render(t: &PivotTable, c: &PivotCache) -> Rendered {
         }
     }
 
-    let cols_iter: Vec<Option<&Line>> = if virtual_col {
-        vec![None]
-    } else {
-        clines.iter().map(Some).collect()
-    };
-    for (i, rl) in rlines.iter().enumerate() {
-        if !rl.values {
-            continue;
-        }
-        for (j, cl) in cols_iter.iter().enumerate() {
-            if let Some(cl) = cl {
-                if !cl.values {
-                    continue;
-                }
-            }
-            let d = rl.data.or_else(|| cl.and_then(|c| c.data)).or(if nd == 1 {
-                Some(0)
+    if nd > 0 && !rlines.is_empty() && !clines.is_empty() {
+        let grows = grid_lines(&rlines, &hidden_rgrand);
+        let gcols = grid_lines(&clines, &hidden_cgrand);
+        let raw: Vec<Vec<Value>> = grows
+            .iter()
+            .map(|(_, rl)| {
+                gcols
+                    .iter()
+                    .map(|(_, cl)| {
+                        let d = rl.data.or(cl.data).or((nd == 1).then_some(0));
+                        let Some(d) = d else { return Value::Blank };
+                        let mut keys = rl.keys.clone();
+                        keys.extend(cl.keys.iter().copied());
+                        match rl.func.or(cl.func) {
+                            Some(fo) => cx.agg_func(fo, d, &keys),
+                            None => cx.agg(d, &keys),
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+        let sxli = |ls: &[(Option<usize>, &Line)], ax: &[Ax]| -> Vec<show::Sxli> {
+            ls.iter().map(|(_, l)| sxli_of(l, ax)).collect()
+        };
+        let mut grid = show::Grid {
+            rows: sxli(&grows, &rax),
+            cols: sxli(&gcols, &cax),
+            row_values: rax.iter().map(|a| *a == Ax::Values).collect(),
+            col_values: cax.iter().map(|a| *a == Ax::Values).collect(),
+            cells: raw
+                .iter()
+                .map(|r| r.iter().map(show::XNum::from_value).collect())
+                .collect(),
+            nd,
+            data_axis: if row_vals {
+                1
+            } else if col_vals {
+                2
             } else {
-                None
-            });
-            let Some(d) = d else { continue };
-            let df = &t.data[d];
-            let mut all_keys = rl.keys.clone();
-            if let Some(cl) = cl {
-                all_keys.extend(cl.keys.iter().copied());
-            }
-            let ovr = rl.func.or(cl.and_then(|c| c.func));
-            cx.func_ovr.set(ovr);
-            let mut v = match ovr {
-                Some(fo) => cx.agg_func(fo, df.src, &all_keys),
-                None => cx.agg(d, &all_keys),
-            };
+                0
+            },
+        };
+        let sel = |ls: &[(Option<usize>, &Line)], ax: &[Ax], base: u32| -> Vec<SelLine> {
+            ls.iter()
+                .filter_map(|(i, l)| {
+                    let i = (*i)?;
+                    let s = sxli_of(l, ax);
+                    Some(SelLine {
+                        at: base + i as u32,
+                        items: s.items,
+                        level: s.level,
+                        kind: if l.values { s.kind } else { show::NON_VALUE },
+                        data: l.data,
+                    })
+                })
+                .collect()
+        };
+        out.sel_rows = sel(&grows, &rax, top + hdr_rows);
+        out.sel_cols = sel(&gcols, &cax, left_cols);
+        let specs: Vec<show::Spec> = (0..nd).map(|d| show_spec(&cx, &rax, &cax, d)).collect();
+        for (d, spec) in specs.iter().enumerate() {
+            grid.apply(d, spec);
+        }
+        for (gi, (ri, rl)) in grows.iter().enumerate() {
+            let Some(i) = *ri else { continue };
+            for (gj, (cj, cl)) in gcols.iter().enumerate() {
+                let Some(j) = *cj else { continue };
+                let d = rl.data.or(cl.data).or((nd == 1).then_some(0));
+                let Some(d) = d else { continue };
+                let k = specs[d].kind;
+                let mut v = grid.cells[gi][gj].to_value();
 
-            let count0 = matches!(df.func, Func::Count | Func::CountNums)
-                && matches!(df.show.kind, 6..=9 | 12);
-            if matches!(v, Value::Blank) && (matches!(df.show.kind, 2 | 10 | 11 | 13) || count0) {
-                v = Value::Number(0.0);
-            }
-            let ck: &[(usize, u32)] = cl.map_or(&[], |c| c.keys.as_slice());
-
-            let mut shown = false;
-            if let (Value::Number(n), true) = (&v, df.show.kind != -4143) {
-                v = cx.show_as(d, &rl.keys, ck, *n);
-                shown = true;
-            } else if let (true, Some(e)) = (
-                matches!(v, Value::Blank | Value::Error(_)),
-                cx.show_denominator_error(d, &rl.keys, ck, matches!(v, Value::Blank)),
-            ) {
-                v = e;
-            } else if matches!(v, Value::Error(_))
-                && (2..=15).contains(&df.show.kind)
-                && !matches!(df.show.kind, 6..=8)
-            {
-                v = Value::Error(XlError::NA);
-            }
-            cx.func_ovr.set(None);
-            if matches!(v, Value::Blank) {
-                v = if t.opts.display_null {
-                    option_string_value(&t.opts.null_string)
-                } else {
-                    Value::Error(crate::value::XlError::DIV0)
-                };
-            }
-            if matches!(v, Value::Error(_)) && t.opts.display_error {
-                v = option_string_value(&t.opts.error_string);
-            }
-            if shown || !matches!(v, Value::Blank) {
-                let mut keys = rl.keys.clone();
-                if let Some(cl) = cl {
-                    keys.extend(cl.keys.iter().copied());
+                let shown = k > 0
+                    && match raw[gi][gj] {
+                        Value::Number(_) => true,
+                        Value::Blank => !matches!(k, 2 | 3 | 0xd | 0xe),
+                        _ => false,
+                    };
+                if matches!(v, Value::Blank) {
+                    v = if t.opts.display_null {
+                        option_string_value(&t.opts.null_string)
+                    } else {
+                        Value::Error(crate::value::XlError::DIV0)
+                    };
                 }
-                value_keys.push(ValueKey {
-                    row: top + hdr_rows + i as u32,
-                    col: left_cols + j as u32,
-                    keys,
-                    data: d,
-                });
-                if !matches!(v, Value::Blank) {
-                    put(hdr_rows + i as u32, left_cols + j as u32, v);
+                if matches!(v, Value::Error(_)) && t.opts.display_error {
+                    v = option_string_value(&t.opts.error_string);
+                }
+                if shown || !matches!(v, Value::Blank) {
+                    let mut keys = rl.keys.clone();
+                    keys.extend(cl.keys.iter().copied());
+                    value_keys.push(ValueKey {
+                        row: top + hdr_rows + i as u32,
+                        col: left_cols + j as u32,
+                        keys,
+                        data: d,
+                    });
+                    if !matches!(v, Value::Blank) {
+                        put(hdr_rows + i as u32, left_cols + j as u32, v);
+                    }
                 }
             }
         }
@@ -3047,7 +3768,8 @@ impl PivotCache {
             if !start.is_finite() || !end.is_finite() {
                 continue;
             }
-            let whole = by.fract() == 0.0 && start.fract() == 0.0;
+            let whole =
+                by.fract() == 0.0 && start.fract() == 0.0 && data.iter().all(|v| v.fract() == 0.0);
             let nb = (((end - start) / by).ceil() as i64).max(1) as usize;
             let lo = |k: usize| start + k as f64 * by;
             let hi = |k: usize| {
@@ -3490,9 +4212,12 @@ pub struct ParentHide {
 
 impl Hide {
     fn hides_record(&self, c: &PivotCache, r: usize) -> bool {
+        self.hides_items(&c.idx[r])
+    }
+
+    fn hides_items(&self, idx: &[u32]) -> bool {
         self.parent.iter().any(|p| {
-            p.items.contains(&(c.idx[r][p.field] as usize))
-                && p.keys.iter().all(|&(f, i)| c.idx[r][f] == i)
+            p.items.contains(&(idx[p.field] as usize)) && p.keys.iter().all(|&(f, i)| idx[f] == i)
         })
     }
 
@@ -3658,15 +4383,7 @@ pub fn effective_hidden(t: &PivotTable, c: &PivotCache) -> Hide {
             .into_iter()
             .filter(|&r| !hide.hides_record(c, r))
             .collect();
-        let probe = Ctx {
-            t,
-            c,
-            live: base.clone(),
-            live_exist: base.clone(),
-            scratch: Default::default(),
-            func_ovr: Default::default(),
-            hide: hide.clone(),
-        };
+        let probe = Ctx::new(t, c, hide.clone(), base.clone(), base.clone());
         let num = |v: &Value| match v {
             Value::Number(x) => *x,
             _ => f64::NAN,
@@ -3733,21 +4450,7 @@ pub fn effective_hidden(t: &PivotTable, c: &PivotCache) -> Hide {
 }
 
 pub fn shown_order(t: &PivotTable, c: &PivotCache, f: usize) -> Vec<u32> {
-    let hide = effective_hidden(t, c);
-    let live: Vec<usize> = pass_hidden(c, &hide.all)
-        .into_iter()
-        .filter(|&r| !hide.hides_record(c, r))
-        .collect();
-    let live_exist = pass_hidden(c, &hide.hard);
-    let cx = Ctx {
-        t,
-        c,
-        live,
-        live_exist,
-        scratch: Default::default(),
-        func_ovr: Default::default(),
-        hide,
-    };
+    let cx = Ctx::of(t, c);
     let mut v = cx.children(f, &[]);
     let n = c.fields[f].items.len() as u32;
     v.retain(|&i| i < n);
@@ -3758,10 +4461,17 @@ pub fn shown_order(t: &PivotTable, c: &PivotCache, f: usize) -> Vec<u32> {
 
 pub fn display_order(t: &PivotTable, c: &PivotCache, f: usize) -> Vec<u32> {
     let mut v: Vec<u32> = (0..c.fields[f].items.len() as u32).collect();
-    if t.fields[f].sort == Sort::Name(true) {
-        v.reverse();
-    }
     let n = c.fields[f].items.len();
+    if let Sort::Name(desc) = t.fields[f].sort {
+        let key = |i: u32| match t.fields[f].item_caps.iter().find(|x| x.0 == i) {
+            Some((_, cap)) => Value::text(cap.as_str()),
+            None => c.fields[f].items[i as usize].value.clone(),
+        };
+        v.sort_by(|a, b| item_cmp(&key(*a), &key(*b)));
+        if desc {
+            v.reverse();
+        }
+    }
     v.extend((0..t.fields[f].calc_items.len()).map(|j| (n + j) as u32));
 
     if let (Sort::Manual, Some(m)) = (&t.fields[f].sort, &t.fields[f].manual) {
@@ -3931,6 +4641,65 @@ impl Workbook {
     }
 }
 impl Workbook {
+    pub fn pivot_chart_series(&self, ti: usize) -> usize {
+        let t = &self.pivots.tables[ti];
+        let Some(c) = self.pivots.caches.get(t.cache) else {
+            return 0;
+        };
+        let r = render(t, c);
+        let need: Vec<usize> = t
+            .cols
+            .iter()
+            .filter_map(|a| match a {
+                Ax::Field(f) => Some(*f),
+                _ => None,
+            })
+            .collect();
+        let mut cols: Vec<u32> = r
+            .value_keys
+            .iter()
+            .filter(|v| need.iter().all(|f| v.keys.iter().any(|k| k.0 == *f)))
+            .map(|v| v.col)
+            .collect();
+        cols.sort_unstable();
+        cols.dedup();
+        cols.len()
+    }
+
+    pub fn pivot_label_above(&self, addr: CellAddr) -> Option<(usize, usize, Option<u32>)> {
+        let at = Rect::cell(addr.row, addr.col);
+        let ti = self.pivot_meeting(addr.sheet, &at)?;
+        let t = &self.pivots.tables[ti];
+        let c = self.pivots.caches.get(t.cache)?;
+        let r = render(t, c);
+        let origin = t.row0.checked_sub(r.top)?;
+        r.label_cells
+            .iter()
+            .filter(|l| t.col0 + l.1 == addr.col && origin + l.0 < addr.row)
+            .max_by_key(|l| l.0)
+            .map(|l| (ti, l.2, l.3))
+    }
+}
+impl Workbook {
+    pub fn pivot_header_field(&self, addr: CellAddr) -> Option<(usize, usize)> {
+        let at = Rect::cell(addr.row, addr.col);
+        let ti = self.pivot_meeting(addr.sheet, &at)?;
+        let t = &self.pivots.tables[ti];
+        let c = self.pivots.caches.get(t.cache)?;
+        let r = render(t, c);
+        let origin = t.row0.checked_sub(r.top)?;
+        let (hr, hc) = (addr.row.checked_sub(origin)?, addr.col.checked_sub(t.col0)?);
+        if hr < r.top || hr >= r.top + r.hdr_rows {
+            return None;
+        }
+        r.label_cells
+            .iter()
+            .filter(|l| l.1 == hc && l.0 > hr)
+            .min_by_key(|l| l.0)
+            .map(|l| (ti, l.2))
+    }
+}
+impl Workbook {
     pub fn pivot_detail_at(&self, addr: CellAddr) -> Option<Vec<Vec<Value>>> {
         let at = Rect::cell(addr.row, addr.col);
         let ti = self.pivot_meeting(addr.sheet, &at)?;
@@ -3949,21 +4718,7 @@ impl Workbook {
         } else {
             c
         };
-        let hide = effective_hidden(t, c);
-        let live: Vec<usize> = pass_hidden(c, &hide.all)
-            .into_iter()
-            .filter(|&r| !hide.hides_record(c, r))
-            .collect();
-        let live_exist = pass_hidden(c, &hide.hard);
-        let cx = Ctx {
-            t,
-            c,
-            live,
-            live_exist,
-            scratch: Default::default(),
-            func_ovr: Default::default(),
-            hide,
-        };
+        let cx = Ctx::of(t, c);
         let cols: Vec<usize> = (0..c.fields.len())
             .filter(|&f| c.fields[f].formula.is_none())
             .collect();
@@ -3976,6 +4731,59 @@ impl Workbook {
         }
         Some(out)
     }
+}
+
+struct SelFilt {
+    axis: usize,
+    pos: usize,
+    field: Option<usize>,
+    items: Vec<u32>,
+    mask: u32,
+}
+
+fn sel_type(l: &SelLine, pos: usize) -> u16 {
+    if l.kind == show::NON_VALUE || l.kind == show::GRAND || pos + 1 >= l.items.len() {
+        l.kind
+    } else {
+        show::DATA
+    }
+}
+
+fn sel_filt_match(f: &SelFilt, l: &SelLine) -> bool {
+    let item = match f.field {
+        None if l.kind != show::DATA => l.data.unwrap_or(0) as u32,
+        _ => {
+            if f.field.is_some() {
+                if l.level <= f.pos {
+                    return false;
+                }
+                let t = u32::from(sel_type(l, f.pos));
+                if t >= 32 || f.mask >> t & 1 == 0 {
+                    return false;
+                }
+            }
+            match l.items.get(f.pos) {
+                Some(&i) => i,
+                None => return false,
+            }
+        }
+    };
+    f.items.contains(&item)
+}
+
+fn sel_line_match(fs: &[SelFilt], grand: bool, axis: usize, l: &SelLine) -> bool {
+    let on: Vec<&SelFilt> = fs.iter().filter(|f| f.axis == axis).collect();
+    if l.kind == show::GRAND {
+        return grand
+            && on
+                .iter()
+                .filter(|f| f.field.is_none())
+                .all(|f| sel_filt_match(f, l));
+    }
+    if grand || on.is_empty() {
+        return false;
+    }
+    on.iter().all(|f| sel_filt_match(f, l))
 }
 
 impl Workbook {
@@ -3991,7 +4799,10 @@ impl Workbook {
             return ref_err;
         };
         match self.pivot_data_cell(ti, data, pairs) {
-            Some(a) => self.value(a),
+            Some(a) => match self.value(a) {
+                Value::Blank => Value::Number(0.0),
+                v => v,
+            },
             None => ref_err,
         }
     }
@@ -4011,68 +4822,170 @@ impl Workbook {
         } else {
             c
         };
-        let name = match data {
-            Value::Text(s) => s.to_string(),
-            Value::Number(n) => crate::coerce::to_text(&Value::Number(*n))
-                .map(|t| t.to_string())
-                .unwrap_or_default(),
-            _ => return None,
+        let text_of = |v: &Value| match v {
+            Value::Text(s) => Some(s.to_string()),
+            Value::Number(n) => Some(number_label(*n)),
+            _ => None,
         };
-        let d = t
-            .data
-            .iter()
-            .position(|d| same_text(&d.caption, &name))
-            .or_else(|| {
-                t.data
-                    .iter()
-                    .position(|d| same_text(&c.fields[d.src].name, &name))
-            });
-        let d = d?;
-        let mut sel: Vec<(usize, u32)> = Vec::new();
-        for (f, item) in pairs {
-            let fname = match f {
-                Value::Text(s) => s.to_string(),
-                _ => return None,
-            };
-            let fi = c.fields.iter().position(|x| same_text(&x.name, &fname))?;
-            if sel.iter().any(|s| s.0 == fi)
-                || !matches!(t.fields[fi].orient, Orient::Row | Orient::Column)
-            {
-                return None;
-            }
-            let ii = c.fields[fi]
-                .items
+
+        let data_by_name = |name: &str| {
+            t.data
                 .iter()
-                .position(|it| match (&it.value, item) {
-                    (Value::Text(a), Value::Text(b)) => same_text(a, b),
-                    (Value::Number(a), Value::Number(b)) => a == b,
-                    (Value::Number(_), Value::Text(b)) => same_text(&it.label, b),
-                    (Value::Text(a), Value::Number(n)) => same_text(
-                        a,
-                        &crate::coerce::to_text(&Value::Number(*n))
-                            .map(|t| t.to_string())
-                            .unwrap_or_default(),
-                    ),
-                    (Value::Bool(a), Value::Bool(b)) => a == b,
-                    _ => false,
-                });
-            let ii = ii?;
-            sel.push((fi, ii as u32));
+                .position(|d| same_text(&d.caption, name))
+                .or_else(|| {
+                    let over: Vec<usize> = (0..t.data.len())
+                        .filter(|&d| same_text(t.field_name(c, t.data[d].src), name))
+                        .collect();
+                    over.iter()
+                        .copied()
+                        .find(|&d| t.data[d].func == Func::Sum)
+                        .or(over.first().copied())
+                })
+        };
+        let d = data_by_name(&text_of(data)?)?;
+        let (rax, cax) = t.axes();
+        let axes = [&rax, &cax];
+        let place =
+            |a: Ax| (0..2).find_map(|x| axes[x].iter().position(|y| *y == a).map(|p| (x, p)));
+        let mut fs: Vec<SelFilt> = Vec::new();
+        let add =
+            |fs: &mut Vec<SelFilt>, axis: usize, pos: usize, field: Option<usize>, item: u32| {
+                match fs.iter_mut().find(|f| f.field == field && f.axis == axis) {
+                    Some(f) if !f.items.contains(&item) => f.items.push(item),
+                    Some(_) => {}
+                    None => fs.push(SelFilt {
+                        axis,
+                        pos,
+                        field,
+                        items: vec![item],
+                        mask: 1,
+                    }),
+                }
+            };
+        if let Some((x, p)) = place(Ax::Values) {
+            add(&mut fs, x, p, None, d as u32);
         }
-        let r = render(t, c);
-        let origin = t.row0 - r.top;
-        for vk in &r.value_keys {
-            if vk.data != d || vk.keys.len() != sel.len() {
+        for (f, item) in pairs {
+            let Value::Text(fname) = f else { return None };
+
+            let Some(fi) = (0..c.fields.len()).find(|&k| same_text(t.field_name(c, k), fname))
+            else {
+                if !same_text(fname, "Values") {
+                    return None;
+                }
+                let dd = data_by_name(&text_of(item)?)?;
+                match place(Ax::Values) {
+                    Some((x, p)) => add(&mut fs, x, p, None, dd as u32),
+                    None if dd == d => {}
+                    None => return None,
+                }
+                continue;
+            };
+            let ii = pivot_item_named(t, c, fi, item)?;
+            match place(Ax::Field(fi)) {
+                Some((x, p)) => add(&mut fs, x, p, Some(fi), ii),
+
+                None if t.fields[fi].orient == Orient::Page
+                    && t.fields[fi].page_item == Some(ii) => {}
+                None => return None,
+            }
+        }
+
+        let mut grand = [false; 2];
+        for x in 0..2 {
+            let named: Vec<usize> = (0..fs.len()).filter(|&i| fs[i].axis == x).collect();
+            if named.is_empty() {
+                grand[x] = true;
                 continue;
             }
-            if sel.iter().all(|s| vk.keys.contains(s)) {
-                let abs_row = origin + vk.row;
-                let abs_col = t.col0 + vk.col;
-                return Some(CellAddr::new(t.sheet, abs_row, abs_col));
+            let n = axes[x].len();
+            if named.len() == n {
+                continue;
+            }
+            let mut best: Option<usize> = None;
+            let mut multi = false;
+            for &i in &named {
+                if fs[i].field.is_none() && named.len() == 1 && n != 1 {
+                    grand[x] = true;
+                }
+                if fs[i].items.len() > 1 {
+                    multi = true;
+                    break;
+                }
+
+                if fs[i].field.is_some() && best.is_none_or(|b| fs[b].pos < fs[i].pos) {
+                    best = Some(i);
+                }
+            }
+            if multi {
+                continue;
+            }
+            let mut last = n - 1;
+            while last > 0 && axes[x][last] == Ax::Values {
+                last -= 1;
+            }
+            if let Some(b) = best {
+                if let Some(f) = fs[b].field {
+                    let pf = &t.fields[f];
+                    if fs[b].pos < last
+                        && !pf.collapsed.contains(&fs[b].items[0])
+                        && pf.subtotals
+                        && pf.custom.is_empty()
+                    {
+                        fs[b].mask = 2;
+                    }
+                }
             }
         }
-        None
+        let r = render(t, c);
+        let pick = |x: usize, ls: &[SelLine]| -> Option<u32> {
+            let hit: Vec<u32> = if axes[x].is_empty() {
+                ls.iter().map(|l| l.at).collect()
+            } else {
+                ls.iter()
+                    .filter(|l| sel_line_match(&fs, grand[x], x, l))
+                    .map(|l| l.at)
+                    .collect()
+            };
+            match hit[..] {
+                [one] => Some(one),
+                _ => None,
+            }
+        };
+        let row = pick(0, &r.sel_rows)?;
+        let col = pick(1, &r.sel_cols)?;
+        Some(CellAddr::new(t.sheet, t.row0 - r.top + row, t.col0 + col))
     }
+}
+
+fn pivot_item_named(t: &PivotTable, c: &PivotCache, f: usize, item: &Value) -> Option<u32> {
+    let caps = &t.fields[f].item_caps;
+    if let Value::Text(b) = item {
+        if let Some(x) = caps.iter().find(|x| same_text(&x.1, b)) {
+            return Some(x.0);
+        }
+    }
+    let items = &c.fields[f].items;
+    let by_value = (0..items.len()).find(|&i| match (&items[i].value, item) {
+        (Value::Text(a), Value::Text(b)) => same_text(a, b),
+        (Value::Number(a), Value::Number(b)) => a == b,
+        (Value::Bool(a), Value::Bool(b)) => a == b,
+        _ => false,
+    });
+    let text = match item {
+        Value::Text(s) => s.to_string(),
+        Value::Number(n) => number_label(*n),
+        _ => return by_value.map(|i| i as u32),
+    };
+    let calc = &t.fields[f].calc_items;
+    by_value
+        .or_else(|| (0..items.len()).find(|&i| same_text(&items[i].label, &text)))
+        .or_else(|| {
+            (0..calc.len())
+                .find(|&j| same_text(&calc[j].name, &text))
+                .map(|j| items.len() + j)
+        })
+        .map(|i| i as u32)
 }
 
 pub fn number_label(x: f64) -> String {
@@ -4097,4 +5010,21 @@ pub fn item_formula_names(formula: &str, mut f: impl FnMut(&str)) -> bool {
 
 fn text_is_some(formula: &str) -> bool {
     subst_idents(formula, |_| Some(1.0)).is_some()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::default_group_step;
+
+    #[test]
+    fn group_step_is_a_floored_power_of_ten_of_a_third_of_the_span() {
+        assert_eq!(default_group_step(1.0, 9.0), 1.0);
+        assert_eq!(default_group_step(1.0, 25.0), 1.0);
+        assert_eq!(default_group_step(1.0, 31.0), 10.0);
+        assert_eq!(default_group_step(1.0, 100.0), 10.0);
+        assert_eq!(default_group_step(0.1, 0.5), 0.1);
+        assert_eq!(default_group_step(5.0, 6.0), 0.1);
+        assert_eq!(default_group_step(0.002, 0.02), 0.001);
+        assert_eq!(default_group_step(3.0, 3.0), 1.0);
+    }
 }

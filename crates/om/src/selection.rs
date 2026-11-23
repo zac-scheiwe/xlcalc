@@ -84,10 +84,11 @@ impl Application<'_> {
         m: &'static Member,
     ) -> Result<Variant, OmError> {
         if !self.is_shown(b, s) {
-            return Err(OmError::app_defined_with(&format!(
-                "{} method of Range class failed",
-                m.name
-            )));
+            return Err(OmError::app_defined_with(&if self.expr_call {
+                format!("Unable to get the {} property of the Range class", m.name)
+            } else {
+                format!("{} method of Range class failed", m.name)
+            }));
         }
         let first = rects
             .first()
@@ -171,6 +172,24 @@ impl Application<'_> {
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
+        let has_dest = matches!(a.get(0), Some(Variant::Dispatch(Some(_))));
+
+        if self.shape_clip.is_some() && !has_dest && self.clip.is_some() {
+            return Err(unsupported("Worksheet", m));
+        }
+        if self.shape_clip.is_some() && self.clip.is_none() {
+            let dest = match a.get(0) {
+                Some(v @ Variant::Dispatch(Some(_))) => {
+                    let (db, ds, rects) = self.range_areas(Some(v))?;
+                    match rects.as_slice() {
+                        [one] if db == b => Some((ds, *one)),
+                        _ => return Err(unsupported("Worksheet", m)),
+                    }
+                }
+                _ => None,
+            };
+            return self.paste_shape_clip(b, s, dest);
+        }
         let Some((cb, ss, src)) = self.clip else {
             return Err(OmError::app_defined_with(
                 "Paste method of Worksheet class failed",
@@ -197,7 +216,9 @@ impl Application<'_> {
                     _ => return Err(unsupported("Worksheet", m)),
                 },
             };
-            if let Err(e) = app.paste_copy(b, (ss, src), (ds, dr), false) {
+
+            let cut = app.clip_cut;
+            if let Err(e) = app.paste_copy(b, (ss, src), (ds, dr), cut) {
                 if dest.is_none() {
                     app.book_mut(b)?
                         .wb
@@ -212,6 +233,9 @@ impl Application<'_> {
                     .wb
                     .set_selection(ds, Selection::of(&[pasted]))
                     .map_err(edit_error)?;
+            }
+            if cut {
+                app.clip = None;
             }
             Ok(Variant::Bool(true))
         })

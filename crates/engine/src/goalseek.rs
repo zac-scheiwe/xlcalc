@@ -14,7 +14,13 @@ struct Seek<'a> {
 }
 
 impl Seek<'_> {
-    fn eval(&mut self, x: f64) -> f64 {
+    fn eval(&mut self, x: f64) -> Read {
+        self.put(x);
+        calc::recalc_cells(self.wb);
+        self.read()
+    }
+
+    fn put(&mut self, x: f64) {
         let a = self.changing;
 
         let x = if self.wb.precision_as_displayed() {
@@ -28,18 +34,36 @@ impl Seek<'_> {
             .cells
             .set(a.row, a.col, Entry::Const(Value::Number(x)));
         calc::cell_changed(self.wb, a);
-        calc::recalc_cells(self.wb);
-        self.read()
     }
 
-    fn read(&self) -> f64 {
+    fn read(&self) -> Read {
         match self.wb.value(self.target) {
-            Value::Number(f) => f,
-            Value::Bool(b) => f64::from(u8::from(b)),
-            _ => f64::NAN,
+            Value::Number(f) => Read::Num(f),
+            Value::Bool(b) => Read::Num(f64::from(u8::from(b))),
+            Value::Error(crate::XlError::NA) => Read::Na,
+            _ => Read::Invalid,
         }
     }
 }
+
+#[derive(Clone, Copy)]
+enum Read {
+    Num(f64),
+    Na,
+    Invalid,
+}
+
+impl Read {
+    fn value(self) -> Option<f64> {
+        match self {
+            Read::Num(f) => Some(f),
+            Read::Na => Some(f64::from_bits(u64::MAX)),
+            Read::Invalid => None,
+        }
+    }
+}
+
+const START_ACC: f64 = 10.0;
 
 impl Workbook {
     pub fn goal_seek(
@@ -106,7 +130,7 @@ impl Workbook {
         };
 
         match s.wb.value(target) {
-            Value::Error(crate::XlError::NA) => return Ok(true),
+            Value::Error(crate::XlError::NA) => {}
             Value::Error(_) | Value::Text(_) => {
                 return Err(EditError::Compile("Reference isn't valid.".into()))
             }
@@ -117,19 +141,24 @@ impl Workbook {
         {
             calc::recalc_cells(s.wb);
         }
-        let f0 = s.read();
-
-        let mut rec = Records::default();
-
-        if !f0.is_nan() {
-            rec.accept(f0, goal);
-        }
-        if !f0.is_nan() && converged(f0, goal, tol) {
-            s.eval(x0);
-            return Ok(true);
-        }
+        let r0 = s.read();
 
         let mut err = false;
+        let mut rec = Records::default();
+
+        let f0 = r0.value().unwrap_or(0.0);
+        if let Some(f) = r0.value() {
+            rec.accept(f, goal, &mut err);
+        }
+        let acc = match r0 {
+            Read::Num(f) => f,
+            Read::Na => START_ACC,
+            Read::Invalid => 0.0,
+        };
+        if converged(acc, goal, tol) {
+            s.put(x0);
+            return Ok(true);
+        }
         let ddiv = |a: f64, b: f64, err: &mut bool| -> f64 {
             if b == 0.0 || b.abs() < f64::MIN_POSITIVE {
                 *err = true;
@@ -158,31 +187,31 @@ impl Workbook {
             let ok = if std::mem::take(&mut err) {
                 None
             } else {
-                let f = s.eval(x);
-                if f.is_nan() || !rec.accept(f, goal) {
-                    None
-                } else if converged(f, goal, tol) {
-                    return Ok(true);
-                } else {
-                    let slope = ddiv(x87::sub(f, fb), x87::sub(x, xb), &mut err);
-                    let mut st = if std::mem::take(&mut err) {
-                        None
-                    } else {
-                        let st = ddiv(x87::sub(goal, f), slope, &mut err);
-                        (!std::mem::take(&mut err)).then_some(st)
-                    };
-                    if let Some(s0) = st {
-                        let c = if secant { 2.0 } else { 10.0 };
-                        let t = ddiv(s0, step, &mut err).abs();
-                        let dd = x87::sub(t, c);
-                        if !dd.is_finite() {
-                            err = true;
-                        } else if dd > 0.0 && (dd.to_bits() >> 48) != 0 {
-                            let mut e2 = false;
-                            st = Some(x87::mul(ddiv(s0, t, &mut e2), c));
+                let f = s.eval(x).value();
+                match f.filter(|&f| rec.accept(f, goal, &mut err)) {
+                    None => None,
+                    Some(f) if converged(f, goal, tol) => return Ok(true),
+                    Some(f) => {
+                        let slope = ddiv(x87::sub(f, fb), x87::sub(x, xb), &mut err);
+                        let mut st = if std::mem::take(&mut err) {
+                            None
+                        } else {
+                            let st = ddiv(x87::sub(goal, f), slope, &mut err);
+                            (!std::mem::take(&mut err)).then_some(st)
+                        };
+                        if let Some(s0) = st {
+                            let c = if secant { 2.0 } else { 10.0 };
+                            let t = ddiv(s0, step, &mut err).abs();
+                            let dd = x87::sub(t, c);
+                            if !dd.is_finite() {
+                                err = true;
+                            } else if dd > 0.0 && (dd.to_bits() >> 48) != 0 {
+                                let mut e2 = false;
+                                st = Some(x87::mul(ddiv(s0, t, &mut e2), c));
+                            }
                         }
+                        st.map(|st| (x, f, st))
                     }
-                    st.map(|st| (x, f, st))
                 }
             };
             match ok {
@@ -228,14 +257,16 @@ struct Records {
 }
 
 impl Records {
-    fn accept(&mut self, f: f64, goal: f64) -> bool {
+    fn accept(&mut self, f: f64, goal: f64, err: &mut bool) -> bool {
         let e = x87::sub(f, goal);
-        let up = e >= 0.0 || e.is_nan() || (e.to_bits() >> 48) == 0;
+        *err |= !e.is_finite();
+        let up = e >= 0.0 || !e.is_finite() || (e.to_bits() >> 48) == 0;
         let rec = if up { &mut self.above } else { &mut self.below };
         let take = match *rec {
             None => true,
             Some(r) => {
                 let g = x87::sub(r, f);
+                *err |= !g.is_finite();
                 g.is_finite() && (g.to_bits() >> 48) != 0 && if up { g > 0.0 } else { g < 0.0 }
             }
         };
@@ -248,7 +279,7 @@ impl Records {
 
 fn converged(f: f64, goal: f64, tol: f64) -> bool {
     let v = x87::sub(x87::sub(f, goal).abs(), tol);
-    v <= 0.0 || v.is_nan() || (v.to_bits() >> 48) == 0
+    v <= 0.0 || !v.is_finite() || (v.to_bits() >> 48) == 0
 }
 
 fn trial_count(wb: &Workbook) -> u32 {

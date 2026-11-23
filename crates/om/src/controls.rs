@@ -388,6 +388,17 @@ pub(crate) fn num_arg(v: &Variant, lcid: u32) -> Result<f64, OmError> {
     }
 }
 
+pub(crate) fn variant_i4(v: &Variant, lcid: u32) -> Result<i32, OmError> {
+    if let Variant::Bool(b) = v {
+        return Ok(-i32::from(*b));
+    }
+    let x = num_arg(v, lcid)?.round_ties_even();
+    if !(-2147483648.0..=2147483647.0).contains(&x) {
+        return Err(OmError::arg(crate::error::DISP_E_OVERFLOW, 0));
+    }
+    Ok(x as i32)
+}
+
 pub(crate) fn put_num(a: &Args) -> Result<f64, OmError> {
     num_arg(a.put.as_ref().unwrap_or(&Variant::Empty), a.lcid)
 }

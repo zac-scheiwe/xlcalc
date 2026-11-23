@@ -9,6 +9,8 @@ pub struct Note {
     pub author: String,
 
     pub visible: bool,
+
+    pub shape_no: u32,
 }
 
 pub type NoteMap = BTreeMap<(u32, u32), Note>;
@@ -52,6 +54,8 @@ impl Workbook {
         }
         self.note_next += 1;
         let id = self.note_next;
+        let shape_no = self.note_shapes.entry(at.sheet).or_default();
+        *shape_no += 1;
         map.insert(
             (at.row, at.col),
             Note {
@@ -59,8 +63,14 @@ impl Workbook {
                 text: text.to_string(),
                 author: author.to_string(),
                 visible,
+                shape_no: *shape_no,
             },
         );
+
+        if let Some(sh) = self.sheet_mut(at.sheet) {
+            sh.cells
+                .extend_sticky(Rect::new(at.row, at.col, at.row, at.col));
+        }
         Some(id)
     }
 

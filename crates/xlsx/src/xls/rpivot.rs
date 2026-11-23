@@ -358,7 +358,7 @@ fn parse_stream(
                         );
                     }
                     if let Some(f) = cache.fields.last_mut() {
-                        f.formula = super::wpcalc::decompile(&rgce, &used);
+                        f.formula = super::wpcalc::tokens_to_formula(&rgce, &used);
                     }
                 }
                 if cache.fields.len() >= ntotal {
@@ -402,7 +402,7 @@ fn parse_stream(
     for (rgce, names, item) in pending {
         let ph: Vec<String> = (0..names.len()).map(|k| format!("R{k}Q")).collect();
         let (field, _) = names.first().copied().unwrap_or((0, 0));
-        let Some(mut text) = super::wpcalc::decompile(&rgce, &ph) else {
+        let Some(mut text) = super::wpcalc::tokens_to_formula(&rgce, &ph) else {
             continue;
         };
         for (k, (f, it)) in names.iter().enumerate().rev() {

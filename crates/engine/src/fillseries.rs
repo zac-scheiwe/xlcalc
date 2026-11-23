@@ -51,6 +51,7 @@ impl DateUnit {
 enum GrowthCount {
     Run,
     Skip,
+    LogError,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -90,7 +91,6 @@ impl Workbook {
         spec: &SeriesSpec,
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::DataSeries, |wb| {
-            wb.note_changed(sheet, &notice::series_rest(range, spec.rows));
             wb.data_series_run(sheet, range, spec)
         })
     }
@@ -295,6 +295,7 @@ impl Workbook {
                 }
             }
         }
+        let mut written: Vec<CellAddr> = Vec::new();
         for l in 0..nlines {
             let first = at(l, 0);
             let cells: Vec<(CellAddr, Value)> = match ty {
@@ -333,13 +334,24 @@ impl Workbook {
                 SeriesType::Growth if spec.stop.is_some() && !spec.trend => {
                     match self.growth_stop_count(first, spec.stop.unwrap_or(0.0), step) {
                         GrowthCount::Skip => Vec::new(),
+                        GrowthCount::LogError => {
+                            self.session.math_error = true;
+                            Vec::new()
+                        }
                         GrowthCount::Run => self.series_line(&at, l, len, ty, spec, step),
                     }
                 }
                 _ => self.series_line(&at, l, len, ty, spec, step),
             };
             let fmt = self.number_format(first).to_string();
+            written.extend(cells.iter().map(|(a, _)| *a));
             for (addr, v) in cells {
+                let v = if std::mem::take(&mut self.session.math_error) {
+                    Value::Error(crate::value::XlError::NUM)
+                } else {
+                    v
+                };
+
                 let r = self.with_op(Op::NoAutoExpand, true, |this| this.set_value_exact(addr, v));
                 report.add_sheets(&r);
                 report.changed.extend(r.changed);
@@ -347,6 +359,14 @@ impl Workbook {
                 if self.number_format(addr) != fmt {
                     self.set_number_format_unrounded(sheet, Rect::cell(addr.row, addr.col), &fmt);
                 }
+            }
+        }
+
+        if !written.is_empty() {
+            written.push(at(0, 1));
+            written.push(at(nlines - 1, 1));
+            if let Some(dest) = notice::bounds(written.into_iter()) {
+                self.note_changed(sheet, &[dest]);
             }
         }
         self.settings.mode = mode;
@@ -367,16 +387,16 @@ impl Workbook {
         let Some(seed) = self.series_seed(first) else {
             return GrowthCount::Run;
         };
-        let mp_zero = |x: f64| x.to_bits() & 0xFFFF_0000_0000_0000 == 0;
-        if mp_zero(seed) {
+        let is_small_zero = |x: f64| x.to_bits() & 0xFFFF_0000_0000_0000 == 0;
+        if is_small_zero(seed) {
             return GrowthCount::Skip;
         }
         let ratio = stop / seed;
-        if !mp_zero(ratio) && ratio < 0.0 {
+        if !is_small_zero(ratio) && ratio < 0.0 {
             return GrowthCount::Skip;
         }
         if step < 0.0 {
-            return GrowthCount::Skip;
+            return GrowthCount::LogError;
         }
         GrowthCount::Run
     }
@@ -453,6 +473,15 @@ impl Workbook {
                 }
             }
         };
+
+        if ty == SeriesType::Date && unit != DateUnit::Day && seed < 0.0 {
+            if stop.is_none() {
+                for k in 1..len {
+                    out.push((at(l, k), Value::Error(crate::value::XlError::NUM)));
+                }
+            }
+            return out;
+        }
         for k in 1..len {
             let kf = k as f64;
             let v = match ty {

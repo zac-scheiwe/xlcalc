@@ -187,21 +187,25 @@ pub(super) fn instr(ctx: &RtContext, a: &[Variant]) -> R {
     } else {
         (1, a)
     };
-    if start < 1 || start == i32::MAX {
-        return Err(VbaError::new(5));
-    }
     let fold = text_compare(ctx, rest, 2, false)?;
     if is_null(&rest[0]) || is_null(&rest[1]) {
+        if start < 1 || start == i32::MAX {
+            return Err(VbaError::new(5));
+        }
         return Ok(Variant::Null);
     }
     let (hay, needle) = (units(&text(ctx, &rest[0])?), units(&text(ctx, &rest[1])?));
-    let from = start as usize - 1;
+
     if hay.is_empty() {
         return long_value(0);
     }
     if needle.is_empty() {
         return long_value(start.into());
     }
+    if start < 1 || start == i32::MAX {
+        return Err(VbaError::new(5));
+    }
+    let from = start as usize - 1;
     if from > hay.len() {
         return long_value(0);
     }
@@ -385,11 +389,25 @@ pub(super) fn string(ctx: &RtContext, a: &[Variant]) -> R {
 strict!(string_d, string_impl);
 
 pub(super) fn strcomp(ctx: &RtContext, a: &[Variant]) -> R {
-    let fold = text_compare(ctx, a, 2, false)?;
+    let fold = text_compare(ctx, a, 2, false);
     if is_null(&a[0]) || is_null(&a[1]) {
+        fold?;
         return Ok(Variant::Null);
     }
     let (x, y) = (text(ctx, &a[0])?, text(ctx, &a[1])?);
+
+    let use_option = match opt(a, 2) {
+        Some(v) => long(ctx, v).is_ok_and(|n| n == -1),
+        None => false,
+    };
+    if (x.is_empty() || y.is_empty()) && (fold.is_ok() || use_option) {
+        return Ok(Variant::I2(match x.len().cmp(&y.len()) {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
+        }));
+    }
+    let fold = fold?;
     let o = if fold {
         let (x, y) = (compare_form(&x), compare_form(&y));
         let code =
@@ -608,7 +626,8 @@ pub(super) fn split(ctx: &RtContext, a: &[Variant]) -> R {
     }
     let fold = text_compare(ctx, a, 3, true)?;
     let mut parts: Vec<String> = Vec::new();
-    if limit != 0 && (!expr.is_empty() || delim.is_empty()) {
+
+    if delim.is_empty() || (limit != 0 && !expr.is_empty()) {
         let mut i = 0;
         while !delim.is_empty() && (limit == -1 || (parts.len() as i32) < limit - 1) {
             let Some((j, end)) = find(&expr, &delim, i, fold) else {

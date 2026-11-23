@@ -125,6 +125,13 @@ fn color_for_index_put(n: i32) -> Result<i32, OmError> {
     }
 }
 
+fn long_put(m: &Member, a: &Args) -> Result<i32, OmError> {
+    match crate::app::coerce_put(m, a.put.clone().unwrap_or(Variant::Empty), a.lcid)? {
+        Variant::I4(n) => Ok(n),
+        _ => Err(OmError::type_mismatch()),
+    }
+}
+
 fn num(a: &Args) -> Result<f64, OmError> {
     put_num(a)
 }
@@ -177,21 +184,29 @@ impl Application<'_> {
         let ku = k as u8;
         Some(match (m.name, put) {
             ("MarkerStyle", false) => Ok(i4(f.marker_style.unwrap_or(marker_default(t).0))),
+
             ("MarkerStyle", true) => (|| {
-                let v = num(a)? as i32;
+                let v = long_put(m, a)?;
                 let v = match v {
                     0 => -4142,
-                    -4105 | -4142 | 8 | -4115 | 2 | -4118 | 9 | 1 | 5 | 3 | -4168 | -4147 => v,
+                    4 => -4168,
+                    6 => -4118,
+                    7 => -4115,
+                    -4105 | -4142 | -4147 | -4168 | -4118 | -4115 | 1 | 2 | 3 | 5 | 8 | 9 => v,
                     _ => return Err(range_err("Parameter not valid")),
                 };
                 self.series_edit(r, k, |s, _| {
                     s.fmt.marker_style = Some(v);
+                    if v == -4105 {
+                        s.fmt.marker_size = None;
+                    }
                     Ok(())
                 })
             })(),
             ("MarkerSize", false) => Ok(i4(f.marker_size.unwrap_or(marker_default(t).1))),
+
             ("MarkerSize", true) => (|| {
-                let v = num(a)?.round_ties_even() as i32;
+                let v = long_put(m, a)?;
                 if !(2..=72).contains(&v) {
                     return Err(OmError::exception(0x8000_4005_u32 as i32, None));
                 }
@@ -260,7 +275,15 @@ impl Application<'_> {
                 if matches!(cl, Cls::Fill | Cls::Area) {
                     return Err(no_such(m));
                 }
-                let v = color_for_index_put(num(a)? as i32)?;
+
+                let n = num(a)? as i32;
+                let v = match n {
+                    -1 => -1,
+                    n if n < 0 && !matches!(n, -4105 | -4142) => {
+                        return Err(OmError::exception(0x8000_4005_u32 as i32, None))
+                    }
+                    n => color_for_index_put(n)?,
+                };
                 let bg = m.name == "MarkerBackgroundColorIndex";
                 self.series_edit(r, k, |s, _| {
                     if bg {
@@ -271,11 +294,14 @@ impl Application<'_> {
                     Ok(())
                 })
             })(),
-            ("InvertIfNegative" | "Shadow", false) => Ok(Variant::Bool(false)),
-            ("Explosion", false) => Ok(i4(0)),
             ("Format", false) => Ok(self.sub_of(r, Sub::SerFormat(ku))),
             ("Interior", false) => Ok(self.sub_of(r, Sub::SerInterior(ku))),
             ("Border", false) => Ok(self.sub_of(r, Sub::SerBorder(ku))),
+            ("HasDataLabels" | "DataLabels", _)
+                if crate::chart_types::refuses_data_labels(ser.chart_type) =>
+            {
+                Err(OmError::exception(0x8000_4005_u32 as i32, None))
+            }
             ("HasDataLabels", false) => Ok(Variant::Bool(f.labels.as_ref().is_some_and(shows))),
             ("HasDataLabels", true) => (|| {
                 let v = put_bool(a)?;
@@ -322,8 +348,12 @@ impl Application<'_> {
                 None => Ok(self.sub_of(r, Sub::TrendColl(ku))),
             },
             ("HasErrorBars", false) => Ok(Variant::Bool(f.error_bars.is_some())),
+
             ("HasErrorBars", true) => (|| {
                 let v = put_bool(a)?;
+                if matches!(t, -4151 | 81 | 82) {
+                    return Err(OmError::exception(0x8000_4005_u32 as i32, None));
+                }
                 self.series_edit(r, k, |s, _| {
                     s.fmt.error_bars = if v {
                         Some(s.fmt.error_bars.take().unwrap_or_default())
@@ -341,6 +371,10 @@ impl Application<'_> {
                     && matches!(incl, 1..=3 | -4142)
                     && matches!(ty, 1 | 2 | 4 | -4155 | -4114);
                 if !valid {
+                    return Err(OmError::app_defined());
+                }
+
+                if matches!(ty, 1 | 2) && opt_num(a, 3) < 0.0 {
                     return Err(OmError::app_defined());
                 }
                 if ty == -4114 && matches!(incl, 1 | 3) {
@@ -786,6 +820,9 @@ impl Application<'_> {
             .cloned()
             .ok_or_else(OmError::object_required)?;
         let t = ser.chart_type;
+        if crate::chart_types::refuses_data_labels(t) {
+            return Err(OmError::exception(0x8000_4005_u32 as i32, None));
+        }
         let own = matches!(sub, Sub::SerLabel(_, n) if ser.fmt.point_labels.contains(&n));
         let Some(l) = ser
             .fmt
@@ -813,6 +850,15 @@ impl Application<'_> {
             }
             let nv = put_bool(a)?;
             let name = m.name;
+
+            if (name == "ShowPercentage" && nv && !crate::chart_types::is_pie_kind(t))
+                || (name == "ShowBubbleSize" && nv && !crate::chart_types::is_bubble(t))
+            {
+                return Err(OmError::exception(
+                    0x8007_0057_u32 as i32,
+                    Some("This property is not valid for the current chart type."),
+                ));
+            }
             return self.series_edit(r, ku, |s, _| {
                 if let Some(l) = &mut s.fmt.labels {
                     match name {
@@ -827,11 +873,51 @@ impl Application<'_> {
                 Ok(())
             });
         }
+        let slot = match sub {
+            Sub::SerLabel(_, n) => format!("DataLabel{ku}_{n}"),
+            _ => format!("DataLabels{ku}"),
+        };
+
+        if matches!(
+            m.name,
+            "Orientation" | "HorizontalAlignment" | "VerticalAlignment" | "ReadingOrder"
+        ) {
+            if let Some(res) =
+                self.bag_member(crate::bag::Store::Chart(r), "DataLabels", &slot, m, a)
+            {
+                return res;
+            }
+        }
         match (m.name, put) {
+            ("Separator", true) => {
+                let v = match a.put.as_ref() {
+                    Some(Variant::Bstr(t)) => Some(t.clone()),
+                    other => {
+                        match crate::controls::variant_i4(other.unwrap_or(&Variant::Empty), a.lcid)
+                        {
+                            Ok(1) => None,
+                            _ => return Err(OmError::exception(0x8000_4005_u32 as i32, None)),
+                        }
+                    }
+                };
+                self.chart_edit(r, |_, ch| {
+                    let key = format!("{slot}.Separator");
+                    match v {
+                        Some(v) => ch.bag.insert(key, xlcalc::drawing::BagVal::S(v)),
+
+                        None if matches!(sub, Sub::SerLabel(..)) => {
+                            ch.bag.insert(key, xlcalc::drawing::BagVal::I(1))
+                        }
+                        None => ch.bag.remove(&key),
+                    };
+                    Ok(Variant::Empty)
+                })
+            }
             ("Position", false) => Ok(i4(l.position.unwrap_or(default_label_pos(t)))),
             ("Position", true) => {
                 let v = num(a)? as i32;
-                if !label_positions(t).contains(&v) {
+
+                if !crate::chart_types::label_position_valid(t, v) {
                     return Err(OmError::exception(0x8000_4005_u32 as i32, None));
                 }
                 self.series_edit(r, ku, |s, _| {
@@ -849,6 +935,11 @@ impl Application<'_> {
                     Some(Variant::Bstr(t)) => t.clone(),
                     _ => return Err(OmError::type_mismatch()),
                 };
+                let v = if v.is_empty() {
+                    "General".to_string()
+                } else {
+                    v
+                };
                 self.series_edit(r, ku, |s, _| {
                     if let Some(l) = &mut s.fmt.labels {
                         l.number_format = Some(v);
@@ -858,7 +949,17 @@ impl Application<'_> {
             }
             ("NumberFormatLinked", false) => Ok(Variant::Bool(l.number_format.is_none())),
             ("Count", false) => Ok(i4(count as i32)),
-            ("Separator", false) => Ok(i4(1)),
+
+            ("Separator", false) => Ok(
+                match c
+                    .bag
+                    .get(&format!("{slot}.Separator"))
+                    .or_else(|| c.bag.get(&format!("DataLabels{ku}.Separator")))
+                {
+                    Some(xlcalc::drawing::BagVal::S(v)) => Variant::Bstr(v.clone()),
+                    _ => i4(1),
+                },
+            ),
             ("Delete", false) => {
                 self.series_edit(r, ku, |s, _| {
                     s.fmt.labels = None;
@@ -866,7 +967,8 @@ impl Application<'_> {
                 })?;
                 Ok(Variant::Empty)
             }
-            ("Text", false) => {
+
+            ("Text" | "Caption", false) => {
                 if !shows(&l) {
                     return Err(OmError::exception(
                         0x8007_0057_u32 as i32,
@@ -877,19 +979,46 @@ impl Application<'_> {
                     return Err(unsupported(sub.interface_name(), m));
                 };
                 let wb = &self.book(r.book)?.wb;
-                let vals = part_values(wb, &ser.values);
-                let cats = part_values(wb, &ser.x);
+
+                let hv = crate::charts::HideView::new(wb, c);
+                let vals = crate::charts::part_values_vis(&hv, &ser.values, c.visible_only);
                 let i = n.max(1) as usize - 1;
+
+                if !matches!(vals.get(i), Some(Variant::R8(_))) {
+                    return Ok(Variant::Bstr(String::new()));
+                }
+
+                let cats: Vec<Variant> = match &ser.x {
+                    xlcalc::drawing::Part::Refs(v) => {
+                        let mut out = Vec::new();
+                        for (s, rc) in v {
+                            for row in rc.r0..=rc.r1 {
+                                for col in rc.c0..=rc.c1 {
+                                    if c.visible_only && (hv.row(*s, row) || hv.col(*s, col)) {
+                                        continue;
+                                    }
+                                    let a = xlcalc::CellAddr::new(*s, row, col);
+                                    out.push(match crate::charts::cell_variant(&wb.value(a)) {
+                                        Variant::R8(x) => {
+                                            let t = wb.display_text(a);
+                                            Variant::Bstr(if t.is_empty() || t.contains('#') {
+                                                xlcalc::format_general(x)
+                                            } else {
+                                                t
+                                            })
+                                        }
+                                        v => v,
+                                    });
+                                }
+                            }
+                        }
+                        out
+                    }
+                    p => part_values(wb, p),
+                };
                 let mut parts = Vec::new();
                 if l.show_series {
-                    parts.push(match &ser.name {
-                        xlcalc::drawing::Part::None => format!("Series{}", ku + 1),
-                        xlcalc::drawing::Part::Text(t) => t.clone(),
-                        p => match part_values(wb, p).first() {
-                            Some(Variant::Bstr(s)) => s.clone(),
-                            _ => String::new(),
-                        },
-                    });
+                    parts.push(crate::chartparts::series_name_text(wb, ku, &ser));
                 }
                 if l.show_category {
                     parts.push(match cats.get(i) {
@@ -1003,7 +1132,7 @@ impl Application<'_> {
             })
         };
         let sname = match &ser.name {
-            xlcalc::drawing::Part::None => format!("Series{}", ku + 1),
+            xlcalc::drawing::Part::None => format!("Series{}", ser.number(ku)),
             xlcalc::drawing::Part::Text(t) => t.clone(),
             p => match part_values(&self.book(r.book)?.wb, p).first() {
                 Some(Variant::Bstr(s)) => s.clone(),
@@ -1044,9 +1173,13 @@ impl Application<'_> {
             }
             ("NameIsAuto", false) => Ok(Variant::Bool(tl.name.is_none())),
             ("Order", false) => Ok(i4(tl.order)),
+
             ("Order", true) => {
-                let v = num(a)? as i32;
-                if tl.kind != 3 && (2..=6).contains(&v) {
+                let v = num(a)?.round_ties_even() as i32;
+                if tl.kind == 6 {
+                    return Err(OmError::exception(0x800A_03EC_u32 as i32, None));
+                }
+                if tl.kind != 3 {
                     return edit(self, &|_| {});
                 }
                 if !(2..=6).contains(&v) {
@@ -1055,18 +1188,32 @@ impl Application<'_> {
                 edit(self, &|t| t.order = v)
             }
             ("Period", false) => Ok(i4(tl.period)),
+
             ("Period", true) => {
-                let v = num(a)? as i32;
-                if tl.kind != 6 || !(2..=255).contains(&v) {
+                let v = num(a)?.round_ties_even() as i32;
+                if tl.kind != 6 {
                     return Err(OmError::exception(0x800A_03EC_u32 as i32, None));
+                }
+                let ccat = part_values(&self.book(r.book)?.wb, &ser.values).len() as i32;
+                if v < 2 || v >= ccat {
+                    return Err(range_err("Parameter not valid"));
                 }
                 edit(self, &|t| t.period = v)
             }
             ("Forward", false) => Ok(Variant::R8(tl.forward)),
             ("Backward", false) => Ok(Variant::R8(tl.backward)),
+
             ("Forward", true) => {
                 let v = num(a)?;
+                if v < 0.0 || v.is_nan() {
+                    return Err(OmError::exception(0x8000_4005_u32 as i32, None));
+                }
                 edit(self, &|t| t.forward = v)
+            }
+
+            ("Intercept", true) => {
+                let v = num(a)?;
+                edit(self, &|t| t.intercept = Some(v))
             }
             ("Backward", true) => {
                 let v = num(a)?;
@@ -1119,7 +1266,7 @@ fn back_limit(app: &Application<'_>, r: &DrawRef, ser: &Series) -> f64 {
 }
 
 fn no_trend(t: i32) -> bool {
-    is_pie_like(t)
+    crate::chart_types::is_pie_kind(t)
         || matches!(t, 52 | 53 | 54..=56 | 58 | 59 | 60..=62 | 63 | 64 | 66 | 67 | 76..=78 | -4151 | 81 | 82 | -4100 | -4098 | -4101)
 }
 
@@ -1138,29 +1285,20 @@ fn shows(l: &DataLabels) -> bool {
     l.show_value || l.show_series || l.show_category || l.show_percent || l.show_bubble
 }
 
-fn is_pie_like(t: i32) -> bool {
-    matches!(t, 5 | 68..=71 | 80 | -4102 | -4120)
-}
-
 fn default_label_pos(t: i32) -> i32 {
-    match cls(t) {
-        Cls::Fill if t == 52 || t == 53 || t == 58 || t == 59 => -4108,
-        Cls::Fill if is_pie_like(t) => 5,
-        Cls::Fill => 2,
-        Cls::Area => -4108,
-        Cls::Radar => 2,
-        _ => -4152,
+    use crate::chart_types::{is_bubble, is_pie_kind, owc_type};
+    if is_bubble(t) {
+        return -4152;
     }
-}
-
-fn label_positions(t: i32) -> &'static [i32] {
-    match cls(t) {
-        Cls::Fill if matches!(t, 52 | 53 | 58 | 59) => &[3, -4108, 4],
-        Cls::Fill if is_pie_like(t) => &[2, 3, -4108, 5],
-        Cls::Fill => &[2, 3, -4108, 4],
-        Cls::Area => &[],
-        Cls::Radar => &[],
-        _ => &[-4131, -4152, -4108, 1, 0],
+    if is_pie_kind(t) {
+        return if matches!(t, -4120 | 80) { -4108 } else { 5 };
+    }
+    match owc_type(t).unwrap_or(0) {
+        1 | 2 | 4 | 5 | 44 | 45 | 48 | 49 => -4108,
+        0 | 3 | 42 | 43 | 47 => 2,
+        25..=27 | 56..=59 => -4108,
+        31 | 32 => 2,
+        _ => -4152,
     }
 }
 

@@ -123,17 +123,14 @@ pub(super) fn mid(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
-use super::casemap;
+use super::{casemap, casemap_letters};
 
-fn table_map(table: &[(u16, u16)], c: char) -> char {
+fn map_unit(f: impl Fn(u16) -> u16, c: char) -> char {
     let n = c as u32;
     if n > 0xFFFF {
         return c;
     }
-    match table.binary_search_by_key(&(n as u16), |e| e.0) {
-        Ok(i) => char::from_u32(table[i].1 as u32).unwrap_or(c),
-        Err(_) => c,
-    }
+    char::from_u32(u32::from(f(n as u16))).unwrap_or(c)
 }
 
 pub fn lower_char(c: char) -> char {
@@ -162,14 +159,11 @@ pub fn map_case(s: &str, upper: bool) -> String {
             out.push(if fin { '\u{3C2}' } else { '\u{3C3}' });
             continue;
         }
-        out.push(table_map(
-            if upper {
-                casemap::UPPER
-            } else {
-                casemap::LOWER
-            },
-            c,
-        ));
+        out.push(if upper {
+            map_unit(casemap::upper_unit, c)
+        } else {
+            map_unit(|u| casemap::lower_plain(u, 0), c)
+        });
     }
     out
 }
@@ -180,8 +174,8 @@ fn xl_letter(c: char) -> bool {
         return false;
     }
     let n = n as u16;
-    let i = casemap::LETTERS.partition_point(|r| r.1 < n);
-    i < casemap::LETTERS.len() && casemap::LETTERS[i].0 <= n
+    let i = casemap_letters::LETTERS.partition_point(|r| r.1 < n);
+    i < casemap_letters::LETTERS.len() && casemap_letters::LETTERS[i].0 <= n
 }
 
 fn proper(s: &str) -> String {
@@ -191,12 +185,7 @@ fn proper(s: &str) -> String {
     for (orig, c) in s.chars().zip(lowered.chars()) {
         let letter = xl_letter(orig);
         if letter && !prev_letter {
-            let p = table_map(casemap::PROPER_UPPER, c);
-            out.push(if p != c {
-                p
-            } else {
-                table_map(casemap::UPPER, c)
-            });
+            out.push(map_unit(|u| casemap::upper_plain(u, 0), c));
         } else {
             out.push(c);
         }
@@ -646,6 +635,10 @@ fn hyperlink(_: &mut EvalCtx, a: &[Value]) -> Value {
         Ok(t) => t,
         Err(e) => return Value::Error(e),
     };
+
+    if link.chars().count() > 255 {
+        return Value::Error(XlError::VALUE);
+    }
     match a.get(1) {
         None => Value::Text(link),
         Some(Value::Blank) => Value::Number(0.0),
@@ -667,4 +660,21 @@ fn na_stub(c: &mut EvalCtx, a: &[Value]) -> Value {
         }
     }
     err(XlError::NA)
+}
+
+#[cfg(test)]
+mod case_tests {
+    use super::map_case;
+
+    #[test]
+    fn upper_lower_branches() {
+        assert_eq!(map_case("abc\u{e9}", true), "ABC\u{c9}");
+        assert_eq!(map_case("\u{101}\u{13a}", true), "\u{100}\u{139}");
+        assert_eq!(map_case("\u{100}\u{139}", false), "\u{101}\u{13a}");
+        assert_eq!(map_case("\u{3ac}\u{3c2}", true), "\u{391}\u{3a3}");
+        assert_eq!(map_case("\u{1f00}", true), "\u{1f00}");
+        assert_eq!(map_case("\u{3a3}a \u{3a3}", false), "\u{3c3}a \u{3c2}");
+        assert_eq!(map_case("\u{10428}", true), "\u{10428}");
+        assert_eq!(map_case("I", false), "i");
+    }
 }

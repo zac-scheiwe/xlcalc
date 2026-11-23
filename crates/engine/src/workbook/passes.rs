@@ -5,7 +5,7 @@ use super::{CalcMode, Workbook};
 
 #[derive(Default)]
 pub(crate) struct Passes {
-    notifying: bool,
+    pub(super) notifying: bool,
 
     silent: u32,
 
@@ -60,6 +60,16 @@ impl Workbook {
         r
     }
 
+    pub(crate) fn in_last_pass<R>(&mut self, f: impl FnOnce(&mut Workbook) -> R) -> R {
+        let merged = self.passes.merged;
+        self.passes.merge += 1;
+        self.passes.merged = true;
+        let r = f(self);
+        self.passes.merge -= 1;
+        self.passes.merged = merged;
+        r
+    }
+
     pub(crate) fn not_a_pass<R>(&mut self, f: impl FnOnce(&mut Workbook) -> R) -> R {
         self.passes.internal += 1;
         let r = f(self);
@@ -81,11 +91,14 @@ impl Workbook {
         }
         self.passes.merged = self.passes.merge > 0;
         let silent = self.passes.silent > 0;
-
-        if !self.settings.iteration && !self.calc.circular.is_empty() {
+        if self.after_skipped(!self.calc.circular.is_empty()) {
             self.notes.no_after = true;
         }
         self.notes.pass(sheets, silent);
+    }
+
+    pub(crate) fn after_skipped(&self, restart_pending: bool) -> bool {
+        restart_pending && !self.settings.iteration
     }
 }
 
@@ -117,15 +130,66 @@ mod tests {
         assert_eq!(
             wb.take_notices(),
             vec![
+                calc.clone(),
+                Notice::AfterCalculate,
                 Notice::Changed {
                     sheet: s,
                     areas: vec![Rect::new(0, 3, 3, 4)]
                 },
-                calc.clone(),
-                Notice::AfterCalculate,
                 calc,
                 Notice::AfterCalculate
             ]
         );
+    }
+
+    fn num(wb: &Workbook, a: CellAddr) -> f64 {
+        match wb.value(a) {
+            Value::Number(n) => n,
+            v => panic!("{a:?} holds {v:?}"),
+        }
+    }
+
+    #[test]
+    fn a_sheet_calculation_follows_same_sheet_precedents() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let a = |r, c| CellAddr::new(s, r, c);
+        wb.set_mode(crate::CalcMode::Manual);
+        wb.set_input(a(0, 10), "1").unwrap();
+
+        wb.set_input(a(0, 0), "=A2+1").unwrap();
+        wb.set_input(a(1, 0), "=A3*2").unwrap();
+        wb.set_input(a(2, 0), "=K1").unwrap();
+        wb.set_input(a(0, 1), "=INDIRECT(\"B2\")*1").unwrap();
+        wb.set_input(a(1, 1), "=K1*5").unwrap();
+        wb.set_input(a(0, 10), "10").unwrap();
+        wb.calculate_sheet(s);
+        assert_eq!(num(&wb, a(2, 0)), 10.0);
+        assert_eq!(num(&wb, a(1, 0)), 20.0);
+        assert_eq!(num(&wb, a(0, 0)), 21.0);
+        assert_eq!(num(&wb, a(1, 1)), 50.0);
+        assert_eq!(num(&wb, a(0, 1)), 50.0);
+    }
+
+    #[test]
+    fn a_sheet_calculation_reads_other_sheets_stale() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let t = wb.add_sheet("Sheet2").unwrap();
+        let a = |r, c| CellAddr::new(s, r, c);
+        let b1 = CellAddr::new(t, 0, 1);
+        wb.set_input(a(1, 10), "2").unwrap();
+        wb.set_input(a(1, 1), "=K2").unwrap();
+        wb.set_input(b1, "=Sheet1!B2*2").unwrap();
+        wb.set_input(a(0, 1), "=Sheet2!B1+1").unwrap();
+        wb.set_mode(crate::CalcMode::Manual);
+        wb.set_input(a(1, 10), "20").unwrap();
+        wb.calculate_sheet(s);
+        assert_eq!(num(&wb, a(1, 1)), 20.0);
+        assert_eq!(num(&wb, b1), 4.0);
+        assert_eq!(num(&wb, a(0, 1)), 5.0);
+        wb.recalc();
+        assert_eq!(num(&wb, b1), 40.0);
+        assert_eq!(num(&wb, a(0, 1)), 41.0);
     }
 }

@@ -1,6 +1,6 @@
-use super::{lazy, volatile, FnDef};
-use crate::address::CellAddr;
-use crate::eval::{EvalCtx, Operand};
+use super::{args, lazy, volatile, FnDef};
+use crate::address::{col_to_letters, CellAddr, Rect};
+use crate::eval::{Area, EvalCtx, Operand, Reference};
 use crate::formula::Node;
 use crate::value::{Value, XlError};
 
@@ -74,11 +74,19 @@ fn get_cell_type(ctx: &mut EvalCtx, tv: &Value, target: CellAddr) -> Value {
             target.row + 1
         )),
         1 => Value::from(format!(
-            "[Book1]{}!${}${}",
+            "[{}]{}!${}${}",
+            wb.book_name(),
             wb.sheet(target.sheet).map_or("", |s| s.name.as_str()),
             crate::address::col_to_letters(target.col),
             target.row + 1
         )),
+
+        32 | 62 => Value::from(format!(
+            "[{}]{}",
+            wb.book_name(),
+            wb.sheet(target.sheet).map_or("", |s| s.name.as_str())
+        )),
+        66 => Value::from(wb.book_name().to_string()),
         2 => Value::Number(f64::from(target.row) + 1.0),
         3 => Value::Number(f64::from(target.col) + 1.0),
         4 => Value::Number(match v {
@@ -96,6 +104,11 @@ fn get_cell_type(ctx: &mut EvalCtx, tv: &Value, target: CellAddr) -> Value {
             None => text_of(&v),
         }),
         7 => Value::from(wb.number_format(target)),
+
+        47 => Value::Bool(false),
+        46 => Value::Bool(wb.note_at(target.sheet, target.row, target.col).is_some()),
+
+        65 => Value::Bool(false),
         48 => Value::Bool(wb.formula_text(target).is_some()),
 
         49 => Value::Bool(wb.array_at(target).is_some()),
@@ -128,9 +141,12 @@ fn appearance(wb: &crate::workbook::Workbook, at: CellAddr, t: i64) -> Option<Va
     let s = wb.cell_style(at);
     let theme = &wb.style_table().theme;
 
-    let index = |c: CellColor| match c {
-        CellColor::Auto => 0.0,
-        c => f64::from(crate::style::nearest_color_index(theme.rgb(c, 0))),
+    let index = |c: CellColor| {
+        if c.is_auto() {
+            0.0
+        } else {
+            f64::from(crate::style::nearest_color_index(theme.rgb(c, 0)))
+        }
     };
     let num = |n: f64| Some(Value::Number(n));
 
@@ -228,6 +244,15 @@ fn evaluate(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
     ctx.in_evaluate = was;
     ctx.env = env;
     out
+}
+
+pub fn max_args(name: &str) -> Option<usize> {
+    match name {
+        "FORMAT.NUMBER" | "SET.PRINT.AREA" | "ZOOM" | "WINDOW.TITLE" => Some(1),
+        "DISPLAY" => Some(9),
+        "CELL.PROTECTION" => Some(2),
+        _ => None,
+    }
 }
 
 pub const XLM_ONLY: &[&str] = &[
@@ -665,3 +690,250 @@ pub const XLM_ONLY: &[&str] = &[
     "WORKSPACE",
     "ZOOM",
 ];
+
+pub const REF_FUNCTIONS: &[&str] = &[
+    "TEXTREF",
+    "REFTEXT",
+    "ABSREF",
+    "RELREF",
+    "DEREF",
+    "SELECTION",
+    "ACTIVE.CELL",
+];
+
+pub const REF_DEFS: &[FnDef] = &[
+    args("TEXTREF", 1, 2, "V", textref),
+    args("REFTEXT", 1, 2, "QV", reftext),
+    args("ABSREF", 2, 2, "VQ", absref),
+    args("RELREF", 2, 2, "Q", relref),
+    args("DEREF", 1, 1, "Q", deref_fn),
+    volatile(args("SELECTION", 0, 0, "V", selection)),
+    volatile(args("ACTIVE.CELL", 0, 0, "V", active_cell)),
+];
+
+fn flag(ctx: &mut EvalCtx, op: Option<&Operand>) -> Result<bool, XlError> {
+    match op {
+        None | Some(Operand::Missing) => Ok(false),
+        Some(op) => match ctx.deref(op.clone()) {
+            Value::Blank => Ok(false),
+            Value::Error(e) => Err(e),
+            v => super::args::boolean(&v),
+        },
+    }
+}
+
+fn textref(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    let t = match ctx.deref(ops[0].clone()) {
+        Value::Text(t) => t,
+        Value::Error(e) => return Operand::err(e),
+        _ => return Operand::err(XlError::VALUE),
+    };
+    let a1 = match flag(ctx, ops.get(1)) {
+        Ok(b) => b,
+        Err(e) => return Operand::err(e),
+    };
+    let (sheet, body) = match t.rsplit_once('!') {
+        Some((raw, body)) => {
+            let raw = raw
+                .strip_prefix('\'')
+                .and_then(|r| r.strip_suffix('\''))
+                .map_or_else(|| raw.to_string(), |r| r.replace("''", "'"));
+            let name = match raw.strip_prefix('[') {
+                Some(rest) => match rest.split_once(']') {
+                    Some((book, n)) if book.eq_ignore_ascii_case(ctx.wb.book_name()) => {
+                        n.to_string()
+                    }
+                    _ => return Operand::err(XlError::REF),
+                },
+                None => raw,
+            };
+            match ctx.wb.sheet_by_name(&name) {
+                Some(s) => (s.id, body),
+                None => return Operand::err(XlError::REF),
+            }
+        }
+        None => (ctx.host.sheet, &*t),
+    };
+    let rect = if a1 {
+        if body.contains(['[', ']']) {
+            None
+        } else {
+            crate::address::parse_a1_rect(&body.replace('$', ""))
+        }
+    } else {
+        super::lookup::parse_r1c1(body, ctx.host.row, ctx.host.col)
+    };
+    match rect {
+        Some(rect) => Operand::Ref(Reference::Area(Area { sheet, rect })),
+        None => Operand::err(XlError::REF),
+    }
+}
+
+fn sheet_prefix(ctx: &EvalCtx, sheet: crate::SheetId) -> String {
+    if sheet == ctx.host.sheet {
+        return String::new();
+    }
+    let name = ctx
+        .wb
+        .sheet(sheet)
+        .map(|s| s.name.to_string())
+        .unwrap_or_default();
+    let full = format!("[{}]{}", ctx.wb.book_name(), name);
+    if crate::parser::print::sheet_name_text(&name) == name {
+        format!("{full}!")
+    } else {
+        format!("'{}'!", full.replace('\'', "''"))
+    }
+}
+
+fn rect_text(r: &Rect, a1: bool) -> String {
+    let rows = r.is_full_rows() && !r.is_full_columns();
+    let cols = r.is_full_columns() && !r.is_full_rows();
+    let two = |x: String, y: String| if x == y { x } else { format!("{x}:{y}") };
+    if a1 {
+        let col = |c: u32| format!("${}", col_to_letters(c));
+        if rows {
+            format!("${}:${}", r.r0 + 1, r.r1 + 1)
+        } else if cols {
+            format!("{}:{}", col(r.c0), col(r.c1))
+        } else {
+            two(
+                format!("{}${}", col(r.c0), r.r0 + 1),
+                format!("{}${}", col(r.c1), r.r1 + 1),
+            )
+        }
+    } else if rows {
+        two(format!("R{}", r.r0 + 1), format!("R{}", r.r1 + 1))
+    } else if cols {
+        two(format!("C{}", r.c0 + 1), format!("C{}", r.c1 + 1))
+    } else {
+        two(
+            format!("R{}C{}", r.r0 + 1, r.c0 + 1),
+            format!("R{}C{}", r.r1 + 1, r.c1 + 1),
+        )
+    }
+}
+
+fn reftext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    let r = match &ops[0] {
+        Operand::Ref(r) => r,
+        Operand::Val(Value::Error(e)) => return Operand::err(*e),
+        _ => return Operand::err(XlError::VALUE),
+    };
+    let a1 = match flag(ctx, ops.get(1)) {
+        Ok(b) => b,
+        Err(e) => return Operand::err(e),
+    };
+    let text: Vec<String> = r
+        .areas()
+        .iter()
+        .map(|a| format!("{}{}", sheet_prefix(ctx, a.sheet), rect_text(&a.rect, a1)))
+        .collect();
+    Operand::Val(Value::Text(text.join(",").into()))
+}
+
+fn absref(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    let t = match ctx.deref(ops[0].clone()) {
+        Value::Text(t) => t,
+        Value::Error(e) => return Operand::err(e),
+        _ => return Operand::err(XlError::VALUE),
+    };
+    let base = match &ops[1] {
+        Operand::Ref(r) => match r.areas().first() {
+            Some(a) => *a,
+            None => return Operand::err(XlError::REF),
+        },
+        Operand::Val(Value::Error(e)) => return Operand::err(*e),
+        _ => return Operand::err(XlError::VALUE),
+    };
+    match super::lookup::parse_r1c1(&t, base.rect.r0, base.rect.c0) {
+        Some(rect) => Operand::Ref(Reference::Area(Area {
+            sheet: base.sheet,
+            rect,
+        })),
+        None => Operand::err(XlError::VALUE),
+    }
+}
+
+fn relref(_: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    let mut areas = [None, None];
+    for (slot, op) in areas.iter_mut().zip(ops) {
+        *slot = match op {
+            Operand::Ref(r) => r.areas().first().copied(),
+            Operand::Val(Value::Error(e)) => return Operand::err(*e),
+            _ => return Operand::err(XlError::VALUE),
+        };
+    }
+    let (Some(a), Some(b)) = (areas[0], areas[1]) else {
+        return Operand::err(XlError::REF);
+    };
+    if a.sheet != b.sheet {
+        return Operand::err(XlError::VALUE);
+    }
+    let part = |l: char, v: u32, base: u32| {
+        let d = i64::from(v) - i64::from(base);
+        if d == 0 {
+            l.to_string()
+        } else {
+            format!("{l}[{d}]")
+        }
+    };
+    let cell = |r: u32, c: u32| format!("{}{}", part('R', r, b.rect.r0), part('C', c, b.rect.c0));
+    let x = cell(a.rect.r0, a.rect.c0);
+    let text = if a.rect.is_cell() {
+        x
+    } else {
+        format!("{x}:{}", cell(a.rect.r1, a.rect.c1))
+    };
+    Operand::Val(Value::Text(text.into()))
+}
+
+fn deref_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    match &ops[0] {
+        Operand::Ref(_) => match crate::eval::refs::implicit_intersection(ctx, ops[0].clone()) {
+            Operand::Ref(r) if host_cell(&r, ctx.host) => {
+                let h = ctx.host;
+                let kept = ctx
+                    .xlm_cells
+                    .as_ref()
+                    .and_then(|c| c.get(&(h.sheet, h.row, h.col)).cloned());
+                match kept.unwrap_or_else(|| ctx.wb.value(h)) {
+                    Value::Blank => Operand::Val(Value::Bool(false)),
+                    v => Operand::Val(v),
+                }
+            }
+            Operand::Ref(r) => match ctx.deref(Operand::Ref(r)) {
+                Value::Blank => Operand::Val(Value::Number(0.0)),
+                v => Operand::Val(v),
+            },
+            o => o,
+        },
+        o => o.clone(),
+    }
+}
+
+fn selection(ctx: &mut EvalCtx, _: &[Operand]) -> Operand {
+    let s = ctx.wb.active_sheet();
+    let sel = ctx.wb.selection_of(s);
+    let mut areas: Vec<Area> = sel
+        .areas
+        .iter()
+        .map(|&rect| Area { sheet: s, rect })
+        .collect();
+    if areas.len() == 1 {
+        Operand::Ref(Reference::Area(areas.remove(0)))
+    } else {
+        Operand::Ref(Reference::Multi(areas.into()))
+    }
+}
+
+fn active_cell(ctx: &mut EvalCtx, _: &[Operand]) -> Operand {
+    let s = ctx.wb.active_sheet();
+    let (r, c) = ctx.wb.active_cell_of(s);
+    Operand::Ref(Reference::Area(Area::cell(s, r, c)))
+}
+
+fn host_cell(r: &Reference, host: CellAddr) -> bool {
+    matches!(r, Reference::Area(a) if a.sheet == host.sheet
+        && a.rect == Rect::new(host.row, host.col, host.row, host.col))
+}

@@ -73,9 +73,41 @@ pub(crate) struct Unseen {
     late: std::sync::Mutex<rustc_hash::FxHashMap<FormulaId, u32>>,
 
     late_done: std::sync::Mutex<rustc_hash::FxHashMap<FormulaId, u32>>,
+
+    own: std::sync::Mutex<Option<CellAddr>>,
+    own_on: std::sync::atomic::AtomicBool,
+    read_own: std::sync::atomic::AtomicBool,
 }
 
 impl Unseen {
+    fn begin_own(&self, addr: CellAddr) {
+        *self.own.lock().unwrap_or_else(|e| e.into_inner()) = Some(addr);
+        self.read_own
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+        self.own_on
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+
+    fn end_own(&self) -> bool {
+        self.own_on
+            .store(false, std::sync::atomic::Ordering::Relaxed);
+        *self.own.lock().unwrap_or_else(|e| e.into_inner()) = None;
+        self.read_own
+            .swap(false, std::sync::atomic::Ordering::Relaxed)
+    }
+
+    pub(crate) fn hides_own(&self, addr: CellAddr) -> bool {
+        if !self.own_on.load(std::sync::atomic::Ordering::Relaxed) {
+            return false;
+        }
+        let own = *self.own.lock().unwrap_or_else(|e| e.into_inner()) == Some(addr);
+        if own {
+            self.read_own
+                .store(true, std::sync::atomic::Ordering::Relaxed);
+        }
+        own
+    }
+
     pub(crate) fn begin(&self, areas: Vec<Area>) {
         *self.areas.lock().unwrap_or_else(|e| e.into_inner()) = areas;
         self.on.store(true, std::sync::atomic::Ordering::Relaxed);
@@ -347,11 +379,24 @@ pub(crate) fn call(
 
     let mut waits: Option<FormulaId> = None;
     let mut unseen: Vec<Area> = Vec::new();
+
+    let mut holds_own = false;
+
+    let mut fails: Option<FormulaId> = None;
     let caller = ctx.wb.formula_at(ctx.host);
     for (i, a) in args.iter().enumerate() {
         let op = ctx.eval(a);
         let arg = match (sig.kind(i), op) {
             (_, Operand::Missing) => Arg::Missing,
+
+            (ParamKind::Reference, Operand::Ref(r))
+                if !matches!(r, Reference::Grid(_))
+                    && r.areas()
+                        .iter()
+                        .any(|a| ctx.wb.ext_sheet_info(a.sheet).is_some_and(|(l, _)| !l.open)) =>
+            {
+                Arg::Value(ctx.deref(Operand::Ref(r)))
+            }
             (ParamKind::Reference, Operand::Ref(r)) if !matches!(r, Reference::Grid(_)) => {
                 let clear = !ctx.interrupted();
 
@@ -359,6 +404,9 @@ pub(crate) fn call(
                 for area in r.areas() {
                     let (r0, c0) = (area.rect.r0, area.rect.c0);
                     let own = (area.sheet == me.sheet).then_some((me.row, me.col));
+                    if own.is_some_and(|(row, col)| area.rect.contains(row, col)) {
+                        holds_own = true;
+                    }
                     ctx.visit_area_where(
                         area,
                         |dr, dc| Some((r0 + dr, c0 + dc)) != own,
@@ -383,6 +431,12 @@ pub(crate) fn call(
                         if let Some(c) = caller {
                             ctx.wb.calc.unseen.deferred(c, ctx.wb.calc.pass);
                         }
+                        unseen.extend(r.areas().iter().copied());
+                    }
+                } else if let Some(Interrupt::Cycle(g)) = ctx.interrupt {
+                    if clear && ctx.walk && Some(g) != caller && ctx.read_mode() == ReadMode::Calc {
+                        ctx.interrupt = None;
+                        fails.get_or_insert(g);
                         unseen.extend(r.areas().iter().copied());
                     }
                 }
@@ -419,9 +473,18 @@ pub(crate) fn call(
     }
     let mut cx = CallContext::new(ReadView::new(ctx.wb, ctx.host), sig.volatile);
     cx.legacy = (ctx.legacy_form || under_at) && !ctx.in_array_block();
-    if waits.is_some() && ctx.wb.calc.no_empty_call {
+    if waits.is_some_and(|g| ctx.wb.calc.no_empty_call && !ctx.wb.calc.moved_now.contains(&g)) {
         ctx.interrupt = waits.map(Interrupt::Pending);
         return Operand::err(XlError::CALC);
+    }
+
+    let own = holds_own
+        && ctx.walk
+        && caller.is_some()
+        && ctx.read_mode() == ReadMode::Calc
+        && !ctx.in_array_block();
+    if own {
+        ctx.wb.calc.unseen.begin_own(ctx.host);
     }
     let out = if unseen.is_empty() {
         host.call(key, &vals, &mut cx)
@@ -431,6 +494,13 @@ pub(crate) fn call(
         ctx.wb.calc.unseen.end();
         out
     };
+    if own && ctx.wb.calc.unseen.end_own() {
+        cx.set_circular();
+    }
+    if let (Some(g), None) = (fails, waits) {
+        ctx.interrupt = Some(Interrupt::Cycle(g));
+        return Operand::err(XlError::CALC);
+    }
     let volatile = ctx.observed.host_volatile.unwrap_or(false) || cx.is_volatile();
     ctx.observed.host_volatile = Some(volatile);
     if let Some(g) = waits {
@@ -491,6 +561,13 @@ impl Workbook {
             return bad();
         }
         let Ok((mut f, _)) = self.compile_normalized(body, host) else {
+            let t = body.trim_start();
+            if t.starts_with('[')
+                && t.split_once(']')
+                    .is_some_and(|(_, r)| r.starts_with(|c: char| c.is_alphabetic() || c == '$'))
+            {
+                return Evaluated::Value(Value::Error(XlError::NAME));
+            }
             return bad();
         };
         poison_indirect(&mut f.root, true);
@@ -542,6 +619,16 @@ impl Workbook {
     }
 
     pub fn call_function(&self, at: CellAddr, name: &str, args: &[Arg]) -> Option<Value> {
+        self.call_function_in(at, name, args, &self.locale)
+    }
+
+    pub fn call_function_in(
+        &self,
+        at: CellAddr,
+        name: &str,
+        args: &[Arg],
+        locale: &crate::Locale,
+    ) -> Option<Value> {
         use crate::formula::{CRef, Node, Rc, SheetRef};
         let id = crate::functions::lookup(&name.to_uppercase())?;
         let def = crate::functions::def(id);
@@ -581,6 +668,7 @@ impl Workbook {
             .collect();
         let root = Node::Func { id, args: nodes };
         let mut ctx = crate::eval::EvalCtx::with_mode(self, at, crate::eval::ReadMode::Stale);
+        ctx.locale = locale;
         Some(crate::eval::eval_formula(&mut ctx, &root))
     }
 }

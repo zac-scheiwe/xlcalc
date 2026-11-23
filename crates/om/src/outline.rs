@@ -1,7 +1,7 @@
 use xlcalc::{Rect, SheetId};
 use xlcalc_variant::Variant;
 
-use crate::addr::{MAX_COLS, MAX_ROWS};
+use crate::addr::{max_cols, max_rows};
 use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef};
 use crate::conv::Args;
 use crate::error::OmError;
@@ -12,11 +12,12 @@ const XL_LEFT: i32 = -4131;
 const XL_RIGHT: i32 = -4152;
 
 pub(crate) fn group_axis(rect: Rect, mode: Mode) -> bool {
-    let rows = rect.c0 == 0 && rect.c1 == MAX_COLS - 1;
-    let cols = rect.r0 == 0 && rect.r1 == MAX_ROWS - 1;
+    let rows = rect.c0 == 0 && rect.c1 == max_cols() - 1;
+    let cols = rect.r0 == 0 && rect.r1 == max_rows() - 1;
     match (mode, rows, cols) {
         (Mode::Columns, _, true) => false,
-        (_, true, _) => true,
+
+        (Mode::Rows, _, _) | (_, true, _) => true,
         _ => false,
     }
 }
@@ -96,7 +97,7 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
         let book = r.book;
-        if m.name == "ShowDetail" && rect.cell_count() == 1 && r.mode == Mode::Cells {
+        if m.name == "ShowDetail" && rect.cell_count() == 1 && r.eff_mode() == Mode::Cells {
             let addr = xlcalc::CellAddr::new(sheet, rect.r0, rect.c0);
             let wb = &self.book(book)?.wb;
             if let Some(rows) = wb.pivot_detail_at(addr) {
@@ -109,12 +110,21 @@ impl Application<'_> {
                 return Ok(Variant::Bool(true));
             }
         }
+
+        if matches!(m.name, "ShowDetail" | "OutlineLevel") && r.eff_mode() == Mode::Cells {
+            return Err(OmError::app_defined());
+        }
         match (m.name, m.kind) {
             ("Group" | "Ungroup", Func) => {
-                if a.get(1).is_some() {
+                if a.get(1).is_some()
+                    || (r.mode == Mode::Cells
+                        && !(rect.c0 == 0 && rect.c1 == max_cols() - 1)
+                        && !(rect.r0 == 0 && rect.r1 == max_rows() - 1)
+                        && (0..4).any(|i| a.get(i).is_some()))
+                {
                     return Err(OmError::app_defined());
                 }
-                let rows = group_axis(rect, r.mode);
+                let rows = group_axis(rect, r.eff_mode());
                 let (at, count) = if rows {
                     (rect.r0, rect.rows())
                 } else {
@@ -127,14 +137,8 @@ impl Application<'_> {
                 Ok(Variant::Bool(true))
             }
             ("ShowDetail", _) => {
-                let rows = group_axis(rect, r.mode);
-                let single = if rows { rect.rows() } else { rect.cols() } == 1;
-                let whole = if rows {
-                    rect.c0 == 0 && rect.c1 == MAX_COLS - 1
-                } else {
-                    rect.r0 == 0 && rect.r1 == MAX_ROWS - 1
-                };
-                if !single || !whole {
+                let rows = r.eff_mode() == Mode::Rows;
+                if (if rows { rect.rows() } else { rect.cols() }) != 1 {
                     return Err(OmError::app_defined());
                 }
                 let idx = if rows { rect.r0 } else { rect.c0 };
@@ -150,8 +154,8 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("OutlineLevel", _) => {
-                let whole_rows = rect.c0 == 0 && rect.c1 == MAX_COLS - 1;
-                let whole_cols = rect.r0 == 0 && rect.r1 == MAX_ROWS - 1;
+                let whole_rows = rect.c0 == 0 && rect.c1 == max_cols() - 1;
+                let whole_cols = rect.r0 == 0 && rect.r1 == max_rows() - 1;
                 let rows = match r.mode {
                     Mode::Rows => true,
                     Mode::Columns => false,

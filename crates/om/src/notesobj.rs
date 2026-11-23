@@ -28,7 +28,137 @@ fn splice(text: &str, new: &str, start: usize, len: Option<usize>) -> String {
     out
 }
 
+pub(crate) struct Thread {
+    resolved: bool,
+    date: f64,
+    replies: u32,
+    text: String,
+}
+
 impl Application<'_> {
+    pub(crate) fn range_thread(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Result<Variant, OmError> {
+        if !rect.is_cell() {
+            return Err(invalid_arg());
+        }
+        let key = (sheet, rect.r0, rect.c0);
+        let has = self.book(book)?.threads.iter().any(|(k, _)| *k == key);
+        Ok(if has {
+            self.alloc(Object::CommentThreaded(book, sheet, rect.r0, rect.c0))
+        } else {
+            Variant::Dispatch(None)
+        })
+    }
+
+    pub(crate) fn range_add_thread(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        if !rect.is_cell() {
+            return Err(invalid_arg());
+        }
+        let text = a.string(0)?.unwrap_or_default();
+        let key = (sheet, rect.r0, rect.c0);
+        let bk = self.book(book)?;
+        if bk.threads.iter().any(|(k, _)| *k == key)
+            || bk.wb.note_at(sheet, rect.r0, rect.c0).is_some()
+        {
+            return Err(OmError::app_defined());
+        }
+        let date = match crate::fsobj::ole_date(Ok(std::time::SystemTime::now())) {
+            Variant::Date(d) => d,
+            _ => 0.0,
+        };
+        self.book_mut(book)?.threads.push((
+            key,
+            Thread {
+                resolved: false,
+                date,
+                replies: 0,
+                text,
+            },
+        ));
+        Ok(self.alloc(Object::CommentThreaded(book, sheet, rect.r0, rect.c0)))
+    }
+
+    pub(crate) fn thread_member(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        row: u32,
+        col: u32,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        use InvokeKind::*;
+        let key = (sheet, row, col);
+        let at = self
+            .book(book)?
+            .threads
+            .iter()
+            .position(|(k, _)| *k == key)
+            .ok_or_else(OmError::object_required)?;
+        match (m.name, m.kind) {
+            ("Application", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
+            ("Creator", Get) => Ok(Variant::I4(CREATOR)),
+            ("Parent", Get) => self.new_range(book, sheet, Rect::cell(row, col), Mode::Cells),
+            ("Text", Func | Get) => Ok(Variant::Bstr(self.book(book)?.threads[at].1.text.clone())),
+            ("Date", Get) => Ok(Variant::Date(self.book(book)?.threads[at].1.date)),
+            ("Resolved", Get) => Ok(Variant::Bool(self.book(book)?.threads[at].1.resolved)),
+            ("Resolved", Put) => {
+                let v = match a.put.as_ref() {
+                    Some(Variant::Bool(x)) => *x,
+                    Some(Variant::I4(x)) => *x != 0,
+                    Some(Variant::R8(x)) => *x != 0.0,
+                    _ => return Err(OmError::type_mismatch()),
+                };
+                self.book_mut(book)?.threads[at].1.resolved = v;
+                Ok(Variant::Empty)
+            }
+            ("Delete", Func) => {
+                self.book_mut(book)?.threads.remove(at);
+                Ok(Variant::Empty)
+            }
+            ("Next" | "Previous", Func) => Ok(Variant::Dispatch(None)),
+            ("Replies", Get) => Ok(self.alloc(Object::ThreadList(book, sheet, Some((row, col))))),
+            ("AddReply", Func) => {
+                self.book_mut(book)?.threads[at].1.replies += 1;
+                Ok(Variant::Dispatch(None))
+            }
+            ("Author", Get) => Ok(self.alloc(Object::Stub("Author"))),
+            _ => Err(unsupported("CommentThreaded", m)),
+        }
+    }
+
+    pub(crate) fn thread_list_member(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        cell: Option<(u32, u32)>,
+        m: &'static Member,
+    ) -> Result<Variant, OmError> {
+        if m.name != "Count" {
+            return Err(unsupported("CommentsThreaded", m));
+        }
+        let bk = self.book(book)?;
+        let n = match cell {
+            None => bk.threads.iter().filter(|(k, _)| k.0 == sheet).count() as u32,
+            Some((r, c)) => bk
+                .threads
+                .iter()
+                .find(|(k, _)| *k == (sheet, r, c))
+                .map_or(0, |(_, t)| t.replies),
+        };
+        Ok(Variant::I4(n as i32))
+    }
+
     pub(crate) fn range_comment(
         &mut self,
         book: BookId,
@@ -59,13 +189,23 @@ impl Application<'_> {
         if !rect.is_cell() {
             return Err(invalid_arg());
         }
+
+        let key = (sheet, rect.r0, rect.c0);
+        if self.book(book)?.threads.iter().any(|(k, _)| *k == key) {
+            return Err(OmError::app_defined());
+        }
         let author = user_name();
         let text = match a.get(0) {
             None | Some(Variant::Empty) => String::new(),
+
+            Some(Variant::Null) => return Err(OmError::app_defined()),
+            Some(v) if !matches!(v, Variant::Bstr(_) | Variant::Error(_)) => {
+                return Err(OmError::app_defined())
+            }
             Some(_) => a.string(0)?.unwrap_or_default(),
         };
 
-        let text = if text.is_empty() {
+        let text = if text.is_empty() && self.running.is_none() {
             format!("{author}:\n")
         } else {
             text
@@ -168,6 +308,10 @@ impl Application<'_> {
             ("Parent", Get) => Ok(self.alloc(Object::Worksheet(book, sheet))),
             ("Item" | "_Default", _) => {
                 let i = a.i32(0)?.unwrap_or(0);
+
+                if i < 1 {
+                    return Err(OmError::exception(crate::error::SCODE_BAD_INDEX, None));
+                }
                 match usize::try_from(i - 1).ok().and_then(|i| ids.get(i)) {
                     Some(id) => Ok(self.alloc(Object::Comment(book, sheet, *id))),
                     None => Err(OmError::app_defined()),
@@ -236,11 +380,31 @@ impl Application<'_> {
             }
             ("Text", Func) => {
                 let overwrite = a.get(2).filter(|v| !matches!(v, Variant::Empty));
-                if overwrite.is_some() && a.bool(2)? == Some(true) {
+                let empty_given = overwrite.is_none()
+                    && a.get(1).is_some_and(|v| !matches!(v, Variant::Empty))
+                    && a.values
+                        .get(2)
+                        .is_some_and(|v| matches!(v, Some(Variant::Empty)));
+                let count = match overwrite {
+                    None if empty_given => Some(0),
+                    None => None,
+                    Some(Variant::Bool(true)) => return Err(invalid_arg()),
+
+                    Some(Variant::Bool(false) | Variant::Null) => Some(0),
+                    Some(_) => a.i32(2)?,
+                };
+                if count.is_some_and(|c| c < 0) {
                     return Err(invalid_arg());
                 }
                 let new = match a.get(0).filter(|v| !matches!(v, Variant::Empty)) {
+                    None if a.get(1).is_some_and(|v| !matches!(v, Variant::Empty))
+                        || overwrite.is_some() =>
+                    {
+                        return Err(OmError::app_defined());
+                    }
                     None => return Ok(Variant::Bstr(note.text)),
+
+                    Some(Variant::Bstr(s)) if s.is_empty() => return Ok(Variant::Bstr(note.text)),
                     Some(Variant::Bstr(s)) => s.clone(),
                     Some(_) => return Err(OmError::app_defined()),
                 };
@@ -248,10 +412,12 @@ impl Application<'_> {
                 if start.is_some_and(|s| s < 1) {
                     return Err(invalid_arg());
                 }
-                let text = match (start, overwrite.is_some()) {
-                    (None, false) => new,
-                    (s, true) => splice(&note.text, &new, s.unwrap_or(1) as usize, Some(0)),
-                    (Some(s), false) => splice(&note.text, &new, s as usize, None),
+                let text = match (start, count) {
+                    (None, None) => new,
+                    (s, Some(c)) => {
+                        splice(&note.text, &new, s.unwrap_or(1) as usize, Some(c as usize))
+                    }
+                    (Some(s), None) => splice(&note.text, &new, s as usize, None),
                 };
                 self.book_mut(book)?
                     .wb

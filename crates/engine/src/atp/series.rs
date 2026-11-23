@@ -1,4 +1,7 @@
-use super::{a1_col, flag, input, number, output, Arg, AtpError, Out, Run};
+use super::{
+    a1_col, flag, input, number, output, Arg, AtpError, ChartSpec, Out, Ref, Run, SeriesSpec, Src,
+};
+use crate::address::Rect;
 use crate::format_general;
 
 fn constant(x: f64) -> String {
@@ -26,6 +29,32 @@ fn std_errors(
             );
         }
     }
+}
+
+fn chart(o: &mut Out, src: &Src, lab: u32, m: u32, std: bool, title: &str) {
+    let line = |name: &str, values: Ref| SeriesSpec {
+        name: Ref::Text(name.into()),
+        x: Ref::None,
+        values,
+        chart_type: 65,
+        axis_group: 1,
+    };
+    let data = Rect::new(src.rect.r0 + lab, src.rect.c0, src.rect.r1, src.rect.c0);
+    o.charts.push(ChartSpec {
+        row: 0,
+        col: 2 + u32::from(std),
+        chart_type: 65,
+        title: title.into(),
+        legend: true,
+        axis_titles: ["Data Point".into(), "Value".into()],
+        series: vec![
+            line("Actual", Ref::Abs(src.sheet, data)),
+            line(
+                "Forecast",
+                Ref::Rel(Rect::new(0, 0, m.saturating_sub(1), 0)),
+            ),
+        ],
+    });
 }
 
 pub(super) fn moveavg(args: &[Arg]) -> Result<Run, AtpError> {
@@ -61,6 +90,9 @@ pub(super) fn moveavg(args: &[Arg]) -> Result<Run, AtpError> {
             ocol,
             out.row,
         );
+    }
+    if flag(args, 4) {
+        chart(&mut o, &src, lab, m, std, "Moving Average");
     }
     output(args, 1, o)
 }
@@ -109,6 +141,9 @@ pub(super) fn expon(args: &[Arg]) -> Result<Run, AtpError> {
                 );
             }
         }
+    }
+    if flag(args, 4) {
+        chart(&mut o, &src, lab, m, std, "Exponential Smoothing");
     }
     output(args, 1, o)
 }

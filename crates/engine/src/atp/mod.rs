@@ -1,4 +1,5 @@
 use crate::address::{col_to_letters, CellAddr, Rect, SheetId};
+use crate::drawing::{pt_to_emu, Anchor, Chart, Part, Pos, Series, SeriesFmt, ShapeKind};
 use crate::style::{Border, BorderLine, CellColor, Edge, HAlign, Style};
 use crate::value::{Value, XlError};
 use crate::workbook::notice::Command;
@@ -62,11 +63,44 @@ pub enum Mark {
     Line(Rect, Edge, bool),
 }
 
+#[derive(Clone, Debug)]
+pub enum Ref {
+    None,
+
+    Text(String),
+
+    Abs(SheetId, Rect),
+
+    Rel(Rect),
+}
+
+#[derive(Clone, Debug)]
+pub struct SeriesSpec {
+    pub name: Ref,
+    pub x: Ref,
+    pub values: Ref,
+    pub chart_type: i32,
+    pub axis_group: i32,
+}
+
+#[derive(Clone, Debug)]
+pub struct ChartSpec {
+    pub row: u32,
+    pub col: u32,
+    pub chart_type: i32,
+    pub title: String,
+    pub legend: bool,
+
+    pub axis_titles: [String; 2],
+    pub series: Vec<SeriesSpec>,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Out {
     pub items: Vec<Item>,
     pub marks: Vec<Mark>,
     pub formats: Vec<Fmt>,
+    pub charts: Vec<ChartSpec>,
 }
 
 impl Out {
@@ -246,7 +280,71 @@ impl Workbook {
                 wb.set_number_format(sheet, Rect::cell(row + f.row, col + f.col), f.code);
             }
             wb.atp_marks(sheet, row, col, &out.marks);
+            for c in &out.charts {
+                wb.atp_chart(sheet, row, col, c);
+            }
         });
+    }
+
+    fn atp_chart(&mut self, sheet: SheetId, row: u32, col: u32, c: &ChartSpec) {
+        let part = |r: &Ref| match r {
+            Ref::None => Part::None,
+            Ref::Text(t) => Part::Text(t.clone()),
+            Ref::Abs(s, r) => Part::Refs(vec![(*s, *r)]),
+            Ref::Rel(r) => Part::Refs(vec![(
+                sheet,
+                Rect::new(row + r.r0, col + r.c0, row + r.r1, col + r.c1),
+            )]),
+        };
+        let mut ch = Chart::new();
+        ch.chart_type = c.chart_type;
+        ch.has_title = true;
+        ch.title = c.title.clone();
+        ch.has_legend = c.legend;
+        for (a, t) in ch.axes.iter_mut().zip(&c.axis_titles) {
+            a.has_title = true;
+            a.title = t.clone();
+        }
+        ch.axes[1].grid_major = false;
+        for s in &c.series {
+            ch.series.push(Series {
+                name: part(&s.name),
+                x: part(&s.x),
+                values: part(&s.values),
+                chart_type: s.chart_type,
+                axis_group: s.axis_group,
+                fmt: SeriesFmt::default(),
+            });
+        }
+
+        let spans: Vec<(u32, u32)> = ch
+            .series
+            .iter()
+            .flat_map(|s| [&s.x, &s.values])
+            .filter_map(|p| match p {
+                Part::Refs(v) => v.first().map(|(_, r)| (r.r0, r.r1)),
+                _ => None,
+            })
+            .collect();
+        ch.plot_by = if spans.windows(2).all(|w| w[0] == w[1]) {
+            2
+        } else {
+            0
+        };
+        let id = self.add_shape(sheet, ShapeKind::Chart, "Chart", [0.0, 0.0, 1.0, 1.0]);
+        let corner = |dr: u32, dc: u32| Anchor {
+            row: row + c.row + dr,
+            col: col + c.col + dc,
+            row_off: pt_to_emu(14.0),
+            col_off: pt_to_emu(19.5),
+        };
+        if let Some(sh) = self.drawing_mut(sheet).get_mut(id) {
+            sh.pos = Pos::Both {
+                from: corner(0, 0),
+                to: corner(10, 6),
+            };
+            sh.chart = Some(ch);
+        }
     }
 }
 

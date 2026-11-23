@@ -1,0 +1,311 @@
+=""
+=+-K5
+=0.1%   @Data!A1:D1
+=1%  >Data!B1:B3  =@""
+=PI()
+=0.1,-"" * Data!A$2
+=ROWS(Data!A1:A3%^ROW())
+=Data!B5& 1
+=ROWS((Data!B5))
+=SUM(Data!A1)
+={1,2;3,4}  #N/A
+=@2.5  (1)
+=Data!A$2%
+=SUM(Data!B5   "a" > Data!B1)
+=Data!B5  ,0.1  ,"a"
+=SUM(1)
+=SUM((Data!A$2):2.5/2.5)
+=IF((@{1,2;3,4}),1,2)
+=Data!A1
+={1,2,3}<>  -@Data!A$2  TRUE
+=IF(Data!A1%< Data!B5 &(1),1,2)
+=1E3 <>-3&Data!B5%
+=SUM(-+"")
+=IF((-@1%),1,2)
+=IF(Data!A1:D1+  ""> TRUE%,1,2)
+=-+Data!B5
+=$K$5%
+=-3>=  (+TRUE) <>(1%)
+=#N/A%  <>-3*  -@Data!A1:D1
+=IF(+1-0.1,1,2)
+=SUM("a">Data!A1:A3:  (+1%))
+=SUM(1%)
+=SUM(Data!B1  &  (--#N/A%))
+=#N/A% /Data!A$2<-Data!C1:C3
+=SUM(Data!A1%)
+=2.5% -Data!A1:A3
+=$K$5  >=1E3  >@-ROW()
+=IF(({1,2,3})=Data!A1:A3,1,2)
+=-@#N/A /Data!B1<> Data!B1
+=($K$5)
+="">Data!A1:A3     Data!A$2%
+=+-(1)%
+=(1)<Data!A1%  +(-3%)
+=SUM(+Data!B2  Data!B1:B3%, -3)
+=SUM(Data!A$2  /$K$5%<>{1,2;3,4})
+=@-Data!B1:B3<=TRUE%
+="a"-#N/A%
+=ROWS(Data!C1:C3,  Data!B2)
+=2.5+Data!B1:B3
+=SUM(1 ^--TRUE*  {1,2;3,4})
+=ROWS(1  ^  --1%,"")
+=SUM(+"a"-  Data!C1:C3)
+=IF(1E3%,1,2)
+=ROWS(Data!A1:D1^Data!B1:B3)
+=SUM(--K5%  ^ ROW())
+=SUM(Data!B2:@Data!B1:B3)
+=ROWS("">""  <= ROW())
+=IF(2.5 <--PI(),1,2)
+={1,2;3,4}>-@Data!A$2  >-+ROW()
+=Data!B5*(-@{1,2,3})
+=IF(#DIV/0!  -ROW(),1,2)
+=--1%%,(2.5)
+=SUM("a"<>  (Data!A1), 1%)
+=0.1
+=Data!A1 ^PI() >=Data!A1:A3%
+=TRUE ^"a"  >=Data!A1:A3
+=SUM(Data!C1:C3)
+=Data!A$2>  Data!B1
+=1E3* Data!A1:D1
+=IF((ROW())<=Data!A1:A3% =@-Data!B1,1,2)
+=-1&-3
+=ROWS((Data!B1:B3)<> Data!B5%,#DIV/0!)
+=Data!A1:A3=Data!C1:C3
+=+-Data!B1:B3%  @{1,2,3}  ="a"
+=(Data!B1)  /(1)  ^""
+=SUM(ROW())
+=SUM(+Data!B1:B3^ROW()    (1%))
+=ROWS((Data!C1:C3)  <Data!B1)
+=Data!C1:C3
+=ROW()
+=SUM(+-K5^-K5)
+=ROWS($K$5%*2.5<={1,2,3})
+=$K$5& Data!B2%  <Data!B1
+=(1)  +-Data!B1:B3
+=(1%)  <  +Data!B2
+=SUM(1%  =Data!A$2)
+=-PI()> @-Data!B1 K5%
+=1
+=-@2.5 &  1%*(-@Data!A$2)
+=(@-PI())*  Data!A1:A3<  1%%
+=IF(Data!A1:D1,1,2)
+=ROWS(#DIV/0!^Data!B1:B3)
+=SUM(-+Data!A$2/  "a")
+="a"& $K$5
+=(#DIV/0!%)<={1,2,3}
+=SUM((1) --3 (1E3%))
+=@-ROW()/""%
+=Data!B1:B3
+=Data!B2  ,Data!A1
+=1%+(-@K5%)
+=("a")<>  "a" <>Data!A$2
+={1,2;3,4}  >Data!A1&ROW()
+=PI()%
+=Data!A1:D1<  -+Data!B2
+=SUM((Data!B5))
+=#N/A
+=SUM(Data!B5<>+{1,2,3}  <>  -@TRUE)
+=ROWS(1)
+=(@-Data!B1)
+=(1E3),+""
+=Data!A1   0.1 TRUE
+=ROWS((1E3))
+=(Data!A$2)-PI()%  <>-Data!B5
+=SUM($K$5)
+=SUM(1E3%&+-#N/A)
+=({1,2,3})
+=Data!B5
+=IF((Data!B5) -Data!A$2%,1,2)
+=(1)%^ Data!C1:C3
+=Data!C1:C3  =""*""%
+=2.5  * Data!A1
+=(Data!B1:B3):  2.5
+=(@-#N/A)= 1 ^  ("")
+=ROWS(1%)
+=IF(-Data!B2 - +-"a",1,2)
+=SUM($K$5%)
+=Data!A$2
+=SUM(1E3)
+=+-Data!B1:B3+ROW() ,TRUE
+=-@1*-+"a"
+=@-Data!B2    1
+={1,2;3,4}
+=SUM(PI()%<=  (Data!B1))
+=1E3%  +Data!A1:A3:  $K$5
+=ROWS(Data!A$2 >=1E3*0.1)
+=SUM(0.1*  +1)
+=IF(K5,1,2)
+=IF(--Data!C1:C3< (1),1,2)
+=Data!A1:D1 >-+Data!A1:A3%
+=IF((@-Data!B1)  >-+#N/A,1,2)
+="" +Data!A1:D1<>@-2.5
+=-@ROW() >=  -3
+=Data!B2<>0.1
+=IF(Data!C1:C3^-+#N/A,1,2)
+=ROW()  ^ PI() /Data!C1:C3
+=1 <> -Data!B2
+=SUM(@Data!A$2% < 0.1^($K$5))
+=1E3<>-@1%
+=#N/A%<>Data!C1:C3
+=SUM(Data!A1:D1  /@--3)
+=SUM({1,2,3})
+=SUM(+Data!B1)
+=(1)=2.5%/@-{1,2;3,4}%
+=IF(Data!B5:2.5>(Data!A1%),1,2)
+=+-1, @Data!A$2
+=ROWS(1<=+-$K$5)
+=ROWS(("a")<= +{1,2,3}% *0.1)
+=1%=("")
+=(1%), (1)
+=IF(-""% -+2.5%,1,2)
+=IF(1%% &"a"  Data!A$2%,1,2)
+=SUM(ROW()  <= {1,2;3,4})
+=--1E3%
+=SUM(-@Data!A1:D1^-#N/A)
+=Data!B2<=ROW()
+=IF(Data!B5 *1%,1,2)
+=2.5:ROW()  &-@Data!B1:B3
+=+Data!A1:D1/  (--#DIV/0!)
+=IF((1%)<= ROW(),1,2)
+=(Data!C1:C3)
+=TRUE
+=-+{1,2;3,4} ROW()<""
+=IF((-@{1,2,3})^$K$5,1,2)
+=SUM(#N/A)
+=SUM(1% <  (Data!B5))
+=SUM(1E3 /1E3)
+=SUM(#DIV/0!)
+=@#N/A
+=#N/A  <Data!B1:B3 >=  (#N/A%)
+=IF(#DIV/0!  <@#N/A,  #N/A,1,2)
+=Data!B1:B3* Data!C1:C3+Data!A1
+=-3&"a" <=PI()
+=IF(-+{1,2,3}>(1)* TRUE,1,2)
+=@1E3 Data!B1
+="a" <> Data!A1 TRUE
+=Data!B2
+=IF(+Data!B1<=(-#DIV/0!),  0.1,1,2)
+=(1E3)>= +"a"
+=--Data!C1:C3%^ -@Data!A$2: -Data!C1:C3
+=SUM(Data!B1)
+=0.1 :@-PI()%^#N/A
+=+TRUE=(Data!B1:B3)>+-Data!A1:A3
+="" 2.5
+=SUM("a")
+=ROWS(-3%)
+=--#N/A
+=ROWS(0.1 &(""%)^1E3)
+=IF(Data!B1:B3 + Data!A$2%  >"a",1,2)
+=IF(-@Data!A1 <K5,@-Data!B1:B3,1,2)
+=ROWS(Data!B1:B3)
+=(1) <> ""
+=SUM((-#N/A)&  Data!B5%&-@TRUE)
+=SUM(TRUE* +-Data!B1)
+=TRUE%,0.1<  @-""
+=-@2.5<PI()
+="a"- +K5
+=(@-Data!A$2%)
+=ROWS(-@Data!B2  -K5)
+=Data!A1:D1/ ""+  {1,2;3,4}%
+=IF(Data!B5,1,2)
+=(1)=(-+-3)
+=@-{1,2;3,4}% ("")
+=Data!B1:B3<=(1E3%)
+=1%  2.5
+=0.1  * "a" /+PI()
+=1E3%&  ""% *{1,2;3,4}
+=PI()+2.5^ Data!B1
+=SUM(@ROW()/ Data!B5*  $K$5)
+=1E3>(1E3)
+=K5%<  Data!B5
+=IF(2.5%  <=+Data!A$2,1,2)
+=SUM(K5% >=#DIV/0!%* ($K$5))
+=ROWS((Data!B2)<=  #DIV/0!  >=  0.1)
+=Data!C1:C3^Data!B5%  /  ({1,2;3,4})
+=1E3
+=Data!A1:A3
+=IF(Data!B1:B3/#N/A,1,2)
+=SUM(Data!C1:C3<>"a" <=#N/A)
+=SUM(Data!B5  <=  -3)
+=(Data!B5)
+=-TRUE%
+=@Data!C1:C3 <> Data!B1:B3
+=SUM(-+#N/A)
+=--0.1=K5/-3
+=Data!B1%  <>Data!A$2%
+=+-Data!C1:C3  (K5)
+=-@0.1
+={1,2;3,4}<=Data!B1
+=(1%) ^ ((1)) &  {1,2,3}
+=Data!A$2%<= -@TRUE  ,  Data!B5%
+=SUM(+-Data!B1:B3  <>$K$5^@{1,2,3})
+=SUM((Data!A$2)  /  @-{1,2,3})
+=$K$5 ,Data!B5%
+=Data!A1  -$K$5%
+=IF(Data!B2,1,2)
+=SUM(Data!A$2)
+=(Data!A1:A3):--Data!C1:C3+2.5%
+=IF(1,1,2)
+=IF({1,2,3}&Data!B1:B3^#N/A,1,2)
+=-+""%-Data!A$2- Data!A$2
+=ROWS(-3 +K5)
+=ROWS((-3))
+=1%&TRUE
+=SUM(2.5  > ((1))/  PI())
+=(PI())>= Data!B2
+=IF(""^  #DIV/0!,1,2)
+=IF(1E3 ,@#DIV/0!%,1,2)
+=(+-(1)) =--{1,2;3,4}&$K$5
+=SUM(Data!B5%)
+=SUM(#DIV/0!: {1,2;3,4})
+=SUM(Data!A1:A3&  --K5<>1)
+=ROWS(Data!A$2%)
+=IF(Data!B1:B3 &Data!B5  :  "",1,2)
+=IF(2.5>= $K$5,1,2)
+=IF((Data!A$2)+-3,"a",1,2)
+=ROWS(Data!A1:D1<= {1,2,3} ,  {1,2,3})
+=IF(PI(),1,2)
+=SUM(0.1)
+=SUM(Data!A1:A3<>{1,2;3,4}%> ROW())
+=SUM(@Data!A$2+ 1<=(@K5))
+=ROWS(+-1- Data!C1:C3<> (Data!A$2))
+=ROWS(Data!B1:B3  >=  ({1,2,3}))
+=-3  *  2.5
+=SUM({1,2,3}& +-{1,2;3,4})
+=SUM(""+  (1))
+=@Data!B1
+=+-#N/A
+=IF(Data!B1:B3  <(#N/A)  /PI(),1,2)
+=SUM((1)  *-$K$5  Data!B1:B3)
+=ROWS(2.5)
+=-#N/A^  +-""
+=$K$5
+=PI()> Data!A1:D1   K5
+=(#DIV/0!)  ,-@Data!A$2
+=SUM(-@$K$5)
+=ROWS(ROW()%*(#DIV/0!))
+=PI()%,@-2.5/Data!A1:A3
+=IF({1,2;3,4}%,1,2)
+=+1 =@Data!B1%
+=IF((Data!A1:D1),1,2)
+=+#DIV/0!^(Data!B1:B3)
+=#N/A    --1E3
+=ROWS(""/(#N/A%) &(-3))
+=IF(-@Data!A$2,1,2)
+=SUM({1,2;3,4}>#N/A)
+=Data!B5&+Data!A$2  ,1%
+=#DIV/0!%  <>(-@ROW())
+=SUM(#DIV/0!<#DIV/0!=1%)
+=1E3%>= Data!A1:D1-0.1%
+=IF(Data!B5> Data!B1,1,2)
+=SUM(Data!B1  &-+1%,#N/A)
+=IF(({1,2,3}),1,2)
+=Data!B1%>PI()%
+=ROWS(2.5<>  --Data!B5% -#N/A)
+=K5-$K$5*1%
+=("")<= (1)<=Data!B5
+=SUM(TRUE% < 2.5 +$K$5)
+=Data!A1+ 1E3  +(@-Data!B2%)
+=(-+1)<=--Data!A$2
+=K5
+=Data!C1:C3--+Data!C1:C3

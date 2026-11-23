@@ -101,6 +101,8 @@ pub enum Node {
     Lambda(Arc<LambdaDef>),
     Missing,
 
+    Unwritten,
+
     Unsupported {
         text: Text,
         error: XlError,
@@ -176,6 +178,7 @@ impl Node {
             },
             Node::Lambda(d) => Node::Lambda(d.clone()),
             Node::Missing => Node::Missing,
+            Node::Unwritten => Node::Unwritten,
             Node::Unsupported { text, error } => Node::Unsupported {
                 text: text.clone(),
                 error: *error,
@@ -264,6 +267,8 @@ pub struct CompileCtx<'a> {
     pub sheets: &'a dyn SheetResolver,
     pub host_row: u32,
     pub host_col: u32,
+
+    pub keep_corners: bool,
 }
 
 struct Compiler<'a> {
@@ -312,7 +317,7 @@ pub fn strip_prefixes(name: &str) -> &str {
 }
 
 fn upper(s: &str) -> Text {
-    s.to_uppercase().into()
+    crate::text::name_key(s).into()
 }
 
 impl<'a> Compiler<'a> {
@@ -379,6 +384,9 @@ impl<'a> Compiler<'a> {
             }
             Some(SheetSpec::External { book, sheet }) => {
                 if sheet.is_none() {
+                    if book.bytes().all(|b| b.is_ascii_digit()) {
+                        return SheetRef::Missing(format!("\u{3}{book}").into());
+                    }
                     self.refused.set(true);
                 }
                 if let Some((s1, s2)) = sheet.as_deref().and_then(|s| s.split_once(':')) {
@@ -409,7 +417,14 @@ impl<'a> Compiler<'a> {
     }
 
     fn cref(&self, kind: &RefKind) -> CRef {
-        let ord = |a: ast::Coord, b: ast::Coord| if a.index > b.index { (b, a) } else { (a, b) };
+        let keep = self.cx.keep_corners;
+        let ord = |a: ast::Coord, b: ast::Coord| {
+            if a.index > b.index && !keep {
+                (b, a)
+            } else {
+                (a, b)
+            }
+        };
         let kind = &match *kind {
             RefKind::Area { r0, c0, r1, c1 } => {
                 let (r0, r1) = ord(r0, r1);
@@ -493,10 +508,10 @@ impl<'a> Compiler<'a> {
     }
 
     fn local(&self, name: &str) -> Option<u32> {
-        let key = strip_prefixes(name).to_uppercase();
+        let key = crate::text::name_key(strip_prefixes(name));
         self.scope
             .iter()
-            .rposition(|s| s.to_uppercase() == key)
+            .rposition(|s| crate::text::name_key(s) == key)
             .map(|i| i as u32)
     }
 
@@ -548,6 +563,11 @@ impl<'a> Compiler<'a> {
             }
             Expr::Bool(b) => Node::Lit(Value::Bool(*b)),
             Expr::Error(err) => Node::Lit(Value::Error(*err)),
+            Expr::DeadRef(sheet) => Node::DeadRef(self.sheet(&Some(sheet.clone()))),
+            Expr::DeadTable { sheet, text } => Node::Unsupported {
+                text: format!("{}{text}", crate::parser::print::sheet_spec_text(sheet)).into(),
+                error: XlError::REF,
+            },
             Expr::Array(rows) => {
                 let r = rows.len() as u32;
                 let c = rows[0].len() as u32;
@@ -698,7 +718,9 @@ impl<'a> Compiler<'a> {
                     && matches!(right.unwrap_ws(), Expr::Ref { sheet: Some(_), .. });
                 if matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union)
                     && !number_to_sheet_ref
-                    && !(functions::is_reference_expr(left) && functions::is_reference_expr(right))
+                    && !((functions::is_reference_expr(left)
+                        || matches!(left.unwrap_ws(), Expr::Unwritten))
+                        && functions::is_reference_expr(right))
                 {
                     return Err(CompileError(format!(
                         "the '{}' operator needs references",
@@ -709,6 +731,7 @@ impl<'a> Compiler<'a> {
             }
             Expr::Paren(x) => Node::Paren(Box::new(self.node(x)?)),
             Expr::Missing => Node::Missing,
+            Expr::Unwritten => Node::Unwritten,
             Expr::Ws {
                 before,
                 after,
@@ -771,7 +794,8 @@ impl<'a> Compiler<'a> {
             Expr::Name { sheet: None, name } => {
                 let n = strip_prefixes(name);
 
-                let ok = relaxed_param_name(n);
+                let ok =
+                    relaxed_param_name(n) && (n.len() == name.len() || name.starts_with("_xlpm."));
                 if ok && !n.contains('.') {
                     Ok(n.into())
                 } else {
@@ -890,6 +914,17 @@ impl<'a> Compiler<'a> {
                     params.push(n);
                 }
                 let required = required.unwrap_or(params.len());
+
+                if params
+                    .iter()
+                    .any(|p| crate::address::parse_a1_cell(p).is_some())
+                    && self
+                        .scope
+                        .iter()
+                        .any(|n| n.eq_ignore_ascii_case("r") || n.eq_ignore_ascii_case("c"))
+                {
+                    return Err(CompileError("not a valid LAMBDA parameter".into()));
+                }
                 self.scope.extend(params.iter().cloned());
                 let body = if matches!(args[args.len() - 1], Expr::Missing) {
                     Err(CompileError("LAMBDA needs a calculation".into()))
@@ -927,10 +962,16 @@ impl<'a> Compiler<'a> {
         }
         let macro_host = self.cx.sheets.macro_host();
         if !macro_host
-            && functions::lookup(&stripped_up).is_none()
+            && (functions::lookup(&stripped_up).is_none()
+                || functions::xlm::REF_FUNCTIONS.contains(&&*stripped_up))
             && functions::xlm::XLM_ONLY.contains(&&*stripped_up)
         {
             return Err(CompileError("That function isn't valid".into()));
+        }
+        if macro_host && functions::xlm::max_args(&stripped_up).is_some_and(|m| args.len() > m) {
+            return Err(CompileError(
+                "There's an error in the formula you entered.".into(),
+            ));
         }
 
         let block_if = macro_host && up == "IF" && args.len() == 1;
@@ -999,9 +1040,10 @@ impl<'a> Compiler<'a> {
                         functions::lookup(f).is_some()
                             || functions::xlm::XLM_ONLY.contains(&f.to_ascii_uppercase().as_str())
                     });
-                    if (known || self.cx.sheets.sheet_id(book).is_none())
-                        && !self.cx.sheets.ext_book(book)
-                    {
+
+                    let linked = (known || self.cx.sheets.sheet_id(book).is_none())
+                        && self.cx.sheets.ext_book(book);
+                    if known && !linked {
                         return Err(CompileError("That function isn't valid".into()));
                     }
                 }
@@ -1039,9 +1081,16 @@ fn relaxed_param_name(n: &str) -> bool {
     let Some(first) = chars.next() else {
         return false;
     };
-    (first.is_alphabetic() || first == '_' || first == '\\')
-        && n.chars()
-            .all(|c| c.is_alphanumeric() || c == '_' || c == '.' || c == '\\' || c == '?')
+
+    (first.is_ascii_alphabetic()
+        || first == '_'
+        || first == '\\'
+        || (!first.is_ascii() && crate::parser::namech::name_char(first, true)))
+        && n.chars().all(|c| {
+            c.is_ascii_alphanumeric()
+                || matches!(c, '_' | '.' | '\\' | '?')
+                || (!c.is_ascii() && crate::parser::namech::name_char(c, false))
+        })
         && !n.eq_ignore_ascii_case("TRUE")
         && !n.eq_ignore_ascii_case("FALSE")
         && !r1_style(n)
@@ -1049,11 +1098,22 @@ fn relaxed_param_name(n: &str) -> bool {
 
 fn r1_style(n: &str) -> bool {
     let up = n.to_ascii_uppercase();
-    let rest = up
-        .strip_prefix("RC")
-        .or_else(|| up.strip_prefix('R'))
-        .or_else(|| up.strip_prefix('C'));
-    rest.is_some_and(|d| !d.is_empty() && d.chars().all(|c| c.is_ascii_digit()))
+    let limit = |d: &str, max: u64| {
+        !d.is_empty()
+            && d.chars().all(|c| c.is_ascii_digit())
+            && d.trim_start_matches('0')
+                .parse::<u64>()
+                .is_ok_and(|v| (1..=max).contains(&v))
+    };
+
+    if let Some(d) = up.strip_prefix("RC") {
+        return limit(d, MAX_COLS as u64);
+    }
+    if let Some(d) = up.strip_prefix('R') {
+        return limit(d, MAX_ROWS as u64);
+    }
+    up.strip_prefix('C')
+        .is_some_and(|d| limit(d, MAX_COLS as u64))
 }
 
 pub fn map_node(node: &Node, f: &mut dyn FnMut(&Node) -> Option<Node>) -> Node {
@@ -1144,6 +1204,7 @@ fn walk_inner<'n>(node: &'n Node, f: &mut dyn FnMut(&'n Node)) {
         | Node::Name { .. }
         | Node::Local { .. }
         | Node::Missing
+        | Node::Unwritten
         | Node::Unsupported { .. }
         | Node::DeadRef(_)
         | Node::StructRef { .. } => {}
@@ -1182,5 +1243,20 @@ impl Drop for Node {
         while let Some(mut n) = todo.pop() {
             take_children(&mut n, &mut todo);
         }
+    }
+}
+
+#[cfg(test)]
+mod param_name_tests {
+    use super::{r1_style, relaxed_param_name};
+
+    #[test]
+    fn r1_style_names_are_the_ones_that_read_as_references() {
+        assert!(r1_style("R1") && r1_style("c16384") && r1_style("RC5") && r1_style("R1048576"));
+        assert!(!r1_style("RC16385") && !r1_style("RC1048576"));
+        assert!(!r1_style("R0") && !r1_style("C0") && !r1_style("C16385") && !r1_style("RC0"));
+        assert!(!r1_style("rc") && !r1_style("r1c1") && !r1_style("R1C"));
+        assert!(relaxed_param_name("C0") && relaxed_param_name("c"));
+        assert!(!relaxed_param_name("R1"));
     }
 }

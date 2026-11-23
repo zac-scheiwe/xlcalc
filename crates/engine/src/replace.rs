@@ -129,8 +129,18 @@ impl Workbook {
         let mut cells: Vec<(u32, u32)> =
             sh.cells.iter_rect(scope).map(|(r, c, _)| (r, c)).collect();
 
+        let filter_mode = self.filter_mode(sheet);
+        if filter_mode {
+            cells.retain(|&(r, c)| !self.row_hidden(sheet, r) && !self.col_hidden(sheet, c));
+        }
+
         if spec.whole && spec.what.is_empty() {
-            if let Some(b) = sh.cells.bounds() {
+            let area = if rect.is_cell() {
+                sh.cells.bounds()
+            } else {
+                Some(scope)
+            };
+            if let Some(b) = area {
                 for r in scope.r0.max(b.r0)..=scope.r1.min(b.r1) {
                     for c in scope.c0.max(b.c0)..=scope.c1.min(b.c1) {
                         if sh.cells.get(r, c).is_none() {
@@ -141,35 +151,51 @@ impl Workbook {
                 cells.sort_unstable();
             }
         }
-
-        if self.filter_mode(sheet) {
-            cells.retain(|&(r, c)| !self.row_hidden(sheet, r) && !self.col_hidden(sheet, c));
-        }
         if spec.by_columns {
-            cells.sort_by_key(|&(r, c)| (c, r));
-            let start = cells.partition_point(|&(r, c)| (c, r) <= (rect.c0, rect.r0));
-            cells.rotate_left(start);
+            let hidden = self.hidden_rows(sheet);
+            let starts: Vec<u32> = hidden
+                .iter()
+                .copied()
+                .filter(|&h| h == 0 || hidden.binary_search(&(h - 1)).is_err())
+                .collect();
+            let run_of = |r: u32| -> usize {
+                if filter_mode {
+                    starts.partition_point(|&h| h < r)
+                } else {
+                    0
+                }
+            };
+            let mut keyed: Vec<(usize, u32, u32)> =
+                cells.iter().map(|&(r, c)| (run_of(r), c, r)).collect();
+            keyed.sort_unstable();
+            let first = (run_of(rect.r0), rect.c0, rect.r0);
+            let start = keyed.partition_point(|k| *k <= first);
+            keyed.rotate_left(start);
+            cells = keyed.into_iter().map(|(_, c, r)| (r, c)).collect();
         }
         let mut report = RecalcReport::default();
 
         let mut changed: Vec<Rect> = Vec::new();
-        self.with_op(Op::ReplaceEntry, true, |wb| {
-            for (r, c) in cells {
-                let addr = CellAddr::new(sheet, r, c);
-                match wb.replace_cell(addr, spec) {
-                    Ok(Some(rep)) => {
-                        changed.push(Rect::new(r, c, r, c));
-                        report.evaluations += rep.evaluations;
-                        report.add_sheets(&rep);
-                        report.changed.extend(rep.changed);
-                        if rep.circular.is_some() {
-                            report.circular = rep.circular;
+
+        self.one_pass(|wb| {
+            wb.with_op(Op::ReplaceEntry, true, |wb| {
+                for (r, c) in cells {
+                    let addr = CellAddr::new(sheet, r, c);
+                    match wb.replace_cell(addr, spec) {
+                        Ok(Some(rep)) => {
+                            changed.push(Rect::new(r, c, r, c));
+                            report.evaluations += rep.evaluations;
+                            report.add_sheets(&rep);
+                            report.changed.extend(rep.changed);
+                            if rep.circular.is_some() {
+                                report.circular = rep.circular;
+                            }
                         }
+                        Ok(None) => {}
+                        Err(()) => break,
                     }
-                    Ok(None) => {}
-                    Err(()) => break,
                 }
-            }
+            })
         });
         self.note_changed(sheet, &changed);
 
@@ -229,7 +255,10 @@ impl Workbook {
         let Some(new) = replace_text(&text, spec) else {
             return Ok(None);
         };
-        let r = if new.is_empty() {
+
+        let r = if new.is_empty() && prefixed {
+            self.set_text_prefixed(addr, "")
+        } else if new.is_empty() {
             match array {
                 Some((rows, cols)) => self.clear_range(
                     addr.sheet,

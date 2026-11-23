@@ -33,10 +33,20 @@ pub fn invoke(ctx: &mut EvalCtx, lam: &LambdaValue, args: Vec<Operand>) -> Opera
     }
     let saved = std::mem::replace(&mut ctx.env, env);
     ctx.depth += 1;
+    let was = std::mem::replace(&mut ctx.in_lambda, true);
     let out = ctx.eval(&lam.def.body);
+    ctx.in_lambda = was;
     ctx.depth -= 1;
     ctx.env = saved;
     out
+}
+
+fn is_bare_name(n: &Node) -> bool {
+    let n = match n.unwrap_ws() {
+        Node::Unary(_, x) => x.unwrap_ws(),
+        n => n,
+    };
+    matches!(n, Node::Name { sheet: Some(_), .. })
 }
 
 fn eval_args(ctx: &mut EvalCtx, args: &[Node]) -> Vec<Operand> {
@@ -70,7 +80,21 @@ pub fn call_named(ctx: &mut EvalCtx, key: &str, args: &[Node]) -> Operand {
             .sheet(ctx.host.sheet)
             .is_some_and(|s| s.kind.is_macro())
     {
-        let _ = eval_args(ctx, args);
+        let was = std::mem::replace(&mut ctx.xlm_entry, true);
+        let ops = eval_args(ctx, args);
+        ctx.xlm_entry = was;
+        if !matches!(key, "SET.NAME" | "ELSE.IF" | "RETURN") {
+            if let Some(e) = ops.iter().zip(args).find_map(|(o, n)| match o {
+                Operand::Val(crate::value::Value::Error(e)) if !is_bare_name(n) => Some(*e),
+                _ => None,
+            }) {
+                return Operand::err(e);
+            }
+        }
+
+        if !was && crate::xlm::INFO_FUNCTIONS.contains(&key) {
+            return Operand::Val(crate::xlm::info_call(ctx, key, ops));
+        }
         return Operand::Val(crate::value::Value::Bool(false));
     }
     if ctx.wb.names.lookup(key, ctx.host.sheet).is_none() {
@@ -93,6 +117,9 @@ pub fn call_named(ctx: &mut EvalCtx, key: &str, args: &[Node]) -> Operand {
             && a.rect.cols() == 1
             && ctx.wb.sheet(a.sheet).is_some_and(|s| s.kind.is_macro())
         {
+            if ctx.xlm_entry {
+                return Operand::Val(crate::value::Value::Bool(false));
+            }
             let target = crate::address::CellAddr::new(a.sheet, a.rect.r0, a.rect.c0);
             let ops = args.iter().map(|n| ctx.eval(n)).collect();
             return crate::xlm::call_from_cell(ctx, target, ops);

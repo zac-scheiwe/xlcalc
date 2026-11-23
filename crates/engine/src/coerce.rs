@@ -102,6 +102,14 @@ const DIGIT_SYSTEMS: [(u32, u32, u32); 17] = [
     (0x1810, 0x13, 0x450),
 ];
 
+pub(crate) fn national_digit(c: char) -> Option<char> {
+    let u = c as u32;
+    DIGIT_SYSTEMS
+        .iter()
+        .find(|&&(z, ..)| (z..z + 10).contains(&u))
+        .and_then(|&(z, ..)| char::from_digit(u - z, 10))
+}
+
 const ETHIOPIC_ONE: u32 = 0x1369;
 const ETHIOPIC_NN: u32 = 0x11;
 const ETHIOPIC_LCID: u32 = 0x45E;
@@ -556,7 +564,7 @@ fn expand_year(y: i32) -> i32 {
     }
 }
 
-fn parse_datetime_text(t: &str, env: ParseEnv) -> Option<ParsedNumber> {
+pub(crate) fn parse_datetime_text(t: &str, env: ParseEnv) -> Option<ParsedNumber> {
     parse_datetime_text_lead(t, env, false)
 }
 

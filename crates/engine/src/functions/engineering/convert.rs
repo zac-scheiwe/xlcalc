@@ -414,8 +414,15 @@ pub fn convert(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     atp::call(ctx, ops, "a", |ctx, a, _| {
         val((|| {
             let x = atp::req_num(ctx, a, 0)?;
+
             let from = atp::req_text(a, 1)?;
+            if from.chars().count() > 255 {
+                return Err(XlError::VALUE);
+            }
             let to = atp::req_text(a, 2)?;
+            if to.chars().count() > 255 {
+                return Err(XlError::VALUE);
+            }
             let from = lookup(&from).ok_or(XlError::NA)?;
             let to = lookup(&to).ok_or(XlError::NA)?;
             convert_value(x, &from, &to).map(Value::num)

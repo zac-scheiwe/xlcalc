@@ -22,22 +22,26 @@ impl Application<'_> {
             return;
         };
         if bk.wb.selection_of(sheet).areas != [rect] {
+            let data = match (st.header, st.orientation) {
+                (1, 1) if rect.r1 > rect.r0 => Rect::new(rect.r0 + 1, rect.c0, rect.r1, rect.c1),
+                _ => rect,
+            };
             if bk.wb.active_sheet() != sheet {
-                let data = match (st.header, st.orientation) {
-                    (1, 1) if rect.r1 > rect.r0 => {
-                        Rect::new(rect.r0 + 1, rect.c0, rect.r1, rect.c1)
-                    }
-                    _ => rect,
-                };
                 let _ = bk.wb.set_selection(sheet, Selection::of(&[data]));
             }
             if sorted {
-                self.note_selection(book, mark, At::First, sheet, &[rect]);
+                self.note_selection(book, mark, At::First, sheet, &[data]);
             }
         }
     }
 
-    fn apply_sort(&mut self, book: BookId, st: &SortState) -> Result<(), OmError> {
+    fn apply_sort(
+        &mut self,
+        book: BookId,
+        st: &SortState,
+        filter: bool,
+        lcid: u32,
+    ) -> Result<(), OmError> {
         let Some((sheet, rect)) = st.range else {
             return Err(OmError::app_defined());
         };
@@ -65,11 +69,21 @@ impl Application<'_> {
             by_columns,
             match_case,
             custom: st.custom.clone(),
+            text_as_number: (0..st.fields.len())
+                .map(|i| st.extra.get(i).is_some_and(|e| e.data_option == 1))
+                .collect(),
         };
-        self.book_mut(book)?
-            .wb
-            .sort_range(sheet, rect, &spec)
-            .map_err(edit_error)?;
+        let wb = &mut self.book_mut(book)?.wb;
+
+        let locale = crate::conv::input_locale(lcid, wb.locale());
+        wb.with_input_locale(&locale, |wb| {
+            if filter {
+                wb.sort_filter(sheet, rect, &spec)
+            } else {
+                wb.sort_range(sheet, rect, &spec)
+            }
+        })
+        .map_err(edit_error)?;
         Ok(())
     }
 
@@ -80,11 +94,60 @@ impl Application<'_> {
         rect: Rect,
         a: &Args,
     ) -> Result<(), OmError> {
+        for i in [1, 4, 6] {
+            match a.get(i) {
+                Some(Variant::Null | Variant::Empty) => return Err(OmError::app_defined()),
+                Some(Variant::Bstr(_)) => {
+                    a.i32(i).map_err(|_| OmError::app_defined())?;
+                }
+                _ => {}
+            }
+        }
+        if matches!(a.get(3), Some(Variant::Bstr(_) | Variant::Bool(_))) {
+            return Err(OmError::app_defined());
+        }
+        if matches!(a.get(7), Some(Variant::Bstr(_))) {
+            a.i32(7).map_err(|_| OmError::app_defined())?;
+        }
+
+        let num = |i: usize, lo: i32, hi: i32| -> Result<(), OmError> {
+            match a.get(i) {
+                Some(Variant::Bool(_) | Variant::Null | Variant::Empty) | None => Ok(()),
+                _ => match a.i32(i) {
+                    Ok(Some(v)) if !(lo..=hi).contains(&v) => Err(OmError::app_defined()),
+                    _ => Ok(()),
+                },
+            }
+        };
+        for i in [1, 4, 6] {
+            num(i, 1, 2)?;
+        }
+        num(7, 0, 2)?;
+        num(10, 1, 2)?;
+
+        if !matches!(a.get(3), None | Some(Variant::Null | Variant::Empty)) {
+            return Err(OmError::app_defined().with_detail("Reference isn't valid."));
+        }
+        let header_arg = match a.get(7) {
+            Some(Variant::Null | Variant::Empty) => None,
+            _ => a.i32(7)?,
+        };
         let mut fields = Vec::new();
-        for (key, order) in [(0, 1), (2, 4), (5, 6)] {
-            if a.get(key).is_some() {
+        let mut extra = Vec::new();
+        for (key, order, dopt) in [(0, 1, 12), (2, 4, 13), (5, 6, 14)] {
+            if a.get(key).is_some()
+                && !(key != 0 && matches!(a.get(key), Some(Variant::Null | Variant::Empty)))
+            {
                 let (ks, kr) = self.range_arg(a.get(key))?;
-                fields.push((ks, kr, a.i32(order)?.unwrap_or(1)));
+                let order = match a.get(order) {
+                    Some(Variant::Bool(_)) => 1,
+                    _ => a.i32(order)?.unwrap_or(1),
+                };
+                fields.push((ks, kr, order));
+                extra.push(FieldExtra {
+                    data_option: a.i32(dopt).ok().flatten().unwrap_or(0),
+                    ..FieldExtra::default()
+                });
             }
         }
 
@@ -95,39 +158,66 @@ impl Application<'_> {
             None => self.sort_state(&owner).orientation,
         };
         self.sort_state(&owner).orientation = orientation;
-        let header = a.i32(7)?.unwrap_or(2);
-        let match_case = a.bool(9)?.unwrap_or(false);
-
-        let rect = if rect.is_cell() {
-            self.book(r.book)?.wb.current_region(sheet, rect)
-        } else {
-            rect
+        let header = header_arg.unwrap_or(2);
+        let match_case = match a.bool(9)? {
+            Some(mc) => mc,
+            None => self.sort_state(&owner).match_case,
         };
 
+        if let Some(mc) = a.bool(9)? {
+            self.sort_state(&owner).match_case = mc;
+        }
+
+        let autosel = rect.is_cell();
+        let mut rect = self
+            .book(r.book)?
+            .wb
+            .sort_auto_select(sheet, rect)
+            .ok_or_else(|| {
+                OmError::app_defined().with_detail("Sort method of Range class failed")
+            })?;
+        if self.book(r.book)?.wb.sort_straddles_table(sheet, rect) {
+            return Err(OmError::app_defined().with_detail("Sort method of Range class failed"));
+        }
+
         let header = if header == 0 {
-            if self.guess_header(r.book, sheet, rect) {
-                1
-            } else {
-                2
+            match self
+                .book(r.book)?
+                .wb
+                .guess_list_header(sheet, rect, autosel)
+            {
+                Some(h) => {
+                    rect.r0 = h;
+                    1
+                }
+                None => 2,
             }
         } else {
             header
         };
 
-        let list = a
-            .i32(8)?
-            .and_then(|n| self.custom_list(n - 1))
-            .unwrap_or_default();
+        let oc = match a.i32(8)? {
+            Some(n) => {
+                self.sort_state(&owner).order_custom = n;
+                n
+            }
+            None => self.sort_state(&owner).order_custom,
+        };
+        let list = self.custom_list(oc - 1).unwrap_or_default();
+        let order_custom = self.sort_state(&owner).order_custom;
         let st = SortState {
-            custom: vec![list; fields.len()],
+            order_custom,
+
+            custom: vec![list],
             fields,
+            extra,
             range: Some((sheet, rect)),
             orientation,
             header,
             match_case,
             ..SortState::default()
         };
-        self.apply_sort(r.book, &st)
+        self.apply_sort(r.book, &st, false, a.lcid)
     }
 
     fn field_extra(&mut self, o: &SortOwner, i: usize) -> &mut FieldExtra {
@@ -167,6 +257,7 @@ impl Application<'_> {
         match (m.name, m.kind) {
             ("SortFields", Get) => Ok(self.alloc(Object::SortFields(o.clone()))),
 
+            ("Header", Get) if matches!(o, SortOwner::Filter(..)) => Ok(Variant::I4(1)),
             ("Header", Get) if !sheet_owned => Ok(Variant::I4(self.table_header_value(o)?)),
             ("Header", Get) => Ok(Variant::I4(self.sort_state(o).header)),
             ("Header", Put) => {
@@ -243,12 +334,59 @@ impl Application<'_> {
                 match o {
                     SortOwner::Sheet(book, _) => {
                         if st.fields.is_empty() {
-                            return Err(OmError::app_defined());
+                            return if st.range.is_some() {
+                                Ok(Variant::Empty)
+                            } else {
+                                Err(OmError::app_defined())
+                            };
+                        }
+
+                        if st.fields.iter().any(|f| {
+                            if st.orientation == 2 {
+                                f.1.r0 != f.1.r1
+                            } else {
+                                f.1.c0 != f.1.c1
+                            }
+                        }) {
+                            return Err(OmError::app_defined_with(
+                                "The sort reference is not valid. Make sure that it's within the                                  data you want to sort, and the first Sort By box isn't the same                                  or blank.",
+                            ));
                         }
                         let mark = self.notice_mark(*book);
-                        let r = self.apply_sort(*book, &st);
+                        let r = self.apply_sort(*book, &st, false, a.lcid);
                         self.sort_selects(*book, mark, &st, r.is_ok());
                         r?;
+
+                        if let (Some((sheet, rect)), 1) = (st.range, st.orientation) {
+                            let wb = &self.book(*book)?.wb;
+                            let head = u32::from(st.header == 1 && rect.r1 > rect.r0);
+                            let first = (rect.r0 + head..=rect.r1)
+                                .find(|&r| !wb.row_hidden(sheet, r))
+                                .unwrap_or(rect.r1);
+                            let r1 = (first..=rect.r1)
+                                .rev()
+                                .find(|&r| !wb.row_hidden(sheet, r))
+                                .unwrap_or(first);
+                            let r0 = first.saturating_sub(head).max(rect.r0);
+                            self.sort_state(o).range = Some((sheet, Rect { r0, r1, ..rect }));
+                        }
+                    }
+                    SortOwner::Filter(book, sheet) => {
+                        if st.fields.is_empty() {
+                            return Err(OmError::app_defined());
+                        }
+                        let rect = self
+                            .book(*book)?
+                            .wb
+                            .autofilter_view(*sheet)
+                            .ok_or_else(OmError::app_defined)?
+                            .rect;
+                        let st = SortState {
+                            range: Some((*sheet, rect)),
+                            header: 1,
+                            ..st
+                        };
+                        self.apply_sort(*book, &st, true, a.lcid)?;
                     }
                     SortOwner::Table(b, name) => {
                         let t = self.table_of(*b, name)?;
@@ -267,6 +405,9 @@ impl Application<'_> {
                             by_columns: false,
                             match_case: st.match_case,
                             custom: st.custom.clone(),
+                            text_as_number: (0..st.fields.len())
+                                .map(|i| st.extra.get(i).is_some_and(|e| e.data_option == 1))
+                                .collect(),
                         };
                         self.book_mut(*b)?
                             .wb
@@ -302,6 +443,12 @@ impl Application<'_> {
                 st.fields.clear();
                 st.custom.clear();
                 st.extra.clear();
+
+                if matches!(o, SortOwner::Sheet(..)) {
+                    st.orientation = 1;
+                    st.match_case = false;
+                    st.range = None;
+                }
                 Ok(Variant::Empty)
             }
             "Item" | "_Default" => {
@@ -326,8 +473,13 @@ impl Application<'_> {
                 if !(0..=2).contains(&sort_on) {
                     return Err(OmError::unsupported("SortFields.Add with SortOn icon"));
                 }
-                if a.i32(4)?.unwrap_or(0) != 0 {
-                    return Err(OmError::unsupported("SortFields.Add with DataOption"));
+
+                if a.get(2).is_some() && !matches!(a.i32(2)?, Some(1 | 2)) {
+                    return Err(OmError::app_defined());
+                }
+                let data_option = a.i32(4)?.unwrap_or(0);
+                if !(0..=1).contains(&data_option) {
+                    return Err(OmError::app_defined());
                 }
 
                 let list = match a.get(3) {
@@ -356,6 +508,7 @@ impl Application<'_> {
                 st.custom.push(list);
                 st.extra.push(FieldExtra {
                     sort_on,
+                    data_option,
                     ..FieldExtra::default()
                 });
                 let i = st.fields.len() - 1;
@@ -383,7 +536,7 @@ impl Application<'_> {
             ("Order", Get) => Ok(Variant::I4(order)),
             ("Key", Get) => {
                 let book = match o {
-                    SortOwner::Sheet(b, _) | SortOwner::Table(b, _) => *b,
+                    SortOwner::Sheet(b, _) | SortOwner::Filter(b, _) | SortOwner::Table(b, _) => *b,
                 };
                 let (sheet, rect) = self
                     .sort_state(o)
@@ -440,21 +593,22 @@ impl Application<'_> {
                 }
                 _ => Err(invalid_arg()),
             },
-            ("CustomOrder", Get) => Ok(match self.field_extra(o, i).custom_order.clone() {
-                Some(s) => Variant::Bstr(s),
-                None => Variant::I4(0),
-            }),
-            ("CustomOrder", Put) => match Application::put_value(a).get(0) {
-                Some(Variant::Bstr(s)) => {
-                    self.field_extra(o, i).custom_order = Some(s.clone());
-                    Ok(Variant::Empty)
-                }
-                Some(Variant::Bool(_)) => Err(invalid_arg()),
-                _ => {
-                    self.field_extra(o, i).custom_order = None;
-                    Ok(Variant::Empty)
-                }
-            },
+            ("CustomOrder", Get) => Ok(self
+                .field_extra(o, i)
+                .custom_order
+                .clone()
+                .unwrap_or(Variant::Int(0))),
+            ("CustomOrder", Put) => {
+                let put = Application::put_value(a);
+                let stored = match put.get(0) {
+                    Some(Variant::Bstr(s)) => Some(Variant::Bstr(s.clone())),
+                    Some(Variant::Bool(_)) => return Err(invalid_arg()),
+                    Some(Variant::Empty | Variant::Null) | None => None,
+                    Some(_) => put.i32(0)?.map(Variant::Int),
+                };
+                self.field_extra(o, i).custom_order = stored;
+                Ok(Variant::Empty)
+            }
             ("Order", Put) => {
                 self.coerce_wb_put(m, a)?;
                 let v = self.put_i32(a)?;
@@ -508,7 +662,13 @@ impl Application<'_> {
             }
             "AutoFill" => {
                 let (_, dst) = self.range_arg(a.get(0))?;
-                let ty = match a.i32(1)?.unwrap_or(0) {
+
+                let ty_arg = match a.get(1) {
+                    Some(Variant::Null | Variant::Empty) => None,
+                    Some(Variant::Bool(true)) => Some(1),
+                    _ => a.i32(1)?,
+                };
+                let ty = match ty_arg.unwrap_or(0) {
                     0 => FillType::Default,
                     1 => FillType::Copy,
                     2 => FillType::Series,
@@ -576,7 +736,12 @@ impl Application<'_> {
                 Ok(Variant::Bool(true))
             }
             "PasteSpecial" => {
-                let Some((cb, ss, src)) = self.clip else {
+                let clip = self.clip.filter(|_| !self.clip_cut);
+                let Some((cb, ss, src)) = clip else {
+                    self.book_mut(book)?
+                        .wb
+                        .set_active_sheet(sheet)
+                        .map_err(edit_error)?;
                     return Err(OmError::app_defined_with(
                         "PasteSpecial method of Range class failed",
                     ));
@@ -613,18 +778,15 @@ impl Application<'_> {
                     return res;
                 }
                 let code = a.i32(0)?.unwrap_or(-4104);
+
                 let what = match code {
-                    -4104 | -4144 => PasteWhat::All,
-                    -4163 => PasteWhat::Values,
-                    -4123 => PasteWhat::Formulas,
-                    -4122 => PasteWhat::Formats,
+                    -4104 | -4144 | 7 | 8 | 13 | 14 => Some(PasteWhat::All),
+                    -4163 | 12 => Some(PasteWhat::Values),
+                    -4123 | 11 => Some(PasteWhat::Formulas),
+                    -4122 => Some(PasteWhat::Formats),
                     -4114 => return Err(OmError::app_defined()),
-                    6 => PasteWhat::Validation,
-                    _ => {
-                        return Err(OmError::app_defined_with(
-                            "PasteSpecial method of Range class failed",
-                        ))
-                    }
+                    6 => Some(PasteWhat::Validation),
+                    _ => None,
                 };
                 let op = match a.i32(1)?.unwrap_or(-4142) {
                     -4142 | 1 => PasteOp::None,
@@ -635,7 +797,7 @@ impl Application<'_> {
                     _ => return Err(OmError::app_defined()),
                 };
                 let spec = PasteSpecial {
-                    what,
+                    what: what.unwrap_or(PasteWhat::All),
                     op,
                     skip_blanks: a.bool(2)?.unwrap_or(false),
                     transpose: a.bool(3)?.unwrap_or(false),
@@ -647,6 +809,14 @@ impl Application<'_> {
                     let old = wb.selection_of(sheet).areas;
                     wb.set_selection(sheet, Selection::of(&[rect]))
                         .map_err(edit_error)?;
+                    if what.is_none() {
+                        if old != [rect] {
+                            app.note_selection(book, mark, At::First, sheet, &[rect]);
+                        }
+                        return Err(OmError::app_defined_with(
+                            "PasteSpecial method of Range class failed",
+                        ));
+                    }
                     let shape = if spec.transpose {
                         Rect::new(0, 0, src.cols() - 1, src.rows() - 1)
                     } else {
@@ -662,9 +832,25 @@ impl Application<'_> {
                     }
                     let kept = app.locked_snapshot(book, sheet, pasted);
                     let wb = &mut app.book_mut(book)?.wb;
-                    if code != -4144 {
+                    if code == 8 {
+                        let n = if rect.cols().is_multiple_of(src.cols()) {
+                            rect.cols()
+                        } else {
+                            src.cols()
+                        };
+                        for k in 0..n.min(crate::addr::max_cols() - rect.c0) {
+                            let w = wb.column_width(ss, src.c0 + k % src.cols());
+                            wb.set_column_width(sheet, rect.c0 + k, rect.c0 + k, w);
+                        }
+                    } else if code == 7 {
+                        wb.paste_special_keep_borders(ss, src, sheet, rect, &spec)
+                            .map_err(edit_error)?;
+                    } else if code != -4144 {
                         wb.paste_special(ss, src, sheet, rect, &spec)
                             .map_err(edit_error)?;
+                    }
+                    if matches!(code, 11 | 12) {
+                        wb.paste_number_formats(ss, src, sheet, rect, spec.transpose);
                     }
 
                     if matches!(code, -4104 | -4144) && !spec.transpose {
@@ -684,10 +870,22 @@ impl Application<'_> {
                 let mut st = self.find.clone();
                 st.take_replace(a)?;
                 self.find = st.clone();
+
+                let null_what = matches!(a.get(0), Some(Variant::Null));
                 let spec = ReplaceSpec {
-                    what: a.string(0)?.unwrap_or_default(),
-                    with: a.string(1)?.unwrap_or_default(),
-                    whole: st.whole,
+                    what: if a.get(0).is_none() {
+                        st.what.clone().unwrap_or_default()
+                    } else if null_what {
+                        String::new()
+                    } else {
+                        a.string(0)?.unwrap_or_default()
+                    },
+                    with: if matches!(a.get(1), Some(Variant::Null)) {
+                        String::new()
+                    } else {
+                        a.string(1)?.unwrap_or_default()
+                    },
+                    whole: st.whole || null_what,
                     by_columns: st.by_columns,
                     match_case: st.match_case,
                 };

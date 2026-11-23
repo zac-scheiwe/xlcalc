@@ -252,7 +252,13 @@ fn err_bars(el: &str, f: &SeriesFmt) -> String {
 pub(crate) fn series_pre(el: &str, chart_type: i32, f: &SeriesFmt) -> String {
     let mut s = sp_pr(el, chart_type, f);
     if matches!(el, "lineChart" | "scatterChart" | "radarChart") {
-        s.push_str(&marker(f));
+        let m = marker(f);
+
+        if m.is_empty() && el == "lineChart" && matches!(chart_type, 4 | 63 | 66) {
+            s.push_str("<c:marker><c:symbol val=\"none\"/></c:marker>");
+        } else {
+            s.push_str(&m);
+        }
     }
     s.push_str(&labels(f));
     if !matches!(el, "pieChart" | "doughnutChart" | "radarChart") {

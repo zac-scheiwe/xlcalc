@@ -24,6 +24,8 @@ pub struct CellFormats {
 
     pub(crate) sticky: FxHashMap<SheetId, Rect>,
 
+    pub(crate) row_marks: FxHashMap<SheetId, std::collections::BTreeMap<u32, bool>>,
+
     pub(crate) rows: FxHashMap<(SheetId, u32), (u64, Sty)>,
     pub(crate) cols: FxHashMap<(SheetId, u32), (u64, Sty)>,
     pub(crate) sheets: FxHashMap<SheetId, (u64, Sty)>,
@@ -50,6 +52,7 @@ fn key_of(s: &Sty) -> usize {
 impl CellFormats {
     pub(crate) fn any(&self) -> bool {
         !(self.map.is_empty()
+            && self.row_marks.is_empty()
             && self.rows.is_empty()
             && self.cols.is_empty()
             && self.sheets.is_empty())
@@ -62,6 +65,9 @@ impl CellFormats {
         }
         if let Some(r) = other.sticky.get(&from) {
             self.sticky.insert(to, *r);
+        }
+        if let Some(m) = other.row_marks.get(&from) {
+            self.row_marks.insert(to, m.clone());
         }
         let mut lines: Vec<(u64, u8, u32, Sty)> = Vec::new();
         for (k, (n, v)) in other.rows.iter().filter(|(k, _)| k.0 == from) {
@@ -92,13 +98,32 @@ impl CellFormats {
         }
     }
 
-    pub(crate) fn borderless(&mut self, s: Sty) -> Sty {
-        if s.borders == crate::style::Borders::default() {
-            return s;
+    pub(crate) fn inherited(&mut self, before: Sty, after: Option<&Sty>, rows: bool) -> Sty {
+        let mut b = crate::style::Borders::default();
+        if let Some(a) = after {
+            let (s, t) = (&before.borders, &a.borders);
+            if rows {
+                if s.left == t.left {
+                    b.left = s.left;
+                }
+                if s.right == t.right {
+                    b.right = s.right;
+                }
+            } else {
+                if s.top == t.top {
+                    b.top = s.top;
+                }
+                if s.bottom == t.bottom {
+                    b.bottom = s.bottom;
+                }
+            }
         }
-        let mut b = (*s).clone();
-        b.borders = Default::default();
-        self.intern(b)
+        if before.borders == b {
+            return before;
+        }
+        let mut n = (*before).clone();
+        n.borders = b;
+        self.intern(n)
     }
 
     pub(crate) fn intern(&mut self, s: Style) -> Sty {
@@ -359,6 +384,11 @@ impl Workbook {
         }
     }
 
+    pub fn note_exact_cell_format(&mut self, addr: CellAddr) {
+        let f = self.number_format(addr).to_string();
+        self.session.last_format = Some(f);
+    }
+
     pub(crate) fn subtotal_label_format(&mut self, addr: CellAddr) {
         let Some(f) = self.session.last_format.take() else {
             return;
@@ -572,6 +602,88 @@ impl Workbook {
         out
     }
 
+    pub(crate) fn mark_rows(&mut self, sheet: SheetId, r0: u32, r1: u32, hard: bool) {
+        if r1.saturating_sub(r0) >= 100_000 {
+            return;
+        }
+        let m = self.cellfmt.row_marks.entry(sheet).or_default();
+        for r in r0..=r1 {
+            let e = m.entry(r).or_insert(hard);
+            *e |= hard;
+        }
+    }
+
+    pub fn marked_rows(&self, sheet: SheetId) -> Option<(u32, u32)> {
+        let m = self.cellfmt.row_marks.get(&sheet)?;
+        Some((*m.keys().next()?, *m.keys().next_back()?))
+    }
+
+    pub fn recompute_used_range(&mut self) {
+        let ids: Vec<SheetId> = self.sheets().map(|s| s.id).collect();
+        for id in ids {
+            self.recompute_used_range_of(id);
+        }
+    }
+
+    pub fn used_range_with_formats(&self, id: SheetId) -> Option<Rect> {
+        let mut b = self.used_range(id);
+
+        let base = self.cellfmt.base();
+        let bare = |s: &Style| {
+            let mut s = s.clone();
+            s.borders = Default::default();
+            s == **base
+        };
+        for (k, v) in self.cellfmt.map.iter().filter(|(k, _)| k.0 == id) {
+            if bare(v) {
+                continue;
+            }
+            let cell = Rect::new(k.1, k.2, k.1, k.2);
+            b = Some(b.map_or(cell, |x| x.union_bounds(&cell)));
+        }
+        if let Some(marks) = self.cellfmt.row_marks.get(&id) {
+            let custom: Vec<u32> = self.row_custom_heights(id).iter().map(|h| h.0).collect();
+            let mut hard = marks
+                .keys()
+                .copied()
+                .filter(|r| custom.contains(r) || self.row_hidden(id, *r));
+            let lo = hard.next();
+            let hi = hard.last().or(lo);
+            if let (Some(lo), Some(hi)) = (lo, hi) {
+                b = Some(match b {
+                    Some(x) => Rect::new(x.r0.min(lo), x.c0, x.r1.max(hi), x.c1),
+                    None => Rect::new(lo, 0, hi, 0),
+                });
+            }
+        }
+        b
+    }
+
+    pub fn recompute_used_range_of(&mut self, id: SheetId) {
+        {
+            let used = self.used_range(id);
+            if let Some(sh) = self.sheet_mut(id) {
+                sh.cells.reset_sticky(used);
+            }
+            let mut b: Option<Rect> = None;
+            for k in self.cellfmt.map.keys().filter(|k| k.0 == id) {
+                let cell = Rect::new(k.1, k.2, k.1, k.2);
+                b = Some(b.map_or(cell, |x| x.union_bounds(&cell)));
+            }
+            match b {
+                Some(r) => self.cellfmt.sticky.insert(id, r),
+                None => self.cellfmt.sticky.remove(&id),
+            };
+            if let Some(m) = self.cellfmt.row_marks.get(&id).cloned() {
+                let keep: std::collections::BTreeMap<u32, bool> = m
+                    .into_iter()
+                    .filter(|(r, hard)| *hard || self.row_hidden(id, *r))
+                    .collect();
+                self.cellfmt.row_marks.insert(id, keep);
+            }
+        }
+    }
+
     pub(crate) fn apply_style_with(
         &mut self,
         sheet: SheetId,
@@ -594,6 +706,9 @@ impl Workbook {
             } else {
                 self.line_crossings(sheet, rect, f)
             };
+            if rect.is_full_rows() && !whole {
+                self.mark_rows(sheet, rect.r0, rect.r1, true);
+            }
             let cf = &mut self.cellfmt;
             let base = cf.base.clone();
             let cols = rect.is_full_columns();
@@ -730,6 +845,94 @@ impl Workbook {
         self.note_late_formats(sheet, late);
     }
 
+    pub fn reset_named_style(&mut self, old: &Style) {
+        let base = (*self.cellfmt.base).clone();
+        self.restyle_with(&old.named.clone(), old, &base, true);
+    }
+
+    pub fn restyle_named(&mut self, name: &str, old: &Style, new: &Style) {
+        self.restyle_with(name, old, new, false);
+    }
+
+    fn restyle_with(&mut self, name: &str, old: &Style, new: &Style, rebase: bool) {
+        let cf = &mut self.cellfmt;
+        let follow = |s: &Style| -> Option<Style> {
+            if !s.named.eq_ignore_ascii_case(name) {
+                return None;
+            }
+            let mut t = s.clone();
+            if rebase {
+                t.named = new.named.clone();
+            }
+            if old.number_format != new.number_format && s.number_format == old.number_format {
+                t.number_format = new.number_format.clone();
+                t.custom_code = new.custom_code;
+                t.implicit_general = new.implicit_general;
+            }
+            if old.font != new.font && s.font == old.font {
+                t.font = new.font.clone();
+            }
+            if old.alignment != new.alignment && s.alignment == old.alignment {
+                t.alignment = new.alignment.clone();
+            }
+            if old.borders != new.borders && s.borders == old.borders {
+                t.borders = new.borders.clone();
+            }
+            if old.fill != new.fill && s.fill == old.fill {
+                t.fill = new.fill.clone();
+            }
+            if (old.locked, old.formula_hidden) != (new.locked, new.formula_hidden)
+                && (s.locked, s.formula_hidden) == (old.locked, old.formula_hidden)
+            {
+                t.locked = new.locked;
+                t.formula_hidden = new.formula_hidden;
+            }
+            (t != *s).then_some(t)
+        };
+        let cells: Vec<_> = cf
+            .map
+            .iter()
+            .filter_map(|(k, v)| follow(v).map(|t| (*k, t)))
+            .collect();
+        for (k, t) in cells {
+            let s = cf.intern(t);
+            cf.map.insert(k, s);
+        }
+        let rows: Vec<_> = cf
+            .rows
+            .iter()
+            .filter_map(|(k, v)| follow(&v.1).map(|t| (*k, t)))
+            .collect();
+        for (k, t) in rows {
+            let s = cf.intern(t);
+            if let Some(v) = cf.rows.get_mut(&k) {
+                v.1 = s;
+            }
+        }
+        let cols: Vec<_> = cf
+            .cols
+            .iter()
+            .filter_map(|(k, v)| follow(&v.1).map(|t| (*k, t)))
+            .collect();
+        for (k, t) in cols {
+            let s = cf.intern(t);
+            if let Some(v) = cf.cols.get_mut(&k) {
+                v.1 = s;
+            }
+        }
+        let sheets: Vec<_> = cf
+            .sheets
+            .iter()
+            .filter_map(|(k, v)| follow(&v.1).map(|t| (*k, t)))
+            .collect();
+        for (k, t) in sheets {
+            let s = cf.intern(t);
+            if let Some(v) = cf.sheets.get_mut(&k) {
+                v.1 = s;
+            }
+        }
+    }
+
     pub fn set_cell_style(&mut self, sheet: SheetId, rect: Rect, style: &Style) -> RecalcReport {
         self.command(Command::Format, |wb| {
             wb.set_cell_style_run(sheet, rect, style)
@@ -766,11 +969,34 @@ impl Workbook {
             .cell_style(CellAddr::new(addr.sheet, nr, nc))
             .borders
             .edge(edge.opposite());
-        if other.line.weight_rank() > own.line.weight_rank() {
-            other
+        merge_borders(own, other, &self.styles.theme)
+    }
+
+    pub fn line_style(&self, sheet: SheetId, row: bool, idx: u32) -> &Style {
+        let cf = &self.cellfmt;
+        let m = if row { &cf.rows } else { &cf.cols };
+        m.get(&(sheet, idx))
+            .or_else(|| cf.sheets.get(&sheet))
+            .map_or(&cf.base, |(_, s)| s)
+    }
+
+    pub fn line_format_indices(&self, sheet: SheetId, row: bool) -> Vec<u32> {
+        let m = if row {
+            &self.cellfmt.rows
         } else {
-            own
-        }
+            &self.cellfmt.cols
+        };
+        let mut v: Vec<u32> = m.keys().filter(|k| k.0 == sheet).map(|k| k.1).collect();
+        v.sort_unstable();
+        v
+    }
+
+    pub fn merge_sides(
+        &self,
+        own: crate::style::Border,
+        other: crate::style::Border,
+    ) -> crate::style::Border {
+        merge_borders(own, other, &self.styles.theme)
     }
 
     pub fn style_table(&self) -> &crate::style::StyleTable {
@@ -1123,7 +1349,7 @@ impl Workbook {
         Some(f)
     }
 
-    fn is_builtin_format(&self, f: &str) -> bool {
+    pub(crate) fn is_builtin_format(&self, f: &str) -> bool {
         const FIXED: [&str; 16] = [
             "General",
             "0",
@@ -1328,7 +1554,7 @@ pub(crate) fn is_text_format_code(f: &str) -> bool {
         return false;
     }
     let numeric = |s: &str| {
-        let l = s
+        let l = strip_literals(s)
             .to_ascii_lowercase()
             .replace("general", "")
             .replace("am/pm", "")
@@ -1344,6 +1570,39 @@ pub(crate) fn is_text_format_code(f: &str) -> bool {
     }
     secs[..n - 1].iter().all(|s| !numeric(s))
         && !text.to_ascii_lowercase().contains(['0', '#', '?'])
+}
+
+fn strip_literals(s: &str) -> String {
+    let mut out = String::new();
+    let mut cs = s.chars().peekable();
+    while let Some(c) = cs.next() {
+        match c {
+            '"' => {
+                for d in cs.by_ref() {
+                    if d == '"' {
+                        break;
+                    }
+                }
+            }
+            '\\' | '_' | '*' => {
+                cs.next();
+            }
+            '[' => {
+                let mut inner = String::new();
+                for d in cs.by_ref() {
+                    if d == ']' {
+                        break;
+                    }
+                    inner.push(d);
+                }
+                if inner.starts_with(['h', 'H', 'm', 'M', 's', 'S']) {
+                    out.push('0');
+                }
+            }
+            _ => out.push(c),
+        }
+    }
+    out
 }
 
 pub fn number_format_refused(fmt: &str) -> bool {
@@ -1492,4 +1751,32 @@ fn unquote_dollar(fmt: &str) -> std::borrow::Cow<'_, str> {
         }
     }
     out.into()
+}
+
+fn merge_borders(
+    own: crate::style::Border,
+    other: crate::style::Border,
+    theme: &crate::style::Theme,
+) -> crate::style::Border {
+    use crate::style::BorderLine;
+    if other.line == BorderLine::None || own == other || own.line == BorderLine::None {
+        return if own.line == BorderLine::None {
+            other
+        } else {
+            own
+        };
+    }
+    let (ra, rb) = (own.line.priority_rank(), other.line.priority_rank());
+    if ra != rb {
+        return if ra < rb { own } else { other };
+    }
+    let weight = |b: crate::style::Border| {
+        let v = theme.rgb(b.color, 0);
+        2 * ((v >> 16) & 0xff) + 5 * ((v >> 8) & 0xff) + (v & 0xff)
+    };
+    if weight(other) < weight(own) {
+        other
+    } else {
+        own
+    }
 }

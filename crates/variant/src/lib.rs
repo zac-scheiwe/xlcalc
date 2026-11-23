@@ -24,6 +24,7 @@ pub enum VarType {
     Decimal = 14,
     Ui1 = 17,
     I8 = 20,
+    Int = 22,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -56,6 +57,8 @@ pub enum Variant {
     Ui1(u8),
     I8(i64),
 
+    Int(i32),
+
     Array(Box<SafeArray>),
 }
 
@@ -87,6 +90,7 @@ impl Variant {
             Variant::Decimal(_) => VarType::Decimal,
             Variant::Ui1(_) => VarType::Ui1,
             Variant::I8(_) => VarType::I8,
+            Variant::Int(_) => VarType::Int,
             Variant::Array(a) => return VT_ARRAY | a.elem as u16,
         };
         t as u16

@@ -311,6 +311,8 @@ pub(super) struct ShapeIn {
     pub preset: Option<String>,
 
     pub corners: Option<(Corner, Corner)>,
+
+    pub link: Option<(String, String, Option<String>)>,
 }
 
 pub(super) fn flatten(shapes: &[ShapeIn]) -> Vec<&ShapeIn> {
@@ -511,6 +513,8 @@ pub(super) struct Source<'a> {
     pub chart_of: &'a dyn Fn(&str) -> Option<Node>,
 
     pub image_of: &'a dyn Fn(&str) -> Option<Image>,
+
+    pub link_of: &'a dyn Fn(&str) -> Option<String>,
     pub theme: &'a [u32],
 }
 
@@ -742,6 +746,15 @@ fn shape(
             return None;
         }
     };
+    let link = nv
+        .and_then(|nv| nv.kids.iter().find(|k| k.name == "cNvPr"))
+        .and_then(|c| c.child("hlinkClick"))
+        .and_then(|h| {
+            let target = h.attr("id").and_then(|id| (src.link_of)(id));
+            let (address, sub) = crate::hyperlinks::decode_target(target.as_deref(), None);
+            (!address.is_empty() || !sub.is_empty())
+                .then(|| (address, sub, h.attr("tooltip").map(str::to_string)))
+        });
     Some(ShapeIn {
         name,
         spt,
@@ -767,6 +780,7 @@ fn shape(
         member,
         preset,
         corners: None,
+        link,
     })
 }
 
@@ -886,6 +900,26 @@ pub(super) fn item(
             complex.extend(u.to_le_bytes());
         }
         props.push((0xC380, complex.len() as u32));
+    }
+    if let Some((address, sub, tip)) = s.link.as_ref().filter(|_| !s.group) {
+        let target = (!address.is_empty()).then_some(address.as_str());
+        let loc = (!sub.is_empty()).then_some(sub.as_str());
+        let obj = super::wextras::link_object(target, loc, None);
+        props.push((0xC382, obj.len() as u32));
+        complex.extend(obj);
+        if let Some(t) = tip.as_ref().filter(|t| !t.is_empty()) {
+            let before = complex.len();
+            for u in t.encode_utf16().chain([0]) {
+                complex.extend(u.to_le_bytes());
+            }
+            props.push((0xC38D, (complex.len() - before) as u32));
+        }
+        for p in props.iter_mut().filter(|p| p.0 == 0x3BF) {
+            p.1 = 0x000A_0008;
+        }
+        if !props.iter().any(|p| p.0 == 0x3BF) {
+            props.push((0x3BF, 0x000A_0008));
+        }
     }
     let mut anchor = vec![0u8, 0];
     for w in s.anchor {

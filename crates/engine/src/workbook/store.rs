@@ -115,6 +115,10 @@ impl CellStore {
         self.sticky
     }
 
+    pub fn reset_sticky(&mut self, to: Option<Rect>) {
+        self.sticky = to;
+    }
+
     pub fn extend_sticky(&mut self, r: Rect) {
         self.sticky = Some(self.sticky.map_or(r, |b| b.union_bounds(&r)));
     }

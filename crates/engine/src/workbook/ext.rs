@@ -16,6 +16,8 @@ pub struct ExtLink {
     pub open: bool,
 
     pub broken: bool,
+
+    pub fresh: bool,
 }
 
 impl ExtLink {
@@ -49,6 +51,16 @@ pub(crate) struct ExtState {
 
     pub docs: Vec<String>,
     pub windows: Vec<String>,
+
+    pub slots: Vec<String>,
+}
+
+fn same_file(a: &str, b: &str) -> bool {
+    a.len() == b.len()
+        && a.chars().zip(b.chars()).all(|(x, y)| {
+            x.to_lowercase().eq(y.to_lowercase())
+                || (matches!(x, '/' | '\\') && matches!(y, '/' | '\\'))
+        })
 }
 
 #[derive(Clone, Debug, Default)]
@@ -79,7 +91,8 @@ impl ExtState {
         });
         if let Some(i) = found {
             if self.links[i].dir().is_empty() && !dir.is_empty() {
-                self.links[i].path = key.to_string();
+                let old = std::mem::replace(&mut self.links[i].path, key.to_string());
+                self.rename_slot(&old, key);
             }
             return i;
         }
@@ -87,7 +100,28 @@ impl ExtState {
             path: key.to_string(),
             ..Default::default()
         });
+        self.slot(key);
         self.links.len() - 1
+    }
+
+    fn slot(&mut self, path: &str) -> usize {
+        match self.slots.iter().position(|s| same_file(s, path)) {
+            Some(i) => i,
+            None => {
+                self.slots.push(path.to_string());
+                self.slots.len() - 1
+            }
+        }
+    }
+
+    fn rename_slot(&mut self, old: &str, new: &str) {
+        if self.slots.iter().any(|s| same_file(s, new)) {
+            return;
+        }
+        match self.slots.iter().position(|s| same_file(s, old)) {
+            Some(i) => self.slots[i] = new.to_string(),
+            None => self.slots.push(new.to_string()),
+        }
     }
 
     fn sheet_for(&mut self, link: usize, sheet: &str) -> usize {
@@ -140,7 +174,8 @@ impl Workbook {
         if let Some(ob) = st.open_book(book).cloned() {
             st.links[link].open = true;
             if st.links[link].dir().is_empty() {
-                st.links[link].path = ob.path.clone();
+                let old = std::mem::replace(&mut st.links[link].path, ob.path.clone());
+                st.rename_slot(&old, &ob.path);
             }
             absent = !sheet.is_empty()
                 && !ob
@@ -186,13 +221,105 @@ impl Workbook {
                 let li = link.unwrap_or_else(|| st.link_for(book));
                 st.links[li].open = true;
                 if st.links[li].dir().is_empty() {
-                    st.links[li].path = ob.path;
+                    let old = std::mem::replace(&mut st.links[li].path, ob.path.clone());
+                    st.rename_slot(&old, &ob.path);
                 }
                 true
             }
             (None, Some(_)) => true,
             (None, None) => false,
         }
+    }
+
+    pub(crate) fn ext_ghost(&self, link: usize, sheet: &str) -> Option<SheetId> {
+        let st = self.ext_lock();
+        let i = st
+            .sheets
+            .iter()
+            .position(|(l, n)| *l == link && crate::text::eq_sheet_name(n, sheet))?;
+        Some(SheetId(EXT_BASE + i as u32))
+    }
+
+    pub fn ext_source_renamed_sheet(&mut self, link: usize, old: &str, new: &str) -> bool {
+        let Some(ghost) = self.ext_ghost(link, old) else {
+            return false;
+        };
+        if self.ext_ghost(link, new).is_some() {
+            return false;
+        }
+        self.ext_lock().sheets[(ghost.0 - EXT_BASE) as usize].1 = new.to_string();
+
+        let on = |s: &SheetRef| match s {
+            SheetRef::Sheet(id) => *id == ghost,
+            SheetRef::Span(a, b) => *a == ghost || *b == ghost,
+            _ => false,
+        };
+        self.rewrite_nodes(&mut |n, _| match n {
+            Node::Ref(s, _) | Node::DeadRef(s) if on(s) => Some(n.clone()),
+            Node::Name { sheet: Some(s), .. } if on(s) => Some(n.clone()),
+            _ => None,
+        });
+        true
+    }
+
+    pub fn ext_source_deleted_sheet(&mut self, link: usize, name: &str) -> bool {
+        let Some(ghost) = self.ext_ghost(link, name) else {
+            return false;
+        };
+        self.ext_lock().sheets[(ghost.0 - EXT_BASE) as usize].1 = "#REF".to_string();
+        self.ext_sheets.retain(|s| s.id != ghost);
+        let on = |s: &SheetRef| match s {
+            SheetRef::Sheet(id) => *id == ghost,
+            SheetRef::Span(a, b) => *a == ghost || *b == ghost,
+            _ => false,
+        };
+        self.rewrite_nodes(&mut |n, _| match n {
+            Node::Ref(s, _) | Node::DeadRef(s) if on(s) => Some(n.clone()),
+            _ => None,
+        });
+        self.ext_dirty(vec![ghost]);
+        true
+    }
+
+    pub fn ext_source_renamed_name(&mut self, link: usize, old: &str, new: &str) -> bool {
+        let (old_key, new_key) = (old.to_uppercase(), new.to_uppercase());
+        {
+            let mut st = self.ext_lock();
+            for (l, n) in st.names.iter_mut() {
+                if *l == link && n.name.eq_ignore_ascii_case(old) {
+                    n.name = new.to_string();
+                }
+            }
+        }
+        let (key_text, display): (crate::value::Text, crate::value::Text) =
+            (new_key.as_str().into(), new.into());
+
+        let mut parts: Vec<SheetRef> = Vec::new();
+        for f in self.formulas.iter().flatten() {
+            formula::walk(&f.formula.root, &mut |n| {
+                if let Node::Name { sheet: Some(s), .. } = n {
+                    if !parts.contains(s) && self.ext_name_link(s) == Some(link) {
+                        parts.push(s.clone());
+                    }
+                }
+            });
+        }
+        let changed = self.rewrite_nodes(&mut |n, _| match n {
+            Node::Name {
+                key,
+                sheet: Some(s),
+                ..
+            } if key.as_ref() == old_key.as_str() && parts.contains(s) => Some(Node::Name {
+                key: key_text.clone(),
+                display: display.clone(),
+                sheet: Some(s.clone()),
+            }),
+            _ => None,
+        });
+        if changed {
+            self.relink_and_recalc();
+        }
+        changed
     }
 
     pub fn ext_sheet_info(&self, id: SheetId) -> Option<(ExtLink, String)> {
@@ -230,7 +357,11 @@ impl Workbook {
         for f in self.formulas.iter().flatten() {
             formula::walk(&f.formula.root, &mut |n| match n {
                 Node::Ref(s, _) | Node::DeadRef(s) => self.ext_note(s, &mut used),
-                Node::Name { sheet: Some(s), .. } => self.ext_note(s, &mut used),
+                Node::Name { sheet: Some(s), .. } => {
+                    if let Some(l) = self.ext_name_link(s) {
+                        used.insert(l);
+                    }
+                }
                 _ => {}
             });
         }
@@ -238,12 +369,65 @@ impl Workbook {
         used.into_iter().filter(|&l| !st.links[l].broken).collect()
     }
 
+    fn ext_links_in_cell_order(&self) -> Vec<usize> {
+        let tab = |id: SheetId| self.sheets.iter().position(|s| s.id == id);
+        let mut hosts: Vec<(usize, u32, u32, usize)> = Vec::new();
+        for (fi, f) in self.formulas.iter().enumerate() {
+            let Some(f) = f else { continue };
+            if let Some(t) = tab(f.addr.sheet) {
+                hosts.push((t, f.addr.row, f.addr.col, fi));
+            }
+        }
+        hosts.sort_unstable();
+        let mut out: Vec<usize> = Vec::new();
+        for (.., fi) in hosts {
+            let Some(f) = &self.formulas[fi] else {
+                continue;
+            };
+            formula::walk(&f.formula.root, &mut |n| {
+                let l = match n {
+                    Node::Ref(SheetRef::Sheet(id), _) | Node::DeadRef(SheetRef::Sheet(id)) => {
+                        self.ext_link_of(*id)
+                    }
+                    Node::Name { sheet: Some(s), .. } => self.ext_name_link(s),
+                    _ => None,
+                };
+                if let Some(l) = l {
+                    if !out.contains(&l) {
+                        out.push(l);
+                    }
+                }
+            });
+        }
+        out
+    }
+
     fn ext_note(&self, r: &SheetRef, used: &mut std::collections::BTreeSet<usize>) {
-        if let SheetRef::Sheet(id) = r {
-            if let Some(l) = self.ext_link_of(*id) {
+        let ids = match r {
+            SheetRef::Sheet(id) => [Some(*id), None],
+            SheetRef::Span(a, b) => [Some(*a), Some(*b)],
+            _ => [None, None],
+        };
+        for id in ids.into_iter().flatten() {
+            if let Some(l) = self.ext_link_of(id) {
                 used.insert(l);
             }
         }
+    }
+
+    fn ext_link_spanned(&self, link: usize) -> bool {
+        let mut found = false;
+        for f in self.formulas.iter().flatten() {
+            formula::walk(&f.formula.root, &mut |n| {
+                if let Node::Ref(SheetRef::Span(a, _), _) = n {
+                    found |= self.ext_link_of(*a) == Some(link);
+                }
+            });
+            if found {
+                return true;
+            }
+        }
+        false
     }
 
     fn ext_ref_sheet(&self, r: &SheetRef) -> bool {
@@ -258,9 +442,118 @@ impl Workbook {
             return false;
         };
         let changed = l.path != path || l.open != open;
-        l.path = path.to_string();
+        let old = std::mem::replace(&mut l.path, path.to_string());
         l.open = open;
+        if old != path {
+            if split_path(&old).0.is_empty() {
+                st.rename_slot(&old, path);
+            } else {
+                st.slot(path);
+            }
+        }
         changed
+    }
+
+    pub fn ext_change_links(&mut self, links: &[usize], path: &str) {
+        let mut parts: Vec<SheetRef> = Vec::new();
+        for f in self.formulas.iter().flatten() {
+            formula::walk(&f.formula.root, &mut |n| {
+                if let Node::Name {
+                    sheet: Some(s @ SheetRef::Missing(_)),
+                    ..
+                } = n
+                {
+                    if !parts.contains(s)
+                        && self.ext_name_link(s).is_some_and(|l| links.contains(&l))
+                    {
+                        parts.push(s.clone());
+                    }
+                }
+            });
+        }
+        {
+            let mut st = self.ext_lock();
+            for &li in links {
+                let open = st.links.get(li).is_some_and(|l| l.open);
+                if !open && !st.sheets.iter().any(|(l, n)| *l == li && n == "#REF") {
+                    continue;
+                }
+                let Some(old) = st.links.get(li).cloned() else {
+                    continue;
+                };
+
+                let kept = (0..st.links.len()).find(|&i| {
+                    !links.contains(&i)
+                        && !st.links[i].broken
+                        && same_file(&st.links[i].path, &old.path)
+                });
+                let new = kept.unwrap_or_else(|| {
+                    st.links.push(old);
+                    st.links.len() - 1
+                });
+                for (l, n) in st.sheets.iter_mut() {
+                    if *l == li && n == "#REF" {
+                        *l = new;
+                    }
+                }
+            }
+        }
+        for &li in links {
+            self.ext_set_link(li, path, false);
+        }
+        if parts.is_empty() {
+            return;
+        }
+        let to = SheetRef::Missing(path.into());
+        self.rewrite_nodes(&mut |n, _| match n {
+            Node::Name {
+                key,
+                display,
+                sheet: Some(s),
+            } if parts.contains(s) => Some(Node::Name {
+                key: key.clone(),
+                display: display.clone(),
+                sheet: Some(to.clone()),
+            }),
+            _ => None,
+        });
+    }
+
+    pub fn ext_set_fresh(&mut self, link: usize, fresh: bool) {
+        if let Some(l) = self.ext_lock().links.get_mut(link) {
+            l.fresh = fresh;
+        }
+    }
+
+    pub fn ext_rename_link(&mut self, link: usize, path: &str) -> bool {
+        let used = self.ext_used_links().contains(&link);
+        let mut st = self.ext_lock();
+        let Some(l) = st.links.get_mut(link) else {
+            return false;
+        };
+        if l.path == path {
+            return false;
+        }
+        let old = std::mem::replace(&mut l.path, path.to_string());
+
+        if used {
+            st.rename_slot(&old, path);
+        }
+        true
+    }
+
+    pub fn ext_link_order(&self) -> Vec<usize> {
+        let used = self.ext_used_links();
+        let mut st = self.ext_lock();
+        let mut keyed: Vec<(usize, usize)> = used
+            .into_iter()
+            .map(|l| {
+                let p = st.links[l].path.clone();
+                (st.slot(&p), l)
+            })
+            .collect();
+        keyed.sort_unstable();
+        keyed.into_iter().map(|(_, l)| l).collect()
     }
 
     pub fn ext_data(&self, link: usize) -> Vec<ExtSheetData> {
@@ -279,11 +572,36 @@ impl Workbook {
                 cells: sheet_cells(sh),
             });
         }
+        tab_order(&st, link, &mut out);
         out
     }
 
     pub fn ext_data_read(&self, link: usize) -> Vec<ExtSheetData> {
         let names = self.ext_names(link);
+
+        let mut spans: Vec<(SheetId, SheetId)> = Vec::new();
+        for f in self.formulas.iter().flatten() {
+            formula::walk(&f.formula.root, &mut |n| {
+                if let Node::Ref(SheetRef::Span(a, b), _) = n {
+                    if self.ext_link_of(*a) == Some(link) && !spans.contains(&(*a, *b)) {
+                        spans.push((*a, *b));
+                    }
+                }
+            });
+        }
+        let mut between: Vec<(SheetId, Rect)> = Vec::new();
+        for (a, b) in spans {
+            let rb = self.graph.read_rects(b);
+            let common: Vec<Rect> = self
+                .graph
+                .read_rects(a)
+                .into_iter()
+                .filter(|r| rb.contains(r))
+                .collect();
+            for id in self.ext_span(a, b) {
+                between.extend(common.iter().map(|r| (id, *r)));
+            }
+        }
         let st = self.ext_lock();
         let mut out = Vec::new();
         for (i, (l, name)) in st.sheets.iter().enumerate() {
@@ -295,6 +613,7 @@ impl Workbook {
                 continue;
             };
             let mut rects = self.graph.read_rects(id);
+            rects.extend(between.iter().filter(|(i, _)| *i == id).map(|(_, r)| *r));
             rects.extend(
                 names
                     .iter()
@@ -314,10 +633,23 @@ impl Workbook {
                 cells,
             });
         }
+        tab_order(&st, link, &mut out);
         out
     }
 
     pub fn ext_set_data(&mut self, link: usize, data: Vec<ExtSheetData>) -> RecalcReport {
+        let changed = self.ext_store_data(link, data);
+        if changed.is_empty() {
+            return RecalcReport::default();
+        }
+        self.ext_dirty(changed)
+    }
+
+    pub fn ext_set_data_quiet(&mut self, link: usize, data: Vec<ExtSheetData>) {
+        self.ext_store_data(link, data);
+    }
+
+    fn ext_store_data(&mut self, link: usize, data: Vec<ExtSheetData>) -> Vec<SheetId> {
         let mut changed: Vec<SheetId> = Vec::new();
         let ids: Vec<SheetId> = {
             let mut st = self.ext_lock();
@@ -332,12 +664,18 @@ impl Workbook {
                 .map(|i| SheetId(EXT_BASE + i as u32))
                 .collect()
         };
-        {
+        let reordered = {
             let mut st = self.ext_lock();
+            let tabs: Vec<String> = data.iter().map(|d| d.name.clone()).collect();
+            let old = st
+                .tabs
+                .iter()
+                .find(|(l, _)| *l == link)
+                .map(|(_, t)| t.clone());
             st.tabs.retain(|(l, _)| *l != link);
-            st.tabs
-                .push((link, data.iter().map(|d| d.name.clone()).collect()));
-        }
+            st.tabs.push((link, tabs.clone()));
+            old.is_some_and(|o| o != tabs)
+        };
         let had = self.ext_sheets.len();
         let gone = changed.clone();
         self.ext_sheets.retain(|s| !gone.contains(&s.id));
@@ -364,10 +702,15 @@ impl Workbook {
             self.ext_sheets.push(new);
             changed.push(*id);
         }
-        if changed.is_empty() {
-            return RecalcReport::default();
+
+        if reordered || (!changed.is_empty() && self.ext_link_spanned(link)) {
+            for id in ids {
+                if !changed.contains(&id) {
+                    changed.push(id);
+                }
+            }
         }
-        self.ext_dirty(changed)
+        changed
     }
 
     pub fn ext_reopened(&mut self) -> RecalcReport {
@@ -429,6 +772,9 @@ impl Workbook {
             l.broken = true;
         }
         let mut report = RecalcReport::default();
+
+        self.calc.skip_volatile = true;
+        self.calc.skip_host_volatile = true;
         for addr in hit {
             let v = match self.value(addr) {
                 Value::Array(a) => a.data[0].clone(),
@@ -437,6 +783,8 @@ impl Workbook {
             let r = self.set_value(addr, v);
             report.changed.extend(r.changed);
         }
+        self.calc.skip_volatile = false;
+        self.calc.skip_host_volatile = false;
         report
     }
 
@@ -477,6 +825,8 @@ impl Workbook {
         };
         Some(if quoted {
             format!("{head}:{}'!", last_name.replace('\x27', "''"))
+        } else if !plain_part(&last_name) {
+            format!("'{head}:{}'!", last_name.replace('\x27', "''"))
         } else {
             format!("{head}:{last_name}!")
         })
@@ -488,6 +838,17 @@ impl Workbook {
             .get(id.0.checked_sub(EXT_BASE)? as usize)
             .map(|(l, _)| *l)
     }
+}
+
+fn tab_order(st: &ExtState, link: usize, out: &mut [ExtSheetData]) {
+    let Some((_, tabs)) = st.tabs.iter().find(|(l, _)| *l == link) else {
+        return;
+    };
+    out.sort_by_key(|d| {
+        tabs.iter()
+            .position(|t| crate::text::eq_sheet_name(t, &d.name))
+            .unwrap_or(usize::MAX)
+    });
 }
 
 fn sheet_cells(s: &Sheet) -> Vec<(u32, u32, Value)> {
@@ -517,14 +878,69 @@ impl Workbook {
 
 impl Workbook {
     pub fn ext_file_links(&self) -> Vec<(usize, ExtLink)> {
-        self.ext_links()
+        let links = self.ext_links();
+        let mut order = self.ext_links_in_cell_order();
+
+        for (i, l) in links.iter().enumerate() {
+            if !l.broken && !order.contains(&i) {
+                order.push(i);
+            }
+        }
+        order
             .into_iter()
-            .enumerate()
-            .filter(|(_, l)| !l.broken)
+            .filter(|&i| !links[i].broken)
+            .map(|i| (i, links[i].clone()))
             .collect()
     }
 
     pub(crate) fn ext_file_indexes(&self, text: &str) -> String {
+        let mut out = String::with_capacity(text.len());
+        let mut part = String::new();
+        let mut chars = text.chars().peekable();
+        let mut quote: Option<char> = None;
+        while let Some(c) = chars.next() {
+            match quote {
+                Some(q) if c == q => {
+                    if chars.peek() == Some(&q) {
+                        chars.next();
+                        if q == '"' {
+                            out.push_str("\"\"");
+                        } else {
+                            part.push_str("''");
+                        }
+                        continue;
+                    }
+                    quote = None;
+                    if q == '"' {
+                        out.push(c);
+                    } else {
+                        part.push(c);
+                    }
+                }
+                Some('"') => out.push(c),
+                Some(_) => part.push(c),
+                None if c == '"' => {
+                    out.push_str(&self.ext_file_indexes_code(&part));
+                    part.clear();
+                    out.push(c);
+                    quote = Some('"');
+                }
+                None => {
+                    if c == '\'' {
+                        quote = Some('\'');
+                    }
+                    part.push(c);
+                }
+            }
+        }
+        out.push_str(&self.ext_file_indexes_code(&part));
+        out
+    }
+
+    fn ext_file_indexes_code(&self, text: &str) -> String {
+        if text.is_empty() {
+            return String::new();
+        }
         let mut out = text.to_string();
         for (n, (_, l)) in self.ext_file_links().iter().enumerate() {
             let idx = format!("[{}]", n + 1);
@@ -731,6 +1147,23 @@ impl Workbook {
             .collect()
     }
 
+    pub(crate) fn ext_multi_names(&self) -> Vec<String> {
+        let st = self.ext_lock();
+        let mut out = Vec::new();
+        for (li, n) in &st.names {
+            let Some(l) = st.links.get(*li) else {
+                continue;
+            };
+            if n.value.is_some() || n.sheet.is_empty() || n.rect.is_cell() {
+                continue;
+            }
+            let up = n.name.to_uppercase();
+            out.push(format!("{}!{up}", l.name().to_uppercase()));
+            out.push(format!("{}!{up}", l.path.to_uppercase()));
+        }
+        out
+    }
+
     pub fn ext_names(&self, link: usize) -> Vec<ExtName> {
         self.ext_lock()
             .names
@@ -740,7 +1173,37 @@ impl Workbook {
             .collect()
     }
 
-    pub fn ext_set_names(&mut self, link: usize, mut names: Vec<ExtName>) -> bool {
+    pub fn ext_set_names(&mut self, link: usize, names: Vec<ExtName>) -> bool {
+        if !self.ext_store_names(link, names) {
+            return false;
+        }
+
+        let legacy: Vec<_> = self
+            .formula_ids()
+            .filter(|&fid| {
+                let mut uses = false;
+                formula::walk(&self.formula(fid).formula.root, &mut |n| {
+                    if let Node::Name { sheet: Some(s), .. } = n {
+                        uses |= self.ext_name_link(s) == Some(link);
+                    }
+                });
+                uses
+            })
+            .collect();
+        for fid in legacy {
+            self.refresh_scalar_entry(fid);
+        }
+        if self.settings.mode == super::CalcMode::Automatic {
+            self.full_recalc();
+        }
+        true
+    }
+
+    pub fn ext_set_names_quiet(&mut self, link: usize, names: Vec<ExtName>) {
+        self.ext_store_names(link, names);
+    }
+
+    fn ext_store_names(&mut self, link: usize, mut names: Vec<ExtName>) -> bool {
         let mut consts = Vec::new();
         for (row, n) in names.iter_mut().filter(|n| n.value.is_some()).enumerate() {
             n.rect = Rect::new(row as u32, 0, row as u32, 0);
@@ -767,10 +1230,16 @@ impl Workbook {
         }
         self.ext_sheets.retain(|s| s.id != id);
         self.ext_sheets.push(ghost);
-        if self.settings.mode == super::CalcMode::Automatic {
-            self.full_recalc();
-        }
         true
+    }
+
+    pub(crate) fn ext_name_scalar(&self, book: &str, name: &str) -> Option<bool> {
+        let link = self.ext_find_link(book)?;
+        let st = self.ext_lock();
+        st.names
+            .iter()
+            .find(|(l, n)| *l == link && n.name.eq_ignore_ascii_case(name))
+            .map(|(_, n)| n.value.is_some() || n.rect.is_cell())
     }
 
     fn ext_find_link(&self, key: &str) -> Option<usize> {

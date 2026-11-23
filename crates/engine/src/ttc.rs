@@ -78,8 +78,87 @@ fn split_delimited(
     out
 }
 
+fn guess_breaks(lines: &[Vec<u16>]) -> Vec<u32> {
+    let n = lines.len();
+    let width = lines.iter().map(Vec::len).max().unwrap_or(0);
+    let mut h = vec![0usize; width];
+    for l in lines {
+        for (i, &c) in l.iter().enumerate() {
+            if c != 0x20 && c != 0x3000 {
+                h[i] += 1;
+            }
+        }
+    }
+    let (eighth, half) = (n / 8, n / 2);
+
+    let at = |i: usize| h.get(i).copied().unwrap_or(0);
+    let mut out = vec![0u32];
+    let mut i = 0;
+    let mut prev = 0;
+    while i < width {
+        let c = h[i];
+        if c > eighth || (prev != 0 && c == 0) {
+            break;
+        }
+        prev = c;
+        i += 1;
+    }
+    let (mut best_s, mut best_e) = (0usize, 0usize);
+    while i < width {
+        if h[i] <= eighth {
+            let block = i;
+            let mut low = usize::MAX;
+            while i < width {
+                let c = h[i];
+                if c > eighth {
+                    break;
+                }
+                let mut e = i;
+                if c <= low {
+                    while e < width && h[e] == c {
+                        e += 1;
+                    }
+                    if e < width {
+                        let next = h[e];
+                        e -= 1;
+                        if c <= next
+                            && (c < low
+                                || (at(block.wrapping_sub(1)) <= half
+                                    && next != half
+                                    && half <= next)
+                                || best_e - best_s < e - i)
+                        {
+                            (best_s, best_e, low) = (i, e, c);
+                        }
+                    }
+                }
+                i = e + 1;
+            }
+            if i < width && low != usize::MAX {
+                let mid = best_s + (best_e - best_s) / 2;
+                let p = if half < at(best_s - 1) {
+                    if half < at(best_e + 1) {
+                        mid
+                    } else {
+                        best_s
+                    }
+                } else if at(best_e + 1) <= half {
+                    mid
+                } else {
+                    best_e + 1
+                };
+                out.push(p as u32);
+            }
+        }
+        i += 1;
+    }
+    out.sort_unstable();
+    out.dedup();
+    out
+}
+
 fn split_fixed(line: &str, breaks: &[u32]) -> Vec<String> {
-    let ch: Vec<char> = line.chars().collect();
+    let ch: Vec<u16> = line.encode_utf16().collect();
     let mut out = Vec::new();
     for (j, &s) in breaks.iter().enumerate() {
         let s = s as usize;
@@ -90,167 +169,99 @@ fn split_fixed(line: &str, breaks: &[u32]) -> Vec<String> {
             .get(j + 1)
             .map_or(ch.len(), |&e| (e as usize).min(ch.len()));
         out.push(
-            ch[s..e.max(s)]
-                .iter()
-                .collect::<String>()
-                .trim_matches(' ')
+            String::from_utf16_lossy(&ch[s..e.max(s)])
+                .trim_matches([' ', '\u{3000}'])
                 .to_string(),
         );
     }
     out
 }
 
-fn ttc_date(t: &str, order: DateOrder, ours: DateOrder, year_now: i64) -> Option<String> {
-    let mut parts: Vec<&str> = Vec::new();
-    let s = t.trim_matches(' ');
-    let b = s.as_bytes();
-    let mut i = 0;
-    while i < b.len() {
-        let st = i;
-        if b[i].is_ascii_digit() {
-            while i < b.len() && b[i].is_ascii_digit() {
-                i += 1;
-            }
-        } else if b[i].is_ascii_alphabetic() {
-            while i < b.len() && b[i].is_ascii_alphabetic() {
-                i += 1;
-            }
-        } else {
-            return None;
-        }
-        parts.push(&s[st..i]);
-        let sep = i;
-        while i < b.len() && (b[i] == b' ' || b[i].is_ascii_punctuation()) {
-            i += 1;
-        }
-        if i == sep && i < b.len() {
-            return None;
-        }
-    }
-    let num = |p: &str, max_len: usize| -> Option<i64> {
-        (p.len() <= max_len && p.bytes().all(|c| c.is_ascii_digit())).then(|| p.parse().ok())?
-    };
-    let month = |p: &str, names: bool| -> Option<i64> {
-        match num(p, 2) {
-            Some(m) => (1..=12).contains(&m).then_some(m),
-            None if names && p.bytes().all(|c| c.is_ascii_alphabetic()) => {
-                crate::locale::month_from_name(p)
-                    .filter(|&m| {
-                        p.len() == 3 || p.len() == crate::locale::MONTH_NAMES[m as usize - 1].len()
-                    })
-                    .map(i64::from)
-            }
-            None => None,
-        }
-    };
-    let year = |p: &str| -> Option<i64> {
-        let y = num(p, 4)?;
-        match p.len() {
-            1 | 2 => Some(if y < 30 { 2000 + y } else { 1900 + y }),
-            4 if y >= 1900 => Some(y),
-            _ => None,
-        }
-    };
-    let day_ok = |y: i64, m: i64, d: i64| {
-        d >= 1
-            && (d <= crate::datetime::days_in_month(y, m as u32) as i64
-                || (y == 1900 && m == 2 && d == 29))
-    };
-    const MON: [&str; 12] = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    ];
+fn ttc_slots(ty: u32) -> Option<[usize; 3]> {
+    Some(match ty {
+        3 => [1, 0, 2],
+        4 => [0, 1, 2],
+        5 => [2, 1, 0],
+        6 => [2, 0, 1],
+        7 => [0, 2, 1],
+        8 => [1, 2, 0],
+        _ => return None,
+    })
+}
 
-    let mut split: Vec<&str> = Vec::new();
-    if parts.len() == 1 && parts[0].bytes().all(|c| c.is_ascii_digit()) {
-        let p = parts[0];
-        match (p.len(), order) {
-            (4, _) => split.extend([&p[..2], &p[2..]]),
-            (6, _) => split.extend([&p[..2], &p[2..4], &p[4..]]),
-            (5, DateOrder::MDY) => split.extend([&p[..1], &p[1..3], &p[3..]]),
-            (5, _) => split.extend([&p[..2], &p[2..3], &p[3..]]),
-            (8, DateOrder::YMD) => split.extend([&p[..4], &p[4..6], &p[6..]]),
+fn ttc_date(t: &str, ty: u32, env: crate::coerce::ParseEnv) -> Option<String> {
+    const DAY: usize = 0;
+    const MONTH: usize = 1;
+    const YEAR: usize = 2;
+    let slots = ttc_slots(ty)?;
+    let cs: Vec<char> = t.chars().collect();
+    let len = cs.len();
+    let blank = |c: char| c == ' ' || c == '\t';
+    let alnum = |c: char| c.is_ascii_digit() || c.is_alphabetic();
+    let mut pos = cs.iter().position(|&c| !blank(c)).unwrap_or(len);
+    let run_end = cs[pos..]
+        .iter()
+        .position(|&c| !alnum(c))
+        .map_or(len, |k| pos + k);
+    let separated = cs[run_end..].iter().any(|&c| !blank(c));
+
+    let width: [usize; 3] = if separated {
+        [2, 9, 4]
+    } else {
+        match run_end - pos {
+            4 | 6 => [2, 2, 2],
+            5 => [2, 1, 2],
+            7 => [2, 3, 2],
+            8 => [2, 2, 4],
+            9 => [2, 3, 4],
             _ => return None,
         }
-        parts = split;
-    }
-    let named = parts.iter().any(|p| p.as_bytes()[0].is_ascii_alphabetic());
-    let fmt3 = |d: i64, m: i64, y: i64| -> String {
-        if named {
-            format!("{}-{}-{}", d, MON[m as usize - 1], y)
-        } else {
-            match ours {
-                DateOrder::DMY => format!("{}/{}/{}", d, m, y),
-                DateOrder::MDY => format!("{}/{}/{}", m, d, y),
-                DateOrder::YMD => format!("{}/{}/{}", y, m, d),
+    };
+    let mut fields: [String; 3] = Default::default();
+    for slot in 0..3 {
+        let f = slots.iter().position(|&s| s == slot)?;
+        let mut s = String::new();
+        let mut n = 0;
+        while n < width[f] && pos < len && alnum(cs[pos]) {
+            s.push(cs[pos]);
+            pos += 1;
+            n += 1;
+        }
+        if n == 0 {
+            if slot < 2 {
+                return None;
             }
+        } else if separated && (n > 4 && f != MONTH || n == 4 && f != YEAR || n == 3 && f != MONTH)
+        {
+            return None;
+        }
+        if separated {
+            while pos < len && !alnum(cs[pos]) {
+                pos += 1;
+            }
+        }
+        fields[f] = s;
+    }
+    if cs[pos..].iter().any(|&c| !blank(c)) {
+        return None;
+    }
+    let order = if fields[MONTH].starts_with(char::is_alphabetic) {
+        [DAY, MONTH, YEAR]
+    } else {
+        match env.locale.date_order {
+            DateOrder::MDY => [MONTH, DAY, YEAR],
+            DateOrder::DMY => [DAY, MONTH, YEAR],
+            DateOrder::YMD => [YEAR, MONTH, DAY],
         }
     };
-    match parts.len() {
-        3 => {
-            let (dp, mp, yp) = match order {
-                DateOrder::DMY => (parts[0], parts[1], parts[2]),
-                DateOrder::MDY => (parts[1], parts[0], parts[2]),
-                DateOrder::YMD => (parts[2], parts[1], parts[0]),
-            };
-            let (m, y, d) = (month(mp, true)?, year(yp)?, num(dp, 2)?);
-            day_ok(y, m, d).then(|| fmt3(d, m, y))
-        }
-        2 => {
-            let md = |mp: &str, dp: &str, names: bool| -> Option<String> {
-                let (m, d) = (month(mp, names)?, num(dp, 2)?);
-                day_ok(year_now, m, d).then(|| format!("{}-{}", d, MON[m as usize - 1]))
-            };
-
-            let my = |mp: &str, yp: &str| -> Option<String> {
-                let (m, y) = (month(mp, true)?, year(yp)?);
-                (num(yp, 4)? != 0).then(|| format!("{}-{}", MON[m as usize - 1], y))
-            };
-
-            let name_first = parts[0].starts_with(|c: char| c.is_ascii_alphabetic());
-            let plain = !s.contains(|c: char| c.is_ascii_punctuation() && c != '-' && c != '/');
-            let strict = plain && s.contains([' ', '-', '/']);
-            let ym = || my(parts[1], parts[0]);
-            let m_y = || my(parts[0], parts[1]);
-            match order {
-                DateOrder::DMY if named => {
-                    if name_first {
-                        strict.then(m_y)?
-                    } else {
-                        md(parts[1], parts[0], true)
-                    }
-                }
-                DateOrder::DMY => md(parts[1], parts[0], true).or_else(m_y),
-
-                DateOrder::MDY if named && !name_first => {
-                    plain.then(|| md(parts[1], parts[0], true))?
-                }
-                DateOrder::MDY => md(parts[0], parts[1], true)
-                    .or_else(|| {
-                        let p = parts[1];
-                        if !(3..=4).contains(&p.len()) || !p.bytes().all(|c| c.is_ascii_digit()) {
-                            return None;
-                        }
-                        let (m, d, y) = (month(parts[0], true)?, num(&p[..2], 2)?, year(&p[2..])?);
-                        day_ok(y, m, d).then(|| fmt3(d, m, y))
-                    })
-                    .or_else(|| {
-                        if named {
-                            strict.then(m_y)?
-                        } else {
-                            (parts[0].len() <= 2)
-                                .then(ym)
-                                .flatten()
-                                .or_else(|| strict.then(m_y)?)
-                        }
-                    }),
-
-                DateOrder::YMD => md(parts[0], parts[1], false)
-                    .or_else(ym)
-                    .or_else(|| strict.then(m_y)?),
-            }
-        }
-        _ => None,
-    }
+    let sep = env.locale.date_sep.to_string();
+    let text = order
+        .iter()
+        .map(|&f| fields[f].as_str())
+        .filter(|s| !s.is_empty())
+        .collect::<Vec<_>>()
+        .join(&sep);
+    crate::coerce::parse_datetime_text(&text, env).map(|_| text)
 }
 
 fn trailing_minus(t: &str) -> Option<String> {
@@ -337,33 +348,27 @@ impl Workbook {
             }
             fi = kept;
             if fi.is_empty() {
-                let texts: Vec<Vec<char>> = (rect.r0..=rect.r1)
+                let first = self
+                    .cell_table_extent(sheet)
+                    .map_or(rect.r0, |e| e.r0.max(rect.r0));
+                let last = rect.r1.min(first.saturating_add(250));
+                let texts: Vec<Vec<u16>> = (first..=last)
                     .map(|r| {
                         let addr = CellAddr::new(sheet, r, rect.c0);
-                        match self.sheet(sheet).and_then(|s| s.cells.get(r, rect.c0)) {
-                            Some(Entry::Const(Value::Text(t))) => t.chars().collect(),
-                            Some(Entry::Const(v)) => self
-                                .const_edit_text(addr, v)
-                                .unwrap_or_default()
-                                .chars()
-                                .collect(),
-                            Some(Entry::Formula(_)) => self
-                                .legacy_formula_text(addr)
-                                .unwrap_or_default()
-                                .chars()
-                                .collect(),
-                            None => Vec::new(),
-                        }
+                        let t = match self.sheet(sheet).and_then(|s| s.cells.get(r, rect.c0)) {
+                            Some(Entry::Const(Value::Text(t))) => t.to_string(),
+                            Some(Entry::Const(v)) => {
+                                self.const_edit_text(addr, v).unwrap_or_default()
+                            }
+                            Some(Entry::Formula(_)) => {
+                                self.legacy_formula_text(addr).unwrap_or_default()
+                            }
+                            None => String::new(),
+                        };
+                        t.encode_utf16().collect()
                     })
                     .collect();
-                let width = texts.iter().map(Vec::len).max().unwrap_or(0);
-                let blank = |i: usize| texts.iter().all(|l| l.get(i).is_none_or(|&c| c == ' '));
-                fi.push((0, 1));
-                for i in 1..width {
-                    if blank(i - 1) && !blank(i) {
-                        fi.push((i as u32, 1));
-                    }
-                }
+                fi = guess_breaks(&texts).into_iter().map(|p| (p, 1)).collect();
             }
             breaks = fi;
         }
@@ -514,16 +519,14 @@ impl Workbook {
                                 t = n;
                             }
                         }
-                        let order = match ty {
-                            3 => Some(DateOrder::MDY),
-                            4 => Some(DateOrder::DMY),
-                            5 => Some(DateOrder::YMD),
-                            _ => None,
-                        };
 
-                        if let Some(d) = order
-                            .and_then(|o| ttc_date(&t, o, normal.date_order, wb.calc.current_year))
-                        {
+                        let env = crate::coerce::ParseEnv {
+                            locale: &normal,
+                            date_system: wb.settings.date_system,
+                            current_year: wb.calc.current_year,
+                            iso_t: false,
+                        };
+                        if let Some(d) = ttc_date(&t, *ty, env) {
                             t = d;
                         }
                         if t.is_empty() {
@@ -662,6 +665,23 @@ fn has_r1c1_alias(t: &str) -> bool {
 mod tests {
     use super::*;
 
+    fn u(s: &str) -> Vec<u16> {
+        s.encode_utf16().collect()
+    }
+
+    #[test]
+    fn guess_breaks_cases() {
+        assert_eq!(guess_breaks(&[u("abc def"), u("ghi jkl")]), [0, 3]);
+        assert_eq!(guess_breaks(&[u("abcdef"), u("ghijkl")]), [0]);
+        assert_eq!(guess_breaks(&[]), [0]);
+        let mut l: Vec<Vec<u16>> = vec![u("ab  cd"); 16];
+        l[0] = u("abXXcd");
+        l[1] = u("abXXcd");
+        assert_eq!(guess_breaks(&l), [0, 2]);
+        l[2] = u("abXXcd");
+        assert_eq!(guess_breaks(&l), [0]);
+    }
+
     #[test]
     fn delimited() {
         let d = [','];
@@ -690,6 +710,39 @@ mod tests {
         assert_eq!(split_fixed("abc  123 xy", &[0, 3, 8]), ["abc", "123", "xy"]);
         assert_eq!(split_fixed("abcdef", &[0, 10]), ["abcdef"]);
         assert_eq!(split_fixed("abcdefgh", &[0, 3, 5]), ["abc", "de", "fgh"]);
+    }
+
+    #[test]
+    fn date_fields() {
+        let nz = crate::locale::Locale::en_nz();
+        let us = crate::locale::Locale::en_us();
+        let env = |l| crate::coerce::ParseEnv {
+            locale: l,
+            date_system: crate::datetime::DateSystem::D1900,
+            current_year: 2024,
+            iso_t: false,
+        };
+        let d = |t: &str, ty: u32| ttc_date(t, ty, env(&nz));
+
+        assert_eq!(d("1,234", 3).as_deref(), Some("23/1/4"));
+        assert_eq!(d("12;30", 4).as_deref(), Some("12/30"));
+        assert_eq!(d("2004.12.4", 5).as_deref(), Some("4/12/2004"));
+        assert_eq!(d("12/4/04", 6).as_deref(), Some("04/12/4"));
+
+        assert_eq!(d("Jan 2020", 3).as_deref(), Some("20/Jan/20"));
+        assert_eq!(d("June 5", 3), None);
+        assert_eq!(d("Jan;5", 5), None);
+
+        assert_eq!(d("-12-4", 4), None);
+        assert_eq!(d("1/2/123", 4), None);
+        assert_eq!(d("12;4;2004 5:30", 4), None);
+
+        assert_eq!(d("1230", 4).as_deref(), Some("12/30"));
+        assert_eq!(d("00123", 5).as_deref(), Some("23/1/00"));
+        assert_eq!(d("20201231", 5).as_deref(), Some("31/12/2020"));
+        assert_eq!(d("123", 3), None);
+        assert_eq!(ttc_date("1,234", 3, env(&us)).as_deref(), Some("1/23/4"));
+        assert_eq!(d("5", 1), None);
     }
 
     #[test]

@@ -1,0 +1,3 @@
+Private Sub Workbook_SheetFollowHyperlink(ByVal Sh As Object, ByVal Target As Hyperlink)
+    HlLog.L "Book.SheetFollow " & Sh.Name & " " & HlLog.Desc(Target) & " wb=" & ActiveWorkbook.Name & " active=" & ActiveSheet.Name & " sel=" & Selection.Address
+End Sub

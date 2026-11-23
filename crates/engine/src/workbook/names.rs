@@ -40,6 +40,14 @@ pub struct Names {
     invisible: rustc_hash::FxHashSet<(Option<SheetId>, Text)>,
 
     macro_types: FxHashMap<(Option<SheetId>, Text), i32>,
+
+    notes: FxHashMap<(Option<SheetId>, Text), NameNotes>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct NameNotes {
+    pub comment: String,
+    pub shortcut: Option<String>,
 }
 
 impl Names {
@@ -58,8 +66,23 @@ impl Names {
         }
     }
 
+    pub fn notes(&self, key: &str, scope: Option<SheetId>) -> Option<&NameNotes> {
+        self.notes.get(&(scope, key.into()))
+    }
+
+    pub fn notes_mut(&mut self, key: &str, scope: Option<SheetId>) -> &mut NameNotes {
+        self.notes.entry((scope, key.into())).or_default()
+    }
+
+    pub fn move_notes(&mut self, old: &str, new: &str, scope: Option<SheetId>) {
+        if let Some(n) = self.notes.remove(&(scope, old.into())) {
+            self.notes.insert((scope, new.into()), n);
+        }
+    }
+
     pub fn get(&self, key: &str, scope: Option<SheetId>) -> Option<&NameDef> {
-        self.map.get(&(scope, Text::from(key)))
+        self.map
+            .get(&(scope, Text::from(crate::text::name_key(key))))
     }
 
     pub fn lookup(&self, key: &str, sheet: SheetId) -> Option<&NameDef> {
@@ -67,18 +90,21 @@ impl Names {
     }
 
     pub fn placeholder(&self, key: &str) -> Option<&Text> {
-        self.placeholders.get(key)
+        self.placeholders.get(crate::text::name_key(key).as_str())
     }
 
     pub fn note_placeholder(&mut self, key: &str, display: &Text) {
         self.placeholders
-            .entry(Text::from(key))
+            .entry(Text::from(crate::text::name_key(key)))
             .or_insert_with(|| display.clone());
     }
 
     pub fn insert(&mut self, def: NameDef) -> Option<NameDef> {
-        let key = (def.scope, Text::from(def.name.to_uppercase()));
-        self.invisible.remove(&key);
+        let key = (def.scope, Text::from(crate::text::name_key(&def.name)));
+
+        if !self.map.contains_key(&key) {
+            self.invisible.remove(&key);
+        }
         if let Some(s) = def.scope {
             self.deleted_scoped.remove(&(s, key.1.clone()));
             let bound = self.unbound_locals(&def, s);
@@ -137,6 +163,8 @@ impl Names {
 
     pub fn remove(&mut self, key: &str, scope: Option<SheetId>) -> Option<NameDef> {
         self.invisible.remove(&(scope, Text::from(key)));
+        self.notes.remove(&(scope, Text::from(key)));
+        self.macro_types.remove(&(scope, Text::from(key)));
         if let Some(s) = scope {
             self.global_bound.remove(&(s, Text::from(key)));
             self.copy_stale.remove(&(s, Text::from(key)));
@@ -175,7 +203,7 @@ impl Names {
 
     pub(crate) fn note_hidden(&mut self, name: &str) {
         self.hidden
-            .entry(name.to_uppercase())
+            .entry(crate::text::name_key(name))
             .or_insert_with(|| name.to_string());
     }
 

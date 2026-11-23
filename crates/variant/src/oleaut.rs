@@ -89,7 +89,7 @@ fn to_raw(v: &Variant) -> RawVariant {
     r.data[0] = match v {
         Variant::Empty | Variant::Null | Variant::BstrNull => 0,
         Variant::I2(x) => *x as u16 as u64,
-        Variant::I4(x) | Variant::Error(x) => *x as u32 as u64,
+        Variant::I4(x) | Variant::Int(x) | Variant::Error(x) => *x as u32 as u64,
         Variant::R4(x) => x.to_bits() as u64,
         Variant::R8(x) | Variant::Date(x) => x.to_bits(),
         Variant::Cy(x) | Variant::I8(x) => *x as u64,

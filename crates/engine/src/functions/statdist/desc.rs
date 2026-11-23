@@ -536,7 +536,7 @@ pub fn frequency(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
     Operand::Val(Array::column(counts.into_iter().map(Value::Number).collect()).into_value())
 }
 
-fn moment_base(v: &[f64], population: bool, f: &mut x87::MpFlag) -> (f64, f64, f64) {
+fn moment_base(v: &[f64], population: bool, f: &mut x87::MathFlag) -> (f64, f64, f64) {
     let n = v.len() as f64;
     let mut sum = 0.0;
     for &x in v {
@@ -554,7 +554,7 @@ fn moment_base(v: &[f64], population: bool, f: &mut x87::MpFlag) -> (f64, f64, f
     (m, s, n)
 }
 
-fn moment_sum(v: &[f64], m: f64, s: f64, fourth: bool, f: &mut x87::MpFlag) -> f64 {
+fn moment_sum(v: &[f64], m: f64, s: f64, fourth: bool, f: &mut x87::MathFlag) -> f64 {
     let mut acc = 0.0;
     for &x in v {
         let d = f.add(x, -m);
@@ -573,7 +573,7 @@ pub fn kurt(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
             return Err(XlError::DIV0);
         }
 
-        let mut f = x87::MpFlag::default();
+        let mut f = x87::MathFlag::default();
         let (m, s, n) = moment_base(&v, false, &mut f);
         let acc = moment_sum(&v, m, s, true, &mut f);
 
@@ -593,7 +593,7 @@ pub fn skew(ctx: &mut EvalCtx, o: &[Operand], population: bool) -> Operand {
         if v.len() < 3 {
             return Err(XlError::DIV0);
         }
-        let mut f = x87::MpFlag::default();
+        let mut f = x87::MathFlag::default();
         let (m, s, n) = moment_base(&v, population, &mut f);
         let acc = moment_sum(&v, m, s, false, &mut f);
 
@@ -660,25 +660,28 @@ pub fn prob(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         let mut total = 0.0;
         let mut acc = 0.0;
         let mut counted = 0;
+
+        let mut deferred: Option<XlError> = None;
         for (x, p) in xs.iter().zip(ps.iter()) {
             if let Value::Error(e) = x {
                 return Err(*e);
             }
             if let Value::Error(e) = p {
-                return Err(*e);
+                deferred.get_or_insert(*e);
+                continue;
             }
 
             let (&Value::Number(x), &Value::Number(p)) = (x, p) else {
                 continue;
             };
             counted += 1;
-            if !(0.0..=1.0).contains(&p) {
-                return Err(XlError::NUM);
-            }
             total = x87::add(total, p);
             if x >= lower && x <= upper {
                 acc = x87::add(acc, p);
             }
+        }
+        if let Some(e) = deferred {
+            return Err(e);
         }
         if counted == 0 {
             return Err(XlError::DIV0);

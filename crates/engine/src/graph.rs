@@ -138,21 +138,49 @@ impl DepGraph {
             .map(|(k, _)| k)
     }
 
+    pub fn name_seen(&self, key: &str) -> bool {
+        self.names.contains_key(crate::text::name_key(key).as_str())
+    }
+
+    pub fn fresh(&self) -> DepGraph {
+        DepGraph {
+            names: self
+                .names
+                .keys()
+                .map(|k| (k.clone(), FxHashSet::default()))
+                .collect(),
+            ..DepGraph::default()
+        }
+    }
+
     pub fn dependents_of_name(&self, key: &str, out: &mut Vec<FormulaId>) {
-        if let Some(set) = self.names.get(key) {
+        if let Some(set) = self.names.get(crate::text::name_key(key).as_str()) {
             out.extend(set.iter().copied());
         }
     }
 }
 
 pub fn collect_precedents(wb: &Workbook, formula: &Formula, host: CellAddr) -> Vec<Prec> {
+    collect_precedents_with(wb, formula, host, false)
+}
+
+pub fn collect_precedents_scan(wb: &Workbook, formula: &Formula, host: CellAddr) -> Vec<Prec> {
+    collect_precedents_with(wb, formula, host, true)
+}
+
+fn collect_precedents_with(
+    wb: &Workbook,
+    formula: &Formula,
+    host: CellAddr,
+    scan: bool,
+) -> Vec<Prec> {
     let mut out = Vec::new();
     let mut seen_names: SmallVec<[Text; 4]> = SmallVec::new();
 
     if crate::datatable::is_table_formula(formula) {
         if let Node::Func { args, .. } = &formula.root {
             for a in args.iter().skip(2) {
-                collect_node(wb, a, host, false, &mut out, &mut seen_names);
+                collect_node(wb, a, host, false, scan, &mut out, &mut seen_names);
             }
             return out;
         }
@@ -170,7 +198,15 @@ pub fn collect_precedents(wb: &Workbook, formula: &Formula, host: CellAddr) -> V
             return out;
         }
     }
-    collect_node(wb, &formula.root, host, false, &mut out, &mut seen_names);
+    collect_node(
+        wb,
+        &formula.root,
+        host,
+        false,
+        scan,
+        &mut out,
+        &mut seen_names,
+    );
     out
 }
 
@@ -229,10 +265,39 @@ fn collect_node(
     node: &Node,
     host: CellAddr,
     wrap: bool,
+    scan: bool,
     out: &mut Vec<Prec>,
     seen: &mut SmallVec<[Text; 4]>,
 ) {
+    let mut skip: FxHashSet<*const Node> = FxHashSet::default();
+
+    let mut plain: FxHashSet<*const Node> = FxHashSet::default();
     walk(node, &mut |n| match n {
+        _ if skip.contains(&(n as *const Node)) => {}
+        Node::Binary(crate::parser::ast::BinOp::Intersect, ..)
+            if scan && !plain.contains(&(n as *const Node)) =>
+        {
+            match isect_pieces(wb, n, host, wrap) {
+                Some(pieces) if !pieces.is_empty() => {
+                    for (s, rect) in pieces {
+                        out.push(if rect.is_cell() {
+                            Prec::Cell(s, rect.r0, rect.c0)
+                        } else {
+                            Prec::Range(s, rect)
+                        });
+                    }
+                    walk(n, &mut |d| {
+                        skip.insert(d as *const Node);
+                    });
+                }
+                Some(_) => walk(n, &mut |d| {
+                    if matches!(d, Node::Binary(crate::parser::ast::BinOp::Intersect, ..)) {
+                        plain.insert(d as *const Node);
+                    }
+                }),
+                None => {}
+            }
+        }
         Node::Ref(sheet, cref) => {
             if let Some(rect) = resolve_rect(cref, host, wrap) {
                 for s in sheets_of(wb, sheet, host) {
@@ -261,10 +326,10 @@ fn collect_node(
             }
         }
         Node::Name { key, sheet, .. } => {
-            name_precedents(wb, key, sheet.as_ref(), host, out, seen);
+            name_precedents(wb, key, sheet.as_ref(), host, scan, out, seen);
         }
         Node::NamedCall { key, .. } => {
-            name_precedents(wb, key, None, host, out, seen);
+            name_precedents(wb, key, None, host, scan, out, seen);
         }
 
         Node::Func { id, args }
@@ -309,6 +374,7 @@ fn name_precedents(
     key: &Text,
     sheet: Option<&SheetRef>,
     host: CellAddr,
+    scan: bool,
     out: &mut Vec<Prec>,
     seen: &mut SmallVec<[Text; 4]>,
 ) {
@@ -330,7 +396,65 @@ fn name_precedents(
     if let Some(def) = def {
         seen.push(key.clone());
         let f = def.formula.clone();
-        collect_node(wb, &f.root, host, true, out, seen);
+        collect_node(wb, &f.root, host, true, scan, out, seen);
         seen.pop();
     }
+}
+
+fn operand_rects(
+    wb: &Workbook,
+    node: &Node,
+    host: CellAddr,
+    wrap: bool,
+) -> Option<Vec<(SheetId, Rect)>> {
+    use crate::parser::ast::BinOp;
+    match node.unwrap_ws() {
+        Node::Paren(x) => operand_rects(wb, x, host, wrap),
+        Node::Ref(sheet, cref) => {
+            let rect = resolve_rect(cref, host, wrap)?;
+            let ids = sheets_of(wb, sheet, host);
+            (ids.len() == 1).then(|| vec![(ids[0], rect)])
+        }
+        Node::Binary(BinOp::Range, a, b) => {
+            let (Node::Ref(sa, ca), Node::Ref(sb, cb)) = (a.unwrap_ws(), b.unwrap_ws()) else {
+                return None;
+            };
+            let (ra, rb) = (resolve_rect(ca, host, wrap)?, resolve_rect(cb, host, wrap)?);
+            let (xa, xb) = (sheets_of(wb, sa, host), sheets_of(wb, sb, host));
+            (xa.len() == 1 && xa == xb).then(|| vec![(xa[0], ra.union_bounds(&rb))])
+        }
+        Node::Binary(BinOp::Union, a, b) => {
+            let mut v = operand_rects(wb, a, host, wrap)?;
+            v.extend(operand_rects(wb, b, host, wrap)?);
+            Some(v)
+        }
+        n @ Node::Binary(BinOp::Intersect, ..) => isect_pieces(wb, n, host, wrap),
+        _ => None,
+    }
+}
+
+fn isect_pieces(
+    wb: &Workbook,
+    node: &Node,
+    host: CellAddr,
+    wrap: bool,
+) -> Option<Vec<(SheetId, Rect)>> {
+    let Node::Binary(crate::parser::ast::BinOp::Intersect, a, b) = node.unwrap_ws() else {
+        return None;
+    };
+    let (xs, ys) = (
+        operand_rects(wb, a, host, wrap)?,
+        operand_rects(wb, b, host, wrap)?,
+    );
+    let mut out = Vec::new();
+    for (sx, rx) in &xs {
+        for (sy, ry) in &ys {
+            if sx == sy {
+                if let Some(r) = rx.intersection(ry) {
+                    out.push((*sx, r));
+                }
+            }
+        }
+    }
+    Some(out)
 }

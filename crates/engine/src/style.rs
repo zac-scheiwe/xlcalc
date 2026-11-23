@@ -13,6 +13,20 @@ pub enum CellColor {
         index: u8,
         tint: u64,
     },
+
+    RgbTint {
+        rgb: u32,
+        tint: u64,
+    },
+
+    AutoTint {
+        tint: u64,
+    },
+
+    IndexedTint {
+        index: u8,
+        tint: u64,
+    },
 }
 
 impl CellColor {
@@ -23,9 +37,16 @@ impl CellColor {
         }
     }
 
+    pub fn is_auto(&self) -> bool {
+        matches!(self, CellColor::Auto | CellColor::Indexed(64))
+    }
+
     pub fn tint(&self) -> f64 {
         match self {
-            CellColor::Theme { tint, .. } => f64::from_bits(*tint),
+            CellColor::Theme { tint, .. }
+            | CellColor::RgbTint { tint, .. }
+            | CellColor::AutoTint { tint }
+            | CellColor::IndexedTint { tint, .. } => f64::from_bits(*tint),
             _ => 0.0,
         }
     }
@@ -60,6 +81,9 @@ pub struct Font {
     pub strikethrough: bool,
     pub superscript: bool,
     pub subscript: bool,
+
+    pub outline: bool,
+    pub shadow: bool,
     pub color: CellColor,
     pub scheme: FontScheme,
 
@@ -276,22 +300,22 @@ impl Borders {
 }
 
 impl BorderLine {
-    pub fn weight_rank(self) -> u8 {
+    pub fn priority_rank(self) -> u8 {
         match self {
-            BorderLine::None => 0,
-            BorderLine::Hair => 1,
-            BorderLine::Thin
-            | BorderLine::Dashed
-            | BorderLine::Dotted
-            | BorderLine::DashDot
-            | BorderLine::DashDotDot => 2,
-            BorderLine::Medium
-            | BorderLine::MediumDashed
-            | BorderLine::MediumDashDot
-            | BorderLine::MediumDashDotDot
-            | BorderLine::SlantDashDot => 3,
-            BorderLine::Thick => 4,
-            BorderLine::Double => 5,
+            BorderLine::Double => 0,
+            BorderLine::Thick => 1,
+            BorderLine::Medium => 2,
+            BorderLine::MediumDashed => 3,
+            BorderLine::MediumDashDot => 4,
+            BorderLine::SlantDashDot => 5,
+            BorderLine::MediumDashDotDot => 6,
+            BorderLine::Thin => 7,
+            BorderLine::Dashed => 8,
+            BorderLine::Dotted => 9,
+            BorderLine::DashDot => 10,
+            BorderLine::DashDotDot => 11,
+            BorderLine::Hair => 12,
+            BorderLine::None => 16,
         }
     }
 }
@@ -414,6 +438,8 @@ impl Default for Style {
                 italic: false,
                 underline: Underline::None,
                 strikethrough: false,
+                outline: false,
+                shadow: false,
                 superscript: false,
                 subscript: false,
                 color: CellColor::theme(1, 0.0),
@@ -515,6 +541,32 @@ impl StyleTable {
         }
     }
 
+    pub fn builtin_default(name: &str) -> Option<NamedStyle> {
+        builtin_styles()
+            .into_iter()
+            .find(|s| s.name.eq_ignore_ascii_case(name))
+    }
+
+    pub fn unsaved_when_unused(&self, deleted: &[Arc<str>]) -> Vec<Arc<str>> {
+        let mut order: Vec<(bool, Arc<str>)> = self
+            .named
+            .iter()
+            .map(|n| (n.builtin_id.is_none(), n.name.clone()))
+            .chain(deleted.iter().map(|d| (false, d.clone())))
+            .collect();
+        order.sort_by_cached_key(|(_, n)| sort_key(n));
+        let mut out = Vec::new();
+        for (i, (user, name)) in order.iter().enumerate() {
+            let Some(at) = name.find('_') else { continue };
+            let stem = name[..at].to_lowercase();
+            let prev = order[i.saturating_sub(1)].1.to_lowercase();
+            if *user && stem.chars().count() >= 2 && prev.starts_with(&stem) {
+                out.push(name.clone());
+            }
+        }
+        out
+    }
+
     pub fn insert(&mut self, s: NamedStyle) {
         if let Some(old) = self
             .named
@@ -524,10 +576,28 @@ impl StyleTable {
             *old = s;
             return;
         }
-        let k = s.name.to_lowercase();
-        let at = self.named.partition_point(|o| o.name.to_lowercase() < k);
+        let k = sort_key(&s.name);
+        let at = self.named.partition_point(|o| sort_key(&o.name) < k);
         self.named.insert(at, s);
     }
+}
+
+fn sort_key(name: &str) -> (String, String) {
+    let base = |c: char| -> char {
+        match c {
+            'à'..='å' => 'a',
+            'ç' => 'c',
+            'è'..='ë' => 'e',
+            'ì'..='ï' => 'i',
+            'ñ' => 'n',
+            'ò'..='ö' | 'ø' => 'o',
+            'ù'..='ü' => 'u',
+            'ý' | 'ÿ' => 'y',
+            c => c,
+        }
+    };
+    let lower = name.to_lowercase();
+    (lower.chars().map(base).collect(), lower)
 }
 
 fn builtin(name: &str, id: u32, parts: &str, edit: &dyn Fn(&mut Style)) -> NamedStyle {
@@ -717,7 +787,7 @@ pub fn nearest_color_index(rgb: u32) -> u8 {
     let dist = |p: u32| {
         [16, 8, 0]
             .iter()
-            .map(|&s| (ch(rgb, s) - ch(p, s)).pow(2))
+            .map(|&s| (ch(rgb, s) - ch(p, s)).abs())
             .sum::<i32>()
     };
     let mut best = 0;
@@ -960,11 +1030,25 @@ pub fn apply_tint_cv(rgb: u32, tint: f64) -> u32 {
 }
 
 impl Theme {
+    pub fn rgb_cv(&self, c: CellColor, auto: u32) -> u32 {
+        match c {
+            CellColor::Theme { index, .. } => {
+                let base = self.colors.get(usize::from(index)).copied().unwrap_or(auto);
+                apply_tint_cv(base, c.tint())
+            }
+            c => self.rgb(c, auto),
+        }
+    }
+
     pub fn rgb(&self, c: CellColor, auto: u32) -> u32 {
         match c {
-            CellColor::Auto => auto,
+            CellColor::Auto | CellColor::AutoTint { .. } => auto,
             CellColor::Rgb(v) => v,
+            CellColor::RgbTint { rgb, .. } => apply_tint_cv(rgb, c.tint()),
             CellColor::Indexed(i) => indexed_rgb(i).unwrap_or(auto),
+            CellColor::IndexedTint { index, .. } => {
+                apply_tint_cv(indexed_rgb(index).unwrap_or(auto), c.tint())
+            }
             CellColor::Theme { index, .. } => {
                 let base = self.colors.get(usize::from(index)).copied().unwrap_or(auto);
                 apply_tint(base, c.tint())

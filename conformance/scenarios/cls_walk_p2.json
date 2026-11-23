@@ -1,0 +1,7469 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "cell": "Sheet1!A1",
+   "input": "1",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!A2",
+   "input": "2",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!A3",
+   "input": "3",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!B1",
+   "input": "10",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!B2",
+   "input": "20",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!B3",
+   "input": "30",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!P1",
+   "input": "Region",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!Q1",
+   "input": "Q1",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!R1",
+   "input": "Q2",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!P2",
+   "input": "N",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!Q2",
+   "input": "10",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!R2",
+   "input": "5",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!P3",
+   "input": "S",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!Q3",
+   "input": "20",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!R3",
+   "input": "7",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!P4",
+   "input": "E",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!Q4",
+   "input": "30",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!R4",
+   "input": "9",
+   "op": "set"
+  },
+  {
+   "op": "table",
+   "name": "T",
+   "range": "Sheet1!P1:R4"
+  },
+  {
+   "op": "name",
+   "name": "nmRowD",
+   "refers_to": "=ROW(Sheet1!$A$1)/0"
+  },
+  {
+   "op": "name",
+   "name": "nmRng",
+   "refers_to": "=Sheet1!$A$1:$A$3"
+  },
+  {
+   "cell": "Sheet1!D20",
+   "input": "=ROWS(NOT(IF(MMULT(nmRowD,{1}),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!E20",
+   "input": "=ROWS(NOT(IF(MMULT(nmRowD,{1}),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!F20:F22",
+   "input": "=ROWS(NOT(IF(MMULT(nmRowD,{1}),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!G20",
+   "input": "=TYPE(NOT(IF(MMULT(FORMULATEXT(Y1)&\"\",{1}),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!H20",
+   "input": "=TYPE(NOT(IF(MMULT(FORMULATEXT(Y1)&\"\",{1}),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!I20:I22",
+   "input": "=TYPE(NOT(IF(MMULT(FORMULATEXT(Y1)&\"\",{1}),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!J20",
+   "input": "=SUMPRODUCT(NOT(IF(MMULT(T[Q1],{1}),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!K20",
+   "input": "=SUMPRODUCT(NOT(IF(MMULT(T[Q1],{1}),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!L20:L22",
+   "input": "=SUMPRODUCT(NOT(IF(MMULT(T[Q1],{1}),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!M20",
+   "input": "=N(NOT(IF(MMULT(FORMULATEXT(Y1),{1}),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!N20",
+   "input": "=N(NOT(IF(MMULT(FORMULATEXT(Y1),{1}),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!O20:O22",
+   "input": "=N(NOT(IF(MMULT(FORMULATEXT(Y1),{1}),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!P20",
+   "input": "=NOT(IF(MMULT(ROW(A1),{1}),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!Q20",
+   "input": "=NOT(IF(MMULT(ROW(A1),{1}),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!R20:R22",
+   "input": "=NOT(IF(MMULT(ROW(A1),{1}),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!S20",
+   "input": "=COLUMNS(NOT(IF(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!T20",
+   "input": "=COLUMNS(NOT(IF(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!U20:U22",
+   "input": "=COLUMNS(NOT(IF(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!V20",
+   "input": "=ISREF(NOT(IF(MMULT(ROW(A1)/0,{1}),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!W20",
+   "input": "=ISREF(NOT(IF(MMULT(ROW(A1)/0,{1}),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!X20:X22",
+   "input": "=ISREF(NOT(IF(MMULT(ROW(A1)/0,{1}),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!Y20",
+   "input": "=TYPE(MAX(SUM(-TRANSPOSE(FORMULATEXT(Y1)&\"\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!Z20",
+   "input": "=TYPE(MAX(SUM(-TRANSPOSE(FORMULATEXT(Y1)&\"\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AA20:AA22",
+   "input": "=TYPE(MAX(SUM(-TRANSPOSE(FORMULATEXT(Y1)&\"\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AB20",
+   "input": "=SUMPRODUCT(MAX(SUM(-TRANSPOSE(FORMULATEXT(Y1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AC20",
+   "input": "=SUMPRODUCT(MAX(SUM(-TRANSPOSE(FORMULATEXT(Y1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AD20:AD22",
+   "input": "=SUMPRODUCT(MAX(SUM(-TRANSPOSE(FORMULATEXT(Y1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AE20",
+   "input": "=N(MAX(SUM(-TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AF20",
+   "input": "=N(MAX(SUM(-TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AG20:AG22",
+   "input": "=N(MAX(SUM(-TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AH20",
+   "input": "=MAX(SUM(-TRANSPOSE(T[Q1])))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AI20",
+   "input": "=MAX(SUM(-TRANSPOSE(T[Q1])))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJ20:AJ22",
+   "input": "=MAX(SUM(-TRANSPOSE(T[Q1])))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AK20",
+   "input": "=COLUMNS(MAX(SUM(-TRANSPOSE(COLUMN(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AL20",
+   "input": "=COLUMNS(MAX(SUM(-TRANSPOSE(COLUMN(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AM20:AM22",
+   "input": "=COLUMNS(MAX(SUM(-TRANSPOSE(COLUMN(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AN20",
+   "input": "=ISREF(MAX(SUM(-TRANSPOSE(ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AO20",
+   "input": "=ISREF(MAX(SUM(-TRANSPOSE(ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AP20:AP22",
+   "input": "=ISREF(MAX(SUM(-TRANSPOSE(ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQ20",
+   "input": "=ROWS(MAX(SUM(-TRANSPOSE(LET(x,ROW(A1),x/0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AR20",
+   "input": "=ROWS(MAX(SUM(-TRANSPOSE(LET(x,ROW(A1),x/0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AS20:AS22",
+   "input": "=ROWS(MAX(SUM(-TRANSPOSE(LET(x,ROW(A1),x/0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AT20",
+   "input": "=SUMPRODUCT(ROUND(IF(SWITCH(1,1,T[Q1]),1,2),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AU20",
+   "input": "=SUMPRODUCT(ROUND(IF(SWITCH(1,1,T[Q1]),1,2),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AV20:AV22",
+   "input": "=SUMPRODUCT(ROUND(IF(SWITCH(1,1,T[Q1]),1,2),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AW20",
+   "input": "=N(ROUND(IF(SWITCH(1,1,COLUMN(A1)),1,2),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AX20",
+   "input": "=N(ROUND(IF(SWITCH(1,1,COLUMN(A1)),1,2),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AY20:AY22",
+   "input": "=N(ROUND(IF(SWITCH(1,1,COLUMN(A1)),1,2),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZ20",
+   "input": "=ROUND(IF(SWITCH(1,1,FORMULATEXT(Y1)),1,2),1)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BA20",
+   "input": "=ROUND(IF(SWITCH(1,1,FORMULATEXT(Y1)),1,2),1)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BB20:BB22",
+   "input": "=ROUND(IF(SWITCH(1,1,FORMULATEXT(Y1)),1,2),1)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BC20",
+   "input": "=COLUMNS(ROUND(IF(SWITCH(1,1,ROW(A1)/0),1,2),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BD20",
+   "input": "=COLUMNS(ROUND(IF(SWITCH(1,1,ROW(A1)/0),1,2),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BE20:BE22",
+   "input": "=COLUMNS(ROUND(IF(SWITCH(1,1,ROW(A1)/0),1,2),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BF20",
+   "input": "=ISREF(ROUND(IF(SWITCH(1,1,LET(x,ROW(A1),x/0)),1,2),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BG20",
+   "input": "=ISREF(ROUND(IF(SWITCH(1,1,LET(x,ROW(A1),x/0)),1,2),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BH20:BH22",
+   "input": "=ISREF(ROUND(IF(SWITCH(1,1,LET(x,ROW(A1),x/0)),1,2),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BI20",
+   "input": "=ROWS(ROUND(IF(SWITCH(1,1,nmRng),1,2),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BJ20",
+   "input": "=ROWS(ROUND(IF(SWITCH(1,1,nmRng),1,2),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BK20:BK22",
+   "input": "=ROWS(ROUND(IF(SWITCH(1,1,nmRng),1,2),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BL20",
+   "input": "=TYPE(ROUND(IF(SWITCH(1,1,nmRowD),1,2),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BM20",
+   "input": "=TYPE(ROUND(IF(SWITCH(1,1,nmRowD),1,2),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BN20:BN22",
+   "input": "=TYPE(ROUND(IF(SWITCH(1,1,nmRowD),1,2),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BO20",
+   "input": "=N(ISREF(OFFSET((SWITCH(1,1,T[Q1])),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BP20",
+   "input": "=N(ISREF(OFFSET((SWITCH(1,1,T[Q1])),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BQ20:BQ22",
+   "input": "=N(ISREF(OFFSET((SWITCH(1,1,T[Q1])),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BR20",
+   "input": "=ISREF(OFFSET((SWITCH(1,1,COLUMN(A1))),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BS20",
+   "input": "=ISREF(OFFSET((SWITCH(1,1,COLUMN(A1))),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BT20:BT22",
+   "input": "=ISREF(OFFSET((SWITCH(1,1,COLUMN(A1))),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BU20",
+   "input": "=COLUMNS(ISREF(OFFSET((SWITCH(1,1,FORMULATEXT(Y1))),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BV20",
+   "input": "=COLUMNS(ISREF(OFFSET((SWITCH(1,1,FORMULATEXT(Y1))),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BW20:BW22",
+   "input": "=COLUMNS(ISREF(OFFSET((SWITCH(1,1,FORMULATEXT(Y1))),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BX20",
+   "input": "=ISREF(ISREF(OFFSET((SWITCH(1,1,LET(x,ROW(A1),x/0))),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BY20",
+   "input": "=ISREF(ISREF(OFFSET((SWITCH(1,1,LET(x,ROW(A1),x/0))),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BZ20:BZ22",
+   "input": "=ISREF(ISREF(OFFSET((SWITCH(1,1,LET(x,ROW(A1),x/0))),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CA20",
+   "input": "=ROWS(ISREF(OFFSET((SWITCH(1,1,nmRowD)),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CB20",
+   "input": "=ROWS(ISREF(OFFSET((SWITCH(1,1,nmRowD)),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CC20:CC22",
+   "input": "=ROWS(ISREF(OFFSET((SWITCH(1,1,nmRowD)),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CD20",
+   "input": "=TYPE(ISREF(OFFSET((SWITCH(1,1,LAMBDA(p,ROW(p)/0)(A1))),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CE20",
+   "input": "=TYPE(ISREF(OFFSET((SWITCH(1,1,LAMBDA(p,ROW(p)/0)(A1))),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CF20:CF22",
+   "input": "=TYPE(ISREF(OFFSET((SWITCH(1,1,LAMBDA(p,ROW(p)/0)(A1))),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CG20",
+   "input": "=SUMPRODUCT(ISREF(OFFSET((SWITCH(1,1,nmRng)),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CH20",
+   "input": "=SUMPRODUCT(ISREF(OFFSET((SWITCH(1,1,nmRng)),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CI20:CI22",
+   "input": "=SUMPRODUCT(ISREF(OFFSET((SWITCH(1,1,nmRng)),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CJ20",
+   "input": "=IFERROR(COUNT(IFS(TRUE,nmRng)),0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CK20",
+   "input": "=IFERROR(COUNT(IFS(TRUE,nmRng)),0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CL20:CL22",
+   "input": "=IFERROR(COUNT(IFS(TRUE,nmRng)),0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CM20",
+   "input": "=COLUMNS(IFERROR(COUNT(IFS(TRUE,FORMULATEXT(Y1))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CN20",
+   "input": "=COLUMNS(IFERROR(COUNT(IFS(TRUE,FORMULATEXT(Y1))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CO20:CO22",
+   "input": "=COLUMNS(IFERROR(COUNT(IFS(TRUE,FORMULATEXT(Y1))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CP20",
+   "input": "=ISREF(IFERROR(COUNT(IFS(TRUE,T[Q1])),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CQ20",
+   "input": "=ISREF(IFERROR(COUNT(IFS(TRUE,T[Q1])),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CR20:CR22",
+   "input": "=ISREF(IFERROR(COUNT(IFS(TRUE,T[Q1])),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CS20",
+   "input": "=ROWS(IFERROR(COUNT(IFS(TRUE,LAMBDA(p,ROW(p)/0)(A1))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CT20",
+   "input": "=ROWS(IFERROR(COUNT(IFS(TRUE,LAMBDA(p,ROW(p)/0)(A1))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CU20:CU22",
+   "input": "=ROWS(IFERROR(COUNT(IFS(TRUE,LAMBDA(p,ROW(p)/0)(A1))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CV20",
+   "input": "=TYPE(IFERROR(COUNT(IFS(TRUE,LET(x,ROW(A1),x/0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CW20",
+   "input": "=TYPE(IFERROR(COUNT(IFS(TRUE,LET(x,ROW(A1),x/0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!CX20:CX22",
+   "input": "=TYPE(IFERROR(COUNT(IFS(TRUE,LET(x,ROW(A1),x/0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!CY20",
+   "input": "=SUMPRODUCT(IFERROR(COUNT(IFS(TRUE,COLUMN(A1))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!CZ20",
+   "input": "=SUMPRODUCT(IFERROR(COUNT(IFS(TRUE,COLUMN(A1))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DA20:DA22",
+   "input": "=SUMPRODUCT(IFERROR(COUNT(IFS(TRUE,COLUMN(A1))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DB20",
+   "input": "=N(IFERROR(COUNT(IFS(TRUE,nmRowD)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DC20",
+   "input": "=N(IFERROR(COUNT(IFS(TRUE,nmRowD)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DD20:DD22",
+   "input": "=N(IFERROR(COUNT(IFS(TRUE,nmRowD)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DE20",
+   "input": "=COLUMNS(TRANSPOSE(MAX(MAX(TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DF20",
+   "input": "=COLUMNS(TRANSPOSE(MAX(MAX(TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DG20:DG22",
+   "input": "=COLUMNS(TRANSPOSE(MAX(MAX(TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DH20",
+   "input": "=ISREF(TRANSPOSE(MAX(MAX(TRANSPOSE(LET(x,ROW(A1),x/0))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DI20",
+   "input": "=ISREF(TRANSPOSE(MAX(MAX(TRANSPOSE(LET(x,ROW(A1),x/0))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DJ20:DJ22",
+   "input": "=ISREF(TRANSPOSE(MAX(MAX(TRANSPOSE(LET(x,ROW(A1),x/0))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DK20",
+   "input": "=ROWS(TRANSPOSE(MAX(MAX(TRANSPOSE(FORMULATEXT(Y1)&\"\")))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DL20",
+   "input": "=ROWS(TRANSPOSE(MAX(MAX(TRANSPOSE(FORMULATEXT(Y1)&\"\")))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DM20:DM22",
+   "input": "=ROWS(TRANSPOSE(MAX(MAX(TRANSPOSE(FORMULATEXT(Y1)&\"\")))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DN20",
+   "input": "=TYPE(TRANSPOSE(MAX(MAX(TRANSPOSE(COLUMN(A1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DO20",
+   "input": "=TYPE(TRANSPOSE(MAX(MAX(TRANSPOSE(COLUMN(A1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DP20:DP22",
+   "input": "=TYPE(TRANSPOSE(MAX(MAX(TRANSPOSE(COLUMN(A1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DQ20",
+   "input": "=SUMPRODUCT(TRANSPOSE(MAX(MAX(TRANSPOSE(FORMULATEXT(Y1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DR20",
+   "input": "=SUMPRODUCT(TRANSPOSE(MAX(MAX(TRANSPOSE(FORMULATEXT(Y1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DS20:DS22",
+   "input": "=SUMPRODUCT(TRANSPOSE(MAX(MAX(TRANSPOSE(FORMULATEXT(Y1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DT20",
+   "input": "=N(TRANSPOSE(MAX(MAX(TRANSPOSE(nmRng)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DU20",
+   "input": "=N(TRANSPOSE(MAX(MAX(TRANSPOSE(nmRng)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DV20:DV22",
+   "input": "=N(TRANSPOSE(MAX(MAX(TRANSPOSE(nmRng)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DW20",
+   "input": "=TRANSPOSE(MAX(MAX(TRANSPOSE(nmRowD))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!DX20",
+   "input": "=TRANSPOSE(MAX(MAX(TRANSPOSE(nmRowD))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!DY20:DY22",
+   "input": "=TRANSPOSE(MAX(MAX(TRANSPOSE(nmRowD))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!DZ20",
+   "input": "=ISREF(TRANSPOSE(SUMPRODUCT(COUNT(T[Q1]))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EA20",
+   "input": "=ISREF(TRANSPOSE(SUMPRODUCT(COUNT(T[Q1]))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EB20:EB22",
+   "input": "=ISREF(TRANSPOSE(SUMPRODUCT(COUNT(T[Q1]))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EC20",
+   "input": "=ROWS(TRANSPOSE(SUMPRODUCT(COUNT(ROW(A1)/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ED20",
+   "input": "=ROWS(TRANSPOSE(SUMPRODUCT(COUNT(ROW(A1)/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EE20:EE22",
+   "input": "=ROWS(TRANSPOSE(SUMPRODUCT(COUNT(ROW(A1)/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EF20",
+   "input": "=TYPE(TRANSPOSE(SUMPRODUCT(COUNT(FORMULATEXT(Y1)&\"\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EG20",
+   "input": "=TYPE(TRANSPOSE(SUMPRODUCT(COUNT(FORMULATEXT(Y1)&\"\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EH20:EH22",
+   "input": "=TYPE(TRANSPOSE(SUMPRODUCT(COUNT(FORMULATEXT(Y1)&\"\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EI20",
+   "input": "=SUMPRODUCT(TRANSPOSE(SUMPRODUCT(COUNT(nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EJ20",
+   "input": "=SUMPRODUCT(TRANSPOSE(SUMPRODUCT(COUNT(nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EK20:EK22",
+   "input": "=SUMPRODUCT(TRANSPOSE(SUMPRODUCT(COUNT(nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EL20",
+   "input": "=N(TRANSPOSE(SUMPRODUCT(COUNT(FORMULATEXT(Y1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EM20",
+   "input": "=N(TRANSPOSE(SUMPRODUCT(COUNT(FORMULATEXT(Y1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EN20:EN22",
+   "input": "=N(TRANSPOSE(SUMPRODUCT(COUNT(FORMULATEXT(Y1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EO20",
+   "input": "=TRANSPOSE(SUMPRODUCT(COUNT(ROW(A1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EP20",
+   "input": "=TRANSPOSE(SUMPRODUCT(COUNT(ROW(A1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EQ20:EQ22",
+   "input": "=TRANSPOSE(SUMPRODUCT(COUNT(ROW(A1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ER20",
+   "input": "=COLUMNS(TRANSPOSE(SUMPRODUCT(COUNT(COLUMN(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ES20",
+   "input": "=COLUMNS(TRANSPOSE(SUMPRODUCT(COUNT(COLUMN(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ET20:ET22",
+   "input": "=COLUMNS(TRANSPOSE(SUMPRODUCT(COUNT(COLUMN(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EU20",
+   "input": "=ROWS(AND(AND(NOT(OFFSET(ROW(A1)/0,0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EV20",
+   "input": "=ROWS(AND(AND(NOT(OFFSET(ROW(A1)/0,0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EW20:EW22",
+   "input": "=ROWS(AND(AND(NOT(OFFSET(ROW(A1)/0,0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!EX20",
+   "input": "=TYPE(AND(AND(NOT(OFFSET(nmRng,0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!EY20",
+   "input": "=TYPE(AND(AND(NOT(OFFSET(nmRng,0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!EZ20:EZ22",
+   "input": "=TYPE(AND(AND(NOT(OFFSET(nmRng,0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FA20",
+   "input": "=SUMPRODUCT(AND(AND(NOT(OFFSET(LAMBDA(p,ROW(p)/0)(A1),0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FB20",
+   "input": "=SUMPRODUCT(AND(AND(NOT(OFFSET(LAMBDA(p,ROW(p)/0)(A1),0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FC20:FC22",
+   "input": "=SUMPRODUCT(AND(AND(NOT(OFFSET(LAMBDA(p,ROW(p)/0)(A1),0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FD20",
+   "input": "=N(AND(AND(NOT(OFFSET(ROW(A1),0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FE20",
+   "input": "=N(AND(AND(NOT(OFFSET(ROW(A1),0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FF20:FF22",
+   "input": "=N(AND(AND(NOT(OFFSET(ROW(A1),0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FG20",
+   "input": "=AND(AND(NOT(OFFSET(COLUMN(A1),0,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FH20",
+   "input": "=AND(AND(NOT(OFFSET(COLUMN(A1),0,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FI20:FI22",
+   "input": "=AND(AND(NOT(OFFSET(COLUMN(A1),0,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FJ20",
+   "input": "=COLUMNS(AND(AND(NOT(OFFSET(LET(x,ROW(A1),x/0),0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FK20",
+   "input": "=COLUMNS(AND(AND(NOT(OFFSET(LET(x,ROW(A1),x/0),0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FL20:FL22",
+   "input": "=COLUMNS(AND(AND(NOT(OFFSET(LET(x,ROW(A1),x/0),0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FM20",
+   "input": "=ISREF(AND(AND(NOT(OFFSET(FORMULATEXT(Y1)&\"\",0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FN20",
+   "input": "=ISREF(AND(AND(NOT(OFFSET(FORMULATEXT(Y1)&\"\",0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FO20:FO22",
+   "input": "=ISREF(AND(AND(NOT(OFFSET(FORMULATEXT(Y1)&\"\",0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FP20",
+   "input": "=TYPE(TAKE(AND(COUNT(COLUMN(A1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FQ20",
+   "input": "=TYPE(TAKE(AND(COUNT(COLUMN(A1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FR20:FR22",
+   "input": "=TYPE(TAKE(AND(COUNT(COLUMN(A1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FS20",
+   "input": "=SUMPRODUCT(TAKE(AND(COUNT(FORMULATEXT(Y1)&\"\")),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FT20",
+   "input": "=SUMPRODUCT(TAKE(AND(COUNT(FORMULATEXT(Y1)&\"\")),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FU20:FU22",
+   "input": "=SUMPRODUCT(TAKE(AND(COUNT(FORMULATEXT(Y1)&\"\")),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FV20",
+   "input": "=N(TAKE(AND(COUNT(FORMULATEXT(Y1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FW20",
+   "input": "=N(TAKE(AND(COUNT(FORMULATEXT(Y1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!FX20:FX22",
+   "input": "=N(TAKE(AND(COUNT(FORMULATEXT(Y1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!FY20",
+   "input": "=TAKE(AND(COUNT(LAMBDA(p,ROW(p)/0)(A1))),1)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!FZ20",
+   "input": "=TAKE(AND(COUNT(LAMBDA(p,ROW(p)/0)(A1))),1)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GA20:GA22",
+   "input": "=TAKE(AND(COUNT(LAMBDA(p,ROW(p)/0)(A1))),1)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GB20",
+   "input": "=COLUMNS(TAKE(AND(COUNT(LET(x,ROW(A1),x/0))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GC20",
+   "input": "=COLUMNS(TAKE(AND(COUNT(LET(x,ROW(A1),x/0))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GD20:GD22",
+   "input": "=COLUMNS(TAKE(AND(COUNT(LET(x,ROW(A1),x/0))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GE20",
+   "input": "=ISREF(TAKE(AND(COUNT(ROW(A1)/0)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GF20",
+   "input": "=ISREF(TAKE(AND(COUNT(ROW(A1)/0)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GG20:GG22",
+   "input": "=ISREF(TAKE(AND(COUNT(ROW(A1)/0)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GH20",
+   "input": "=ROWS(TAKE(AND(COUNT(nmRng)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GI20",
+   "input": "=ROWS(TAKE(AND(COUNT(nmRng)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GJ20:GJ22",
+   "input": "=ROWS(TAKE(AND(COUNT(nmRng)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GK20",
+   "input": "=SUMPRODUCT(IFERROR(IF(TRUE,OFFSET(MMULT(nmRng,{1}),0,0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GL20",
+   "input": "=SUMPRODUCT(IFERROR(IF(TRUE,OFFSET(MMULT(nmRng,{1}),0,0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GM20:GM22",
+   "input": "=SUMPRODUCT(IFERROR(IF(TRUE,OFFSET(MMULT(nmRng,{1}),0,0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GN20",
+   "input": "=N(IFERROR(IF(TRUE,OFFSET(MMULT(ROW(A1),{1}),0,0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GO20",
+   "input": "=N(IFERROR(IF(TRUE,OFFSET(MMULT(ROW(A1),{1}),0,0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GP20:GP22",
+   "input": "=N(IFERROR(IF(TRUE,OFFSET(MMULT(ROW(A1),{1}),0,0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GQ20",
+   "input": "=IFERROR(IF(TRUE,OFFSET(MMULT(COLUMN(A1),{1}),0,0)),0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GR20",
+   "input": "=IFERROR(IF(TRUE,OFFSET(MMULT(COLUMN(A1),{1}),0,0)),0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GS20:GS22",
+   "input": "=IFERROR(IF(TRUE,OFFSET(MMULT(COLUMN(A1),{1}),0,0)),0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GT20",
+   "input": "=COLUMNS(IFERROR(IF(TRUE,OFFSET(MMULT(nmRowD,{1}),0,0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GU20",
+   "input": "=COLUMNS(IFERROR(IF(TRUE,OFFSET(MMULT(nmRowD,{1}),0,0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GV20:GV22",
+   "input": "=COLUMNS(IFERROR(IF(TRUE,OFFSET(MMULT(nmRowD,{1}),0,0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GW20",
+   "input": "=ISREF(IFERROR(IF(TRUE,OFFSET(MMULT(ROW(A1)/0,{1}),0,0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!GX20",
+   "input": "=ISREF(IFERROR(IF(TRUE,OFFSET(MMULT(ROW(A1)/0,{1}),0,0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!GY20:GY22",
+   "input": "=ISREF(IFERROR(IF(TRUE,OFFSET(MMULT(ROW(A1)/0,{1}),0,0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!GZ20",
+   "input": "=ROWS(IFERROR(IF(TRUE,OFFSET(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),0,0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HA20",
+   "input": "=ROWS(IFERROR(IF(TRUE,OFFSET(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),0,0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HB20:HB22",
+   "input": "=ROWS(IFERROR(IF(TRUE,OFFSET(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),0,0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HC20",
+   "input": "=TYPE(IFERROR(IF(TRUE,OFFSET(MMULT(T[Q1],{1}),0,0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HD20",
+   "input": "=TYPE(IFERROR(IF(TRUE,OFFSET(MMULT(T[Q1],{1}),0,0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HE20:HE22",
+   "input": "=TYPE(IFERROR(IF(TRUE,OFFSET(MMULT(T[Q1],{1}),0,0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HF20",
+   "input": "=N((OFFSET(INDEX(FORMULATEXT(Y1)&\"\",1),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HG20",
+   "input": "=N((OFFSET(INDEX(FORMULATEXT(Y1)&\"\",1),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HH20:HH22",
+   "input": "=N((OFFSET(INDEX(FORMULATEXT(Y1)&\"\",1),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HI20",
+   "input": "=(OFFSET(INDEX(ROW(A1)/0,1),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HJ20",
+   "input": "=(OFFSET(INDEX(ROW(A1)/0,1),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HK20:HK22",
+   "input": "=(OFFSET(INDEX(ROW(A1)/0,1),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HL20",
+   "input": "=COLUMNS((OFFSET(INDEX(LET(x,ROW(A1),x/0),1),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HM20",
+   "input": "=COLUMNS((OFFSET(INDEX(LET(x,ROW(A1),x/0),1),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HN20:HN22",
+   "input": "=COLUMNS((OFFSET(INDEX(LET(x,ROW(A1),x/0),1),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HO20",
+   "input": "=ISREF((OFFSET(INDEX(LAMBDA(p,ROW(p)/0)(A1),1),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HP20",
+   "input": "=ISREF((OFFSET(INDEX(LAMBDA(p,ROW(p)/0)(A1),1),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HQ20:HQ22",
+   "input": "=ISREF((OFFSET(INDEX(LAMBDA(p,ROW(p)/0)(A1),1),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HR20",
+   "input": "=ROWS((OFFSET(INDEX(nmRng,1),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HS20",
+   "input": "=ROWS((OFFSET(INDEX(nmRng,1),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HT20:HT22",
+   "input": "=ROWS((OFFSET(INDEX(nmRng,1),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HU20",
+   "input": "=TYPE((OFFSET(INDEX(nmRowD,1),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HV20",
+   "input": "=TYPE((OFFSET(INDEX(nmRowD,1),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HW20:HW22",
+   "input": "=TYPE((OFFSET(INDEX(nmRowD,1),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!HX20",
+   "input": "=SUMPRODUCT((OFFSET(INDEX(COLUMN(A1),1),0,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!HY20",
+   "input": "=SUMPRODUCT((OFFSET(INDEX(COLUMN(A1),1),0,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!HZ20:HZ22",
+   "input": "=SUMPRODUCT((OFFSET(INDEX(COLUMN(A1),1),0,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IA20",
+   "input": "=SWITCH(1,1,VLOOKUP((SUM(LAMBDA(p,ROW(p)/0)(A1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IB20",
+   "input": "=SWITCH(1,1,VLOOKUP((SUM(LAMBDA(p,ROW(p)/0)(A1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IC20:IC22",
+   "input": "=SWITCH(1,1,VLOOKUP((SUM(LAMBDA(p,ROW(p)/0)(A1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ID20",
+   "input": "=COLUMNS(SWITCH(1,1,VLOOKUP((SUM(ROW(A1))),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IE20",
+   "input": "=COLUMNS(SWITCH(1,1,VLOOKUP((SUM(ROW(A1))),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IF20:IF22",
+   "input": "=COLUMNS(SWITCH(1,1,VLOOKUP((SUM(ROW(A1))),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IG20",
+   "input": "=ISREF(SWITCH(1,1,VLOOKUP((SUM(ROW(A1)/0)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IH20",
+   "input": "=ISREF(SWITCH(1,1,VLOOKUP((SUM(ROW(A1)/0)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!II20:II22",
+   "input": "=ISREF(SWITCH(1,1,VLOOKUP((SUM(ROW(A1)/0)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IJ20",
+   "input": "=ROWS(SWITCH(1,1,VLOOKUP((SUM(COLUMN(A1))),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IK20",
+   "input": "=ROWS(SWITCH(1,1,VLOOKUP((SUM(COLUMN(A1))),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IL20:IL22",
+   "input": "=ROWS(SWITCH(1,1,VLOOKUP((SUM(COLUMN(A1))),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IM20",
+   "input": "=TYPE(SWITCH(1,1,VLOOKUP((SUM(LET(x,ROW(A1),x/0))),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IN20",
+   "input": "=TYPE(SWITCH(1,1,VLOOKUP((SUM(LET(x,ROW(A1),x/0))),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IO20:IO22",
+   "input": "=TYPE(SWITCH(1,1,VLOOKUP((SUM(LET(x,ROW(A1),x/0))),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IP20",
+   "input": "=SUMPRODUCT(SWITCH(1,1,VLOOKUP((SUM(nmRowD)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IQ20",
+   "input": "=SUMPRODUCT(SWITCH(1,1,VLOOKUP((SUM(nmRowD)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IR20:IR22",
+   "input": "=SUMPRODUCT(SWITCH(1,1,VLOOKUP((SUM(nmRowD)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IS20",
+   "input": "=N(SWITCH(1,1,VLOOKUP((SUM(T[Q1])),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IT20",
+   "input": "=N(SWITCH(1,1,VLOOKUP((SUM(T[Q1])),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IU20:IU22",
+   "input": "=N(SWITCH(1,1,VLOOKUP((SUM(T[Q1])),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IV20",
+   "input": "=COLUMNS(ABS(IFERROR(CHOOSE(1,nmRng),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IW20",
+   "input": "=COLUMNS(ABS(IFERROR(CHOOSE(1,nmRng),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!IX20:IX22",
+   "input": "=COLUMNS(ABS(IFERROR(CHOOSE(1,nmRng),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!IY20",
+   "input": "=ISREF(ABS(IFERROR(CHOOSE(1,FORMULATEXT(Y1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!IZ20",
+   "input": "=ISREF(ABS(IFERROR(CHOOSE(1,FORMULATEXT(Y1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JA20:JA22",
+   "input": "=ISREF(ABS(IFERROR(CHOOSE(1,FORMULATEXT(Y1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JB20",
+   "input": "=ROWS(ABS(IFERROR(CHOOSE(1,ROW(A1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JC20",
+   "input": "=ROWS(ABS(IFERROR(CHOOSE(1,ROW(A1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JD20:JD22",
+   "input": "=ROWS(ABS(IFERROR(CHOOSE(1,ROW(A1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JE20",
+   "input": "=TYPE(ABS(IFERROR(CHOOSE(1,ROW(A1)/0),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JF20",
+   "input": "=TYPE(ABS(IFERROR(CHOOSE(1,ROW(A1)/0),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JG20:JG22",
+   "input": "=TYPE(ABS(IFERROR(CHOOSE(1,ROW(A1)/0),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JH20",
+   "input": "=SUMPRODUCT(ABS(IFERROR(CHOOSE(1,nmRowD),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JI20",
+   "input": "=SUMPRODUCT(ABS(IFERROR(CHOOSE(1,nmRowD),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JJ20:JJ22",
+   "input": "=SUMPRODUCT(ABS(IFERROR(CHOOSE(1,nmRowD),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JK20",
+   "input": "=N(ABS(IFERROR(CHOOSE(1,FORMULATEXT(Y1)&\"\"),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JL20",
+   "input": "=N(ABS(IFERROR(CHOOSE(1,FORMULATEXT(Y1)&\"\"),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JM20:JM22",
+   "input": "=N(ABS(IFERROR(CHOOSE(1,FORMULATEXT(Y1)&\"\"),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JN20",
+   "input": "=ABS(IFERROR(CHOOSE(1,LET(x,ROW(A1),x/0)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JO20",
+   "input": "=ABS(IFERROR(CHOOSE(1,LET(x,ROW(A1),x/0)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JP20:JP22",
+   "input": "=ABS(IFERROR(CHOOSE(1,LET(x,ROW(A1),x/0)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JQ20",
+   "input": "=ISREF(-CHOOSE(1,SUM(IF(TRUE,FORMULATEXT(Y1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JR20",
+   "input": "=ISREF(-CHOOSE(1,SUM(IF(TRUE,FORMULATEXT(Y1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JS20:JS22",
+   "input": "=ISREF(-CHOOSE(1,SUM(IF(TRUE,FORMULATEXT(Y1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JT20",
+   "input": "=ROWS(-CHOOSE(1,SUM(IF(TRUE,FORMULATEXT(Y1)&\"\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JU20",
+   "input": "=ROWS(-CHOOSE(1,SUM(IF(TRUE,FORMULATEXT(Y1)&\"\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JV20:JV22",
+   "input": "=ROWS(-CHOOSE(1,SUM(IF(TRUE,FORMULATEXT(Y1)&\"\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JW20",
+   "input": "=TYPE(-CHOOSE(1,SUM(IF(TRUE,COLUMN(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!JX20",
+   "input": "=TYPE(-CHOOSE(1,SUM(IF(TRUE,COLUMN(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!JY20:JY22",
+   "input": "=TYPE(-CHOOSE(1,SUM(IF(TRUE,COLUMN(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!JZ20",
+   "input": "=SUMPRODUCT(-CHOOSE(1,SUM(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KA20",
+   "input": "=SUMPRODUCT(-CHOOSE(1,SUM(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KB20:KB22",
+   "input": "=SUMPRODUCT(-CHOOSE(1,SUM(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KC20",
+   "input": "=N(-CHOOSE(1,SUM(IF(TRUE,ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KD20",
+   "input": "=N(-CHOOSE(1,SUM(IF(TRUE,ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KE20:KE22",
+   "input": "=N(-CHOOSE(1,SUM(IF(TRUE,ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KF20",
+   "input": "=-CHOOSE(1,SUM(IF(TRUE,ROW(A1)/0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KG20",
+   "input": "=-CHOOSE(1,SUM(IF(TRUE,ROW(A1)/0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KH20:KH22",
+   "input": "=-CHOOSE(1,SUM(IF(TRUE,ROW(A1)/0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KI20",
+   "input": "=COLUMNS(-CHOOSE(1,SUM(IF(TRUE,nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KJ20",
+   "input": "=COLUMNS(-CHOOSE(1,SUM(IF(TRUE,nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KK20:KK22",
+   "input": "=COLUMNS(-CHOOSE(1,SUM(IF(TRUE,nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KL20",
+   "input": "=ROWS(MAX(VLOOKUP(ROUND(LAMBDA(p,ROW(p)/0)(A1),1),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KM20",
+   "input": "=ROWS(MAX(VLOOKUP(ROUND(LAMBDA(p,ROW(p)/0)(A1),1),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KN20:KN22",
+   "input": "=ROWS(MAX(VLOOKUP(ROUND(LAMBDA(p,ROW(p)/0)(A1),1),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KO20",
+   "input": "=TYPE(MAX(VLOOKUP(ROUND(T[Q1],1),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KP20",
+   "input": "=TYPE(MAX(VLOOKUP(ROUND(T[Q1],1),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KQ20:KQ22",
+   "input": "=TYPE(MAX(VLOOKUP(ROUND(T[Q1],1),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KR20",
+   "input": "=SUMPRODUCT(MAX(VLOOKUP(ROUND(ROW(A1),1),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KS20",
+   "input": "=SUMPRODUCT(MAX(VLOOKUP(ROUND(ROW(A1),1),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KT20:KT22",
+   "input": "=SUMPRODUCT(MAX(VLOOKUP(ROUND(ROW(A1),1),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KU20",
+   "input": "=N(MAX(VLOOKUP(ROUND(nmRng,1),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KV20",
+   "input": "=N(MAX(VLOOKUP(ROUND(nmRng,1),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KW20:KW22",
+   "input": "=N(MAX(VLOOKUP(ROUND(nmRng,1),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!KX20",
+   "input": "=MAX(VLOOKUP(ROUND(LET(x,ROW(A1),x/0),1),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!KY20",
+   "input": "=MAX(VLOOKUP(ROUND(LET(x,ROW(A1),x/0),1),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!KZ20:KZ22",
+   "input": "=MAX(VLOOKUP(ROUND(LET(x,ROW(A1),x/0),1),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LA20",
+   "input": "=COLUMNS(MAX(VLOOKUP(ROUND(ROW(A1)/0,1),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LB20",
+   "input": "=COLUMNS(MAX(VLOOKUP(ROUND(ROW(A1)/0,1),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LC20:LC22",
+   "input": "=COLUMNS(MAX(VLOOKUP(ROUND(ROW(A1)/0,1),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LD20",
+   "input": "=ISREF(MAX(VLOOKUP(ROUND(COLUMN(A1),1),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LE20",
+   "input": "=ISREF(MAX(VLOOKUP(ROUND(COLUMN(A1),1),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LF20:LF22",
+   "input": "=ISREF(MAX(VLOOKUP(ROUND(COLUMN(A1),1),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LG20",
+   "input": "=TYPE(IFS(TRUE,N(TAKE(FORMULATEXT(Y1),1)+0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LH20",
+   "input": "=TYPE(IFS(TRUE,N(TAKE(FORMULATEXT(Y1),1)+0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LI20:LI22",
+   "input": "=TYPE(IFS(TRUE,N(TAKE(FORMULATEXT(Y1),1)+0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LJ20",
+   "input": "=SUMPRODUCT(IFS(TRUE,N(TAKE(nmRng,1)+0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LK20",
+   "input": "=SUMPRODUCT(IFS(TRUE,N(TAKE(nmRng,1)+0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LL20:LL22",
+   "input": "=SUMPRODUCT(IFS(TRUE,N(TAKE(nmRng,1)+0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LM20",
+   "input": "=N(IFS(TRUE,N(TAKE(ROW(A1)/0,1)+0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LN20",
+   "input": "=N(IFS(TRUE,N(TAKE(ROW(A1)/0,1)+0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LO20:LO22",
+   "input": "=N(IFS(TRUE,N(TAKE(ROW(A1)/0,1)+0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LP20",
+   "input": "=IFS(TRUE,N(TAKE(T[Q1],1)+0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LQ20",
+   "input": "=IFS(TRUE,N(TAKE(T[Q1],1)+0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LR20:LR22",
+   "input": "=IFS(TRUE,N(TAKE(T[Q1],1)+0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LS20",
+   "input": "=COLUMNS(IFS(TRUE,N(TAKE(FORMULATEXT(Y1)&\"\",1)+0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LT20",
+   "input": "=COLUMNS(IFS(TRUE,N(TAKE(FORMULATEXT(Y1)&\"\",1)+0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LU20:LU22",
+   "input": "=COLUMNS(IFS(TRUE,N(TAKE(FORMULATEXT(Y1)&\"\",1)+0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LV20",
+   "input": "=ISREF(IFS(TRUE,N(TAKE(nmRowD,1)+0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LW20",
+   "input": "=ISREF(IFS(TRUE,N(TAKE(nmRowD,1)+0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!LX20:LX22",
+   "input": "=ISREF(IFS(TRUE,N(TAKE(nmRowD,1)+0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!LY20",
+   "input": "=ROWS(IFS(TRUE,N(TAKE(ROW(A1),1)+0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!LZ20",
+   "input": "=ROWS(IFS(TRUE,N(TAKE(ROW(A1),1)+0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MA20:MA22",
+   "input": "=ROWS(IFS(TRUE,N(TAKE(ROW(A1),1)+0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MB20",
+   "input": "=SUMPRODUCT(IFERROR((nmRng)+0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MC20",
+   "input": "=SUMPRODUCT(IFERROR((nmRng)+0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MD20:MD22",
+   "input": "=SUMPRODUCT(IFERROR((nmRng)+0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ME20",
+   "input": "=N(IFERROR((COLUMN(A1))+0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MF20",
+   "input": "=N(IFERROR((COLUMN(A1))+0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MG20:MG22",
+   "input": "=N(IFERROR((COLUMN(A1))+0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MH20",
+   "input": "=IFERROR((ROW(A1)/0)+0,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MI20",
+   "input": "=IFERROR((ROW(A1)/0)+0,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MJ20:MJ22",
+   "input": "=IFERROR((ROW(A1)/0)+0,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MK20",
+   "input": "=COLUMNS(IFERROR((ROW(A1))+0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ML20",
+   "input": "=COLUMNS(IFERROR((ROW(A1))+0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MM20:MM22",
+   "input": "=COLUMNS(IFERROR((ROW(A1))+0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MN20",
+   "input": "=ISREF(IFERROR((LET(x,ROW(A1),x/0))+0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MO20",
+   "input": "=ISREF(IFERROR((LET(x,ROW(A1),x/0))+0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MP20:MP22",
+   "input": "=ISREF(IFERROR((LET(x,ROW(A1),x/0))+0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MQ20",
+   "input": "=ROWS(IFERROR((LAMBDA(p,ROW(p)/0)(A1))+0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MR20",
+   "input": "=ROWS(IFERROR((LAMBDA(p,ROW(p)/0)(A1))+0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MS20:MS22",
+   "input": "=ROWS(IFERROR((LAMBDA(p,ROW(p)/0)(A1))+0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MT20",
+   "input": "=TYPE(IFERROR((FORMULATEXT(Y1)&\"\")+0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MU20",
+   "input": "=TYPE(IFERROR((FORMULATEXT(Y1)&\"\")+0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MV20:MV22",
+   "input": "=TYPE(IFERROR((FORMULATEXT(Y1)&\"\")+0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MW20",
+   "input": "=N(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(FORMULATEXT(Y1),0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!MX20",
+   "input": "=N(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(FORMULATEXT(Y1),0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!MY20:MY22",
+   "input": "=N(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(FORMULATEXT(Y1),0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!MZ20",
+   "input": "=IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(ROW(A1)/0,0))),0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NA20",
+   "input": "=IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(ROW(A1)/0,0))),0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NB20:NB22",
+   "input": "=IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(ROW(A1)/0,0))),0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NC20",
+   "input": "=COLUMNS(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(LET(x,ROW(A1),x/0),0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ND20",
+   "input": "=COLUMNS(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(LET(x,ROW(A1),x/0),0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NE20:NE22",
+   "input": "=COLUMNS(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(LET(x,ROW(A1),x/0),0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NF20",
+   "input": "=ISREF(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(FORMULATEXT(Y1)&\"\",0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NG20",
+   "input": "=ISREF(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(FORMULATEXT(Y1)&\"\",0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NH20:NH22",
+   "input": "=ISREF(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(FORMULATEXT(Y1)&\"\",0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NI20",
+   "input": "=ROWS(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(nmRowD,0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NJ20",
+   "input": "=ROWS(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(nmRowD,0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NK20:NK22",
+   "input": "=ROWS(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(nmRowD,0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NL20",
+   "input": "=TYPE(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(ROW(A1),0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NM20",
+   "input": "=TYPE(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(ROW(A1),0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NN20:NN22",
+   "input": "=TYPE(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(ROW(A1),0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NO20",
+   "input": "=SUMPRODUCT(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(T[Q1],0))),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NP20",
+   "input": "=SUMPRODUCT(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(T[Q1],0))),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NQ20:NQ22",
+   "input": "=SUMPRODUCT(IFNA(SWITCH(1,1,TRANSPOSE(IFERROR(T[Q1],0))),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NR20",
+   "input": "=MMULT(LEN(SWITCH(1,1,ROW(A1)/0)),{1})",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NS20",
+   "input": "=MMULT(LEN(SWITCH(1,1,ROW(A1)/0)),{1})",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NT20:NT22",
+   "input": "=MMULT(LEN(SWITCH(1,1,ROW(A1)/0)),{1})",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NU20",
+   "input": "=COLUMNS(MMULT(LEN(SWITCH(1,1,T[Q1])),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NV20",
+   "input": "=COLUMNS(MMULT(LEN(SWITCH(1,1,T[Q1])),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NW20:NW22",
+   "input": "=COLUMNS(MMULT(LEN(SWITCH(1,1,T[Q1])),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!NX20",
+   "input": "=ISREF(MMULT(LEN(SWITCH(1,1,COLUMN(A1))),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!NY20",
+   "input": "=ISREF(MMULT(LEN(SWITCH(1,1,COLUMN(A1))),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!NZ20:NZ22",
+   "input": "=ISREF(MMULT(LEN(SWITCH(1,1,COLUMN(A1))),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OA20",
+   "input": "=ROWS(MMULT(LEN(SWITCH(1,1,nmRng)),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OB20",
+   "input": "=ROWS(MMULT(LEN(SWITCH(1,1,nmRng)),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OC20:OC22",
+   "input": "=ROWS(MMULT(LEN(SWITCH(1,1,nmRng)),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OD20",
+   "input": "=TYPE(MMULT(LEN(SWITCH(1,1,FORMULATEXT(Y1))),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OE20",
+   "input": "=TYPE(MMULT(LEN(SWITCH(1,1,FORMULATEXT(Y1))),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OF20:OF22",
+   "input": "=TYPE(MMULT(LEN(SWITCH(1,1,FORMULATEXT(Y1))),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OG20",
+   "input": "=SUMPRODUCT(MMULT(LEN(SWITCH(1,1,LET(x,ROW(A1),x/0))),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OH20",
+   "input": "=SUMPRODUCT(MMULT(LEN(SWITCH(1,1,LET(x,ROW(A1),x/0))),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OI20:OI22",
+   "input": "=SUMPRODUCT(MMULT(LEN(SWITCH(1,1,LET(x,ROW(A1),x/0))),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OJ20",
+   "input": "=N(MMULT(LEN(SWITCH(1,1,ROW(A1))),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OK20",
+   "input": "=N(MMULT(LEN(SWITCH(1,1,ROW(A1))),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OL20:OL22",
+   "input": "=N(MMULT(LEN(SWITCH(1,1,ROW(A1))),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OM20",
+   "input": "=COLUMNS(MAX(SWITCH(1,1,ABS(-COLUMN(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ON20",
+   "input": "=COLUMNS(MAX(SWITCH(1,1,ABS(-COLUMN(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OO20:OO22",
+   "input": "=COLUMNS(MAX(SWITCH(1,1,ABS(-COLUMN(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OP20",
+   "input": "=ISREF(MAX(SWITCH(1,1,ABS(-nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OQ20",
+   "input": "=ISREF(MAX(SWITCH(1,1,ABS(-nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OR20:OR22",
+   "input": "=ISREF(MAX(SWITCH(1,1,ABS(-nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OS20",
+   "input": "=ROWS(MAX(SWITCH(1,1,ABS(-T[Q1]))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OT20",
+   "input": "=ROWS(MAX(SWITCH(1,1,ABS(-T[Q1]))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OU20:OU22",
+   "input": "=ROWS(MAX(SWITCH(1,1,ABS(-T[Q1]))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OV20",
+   "input": "=TYPE(MAX(SWITCH(1,1,ABS(-ROW(A1)/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OW20",
+   "input": "=TYPE(MAX(SWITCH(1,1,ABS(-ROW(A1)/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!OX20:OX22",
+   "input": "=TYPE(MAX(SWITCH(1,1,ABS(-ROW(A1)/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!OY20",
+   "input": "=SUMPRODUCT(MAX(SWITCH(1,1,ABS(-FORMULATEXT(Y1)&\"\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!OZ20",
+   "input": "=SUMPRODUCT(MAX(SWITCH(1,1,ABS(-FORMULATEXT(Y1)&\"\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PA20:PA22",
+   "input": "=SUMPRODUCT(MAX(SWITCH(1,1,ABS(-FORMULATEXT(Y1)&\"\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PB20",
+   "input": "=N(MAX(SWITCH(1,1,ABS(-ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PC20",
+   "input": "=N(MAX(SWITCH(1,1,ABS(-ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PD20:PD22",
+   "input": "=N(MAX(SWITCH(1,1,ABS(-ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PE20",
+   "input": "=MAX(SWITCH(1,1,ABS(-LAMBDA(p,ROW(p)/0)(A1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PF20",
+   "input": "=MAX(SWITCH(1,1,ABS(-LAMBDA(p,ROW(p)/0)(A1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PG20:PG22",
+   "input": "=MAX(SWITCH(1,1,ABS(-LAMBDA(p,ROW(p)/0)(A1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PH20",
+   "input": "=ISREF(IF(NOT(OFFSET(FORMULATEXT(Y1)&\"\",0,0)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PI20",
+   "input": "=ISREF(IF(NOT(OFFSET(FORMULATEXT(Y1)&\"\",0,0)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PJ20:PJ22",
+   "input": "=ISREF(IF(NOT(OFFSET(FORMULATEXT(Y1)&\"\",0,0)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PK20",
+   "input": "=ROWS(IF(NOT(OFFSET(FORMULATEXT(Y1),0,0)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PL20",
+   "input": "=ROWS(IF(NOT(OFFSET(FORMULATEXT(Y1),0,0)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PM20:PM22",
+   "input": "=ROWS(IF(NOT(OFFSET(FORMULATEXT(Y1),0,0)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PN20",
+   "input": "=TYPE(IF(NOT(OFFSET(ROW(A1)/0,0,0)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PO20",
+   "input": "=TYPE(IF(NOT(OFFSET(ROW(A1)/0,0,0)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PP20:PP22",
+   "input": "=TYPE(IF(NOT(OFFSET(ROW(A1)/0,0,0)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PQ20",
+   "input": "=SUMPRODUCT(IF(NOT(OFFSET(T[Q1],0,0)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PR20",
+   "input": "=SUMPRODUCT(IF(NOT(OFFSET(T[Q1],0,0)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PS20:PS22",
+   "input": "=SUMPRODUCT(IF(NOT(OFFSET(T[Q1],0,0)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PT20",
+   "input": "=N(IF(NOT(OFFSET(COLUMN(A1),0,0)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PU20",
+   "input": "=N(IF(NOT(OFFSET(COLUMN(A1),0,0)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PV20:PV22",
+   "input": "=N(IF(NOT(OFFSET(COLUMN(A1),0,0)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PW20",
+   "input": "=IF(NOT(OFFSET(nmRowD,0,0)),1,2)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!PX20",
+   "input": "=IF(NOT(OFFSET(nmRowD,0,0)),1,2)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!PY20:PY22",
+   "input": "=IF(NOT(OFFSET(nmRowD,0,0)),1,2)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!PZ20",
+   "input": "=COLUMNS(IF(NOT(OFFSET(nmRng,0,0)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QA20",
+   "input": "=COLUMNS(IF(NOT(OFFSET(nmRng,0,0)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QB20:QB22",
+   "input": "=COLUMNS(IF(NOT(OFFSET(nmRng,0,0)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QC20",
+   "input": "=ROWS(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,ROW(A1)/0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QD20",
+   "input": "=ROWS(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,ROW(A1)/0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QE20:QE22",
+   "input": "=ROWS(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,ROW(A1)/0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QF20",
+   "input": "=TYPE(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,FORMULATEXT(Y1)&\"\"),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QG20",
+   "input": "=TYPE(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,FORMULATEXT(Y1)&\"\"),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QH20:QH22",
+   "input": "=TYPE(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,FORMULATEXT(Y1)&\"\"),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QI20",
+   "input": "=SUMPRODUCT(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,FORMULATEXT(Y1)),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QJ20",
+   "input": "=SUMPRODUCT(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,FORMULATEXT(Y1)),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QK20:QK22",
+   "input": "=SUMPRODUCT(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,FORMULATEXT(Y1)),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QL20",
+   "input": "=N(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,LET(x,ROW(A1),x/0)),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QM20",
+   "input": "=N(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,LET(x,ROW(A1),x/0)),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QN20:QN22",
+   "input": "=N(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,LET(x,ROW(A1),x/0)),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QO20",
+   "input": "=CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,LAMBDA(p,ROW(p)/0)(A1)),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QP20",
+   "input": "=CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,LAMBDA(p,ROW(p)/0)(A1)),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QQ20:QQ22",
+   "input": "=CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,LAMBDA(p,ROW(p)/0)(A1)),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QR20",
+   "input": "=COLUMNS(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,ROW(A1)),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QS20",
+   "input": "=COLUMNS(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,ROW(A1)),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QT20:QT22",
+   "input": "=COLUMNS(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,ROW(A1)),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QU20",
+   "input": "=ISREF(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,COLUMN(A1)),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QV20",
+   "input": "=ISREF(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,COLUMN(A1)),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QW20:QW22",
+   "input": "=ISREF(CHOOSE(1,TRANSPOSE(IF(IFS(TRUE,COLUMN(A1)),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!QX20",
+   "input": "=TYPE(INDEX(SUM(CHOOSE(1,nmRng)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!QY20",
+   "input": "=TYPE(INDEX(SUM(CHOOSE(1,nmRng)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!QZ20:QZ22",
+   "input": "=TYPE(INDEX(SUM(CHOOSE(1,nmRng)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RA20",
+   "input": "=SUMPRODUCT(INDEX(SUM(CHOOSE(1,FORMULATEXT(Y1)&\"\")),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RB20",
+   "input": "=SUMPRODUCT(INDEX(SUM(CHOOSE(1,FORMULATEXT(Y1)&\"\")),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RC20:RC22",
+   "input": "=SUMPRODUCT(INDEX(SUM(CHOOSE(1,FORMULATEXT(Y1)&\"\")),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RD20",
+   "input": "=N(INDEX(SUM(CHOOSE(1,COLUMN(A1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RE20",
+   "input": "=N(INDEX(SUM(CHOOSE(1,COLUMN(A1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RF20:RF22",
+   "input": "=N(INDEX(SUM(CHOOSE(1,COLUMN(A1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RG20",
+   "input": "=INDEX(SUM(CHOOSE(1,FORMULATEXT(Y1))),1)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RH20",
+   "input": "=INDEX(SUM(CHOOSE(1,FORMULATEXT(Y1))),1)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RI20:RI22",
+   "input": "=INDEX(SUM(CHOOSE(1,FORMULATEXT(Y1))),1)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RJ20",
+   "input": "=COLUMNS(INDEX(SUM(CHOOSE(1,ROW(A1)/0)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RK20",
+   "input": "=COLUMNS(INDEX(SUM(CHOOSE(1,ROW(A1)/0)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RL20:RL22",
+   "input": "=COLUMNS(INDEX(SUM(CHOOSE(1,ROW(A1)/0)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RM20",
+   "input": "=ISREF(INDEX(SUM(CHOOSE(1,nmRowD)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RN20",
+   "input": "=ISREF(INDEX(SUM(CHOOSE(1,nmRowD)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RO20:RO22",
+   "input": "=ISREF(INDEX(SUM(CHOOSE(1,nmRowD)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RP20",
+   "input": "=ROWS(INDEX(SUM(CHOOSE(1,ROW(A1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RQ20",
+   "input": "=ROWS(INDEX(SUM(CHOOSE(1,ROW(A1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RR20:RR22",
+   "input": "=ROWS(INDEX(SUM(CHOOSE(1,ROW(A1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RS20",
+   "input": "=SUMPRODUCT(N(COUNT(IFERROR(TAKE(LAMBDA(p,ROW(p)/0)(A1),1),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RT20",
+   "input": "=SUMPRODUCT(N(COUNT(IFERROR(TAKE(LAMBDA(p,ROW(p)/0)(A1),1),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RU20:RU22",
+   "input": "=SUMPRODUCT(N(COUNT(IFERROR(TAKE(LAMBDA(p,ROW(p)/0)(A1),1),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RV20",
+   "input": "=N(N(COUNT(IFERROR(TAKE(ROW(A1)/0,1),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RW20",
+   "input": "=N(N(COUNT(IFERROR(TAKE(ROW(A1)/0,1),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!RX20:RX22",
+   "input": "=N(N(COUNT(IFERROR(TAKE(ROW(A1)/0,1),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!RY20",
+   "input": "=N(COUNT(IFERROR(TAKE(nmRng,1),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!RZ20",
+   "input": "=N(COUNT(IFERROR(TAKE(nmRng,1),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SA20:SA22",
+   "input": "=N(COUNT(IFERROR(TAKE(nmRng,1),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SB20",
+   "input": "=COLUMNS(N(COUNT(IFERROR(TAKE(LET(x,ROW(A1),x/0),1),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SC20",
+   "input": "=COLUMNS(N(COUNT(IFERROR(TAKE(LET(x,ROW(A1),x/0),1),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SD20:SD22",
+   "input": "=COLUMNS(N(COUNT(IFERROR(TAKE(LET(x,ROW(A1),x/0),1),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SE20",
+   "input": "=ISREF(N(COUNT(IFERROR(TAKE(FORMULATEXT(Y1)&\"\",1),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SF20",
+   "input": "=ISREF(N(COUNT(IFERROR(TAKE(FORMULATEXT(Y1)&\"\",1),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SG20:SG22",
+   "input": "=ISREF(N(COUNT(IFERROR(TAKE(FORMULATEXT(Y1)&\"\",1),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SH20",
+   "input": "=ROWS(N(COUNT(IFERROR(TAKE(nmRowD,1),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SI20",
+   "input": "=ROWS(N(COUNT(IFERROR(TAKE(nmRowD,1),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SJ20:SJ22",
+   "input": "=ROWS(N(COUNT(IFERROR(TAKE(nmRowD,1),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SK20",
+   "input": "=TYPE(N(COUNT(IFERROR(TAKE(COLUMN(A1),1),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SL20",
+   "input": "=TYPE(N(COUNT(IFERROR(TAKE(COLUMN(A1),1),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SM20:SM22",
+   "input": "=TYPE(N(COUNT(IFERROR(TAKE(COLUMN(A1),1),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SN20",
+   "input": "=N(AND(NOT(SUMPRODUCT(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SO20",
+   "input": "=N(AND(NOT(SUMPRODUCT(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SP20:SP22",
+   "input": "=N(AND(NOT(SUMPRODUCT(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SQ20",
+   "input": "=AND(NOT(SUMPRODUCT(ROW(A1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SR20",
+   "input": "=AND(NOT(SUMPRODUCT(ROW(A1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SS20:SS22",
+   "input": "=AND(NOT(SUMPRODUCT(ROW(A1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ST20",
+   "input": "=COLUMNS(AND(NOT(SUMPRODUCT(nmRowD))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SU20",
+   "input": "=COLUMNS(AND(NOT(SUMPRODUCT(nmRowD))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SV20:SV22",
+   "input": "=COLUMNS(AND(NOT(SUMPRODUCT(nmRowD))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SW20",
+   "input": "=ISREF(AND(NOT(SUMPRODUCT(T[Q1]))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!SX20",
+   "input": "=ISREF(AND(NOT(SUMPRODUCT(T[Q1]))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!SY20:SY22",
+   "input": "=ISREF(AND(NOT(SUMPRODUCT(T[Q1]))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!SZ20",
+   "input": "=ROWS(AND(NOT(SUMPRODUCT(FORMULATEXT(Y1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TA20",
+   "input": "=ROWS(AND(NOT(SUMPRODUCT(FORMULATEXT(Y1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TB20:TB22",
+   "input": "=ROWS(AND(NOT(SUMPRODUCT(FORMULATEXT(Y1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TC20",
+   "input": "=TYPE(AND(NOT(SUMPRODUCT(LET(x,ROW(A1),x/0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TD20",
+   "input": "=TYPE(AND(NOT(SUMPRODUCT(LET(x,ROW(A1),x/0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TE20:TE22",
+   "input": "=TYPE(AND(NOT(SUMPRODUCT(LET(x,ROW(A1),x/0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TF20",
+   "input": "=SUMPRODUCT(AND(NOT(SUMPRODUCT(nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TG20",
+   "input": "=SUMPRODUCT(AND(NOT(SUMPRODUCT(nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TH20:TH22",
+   "input": "=SUMPRODUCT(AND(NOT(SUMPRODUCT(nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TI20",
+   "input": "=COUNT(SUM(TEXT(SUMPRODUCT(FORMULATEXT(Y1)&\"\"),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TJ20",
+   "input": "=COUNT(SUM(TEXT(SUMPRODUCT(FORMULATEXT(Y1)&\"\"),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TK20:TK22",
+   "input": "=COUNT(SUM(TEXT(SUMPRODUCT(FORMULATEXT(Y1)&\"\"),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TL20",
+   "input": "=COLUMNS(COUNT(SUM(TEXT(SUMPRODUCT(T[Q1]),\"0\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TM20",
+   "input": "=COLUMNS(COUNT(SUM(TEXT(SUMPRODUCT(T[Q1]),\"0\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TN20:TN22",
+   "input": "=COLUMNS(COUNT(SUM(TEXT(SUMPRODUCT(T[Q1]),\"0\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TO20",
+   "input": "=ISREF(COUNT(SUM(TEXT(SUMPRODUCT(LAMBDA(p,ROW(p)/0)(A1)),\"0\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TP20",
+   "input": "=ISREF(COUNT(SUM(TEXT(SUMPRODUCT(LAMBDA(p,ROW(p)/0)(A1)),\"0\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TQ20:TQ22",
+   "input": "=ISREF(COUNT(SUM(TEXT(SUMPRODUCT(LAMBDA(p,ROW(p)/0)(A1)),\"0\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TR20",
+   "input": "=ROWS(COUNT(SUM(TEXT(SUMPRODUCT(ROW(A1)/0),\"0\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TS20",
+   "input": "=ROWS(COUNT(SUM(TEXT(SUMPRODUCT(ROW(A1)/0),\"0\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TT20:TT22",
+   "input": "=ROWS(COUNT(SUM(TEXT(SUMPRODUCT(ROW(A1)/0),\"0\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TU20",
+   "input": "=TYPE(COUNT(SUM(TEXT(SUMPRODUCT(LET(x,ROW(A1),x/0)),\"0\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TV20",
+   "input": "=TYPE(COUNT(SUM(TEXT(SUMPRODUCT(LET(x,ROW(A1),x/0)),\"0\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TW20:TW22",
+   "input": "=TYPE(COUNT(SUM(TEXT(SUMPRODUCT(LET(x,ROW(A1),x/0)),\"0\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!TX20",
+   "input": "=SUMPRODUCT(COUNT(SUM(TEXT(SUMPRODUCT(COLUMN(A1)),\"0\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!TY20",
+   "input": "=SUMPRODUCT(COUNT(SUM(TEXT(SUMPRODUCT(COLUMN(A1)),\"0\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!TZ20:TZ22",
+   "input": "=SUMPRODUCT(COUNT(SUM(TEXT(SUMPRODUCT(COLUMN(A1)),\"0\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UA20",
+   "input": "=N(COUNT(SUM(TEXT(SUMPRODUCT(ROW(A1)),\"0\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UB20",
+   "input": "=N(COUNT(SUM(TEXT(SUMPRODUCT(ROW(A1)),\"0\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UC20:UC22",
+   "input": "=N(COUNT(SUM(TEXT(SUMPRODUCT(ROW(A1)),\"0\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UD20",
+   "input": "=COLUMNS(IFNA(CHOOSE(1,nmRowD+0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UE20",
+   "input": "=COLUMNS(IFNA(CHOOSE(1,nmRowD+0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UF20:UF22",
+   "input": "=COLUMNS(IFNA(CHOOSE(1,nmRowD+0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UG20",
+   "input": "=ISREF(IFNA(CHOOSE(1,T[Q1]+0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UH20",
+   "input": "=ISREF(IFNA(CHOOSE(1,T[Q1]+0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UI20:UI22",
+   "input": "=ISREF(IFNA(CHOOSE(1,T[Q1]+0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UJ20",
+   "input": "=ROWS(IFNA(CHOOSE(1,LET(x,ROW(A1),x/0)+0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UK20",
+   "input": "=ROWS(IFNA(CHOOSE(1,LET(x,ROW(A1),x/0)+0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UL20:UL22",
+   "input": "=ROWS(IFNA(CHOOSE(1,LET(x,ROW(A1),x/0)+0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UM20",
+   "input": "=TYPE(IFNA(CHOOSE(1,LAMBDA(p,ROW(p)/0)(A1)+0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UN20",
+   "input": "=TYPE(IFNA(CHOOSE(1,LAMBDA(p,ROW(p)/0)(A1)+0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UO20:UO22",
+   "input": "=TYPE(IFNA(CHOOSE(1,LAMBDA(p,ROW(p)/0)(A1)+0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UP20",
+   "input": "=SUMPRODUCT(IFNA(CHOOSE(1,COLUMN(A1)+0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UQ20",
+   "input": "=SUMPRODUCT(IFNA(CHOOSE(1,COLUMN(A1)+0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UR20:UR22",
+   "input": "=SUMPRODUCT(IFNA(CHOOSE(1,COLUMN(A1)+0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!US20",
+   "input": "=N(IFNA(CHOOSE(1,ROW(A1)/0+0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UT20",
+   "input": "=N(IFNA(CHOOSE(1,ROW(A1)/0+0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UU20:UU22",
+   "input": "=N(IFNA(CHOOSE(1,ROW(A1)/0+0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UV20",
+   "input": "=IFNA(CHOOSE(1,FORMULATEXT(Y1)&\"\"+0),0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UW20",
+   "input": "=IFNA(CHOOSE(1,FORMULATEXT(Y1)&\"\"+0),0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!UX20:UX22",
+   "input": "=IFNA(CHOOSE(1,FORMULATEXT(Y1)&\"\"+0),0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!UY20",
+   "input": "=ISREF(LEN(SUM(COUNT(ABS(nmRng)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!UZ20",
+   "input": "=ISREF(LEN(SUM(COUNT(ABS(nmRng)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VA20:VA22",
+   "input": "=ISREF(LEN(SUM(COUNT(ABS(nmRng)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VB20",
+   "input": "=ROWS(LEN(SUM(COUNT(ABS(T[Q1])))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VC20",
+   "input": "=ROWS(LEN(SUM(COUNT(ABS(T[Q1])))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VD20:VD22",
+   "input": "=ROWS(LEN(SUM(COUNT(ABS(T[Q1])))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VE20",
+   "input": "=TYPE(LEN(SUM(COUNT(ABS(LET(x,ROW(A1),x/0))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VF20",
+   "input": "=TYPE(LEN(SUM(COUNT(ABS(LET(x,ROW(A1),x/0))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VG20:VG22",
+   "input": "=TYPE(LEN(SUM(COUNT(ABS(LET(x,ROW(A1),x/0))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VH20",
+   "input": "=SUMPRODUCT(LEN(SUM(COUNT(ABS(LAMBDA(p,ROW(p)/0)(A1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VI20",
+   "input": "=SUMPRODUCT(LEN(SUM(COUNT(ABS(LAMBDA(p,ROW(p)/0)(A1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VJ20:VJ22",
+   "input": "=SUMPRODUCT(LEN(SUM(COUNT(ABS(LAMBDA(p,ROW(p)/0)(A1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VK20",
+   "input": "=N(LEN(SUM(COUNT(ABS(COLUMN(A1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VL20",
+   "input": "=N(LEN(SUM(COUNT(ABS(COLUMN(A1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VM20:VM22",
+   "input": "=N(LEN(SUM(COUNT(ABS(COLUMN(A1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VN20",
+   "input": "=LEN(SUM(COUNT(ABS(ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VO20",
+   "input": "=LEN(SUM(COUNT(ABS(ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VP20:VP22",
+   "input": "=LEN(SUM(COUNT(ABS(ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VQ20",
+   "input": "=COLUMNS(LEN(SUM(COUNT(ABS(FORMULATEXT(Y1)&\"\")))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VR20",
+   "input": "=COLUMNS(LEN(SUM(COUNT(ABS(FORMULATEXT(Y1)&\"\")))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VS20:VS22",
+   "input": "=COLUMNS(LEN(SUM(COUNT(ABS(FORMULATEXT(Y1)&\"\")))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VT20",
+   "input": "=ROWS(INDEX(CHOOSE(1,COUNT(FORMULATEXT(Y1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VU20",
+   "input": "=ROWS(INDEX(CHOOSE(1,COUNT(FORMULATEXT(Y1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VV20:VV22",
+   "input": "=ROWS(INDEX(CHOOSE(1,COUNT(FORMULATEXT(Y1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VW20",
+   "input": "=TYPE(INDEX(CHOOSE(1,COUNT(T[Q1])),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!VX20",
+   "input": "=TYPE(INDEX(CHOOSE(1,COUNT(T[Q1])),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!VY20:VY22",
+   "input": "=TYPE(INDEX(CHOOSE(1,COUNT(T[Q1])),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!VZ20",
+   "input": "=SUMPRODUCT(INDEX(CHOOSE(1,COUNT(nmRowD)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WA20",
+   "input": "=SUMPRODUCT(INDEX(CHOOSE(1,COUNT(nmRowD)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WB20:WB22",
+   "input": "=SUMPRODUCT(INDEX(CHOOSE(1,COUNT(nmRowD)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WC20",
+   "input": "=N(INDEX(CHOOSE(1,COUNT(nmRng)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WD20",
+   "input": "=N(INDEX(CHOOSE(1,COUNT(nmRng)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WE20:WE22",
+   "input": "=N(INDEX(CHOOSE(1,COUNT(nmRng)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WF20",
+   "input": "=INDEX(CHOOSE(1,COUNT(LET(x,ROW(A1),x/0))),1)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WG20",
+   "input": "=INDEX(CHOOSE(1,COUNT(LET(x,ROW(A1),x/0))),1)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WH20:WH22",
+   "input": "=INDEX(CHOOSE(1,COUNT(LET(x,ROW(A1),x/0))),1)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WI20",
+   "input": "=COLUMNS(INDEX(CHOOSE(1,COUNT(COLUMN(A1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WJ20",
+   "input": "=COLUMNS(INDEX(CHOOSE(1,COUNT(COLUMN(A1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WK20:WK22",
+   "input": "=COLUMNS(INDEX(CHOOSE(1,COUNT(COLUMN(A1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WL20",
+   "input": "=ISREF(INDEX(CHOOSE(1,COUNT(LAMBDA(p,ROW(p)/0)(A1))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WM20",
+   "input": "=ISREF(INDEX(CHOOSE(1,COUNT(LAMBDA(p,ROW(p)/0)(A1))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WN20:WN22",
+   "input": "=ISREF(INDEX(CHOOSE(1,COUNT(LAMBDA(p,ROW(p)/0)(A1))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WO20",
+   "input": "=TYPE(-ABS(SUMPRODUCT(AND(nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WP20",
+   "input": "=TYPE(-ABS(SUMPRODUCT(AND(nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WQ20:WQ22",
+   "input": "=TYPE(-ABS(SUMPRODUCT(AND(nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WR20",
+   "input": "=SUMPRODUCT(-ABS(SUMPRODUCT(AND(FORMULATEXT(Y1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WS20",
+   "input": "=SUMPRODUCT(-ABS(SUMPRODUCT(AND(FORMULATEXT(Y1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WT20:WT22",
+   "input": "=SUMPRODUCT(-ABS(SUMPRODUCT(AND(FORMULATEXT(Y1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WU20",
+   "input": "=N(-ABS(SUMPRODUCT(AND(ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WV20",
+   "input": "=N(-ABS(SUMPRODUCT(AND(ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WW20:WW22",
+   "input": "=N(-ABS(SUMPRODUCT(AND(ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!WX20",
+   "input": "=-ABS(SUMPRODUCT(AND(nmRowD)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!WY20",
+   "input": "=-ABS(SUMPRODUCT(AND(nmRowD)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!WZ20:WZ22",
+   "input": "=-ABS(SUMPRODUCT(AND(nmRowD)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XA20",
+   "input": "=COLUMNS(-ABS(SUMPRODUCT(AND(LET(x,ROW(A1),x/0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XB20",
+   "input": "=COLUMNS(-ABS(SUMPRODUCT(AND(LET(x,ROW(A1),x/0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XC20:XC22",
+   "input": "=COLUMNS(-ABS(SUMPRODUCT(AND(LET(x,ROW(A1),x/0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XD20",
+   "input": "=ISREF(-ABS(SUMPRODUCT(AND(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XE20",
+   "input": "=ISREF(-ABS(SUMPRODUCT(AND(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XF20:XF22",
+   "input": "=ISREF(-ABS(SUMPRODUCT(AND(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XG20",
+   "input": "=ROWS(-ABS(SUMPRODUCT(AND(ROW(A1)/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XH20",
+   "input": "=ROWS(-ABS(SUMPRODUCT(AND(ROW(A1)/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XI20:XI22",
+   "input": "=ROWS(-ABS(SUMPRODUCT(AND(ROW(A1)/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XJ20",
+   "input": "=SUMPRODUCT(COUNT(TEXT(OFFSET(LAMBDA(p,ROW(p)/0)(A1),0,0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XK20",
+   "input": "=SUMPRODUCT(COUNT(TEXT(OFFSET(LAMBDA(p,ROW(p)/0)(A1),0,0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XL20:XL22",
+   "input": "=SUMPRODUCT(COUNT(TEXT(OFFSET(LAMBDA(p,ROW(p)/0)(A1),0,0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XM20",
+   "input": "=N(COUNT(TEXT(OFFSET(T[Q1],0,0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XN20",
+   "input": "=N(COUNT(TEXT(OFFSET(T[Q1],0,0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XO20:XO22",
+   "input": "=N(COUNT(TEXT(OFFSET(T[Q1],0,0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XP20",
+   "input": "=COUNT(TEXT(OFFSET(COLUMN(A1),0,0),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XQ20",
+   "input": "=COUNT(TEXT(OFFSET(COLUMN(A1),0,0),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XR20:XR22",
+   "input": "=COUNT(TEXT(OFFSET(COLUMN(A1),0,0),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XS20",
+   "input": "=COLUMNS(COUNT(TEXT(OFFSET(nmRng,0,0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XT20",
+   "input": "=COLUMNS(COUNT(TEXT(OFFSET(nmRng,0,0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XU20:XU22",
+   "input": "=COLUMNS(COUNT(TEXT(OFFSET(nmRng,0,0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XV20",
+   "input": "=ISREF(COUNT(TEXT(OFFSET(LET(x,ROW(A1),x/0),0,0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XW20",
+   "input": "=ISREF(COUNT(TEXT(OFFSET(LET(x,ROW(A1),x/0),0,0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!XX20:XX22",
+   "input": "=ISREF(COUNT(TEXT(OFFSET(LET(x,ROW(A1),x/0),0,0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!XY20",
+   "input": "=ROWS(COUNT(TEXT(OFFSET(ROW(A1),0,0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!XZ20",
+   "input": "=ROWS(COUNT(TEXT(OFFSET(ROW(A1),0,0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YA20:YA22",
+   "input": "=ROWS(COUNT(TEXT(OFFSET(ROW(A1),0,0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YB20",
+   "input": "=TYPE(COUNT(TEXT(OFFSET(FORMULATEXT(Y1)&\"\",0,0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YC20",
+   "input": "=TYPE(COUNT(TEXT(OFFSET(FORMULATEXT(Y1)&\"\",0,0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YD20:YD22",
+   "input": "=TYPE(COUNT(TEXT(OFFSET(FORMULATEXT(Y1)&\"\",0,0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YE20",
+   "input": "=N(ABS(IF(TRUE,MAX(COLUMN(A1))))+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YF20",
+   "input": "=N(ABS(IF(TRUE,MAX(COLUMN(A1))))+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YG20:YG22",
+   "input": "=N(ABS(IF(TRUE,MAX(COLUMN(A1))))+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YH20",
+   "input": "=ABS(IF(TRUE,MAX(T[Q1])))+0",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YI20",
+   "input": "=ABS(IF(TRUE,MAX(T[Q1])))+0",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YJ20:YJ22",
+   "input": "=ABS(IF(TRUE,MAX(T[Q1])))+0",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YK20",
+   "input": "=COLUMNS(ABS(IF(TRUE,MAX(FORMULATEXT(Y1))))+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YL20",
+   "input": "=COLUMNS(ABS(IF(TRUE,MAX(FORMULATEXT(Y1))))+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YM20:YM22",
+   "input": "=COLUMNS(ABS(IF(TRUE,MAX(FORMULATEXT(Y1))))+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YN20",
+   "input": "=ISREF(ABS(IF(TRUE,MAX(ROW(A1)/0)))+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YO20",
+   "input": "=ISREF(ABS(IF(TRUE,MAX(ROW(A1)/0)))+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YP20:YP22",
+   "input": "=ISREF(ABS(IF(TRUE,MAX(ROW(A1)/0)))+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YQ20",
+   "input": "=ROWS(ABS(IF(TRUE,MAX(nmRowD)))+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YR20",
+   "input": "=ROWS(ABS(IF(TRUE,MAX(nmRowD)))+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YS20:YS22",
+   "input": "=ROWS(ABS(IF(TRUE,MAX(nmRowD)))+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YT20",
+   "input": "=TYPE(ABS(IF(TRUE,MAX(ROW(A1))))+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YU20",
+   "input": "=TYPE(ABS(IF(TRUE,MAX(ROW(A1))))+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YV20:YV22",
+   "input": "=TYPE(ABS(IF(TRUE,MAX(ROW(A1))))+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YW20",
+   "input": "=SUMPRODUCT(ABS(IF(TRUE,MAX(FORMULATEXT(Y1)&\"\")))+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!YX20",
+   "input": "=SUMPRODUCT(ABS(IF(TRUE,MAX(FORMULATEXT(Y1)&\"\")))+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!YY20:YY22",
+   "input": "=SUMPRODUCT(ABS(IF(TRUE,MAX(FORMULATEXT(Y1)&\"\")))+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!YZ20",
+   "input": "=VLOOKUP(IFERROR(nmRowD,0)+0,A1:B3,2,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZA20",
+   "input": "=VLOOKUP(IFERROR(nmRowD,0)+0,A1:B3,2,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZB20:ZB22",
+   "input": "=VLOOKUP(IFERROR(nmRowD,0)+0,A1:B3,2,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZC20",
+   "input": "=COLUMNS(VLOOKUP(IFERROR(COLUMN(A1),0)+0,A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZD20",
+   "input": "=COLUMNS(VLOOKUP(IFERROR(COLUMN(A1),0)+0,A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZE20:ZE22",
+   "input": "=COLUMNS(VLOOKUP(IFERROR(COLUMN(A1),0)+0,A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZF20",
+   "input": "=ISREF(VLOOKUP(IFERROR(LET(x,ROW(A1),x/0),0)+0,A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZG20",
+   "input": "=ISREF(VLOOKUP(IFERROR(LET(x,ROW(A1),x/0),0)+0,A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZH20:ZH22",
+   "input": "=ISREF(VLOOKUP(IFERROR(LET(x,ROW(A1),x/0),0)+0,A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZI20",
+   "input": "=ROWS(VLOOKUP(IFERROR(LAMBDA(p,ROW(p)/0)(A1),0)+0,A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZJ20",
+   "input": "=ROWS(VLOOKUP(IFERROR(LAMBDA(p,ROW(p)/0)(A1),0)+0,A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZK20:ZK22",
+   "input": "=ROWS(VLOOKUP(IFERROR(LAMBDA(p,ROW(p)/0)(A1),0)+0,A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZL20",
+   "input": "=TYPE(VLOOKUP(IFERROR(FORMULATEXT(Y1)&\"\",0)+0,A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZM20",
+   "input": "=TYPE(VLOOKUP(IFERROR(FORMULATEXT(Y1)&\"\",0)+0,A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZN20:ZN22",
+   "input": "=TYPE(VLOOKUP(IFERROR(FORMULATEXT(Y1)&\"\",0)+0,A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZO20",
+   "input": "=SUMPRODUCT(VLOOKUP(IFERROR(nmRng,0)+0,A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZP20",
+   "input": "=SUMPRODUCT(VLOOKUP(IFERROR(nmRng,0)+0,A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZQ20:ZQ22",
+   "input": "=SUMPRODUCT(VLOOKUP(IFERROR(nmRng,0)+0,A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZR20",
+   "input": "=N(VLOOKUP(IFERROR(ROW(A1)/0,0)+0,A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZS20",
+   "input": "=N(VLOOKUP(IFERROR(ROW(A1)/0,0)+0,A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZT20:ZT22",
+   "input": "=N(VLOOKUP(IFERROR(ROW(A1)/0,0)+0,A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZU20",
+   "input": "=COLUMNS(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,T[Q1]),{1}))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZV20",
+   "input": "=COLUMNS(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,T[Q1]),{1}))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZW20:ZW22",
+   "input": "=COLUMNS(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,T[Q1]),{1}))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ZX20",
+   "input": "=ISREF(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,ROW(A1)),{1}))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ZY20",
+   "input": "=ISREF(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,ROW(A1)),{1}))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ZZ20:ZZ22",
+   "input": "=ISREF(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,ROW(A1)),{1}))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAA20",
+   "input": "=ROWS(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,FORMULATEXT(Y1)),{1}))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAB20",
+   "input": "=ROWS(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,FORMULATEXT(Y1)),{1}))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAC20:AAC22",
+   "input": "=ROWS(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,FORMULATEXT(Y1)),{1}))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAD20",
+   "input": "=TYPE(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,LET(x,ROW(A1),x/0)),{1}))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAE20",
+   "input": "=TYPE(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,LET(x,ROW(A1),x/0)),{1}))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAF20:AAF22",
+   "input": "=TYPE(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,LET(x,ROW(A1),x/0)),{1}))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAG20",
+   "input": "=SUMPRODUCT(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,ROW(A1)/0),{1}))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAH20",
+   "input": "=SUMPRODUCT(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,ROW(A1)/0),{1}))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAI20:AAI22",
+   "input": "=SUMPRODUCT(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,ROW(A1)/0),{1}))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAJ20",
+   "input": "=N(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,FORMULATEXT(Y1)&\"\"),{1}))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAK20",
+   "input": "=N(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,FORMULATEXT(Y1)&\"\"),{1}))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAL20:AAL22",
+   "input": "=N(SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,FORMULATEXT(Y1)&\"\"),{1}))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAM20",
+   "input": "=SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,nmRowD),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAN20",
+   "input": "=SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,nmRowD),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAO20:AAO22",
+   "input": "=SUMPRODUCT(IFS(TRUE,MMULT(IF(TRUE,nmRowD),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAP20",
+   "input": "=ISREF(TEXT(MMULT(LEN(COLUMN(A1)),{1}),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAQ20",
+   "input": "=ISREF(TEXT(MMULT(LEN(COLUMN(A1)),{1}),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAR20:AAR22",
+   "input": "=ISREF(TEXT(MMULT(LEN(COLUMN(A1)),{1}),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAS20",
+   "input": "=ROWS(TEXT(MMULT(LEN(FORMULATEXT(Y1)&\"\"),{1}),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAT20",
+   "input": "=ROWS(TEXT(MMULT(LEN(FORMULATEXT(Y1)&\"\"),{1}),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAU20:AAU22",
+   "input": "=ROWS(TEXT(MMULT(LEN(FORMULATEXT(Y1)&\"\"),{1}),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAV20",
+   "input": "=TYPE(TEXT(MMULT(LEN(LAMBDA(p,ROW(p)/0)(A1)),{1}),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAW20",
+   "input": "=TYPE(TEXT(MMULT(LEN(LAMBDA(p,ROW(p)/0)(A1)),{1}),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AAX20:AAX22",
+   "input": "=TYPE(TEXT(MMULT(LEN(LAMBDA(p,ROW(p)/0)(A1)),{1}),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AAY20",
+   "input": "=SUMPRODUCT(TEXT(MMULT(LEN(FORMULATEXT(Y1)),{1}),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AAZ20",
+   "input": "=SUMPRODUCT(TEXT(MMULT(LEN(FORMULATEXT(Y1)),{1}),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABA20:ABA22",
+   "input": "=SUMPRODUCT(TEXT(MMULT(LEN(FORMULATEXT(Y1)),{1}),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABB20",
+   "input": "=N(TEXT(MMULT(LEN(ROW(A1)),{1}),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABC20",
+   "input": "=N(TEXT(MMULT(LEN(ROW(A1)),{1}),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABD20:ABD22",
+   "input": "=N(TEXT(MMULT(LEN(ROW(A1)),{1}),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABE20",
+   "input": "=TEXT(MMULT(LEN(LET(x,ROW(A1),x/0)),{1}),\"0\")",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABF20",
+   "input": "=TEXT(MMULT(LEN(LET(x,ROW(A1),x/0)),{1}),\"0\")",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABG20:ABG22",
+   "input": "=TEXT(MMULT(LEN(LET(x,ROW(A1),x/0)),{1}),\"0\")",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABH20",
+   "input": "=COLUMNS(TEXT(MMULT(LEN(nmRng),{1}),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABI20",
+   "input": "=COLUMNS(TEXT(MMULT(LEN(nmRng),{1}),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABJ20:ABJ22",
+   "input": "=COLUMNS(TEXT(MMULT(LEN(nmRng),{1}),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABK20",
+   "input": "=ROWS(OFFSET(SWITCH(1,1,IFERROR((nmRowD),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABL20",
+   "input": "=ROWS(OFFSET(SWITCH(1,1,IFERROR((nmRowD),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABM20:ABM22",
+   "input": "=ROWS(OFFSET(SWITCH(1,1,IFERROR((nmRowD),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABN20",
+   "input": "=TYPE(OFFSET(SWITCH(1,1,IFERROR((ROW(A1)),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABO20",
+   "input": "=TYPE(OFFSET(SWITCH(1,1,IFERROR((ROW(A1)),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABP20:ABP22",
+   "input": "=TYPE(OFFSET(SWITCH(1,1,IFERROR((ROW(A1)),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABQ20",
+   "input": "=SUMPRODUCT(OFFSET(SWITCH(1,1,IFERROR((FORMULATEXT(Y1)&\"\"),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABR20",
+   "input": "=SUMPRODUCT(OFFSET(SWITCH(1,1,IFERROR((FORMULATEXT(Y1)&\"\"),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABS20:ABS22",
+   "input": "=SUMPRODUCT(OFFSET(SWITCH(1,1,IFERROR((FORMULATEXT(Y1)&\"\"),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABT20",
+   "input": "=N(OFFSET(SWITCH(1,1,IFERROR((nmRng),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABU20",
+   "input": "=N(OFFSET(SWITCH(1,1,IFERROR((nmRng),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABV20:ABV22",
+   "input": "=N(OFFSET(SWITCH(1,1,IFERROR((nmRng),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABW20",
+   "input": "=OFFSET(SWITCH(1,1,IFERROR((ROW(A1)/0),0)),0,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ABX20",
+   "input": "=OFFSET(SWITCH(1,1,IFERROR((ROW(A1)/0),0)),0,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ABY20:ABY22",
+   "input": "=OFFSET(SWITCH(1,1,IFERROR((ROW(A1)/0),0)),0,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ABZ20",
+   "input": "=COLUMNS(OFFSET(SWITCH(1,1,IFERROR((T[Q1]),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACA20",
+   "input": "=COLUMNS(OFFSET(SWITCH(1,1,IFERROR((T[Q1]),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACB20:ACB22",
+   "input": "=COLUMNS(OFFSET(SWITCH(1,1,IFERROR((T[Q1]),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACC20",
+   "input": "=ISREF(OFFSET(SWITCH(1,1,IFERROR((LET(x,ROW(A1),x/0)),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACD20",
+   "input": "=ISREF(OFFSET(SWITCH(1,1,IFERROR((LET(x,ROW(A1),x/0)),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACE20:ACE22",
+   "input": "=ISREF(OFFSET(SWITCH(1,1,IFERROR((LET(x,ROW(A1),x/0)),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACF20",
+   "input": "=TYPE(LEN(COUNT(TAKE(FORMULATEXT(Y1)&\"\",1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACG20",
+   "input": "=TYPE(LEN(COUNT(TAKE(FORMULATEXT(Y1)&\"\",1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACH20:ACH22",
+   "input": "=TYPE(LEN(COUNT(TAKE(FORMULATEXT(Y1)&\"\",1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACI20",
+   "input": "=SUMPRODUCT(LEN(COUNT(TAKE(T[Q1],1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACJ20",
+   "input": "=SUMPRODUCT(LEN(COUNT(TAKE(T[Q1],1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACK20:ACK22",
+   "input": "=SUMPRODUCT(LEN(COUNT(TAKE(T[Q1],1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACL20",
+   "input": "=N(LEN(COUNT(TAKE(COLUMN(A1),1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACM20",
+   "input": "=N(LEN(COUNT(TAKE(COLUMN(A1),1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACN20:ACN22",
+   "input": "=N(LEN(COUNT(TAKE(COLUMN(A1),1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACO20",
+   "input": "=LEN(COUNT(TAKE(LAMBDA(p,ROW(p)/0)(A1),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACP20",
+   "input": "=LEN(COUNT(TAKE(LAMBDA(p,ROW(p)/0)(A1),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACQ20:ACQ22",
+   "input": "=LEN(COUNT(TAKE(LAMBDA(p,ROW(p)/0)(A1),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACR20",
+   "input": "=COLUMNS(LEN(COUNT(TAKE(ROW(A1)/0,1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACS20",
+   "input": "=COLUMNS(LEN(COUNT(TAKE(ROW(A1)/0,1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACT20:ACT22",
+   "input": "=COLUMNS(LEN(COUNT(TAKE(ROW(A1)/0,1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACU20",
+   "input": "=ISREF(LEN(COUNT(TAKE(ROW(A1),1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACV20",
+   "input": "=ISREF(LEN(COUNT(TAKE(ROW(A1),1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACW20:ACW22",
+   "input": "=ISREF(LEN(COUNT(TAKE(ROW(A1),1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ACX20",
+   "input": "=ROWS(LEN(COUNT(TAKE(nmRowD,1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ACY20",
+   "input": "=ROWS(LEN(COUNT(TAKE(nmRowD,1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ACZ20:ACZ22",
+   "input": "=ROWS(LEN(COUNT(TAKE(nmRowD,1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADA20",
+   "input": "=SUMPRODUCT(LEN(MMULT(AND(AND(FORMULATEXT(Y1))),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADB20",
+   "input": "=SUMPRODUCT(LEN(MMULT(AND(AND(FORMULATEXT(Y1))),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADC20:ADC22",
+   "input": "=SUMPRODUCT(LEN(MMULT(AND(AND(FORMULATEXT(Y1))),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADD20",
+   "input": "=N(LEN(MMULT(AND(AND(COLUMN(A1))),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADE20",
+   "input": "=N(LEN(MMULT(AND(AND(COLUMN(A1))),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADF20:ADF22",
+   "input": "=N(LEN(MMULT(AND(AND(COLUMN(A1))),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADG20",
+   "input": "=LEN(MMULT(AND(AND(LAMBDA(p,ROW(p)/0)(A1))),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADH20",
+   "input": "=LEN(MMULT(AND(AND(LAMBDA(p,ROW(p)/0)(A1))),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADI20:ADI22",
+   "input": "=LEN(MMULT(AND(AND(LAMBDA(p,ROW(p)/0)(A1))),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADJ20",
+   "input": "=COLUMNS(LEN(MMULT(AND(AND(ROW(A1))),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADK20",
+   "input": "=COLUMNS(LEN(MMULT(AND(AND(ROW(A1))),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADL20:ADL22",
+   "input": "=COLUMNS(LEN(MMULT(AND(AND(ROW(A1))),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADM20",
+   "input": "=ISREF(LEN(MMULT(AND(AND(nmRowD)),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADN20",
+   "input": "=ISREF(LEN(MMULT(AND(AND(nmRowD)),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADO20:ADO22",
+   "input": "=ISREF(LEN(MMULT(AND(AND(nmRowD)),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADP20",
+   "input": "=ROWS(LEN(MMULT(AND(AND(FORMULATEXT(Y1)&\"\")),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADQ20",
+   "input": "=ROWS(LEN(MMULT(AND(AND(FORMULATEXT(Y1)&\"\")),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADR20:ADR22",
+   "input": "=ROWS(LEN(MMULT(AND(AND(FORMULATEXT(Y1)&\"\")),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADS20",
+   "input": "=TYPE(LEN(MMULT(AND(AND(LET(x,ROW(A1),x/0))),{1})))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADT20",
+   "input": "=TYPE(LEN(MMULT(AND(AND(LET(x,ROW(A1),x/0))),{1})))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADU20:ADU22",
+   "input": "=TYPE(LEN(MMULT(AND(AND(LET(x,ROW(A1),x/0))),{1})))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADV20",
+   "input": "=N(TRANSPOSE(SUMPRODUCT(MAX(ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADW20",
+   "input": "=N(TRANSPOSE(SUMPRODUCT(MAX(ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ADX20:ADX22",
+   "input": "=N(TRANSPOSE(SUMPRODUCT(MAX(ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ADY20",
+   "input": "=TRANSPOSE(SUMPRODUCT(MAX(FORMULATEXT(Y1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ADZ20",
+   "input": "=TRANSPOSE(SUMPRODUCT(MAX(FORMULATEXT(Y1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEA20:AEA22",
+   "input": "=TRANSPOSE(SUMPRODUCT(MAX(FORMULATEXT(Y1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEB20",
+   "input": "=COLUMNS(TRANSPOSE(SUMPRODUCT(MAX(ROW(A1)/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEC20",
+   "input": "=COLUMNS(TRANSPOSE(SUMPRODUCT(MAX(ROW(A1)/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AED20:AED22",
+   "input": "=COLUMNS(TRANSPOSE(SUMPRODUCT(MAX(ROW(A1)/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEE20",
+   "input": "=ISREF(TRANSPOSE(SUMPRODUCT(MAX(nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEF20",
+   "input": "=ISREF(TRANSPOSE(SUMPRODUCT(MAX(nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEG20:AEG22",
+   "input": "=ISREF(TRANSPOSE(SUMPRODUCT(MAX(nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEH20",
+   "input": "=ROWS(TRANSPOSE(SUMPRODUCT(MAX(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEI20",
+   "input": "=ROWS(TRANSPOSE(SUMPRODUCT(MAX(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEJ20:AEJ22",
+   "input": "=ROWS(TRANSPOSE(SUMPRODUCT(MAX(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEK20",
+   "input": "=TYPE(TRANSPOSE(SUMPRODUCT(MAX(nmRowD))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEL20",
+   "input": "=TYPE(TRANSPOSE(SUMPRODUCT(MAX(nmRowD))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEM20:AEM22",
+   "input": "=TYPE(TRANSPOSE(SUMPRODUCT(MAX(nmRowD))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEN20",
+   "input": "=SUMPRODUCT(TRANSPOSE(SUMPRODUCT(MAX(LET(x,ROW(A1),x/0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEO20",
+   "input": "=SUMPRODUCT(TRANSPOSE(SUMPRODUCT(MAX(LET(x,ROW(A1),x/0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEP20:AEP22",
+   "input": "=SUMPRODUCT(TRANSPOSE(SUMPRODUCT(MAX(LET(x,ROW(A1),x/0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEQ20",
+   "input": "=IFERROR(VLOOKUP(TRANSPOSE(INDEX(ROW(A1)/0,1)),A1:B3,2,0),0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AER20",
+   "input": "=IFERROR(VLOOKUP(TRANSPOSE(INDEX(ROW(A1)/0,1)),A1:B3,2,0),0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AES20:AES22",
+   "input": "=IFERROR(VLOOKUP(TRANSPOSE(INDEX(ROW(A1)/0,1)),A1:B3,2,0),0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AET20",
+   "input": "=COLUMNS(IFERROR(VLOOKUP(TRANSPOSE(INDEX(nmRowD,1)),A1:B3,2,0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEU20",
+   "input": "=COLUMNS(IFERROR(VLOOKUP(TRANSPOSE(INDEX(nmRowD,1)),A1:B3,2,0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEV20:AEV22",
+   "input": "=COLUMNS(IFERROR(VLOOKUP(TRANSPOSE(INDEX(nmRowD,1)),A1:B3,2,0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEW20",
+   "input": "=ISREF(IFERROR(VLOOKUP(TRANSPOSE(INDEX(FORMULATEXT(Y1)&\"\",1)),A1:B3,2,0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AEX20",
+   "input": "=ISREF(IFERROR(VLOOKUP(TRANSPOSE(INDEX(FORMULATEXT(Y1)&\"\",1)),A1:B3,2,0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AEY20:AEY22",
+   "input": "=ISREF(IFERROR(VLOOKUP(TRANSPOSE(INDEX(FORMULATEXT(Y1)&\"\",1)),A1:B3,2,0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AEZ20",
+   "input": "=ROWS(IFERROR(VLOOKUP(TRANSPOSE(INDEX(FORMULATEXT(Y1),1)),A1:B3,2,0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFA20",
+   "input": "=ROWS(IFERROR(VLOOKUP(TRANSPOSE(INDEX(FORMULATEXT(Y1),1)),A1:B3,2,0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFB20:AFB22",
+   "input": "=ROWS(IFERROR(VLOOKUP(TRANSPOSE(INDEX(FORMULATEXT(Y1),1)),A1:B3,2,0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFC20",
+   "input": "=TYPE(IFERROR(VLOOKUP(TRANSPOSE(INDEX(LET(x,ROW(A1),x/0),1)),A1:B3,2,0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFD20",
+   "input": "=TYPE(IFERROR(VLOOKUP(TRANSPOSE(INDEX(LET(x,ROW(A1),x/0),1)),A1:B3,2,0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFE20:AFE22",
+   "input": "=TYPE(IFERROR(VLOOKUP(TRANSPOSE(INDEX(LET(x,ROW(A1),x/0),1)),A1:B3,2,0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFF20",
+   "input": "=SUMPRODUCT(IFERROR(VLOOKUP(TRANSPOSE(INDEX(COLUMN(A1),1)),A1:B3,2,0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFG20",
+   "input": "=SUMPRODUCT(IFERROR(VLOOKUP(TRANSPOSE(INDEX(COLUMN(A1),1)),A1:B3,2,0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFH20:AFH22",
+   "input": "=SUMPRODUCT(IFERROR(VLOOKUP(TRANSPOSE(INDEX(COLUMN(A1),1)),A1:B3,2,0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFI20",
+   "input": "=N(IFERROR(VLOOKUP(TRANSPOSE(INDEX(nmRng,1)),A1:B3,2,0),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFJ20",
+   "input": "=N(IFERROR(VLOOKUP(TRANSPOSE(INDEX(nmRng,1)),A1:B3,2,0),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFK20:AFK22",
+   "input": "=N(IFERROR(VLOOKUP(TRANSPOSE(INDEX(nmRng,1)),A1:B3,2,0),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFL20",
+   "input": "=COLUMNS(SUMPRODUCT(CHOOSE(1,TRANSPOSE(FORMULATEXT(Y1)&\"\"))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFM20",
+   "input": "=COLUMNS(SUMPRODUCT(CHOOSE(1,TRANSPOSE(FORMULATEXT(Y1)&\"\"))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFN20:AFN22",
+   "input": "=COLUMNS(SUMPRODUCT(CHOOSE(1,TRANSPOSE(FORMULATEXT(Y1)&\"\"))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFO20",
+   "input": "=ISREF(SUMPRODUCT(CHOOSE(1,TRANSPOSE(T[Q1]))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFP20",
+   "input": "=ISREF(SUMPRODUCT(CHOOSE(1,TRANSPOSE(T[Q1]))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFQ20:AFQ22",
+   "input": "=ISREF(SUMPRODUCT(CHOOSE(1,TRANSPOSE(T[Q1]))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFR20",
+   "input": "=ROWS(SUMPRODUCT(CHOOSE(1,TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFS20",
+   "input": "=ROWS(SUMPRODUCT(CHOOSE(1,TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFT20:AFT22",
+   "input": "=ROWS(SUMPRODUCT(CHOOSE(1,TRANSPOSE(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFU20",
+   "input": "=TYPE(SUMPRODUCT(CHOOSE(1,TRANSPOSE(FORMULATEXT(Y1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFV20",
+   "input": "=TYPE(SUMPRODUCT(CHOOSE(1,TRANSPOSE(FORMULATEXT(Y1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFW20:AFW22",
+   "input": "=TYPE(SUMPRODUCT(CHOOSE(1,TRANSPOSE(FORMULATEXT(Y1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AFX20",
+   "input": "=SUMPRODUCT(SUMPRODUCT(CHOOSE(1,TRANSPOSE(ROW(A1)/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AFY20",
+   "input": "=SUMPRODUCT(SUMPRODUCT(CHOOSE(1,TRANSPOSE(ROW(A1)/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AFZ20:AFZ22",
+   "input": "=SUMPRODUCT(SUMPRODUCT(CHOOSE(1,TRANSPOSE(ROW(A1)/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGA20",
+   "input": "=N(SUMPRODUCT(CHOOSE(1,TRANSPOSE(LET(x,ROW(A1),x/0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGB20",
+   "input": "=N(SUMPRODUCT(CHOOSE(1,TRANSPOSE(LET(x,ROW(A1),x/0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGC20:AGC22",
+   "input": "=N(SUMPRODUCT(CHOOSE(1,TRANSPOSE(LET(x,ROW(A1),x/0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGD20",
+   "input": "=SUMPRODUCT(CHOOSE(1,TRANSPOSE(nmRowD)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGE20",
+   "input": "=SUMPRODUCT(CHOOSE(1,TRANSPOSE(nmRowD)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGF20:AGF22",
+   "input": "=SUMPRODUCT(CHOOSE(1,TRANSPOSE(nmRowD)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGG20",
+   "input": "=ISREF(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(LET(x,ROW(A1),x/0),A1:B3,2,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGH20",
+   "input": "=ISREF(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(LET(x,ROW(A1),x/0),A1:B3,2,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGI20:AGI22",
+   "input": "=ISREF(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(LET(x,ROW(A1),x/0),A1:B3,2,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGJ20",
+   "input": "=ROWS(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(T[Q1],A1:B3,2,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGK20",
+   "input": "=ROWS(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(T[Q1],A1:B3,2,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGL20:AGL22",
+   "input": "=ROWS(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(T[Q1],A1:B3,2,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGM20",
+   "input": "=TYPE(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGN20",
+   "input": "=TYPE(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGO20:AGO22",
+   "input": "=TYPE(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGP20",
+   "input": "=SUMPRODUCT(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(nmRowD,A1:B3,2,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGQ20",
+   "input": "=SUMPRODUCT(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(nmRowD,A1:B3,2,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGR20:AGR22",
+   "input": "=SUMPRODUCT(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(nmRowD,A1:B3,2,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGS20",
+   "input": "=N(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(FORMULATEXT(Y1),A1:B3,2,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGT20",
+   "input": "=N(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(FORMULATEXT(Y1),A1:B3,2,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGU20:AGU22",
+   "input": "=N(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(FORMULATEXT(Y1),A1:B3,2,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGV20",
+   "input": "=IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(nmRng,A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGW20",
+   "input": "=IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(nmRng,A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AGX20:AGX22",
+   "input": "=IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(nmRng,A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AGY20",
+   "input": "=COLUMNS(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(ROW(A1),A1:B3,2,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AGZ20",
+   "input": "=COLUMNS(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(ROW(A1),A1:B3,2,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHA20:AHA22",
+   "input": "=COLUMNS(IFS(TRUE,IFS(TRUE,CHOOSE(1,VLOOKUP(ROW(A1),A1:B3,2,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHB20",
+   "input": "=ROWS(COUNT(INDEX((ROW(A1)/0),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHC20",
+   "input": "=ROWS(COUNT(INDEX((ROW(A1)/0),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHD20:AHD22",
+   "input": "=ROWS(COUNT(INDEX((ROW(A1)/0),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHE20",
+   "input": "=TYPE(COUNT(INDEX((LET(x,ROW(A1),x/0)),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHF20",
+   "input": "=TYPE(COUNT(INDEX((LET(x,ROW(A1),x/0)),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHG20:AHG22",
+   "input": "=TYPE(COUNT(INDEX((LET(x,ROW(A1),x/0)),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHH20",
+   "input": "=SUMPRODUCT(COUNT(INDEX((nmRowD),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHI20",
+   "input": "=SUMPRODUCT(COUNT(INDEX((nmRowD),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHJ20:AHJ22",
+   "input": "=SUMPRODUCT(COUNT(INDEX((nmRowD),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHK20",
+   "input": "=N(COUNT(INDEX((ROW(A1)),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHL20",
+   "input": "=N(COUNT(INDEX((ROW(A1)),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHM20:AHM22",
+   "input": "=N(COUNT(INDEX((ROW(A1)),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHN20",
+   "input": "=COUNT(INDEX((FORMULATEXT(Y1)),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHO20",
+   "input": "=COUNT(INDEX((FORMULATEXT(Y1)),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHP20:AHP22",
+   "input": "=COUNT(INDEX((FORMULATEXT(Y1)),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHQ20",
+   "input": "=COLUMNS(COUNT(INDEX((FORMULATEXT(Y1)&\"\"),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHR20",
+   "input": "=COLUMNS(COUNT(INDEX((FORMULATEXT(Y1)&\"\"),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHS20:AHS22",
+   "input": "=COLUMNS(COUNT(INDEX((FORMULATEXT(Y1)&\"\"),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHT20",
+   "input": "=ISREF(COUNT(INDEX((COLUMN(A1)),1)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHU20",
+   "input": "=ISREF(COUNT(INDEX((COLUMN(A1)),1)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHV20:AHV22",
+   "input": "=ISREF(COUNT(INDEX((COLUMN(A1)),1)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHW20",
+   "input": "=TYPE(SUM(SUMPRODUCT(LEN(IF(nmRowD,1,2)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AHX20",
+   "input": "=TYPE(SUM(SUMPRODUCT(LEN(IF(nmRowD,1,2)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AHY20:AHY22",
+   "input": "=TYPE(SUM(SUMPRODUCT(LEN(IF(nmRowD,1,2)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AHZ20",
+   "input": "=SUMPRODUCT(SUM(SUMPRODUCT(LEN(IF(ROW(A1),1,2)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIA20",
+   "input": "=SUMPRODUCT(SUM(SUMPRODUCT(LEN(IF(ROW(A1),1,2)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIB20:AIB22",
+   "input": "=SUMPRODUCT(SUM(SUMPRODUCT(LEN(IF(ROW(A1),1,2)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIC20",
+   "input": "=N(SUM(SUMPRODUCT(LEN(IF(nmRng,1,2)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AID20",
+   "input": "=N(SUM(SUMPRODUCT(LEN(IF(nmRng,1,2)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIE20:AIE22",
+   "input": "=N(SUM(SUMPRODUCT(LEN(IF(nmRng,1,2)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIF20",
+   "input": "=SUM(SUMPRODUCT(LEN(IF(ROW(A1)/0,1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIG20",
+   "input": "=SUM(SUMPRODUCT(LEN(IF(ROW(A1)/0,1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIH20:AIH22",
+   "input": "=SUM(SUMPRODUCT(LEN(IF(ROW(A1)/0,1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AII20",
+   "input": "=COLUMNS(SUM(SUMPRODUCT(LEN(IF(LET(x,ROW(A1),x/0),1,2)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIJ20",
+   "input": "=COLUMNS(SUM(SUMPRODUCT(LEN(IF(LET(x,ROW(A1),x/0),1,2)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIK20:AIK22",
+   "input": "=COLUMNS(SUM(SUMPRODUCT(LEN(IF(LET(x,ROW(A1),x/0),1,2)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIL20",
+   "input": "=ISREF(SUM(SUMPRODUCT(LEN(IF(FORMULATEXT(Y1),1,2)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIM20",
+   "input": "=ISREF(SUM(SUMPRODUCT(LEN(IF(FORMULATEXT(Y1),1,2)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIN20:AIN22",
+   "input": "=ISREF(SUM(SUMPRODUCT(LEN(IF(FORMULATEXT(Y1),1,2)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIO20",
+   "input": "=ROWS(SUM(SUMPRODUCT(LEN(IF(LAMBDA(p,ROW(p)/0)(A1),1,2)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIP20",
+   "input": "=ROWS(SUM(SUMPRODUCT(LEN(IF(LAMBDA(p,ROW(p)/0)(A1),1,2)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIQ20:AIQ22",
+   "input": "=ROWS(SUM(SUMPRODUCT(LEN(IF(LAMBDA(p,ROW(p)/0)(A1),1,2)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIR20",
+   "input": "=SUMPRODUCT(N(TEXT(N(LET(x,ROW(A1),x/0)),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIS20",
+   "input": "=SUMPRODUCT(N(TEXT(N(LET(x,ROW(A1),x/0)),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIT20:AIT22",
+   "input": "=SUMPRODUCT(N(TEXT(N(LET(x,ROW(A1),x/0)),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIU20",
+   "input": "=N(N(TEXT(N(FORMULATEXT(Y1)&\"\"),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIV20",
+   "input": "=N(N(TEXT(N(FORMULATEXT(Y1)&\"\"),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIW20:AIW22",
+   "input": "=N(N(TEXT(N(FORMULATEXT(Y1)&\"\"),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AIX20",
+   "input": "=N(TEXT(N(ROW(A1)),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AIY20",
+   "input": "=N(TEXT(N(ROW(A1)),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AIZ20:AIZ22",
+   "input": "=N(TEXT(N(ROW(A1)),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJA20",
+   "input": "=COLUMNS(N(TEXT(N(T[Q1]),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJB20",
+   "input": "=COLUMNS(N(TEXT(N(T[Q1]),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJC20:AJC22",
+   "input": "=COLUMNS(N(TEXT(N(T[Q1]),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJD20",
+   "input": "=ISREF(N(TEXT(N(nmRng),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJE20",
+   "input": "=ISREF(N(TEXT(N(nmRng),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJF20:AJF22",
+   "input": "=ISREF(N(TEXT(N(nmRng),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJG20",
+   "input": "=ROWS(N(TEXT(N(ROW(A1)/0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJH20",
+   "input": "=ROWS(N(TEXT(N(ROW(A1)/0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJI20:AJI22",
+   "input": "=ROWS(N(TEXT(N(ROW(A1)/0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJJ20",
+   "input": "=TYPE(N(TEXT(N(LAMBDA(p,ROW(p)/0)(A1)),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJK20",
+   "input": "=TYPE(N(TEXT(N(LAMBDA(p,ROW(p)/0)(A1)),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJL20:AJL22",
+   "input": "=TYPE(N(TEXT(N(LAMBDA(p,ROW(p)/0)(A1)),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJM20",
+   "input": "=N(ABS(SWITCH(1,1,SUM(NOT(LET(x,ROW(A1),x/0))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJN20",
+   "input": "=N(ABS(SWITCH(1,1,SUM(NOT(LET(x,ROW(A1),x/0))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJO20:AJO22",
+   "input": "=N(ABS(SWITCH(1,1,SUM(NOT(LET(x,ROW(A1),x/0))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJP20",
+   "input": "=ABS(SWITCH(1,1,SUM(NOT(nmRowD))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJQ20",
+   "input": "=ABS(SWITCH(1,1,SUM(NOT(nmRowD))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJR20:AJR22",
+   "input": "=ABS(SWITCH(1,1,SUM(NOT(nmRowD))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJS20",
+   "input": "=COLUMNS(ABS(SWITCH(1,1,SUM(NOT(FORMULATEXT(Y1)&\"\")))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJT20",
+   "input": "=COLUMNS(ABS(SWITCH(1,1,SUM(NOT(FORMULATEXT(Y1)&\"\")))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJU20:AJU22",
+   "input": "=COLUMNS(ABS(SWITCH(1,1,SUM(NOT(FORMULATEXT(Y1)&\"\")))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJV20",
+   "input": "=ISREF(ABS(SWITCH(1,1,SUM(NOT(FORMULATEXT(Y1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJW20",
+   "input": "=ISREF(ABS(SWITCH(1,1,SUM(NOT(FORMULATEXT(Y1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AJX20:AJX22",
+   "input": "=ISREF(ABS(SWITCH(1,1,SUM(NOT(FORMULATEXT(Y1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AJY20",
+   "input": "=ROWS(ABS(SWITCH(1,1,SUM(NOT(T[Q1])))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AJZ20",
+   "input": "=ROWS(ABS(SWITCH(1,1,SUM(NOT(T[Q1])))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKA20:AKA22",
+   "input": "=ROWS(ABS(SWITCH(1,1,SUM(NOT(T[Q1])))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKB20",
+   "input": "=TYPE(ABS(SWITCH(1,1,SUM(NOT(COLUMN(A1))))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKC20",
+   "input": "=TYPE(ABS(SWITCH(1,1,SUM(NOT(COLUMN(A1))))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKD20:AKD22",
+   "input": "=TYPE(ABS(SWITCH(1,1,SUM(NOT(COLUMN(A1))))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKE20",
+   "input": "=SUMPRODUCT(ABS(SWITCH(1,1,SUM(NOT(nmRng)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKF20",
+   "input": "=SUMPRODUCT(ABS(SWITCH(1,1,SUM(NOT(nmRng)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKG20:AKG22",
+   "input": "=SUMPRODUCT(ABS(SWITCH(1,1,SUM(NOT(nmRng)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKH20",
+   "input": "=TRANSPOSE(ISREF(IF(COLUMN(A1),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKI20",
+   "input": "=TRANSPOSE(ISREF(IF(COLUMN(A1),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKJ20:AKJ22",
+   "input": "=TRANSPOSE(ISREF(IF(COLUMN(A1),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKK20",
+   "input": "=COLUMNS(TRANSPOSE(ISREF(IF(FORMULATEXT(Y1),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKL20",
+   "input": "=COLUMNS(TRANSPOSE(ISREF(IF(FORMULATEXT(Y1),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKM20:AKM22",
+   "input": "=COLUMNS(TRANSPOSE(ISREF(IF(FORMULATEXT(Y1),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKN20",
+   "input": "=ISREF(TRANSPOSE(ISREF(IF(nmRng,1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKO20",
+   "input": "=ISREF(TRANSPOSE(ISREF(IF(nmRng,1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKP20:AKP22",
+   "input": "=ISREF(TRANSPOSE(ISREF(IF(nmRng,1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKQ20",
+   "input": "=ROWS(TRANSPOSE(ISREF(IF(nmRowD,1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKR20",
+   "input": "=ROWS(TRANSPOSE(ISREF(IF(nmRowD,1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKS20:AKS22",
+   "input": "=ROWS(TRANSPOSE(ISREF(IF(nmRowD,1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKT20",
+   "input": "=TYPE(TRANSPOSE(ISREF(IF(FORMULATEXT(Y1)&\"\",1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKU20",
+   "input": "=TYPE(TRANSPOSE(ISREF(IF(FORMULATEXT(Y1)&\"\",1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKV20:AKV22",
+   "input": "=TYPE(TRANSPOSE(ISREF(IF(FORMULATEXT(Y1)&\"\",1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKW20",
+   "input": "=SUMPRODUCT(TRANSPOSE(ISREF(IF(ROW(A1)/0,1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AKX20",
+   "input": "=SUMPRODUCT(TRANSPOSE(ISREF(IF(ROW(A1)/0,1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AKY20:AKY22",
+   "input": "=SUMPRODUCT(TRANSPOSE(ISREF(IF(ROW(A1)/0,1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AKZ20",
+   "input": "=N(TRANSPOSE(ISREF(IF(LAMBDA(p,ROW(p)/0)(A1),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALA20",
+   "input": "=N(TRANSPOSE(ISREF(IF(LAMBDA(p,ROW(p)/0)(A1),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALB20:ALB22",
+   "input": "=N(TRANSPOSE(ISREF(IF(LAMBDA(p,ROW(p)/0)(A1),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALC20",
+   "input": "=COLUMNS(OFFSET(ISREF(MAX(LET(x,ROW(A1),x/0)))+0,0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALD20",
+   "input": "=COLUMNS(OFFSET(ISREF(MAX(LET(x,ROW(A1),x/0)))+0,0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALE20:ALE22",
+   "input": "=COLUMNS(OFFSET(ISREF(MAX(LET(x,ROW(A1),x/0)))+0,0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALF20",
+   "input": "=ISREF(OFFSET(ISREF(MAX(nmRng))+0,0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALG20",
+   "input": "=ISREF(OFFSET(ISREF(MAX(nmRng))+0,0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALH20:ALH22",
+   "input": "=ISREF(OFFSET(ISREF(MAX(nmRng))+0,0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALI20",
+   "input": "=ROWS(OFFSET(ISREF(MAX(FORMULATEXT(Y1)))+0,0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALJ20",
+   "input": "=ROWS(OFFSET(ISREF(MAX(FORMULATEXT(Y1)))+0,0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALK20:ALK22",
+   "input": "=ROWS(OFFSET(ISREF(MAX(FORMULATEXT(Y1)))+0,0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALL20",
+   "input": "=TYPE(OFFSET(ISREF(MAX(T[Q1]))+0,0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALM20",
+   "input": "=TYPE(OFFSET(ISREF(MAX(T[Q1]))+0,0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALN20:ALN22",
+   "input": "=TYPE(OFFSET(ISREF(MAX(T[Q1]))+0,0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALO20",
+   "input": "=SUMPRODUCT(OFFSET(ISREF(MAX(COLUMN(A1)))+0,0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALP20",
+   "input": "=SUMPRODUCT(OFFSET(ISREF(MAX(COLUMN(A1)))+0,0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALQ20:ALQ22",
+   "input": "=SUMPRODUCT(OFFSET(ISREF(MAX(COLUMN(A1)))+0,0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALR20",
+   "input": "=N(OFFSET(ISREF(MAX(LAMBDA(p,ROW(p)/0)(A1)))+0,0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALS20",
+   "input": "=N(OFFSET(ISREF(MAX(LAMBDA(p,ROW(p)/0)(A1)))+0,0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALT20:ALT22",
+   "input": "=N(OFFSET(ISREF(MAX(LAMBDA(p,ROW(p)/0)(A1)))+0,0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALU20",
+   "input": "=OFFSET(ISREF(MAX(ROW(A1)/0))+0,0,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALV20",
+   "input": "=OFFSET(ISREF(MAX(ROW(A1)/0))+0,0,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALW20:ALW22",
+   "input": "=OFFSET(ISREF(MAX(ROW(A1)/0))+0,0,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ALX20",
+   "input": "=ISREF(IFS(TRUE,SWITCH(1,1,VLOOKUP(FORMULATEXT(Y1)&\"\",A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ALY20",
+   "input": "=ISREF(IFS(TRUE,SWITCH(1,1,VLOOKUP(FORMULATEXT(Y1)&\"\",A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ALZ20:ALZ22",
+   "input": "=ISREF(IFS(TRUE,SWITCH(1,1,VLOOKUP(FORMULATEXT(Y1)&\"\",A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMA20",
+   "input": "=ROWS(IFS(TRUE,SWITCH(1,1,VLOOKUP(nmRowD,A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMB20",
+   "input": "=ROWS(IFS(TRUE,SWITCH(1,1,VLOOKUP(nmRowD,A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMC20:AMC22",
+   "input": "=ROWS(IFS(TRUE,SWITCH(1,1,VLOOKUP(nmRowD,A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMD20",
+   "input": "=TYPE(IFS(TRUE,SWITCH(1,1,VLOOKUP(nmRng,A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AME20",
+   "input": "=TYPE(IFS(TRUE,SWITCH(1,1,VLOOKUP(nmRng,A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMF20:AMF22",
+   "input": "=TYPE(IFS(TRUE,SWITCH(1,1,VLOOKUP(nmRng,A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMG20",
+   "input": "=SUMPRODUCT(IFS(TRUE,SWITCH(1,1,VLOOKUP(ROW(A1),A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMH20",
+   "input": "=SUMPRODUCT(IFS(TRUE,SWITCH(1,1,VLOOKUP(ROW(A1),A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMI20:AMI22",
+   "input": "=SUMPRODUCT(IFS(TRUE,SWITCH(1,1,VLOOKUP(ROW(A1),A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMJ20",
+   "input": "=N(IFS(TRUE,SWITCH(1,1,VLOOKUP(ROW(A1)/0,A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMK20",
+   "input": "=N(IFS(TRUE,SWITCH(1,1,VLOOKUP(ROW(A1)/0,A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AML20:AML22",
+   "input": "=N(IFS(TRUE,SWITCH(1,1,VLOOKUP(ROW(A1)/0,A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMM20",
+   "input": "=IFS(TRUE,SWITCH(1,1,VLOOKUP(T[Q1],A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMN20",
+   "input": "=IFS(TRUE,SWITCH(1,1,VLOOKUP(T[Q1],A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMO20:AMO22",
+   "input": "=IFS(TRUE,SWITCH(1,1,VLOOKUP(T[Q1],A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMP20",
+   "input": "=COLUMNS(IFS(TRUE,SWITCH(1,1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMQ20",
+   "input": "=COLUMNS(IFS(TRUE,SWITCH(1,1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMR20:AMR22",
+   "input": "=COLUMNS(IFS(TRUE,SWITCH(1,1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMS20",
+   "input": "=ROWS(TAKE(NOT(AND(SUM(ROW(A1)/0))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMT20",
+   "input": "=ROWS(TAKE(NOT(AND(SUM(ROW(A1)/0))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMU20:AMU22",
+   "input": "=ROWS(TAKE(NOT(AND(SUM(ROW(A1)/0))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMV20",
+   "input": "=TYPE(TAKE(NOT(AND(SUM(COLUMN(A1)))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMW20",
+   "input": "=TYPE(TAKE(NOT(AND(SUM(COLUMN(A1)))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AMX20:AMX22",
+   "input": "=TYPE(TAKE(NOT(AND(SUM(COLUMN(A1)))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AMY20",
+   "input": "=SUMPRODUCT(TAKE(NOT(AND(SUM(nmRng))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AMZ20",
+   "input": "=SUMPRODUCT(TAKE(NOT(AND(SUM(nmRng))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANA20:ANA22",
+   "input": "=SUMPRODUCT(TAKE(NOT(AND(SUM(nmRng))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANB20",
+   "input": "=N(TAKE(NOT(AND(SUM(LAMBDA(p,ROW(p)/0)(A1)))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANC20",
+   "input": "=N(TAKE(NOT(AND(SUM(LAMBDA(p,ROW(p)/0)(A1)))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AND20:AND22",
+   "input": "=N(TAKE(NOT(AND(SUM(LAMBDA(p,ROW(p)/0)(A1)))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANE20",
+   "input": "=TAKE(NOT(AND(SUM(T[Q1]))),1)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANF20",
+   "input": "=TAKE(NOT(AND(SUM(T[Q1]))),1)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANG20:ANG22",
+   "input": "=TAKE(NOT(AND(SUM(T[Q1]))),1)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANH20",
+   "input": "=COLUMNS(TAKE(NOT(AND(SUM(FORMULATEXT(Y1)))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANI20",
+   "input": "=COLUMNS(TAKE(NOT(AND(SUM(FORMULATEXT(Y1)))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANJ20:ANJ22",
+   "input": "=COLUMNS(TAKE(NOT(AND(SUM(FORMULATEXT(Y1)))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANK20",
+   "input": "=ISREF(TAKE(NOT(AND(SUM(ROW(A1)))),1))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANL20",
+   "input": "=ISREF(TAKE(NOT(AND(SUM(ROW(A1)))),1))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANM20:ANM22",
+   "input": "=ISREF(TAKE(NOT(AND(SUM(ROW(A1)))),1))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANN20",
+   "input": "=TYPE(ISREF(IFNA(N(nmRowD),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANO20",
+   "input": "=TYPE(ISREF(IFNA(N(nmRowD),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANP20:ANP22",
+   "input": "=TYPE(ISREF(IFNA(N(nmRowD),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANQ20",
+   "input": "=SUMPRODUCT(ISREF(IFNA(N(T[Q1]),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANR20",
+   "input": "=SUMPRODUCT(ISREF(IFNA(N(T[Q1]),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANS20:ANS22",
+   "input": "=SUMPRODUCT(ISREF(IFNA(N(T[Q1]),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANT20",
+   "input": "=N(ISREF(IFNA(N(LET(x,ROW(A1),x/0)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANU20",
+   "input": "=N(ISREF(IFNA(N(LET(x,ROW(A1),x/0)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANV20:ANV22",
+   "input": "=N(ISREF(IFNA(N(LET(x,ROW(A1),x/0)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANW20",
+   "input": "=ISREF(IFNA(N(FORMULATEXT(Y1)),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ANX20",
+   "input": "=ISREF(IFNA(N(FORMULATEXT(Y1)),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ANY20:ANY22",
+   "input": "=ISREF(IFNA(N(FORMULATEXT(Y1)),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ANZ20",
+   "input": "=COLUMNS(ISREF(IFNA(N(ROW(A1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOA20",
+   "input": "=COLUMNS(ISREF(IFNA(N(ROW(A1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOB20:AOB22",
+   "input": "=COLUMNS(ISREF(IFNA(N(ROW(A1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOC20",
+   "input": "=ISREF(ISREF(IFNA(N(nmRng),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOD20",
+   "input": "=ISREF(ISREF(IFNA(N(nmRng),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOE20:AOE22",
+   "input": "=ISREF(ISREF(IFNA(N(nmRng),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOF20",
+   "input": "=ROWS(ISREF(IFNA(N(LAMBDA(p,ROW(p)/0)(A1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOG20",
+   "input": "=ROWS(ISREF(IFNA(N(LAMBDA(p,ROW(p)/0)(A1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOH20:AOH22",
+   "input": "=ROWS(ISREF(IFNA(N(LAMBDA(p,ROW(p)/0)(A1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOI20",
+   "input": "=SUMPRODUCT(MAX(COUNT(IF(IFERROR(nmRowD,0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOJ20",
+   "input": "=SUMPRODUCT(MAX(COUNT(IF(IFERROR(nmRowD,0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOK20:AOK22",
+   "input": "=SUMPRODUCT(MAX(COUNT(IF(IFERROR(nmRowD,0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOL20",
+   "input": "=N(MAX(COUNT(IF(IFERROR(FORMULATEXT(Y1)&\"\",0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOM20",
+   "input": "=N(MAX(COUNT(IF(IFERROR(FORMULATEXT(Y1)&\"\",0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AON20:AON22",
+   "input": "=N(MAX(COUNT(IF(IFERROR(FORMULATEXT(Y1)&\"\",0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOO20",
+   "input": "=MAX(COUNT(IF(IFERROR(ROW(A1),0),1,2)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOP20",
+   "input": "=MAX(COUNT(IF(IFERROR(ROW(A1),0),1,2)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOQ20:AOQ22",
+   "input": "=MAX(COUNT(IF(IFERROR(ROW(A1),0),1,2)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOR20",
+   "input": "=COLUMNS(MAX(COUNT(IF(IFERROR(FORMULATEXT(Y1),0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOS20",
+   "input": "=COLUMNS(MAX(COUNT(IF(IFERROR(FORMULATEXT(Y1),0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOT20:AOT22",
+   "input": "=COLUMNS(MAX(COUNT(IF(IFERROR(FORMULATEXT(Y1),0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOU20",
+   "input": "=ISREF(MAX(COUNT(IF(IFERROR(T[Q1],0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOV20",
+   "input": "=ISREF(MAX(COUNT(IF(IFERROR(T[Q1],0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOW20:AOW22",
+   "input": "=ISREF(MAX(COUNT(IF(IFERROR(T[Q1],0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AOX20",
+   "input": "=ROWS(MAX(COUNT(IF(IFERROR(LET(x,ROW(A1),x/0),0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AOY20",
+   "input": "=ROWS(MAX(COUNT(IF(IFERROR(LET(x,ROW(A1),x/0),0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AOZ20:AOZ22",
+   "input": "=ROWS(MAX(COUNT(IF(IFERROR(LET(x,ROW(A1),x/0),0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APA20",
+   "input": "=TYPE(MAX(COUNT(IF(IFERROR(COLUMN(A1),0),1,2))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APB20",
+   "input": "=TYPE(MAX(COUNT(IF(IFERROR(COLUMN(A1),0),1,2))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APC20:APC22",
+   "input": "=TYPE(MAX(COUNT(IF(IFERROR(COLUMN(A1),0),1,2))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APD20",
+   "input": "=N(ISREF(IFNA((COLUMN(A1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APE20",
+   "input": "=N(ISREF(IFNA((COLUMN(A1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APF20:APF22",
+   "input": "=N(ISREF(IFNA((COLUMN(A1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APG20",
+   "input": "=ISREF(IFNA((nmRowD),0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APH20",
+   "input": "=ISREF(IFNA((nmRowD),0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!API20:API22",
+   "input": "=ISREF(IFNA((nmRowD),0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APJ20",
+   "input": "=COLUMNS(ISREF(IFNA((ROW(A1)/0),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APK20",
+   "input": "=COLUMNS(ISREF(IFNA((ROW(A1)/0),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APL20:APL22",
+   "input": "=COLUMNS(ISREF(IFNA((ROW(A1)/0),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APM20",
+   "input": "=ISREF(ISREF(IFNA((ROW(A1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APN20",
+   "input": "=ISREF(ISREF(IFNA((ROW(A1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APO20:APO22",
+   "input": "=ISREF(ISREF(IFNA((ROW(A1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APP20",
+   "input": "=ROWS(ISREF(IFNA((FORMULATEXT(Y1)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APQ20",
+   "input": "=ROWS(ISREF(IFNA((FORMULATEXT(Y1)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APR20:APR22",
+   "input": "=ROWS(ISREF(IFNA((FORMULATEXT(Y1)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APS20",
+   "input": "=TYPE(ISREF(IFNA((LET(x,ROW(A1),x/0)),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APT20",
+   "input": "=TYPE(ISREF(IFNA((LET(x,ROW(A1),x/0)),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APU20:APU22",
+   "input": "=TYPE(ISREF(IFNA((LET(x,ROW(A1),x/0)),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APV20",
+   "input": "=SUMPRODUCT(ISREF(IFNA((nmRng),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APW20",
+   "input": "=SUMPRODUCT(ISREF(IFNA((nmRng),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!APX20:APX22",
+   "input": "=SUMPRODUCT(ISREF(IFNA((nmRng),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!APY20",
+   "input": "=-IF(IF(IF(COLUMN(A1),1,2),1,2),1,2)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!APZ20",
+   "input": "=-IF(IF(IF(COLUMN(A1),1,2),1,2),1,2)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQA20:AQA22",
+   "input": "=-IF(IF(IF(COLUMN(A1),1,2),1,2),1,2)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQB20",
+   "input": "=COLUMNS(-IF(IF(IF(ROW(A1)/0,1,2),1,2),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQC20",
+   "input": "=COLUMNS(-IF(IF(IF(ROW(A1)/0,1,2),1,2),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQD20:AQD22",
+   "input": "=COLUMNS(-IF(IF(IF(ROW(A1)/0,1,2),1,2),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQE20",
+   "input": "=ISREF(-IF(IF(IF(FORMULATEXT(Y1),1,2),1,2),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQF20",
+   "input": "=ISREF(-IF(IF(IF(FORMULATEXT(Y1),1,2),1,2),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQG20:AQG22",
+   "input": "=ISREF(-IF(IF(IF(FORMULATEXT(Y1),1,2),1,2),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQH20",
+   "input": "=ROWS(-IF(IF(IF(nmRowD,1,2),1,2),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQI20",
+   "input": "=ROWS(-IF(IF(IF(nmRowD,1,2),1,2),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQJ20:AQJ22",
+   "input": "=ROWS(-IF(IF(IF(nmRowD,1,2),1,2),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQK20",
+   "input": "=TYPE(-IF(IF(IF(LAMBDA(p,ROW(p)/0)(A1),1,2),1,2),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQL20",
+   "input": "=TYPE(-IF(IF(IF(LAMBDA(p,ROW(p)/0)(A1),1,2),1,2),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQM20:AQM22",
+   "input": "=TYPE(-IF(IF(IF(LAMBDA(p,ROW(p)/0)(A1),1,2),1,2),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQN20",
+   "input": "=SUMPRODUCT(-IF(IF(IF(LET(x,ROW(A1),x/0),1,2),1,2),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQO20",
+   "input": "=SUMPRODUCT(-IF(IF(IF(LET(x,ROW(A1),x/0),1,2),1,2),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQP20:AQP22",
+   "input": "=SUMPRODUCT(-IF(IF(IF(LET(x,ROW(A1),x/0),1,2),1,2),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQQ20",
+   "input": "=N(-IF(IF(IF(FORMULATEXT(Y1)&\"\",1,2),1,2),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQR20",
+   "input": "=N(-IF(IF(IF(FORMULATEXT(Y1)&\"\",1,2),1,2),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQS20:AQS22",
+   "input": "=N(-IF(IF(IF(FORMULATEXT(Y1)&\"\",1,2),1,2),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQT20",
+   "input": "=COLUMNS(SUM(TEXT(IF(TRUE,COLUMN(A1)),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQU20",
+   "input": "=COLUMNS(SUM(TEXT(IF(TRUE,COLUMN(A1)),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQV20:AQV22",
+   "input": "=COLUMNS(SUM(TEXT(IF(TRUE,COLUMN(A1)),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQW20",
+   "input": "=ISREF(SUM(TEXT(IF(TRUE,T[Q1]),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AQX20",
+   "input": "=ISREF(SUM(TEXT(IF(TRUE,T[Q1]),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AQY20:AQY22",
+   "input": "=ISREF(SUM(TEXT(IF(TRUE,T[Q1]),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AQZ20",
+   "input": "=ROWS(SUM(TEXT(IF(TRUE,ROW(A1)),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARA20",
+   "input": "=ROWS(SUM(TEXT(IF(TRUE,ROW(A1)),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARB20:ARB22",
+   "input": "=ROWS(SUM(TEXT(IF(TRUE,ROW(A1)),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARC20",
+   "input": "=TYPE(SUM(TEXT(IF(TRUE,FORMULATEXT(Y1)),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARD20",
+   "input": "=TYPE(SUM(TEXT(IF(TRUE,FORMULATEXT(Y1)),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARE20:ARE22",
+   "input": "=TYPE(SUM(TEXT(IF(TRUE,FORMULATEXT(Y1)),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARF20",
+   "input": "=SUMPRODUCT(SUM(TEXT(IF(TRUE,ROW(A1)/0),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARG20",
+   "input": "=SUMPRODUCT(SUM(TEXT(IF(TRUE,ROW(A1)/0),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARH20:ARH22",
+   "input": "=SUMPRODUCT(SUM(TEXT(IF(TRUE,ROW(A1)/0),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARI20",
+   "input": "=N(SUM(TEXT(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1)),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARJ20",
+   "input": "=N(SUM(TEXT(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1)),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARK20:ARK22",
+   "input": "=N(SUM(TEXT(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1)),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARL20",
+   "input": "=SUM(TEXT(IF(TRUE,nmRng),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARM20",
+   "input": "=SUM(TEXT(IF(TRUE,nmRng),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARN20:ARN22",
+   "input": "=SUM(TEXT(IF(TRUE,nmRng),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARO20",
+   "input": "=ISREF(OFFSET(COUNT(IFNA(MMULT(COLUMN(A1),{1}),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARP20",
+   "input": "=ISREF(OFFSET(COUNT(IFNA(MMULT(COLUMN(A1),{1}),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARQ20:ARQ22",
+   "input": "=ISREF(OFFSET(COUNT(IFNA(MMULT(COLUMN(A1),{1}),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARR20",
+   "input": "=ROWS(OFFSET(COUNT(IFNA(MMULT(LET(x,ROW(A1),x/0),{1}),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARS20",
+   "input": "=ROWS(OFFSET(COUNT(IFNA(MMULT(LET(x,ROW(A1),x/0),{1}),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ART20:ART22",
+   "input": "=ROWS(OFFSET(COUNT(IFNA(MMULT(LET(x,ROW(A1),x/0),{1}),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARU20",
+   "input": "=TYPE(OFFSET(COUNT(IFNA(MMULT(nmRng,{1}),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARV20",
+   "input": "=TYPE(OFFSET(COUNT(IFNA(MMULT(nmRng,{1}),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARW20:ARW22",
+   "input": "=TYPE(OFFSET(COUNT(IFNA(MMULT(nmRng,{1}),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ARX20",
+   "input": "=SUMPRODUCT(OFFSET(COUNT(IFNA(MMULT(FORMULATEXT(Y1),{1}),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ARY20",
+   "input": "=SUMPRODUCT(OFFSET(COUNT(IFNA(MMULT(FORMULATEXT(Y1),{1}),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ARZ20:ARZ22",
+   "input": "=SUMPRODUCT(OFFSET(COUNT(IFNA(MMULT(FORMULATEXT(Y1),{1}),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASA20",
+   "input": "=N(OFFSET(COUNT(IFNA(MMULT(nmRowD,{1}),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASB20",
+   "input": "=N(OFFSET(COUNT(IFNA(MMULT(nmRowD,{1}),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASC20:ASC22",
+   "input": "=N(OFFSET(COUNT(IFNA(MMULT(nmRowD,{1}),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASD20",
+   "input": "=OFFSET(COUNT(IFNA(MMULT(ROW(A1)/0,{1}),0)),0,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASE20",
+   "input": "=OFFSET(COUNT(IFNA(MMULT(ROW(A1)/0,{1}),0)),0,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASF20:ASF22",
+   "input": "=OFFSET(COUNT(IFNA(MMULT(ROW(A1)/0,{1}),0)),0,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASG20",
+   "input": "=COLUMNS(OFFSET(COUNT(IFNA(MMULT(FORMULATEXT(Y1)&\"\",{1}),0)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASH20",
+   "input": "=COLUMNS(OFFSET(COUNT(IFNA(MMULT(FORMULATEXT(Y1)&\"\",{1}),0)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASI20:ASI22",
+   "input": "=COLUMNS(OFFSET(COUNT(IFNA(MMULT(FORMULATEXT(Y1)&\"\",{1}),0)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASJ20",
+   "input": "=ROWS(VLOOKUP(NOT(IF(TRUE,T[Q1])),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASK20",
+   "input": "=ROWS(VLOOKUP(NOT(IF(TRUE,T[Q1])),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASL20:ASL22",
+   "input": "=ROWS(VLOOKUP(NOT(IF(TRUE,T[Q1])),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASM20",
+   "input": "=TYPE(VLOOKUP(NOT(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASN20",
+   "input": "=TYPE(VLOOKUP(NOT(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASO20:ASO22",
+   "input": "=TYPE(VLOOKUP(NOT(IF(TRUE,LAMBDA(p,ROW(p)/0)(A1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASP20",
+   "input": "=SUMPRODUCT(VLOOKUP(NOT(IF(TRUE,FORMULATEXT(Y1)&\"\")),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASQ20",
+   "input": "=SUMPRODUCT(VLOOKUP(NOT(IF(TRUE,FORMULATEXT(Y1)&\"\")),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASR20:ASR22",
+   "input": "=SUMPRODUCT(VLOOKUP(NOT(IF(TRUE,FORMULATEXT(Y1)&\"\")),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASS20",
+   "input": "=N(VLOOKUP(NOT(IF(TRUE,LET(x,ROW(A1),x/0))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AST20",
+   "input": "=N(VLOOKUP(NOT(IF(TRUE,LET(x,ROW(A1),x/0))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASU20:ASU22",
+   "input": "=N(VLOOKUP(NOT(IF(TRUE,LET(x,ROW(A1),x/0))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASV20",
+   "input": "=VLOOKUP(NOT(IF(TRUE,ROW(A1))),A1:B3,2,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASW20",
+   "input": "=VLOOKUP(NOT(IF(TRUE,ROW(A1))),A1:B3,2,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ASX20:ASX22",
+   "input": "=VLOOKUP(NOT(IF(TRUE,ROW(A1))),A1:B3,2,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ASY20",
+   "input": "=COLUMNS(VLOOKUP(NOT(IF(TRUE,COLUMN(A1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ASZ20",
+   "input": "=COLUMNS(VLOOKUP(NOT(IF(TRUE,COLUMN(A1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATA20:ATA22",
+   "input": "=COLUMNS(VLOOKUP(NOT(IF(TRUE,COLUMN(A1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATB20",
+   "input": "=ISREF(VLOOKUP(NOT(IF(TRUE,ROW(A1)/0)),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATC20",
+   "input": "=ISREF(VLOOKUP(NOT(IF(TRUE,ROW(A1)/0)),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATD20:ATD22",
+   "input": "=ISREF(VLOOKUP(NOT(IF(TRUE,ROW(A1)/0)),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATE20",
+   "input": "=TYPE(IF(TEXT(CHOOSE(1,VLOOKUP(ROW(A1)/0,A1:B3,2,0)),\"0\"),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATF20",
+   "input": "=TYPE(IF(TEXT(CHOOSE(1,VLOOKUP(ROW(A1)/0,A1:B3,2,0)),\"0\"),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATG20:ATG22",
+   "input": "=TYPE(IF(TEXT(CHOOSE(1,VLOOKUP(ROW(A1)/0,A1:B3,2,0)),\"0\"),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATH20",
+   "input": "=SUMPRODUCT(IF(TEXT(CHOOSE(1,VLOOKUP(T[Q1],A1:B3,2,0)),\"0\"),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATI20",
+   "input": "=SUMPRODUCT(IF(TEXT(CHOOSE(1,VLOOKUP(T[Q1],A1:B3,2,0)),\"0\"),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATJ20:ATJ22",
+   "input": "=SUMPRODUCT(IF(TEXT(CHOOSE(1,VLOOKUP(T[Q1],A1:B3,2,0)),\"0\"),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATK20",
+   "input": "=N(IF(TEXT(CHOOSE(1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATL20",
+   "input": "=N(IF(TEXT(CHOOSE(1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATM20:ATM22",
+   "input": "=N(IF(TEXT(CHOOSE(1,VLOOKUP(LAMBDA(p,ROW(p)/0)(A1),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATN20",
+   "input": "=IF(TEXT(CHOOSE(1,VLOOKUP(FORMULATEXT(Y1),A1:B3,2,0)),\"0\"),1,2)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATO20",
+   "input": "=IF(TEXT(CHOOSE(1,VLOOKUP(FORMULATEXT(Y1),A1:B3,2,0)),\"0\"),1,2)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATP20:ATP22",
+   "input": "=IF(TEXT(CHOOSE(1,VLOOKUP(FORMULATEXT(Y1),A1:B3,2,0)),\"0\"),1,2)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATQ20",
+   "input": "=COLUMNS(IF(TEXT(CHOOSE(1,VLOOKUP(FORMULATEXT(Y1)&\"\",A1:B3,2,0)),\"0\"),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATR20",
+   "input": "=COLUMNS(IF(TEXT(CHOOSE(1,VLOOKUP(FORMULATEXT(Y1)&\"\",A1:B3,2,0)),\"0\"),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATS20:ATS22",
+   "input": "=COLUMNS(IF(TEXT(CHOOSE(1,VLOOKUP(FORMULATEXT(Y1)&\"\",A1:B3,2,0)),\"0\"),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATT20",
+   "input": "=ISREF(IF(TEXT(CHOOSE(1,VLOOKUP(ROW(A1),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATU20",
+   "input": "=ISREF(IF(TEXT(CHOOSE(1,VLOOKUP(ROW(A1),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATV20:ATV22",
+   "input": "=ISREF(IF(TEXT(CHOOSE(1,VLOOKUP(ROW(A1),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATW20",
+   "input": "=ROWS(IF(TEXT(CHOOSE(1,VLOOKUP(LET(x,ROW(A1),x/0),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!ATX20",
+   "input": "=ROWS(IF(TEXT(CHOOSE(1,VLOOKUP(LET(x,ROW(A1),x/0),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!ATY20:ATY22",
+   "input": "=ROWS(IF(TEXT(CHOOSE(1,VLOOKUP(LET(x,ROW(A1),x/0),A1:B3,2,0)),\"0\"),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!ATZ20",
+   "input": "=SUMPRODUCT(MMULT(IFERROR(ISREF(nmRowD),0),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUA20",
+   "input": "=SUMPRODUCT(MMULT(IFERROR(ISREF(nmRowD),0),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUB20:AUB22",
+   "input": "=SUMPRODUCT(MMULT(IFERROR(ISREF(nmRowD),0),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUC20",
+   "input": "=N(MMULT(IFERROR(ISREF(ROW(A1)/0),0),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUD20",
+   "input": "=N(MMULT(IFERROR(ISREF(ROW(A1)/0),0),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUE20:AUE22",
+   "input": "=N(MMULT(IFERROR(ISREF(ROW(A1)/0),0),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUF20",
+   "input": "=MMULT(IFERROR(ISREF(FORMULATEXT(Y1)),0),{1})",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUG20",
+   "input": "=MMULT(IFERROR(ISREF(FORMULATEXT(Y1)),0),{1})",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUH20:AUH22",
+   "input": "=MMULT(IFERROR(ISREF(FORMULATEXT(Y1)),0),{1})",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUI20",
+   "input": "=COLUMNS(MMULT(IFERROR(ISREF(COLUMN(A1)),0),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUJ20",
+   "input": "=COLUMNS(MMULT(IFERROR(ISREF(COLUMN(A1)),0),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUK20:AUK22",
+   "input": "=COLUMNS(MMULT(IFERROR(ISREF(COLUMN(A1)),0),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUL20",
+   "input": "=ISREF(MMULT(IFERROR(ISREF(LAMBDA(p,ROW(p)/0)(A1)),0),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUM20",
+   "input": "=ISREF(MMULT(IFERROR(ISREF(LAMBDA(p,ROW(p)/0)(A1)),0),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUN20:AUN22",
+   "input": "=ISREF(MMULT(IFERROR(ISREF(LAMBDA(p,ROW(p)/0)(A1)),0),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUO20",
+   "input": "=ROWS(MMULT(IFERROR(ISREF(LET(x,ROW(A1),x/0)),0),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUP20",
+   "input": "=ROWS(MMULT(IFERROR(ISREF(LET(x,ROW(A1),x/0)),0),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUQ20:AUQ22",
+   "input": "=ROWS(MMULT(IFERROR(ISREF(LET(x,ROW(A1),x/0)),0),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUR20",
+   "input": "=TYPE(MMULT(IFERROR(ISREF(FORMULATEXT(Y1)&\"\"),0),{1}))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUS20",
+   "input": "=TYPE(MMULT(IFERROR(ISREF(FORMULATEXT(Y1)&\"\"),0),{1}))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUT20:AUT22",
+   "input": "=TYPE(MMULT(IFERROR(ISREF(FORMULATEXT(Y1)&\"\"),0),{1}))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUU20",
+   "input": "=N(SUMPRODUCT(TEXT(IF(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUV20",
+   "input": "=N(SUMPRODUCT(TEXT(IF(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUW20:AUW22",
+   "input": "=N(SUMPRODUCT(TEXT(IF(MMULT(LAMBDA(p,ROW(p)/0)(A1),{1}),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AUX20",
+   "input": "=SUMPRODUCT(TEXT(IF(MMULT(LET(x,ROW(A1),x/0),{1}),1,2),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AUY20",
+   "input": "=SUMPRODUCT(TEXT(IF(MMULT(LET(x,ROW(A1),x/0),{1}),1,2),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AUZ20:AUZ22",
+   "input": "=SUMPRODUCT(TEXT(IF(MMULT(LET(x,ROW(A1),x/0),{1}),1,2),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVA20",
+   "input": "=COLUMNS(SUMPRODUCT(TEXT(IF(MMULT(nmRowD,{1}),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVB20",
+   "input": "=COLUMNS(SUMPRODUCT(TEXT(IF(MMULT(nmRowD,{1}),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVC20:AVC22",
+   "input": "=COLUMNS(SUMPRODUCT(TEXT(IF(MMULT(nmRowD,{1}),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVD20",
+   "input": "=ISREF(SUMPRODUCT(TEXT(IF(MMULT(FORMULATEXT(Y1),{1}),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVE20",
+   "input": "=ISREF(SUMPRODUCT(TEXT(IF(MMULT(FORMULATEXT(Y1),{1}),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVF20:AVF22",
+   "input": "=ISREF(SUMPRODUCT(TEXT(IF(MMULT(FORMULATEXT(Y1),{1}),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVG20",
+   "input": "=ROWS(SUMPRODUCT(TEXT(IF(MMULT(COLUMN(A1),{1}),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVH20",
+   "input": "=ROWS(SUMPRODUCT(TEXT(IF(MMULT(COLUMN(A1),{1}),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVI20:AVI22",
+   "input": "=ROWS(SUMPRODUCT(TEXT(IF(MMULT(COLUMN(A1),{1}),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVJ20",
+   "input": "=TYPE(SUMPRODUCT(TEXT(IF(MMULT(ROW(A1)/0,{1}),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVK20",
+   "input": "=TYPE(SUMPRODUCT(TEXT(IF(MMULT(ROW(A1)/0,{1}),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVL20:AVL22",
+   "input": "=TYPE(SUMPRODUCT(TEXT(IF(MMULT(ROW(A1)/0,{1}),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVM20",
+   "input": "=SUMPRODUCT(SUMPRODUCT(TEXT(IF(MMULT(FORMULATEXT(Y1)&\"\",{1}),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVN20",
+   "input": "=SUMPRODUCT(SUMPRODUCT(TEXT(IF(MMULT(FORMULATEXT(Y1)&\"\",{1}),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVO20:AVO22",
+   "input": "=SUMPRODUCT(SUMPRODUCT(TEXT(IF(MMULT(FORMULATEXT(Y1)&\"\",{1}),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVP20",
+   "input": "=IF((TAKE(COLUMN(A1),1)),1,2)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVQ20",
+   "input": "=IF((TAKE(COLUMN(A1),1)),1,2)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVR20:AVR22",
+   "input": "=IF((TAKE(COLUMN(A1),1)),1,2)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVS20",
+   "input": "=COLUMNS(IF((TAKE(FORMULATEXT(Y1)&\"\",1)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVT20",
+   "input": "=COLUMNS(IF((TAKE(FORMULATEXT(Y1)&\"\",1)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVU20:AVU22",
+   "input": "=COLUMNS(IF((TAKE(FORMULATEXT(Y1)&\"\",1)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVV20",
+   "input": "=ISREF(IF((TAKE(LAMBDA(p,ROW(p)/0)(A1),1)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVW20",
+   "input": "=ISREF(IF((TAKE(LAMBDA(p,ROW(p)/0)(A1),1)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AVX20:AVX22",
+   "input": "=ISREF(IF((TAKE(LAMBDA(p,ROW(p)/0)(A1),1)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AVY20",
+   "input": "=ROWS(IF((TAKE(nmRng,1)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AVZ20",
+   "input": "=ROWS(IF((TAKE(nmRng,1)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWA20:AWA22",
+   "input": "=ROWS(IF((TAKE(nmRng,1)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWB20",
+   "input": "=TYPE(IF((TAKE(ROW(A1),1)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWC20",
+   "input": "=TYPE(IF((TAKE(ROW(A1),1)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWD20:AWD22",
+   "input": "=TYPE(IF((TAKE(ROW(A1),1)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWE20",
+   "input": "=SUMPRODUCT(IF((TAKE(ROW(A1)/0,1)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWF20",
+   "input": "=SUMPRODUCT(IF((TAKE(ROW(A1)/0,1)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWG20:AWG22",
+   "input": "=SUMPRODUCT(IF((TAKE(ROW(A1)/0,1)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWH20",
+   "input": "=N(IF((TAKE(FORMULATEXT(Y1),1)),1,2))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWI20",
+   "input": "=N(IF((TAKE(FORMULATEXT(Y1),1)),1,2))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWJ20:AWJ22",
+   "input": "=N(IF((TAKE(FORMULATEXT(Y1),1)),1,2))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWK20",
+   "input": "=COLUMNS(SUM(N(MAX(IFERROR(COLUMN(A1),0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWL20",
+   "input": "=COLUMNS(SUM(N(MAX(IFERROR(COLUMN(A1),0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWM20:AWM22",
+   "input": "=COLUMNS(SUM(N(MAX(IFERROR(COLUMN(A1),0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWN20",
+   "input": "=ISREF(SUM(N(MAX(IFERROR(ROW(A1),0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWO20",
+   "input": "=ISREF(SUM(N(MAX(IFERROR(ROW(A1),0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWP20:AWP22",
+   "input": "=ISREF(SUM(N(MAX(IFERROR(ROW(A1),0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWQ20",
+   "input": "=ROWS(SUM(N(MAX(IFERROR(nmRowD,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWR20",
+   "input": "=ROWS(SUM(N(MAX(IFERROR(nmRowD,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWS20:AWS22",
+   "input": "=ROWS(SUM(N(MAX(IFERROR(nmRowD,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWT20",
+   "input": "=TYPE(SUM(N(MAX(IFERROR(FORMULATEXT(Y1)&\"\",0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWU20",
+   "input": "=TYPE(SUM(N(MAX(IFERROR(FORMULATEXT(Y1)&\"\",0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWV20:AWV22",
+   "input": "=TYPE(SUM(N(MAX(IFERROR(FORMULATEXT(Y1)&\"\",0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWW20",
+   "input": "=SUMPRODUCT(SUM(N(MAX(IFERROR(LAMBDA(p,ROW(p)/0)(A1),0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AWX20",
+   "input": "=SUMPRODUCT(SUM(N(MAX(IFERROR(LAMBDA(p,ROW(p)/0)(A1),0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AWY20:AWY22",
+   "input": "=SUMPRODUCT(SUM(N(MAX(IFERROR(LAMBDA(p,ROW(p)/0)(A1),0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AWZ20",
+   "input": "=N(SUM(N(MAX(IFERROR(ROW(A1)/0,0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXA20",
+   "input": "=N(SUM(N(MAX(IFERROR(ROW(A1)/0,0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXB20:AXB22",
+   "input": "=N(SUM(N(MAX(IFERROR(ROW(A1)/0,0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXC20",
+   "input": "=SUM(N(MAX(IFERROR(LET(x,ROW(A1),x/0),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXD20",
+   "input": "=SUM(N(MAX(IFERROR(LET(x,ROW(A1),x/0),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXE20:AXE22",
+   "input": "=SUM(N(MAX(IFERROR(LET(x,ROW(A1),x/0),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXF20",
+   "input": "=ISREF(OFFSET(-AND(ROW(A1)/0),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXG20",
+   "input": "=ISREF(OFFSET(-AND(ROW(A1)/0),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXH20:AXH22",
+   "input": "=ISREF(OFFSET(-AND(ROW(A1)/0),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXI20",
+   "input": "=ROWS(OFFSET(-AND(COLUMN(A1)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXJ20",
+   "input": "=ROWS(OFFSET(-AND(COLUMN(A1)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXK20:AXK22",
+   "input": "=ROWS(OFFSET(-AND(COLUMN(A1)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXL20",
+   "input": "=TYPE(OFFSET(-AND(LAMBDA(p,ROW(p)/0)(A1)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXM20",
+   "input": "=TYPE(OFFSET(-AND(LAMBDA(p,ROW(p)/0)(A1)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXN20:AXN22",
+   "input": "=TYPE(OFFSET(-AND(LAMBDA(p,ROW(p)/0)(A1)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXO20",
+   "input": "=SUMPRODUCT(OFFSET(-AND(T[Q1]),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXP20",
+   "input": "=SUMPRODUCT(OFFSET(-AND(T[Q1]),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXQ20:AXQ22",
+   "input": "=SUMPRODUCT(OFFSET(-AND(T[Q1]),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXR20",
+   "input": "=N(OFFSET(-AND(nmRng),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXS20",
+   "input": "=N(OFFSET(-AND(nmRng),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXT20:AXT22",
+   "input": "=N(OFFSET(-AND(nmRng),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXU20",
+   "input": "=OFFSET(-AND(nmRowD),0,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXV20",
+   "input": "=OFFSET(-AND(nmRowD),0,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXW20:AXW22",
+   "input": "=OFFSET(-AND(nmRowD),0,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AXX20",
+   "input": "=COLUMNS(OFFSET(-AND(FORMULATEXT(Y1)),0,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AXY20",
+   "input": "=COLUMNS(OFFSET(-AND(FORMULATEXT(Y1)),0,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AXZ20:AXZ22",
+   "input": "=COLUMNS(OFFSET(-AND(FORMULATEXT(Y1)),0,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYA20",
+   "input": "=ROWS(VLOOKUP(MAX(SUM(ROUND(LAMBDA(p,ROW(p)/0)(A1),1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYB20",
+   "input": "=ROWS(VLOOKUP(MAX(SUM(ROUND(LAMBDA(p,ROW(p)/0)(A1),1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYC20:AYC22",
+   "input": "=ROWS(VLOOKUP(MAX(SUM(ROUND(LAMBDA(p,ROW(p)/0)(A1),1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYD20",
+   "input": "=TYPE(VLOOKUP(MAX(SUM(ROUND(LET(x,ROW(A1),x/0),1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYE20",
+   "input": "=TYPE(VLOOKUP(MAX(SUM(ROUND(LET(x,ROW(A1),x/0),1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYF20:AYF22",
+   "input": "=TYPE(VLOOKUP(MAX(SUM(ROUND(LET(x,ROW(A1),x/0),1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYG20",
+   "input": "=SUMPRODUCT(VLOOKUP(MAX(SUM(ROUND(ROW(A1),1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYH20",
+   "input": "=SUMPRODUCT(VLOOKUP(MAX(SUM(ROUND(ROW(A1),1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYI20:AYI22",
+   "input": "=SUMPRODUCT(VLOOKUP(MAX(SUM(ROUND(ROW(A1),1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYJ20",
+   "input": "=N(VLOOKUP(MAX(SUM(ROUND(nmRowD,1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYK20",
+   "input": "=N(VLOOKUP(MAX(SUM(ROUND(nmRowD,1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYL20:AYL22",
+   "input": "=N(VLOOKUP(MAX(SUM(ROUND(nmRowD,1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYM20",
+   "input": "=VLOOKUP(MAX(SUM(ROUND(FORMULATEXT(Y1),1))),A1:B3,2,0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYN20",
+   "input": "=VLOOKUP(MAX(SUM(ROUND(FORMULATEXT(Y1),1))),A1:B3,2,0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYO20:AYO22",
+   "input": "=VLOOKUP(MAX(SUM(ROUND(FORMULATEXT(Y1),1))),A1:B3,2,0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYP20",
+   "input": "=COLUMNS(VLOOKUP(MAX(SUM(ROUND(COLUMN(A1),1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYQ20",
+   "input": "=COLUMNS(VLOOKUP(MAX(SUM(ROUND(COLUMN(A1),1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYR20:AYR22",
+   "input": "=COLUMNS(VLOOKUP(MAX(SUM(ROUND(COLUMN(A1),1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYS20",
+   "input": "=ISREF(VLOOKUP(MAX(SUM(ROUND(nmRng,1))),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYT20",
+   "input": "=ISREF(VLOOKUP(MAX(SUM(ROUND(nmRng,1))),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYU20:AYU22",
+   "input": "=ISREF(VLOOKUP(MAX(SUM(ROUND(nmRng,1))),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYV20",
+   "input": "=TYPE(NOT(TEXT(IF(ROW(A1)/0,1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYW20",
+   "input": "=TYPE(NOT(TEXT(IF(ROW(A1)/0,1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AYX20:AYX22",
+   "input": "=TYPE(NOT(TEXT(IF(ROW(A1)/0,1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AYY20",
+   "input": "=SUMPRODUCT(NOT(TEXT(IF(FORMULATEXT(Y1)&\"\",1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AYZ20",
+   "input": "=SUMPRODUCT(NOT(TEXT(IF(FORMULATEXT(Y1)&\"\",1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZA20:AZA22",
+   "input": "=SUMPRODUCT(NOT(TEXT(IF(FORMULATEXT(Y1)&\"\",1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZB20",
+   "input": "=N(NOT(TEXT(IF(LET(x,ROW(A1),x/0),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZC20",
+   "input": "=N(NOT(TEXT(IF(LET(x,ROW(A1),x/0),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZD20:AZD22",
+   "input": "=N(NOT(TEXT(IF(LET(x,ROW(A1),x/0),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZE20",
+   "input": "=NOT(TEXT(IF(LAMBDA(p,ROW(p)/0)(A1),1,2),\"0\"))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZF20",
+   "input": "=NOT(TEXT(IF(LAMBDA(p,ROW(p)/0)(A1),1,2),\"0\"))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZG20:AZG22",
+   "input": "=NOT(TEXT(IF(LAMBDA(p,ROW(p)/0)(A1),1,2),\"0\"))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZH20",
+   "input": "=COLUMNS(NOT(TEXT(IF(ROW(A1),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZI20",
+   "input": "=COLUMNS(NOT(TEXT(IF(ROW(A1),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZJ20:AZJ22",
+   "input": "=COLUMNS(NOT(TEXT(IF(ROW(A1),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZK20",
+   "input": "=ISREF(NOT(TEXT(IF(T[Q1],1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZL20",
+   "input": "=ISREF(NOT(TEXT(IF(T[Q1],1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZM20:AZM22",
+   "input": "=ISREF(NOT(TEXT(IF(T[Q1],1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZN20",
+   "input": "=ROWS(NOT(TEXT(IF(FORMULATEXT(Y1),1,2),\"0\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZO20",
+   "input": "=ROWS(NOT(TEXT(IF(FORMULATEXT(Y1),1,2),\"0\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZP20:AZP22",
+   "input": "=ROWS(NOT(TEXT(IF(FORMULATEXT(Y1),1,2),\"0\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZQ20",
+   "input": "=SUMPRODUCT(IF(TRUE,VLOOKUP(SUM(INDEX(COLUMN(A1),1)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZR20",
+   "input": "=SUMPRODUCT(IF(TRUE,VLOOKUP(SUM(INDEX(COLUMN(A1),1)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZS20:AZS22",
+   "input": "=SUMPRODUCT(IF(TRUE,VLOOKUP(SUM(INDEX(COLUMN(A1),1)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZT20",
+   "input": "=N(IF(TRUE,VLOOKUP(SUM(INDEX(FORMULATEXT(Y1)&\"\",1)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZU20",
+   "input": "=N(IF(TRUE,VLOOKUP(SUM(INDEX(FORMULATEXT(Y1)&\"\",1)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZV20:AZV22",
+   "input": "=N(IF(TRUE,VLOOKUP(SUM(INDEX(FORMULATEXT(Y1)&\"\",1)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZW20",
+   "input": "=IF(TRUE,VLOOKUP(SUM(INDEX(LET(x,ROW(A1),x/0),1)),A1:B3,2,0))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!AZX20",
+   "input": "=IF(TRUE,VLOOKUP(SUM(INDEX(LET(x,ROW(A1),x/0),1)),A1:B3,2,0))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!AZY20:AZY22",
+   "input": "=IF(TRUE,VLOOKUP(SUM(INDEX(LET(x,ROW(A1),x/0),1)),A1:B3,2,0))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!AZZ20",
+   "input": "=COLUMNS(IF(TRUE,VLOOKUP(SUM(INDEX(FORMULATEXT(Y1),1)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAA20",
+   "input": "=COLUMNS(IF(TRUE,VLOOKUP(SUM(INDEX(FORMULATEXT(Y1),1)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAB20:BAB22",
+   "input": "=COLUMNS(IF(TRUE,VLOOKUP(SUM(INDEX(FORMULATEXT(Y1),1)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAC20",
+   "input": "=ISREF(IF(TRUE,VLOOKUP(SUM(INDEX(ROW(A1)/0,1)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAD20",
+   "input": "=ISREF(IF(TRUE,VLOOKUP(SUM(INDEX(ROW(A1)/0,1)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAE20:BAE22",
+   "input": "=ISREF(IF(TRUE,VLOOKUP(SUM(INDEX(ROW(A1)/0,1)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAF20",
+   "input": "=ROWS(IF(TRUE,VLOOKUP(SUM(INDEX(nmRng,1)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAG20",
+   "input": "=ROWS(IF(TRUE,VLOOKUP(SUM(INDEX(nmRng,1)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAH20:BAH22",
+   "input": "=ROWS(IF(TRUE,VLOOKUP(SUM(INDEX(nmRng,1)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAI20",
+   "input": "=TYPE(IF(TRUE,VLOOKUP(SUM(INDEX(nmRowD,1)),A1:B3,2,0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAJ20",
+   "input": "=TYPE(IF(TRUE,VLOOKUP(SUM(INDEX(nmRowD,1)),A1:B3,2,0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAK20:BAK22",
+   "input": "=TYPE(IF(TRUE,VLOOKUP(SUM(INDEX(nmRowD,1)),A1:B3,2,0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAL20",
+   "input": "=N(CHOOSE(1,LEN(-T[Q1])))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAM20",
+   "input": "=N(CHOOSE(1,LEN(-T[Q1])))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAN20:BAN22",
+   "input": "=N(CHOOSE(1,LEN(-T[Q1])))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAO20",
+   "input": "=CHOOSE(1,LEN(-nmRng))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAP20",
+   "input": "=CHOOSE(1,LEN(-nmRng))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAQ20:BAQ22",
+   "input": "=CHOOSE(1,LEN(-nmRng))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAR20",
+   "input": "=COLUMNS(CHOOSE(1,LEN(-LET(x,ROW(A1),x/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAS20",
+   "input": "=COLUMNS(CHOOSE(1,LEN(-LET(x,ROW(A1),x/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAT20:BAT22",
+   "input": "=COLUMNS(CHOOSE(1,LEN(-LET(x,ROW(A1),x/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAU20",
+   "input": "=ISREF(CHOOSE(1,LEN(-ROW(A1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAV20",
+   "input": "=ISREF(CHOOSE(1,LEN(-ROW(A1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAW20:BAW22",
+   "input": "=ISREF(CHOOSE(1,LEN(-ROW(A1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BAX20",
+   "input": "=ROWS(CHOOSE(1,LEN(-FORMULATEXT(Y1)&\"\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BAY20",
+   "input": "=ROWS(CHOOSE(1,LEN(-FORMULATEXT(Y1)&\"\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BAZ20:BAZ22",
+   "input": "=ROWS(CHOOSE(1,LEN(-FORMULATEXT(Y1)&\"\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBA20",
+   "input": "=TYPE(CHOOSE(1,LEN(-LAMBDA(p,ROW(p)/0)(A1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBB20",
+   "input": "=TYPE(CHOOSE(1,LEN(-LAMBDA(p,ROW(p)/0)(A1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBC20:BBC22",
+   "input": "=TYPE(CHOOSE(1,LEN(-LAMBDA(p,ROW(p)/0)(A1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBD20",
+   "input": "=SUMPRODUCT(CHOOSE(1,LEN(-FORMULATEXT(Y1))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBE20",
+   "input": "=SUMPRODUCT(CHOOSE(1,LEN(-FORMULATEXT(Y1))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBF20:BBF22",
+   "input": "=SUMPRODUCT(CHOOSE(1,LEN(-FORMULATEXT(Y1))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBG20",
+   "input": "=TAKE(IFNA(N(T[Q1]),0),1)+0",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBH20",
+   "input": "=TAKE(IFNA(N(T[Q1]),0),1)+0",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBI20:BBI22",
+   "input": "=TAKE(IFNA(N(T[Q1]),0),1)+0",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBJ20",
+   "input": "=COLUMNS(TAKE(IFNA(N(ROW(A1)/0),0),1)+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBK20",
+   "input": "=COLUMNS(TAKE(IFNA(N(ROW(A1)/0),0),1)+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBL20:BBL22",
+   "input": "=COLUMNS(TAKE(IFNA(N(ROW(A1)/0),0),1)+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBM20",
+   "input": "=ISREF(TAKE(IFNA(N(FORMULATEXT(Y1)),0),1)+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBN20",
+   "input": "=ISREF(TAKE(IFNA(N(FORMULATEXT(Y1)),0),1)+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBO20:BBO22",
+   "input": "=ISREF(TAKE(IFNA(N(FORMULATEXT(Y1)),0),1)+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBP20",
+   "input": "=ROWS(TAKE(IFNA(N(FORMULATEXT(Y1)&\"\"),0),1)+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBQ20",
+   "input": "=ROWS(TAKE(IFNA(N(FORMULATEXT(Y1)&\"\"),0),1)+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBR20:BBR22",
+   "input": "=ROWS(TAKE(IFNA(N(FORMULATEXT(Y1)&\"\"),0),1)+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBS20",
+   "input": "=TYPE(TAKE(IFNA(N(LAMBDA(p,ROW(p)/0)(A1)),0),1)+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBT20",
+   "input": "=TYPE(TAKE(IFNA(N(LAMBDA(p,ROW(p)/0)(A1)),0),1)+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBU20:BBU22",
+   "input": "=TYPE(TAKE(IFNA(N(LAMBDA(p,ROW(p)/0)(A1)),0),1)+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBV20",
+   "input": "=SUMPRODUCT(TAKE(IFNA(N(ROW(A1)),0),1)+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBW20",
+   "input": "=SUMPRODUCT(TAKE(IFNA(N(ROW(A1)),0),1)+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BBX20:BBX22",
+   "input": "=SUMPRODUCT(TAKE(IFNA(N(ROW(A1)),0),1)+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BBY20",
+   "input": "=N(TAKE(IFNA(N(COLUMN(A1)),0),1)+0)",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BBZ20",
+   "input": "=N(TAKE(IFNA(N(COLUMN(A1)),0),1)+0)",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCA20:BCA22",
+   "input": "=N(TAKE(IFNA(N(COLUMN(A1)),0),1)+0)",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCB20",
+   "input": "=COLUMNS((COUNT(SUM(ROW(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCC20",
+   "input": "=COLUMNS((COUNT(SUM(ROW(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCD20:BCD22",
+   "input": "=COLUMNS((COUNT(SUM(ROW(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCE20",
+   "input": "=ISREF((COUNT(SUM(LET(x,ROW(A1),x/0)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCF20",
+   "input": "=ISREF((COUNT(SUM(LET(x,ROW(A1),x/0)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCG20:BCG22",
+   "input": "=ISREF((COUNT(SUM(LET(x,ROW(A1),x/0)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCH20",
+   "input": "=ROWS((COUNT(SUM(ROW(A1)/0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCI20",
+   "input": "=ROWS((COUNT(SUM(ROW(A1)/0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCJ20:BCJ22",
+   "input": "=ROWS((COUNT(SUM(ROW(A1)/0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCK20",
+   "input": "=TYPE((COUNT(SUM(COLUMN(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCL20",
+   "input": "=TYPE((COUNT(SUM(COLUMN(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCM20:BCM22",
+   "input": "=TYPE((COUNT(SUM(COLUMN(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCN20",
+   "input": "=SUMPRODUCT((COUNT(SUM(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCO20",
+   "input": "=SUMPRODUCT((COUNT(SUM(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCP20:BCP22",
+   "input": "=SUMPRODUCT((COUNT(SUM(LAMBDA(p,ROW(p)/0)(A1)))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCQ20",
+   "input": "=N((COUNT(SUM(nmRng))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCR20",
+   "input": "=N((COUNT(SUM(nmRng))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCS20:BCS22",
+   "input": "=N((COUNT(SUM(nmRng))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCT20",
+   "input": "=(COUNT(SUM(FORMULATEXT(Y1)&\"\")))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCU20",
+   "input": "=(COUNT(SUM(FORMULATEXT(Y1)&\"\")))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCV20:BCV22",
+   "input": "=(COUNT(SUM(FORMULATEXT(Y1)&\"\")))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCW20",
+   "input": "=ISREF(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,FORMULATEXT(Y1)),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BCX20",
+   "input": "=ISREF(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,FORMULATEXT(Y1)),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BCY20:BCY22",
+   "input": "=ISREF(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,FORMULATEXT(Y1)),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BCZ20",
+   "input": "=ROWS(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,COLUMN(A1)),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BDA20",
+   "input": "=ROWS(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,COLUMN(A1)),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BDB20:BDB22",
+   "input": "=ROWS(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,COLUMN(A1)),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BDC20",
+   "input": "=TYPE(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,LET(x,ROW(A1),x/0)),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BDD20",
+   "input": "=TYPE(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,LET(x,ROW(A1),x/0)),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BDE20:BDE22",
+   "input": "=TYPE(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,LET(x,ROW(A1),x/0)),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BDF20",
+   "input": "=SUMPRODUCT(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,LAMBDA(p,ROW(p)/0)(A1)),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BDG20",
+   "input": "=SUMPRODUCT(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,LAMBDA(p,ROW(p)/0)(A1)),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BDH20:BDH22",
+   "input": "=SUMPRODUCT(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,LAMBDA(p,ROW(p)/0)(A1)),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BDI20",
+   "input": "=N(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,nmRowD),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BDJ20",
+   "input": "=N(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,nmRowD),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BDK20:BDK22",
+   "input": "=N(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,nmRowD),0))))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BDL20",
+   "input": "=TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,T[Q1]),0)))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BDM20",
+   "input": "=TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,T[Q1]),0)))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BDN20:BDN22",
+   "input": "=TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,T[Q1]),0)))",
+   "op": "array"
+  },
+  {
+   "cell": "Sheet1!BDO20",
+   "input": "=COLUMNS(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,ROW(A1)),0))))",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!BDP20",
+   "input": "=COLUMNS(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,ROW(A1)),0))))",
+   "op": "setl"
+  },
+  {
+   "range": "Sheet1!BDQ20:BDQ22",
+   "input": "=COLUMNS(TRANSPOSE(COUNT(IFERROR(SWITCH(1,1,ROW(A1)),0))))",
+   "op": "array"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "range": "Sheet1!D20:BDT23",
+   "op": "read"
+  }
+ ]
+}

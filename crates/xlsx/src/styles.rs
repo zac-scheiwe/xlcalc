@@ -148,9 +148,20 @@ impl Styles {
             });
         }
 
+        let mut hidden: Vec<Arc<str>> = Vec::new();
+        for c in list(n, "cellStyles", "cellStyle") {
+            if c.attr("builtinId").is_some() && flag(c, "hidden", false) {
+                if let Some(name) = c.attr("name") {
+                    hidden.push(Arc::from(name));
+                }
+            }
+        }
         for s in named {
             self.table.insert(s);
         }
+        self.table
+            .named
+            .retain(|s| !hidden.iter().any(|h| h.eq_ignore_ascii_case(&s.name)));
         self.quote = list(n, "cellXfs", "xf")
             .into_iter()
             .map(|x| flag(x, "quotePrefix", false))
@@ -245,7 +256,10 @@ impl Styles {
     }
 
     pub fn format_of(&self, xf: u32) -> Option<String> {
-        let id = *self.xf_fmt.get(xf as usize)?;
+        self.code_of(*self.xf_fmt.get(xf as usize)?)
+    }
+
+    pub fn code_of(&self, id: u32) -> Option<String> {
         if id == 0 {
             return None;
         }
@@ -411,10 +425,30 @@ fn color(c: Option<&Node>) -> CellColor {
         return CellColor::theme(t, tint);
     }
     if let Some(v) = c.attr("rgb").and_then(|v| u32::from_str_radix(v, 16).ok()) {
-        return CellColor::Rgb(v & 0xFF_FFFF);
+        let rgb = v & 0xFF_FFFF;
+        return match c.attr("tint").and_then(|t| t.parse::<f64>().ok()) {
+            Some(tint) if tint != 0.0 => CellColor::RgbTint {
+                rgb,
+                tint: tint.to_bits(),
+            },
+            _ => CellColor::Rgb(rgb),
+        };
     }
     match c.attr("indexed").and_then(|i| i.parse::<u8>().ok()) {
-        Some(i) if i < 64 => CellColor::Indexed(i),
+        Some(i) if i < 64 => match c.attr("tint").and_then(|t| t.parse::<f64>().ok()) {
+            Some(tint) if tint != 0.0 => CellColor::IndexedTint {
+                index: i,
+                tint: tint.to_bits(),
+            },
+            _ => CellColor::Indexed(i),
+        },
+        Some(64) => CellColor::Indexed(64),
+        Some(65) => match c.attr("tint").and_then(|t| t.parse::<f64>().ok()) {
+            Some(tint) if tint != 0.0 => CellColor::AutoTint {
+                tint: tint.to_bits(),
+            },
+            _ => CellColor::Auto,
+        },
         _ => CellColor::Auto,
     }
 }
@@ -449,6 +483,8 @@ fn font(f: &Node, w: &mut Vec<String>) -> Font {
         strikethrough: on(f, "strike"),
         superscript: val("vertAlign") == Some("superscript"),
         subscript: val("vertAlign") == Some("subscript"),
+        outline: on(f, "outline"),
+        shadow: on(f, "shadow"),
         color: color(f.child("color")),
         scheme,
         family: val("family").and_then(|v| v.parse().ok()).unwrap_or(0),
@@ -765,6 +801,8 @@ pub struct StyleWriter {
     named: HashMap<String, u32>,
 
     src_cell_styles: HashMap<String, crate::rawxml::Tag>,
+
+    deleted: Vec<NamedStyle>,
 }
 
 fn nodes<'a>(n: &'a Node, name: &str, item: &'a str) -> Vec<&'a Node> {
@@ -868,6 +906,7 @@ impl StyleWriter {
             table: wb.style_table().clone(),
             named: HashMap::new(),
             src_cell_styles,
+            deleted: Vec::new(),
         };
 
         let normal = match sw.table.get("Normal") {
@@ -880,11 +919,28 @@ impl StyleWriter {
         }
         sw.named.insert("normal".into(), 0);
         let defaults = StyleTable::default();
+        let deleted: Vec<Arc<str>> = defaults
+            .named
+            .iter()
+            .filter(|d| sw.table.get(&d.name).is_none())
+            .map(|d| d.name.clone())
+            .collect();
+
+        let unsaved = sw.table.unsaved_when_unused(&deleted);
         for n in sw.table.named.clone() {
             let key = n.name.to_lowercase();
+            if unsaved.contains(&n.name) {
+                continue;
+            }
             let builtin_default = n.builtin_id.is_some() && defaults.get(&n.name) == Some(&n);
             if !builtin_default || sw.src_cell_styles.contains_key(&key) {
                 sw.add_named(&n);
+            }
+        }
+        for d in defaults.named {
+            if sw.table.get(&d.name).is_none() {
+                sw.add_named(&d);
+                sw.deleted.push(d);
             }
         }
 
@@ -906,9 +962,10 @@ impl StyleWriter {
             return i;
         }
         let v = style_xf(n);
+
         let i = match self.style_xfs.index.get(&v) {
-            Some(&i) => i,
-            None => {
+            Some(&i) if !self.named.values().any(|&j| j == i) => i,
+            _ => {
                 let xml = self.style_xf_xml(&v);
                 self.style_xfs.push(v, xml)
             }
@@ -917,7 +974,7 @@ impl StyleWriter {
         i
     }
 
-    fn fmt_id(&mut self, code: &str) -> u32 {
+    pub(crate) fn fmt_id(&mut self, code: &str) -> u32 {
         let code = norm_code(code);
         if code == "General" {
             return 0;
@@ -1141,7 +1198,8 @@ impl StyleWriter {
         });
         let mut cell_styles: Vec<(u32, String)> = Vec::new();
         let mut written = std::collections::HashSet::new();
-        for n in &self.table.named {
+        let deleted: Vec<String> = self.deleted.iter().map(|d| d.name.to_lowercase()).collect();
+        for n in self.table.named.iter().chain(&self.deleted) {
             let key = n.name.to_lowercase();
             let Some(&xf) = self.named.get(&key) else {
                 continue;
@@ -1155,6 +1213,9 @@ impl StyleWriter {
                 t
             });
             t.set("xfId", Some(&xf.to_string()));
+            if deleted.contains(&key) {
+                t.set("hidden", Some("1"));
+            }
             cell_styles.push((xf, t.empty()));
             written.insert(key);
         }
@@ -1250,10 +1311,19 @@ fn xf_with_children(t: crate::rawxml::Tag, s: &Style) -> String {
 
 fn color_xml(name: &str, c: CellColor, auto: bool) -> String {
     match c {
-        CellColor::Auto if auto => format!("<{name} indexed=\"64\"/>"),
+        CellColor::Auto if auto => format!("<{name} auto=\"1\"/>"),
         CellColor::Auto => String::new(),
         CellColor::Rgb(v) => format!("<{name} rgb=\"FF{v:06X}\"/>"),
+        CellColor::RgbTint { rgb, .. } => {
+            format!("<{name} rgb=\"FF{rgb:06X}\" tint=\"{:?}\"/>", c.tint())
+        }
+        CellColor::AutoTint { .. } => {
+            format!("<{name} indexed=\"65\" tint=\"{:?}\"/>", c.tint())
+        }
         CellColor::Indexed(i) => format!("<{name} indexed=\"{i}\"/>"),
+        CellColor::IndexedTint { index, .. } => {
+            format!("<{name} indexed=\"{index}\" tint=\"{:?}\"/>", c.tint())
+        }
         CellColor::Theme { index, .. } => {
             let t = c.tint();
             if t == 0.0 {
@@ -1271,6 +1341,8 @@ fn font_xml(f: &Font) -> String {
         (f.bold, "<b/>"),
         (f.italic, "<i/>"),
         (f.strikethrough, "<strike/>"),
+        (f.outline, "<outline/>"),
+        (f.shadow, "<shadow/>"),
     ] {
         if on {
             s.push_str(el);
@@ -1390,6 +1462,18 @@ fn file_code(code: &str) -> String {
 #[cfg(test)]
 mod writer_tests {
     use super::*;
+
+    #[test]
+    fn rgb_tint_is_written_with_its_tint() {
+        let c = CellColor::RgbTint {
+            rgb: 0xFF0000,
+            tint: 0.5f64.to_bits(),
+        };
+        assert_eq!(
+            color_xml("fgColor", c, false),
+            "<fgColor rgb=\"FFFF0000\" tint=\"0.5\"/>"
+        );
+    }
 
     #[test]
     fn dollars() {

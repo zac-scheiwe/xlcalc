@@ -259,6 +259,9 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
                     let ext = part.rsplit_once('.')?.1.to_lowercase();
                     Some((ext, bytes))
                 };
+                let link_of = |rid: &str| -> Option<String> {
+                    rels.iter().find(|r| r.id == rid).map(|r| r.target.clone())
+                };
                 let dims = super::wdraw::Dims::of(&node);
                 super::wdraw::read(
                     &d,
@@ -267,6 +270,7 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
                         sheet: &name,
                         chart_of: &chart_of,
                         image_of: &image_of,
+                        link_of: &link_of,
                         theme: &theme_rgb,
                     },
                     &mut warnings,

@@ -137,7 +137,9 @@ pub const DEFS: &[FnDef] = &[
         })
     }),
     scalar("DEGREES", 1, 1, |c, a| m1(c, a, f64::to_degrees)),
-    scalar("RADIANS", 1, 1, |c, a| m1(c, a, f64::to_radians)),
+    scalar("RADIANS", 1, 1, |c, a| {
+        m1(c, a, |x| crate::x87::mul(x, std::f64::consts::PI / 180.0))
+    }),
     volatile(scalar("RAND", 0, 0, |c, _| Value::Number(c.wb.random()))),
     volatile(args("RANDBETWEEN", 2, 2, "R", randbetween)),
 ];
@@ -411,10 +413,20 @@ pub fn round_decimal(x: f64, digits: i32, mode: RoundMode) -> f64 {
     number::normalize(sign * v)
 }
 
+const MIN_NORMAL_ROUNDED: f64 = f64::from_bits(0x000F_FFFF_FFFF_FFFA);
+
 fn round_fn(ctx: &mut EvalCtx, a: &[Value], mode: RoundMode) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let d = num(ctx, &a[1])?;
+
+        if x == f64::MIN_POSITIVE {
+            return Ok(Value::num(if matches!(mode, RoundMode::HalfAway) {
+                0.0
+            } else {
+                MIN_NORMAL_ROUNDED
+            }));
+        }
         if matches!(mode, RoundMode::HalfAway) {
             let n = ifuzz(d).clamp(-2147483647.0, 2147483647.0) as i32;
             return Ok(Value::num(round_decimal(x, n, mode)));
@@ -462,6 +474,9 @@ fn trunc_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let d = trunc_digits(opt_num(ctx, a, 1, 0.0)?);
+        if x == f64::MIN_POSITIVE {
+            return Ok(Value::num(MIN_NORMAL_ROUNDED));
+        }
         Ok(Value::num(round_decimal(x, d, RoundMode::Down)))
     })())
 }
@@ -808,6 +823,10 @@ fn atan2(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let y = num(ctx, &a[1])?;
         if x == 0.0 && y == 0.0 {
             return Err(XlError::DIV0);
+        }
+
+        if x != 0.0 && !crate::x87::div(y, x).is_finite() {
+            return Err(XlError::NUM);
         }
         Ok(Value::num(crate::xmath::atan2(y, x)))
     })())

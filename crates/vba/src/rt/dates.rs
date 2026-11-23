@@ -75,9 +75,10 @@ fn in_range(x: f64) -> Result<f64, VbaError> {
 }
 
 pub(super) fn system_clock() -> f64 {
-    let secs = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_or(0.0, |d| d.as_secs_f64());
+    let now = chrono::Local::now();
+    let secs = now.timestamp() as f64
+        + f64::from(now.timestamp_subsec_nanos()) / 1e9
+        + f64::from(now.offset().local_minus_utc());
     secs / 86_400.0 - EPOCH as f64
 }
 
@@ -355,8 +356,9 @@ pub(super) fn weekday(ctx: &RtContext, a: &[Variant]) -> R {
     if is_null(&a[0]) {
         return Ok(Variant::Null);
     }
-    let first = first_day(ctx, a, 1)?;
+
     let d = split(to_date(ctx, &a[0])?).0;
+    let first = first_day(ctx, a, 1)?;
     Ok(Variant::I2(
         ((weekday_sunday(d) - first).rem_euclid(7) + 1) as i16,
     ))
@@ -418,9 +420,11 @@ pub(super) fn date_add(ctx: &RtContext, a: &[Variant]) -> R {
         return Ok(Variant::Null);
     }
     let x = to_date(ctx, &a[2])?;
-    let (day, _) = split(x);
+    let (day, secs) = split(x);
     let frac = (x - x.trunc()).abs();
+
     let months = |k: i64| -> Result<f64, VbaError> {
+        let frac = secs as f64 / 86_400.0;
         let (y, m, d) = civil_from_days(day + EPOCH);
         let t = y * 12 + m - 1 + k;
         let (y, m) = (t.div_euclid(12), t.rem_euclid(12) + 1);
@@ -530,6 +534,13 @@ pub(super) fn date_part(ctx: &RtContext, a: &[Variant]) -> R {
     if is_null(&a[1]) {
         return Ok(Variant::Null);
     }
+
+    if !matches!(
+        unit.as_str(),
+        "yyyy" | "q" | "m" | "y" | "d" | "w" | "ww" | "h" | "n" | "s"
+    ) {
+        return Err(VbaError::new(5));
+    }
     let x = to_date(ctx, &a[1])?;
     let (day, secs) = split(x);
     let p = parts(x);
@@ -576,7 +587,9 @@ pub(super) fn month_name_fn(ctx: &RtContext, a: &[Variant]) -> R {
         return Err(VbaError::new(5));
     }
     let full = month_title(m);
-    text_out(if abbreviate {
+    text_out(if abbreviate && m == 9 && ctx.locale != Locale::EN_US {
+        "Sept".to_string()
+    } else if abbreviate {
         full[..3].to_string()
     } else {
         full

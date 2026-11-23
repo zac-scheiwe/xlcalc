@@ -1,4 +1,4 @@
-use super::{flag, input, output, Arg, AtpError, Out, Run, Src};
+use super::{flag, input, output, Arg, AtpError, ChartSpec, Out, Ref, Run, SeriesSpec, Src};
 use crate::address::Rect;
 use crate::style::Edge;
 use crate::value::Value;
@@ -20,6 +20,7 @@ pub(super) fn histogram(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
     let src = input(args, 0)?;
     let pareto = flag(args, 3);
     let cumulative = flag(args, 4);
+    let chart = flag(args, 5);
     let labels = flag(args, 6);
     let data = numbers(wb, &src, labels);
     let mut bin_label = "Bin".to_string();
@@ -78,7 +79,10 @@ pub(super) fn histogram(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
     };
     let natural: Vec<usize> = (0..rows).collect();
     block(&mut o, 0, &natural);
+
+    let mut table_col = 0;
     if pareto {
+        table_col = width as u32;
         let mut order = natural;
         order.sort_by(|a, b| freq[*b].cmp(&freq[*a]));
         block(&mut o, width as u32, &order);
@@ -89,5 +93,34 @@ pub(super) fn histogram(wb: &Workbook, args: &[Arg]) -> Result<Run, AtpError> {
     o.line(Rect::new(0, 0, 0, width as u32 - 1), Edge::Top, true);
     o.line(Rect::new(0, 0, 0, width as u32 - 1), Edge::Bottom, false);
     o.line(last, Edge::Bottom, true);
+    if chart {
+        let col = |c: u32| Ref::Rel(Rect::new(1, table_col + c, rows as u32, table_col + c));
+        let series = |name: &str, c: u32, chart_type: i32, axis_group: i32| SeriesSpec {
+            name: Ref::Text(name.into()),
+            x: col(0),
+            values: col(c),
+            chart_type,
+            axis_group,
+        };
+        let mut s = vec![series("Frequency", 1, 51, 1)];
+        if cumulative {
+            s.push(series("Cumulative %", 2, 65, 2));
+        }
+
+        let (row, ccol) = if width <= 4 {
+            (0, width as u32 + 1)
+        } else {
+            (rows as u32 + 2, 0)
+        };
+        o.charts.push(ChartSpec {
+            row,
+            col: ccol,
+            chart_type: if cumulative { -4111 } else { 51 },
+            title: "Histogram".into(),
+            legend: true,
+            axis_titles: [bin_label.clone(), "Frequency".into()],
+            series: s,
+        });
+    }
     output(args, 1, o)
 }

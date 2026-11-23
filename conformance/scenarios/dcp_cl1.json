@@ -1,0 +1,190 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "lo"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "hi"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "mid"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "hi"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "lo"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "x"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "m"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "Mar"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "Jan"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "Dec"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C5",
+   "input": "Feb"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C6",
+   "input": "Jan"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C7",
+   "input": "Apr"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "d"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "Wed"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "Mon"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "Sun"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E5",
+   "input": "Fri"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E6",
+   "input": "Tue"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E7",
+   "input": "Sat"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Clear"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Add",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A2:A7')"
+    },
+    0,
+    1,
+    "hi,mid,lo"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort",
+   "call": "SetRange",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A1:A7')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Sort",
+   "prop": "Header",
+   "value": 1
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort",
+   "call": "Apply"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A7"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('C1')",
+   "call": "Sort",
+   "named": {
+    "Key1": {
+     "path": "Worksheets('Sheet1').Range('C1')"
+    },
+    "Order1": 1,
+    "Header": 1,
+    "OrderCustom": 4
+   }
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!C1:C7"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('E1')",
+   "call": "Sort",
+   "named": {
+    "Key1": {
+     "path": "Worksheets('Sheet1').Range('E1')"
+    },
+    "Order1": 2,
+    "Header": 1,
+    "OrderCustom": 2
+   }
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!E1:E7"
+  }
+ ]
+}

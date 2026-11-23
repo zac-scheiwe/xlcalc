@@ -26,6 +26,8 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let calc_method = match a.get(7) {
             Some(Some(v)) => match v {
                 Value::Blank => false,
+
+                Value::Text(_) => return Err(XlError::VALUE),
                 v => boolean(v)?,
             },
             _ => true,
@@ -47,7 +49,8 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let sys = b.sys;
         let months = (12 / freq) as i64;
         let f = days::ymd(sys, first);
-        let eom = f.d >= days::dim(f.y, f.m);
+
+        let eom = f.d == days::dim(f.y, f.m);
 
         let out_of_range = std::cell::Cell::new(false);
         let adj = |s: i64, k: i64| {
@@ -62,8 +65,8 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 
         let cnt = |x: i64, y: i64, period: bool, count: bool| -> f64 {
             (match b.basis {
-                0 => days::days360_us(sys, x, y, period),
-                2 if !count => days::days360_us(sys, x, y, period),
+                0 => days::days360_us_exact(sys, x, y, period),
+                2 if !count => days::days360_us_exact(sys, x, y, period),
                 4 => days::days360_eu(sys, x, y),
                 _ => y - x,
             }) as f64
@@ -259,7 +262,11 @@ fn tbill_args(ctx: &EvalCtx, a: &[Arg]) -> R<(f64, f64)> {
     let settle = atp::date(ctx, a, 0)?;
     let mat = atp::date(ctx, a, 1)?;
     let x = atp::req(ctx, a, 2)?;
-    if settle >= mat || mat - settle > 365 {
+
+    let sys = atp::date_system(ctx);
+    let (y, m, d) = crate::datetime::ymd_from_serial(sys, settle);
+    let one_year = crate::datetime::serial_from_ymd(sys, y + 1, i64::from(m), i64::from(d));
+    if settle >= mat || mat > one_year {
         return Err(XlError::NUM);
     }
     Ok(((mat - settle) as f64, x))
@@ -276,7 +283,8 @@ pub fn tbillprice(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             100.0,
             x87::sub(1.0, x87::div(x87::mul(discount, dsm), 360.0)),
         );
-        if p <= 0.0 {
+
+        if p < 0.0 {
             return Err(XlError::NUM);
         }
         finite(p)
@@ -322,10 +330,12 @@ pub fn tbilleq(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
             sub(100.0, div(mul(mul(100.0, discount), dsm), 360.0)),
             100.0,
         );
-        let b = div(mul(dsm, -2.0), 365.0);
+
+        let yl = if dsm == 366.0 { 366.0 } else { 365.0 };
+        let b = div(mul(dsm, -2.0), yl);
         let c = sub(1.0, div(1.0, p));
-        let qa = sub(div(mul(dsm, 2.0), 365.0), 1.0);
-        let disc = sub(crate::xmath::pow(div(dsm, 365.0), 2.0), mul(c, qa));
+        let qa = sub(div(mul(dsm, 2.0), yl), 1.0);
+        let disc = sub(crate::xmath::pow(div(dsm, yl), 2.0), mul(c, qa));
         if disc < 0.0 {
             return Err(XlError::NUM);
         }
@@ -672,12 +682,13 @@ fn oddfprice_core(o: &OddF, rate: f64, yld: f64, redemption: f64) -> R<f64> {
     let (regular, tail) = fl.flows.split_at(fl.flows.len() - 2);
     let mut acc = 0.0;
     for &(amt, t, _) in regular {
-        acc = add(acc, div(amt, xmath::pow(base, t)));
+        acc = add(acc, div(amt, finite(xmath::pow(base, t))?));
     }
     let (odd, red) = (tail[0], tail[1]);
+
     let tail = add(
-        div(odd.0, xmath::pow(base, odd.1)),
-        div(red.0, xmath::pow(base, red.1)),
+        div(odd.0, finite(xmath::pow(base, odd.1))?),
+        div(red.0, finite(xmath::pow(base, red.1))?),
     );
     finite(sub(add(acc, tail), fl.accrued))
 }

@@ -1,0 +1,495 @@
+AreaFill BackColor oColorFormat
+AreaFill ForeColor oColorFormat
+AreaFill GradientAngle Fg80004005 Fp80004005
+AreaFill GradientColorType i-2
+AreaFill GradientDegree Fg80070005
+AreaFill GradientStops oGradientStops
+AreaFill GradientStyle i-2
+AreaFill GradientVariant i0
+AreaFill Pattern i-2
+AreaFill PictureEffects oPictureEffects
+AreaFill PresetGradientType i-2
+AreaFill PresetTexture i-2
+AreaFill RotateWithObject i0 Fp80070057"The specified value is out of range."
+AreaFill TextureAlignment Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+AreaFill TextureHorizontalScale Fg80070057"This property can only be accessed on shapes with texture fill."
+AreaFill TextureName Fg80070005
+AreaFill TextureOffsetX Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+AreaFill TextureOffsetY Fg80070057"This property can only be accessed on shapes with texture fill."
+AreaFill TextureTile Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+AreaFill TextureType i-2
+AreaFill TextureVerticalScale Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+AreaFill Transparency d-2147483648.0 Fp80070057"The specified value is out of range."
+AreaFill Type i-2
+AreaFill Visible i-1
+AreaLine BackColor oColorFormat
+AreaLine BeginArrowheadLength i2 Fp80070057"The specified value is out of range."
+AreaLine BeginArrowheadStyle i1 Fp80070057"The specified value is out of range."
+AreaLine BeginArrowheadWidth i2
+AreaLine DashStyle i1 Fp80070057"The specified value is out of range."
+AreaLine EndArrowheadLength i2 Fp80070057"The specified value is out of range."
+AreaLine EndArrowheadStyle i1 Fp80070057"The specified value is out of range."
+AreaLine EndArrowheadWidth i2 r1..2147483647 !80070057"The specified value is out of range."
+AreaLine ForeColor oColorFormat
+AreaLine InsetPen i0 =
+AreaLine Pattern i-2
+AreaLine Style i1
+AreaLine Transparency d-2147483648.0 Fp80070057"The specified value is out of range."
+AreaLine Visible i-1
+AreaLine Weight d1.0
+AutoCorrect AutoExpandListRange b1
+AutoCorrect AutoFillFormulasInLists b1
+AutoCorrect CapitalizeNamesOfDays b1
+AutoCorrect ConvertNumbersWithECharacter Fg800A03EC Fp800A03EC
+AutoCorrect CorrectCapsLock b1
+AutoCorrect CorrectSentenceCap b1
+AutoCorrect DisplayAutoCorrectOptions b1
+AutoCorrect ReplaceText b1 U"AutoCorrect"
+AutoCorrect TruncateLargeNumbers Fg800A03EC Fp800A03EC
+AutoCorrect TruncateLeadingZeros Fg800A03EC Fp800A03EC
+AutoCorrect TwoInitialCapitals b1
+Axis1 AxisBetweenCategories b1 @area:b0 @pie:Fg80004003 @xy:Fg80004005 @bubble:Fg80004005
+Axis1 AxisGroup i1 @pie:Fg80004003
+Axis1 AxisTitle oAxisTitle
+Axis1 BaseUnit i0 r0..2 !80004005 @pie:Fg80004003 @xy:Fg80004005 @bubble:Fg80004005
+Axis1 BaseUnitIsAuto b1 @pie:Fg80004003 @xy:Fg80004005 @bubble:Fg80004005
+Axis1 Border oBorder @pie:Fg80004003
+Axis1 CategoryNames Fg80004005 Fp800A03EC
+Axis1 CategorySortOrder Fg80004001 Fp80004001
+Axis1 CategoryType i-4105 @pie:Fg80004003 @xy:Fg80004005 @bubble:Fg80004005
+Axis1 Crosses i-4105 Fp80004005 @pie:Fg80004003
+Axis1 CrossesAt d1.0 r1.0..1.7976931348623157e308 !80004005 @pie:Fg80004003 @xy:d0.0 @bubble:d0.0
+Axis1 DisplayUnit Fg80004005"This property is only used by value axes." Fp80004005"This property is only used by value axes." @pie:Fg80004003 @xy:i-4142 @bubble:i-4142
+Axis1 DisplayUnitCustom Fg80004005"This property is only used by value axes." Fp80004005"This property is only used by value axes." r5e-324..1.7976931348623157e308 !80004005"Parameter not valid" %xy,bubble/store @pie:Fg80004003 @xy:d1.0 @bubble:d1.0
+Axis1 DisplayUnitLabel Fg800A03EC"This property is only used by value axes." @pie:Fg800A03EC @xy:Fg800A03EC @bubble:Fg800A03EC
+Axis1 Format oChartFormat @pie:Fg80004005
+Axis1 HasDisplayUnitLabel Fg80004005"This property is only used by value axes." Fp80004005"This property is only used by value axes." @pie:Fg80004003 @xy:b0 @bubble:b0
+Axis1 HasMajorGridlines b0 @pie:Fg80004003
+Axis1 HasMinorGridlines b0 @pie:Fg80004003
+Axis1 HasTitle b0 @pie:Fg80004003
+Axis1 Height d20.0 @pie:Fg80004003 @bar:d133.0
+Axis1 Left d17.0 @pie:Fg80004003 @bar:d1.0 @bubble:d22.0
+Axis1 LogBase Fg80004005 Fp80004005 @pie:Fg80004003 @xy:Fg800A03EC @bubble:Fg800A03EC
+Axis1 MajorGridlines oGridlines @pie:Fg800A03EC
+Axis1 MajorTickMark i3 Fp80004005 @pie:Fg80004005
+Axis1 MajorUnit Fg80004005 Fp80004005 @pie:Fg80004003 @xy:d1.0 @bubble:d1.0
+Axis1 MajorUnitIsAuto Fg80004005 Fp80004005 @pie:Fg80004003 @xy:b1 @bubble:b1
+Axis1 MajorUnitScale Fg80004005"Parameter not valid" Fp80004005"Parameter not valid" @pie:Fg80004003 @xy:Fg80004005 @bubble:Fg80004005
+Axis1 MaximumScale Fg80004005 Fp80004005 @pie:Fg80004003 @xy:d4.0 @bubble:d4.0
+Axis1 MaximumScaleIsAuto Fg80004005 Fp80004005 @pie:Fg80004003 @xy:b1 @bubble:b1
+Axis1 MinimumScale Fg80004005 Fp80004005 @pie:Fg80004003 @xy:d0.0 @bubble:d0.0
+Axis1 MinimumScaleIsAuto Fg80004005 Fp80004005 @pie:Fg80004003 @xy:b1 @bubble:b1
+Axis1 MinorGridlines oGridlines @pie:Fg800A03EC
+Axis1 MinorTickMark i-4142 Fp80004005"Parameter not valid" @pie:Fg80004003
+Axis1 MinorUnit Fg80004005 Fp80004005 @pie:Fg80004003 @xy:d0.2 @bubble:d0.2
+Axis1 MinorUnitIsAuto Fg80004005 Fp80004005 @pie:Fg80004003 @xy:b1 @bubble:b1
+Axis1 MinorUnitScale i0 Fp80004005"Parameter not valid" @pie:Fg80004003 @xy:Fg80004005 @bubble:Fg80004005
+Axis1 ReversePlotOrder b0 @pie:Fg80004003
+Axis1 ScaleType Fg80004005 Fp80004005 @pie:Fg80004003 @xy:i-4132 @bubble:i-4132
+Axis1 TickLabelPosition i4 Fp80004005 @pie:Fg80004003
+Axis1 TickLabelSpacing i1 r1..31999 !80004005"Parameter not valid" %xy,bubble/ignore @pie:Fg80004003
+Axis1 TickLabelSpacingIsAuto b1 @pie:Fg80004003
+Axis1 TickLabels oTickLabels @pie:Fg80004003
+Axis1 TickMarkSpacing i1 r1..2147483647 !80004005"Parameter not valid" %xy,bubble/ignore @pie:Fg80004003 @xy:i0 @bubble:i0
+Axis1 Top d171.0 @pie:Fg80004003 @bar:d38.0 @bubble:d160.0
+Axis1 Type i1 Fp80004005 @pie:Fg80004003
+Axis1 Width d225.0 @line:d212.0 @pie:Fg80004003 @xy:d222.0 @bar:d34.0 @bubble:d217.0
+Axis2 AxisBetweenCategories Fg80004005 Fp80004005 @pie:Fg80004003
+Axis2 AxisGroup i1 @pie:Fg80004003
+Axis2 AxisTitle oAxisTitle
+Axis2 BaseUnit Fg80004005"Parameter not valid" Fp80004005 @pie:Fg80004003
+Axis2 BaseUnitIsAuto Fg80004005"Parameter not valid" = @pie:Fg80004003
+Axis2 Border oBorder @pie:Fg80004003
+Axis2 CategoryNames Fg80004005"Parameter not valid" Fp800A03EC @pie:Fg80004003
+Axis2 CategorySortOrder Fg80004001 Fp80004001
+Axis2 CategoryType Fg80004005"Parameter not valid" Fp80004005 @pie:Fg80004003
+Axis2 Crosses i-4105 Fp80004005 @pie:Fg80004003
+Axis2 CrossesAt d0.0 @pie:Fg80004003
+Axis2 DisplayUnit i-4142 R-4142,-4114,-2,-3,-4,-5,-6,-7,-8,-9,-10 @pie:Fg80004003
+Axis2 DisplayUnitCustom d1.0 r5e-324..1.7976931348623157e308 !80004005 @pie:Fg80004003
+Axis2 DisplayUnitLabel Fg800A03EC"This object has no title." @pie:Fg800A03EC
+Axis2 Format oChartFormat @pie:Fg80004005
+Axis2 HasDisplayUnitLabel b0 @pie:Fg80004003
+Axis2 HasMajorGridlines b1 @pie:Fg80004003
+Axis2 HasMinorGridlines b0 @pie:Fg80004003
+Axis2 HasTitle b0 @pie:Fg80004003
+Axis2 Height d133.0 @pie:Fg80004003 @bar:d20.0 @bubble:d147.0
+Axis2 Left d1.0 @pie:Fg80004003 @bar:d35.0
+Axis2 LogBase = @pie:Fg80004003
+Axis2 MajorGridlines oGridlines @pie:Fg800A03EC
+Axis2 MajorTickMark i3 Fp80004005 @pie:Fg80004005
+Axis2 MajorUnit d1.0 Fp80004005"Parameter not valid" @pie:Fg80004003 @bar:d2.0 @bubble:d2.0
+Axis2 MajorUnitIsAuto b1 @pie:Fg80004003
+Axis2 MajorUnitScale Fg80004005"This property is not used by value axes." @pie:Fg80004003
+Axis2 MaximumScale d9.0 @pie:Fg80004003 @bar:d10.0 @bubble:d10.0
+Axis2 MaximumScaleIsAuto b1 @pie:Fg80004003
+Axis2 MinimumScale d0.0 @pie:Fg80004003 @bubble:d-2.0
+Axis2 MinimumScaleIsAuto b1 @pie:Fg80004003
+Axis2 MinorGridlines oGridlines @pie:Fg800A03EC
+Axis2 MinorTickMark i-4142 Fp80004005"Parameter not valid" @pie:Fg80004003
+Axis2 MinorUnit d0.2 Fp80004005"Parameter not valid" @pie:Fg80004003 @bar:d0.4 @bubble:d0.4
+Axis2 MinorUnitIsAuto b1 @pie:Fg80004003
+Axis2 MinorUnitScale Fg80004005"This property is not used by value axes." Fp80004005 @pie:Fg80004003
+Axis2 ReversePlotOrder b0 @pie:Fg80004003
+Axis2 ScaleType i-4132 Fp80004005"Parameter not valid" @pie:Fg80004003
+Axis2 TickLabelPosition i4 Fp80004005 @pie:Fg80004003
+Axis2 TickLabelSpacing F80004005 @pie:Fg80004003
+Axis2 TickLabelSpacingIsAuto Fg80004005"This property is not used by category axes." Fp80004005"This property is not used by category axes." @pie:Fg80004003
+Axis2 TickLabels oTickLabels @pie:Fg80004003
+Axis2 TickMarkSpacing F80004005 @pie:Fg80004003
+Axis2 Top d38.0 @pie:Fg80004003 @bar:d171.0
+Axis2 Type i2 Fp80004005 @pie:Fg80004003
+Axis2 Width d16.0 @pie:Fg80004003 @bar:d202.0 @bubble:d21.0
+Chart Area3DGroup Fg800A03EC
+Chart AutoScaling b1
+Chart BackWall oWalls
+Chart Bar3DGroup Fg800A03EC
+Chart BarShape i0
+Chart ChartArea oChartArea
+Chart ChartColor i2 Fp80070057
+Chart ChartStyle i2
+Chart ChartTitle oChartTitle
+Chart ChartType i51 @line:i4 @pie:i5 @xy:i-4169 @bar:i57 @bubble:i15
+Chart CodeName Fg800A03EC
+Chart Column3DGroup Fg800A03EC
+Chart Corners oCorners
+Chart DataTable
+Chart DepthPercent i100
+Chart DisplayBlanksAs i1
+Chart DisplayValueNotAvailableAsBlank b1
+Chart Dummy24 Fg80004001 Fp80004001
+Chart Dummy25 Fg80004001 Fp80004001
+Chart Elevation i15 @pie:i75
+Chart Floor oFloor
+Chart GapDepth i150
+Chart HasAxis Fg80004005
+Chart HasDataTable b0
+Chart HasHiddenContent b0
+Chart HasLegend b1
+Chart HasPivotFields b0 Fp800A03EC
+Chart HasTitle b1
+Chart HeightPercent i100
+Chart Hyperlinks oHyperlinks
+Chart Index Fg800A03EC
+Chart Legend oLegend
+Chart Line3DGroup Fg800A03EC
+Chart MailEnvelope Fg800A03EC
+Chart Next Fg800A03EC
+Chart OnDoubleClick Fg800A03EC"Unable to get the OnDoubleClick property of the Chart class"
+Chart OnSheetActivate Fg800A03EC"Unable to get the OnSheetActivate property of the Chart class"
+Chart OnSheetDeactivate Fg800A03EC"Unable to get the OnSheetDeactivate property of the Chart class"
+Chart PageSetup oPageSetup
+Chart Perspective i30
+Chart Pie3DGroup Fg800A03EC
+Chart PivotLayout n
+Chart PlotArea oPlotArea
+Chart PlotBy i2 Fp800A03EC
+Chart PlotVisibleOnly b1
+Chart Previous Fg800A03EC
+Chart PrintedCommentPages i0
+Chart ProtectContents Fg800A03EC"Unable to get the ProtectContents property of the Chart class"
+Chart ProtectData b0
+Chart ProtectDrawingObjects Fg800A03EC"Unable to get the ProtectDrawingObjects property of the Chart class"
+Chart ProtectFormatting b0
+Chart ProtectGoalSeek b0
+Chart ProtectSelection b0
+Chart ProtectionMode Fg800A03EC
+Chart RightAngleAxes b0
+Chart Rotation i20 @pie:i0
+Chart Scripts Fg800A03EC
+Chart Shapes oShapes
+Chart ShowAllFieldButtons b0 Fp800A03EC
+Chart ShowAxisFieldButtons Fg800A03EC Fp800A03EC
+Chart ShowDataLabelsOverMaximum b0
+Chart ShowExpandCollapseEntireFieldButtons b0 Fp800A03EC
+Chart ShowLegendFieldButtons Fg800A03EC Fp800A03EC
+Chart ShowReportFilterFieldButtons Fg800A03EC Fp800A03EC
+Chart ShowValueFieldButtons Fg800A03EC Fp800A03EC
+Chart ShowWindow b0
+Chart SideWall oWalls
+Chart SizeWithWindow b0 =
+Chart SubType i1 @bubble:i2
+Chart SurfaceGroup Fg800A03EC
+Chart Tab Fg800A03EC
+Chart Type i3 r-2147483648..12 !80004005 @line:i4 @pie:i5 @xy:i-4169 @bar:i2 @bubble:i-4169
+Chart Visible Fg800A03EC"Unable to get the Visible property of the Chart class"
+Chart Walls oWalls
+Chart WallsAndGridlines2D b0
+Chart _CodeName Fg800A03EC
+AxisTitle HorizontalAlignment i-4108
+AxisTitle IncludeInLayout b1
+AxisTitle Orientation i-4128
+AxisTitle ReadingOrder i-5002
+AxisTitle VerticalAlignment i-4108
+DataLabels HorizontalAlignment i-4108
+DataLabels Orientation i-4128
+DataLabels ReadingOrder i-5002
+DataLabels VerticalAlignment i-4108
+ChartArea AutoScaleFont b0 =
+ChartArea Border oBorder
+ChartArea Fill oChartFillFormat
+ChartArea Font oFont
+ChartArea Format oChartFormat
+ChartArea Height d194.0
+ChartArea Interior oInterior
+ChartArea Left d200.0
+ChartArea Name s"Chart"
+ChartArea RoundedCorners b0
+ChartArea Shadow b0
+ChartArea Top d50.0 @line:d90.0 @pie:d130.0 @xy:d170.0 @bar:d210.0 @bubble:d250.0
+ChartArea Width d294.0
+ChartGroup AxisGroup i1 R1,2
+ChartGroup BinWidthValue Fg80004001 Fp80004001
+ChartGroup BinsCountValue Fg80004001 Fp80004001
+ChartGroup BinsOverflowEnabled Fg80004001 Fp80004001
+ChartGroup BinsOverflowValue Fg80004001 Fp80004001
+ChartGroup BinsType Fg80004001 Fp80004001
+ChartGroup BinsUnderflowEnabled Fg80004001 Fp80004001
+ChartGroup BinsUnderflowValue Fg80004001 Fp80004001
+ChartGroup BubbleScale i100 r0..300 !80070057
+ChartGroup DoughnutHoleSize i0 r10..90 !800A03EC @doughnut:i50
+ChartGroup DownBars oDownBars
+ChartGroup DropLines oDropLines
+ChartGroup FirstSliceAngle i0 r0..360 !800A03EC
+ChartGroup GapWidth i150 r0..500 !800A03EC
+ChartGroup Has3DShading b1
+ChartGroup HasDropLines b0
+ChartGroup HasHiLoLines b0
+ChartGroup HasRadarAxisLabels Fg80004005 Fp80004005
+ChartGroup HasSeriesLines b0
+ChartGroup HasUpDownBars b0
+ChartGroup HiLoLines oHiLoLines
+ChartGroup Index i1
+ChartGroup Overlap i0 r-100..100 !800A03EC"Overlap must be between -100 and 100." @line:i100 @xy:i100 @bubble:i100 @area:i100 @radar:i100
+ChartGroup RadarAxisLabels Fg80004005
+ChartGroup SecondPlotSize i75 r5..200 !80070057
+ChartGroup SeriesLines oSeriesLines
+ChartGroup ShowNegativeBubbles b0
+ChartGroup SizeRepresents i1 r1..2 !80070057
+ChartGroup SplitType i1 r1..4 !800A03EC
+ChartGroup SplitValue d1.0 r0.0..1000000000.0 !80004005
+ChartGroup SubType i1 Fp80004005 @bubble:i2
+ChartGroup Type i3 Fp80004005 @line:i4 @pie:i5 @xy:i-4169 @bar:i2 @bubble:i-4169
+ChartGroup UpBars oUpBars
+ChartGroup VaryByCategories b0 @pie:b1
+ChartObject Border oBorder
+ChartObject BottomRightCell oRange
+ChartObject Chart o_Chart
+ChartObject Enabled b1 =
+ChartObject Height d200.0
+ChartObject Index i1 @line:i2 @pie:i3 @xy:i4 @bar:i5 @bubble:i6
+ChartObject Interior oInterior
+ChartObject Left d200.0
+ChartObject Locked b1
+ChartObject Name s"Chart 1"
+ChartObject OnAction s""
+ChartObject Placement i1 Fp80004005
+ChartObject PrintObject b1
+ChartObject ProtectChartObject b0
+ChartObject RoundedCorners b0
+ChartObject Shadow b0
+ChartObject ShapeRange oShapeRange
+ChartObject Top d50.0 @line:d90.0 @pie:d130.0 @xy:d170.0 @bar:d210.0 @bubble:d250.0
+ChartObject TopLeftCell oRange
+ChartObject Visible b1
+ChartObject Width d300.0
+ChartObject ZOrder i1 @line:i2 @pie:i3 @xy:i4 @bar:i5 @bubble:i6
+ChartTitle AutoScaleFont b0 =
+ChartTitle Border oBorder
+ChartTitle Caption s"Chart Title" @pie:s"Qty"
+ChartTitle Characters oCharacters
+ChartTitle Fill oChartFillFormat
+ChartTitle Font oFont
+ChartTitle Format oChartFormat
+ChartTitle Formula s"Chart Title" Fp800A03EC @pie:s"Qty"
+ChartTitle Height d24.97
+ChartTitle HorizontalAlignment i-4108
+ChartTitle IncludeInLayout b1
+ChartTitle Interior oInterior
+ChartTitle Left d104.37 @pie:d130.19748031496064
+ChartTitle Name s"Title"
+ChartTitle Orientation i-4128
+ChartTitle Position i-4105
+ChartTitle ReadingOrder i-5002
+ChartTitle Shadow b0
+ChartTitle Text s"Chart Title" @pie:s"Qty"
+ChartTitle Top d2.0
+ChartTitle VerticalAlignment i-4108
+ChartTitle Width d83.26 @pie:d31.60496062992126
+DataTable ShowLegendKey b1
+ErrorCheckingOptions BackgroundChecking b1
+ErrorCheckingOptions EmptyCellReferences b0
+ErrorCheckingOptions EvaluateToError b1
+ErrorCheckingOptions InconsistentFormula b1
+ErrorCheckingOptions InconsistentTableFormula b1
+ErrorCheckingOptions IndicatorColorIndex i40
+ErrorCheckingOptions ListDataValidation b1
+ErrorCheckingOptions MisleadingNumberFormats b1
+ErrorCheckingOptions NumberAsText b0
+ErrorCheckingOptions OmittedCells b1
+ErrorCheckingOptions OutdatedLinkedDataType b0
+ErrorCheckingOptions TextDate b1
+ErrorCheckingOptions UnlockedFormulaCells b1
+Fill BackColor oColorFormat
+Fill ForeColor oColorFormat
+Fill GradientAngle Fg80004005 Fp80004005
+Fill GradientColorType i-2
+Fill GradientDegree Fg80070005
+Fill GradientStops oGradientStops
+Fill GradientStyle i-2
+Fill GradientVariant i0
+Fill Pattern i-2
+Fill PictureEffects oPictureEffects
+Fill PresetGradientType i-2
+Fill PresetTexture i-2
+Fill RotateWithObject i0 Fp80070057"The specified value is out of range." @line:i-2
+Fill TextureAlignment Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+Fill TextureHorizontalScale Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+Fill TextureName Fg80070005
+Fill TextureOffsetX Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+Fill TextureOffsetY Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+Fill TextureTile Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+Fill TextureType i-2
+Fill TextureVerticalScale Fg80070057"This property can only be accessed on shapes with texture fill." Fp80070057"This property can only be accessed on shapes with texture fill."
+Fill Transparency d0.0 Fp80070057"The specified value is out of range." @chart:d-2147483648.0 @line:d1.0
+Fill Type i1 @chart:i-2 @line:i-2
+Fill Visible i-1 @line:i0
+Legend AutoScaleFont b0 =
+Legend Border oBorder
+Legend Fill oChartFillFormat
+Legend Font oFont
+Legend Format oChartFormat
+Legend Height d36.16582677165354 @pie:d54.24874015748031
+Legend IncludeInLayout b1
+Legend Interior oInterior
+Legend Left d252.74543307086617 @line:d239.7299212598425 @pie:d250.11543307086615
+Legend Name s"Legend"
+Legend Position i-4152 Fp80004005
+Legend Shadow b0
+Legend Top d93.40204724409449 @pie:d84.36062992125984
+Legend Width d37.25456692913386 @line:d50.27007874015748 @pie:d39.88456692913386
+Line BackColor oColorFormat
+Line BeginArrowheadLength i2 Fp80070057"The specified value is out of range."
+Line BeginArrowheadStyle i1 Fp80070057"The specified value is out of range."
+Line BeginArrowheadWidth i2 Fp80070057"The specified value is out of range."
+Line DashStyle i1 r5..55 !80070057"The specified value is out of range."
+Line EndArrowheadLength i2 r1..32768 !80070057"The specified value is out of range."
+Line EndArrowheadStyle i1 Fp80070057"The specified value is out of range."
+Line EndArrowheadWidth i2 Fp80070057"The specified value is out of range."
+Line ForeColor oColorFormat
+Line InsetPen i0 K2
+Line Pattern i-2 r0..500 !80070057"The specified value is out of range."
+Line Style i1 Fp80070057"The specified value is out of range."
+Line Transparency d0.0 r-1000000000.0..127.5 !80070057"The specified value is out of range." @chart:d-2147483648.0
+Line Visible i-1
+Line Weight d1.5 r-2072.5..50127.0 !80070057"The specified value is out of range." @chart:d1.0 @textbox:d0.75
+PlotArea Border oBorder
+PlotArea Fill oChartFillFormat
+PlotArea Format oChartFormat
+PlotArea Height d147.03
+PlotArea InsideHeight d132.96244094488188 @pie:d147.03 @bar:d133.06496062992127 @bubble:d146.82496062992126
+PlotArea InsideLeft d16.80251968503937 @pie:d49.54275590551181 @bar:d34.63259842519685 @bubble:d21.87251968503937
+PlotArea InsideTop d38.07251968503937 @pie:d37.97 @bar:d37.97
+PlotArea InsideWidth d224.94291338582678 @line:d211.92740157480316 @pie:d147.03 @xy:d222.4079527559055 @bar:d202.0428346456693 @bubble:d217.33795275590552
+PlotArea Interior oInterior
+PlotArea Left d7.0 @pie:d49.54275590551181
+PlotArea Name s"Plot"
+PlotArea Position i-4105
+PlotArea Top d37.97
+PlotArea Width d234.74543307086614 @line:d221.7299212598425 @pie:d147.03
+PlotArea _InsideHeight d132.96244094488188 @pie:d147.03 @bar:d133.06496062992127 @bubble:d146.82496062992126
+PlotArea _InsideLeft d16.80251968503937 @pie:d49.54275590551181 @bar:d34.63259842519685 @bubble:d21.87251968503937
+PlotArea _InsideTop d38.07251968503937 @pie:d37.97 @bar:d37.97
+PlotArea _InsideWidth d224.94291338582678 @line:d211.92740157480316 @pie:d147.03 @xy:d222.4079527559055 @bar:d202.0428346456693 @bubble:d217.33795275590552
+Series ApplyPictToEnd Fg80004005"Parameter not valid" Fp80004005"Parameter not valid"
+Series ApplyPictToFront Fg80004005"Parameter not valid" Fp80004005"Parameter not valid"
+Series ApplyPictToSides Fg80004005"Parameter not valid" Fp80004005"Parameter not valid"
+Series AxisGroup i1
+Series BarShape i0 r-2147483648..32769 !80004005
+Series Border oBorder
+Series BubbleSizes Fg80070057"The specified dimension is not valid for the current chart type." Fp80070057"The specified dimension is not valid for the current chart type." %bubble/store-r @bubble:s"{1,1,1}"
+Series ChartType i51 Fp80004005 @line:i4 @pie:i5 @xy:i-4169 @bar:i57 @bubble:i15
+Series ErrorBars Fg80004005
+Series Explosion i0 Fp800A03EC"Unknown Error" r0..2147483647 !800A03EC"Parameter not valid" %pie/store-r
+Series Fill oChartFillFormat
+Series Format oChartFormat
+Series Formula s"=SERIES(Sheet1!$B$1,Sheet1!$A$2:$A$4,Sheet1!$B$2:$B$4,1)" @bubble:s"=SERIES(Sheet1!$B$1,Sheet1!$A$2:$A$4,Sheet1!$B$2:$B$4,1,{1,1,1})"
+Series FormulaLocal s"=SERIES(Sheet1!$B$1,Sheet1!$A$2:$A$4,Sheet1!$B$2:$B$4,1)" @bubble:s"=SERIES(Sheet1!$B$1,Sheet1!$A$2:$A$4,Sheet1!$B$2:$B$4,1,{1,1,1})"
+Series FormulaR1C1 s"=SERIES(Sheet1!R1C2,Sheet1!R2C1:R4C1,Sheet1!R2C2:R4C2,1)" @bubble:s"=SERIES(Sheet1!R1C2,Sheet1!R2C1:R4C1,Sheet1!R2C2:R4C2,1,{1,1,1})"
+Series FormulaR1C1Local s"=SERIES(Sheet1!R1C2,Sheet1!R2C1:R4C1,Sheet1!R2C2:R4C2,1)" @bubble:s"=SERIES(Sheet1!R1C2,Sheet1!R2C1:R4C1,Sheet1!R2C2:R4C2,1,{1,1,1})"
+Series GeoMappingLevel Fg80004001 Fp80070057
+Series GeoProjectionType Fg80004001 Fp80004001
+Series Has3DEffect b0
+Series HasDataLabels b0
+Series HasErrorBars b0
+Series HasLeaderLines b1
+Series Interior oInterior
+Series InvertColor i16777215
+Series InvertColorIndex i2 =
+Series #mat InvertColorIndex=i1
+Series InvertIfNegative b0
+Series IsFiltered b0 =
+Series LeaderLines oLeaderLines
+Series MarkerBackgroundColor = @line:i-1 @xy:i-1
+Series MarkerBackgroundColorIndex = @line:i2 @xy:i2
+Series MarkerForegroundColor = @line:i-1 @xy:i-1
+Series MarkerForegroundColorIndex = @line:i2 @xy:i2
+Series MarkerSize i5 @xy:i9
+Series MarkerStyle i-4142 @xy:i-4105
+Series Name s"Qty"
+Series ParentDataLabelOption Fg80004001 Fp80004001 r0..2 !80070057
+Series PictureType i1 Fp80004005
+Series PictureUnit d0.0 Fp80004005
+Series PictureUnit2 d0.0 Fp80004005
+Series PlotColorIndex i1
+Series PlotOrder i1
+Series QuartileCalculationInclusiveMedian Fg80004001 Fp80004001
+Series RegionLabelOption Fg80004001 Fp80004001
+Series SeriesColorGradientStyle Fg80004001 Fp80004001
+Series SeriesColorMaxGradientStop Fg80004005
+Series SeriesColorMidGradientStop Fg80004005
+Series SeriesColorMinGradientStop Fg80004005
+Series Shadow b0
+Series Smooth = @line:b0 @xy:b0 @bubble:b0
+Series Type i3 r1..10 !80004005 @line:i4 @pie:i5 @xy:i-4169 @bar:i2 @bubble:i-4169
+Series ValueSortOrder Fg80004001 Fp80004001 r1..2 !80070057
+ShadowFormat Blur d5.0 r-1073741824.0..1000000000.0 !80070057"The specified value is out of range."
+ShadowFormat ForeColor oColorFormat
+ShadowFormat Obscured i0 K2 @chart:i-2
+ShadowFormat OffsetX d2.079951763153076
+ShadowFormat OffsetY d2.079951763153076 r-1000000000.0..1073741823.625 !80070057"The specified value is out of range."
+ShadowFormat RotateWithShape i0 K1
+ShadowFormat Size d100.0 r-0.5..205.25 !80070057"The specified value is out of range."
+ShadowFormat Style i-2
+ShadowFormat Transparency d-2147483648.0 r-0.5..5.0 !80070057"The specified value is out of range."
+ShadowFormat Type i-2 r9..43 !80070057"The specified value is out of range."
+ShadowFormat Visible i0
+TableStyle BuiltIn b1
+TableStyle Name s"TableStyleMedium2"
+TableStyle NameLocal s"Table Style Medium 2"
+TableStyle ShowAsAvailablePivotTableStyle b0 Fp80070057
+TableStyle ShowAsAvailableSlicerStyle b0 Fp80070057
+TableStyle ShowAsAvailableTableStyle b1 Fp80070057
+TableStyle ShowAsAvailableTimelineStyle b0 Fp80070057
+TableStyle TableStyleElements oTableStyleElements
+TableStyle _Default s"TableStyleMedium2"
+TextFrame2 AutoSize i0 Fp80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 Column oTextColumn2
+TextFrame2 HasText i0
+TextFrame2 HorizontalAnchor i1 r-2147483648..6 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 MarginBottom d3.5999999046325684 r-1000000000.0..1000000000.0 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 MarginLeft d7.199999809265137 r127.5..1073741951.0 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 MarginRight d7.199999809265137 r-1000000000.0..65535.5 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 MarginTop d3.5999999046325684 r50.375..1073774591.5 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 NoTextRotation i0 r-2147483648..2147483647 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 Orientation i1 r-2062..7 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 PathFormat i0 r0..1 !80070057"The index into the specified collection is out of bounds." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 Ruler oRuler2 @chart:Fg80070057 @line:Fg80070057
+TextFrame2 TextRange oTextRange2 @chart:Fg80070057 @line:Fg80070057
+TextFrame2 ThreeD oThreeDFormat
+TextFrame2 VerticalAnchor i1 Fp80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 WarpFormat i0 r3..52 !80070057"The index into the specified collection is out of bounds." @chart:Fg80070057 @line:Fg80070057
+TextFrame2 WordArtformat i-2 Fp80070057"The specified value is out of range." @chart:Fg80004005 @line:Fg80004005
+TextFrame2 WordWrap i-1 r-2147483648..2147483647 !80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057
+ShadowFormat #mat Style=i2 Transparency=d0.0
+AreaLine #mat Transparency=d0.0

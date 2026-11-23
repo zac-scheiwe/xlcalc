@@ -9,6 +9,7 @@ mod host;
 mod macro_table;
 pub mod sig;
 mod xlfn;
+mod xlfn_ftab;
 pub mod xloper;
 mod xloper_old;
 

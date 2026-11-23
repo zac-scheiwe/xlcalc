@@ -6,7 +6,7 @@ use crate::ir::{ProcCode, ProcId};
 use crate::types::VType;
 use crate::{ModuleKind, VbaError};
 use std::sync::{Condvar, Mutex, PoisonError};
-use xlcalc_variant::{ObjectId, Variant};
+use xlcalc_variant::{HResult, ObjectId, Variant};
 
 #[derive(Default)]
 pub(crate) struct Shared {
@@ -259,7 +259,30 @@ impl Project {
     ) -> Result<Variant, VbaError> {
         let id = self.find(name).ok_or_else(|| VbaError::new(35))?;
         self.exec(host, |ex| {
-            let cells = ex.bind_values(id, args)?;
+            let cells = ex.bind_values(id, args, false)?;
+            let v = ex.run(id, cells, None, None)?;
+            Self::finish(ex, v)
+        })
+    }
+
+    pub fn call_cell(
+        &self,
+        name: &str,
+        args: &[Variant],
+        host: &mut dyn ObjectHost,
+    ) -> Result<Variant, VbaError> {
+        let id = self.find(name).ok_or_else(|| VbaError::new(35))?;
+        self.exec(host, |ex| {
+            let cells = ex.bind_values(id, args, true).map_err(|e| {
+                if e.number == 6 {
+                    VbaError {
+                        number: HResult::DISP_E_OVERFLOW.0,
+                        description: String::new(),
+                    }
+                } else {
+                    e
+                }
+            })?;
             let v = ex.run(id, cells, None, None)?;
             Self::finish(ex, v)
         })
@@ -273,7 +296,9 @@ impl Project {
     ) -> Result<Variant, VbaError> {
         let id = self.find_macro(name).map_err(|_| VbaError::new(35))?;
         self.exec(host, |ex| {
-            let cells = ex.bind_values(id, args).map_err(Self::run_bind_error)?;
+            let cells = ex
+                .bind_values(id, args, false)
+                .map_err(Self::run_bind_error)?;
             let mut back = Vec::new();
             let v = ex.run(id, cells, None, Some(&mut back));
             for (a, b) in args.iter_mut().zip(back) {
@@ -331,7 +356,7 @@ impl Project {
                     return Ok(());
                 }
             }
-            let cells = ex.bind_values(sink.handler, args)?;
+            let cells = ex.bind_values(sink.handler, args, false)?;
             let mut back = Vec::new();
             let v = ex.run(sink.handler, cells, sink.me, Some(&mut back));
             for (a, b) in args.iter_mut().zip(back) {

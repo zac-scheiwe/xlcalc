@@ -263,7 +263,7 @@ pub fn binary_type(op: BinOp, l: &VType, r: &VType) -> VType {
         }
         BinOp::Mul => {
             let (l, r) = (undate(l), undate(r));
-            let float = |t: &VType| matches!(t, VType::Single | VType::Double);
+            let float = |t: &VType| matches!(t, VType::Single | VType::Double | VType::String);
 
             if (l == VType::Currency && float(&r)) || (r == VType::Currency && float(&l)) {
                 return VType::Double;

@@ -317,6 +317,115 @@ fn manual_mode() {
 }
 
 #[test]
+fn amordegrc_huge_period_terminates() {
+    let mut t = T::new();
+    t.set(
+        "A1",
+        "=AMORDEGRC(2400,DATE(2008,8,19),DATE(2008,12,31),300,1E+300,0.15,1)",
+    );
+    assert_eq!(t.num("A1"), 0.0);
+}
+
+#[test]
+fn amorlinc_huge_life_terminates() {
+    let start = std::time::Instant::now();
+    let mut t = T::new();
+    t.set("A1", "=AMORLINC(1000,44196,44561,100,9E+8,1E-9,1)");
+    t.set("A3", "=AMORLINC(1E+300,44196,44561,0,1E+300,1E-300,1)");
+    t.set("A4", "=AMORLINC(1000,44196,44561,100,1E+300,1E-12,1)");
+    assert_eq!(t.num("A1"), 1.0000000000000002e-6);
+    assert_eq!(t.num("A3"), 0.0);
+    assert_eq!(t.num("A4"), 0.0);
+    assert!(start.elapsed().as_secs() < 10, "AMORLINC must not loop");
+}
+
+#[test]
+fn gap_audit_al_extremes() {
+    let mut t = T::new();
+
+    t.set(
+        "A1",
+        "=ACCRINT(DATE(2019,1,1),60,DATE(2019,4,1),0.05,1000,2,0,TRUE)",
+    );
+    assert_eq!(t.num("A1"), 12.135225885225886);
+
+    t.set("B1", "=CHIINV(0.05,1E+300)/1E+300");
+    assert_eq!(t.num("B1"), 1.0002658235505755);
+    t.set("B2", "=CHISQ.INV.RT(0.05,1E+11)/1E+11");
+    assert_eq!(t.num("B2"), 1.0002731807118597);
+    t.set("B3", "=CHIINV(0.05,1E+10)");
+    assert!(matches!(t.get("B3"), Value::Error(XlError::NUM)));
+    t.set("B4", "=CHIINV(0.05,6E+307)");
+    assert!(matches!(t.get("B4"), Value::Error(XlError::DIV0)));
+
+    t.set(
+        "C1",
+        "=FORECAST.ETS(2147483657,{1,2,3,4,5},{6,7,8,9,10},1,1,1)",
+    );
+    t.set(
+        "C2",
+        "=FORECAST.ETS(2147483658,{1,2,3,4,5},{6,7,8,9,10},1,1,1)",
+    );
+    t.set("C3", "=FORECAST.ETS(1E+300,{1,2,3,4,5},{6,7,8,9,10},1,1,1)");
+    assert!(matches!(t.get("C2"), Value::Error(XlError::NUM)));
+    assert!(matches!(t.get("C3"), Value::Error(XlError::NUM)));
+    assert!(!matches!(t.get("C1"), Value::Error(_)));
+}
+
+#[test]
+fn gap_audit_al_edges() {
+    let mut t = T::new();
+    t.set("A1", "=DB(1000,100,0.5,1,6)");
+    assert!((t.num("A1") - 249.975).abs() < 1e-9);
+    t.set("A2", "=CUBEKPIMEMBER(\"a\",\"b\",1)");
+    assert!(matches!(t.get("A2"), Value::Error(XlError::NA)));
+    t.set("A3", "=CUBEKPIMEMBER(1,\"b\",\"c\")");
+    assert!(matches!(t.get("A3"), Value::Error(XlError::VALUE)));
+    t.set("A4", "=CONVERT(1,REPT(\"a\",256),\"ft\")");
+    assert!(matches!(t.get("A4"), Value::Error(XlError::VALUE)));
+    t.set(
+        "A5",
+        "=DATEDIF(DATE(2020,1,1),DATE(2021,3,5),REPT(\"d\",256))",
+    );
+    assert!(matches!(t.get("A5"), Value::Error(XlError::VALUE)));
+    t.set("A6", "=HYPERLINK(REPT(\"a\",256),\"n\")");
+    assert!(matches!(t.get("A6"), Value::Error(XlError::VALUE)));
+    t.set(
+        "A7",
+        "=ACCRINT(DATE(2019,1,1),DATE(2019,7,1),DATE(2019,4,1),0.05,1000,2,0,\"TRUE\")",
+    );
+    assert!(matches!(t.get("A7"), Value::Error(XlError::VALUE)));
+    t.set(
+        "A8",
+        "=ACCRINT(60,DATE(2019,7,1),DATE(2019,4,1),0.05,1000,2,0,TRUE)",
+    );
+    assert!((t.num("A8") - 5954.444444444444).abs() < 1e-9);
+}
+
+#[test]
+fn gap_audit_al3_edges() {
+    let mut t = T::new();
+    for (cell, f, e) in [
+        ("A1", "=IRR(,0.1)", XlError::VALUE),
+        ("A2", "=TREND({1;2;3},{1;2;3},{1,#N/A})", XlError::VALUE),
+        ("A3", "=GROWTH({1;2;3},{1;2;3},{1,#N/A})", XlError::VALUE),
+        (
+            "A4",
+            "=FORECAST.ETS(\"x\",{1;2;3;4;5},{1;2;3;4;5},#N/A)",
+            XlError::VALUE,
+        ),
+        (
+            "A5",
+            "=FORECAST.ETS.STAT({1;2;3;4;5},{1;2;3;4;5},)",
+            XlError::NUM,
+        ),
+    ] {
+        t.set(cell, f);
+        assert!(matches!(t.get(cell), Value::Error(x) if x == e), "{f}");
+    }
+}
+
+#[test]
 fn seeded_random_is_deterministic_across_threads() {
     let run = |threads: usize| {
         let mut t = T::new();

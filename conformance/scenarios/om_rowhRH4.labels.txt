@@ -1,0 +1,63 @@
+0	nf text wrapA
+1	nf text wrapA general
+2	nf text wrapA @
+3	nf number plainB
+4	nf number plainB same
+5	nf number wrapB
+6	nf number wrapB same
+7	nf date plainB
+8	nf date wrapB
+9	nf text plainB
+10	nf text wrapB
+11	nf number big font
+12	nf number wrap big font
+13	nf number wrap courier
+14	nf empty plainB
+15	nf empty wrapB
+16	nf rows range
+17	merge A:B
+18	merge B:C empty
+19	merge B:C text
+20	merge B:B down
+21	merge A:A down
+22	merge B:B down custom
+23	merge B:C up/down 3 rows
+24	unmerge
+25	merge wrapB
+26	addindent plainB
+27	addindent emptyB
+28	addindent wrapB
+29	addindent wrapA
+30	addindent left B
+31	indent wrapA
+32	rtl plainB
+33	rtl emptyB
+34	rtl wrapB
+35	rtl wrapA
+36	ltr wrapA
+37	context wrapA
+38	rtl plainB same
+39	bottom thick plainB
+40	bottom thick wrapA
+41	bottom medium wrapA
+42	bottom thin wrapA
+43	bottom hairline wrapA
+44	bottom dashed wrapA
+45	bottom dotted wrapA
+46	bottom double wrapA
+47	bottom thin->thick wrapA
+48	bottom thick->none wrapA
+49	bottom medium->none wrapA
+50	bottom thin->none wrapA
+51	bottom thick->thin wrapA
+52	bottom thick->medium wrapA
+53	bottom thick->thick wrapA
+54	top thick wrapA
+55	top medium wrapA
+56	left thick wrapA
+57	right thick wrapA
+58	inside H thick A:B 2 rows
+59	top of below row thick
+60	bottom of above row thick
+61	box thick B wrap
+62	bottom thick plain big font

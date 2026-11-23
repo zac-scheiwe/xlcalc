@@ -21,6 +21,8 @@ pub(crate) enum Op {
     PasteHeader,
 
     PivotWrite,
+
+    SubtotalDelete,
 }
 
 impl Op {

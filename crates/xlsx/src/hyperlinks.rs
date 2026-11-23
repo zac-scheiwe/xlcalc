@@ -36,20 +36,26 @@ pub(crate) fn read(sheet: &Node, targets: &HashMap<String, String>) -> Vec<LinkD
         .collect()
 }
 
+pub(crate) fn decode_target(target: Option<&str>, location: Option<&str>) -> (String, String) {
+    let (mut address, mut sub) = (String::new(), location.unwrap_or_default().to_string());
+    if let Some(t) = target.filter(|t| !t.is_empty()) {
+        let t = t.strip_prefix("file:///").unwrap_or(t);
+        let a = if t.to_ascii_lowercase().starts_with("mailto:") {
+            t.to_string()
+        } else {
+            t.replace("%20", " ")
+        };
+        match a.strip_prefix('#') {
+            Some(rest) => sub = rest.to_string(),
+            None => address = a,
+        }
+    }
+    (address, sub)
+}
+
 pub(crate) fn apply(wb: &mut Workbook, sheet: SheetId, defs: &[LinkDef]) {
     for d in defs {
-        let (mut address, mut sub) = (String::new(), d.location.clone().unwrap_or_default());
-        if let Some(t) = d.target.as_deref().filter(|t| !t.is_empty()) {
-            let a = if t.to_ascii_lowercase().starts_with("mailto:") {
-                t.to_string()
-            } else {
-                t.replace("%20", " ")
-            };
-            match a.strip_prefix('#') {
-                Some(rest) => sub = rest.to_string(),
-                None => address = a,
-            }
-        }
+        let (address, sub) = decode_target(d.target.as_deref(), d.location.as_deref());
         if address.is_empty() && sub.is_empty() {
             continue;
         }
@@ -66,12 +72,20 @@ pub(crate) fn apply(wb: &mut Workbook, sheet: SheetId, defs: &[LinkDef]) {
                 sub_address: sub,
                 screen_tip: d.tooltip.clone(),
                 name: d.display.clone().or(text),
+                shape: None,
             },
         );
     }
 }
 
-fn target_of(address: &str) -> String {
+pub(crate) fn target_of(address: &str) -> String {
+    let abs = address.starts_with("\\\\")
+        || address.as_bytes().get(1) == Some(&b':') && address.as_bytes()[0].is_ascii_alphabetic();
+    let address = if abs && !address.starts_with("file://") {
+        format!("file:///{address}")
+    } else {
+        address.to_string()
+    };
     address.replace(' ', "%20")
 }
 
@@ -83,7 +97,11 @@ pub(crate) fn write(
     used: &mut BTreeSet<String>,
     fresh: fn(&mut BTreeSet<String>) -> String,
 ) -> Option<String> {
-    let links = wb.hyperlinks(sheet);
+    let links: Vec<_> = wb
+        .hyperlinks(sheet)
+        .iter()
+        .filter(|l| l.shape.is_none())
+        .collect();
     if links.is_empty() {
         return None;
     }
@@ -106,18 +124,25 @@ pub(crate) fn write(
         if !l.sub_address.is_empty() {
             x.push_str(&format!(" location=\"{}\"", escape_attr(&l.sub_address)));
         }
-        if let Some(t) = &l.screen_tip {
+
+        if let Some(t) = l.screen_tip.as_ref().filter(|t| !t.is_empty()) {
             x.push_str(&format!(" tooltip=\"{}\"", escape_attr(t)));
         }
+        let multi = l.rect.r0 != l.rect.r1 || l.rect.c0 != l.rect.c1;
+        let cell = match wb.value(CellAddr::new(sheet, l.rect.r0, l.rect.c0)) {
+            Value::Text(t) => Some(t.to_string()),
+            _ => None,
+        };
         if let Some(n) = &l.name {
-            let multi = l.rect.r0 != l.rect.r1 || l.rect.c0 != l.rect.c1;
-            let cell = match wb.value(CellAddr::new(sheet, l.rect.r0, l.rect.c0)) {
-                Value::Text(t) => t.to_string(),
-                _ => String::new(),
-            };
+            let cell = cell.unwrap_or_default();
             if l.address.is_empty() || multi || cell != *n {
                 x.push_str(&format!(" display=\"{}\"", escape_attr(n)));
             }
+        } else if let Some(n) = l
+            .display_name()
+            .filter(|n| cell.as_ref().is_some_and(|c| c != n))
+        {
+            x.push_str(&format!(" display=\"{}\"", escape_attr(&n)));
         }
         x.push_str("/>");
     }

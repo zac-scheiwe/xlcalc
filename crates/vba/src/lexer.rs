@@ -224,7 +224,20 @@ impl Lexer<'_> {
                     self.push(Tok::Ident(name, None), line, col, space);
                 }
                 '[' => {
-                    return Err(self.err(line, col, "unsupported: bracketed names ([A1], [x y])"));
+                    self.bump();
+                    let mut text = String::new();
+                    while let Some(c) = self.peek(0).filter(|&c| c != ']' && c != '\n') {
+                        text.push(c);
+                        self.bump();
+                    }
+                    if self.peek(0) != Some(']') {
+                        return Err(self.err(line, col, "unterminated bracketed expression"));
+                    }
+                    self.bump();
+                    self.push(Tok::Ident("Evaluate".into(), None), line, col, space);
+                    self.push(Tok::P(P::LParen), line, col, false);
+                    self.push(Tok::Lit(Variant::Bstr(text)), line, col, false);
+                    self.push(Tok::P(P::RParen), line, col, false);
                 }
                 c if c.is_alphabetic() => {
                     let mut name = String::new();

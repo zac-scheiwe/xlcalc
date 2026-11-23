@@ -155,7 +155,7 @@ fn settings_case(xlsb: bool) {
 }
 
 fn grouped_book(kind: &str) -> Workbook {
-    use xlcalc::pivot::{CalcItem, DateUnit, Group};
+    use xlcalc::pivot::{DateUnit, Group};
     let mut wb = Workbook::new();
     let s = wb.active_sheet();
     let heads = ["Date", "Units", "Region", "Amount"];
@@ -190,10 +190,7 @@ fn grouped_book(kind: &str) -> Workbook {
     match kind {
         "calc" => {
             t.set_orient(2, Orient::Row);
-            t.fields[2].calc_items.push(CalcItem {
-                name: "Mix".into(),
-                formula: "East+West*2".into(),
-            });
+            t.push_calc_item(2, "Mix".into(), "East+West*2".into());
         }
         "num" => {
             t.set_orient(1, Orient::Row);

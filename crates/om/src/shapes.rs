@@ -1,8 +1,12 @@
-use xlcalc::drawing::{pt_to_emu, Chart, Shape, ShapeKind, ShapeProps, EMU_PT};
+use xlcalc::drawing::{pt_to_emu, Chart, Pos, Shape, ShapeKind, ShapeProps, EMU_PT};
 use xlcalc::{Rect, SheetId, Workbook};
 use xlcalc_variant::Variant;
 
+mod clip;
 mod groups;
+mod textfmt;
+
+pub(crate) use clip::ShapeClip;
 
 use crate::app::{unsupported, Application, BookId, Mode, Object};
 use crate::controls::Coll;
@@ -17,10 +21,18 @@ pub(crate) enum DrawKind {
     ShapeRange,
     TextFrame,
     TextFrame2,
-    TextRange2,
+
+    TextRange2(u32, u32),
+
+    Paras,
+    Font(u32, u32),
+    Font2(u32, u32),
+    ParaFmt(u32, u32),
+    TextFill(u32, u32),
+    TextColor(u32, u32),
     Fill,
     LineFmt,
-    Chars,
+    Chars(u32, u32),
     ChartObjects,
     ChartObject,
     Chart,
@@ -49,10 +61,15 @@ impl DrawKind {
             DrawKind::ShapeRange | DrawKind::Multi(_) => "ShapeRange",
             DrawKind::TextFrame => "TextFrame",
             DrawKind::TextFrame2 => "TextFrame2",
-            DrawKind::TextRange2 => "TextRange2",
+            DrawKind::TextRange2(..) | DrawKind::Paras => "TextRange2",
+            DrawKind::Font(..) => "Font",
+            DrawKind::Font2(..) => "Font2",
+            DrawKind::ParaFmt(..) => "ParagraphFormat2",
+            DrawKind::TextFill(..) => "FillFormat",
+            DrawKind::TextColor(..) => "ColorFormat",
             DrawKind::Fill => "FillFormat",
             DrawKind::LineFmt => "LineFormat",
-            DrawKind::Chars => "Characters",
+            DrawKind::Chars(..) => "Characters",
             DrawKind::ChartObjects => "ChartObjects",
             DrawKind::ChartObject => "ChartObject",
             DrawKind::Chart => "_Chart",
@@ -144,6 +161,26 @@ fn clamp_on_sheet(rc: (i64, i64, i64, i64), rotation: f64) -> (i64, i64, i64, i6
     (x.max(min_x), y.max(min_y), w, h)
 }
 
+fn fit_turned_on_sheet(rc: (i64, i64, i64, i64), rotation: f64) -> (i64, i64, i64, i64) {
+    if !(45.0..135.0).contains(&(rotation % 180.0)) {
+        return rc;
+    }
+    let (mut x, mut y, mut w, mut h) = rc;
+    let d = w / 2 - (y + h / 2);
+    if d > 0 {
+        w -= d;
+        x += d / 2;
+        y += d / 2;
+    }
+    let d = h / 2 - (x + w / 2);
+    if d > 0 {
+        h -= d;
+        x += d / 2;
+        y += d / 2;
+    }
+    (x, y, w, h)
+}
+
 const CONNECTION_SITES: [i32; 183] = [
     4, 6, 4, 4, 4, 8, 6, 6, 8, 6, 4, 6, 5, 6, 8, 4, 8, 8, 8, 3, 2, 7, 4, 4, 3, 4, 4, 4, 3, 3, 3, 3,
     4, 4, 4, 4, 8, 8, 4, 4, 4, 5, 8, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 6,
@@ -167,6 +204,20 @@ fn put_f64(a: &Args) -> Result<f64, OmError> {
 
 fn put_i32(a: &Args) -> Result<i32, OmError> {
     Ok(put_f64(a)? as i32)
+}
+
+fn extent_error() -> OmError {
+    OmError::exception(
+        0x800A_03EC_u32 as i32,
+        Some("The specified value is out of range."),
+    )
+}
+
+fn check_extent(sizes: &[f64]) -> Result<(), OmError> {
+    if sizes.iter().any(|v| *v > 169_056.0) {
+        return Err(extent_error());
+    }
+    Ok(())
 }
 
 fn out_of_range() -> OmError {
@@ -210,7 +261,7 @@ impl Application<'_> {
         Ok(&mut self.book_mut(b)?.wb)
     }
 
-    fn draw_obj(&mut self, b: BookId, s: SheetId, id: u32, kind: DrawKind) -> Variant {
+    pub(crate) fn draw_obj(&mut self, b: BookId, s: SheetId, id: u32, kind: DrawKind) -> Variant {
         self.alloc(Object::Draw(DrawRef {
             book: b,
             sheet: s,
@@ -509,7 +560,15 @@ impl Application<'_> {
                 }
             }
         };
-        let item = &found.ok_or_else(out_of_bounds)?.0;
+
+        let miss = || {
+            if shapes {
+                out_of_bounds()
+            } else {
+                OmError::exception(0x800A_03EC_u32 as i32, None)
+            }
+        };
+        let item = &found.ok_or_else(miss)?.0;
         self.item_handle(r.book, r.sheet, item, shapes)
     }
 
@@ -528,7 +587,7 @@ impl Application<'_> {
         match (m.name, m.kind) {
             ("Count", Get) => {
                 let n = if shapes {
-                    self.merged_items(b, s)?.len()
+                    self.merged_items(b, s)?.len() + self.book(b)?.wb.notes(s).count()
                 } else {
                     self.top_level(b, s)?
                         .iter()
@@ -565,13 +624,53 @@ impl Application<'_> {
                 if rect[2] < 0.0 || rect[3] < 0.0 {
                     return Err(OmError::app_defined());
                 }
+                check_extent(&[rect[2], rect[3]])?;
                 let id = self
                     .draw_wb(b)?
                     .add_shape(s, ShapeKind::Auto(actual), name, rect);
                 Ok(self.draw_obj(b, s, id, DrawKind::Shape))
             }
+            ("AddChart2" | "AddChart", _) if shapes => {
+                let k = usize::from(m.name == "AddChart2");
+                let ty = a.i32(k)?.filter(|t| *t != -1).unwrap_or(51);
+                let rect = [
+                    num(a, k + 1)?,
+                    num(a, k + 2)?,
+                    num(a, k + 3)?,
+                    num(a, k + 4)?,
+                ];
+                let wb = self.draw_wb(b)?;
+                let id = wb.add_shape(s, ShapeKind::Chart, "Chart", rect);
+                if let Some(sh) = wb.drawing_mut(s).get_mut(id) {
+                    let mut c = Chart::new();
+                    c.chart_type = ty;
+
+                    if k == 1 {
+                        c.has_title = true;
+                        c.title = "Chart Title".into();
+                    }
+                    sh.chart = Some(c);
+                }
+                Ok(self.draw_obj(b, s, id, DrawKind::Shape))
+            }
             ("AddTextbox", _) if shapes => {
-                let rect = [num(a, 1)?, num(a, 2)?, num(a, 3)?, num(a, 4)?];
+                let numb = |i: usize| match a.get(i) {
+                    Some(Variant::Bool(t)) => Ok(if *t { -1.0 } else { 0.0 }),
+                    _ => num(a, i),
+                };
+                let rect = [numb(1)?, numb(2)?, numb(3)?, numb(4)?];
+
+                let o = match a.get(0) {
+                    Some(Variant::Null) => 0.0,
+                    _ => numb(0)?,
+                };
+                if !(1..=6).contains(&(o.round_ties_even() as i64))
+                    || rect[2] < 0.0
+                    || rect[3] < 0.0
+                {
+                    return Err(extent_error());
+                }
+                check_extent(&[rect[2], rect[3]])?;
                 let id = self
                     .draw_wb(b)?
                     .add_shape(s, ShapeKind::TextBox, "TextBox", rect);
@@ -580,6 +679,7 @@ impl Application<'_> {
             ("AddLine", _) if shapes => {
                 let (bx, by, ex, ey) = (num(a, 0)?, num(a, 1)?, num(a, 2)?, num(a, 3)?);
                 let rect = [bx.min(ex), by.min(ey), (ex - bx).abs(), (ey - by).abs()];
+                check_extent(&[rect[2], rect[3]])?;
                 let wb = self.draw_wb(b)?;
                 let id = wb.add_shape(s, ShapeKind::Line, "Straight Connector", rect);
                 if let Some(sh) = wb.drawing_mut(s).get_mut(id) {
@@ -646,6 +746,23 @@ impl Application<'_> {
                 if let Some(sh) = wb.drawing_mut(s).get_mut(id) {
                     sh.chart = Some(Chart::new());
                 }
+
+                let (row, col) = wb.active_cell_of(s);
+                let region = wb.current_region(s, Rect::cell(row, col));
+                let mut seen = Chart::new();
+                let (by, series) =
+                    xlcalc::chart_src::series_from_block(wb, s, region, None, seen.chart_type, &[]);
+                seen.plot_by = by;
+                seen.series = series;
+                let dref = DrawRef {
+                    book: b,
+                    sheet: s,
+                    id,
+                    kind: DrawKind::ChartObject,
+                };
+                if region != Rect::cell(row, col) {
+                    self.keep_base_unit(&dref, &seen)?;
+                }
                 Ok(self.draw_obj(b, s, id, DrawKind::ChartObject))
             }
             ("Delete", _) if !shapes => {
@@ -663,7 +780,21 @@ impl Application<'_> {
     fn shape_cell(&mut self, r: &DrawRef, br: bool) -> Result<Variant, OmError> {
         let sh = self.shape_clone(r)?;
         let wb = &self.book(r.book)?.wb;
-        let (tl, bright) = wb.shape_cells(r.sheet, &sh.pos);
+
+        let q = sh.rotation.rem_euclid(180.0);
+        let pos = if (45.0..135.0).contains(&q) {
+            let (x, y, w, h) = wb.shape_rect_emu(r.sheet, &sh.pos);
+            let (cx, cy) = (x + w / 2, y + h / 2);
+            Pos::Abs {
+                x: (cx - h / 2).max(0),
+                y: (cy - w / 2).max(0),
+                w: h,
+                h: w,
+            }
+        } else {
+            sh.pos
+        };
+        let (tl, bright) = wb.shape_cells(r.sheet, &pos);
         let (row, col) = if br { bright } else { tl };
         self.new_range(r.book, r.sheet, Rect::cell(row, col), Mode::Cells)
     }
@@ -711,6 +842,18 @@ impl Application<'_> {
                     x.name = name;
                 }
                 Ok(Variant::Empty)
+            }
+
+            ("Index", false) if chart_obj => {
+                let pos = self
+                    .top_level(b, s)?
+                    .into_iter()
+                    .filter(|x| x.kind == ShapeKind::Chart)
+                    .position(|x| x.id == id);
+                match pos {
+                    Some(i) => Ok(Variant::I4(i as i32 + 1)),
+                    None => Err(OmError::app_defined()),
+                }
             }
             ("ID" | "Id", false) => Ok(Variant::I4(sh.id as i32)),
             ("Type", false) if !chart_obj => Ok(Variant::I4(match &sh.image {
@@ -783,7 +926,10 @@ impl Application<'_> {
             ("Placement", false) => Ok(Variant::I4(sh.pos.placement())),
             ("Placement", true) => {
                 let p = put_f64(a)? as i32;
-                if !(1..=3).contains(&p) {
+                if !(1..=3).contains(&p) || (chart_obj && matches!(a.put, Some(Variant::Bool(_)))) {
+                    if chart_obj {
+                        return Err(OmError::exception(0x8000_4005_u32 as i32, None));
+                    }
                     return Err(OmError::unable_to_set("Placement", r.kind.interface_name()));
                 }
                 let wb = self.draw_wb(b)?;
@@ -925,8 +1071,11 @@ impl Application<'_> {
             }
             ("OnAction", false) => Ok(Variant::Bstr(sh.props.on_action)),
             ("OnAction", true) => {
-                let t = crate::controls::put_text(a)?;
-                if t.encode_utf16().count() > 255 {
+                let t = match a.put.as_ref() {
+                    Some(Variant::Bool(v)) => if *v { "TRUE" } else { "FALSE" }.to_string(),
+                    _ => crate::controls::put_text(a)?,
+                };
+                if t.encode_utf16().count() > 255 || t.starts_with('#') {
                     return Err(OmError::exception(0x800A_03EC_u32 as i32, None));
                 }
                 self.set_props(b, s, id, |p| p.on_action = t)
@@ -946,6 +1095,10 @@ impl Application<'_> {
             ("Fill", false) => Ok(self.draw_obj(b, s, id, DrawKind::Fill)),
             ("Line", false) => Ok(self.draw_obj(b, s, id, DrawKind::LineFmt)),
             ("Parent", false) => Ok(self.alloc(Object::Worksheet(b, s))),
+            ("TextEffect", false) if sh.kind == ShapeKind::Line => Err(OmError::exception(
+                0x8007_0057_u32 as i32,
+                Some("The specified value is out of range."),
+            )),
             (
                 "PictureFormat" | "Shadow" | "ThreeD" | "SoftEdge" | "Glow" | "Reflection"
                 | "Model3D" | "TextEffect" | "Callout" | "ConnectorFormat" | "Nodes"
@@ -967,6 +1120,20 @@ impl Application<'_> {
                 Ok(self.draw_obj(b, s, id, DrawKind::Stub(iface)))
             }
             ("Child" | "HasSmartArt", false) => Ok(tri(false)),
+
+            ("Diagram" | "DiagramNode" | "HasDiagram" | "HasDiagramNode", false) => {
+                Err(OmError::exception(0x8000_4001_u32 as i32, None))
+            }
+            ("CanvasItems", false) => Err(OmError::exception(0x800A_03EC_u32 as i32, None)),
+            ("Script", false) => Ok(Variant::Dispatch(None)),
+            ("DrawingObject", false) if !chart_obj => {
+                let iface = match sh.kind {
+                    ShapeKind::TextBox => "TextBox",
+                    ShapeKind::Line => "Line",
+                    _ => "Rectangle",
+                };
+                Ok(self.draw_obj(b, s, id, DrawKind::Stub(iface)))
+            }
             ("SmartArt", false) => Err(OmError::exception(
                 0x8007_0057_u32 as i32,
                 Some("The shape is not a SmartArt object."),
@@ -992,11 +1159,120 @@ impl Application<'_> {
                 self.draw_wb(b)?.delete_shape(s, id);
                 Ok(Variant::Empty)
             }
+            ("Flip", _) => {
+                let cmd = match a.get(0) {
+                    Some(Variant::Null) | None => return Err(invalid_value()),
+                    Some(_) => num(a, 0)?.round_ties_even(),
+                };
+                if cmd != 0.0 && cmd != 1.0 {
+                    return Err(invalid_value());
+                }
+                if sh.kind == ShapeKind::Chart {
+                    return Err(OmError::exception(
+                        0x8007_0057_u32 as i32,
+                        Some("The shape is locked and cannot be rotated."),
+                    ));
+                }
+                if let Some(x) = self.draw_wb(b)?.drawing_mut(s).get_mut(id) {
+                    if cmd == 0.0 {
+                        x.flip_h = !x.flip_h;
+                    } else {
+                        x.flip_v = !x.flip_v;
+                    }
+                    x.rotation = (360.0 - x.rotation).rem_euclid(360.0);
+                }
+                Ok(Variant::Empty)
+            }
+            ("IncrementRotation", _) => {
+                let d = match a.get(0) {
+                    Some(Variant::Null) => 0.0,
+                    _ => num(a, 0)?,
+                };
+                if let Some(x) = self.draw_wb(b)?.drawing_mut(s).get_mut(id) {
+                    x.rotation = (x.rotation + d).rem_euclid(360.0);
+                }
+                Ok(Variant::Empty)
+            }
+            ("ScaleHeight" | "ScaleWidth", _) => {
+                let int = |v: Option<&Variant>| -> Result<i64, OmError> {
+                    match v {
+                        None | Some(Variant::Null) => Ok(0),
+                        Some(Variant::Bool(_)) => Err(out_of_range()),
+                        Some(Variant::Bstr(t)) => t
+                            .trim()
+                            .parse::<f64>()
+                            .map(|f| f.round_ties_even() as i64)
+                            .map_err(|_| out_of_range()),
+                        Some(v) => {
+                            Ok(crate::controls::num_arg(v, a.lcid)?.round_ties_even() as i64)
+                        }
+                    }
+                };
+                let anchor = int(a.get(2))?;
+                if !(0..=2).contains(&anchor) {
+                    return Err(out_of_range());
+                }
+                let relative = match a.get(1) {
+                    Some(Variant::Bool(t)) => *t,
+                    v => int(v).map_err(|_| OmError::type_mismatch())? != 0,
+                };
+                let native = match &sh.image {
+                    Some(i) if relative => crate::picfile::probe(&i.bytes).map(|(_, w, h)| (w, h)),
+                    _ => None,
+                };
+                if relative && native.is_none() {
+                    return Err(OmError::exception(
+                        0x8007_0057_u32 as i32,
+                        Some(
+                            "The RelativeToOriginalSize argument applies only to a picture or an OLE object.",
+                        ),
+                    ));
+                }
+                let f = num(a, 0)?.max(0.0);
+                let (bw, bh) = native.unwrap_or((rect.2, rect.3));
+                let scale = |v: i64| (v as f64 * f).round() as i64;
+                let (w, h) = if sh.lock_aspect {
+                    (scale(bw), scale(bh))
+                } else if m.name == "ScaleHeight" {
+                    (rect.2, scale(bh))
+                } else {
+                    (scale(bw), rect.3)
+                };
+                let rc = {
+                    let q = f64::from(anchor as i32 - 1) / 2.0;
+                    let (sin, cos) = sh.rotation.to_radians().sin_cos();
+                    let turn = |x: f64, y: f64| (x * cos - y * sin, x * sin + y * cos);
+                    let (cx, cy) = (
+                        rect.0 as f64 + rect.2 as f64 / 2.0,
+                        rect.1 as f64 + rect.3 as f64 / 2.0,
+                    );
+                    let (ox, oy) = turn(q * rect.2 as f64, q * rect.3 as f64);
+                    let (nx, ny) = turn(q * w as f64, q * h as f64);
+                    (
+                        (cx + ox - nx - w as f64 / 2.0).round() as i64,
+                        (cy + oy - ny - h as f64 / 2.0).round() as i64,
+                        w,
+                        h,
+                    )
+                };
+                set_rect(self, rc)
+            }
             ("Rotation", false) => Ok(Variant::R4(sh.rotation as f32)),
             ("Rotation", true) => {
                 let v = put_f64(a)?;
-                if let Some(x) = self.draw_wb(b)?.drawing_mut(s).get_mut(id) {
-                    x.rotation = v.rem_euclid(360.0);
+
+                let units = (v * 60000.0).round().clamp(-2147483648.0, 2147483647.0);
+                let rot = (units / 60000.0).rem_euclid(360.0);
+                let wb = self.draw_wb(b)?;
+                if let Some(x) = wb.drawing_mut(s).get_mut(id) {
+                    x.rotation = rot;
+                    if !chart_obj && !is_group {
+                        let rc = fit_turned_on_sheet(rect, rot);
+                        if rc != rect {
+                            wb.set_shape_rect(s, id, rc);
+                            wb.refresh_groups(s);
+                        }
+                    }
                 }
                 Ok(Variant::Empty)
             }
@@ -1011,13 +1287,17 @@ impl Application<'_> {
             ("AlternativeText", false) => Ok(Variant::Bstr(sh.alt_text)),
             ("AlternativeText", true) => {
                 let t = match a.put.as_ref() {
-                    Some(Variant::Bstr(t)) => t.clone(),
-                    _ => return Err(OmError::type_mismatch()),
+                    Some(Variant::Bool(v)) => if *v { "True" } else { "False" }.to_string(),
+                    Some(Variant::Null) => String::new(),
+                    _ => crate::controls::put_text(a)?,
                 };
                 if let Some(x) = self.draw_wb(b)?.drawing_mut(s).get_mut(id) {
                     x.alt_text = t;
                 }
                 Ok(Variant::Empty)
+            }
+            ("Copy" | "Cut", _) if !chart_obj => {
+                self.shape_to_clipboard(r, sh, (rect.2, rect.3), m.name == "Cut", m)
             }
             ("Duplicate", _) => {
                 let wb = self.draw_wb(b)?;
@@ -1027,7 +1307,9 @@ impl Application<'_> {
                     wb.duplicate_shape(s, id, base_name(&sh.kind))
                 }
                 .ok_or_else(OmError::object_required)?;
-                Ok(self.draw_obj(b, s, nid, r.kind))
+
+                let kind = if chart_obj { DrawKind::Shape } else { r.kind };
+                Ok(self.draw_obj(b, s, nid, kind))
             }
             ("ZOrder", _) => {
                 let cmd = a.i32(0)?.ok_or_else(OmError::app_defined)?;
@@ -1091,7 +1373,18 @@ impl Application<'_> {
             }
             ("Select", _) => Ok(Variant::Empty),
             ("Activate", _) => Ok(Variant::Bool(true)),
-            _ => Err(unsupported(r.kind.interface_name(), m)),
+            _ => {
+                let key = if chart_obj { "ChartObject" } else { "Shape" };
+                match self.bag_member(crate::bag::Store::Shape(r), key, key, m, a) {
+                    Some(res) => {
+                        if chart_obj && m.name == "PrintObject" && a.put.is_some() && res.is_ok() {
+                            self.mark_print_early(r)?;
+                        }
+                        res
+                    }
+                    None => Err(unsupported(r.kind.interface_name(), m)),
+                }
+            }
         }
     }
 
@@ -1106,58 +1399,6 @@ impl Application<'_> {
             f(&mut x.props);
         }
         Ok(Variant::Empty)
-    }
-
-    pub(crate) fn text_member(
-        &mut self,
-        r: &DrawRef,
-        m: &'static Member,
-        a: &Args,
-    ) -> Result<Variant, OmError> {
-        use InvokeKind::*;
-        let put = m.kind == Put || m.kind == PutRef;
-        match (r.kind, m.name, put) {
-            (DrawKind::TextFrame, "Characters", _) => {
-                Ok(self.draw_obj(r.book, r.sheet, r.id, DrawKind::Chars))
-            }
-            (DrawKind::TextFrame2, "TextRange", false) => {
-                Ok(self.draw_obj(r.book, r.sheet, r.id, DrawKind::TextRange2))
-            }
-            (DrawKind::TextRange2, "Characters", false) => {
-                Ok(self.draw_obj(r.book, r.sheet, r.id, DrawKind::TextRange2))
-            }
-            (DrawKind::TextRange2, "Count" | "Length", false) => {
-                let n = self.shape_clone(r)?.text.encode_utf16().count();
-                Ok(Variant::I4(i32::try_from(n).unwrap_or(i32::MAX)))
-            }
-            (DrawKind::Fill | DrawKind::LineFmt, "Visible", false) => Ok(Variant::I4(-1)),
-            (DrawKind::Chars | DrawKind::TextRange2, "Text" | "_Default", false) => {
-                Ok(Variant::Bstr(self.shape_clone(r)?.text))
-            }
-            (DrawKind::Chars | DrawKind::TextRange2, "Text", true) => {
-                let t = match a.put.as_ref() {
-                    Some(Variant::Bstr(t)) => t.clone(),
-                    Some(v) => {
-                        match xlcalc_variant::change_type(
-                            v,
-                            xlcalc_variant::VarType::Bstr,
-                            crate::conv::variant_locale(a.lcid),
-                            0,
-                        ) {
-                            Ok(Variant::Bstr(t)) => t,
-                            _ => return Err(OmError::type_mismatch()),
-                        }
-                    }
-                    None => return Err(OmError::type_mismatch()),
-                };
-                self.shape_clone(r)?;
-                if let Some(x) = self.draw_wb(r.book)?.drawing_mut(r.sheet).get_mut(r.id) {
-                    x.text = t;
-                }
-                Ok(Variant::Empty)
-            }
-            _ => Err(unsupported(r.kind.interface_name(), m)),
-        }
     }
 
     pub(crate) fn draw_member(
@@ -1182,13 +1423,24 @@ impl Application<'_> {
                 Ok(got)
             }
             DrawKind::TextFrame
-            | DrawKind::Chars
+            | DrawKind::Chars(..)
             | DrawKind::TextFrame2
-            | DrawKind::TextRange2
+            | DrawKind::TextRange2(..)
+            | DrawKind::Paras
+            | DrawKind::Font(..)
+            | DrawKind::Font2(..)
+            | DrawKind::ParaFmt(..)
+            | DrawKind::TextFill(..)
+            | DrawKind::TextColor(..)
             | DrawKind::Fill
             | DrawKind::LineFmt => self.text_member(r, m, a),
-            DrawKind::Sub(k) => self.sub_member(r, k, m, a),
-            DrawKind::Stub(_) => Err(unsupported(r.kind.interface_name(), m)),
+            DrawKind::Sub(k) => self.chart_undo_wrap(r, m, |s| s.sub_member(r, k, m, a)),
+            DrawKind::Stub(name) => {
+                match self.bag_member(crate::bag::Store::Shape(r), name, name, m, a) {
+                    Some(res) => res,
+                    None => Err(unsupported(r.kind.interface_name(), m)),
+                }
+            }
             DrawKind::Chart | DrawKind::SeriesColl | DrawKind::Series(_) => {
                 self.chart_draw_member(r, m, a)
             }

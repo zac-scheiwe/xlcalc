@@ -123,6 +123,7 @@ fn write_files_for_excel() {
             sub_address: sub.into(),
             screen_tip: tip.map(str::to_string),
             name: name.map(str::to_string),
+            shape: None,
         }
     };
     wb.set_value(CellAddr::new(s, 0, 0), Value::Text("Web".into()));

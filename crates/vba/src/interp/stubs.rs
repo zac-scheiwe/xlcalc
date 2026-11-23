@@ -11,43 +11,44 @@ pub fn like(s: &str, pattern: &str, text: bool) -> Result<bool, VbaError> {
             c
         }
     };
-
-    let letters = |t: &str| -> Vec<char> {
-        t.chars()
-            .flat_map(|c| match c {
-                '\u{DF}' | '\u{1E9E}' if text => vec!['s', 's'],
-                c => vec![fold(c)],
-            })
-            .collect()
-    };
-    let (s, p) = (letters(s), letters(pattern));
-    like_at(&s, &p)
+    let s: Vec<char> = s.chars().map(fold).collect();
+    let p: Vec<char> = pattern.chars().map(fold).collect();
+    like_at(&s, &p, text)
 }
 
-fn like_at(s: &[char], p: &[char]) -> Result<bool, VbaError> {
+fn ligature(c: char) -> Option<[char; 2]> {
+    match c {
+        '\u{DF}' | '\u{1E9E}' => Some(['s', 's']),
+        '\u{C6}' | '\u{E6}' => Some(['a', 'e']),
+        '\u{152}' | '\u{153}' => Some(['o', 'e']),
+        _ => None,
+    }
+}
+
+fn like_at(s: &[char], p: &[char], text: bool) -> Result<bool, VbaError> {
     let Some(&c) = p.first() else {
         return Ok(s.is_empty());
     };
     match c {
         '*' => {
             for i in 0..=s.len() {
-                if like_at(&s[i..], &p[1..])? {
+                if like_at(&s[i..], &p[1..], text)? {
                     return Ok(true);
                 }
             }
             Ok(false)
         }
         '?' => match s.split_first() {
-            Some((_, rest)) => like_at(rest, &p[1..]),
+            Some((_, rest)) => like_at(rest, &p[1..], text),
             None => Ok(false),
         },
         '#' => match s.split_first() {
-            Some((d, rest)) if d.is_ascii_digit() => like_at(rest, &p[1..]),
+            Some((d, rest)) if d.is_ascii_digit() => like_at(rest, &p[1..], text),
             _ => Ok(false),
         },
         '[' => {
             if p.get(1) == Some(&']') {
-                return like_at(s, &p[2..]);
+                return like_at(s, &p[2..], text);
             }
             let Some((&ch, rest)) = s.split_first() else {
                 return Ok(false);
@@ -87,12 +88,34 @@ fn like_at(s: &[char], p: &[char]) -> Result<bool, VbaError> {
             if hit == negate {
                 return Ok(false);
             }
-            like_at(rest, &p[end + 1..])
+            like_at(rest, &p[end + 1..], text)
         }
-        _ => match s.split_first() {
-            Some((&x, rest)) if x == c => like_at(rest, &p[1..]),
-            _ => Ok(false),
-        },
+        _ => {
+            if let Some((&x, rest)) = s.split_first() {
+                if x == c && like_at(rest, &p[1..], text)? {
+                    return Ok(true);
+                }
+            }
+            if !text {
+                return Ok(false);
+            }
+
+            if let Some(l) = ligature(c) {
+                if s.starts_with(&l) && like_at(&s[2..], &p[1..], text)? {
+                    return Ok(true);
+                }
+            }
+            if let Some((&x, rest)) = s.split_first() {
+                if let Some([a, b]) = ligature(x) {
+                    if a == c {
+                        let mut tail = vec![b];
+                        tail.extend_from_slice(rest);
+                        return like_at(&tail, &p[1..], text);
+                    }
+                }
+            }
+            Ok(false)
+        }
     }
 }
 
@@ -114,5 +137,15 @@ mod tests {
         assert_eq!(like("a", "[!]", false), Ok(false));
         assert!(like("a", "[a", false).is_err());
         assert!(like("a", "[c-a]", false).is_err());
+    }
+
+    #[test]
+    fn like_ligatures() {
+        assert_eq!(like("\u{152}", "oe", true), Ok(true));
+        assert_eq!(like("\u{C6}", "?", true), Ok(true));
+        assert_eq!(like("\u{C6}", "??", true), Ok(false));
+        assert_eq!(like("ae", "\u{C6}", true), Ok(true));
+        assert_eq!(like("\u{E6}", "a*", true), Ok(true));
+        assert_eq!(like("\u{C6}", "ae", false), Ok(false));
     }
 }

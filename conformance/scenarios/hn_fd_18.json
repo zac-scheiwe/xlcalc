@@ -1,0 +1,628 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A1')",
+   "prop": "Value",
+   "value": "h"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B1')",
+   "prop": "Value",
+   "value": "k"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A2')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B2')",
+   "prop": "Value",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C2')",
+   "prop": "Value",
+   "value": 20
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A3')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B3')",
+   "prop": "Value",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C3')",
+   "prop": "Value",
+   "value": 30
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A4')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B4')",
+   "prop": "Value",
+   "value": 4
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C4')",
+   "prop": "Value",
+   "value": 40
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A5')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B5')",
+   "prop": "Value",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C5')",
+   "prop": "Value",
+   "value": 50
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A6')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B6')",
+   "prop": "Value",
+   "value": 6
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C6')",
+   "prop": "Value",
+   "value": 60
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!E1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!E2')",
+   "prop": "Value",
+   "value": ">20"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A1')",
+   "prop": "Value",
+   "value": "h"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B1')",
+   "prop": "Value",
+   "value": "k"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A2')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B2')",
+   "prop": "Value",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C2')",
+   "prop": "Value",
+   "value": 20
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A3')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B3')",
+   "prop": "Value",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C3')",
+   "prop": "Value",
+   "value": 30
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A4')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B4')",
+   "prop": "Value",
+   "value": 4
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C4')",
+   "prop": "Value",
+   "value": 40
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A5')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B5')",
+   "prop": "Value",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C5')",
+   "prop": "Value",
+   "value": 50
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A6')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B6')",
+   "prop": "Value",
+   "value": 6
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C6')",
+   "prop": "Value",
+   "value": 60
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!H1')",
+   "prop": "Value",
+   "value": "h"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!I1')",
+   "prop": "Value",
+   "value": "k"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!J1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!L1')",
+   "prop": "Value",
+   "value": "h"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!M1')",
+   "prop": "Value",
+   "value": "k"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!N1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AdvancedFilter",
+   "args": [
+    2,
+    {
+     "path": "Range('Sheet1!E1:E2')"
+    },
+    {
+     "path": "Range('Sheet1!H1:J1')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AdvancedFilter",
+   "args": [
+    2,
+    null,
+    {
+     "path": "Range('Sheet1!H1')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AdvancedFilter",
+   "args": [
+    1,
+    null
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AdvancedFilter",
+   "args": [
+    2,
+    {
+     "path": "Range('Sheet1!E1:E2')"
+    },
+    {
+     "path": "Range('Sheet1!L1:N1')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AdvancedFilter",
+   "args": [
+    1,
+    {
+     "path": "Range('Sheet1!E1:E2')"
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet2!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A7')",
+   "prop": "Value",
+   "value": "x2"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B7')",
+   "prop": "Value",
+   "value": 7
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C7')",
+   "prop": "Value",
+   "value": 70
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet2!A1')",
+   "call": "AutoFilter",
+   "named": {
+    "Field": 1,
+    "Criteria1": "x1"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Extract')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet2!A1')",
+   "call": "AutoFilter",
+   "named": {
+    "Field": 1
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('_FilterDatabase')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Criteria')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names.Item('Extract')",
+   "prop": "RefersTo"
+  }
+ ]
+}

@@ -311,7 +311,7 @@ fn csv_open_probes() {
     wb.set_active_sheet(a).unwrap();
     wb.set_input(wb.addr(a, "C3").unwrap(), "1").unwrap();
     let r = xlcalc_xlsx::save_as_csv(&mut wb, "dup.csv", 6).unwrap();
-    assert_eq!(r.bytes, b",,\r\n,,\r\n,,1\r\n");
+    assert_eq!(r.bytes, b"1\r\n");
     assert_eq!(wb.sheet(a).unwrap().name, "Sheet2");
     let r = xlcalc_xlsx::save_as_csv(
         &mut wb,

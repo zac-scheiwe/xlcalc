@@ -1,3 +1,9 @@
+fn tag_len(inner: &[char]) -> Option<u32> {
+    let rest = inner.strip_prefix(&['$'])?;
+    let text = rest.iter().position(|&c| c == '-').unwrap_or(rest.len());
+    Some(15 + 2 * text as u32)
+}
+
 fn split_sections(code: &str) -> Vec<Vec<char>> {
     let cs: Vec<char> = code.chars().collect();
     let mut out = vec![Vec::new()];
@@ -92,6 +98,8 @@ fn date_len(cs: &[char]) -> Option<u32> {
                 let inner: String = cs[i + 1..j].iter().collect::<String>().to_ascii_lowercase();
                 if inner.starts_with(['<', '>', '=']) {
                     len += 10;
+                } else if let Some(n) = tag_len(&cs[i + 1..j]) {
+                    len += n;
                 } else if !inner.is_empty() && inner.chars().all(|c| matches!(c, 'h' | 'm' | 's'))
                     || matches!(
                         inner.as_str(),
@@ -189,6 +197,10 @@ fn section_len(cs: &[char]) -> Option<u32> {
                 let inner: String = cs[i + 1..j].iter().collect::<String>().to_ascii_lowercase();
                 if inner.starts_with(['<', '>', '=']) {
                     len += 10;
+                } else if let Some(n) = tag_len(&cs[i + 1..j]) {
+                    len += n;
+                    last_run = None;
+                    int_open &= int_ph.is_empty();
                 } else if matches!(
                     inner.as_str(),
                     "black" | "blue" | "cyan" | "green" | "magenta" | "red" | "white" | "yellow"

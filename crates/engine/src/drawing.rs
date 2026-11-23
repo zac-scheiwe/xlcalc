@@ -76,6 +76,9 @@ pub struct Series {
 
 #[derive(Clone, Debug, PartialEq, Default)]
 pub struct SeriesFmt {
+    pub values_ranged: bool,
+
+    pub filtered: bool,
     pub marker_style: Option<i32>,
     pub marker_size: Option<i32>,
     pub smooth: Option<bool>,
@@ -95,6 +98,12 @@ pub struct SeriesFmt {
     pub point_labels: Vec<u16>,
     pub trends: Vec<Trendline>,
     pub error_bars: Option<ErrorBars>,
+
+    pub bubbles: Option<Part>,
+
+    pub plot_rank: u32,
+
+    pub number: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -157,11 +166,40 @@ impl Default for ErrorBars {
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub enum HideTrack {
+    #[default]
+    Live,
+    Armed,
+
+    Frozen(std::collections::BTreeSet<(SheetId, bool, u32)>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum BagVal {
+    I(i32),
+    D(f64),
+    B(bool),
+    S(String),
+}
+
+pub const SECONDARY_ZERO: &str = "Axis3.#zero";
+
+pub const CAT_CROSS: &str = "Axis1.#cx";
+
+pub type Bag = std::collections::BTreeMap<String, BagVal>;
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Chart {
     pub chart_type: i32,
 
     pub plot_by: i32,
+
+    pub pb_stale: bool,
+
+    pub pb_pending: bool,
+
+    pub hide_track: HideTrack,
     pub series: Vec<Series>,
     pub has_title: bool,
     pub title: String,
@@ -178,7 +216,21 @@ pub struct Chart {
 
     pub source: Option<(SheetId, Rect)>,
 
-    pub axes: [ChartAxis; 2],
+    pub pivot: Option<String>,
+
+    pub axes: [ChartAxis; 3],
+
+    pub style: i32,
+
+    pub bag: Bag,
+
+    pub undo: ChartUndo,
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct ChartUndo {
+    pub open: bool,
+    pub snap: Option<Box<Chart>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -200,6 +252,8 @@ pub struct ChartAxis {
     pub tick_nf: Option<String>,
 
     pub log: bool,
+
+    pub log_base: f64,
 }
 
 impl ChartAxis {
@@ -219,17 +273,37 @@ impl ChartAxis {
             tick_pos: 4,
             tick_nf: None,
             log: false,
+            log_base: 10.0,
         }
     }
 }
 
+impl Series {
+    pub fn number(&self, k: usize) -> usize {
+        self.fmt.number.map_or(k + 1, |n| n as usize)
+    }
+}
+
 impl Chart {
+    pub fn free_series_number(&self) -> u32 {
+        let used: std::collections::BTreeSet<usize> = self
+            .series
+            .iter()
+            .enumerate()
+            .map(|(k, s)| s.number(k))
+            .collect();
+        (1..).find(|n| !used.contains(&(*n as usize))).unwrap_or(1)
+    }
+
     pub fn parts_mut(&mut self) -> Vec<&mut Part> {
         let mut v: Vec<&mut Part> = Vec::new();
         for s in &mut self.series {
             v.push(&mut s.name);
             v.push(&mut s.x);
             v.push(&mut s.values);
+            if let Some(b) = &mut s.fmt.bubbles {
+                v.push(b);
+            }
         }
         if let Some(t) = &mut self.title_ref {
             v.push(t);
@@ -241,6 +315,9 @@ impl Chart {
         Chart {
             chart_type: 51,
             plot_by: 0,
+            pb_stale: false,
+            pb_pending: false,
+            hide_track: HideTrack::Live,
             series: Vec::new(),
             has_title: false,
             title: String::new(),
@@ -251,7 +328,15 @@ impl Chart {
             blanks: 1,
             visible_only: true,
             source: None,
-            axes: [ChartAxis::new(false), ChartAxis::new(true)],
+            pivot: None,
+            axes: [
+                ChartAxis::new(false),
+                ChartAxis::new(true),
+                ChartAxis::new(true),
+            ],
+            style: 0,
+            bag: Bag::new(),
+            undo: ChartUndo::default(),
         }
     }
 }
@@ -298,6 +383,29 @@ pub struct ShapeProps {
     pub title: String,
 
     pub text_auto: i32,
+
+    pub tf: crate::drawing_text::TextFrame,
+
+    pub hlink: Option<ShapeLink>,
+
+    pub bag: Bag,
+}
+
+#[derive(Clone, Debug, Eq)]
+pub struct ShapeLink {
+    pub address: String,
+    pub sub_address: String,
+    pub screen_tip: Option<String>,
+
+    pub rid: String,
+}
+
+impl PartialEq for ShapeLink {
+    fn eq(&self, o: &ShapeLink) -> bool {
+        self.address == o.address
+            && self.sub_address == o.sub_address
+            && self.screen_tip == o.screen_tip
+    }
 }
 
 impl Default for ShapeProps {
@@ -310,6 +418,9 @@ impl Default for ShapeProps {
             on_action: String::new(),
             title: String::new(),
             text_auto: 1,
+            tf: crate::drawing_text::TextFrame::default(),
+            hlink: None,
+            bag: Bag::new(),
         }
     }
 }
@@ -481,11 +592,23 @@ impl Workbook {
 
     pub fn pos_for(&self, sheet: SheetId, placement: i32, r: Emu4) -> Pos {
         let (x, y, w, h) = r;
+
+        let (x, y) = (
+            x.clamp(0, self.col_left_emu(sheet, crate::address::MAX_COLS) - 9525),
+            y.clamp(0, self.row_top_emu(sheet, crate::address::MAX_ROWS) - 9525),
+        );
         match placement {
-            1 => Pos::Both {
-                from: self.xy_anchor(sheet, x, y),
-                to: self.xy_anchor(sheet, x + w, y + h),
-            },
+            1 => {
+                let from = self.xy_anchor(sheet, x, y);
+                let to = self.xy_anchor(sheet, x + w, y + h);
+                let (fx, fy) = self.anchor_xy(sheet, &from);
+                let (tx, ty) = self.anchor_xy(sheet, &to);
+                if tx - fx == w && ty - fy == h {
+                    Pos::Both { from, to }
+                } else {
+                    Pos::One { from, w, h }
+                }
+            }
             2 => Pos::One {
                 from: self.xy_anchor(sheet, x, y),
                 w,
@@ -563,6 +686,33 @@ impl Workbook {
         Some(nid)
     }
 
+    pub fn cell_corner_emu(&self, sheet: SheetId, row: u32, col: u32) -> (i64, i64) {
+        (self.col_left_emu(sheet, col), self.row_top_emu(sheet, row))
+    }
+
+    pub fn paste_shape(
+        &mut self,
+        sheet: SheetId,
+        src: &Shape,
+        base: &str,
+        at: (i64, i64, i64, i64),
+    ) -> u32 {
+        let (x, y, w, h) = at;
+        let pos = self.pos_for(sheet, src.pos.placement(), (x, y, w, h));
+        let d = self.drawing_mut(sheet);
+        let nid = d.next_id;
+        d.next_id += 1;
+        let mut copy = src.clone();
+        copy.id = nid;
+        copy.pos = pos;
+        copy.parent = None;
+        if src.name == format!("{base} {}", src.id - 1) {
+            copy.name = format!("{base} {}", nid - 1);
+        }
+        d.shapes.push(copy);
+        nid
+    }
+
     pub fn set_shape_rect(&mut self, sheet: SheetId, id: u32, r: Emu4) {
         let Some(s) = self.drawing(sheet).and_then(|d| d.get(id)) else {
             return;
@@ -584,7 +734,8 @@ impl Workbook {
         }
     }
 
-    pub(crate) fn drawing_shift(&mut self, s: &Shift) {
+    pub(crate) fn drawing_shift(&mut self, s: &Shift) -> Vec<(SheetId, u32, bool)> {
+        self.drawing_hide_live();
         let rows = s.axis == Axis::Rows;
         let map = |a: &Anchor| -> Anchor {
             let mut a = *a;
@@ -612,15 +763,37 @@ impl Workbook {
             !s.insert && i >= s.at && i < s.at + s.count
         };
 
+        let past_hidden = s.limit.is_some_and(|(_, p1)| {
+            if rows {
+                self.column_points(s.sheet, p1 + 1) == 0.0
+            } else {
+                self.row_height(s.sheet, p1 + 1) == 0.0
+            }
+        });
         let across = |a: &Anchor| if rows { a.col } else { a.row };
         let reached = |pos: &Pos| match (s.limit, pos) {
             (None, _) => true,
+            (Some((p0, _)), Pos::Both { from, .. } | Pos::One { from, .. }) if past_hidden => {
+                across(from) >= p0
+            }
             (Some((p0, p1)), Pos::Both { from, to }) => {
                 (p0..=p1).contains(&across(from)) && across(to) <= p1 + 1
             }
             (Some((p0, p1)), Pos::One { from, .. }) => (p0..=p1).contains(&across(from)),
             (Some(_), Pos::Abs { .. }) => false,
         };
+
+        let tabs: Vec<Rect> = self
+            .tables
+            .iter()
+            .filter(|t| t.sheet == s.sheet)
+            .map(|t| t.rect)
+            .collect();
+        let in_table = |r: &Rect| {
+            tabs.iter()
+                .any(|t| t.r0 <= r.r0 && r.r1 <= t.r1 && t.c0 <= r.c0 && r.c1 <= t.c1)
+        };
+        let mut resplit = Vec::new();
         let sheets: Vec<SheetId> = self.drawings.keys().copied().collect();
         for sheet in sheets {
             let Some(d) = self.drawings.get_mut(&sheet) else {
@@ -650,10 +823,132 @@ impl Workbook {
             }
             for sh in &mut d.shapes {
                 if let Some(c) = &mut sh.chart {
+                    let dead = |c: &Chart| {
+                        c.series
+                            .iter()
+                            .filter(|x| matches!(x.values, Part::Dead))
+                            .count()
+                    };
+                    if std::mem::take(&mut c.pb_pending) {
+                        c.plot_by = 0;
+                        c.source = None;
+                    }
+                    let dead0 = dead(c);
+                    let linked = c.plot_by != 0
+                        && c.pivot.is_none()
+                        && c.source.is_some_and(|(ss, r)| {
+                            let lo = if s.axis == Axis::Rows { r.r0 } else { r.c0 };
+                            let gone =
+                                !s.insert && s.limit.is_none() && s.at <= lo && lo < s.at + s.count;
+                            ss == s.sheet && in_table(&r) && !gone
+                        });
+                    let mut trimmed = false;
+                    let named: Vec<bool> = c
+                        .series
+                        .iter()
+                        .map(|x| matches!(x.name, Part::Refs(_)))
+                        .collect();
                     for p in c.parts_mut() {
-                        shift_part(p, s);
+                        trimmed |= shift_part(p, s);
+                    }
+
+                    if s.limit.is_some() {
+                        for (x, was) in c.series.iter_mut().zip(named) {
+                            if was && x.name == Part::Dead && x.values != Part::Dead {
+                                x.name = Part::Text("#REF!".into());
+                            }
+                        }
+                    }
+
+                    let only_parts = s.limit.is_none() && trimmed && dead(c) == dead0;
+                    if s.limit.is_none() {
+                        trimmed = false;
+                    }
+                    trimmed |= dead(c) > dead0;
+                    if only_parts && !linked {
+                        c.pb_pending = true;
+                    }
+
+                    if trimmed && !linked {
+                        c.pb_stale = true;
+                        c.source = None;
+
+                        let combo = c
+                            .series
+                            .windows(2)
+                            .any(|w| w[0].chart_type != w[1].chart_type);
+                        if s.limit.is_none() && combo && dead(c) > dead0 {
+                            c.plot_by = 0;
+                        }
+                    }
+
+                    if let (true, Some((ss, r)), None) = (linked, c.source, &c.pivot) {
+                        {
+                            let shrinks = s.limit.is_some() && !s.insert;
+                            let n = if s.limit.is_some() && !shrinks {
+                                s.adjust_rect(&r)
+                            } else {
+                                s.adjust_rect_whole(&r)
+                            };
+                            if let Some(n) = n {
+                                c.source = Some((ss, n));
+                                resplit.push((sheet, sh.id, s.limit.is_some() && !shrinks));
+                            }
+                        }
                     }
                 }
+            }
+        }
+        resplit
+    }
+
+    pub(crate) fn drawing_resplit(&mut self, list: &[(SheetId, u32, bool)]) {
+        for &(sheet, id, check) in list {
+            let Some(c) = self.drawing(sheet).and_then(|d| d.get(id)?.chart.as_ref()) else {
+                continue;
+            };
+            let Some((ss, r)) = c.source else { continue };
+            let (by, mut series) = crate::chart_src::series_from_block(
+                self,
+                ss,
+                r,
+                Some(c.plot_by),
+                c.chart_type,
+                &[],
+            );
+
+            if check
+                && (series.len() != c.series.len()
+                    || series
+                        .iter()
+                        .zip(&c.series)
+                        .any(|(n, o)| n.name != o.name || n.x != o.x || n.values != o.values))
+            {
+                if let Some(c) = self
+                    .drawing_mut(sheet)
+                    .get_mut(id)
+                    .and_then(|s| s.chart.as_mut())
+                {
+                    c.plot_by = 0;
+                    c.source = None;
+                }
+                continue;
+            }
+
+            for n in &mut series {
+                if let Some(o) = c.series.iter().find(|o| o.values == n.values) {
+                    n.fmt = o.fmt.clone();
+                    n.chart_type = o.chart_type;
+                    n.axis_group = o.axis_group;
+                }
+            }
+            if let Some(c) = self
+                .drawing_mut(sheet)
+                .get_mut(id)
+                .and_then(|s| s.chart.as_mut())
+            {
+                c.series = series;
+                c.plot_by = by;
             }
         }
     }
@@ -697,22 +992,90 @@ impl Workbook {
 }
 
 impl Workbook {
+    pub(crate) fn drawing_sorted(&mut self, sheet: SheetId, rect: Rect) {
+        for d in self.drawings.values_mut() {
+            for sh in &mut d.shapes {
+                let Some(c) = &mut sh.chart else { continue };
+                let hit = c.series.iter().any(|x| {
+                    [&x.name, &x.x, &x.values].into_iter().any(|p| {
+                        matches!(p, Part::Refs(v) if v.iter().any(|(s, r)| *s == sheet && r.intersects(&rect)))
+                    })
+                });
+                if hit {
+                    c.hide_track = HideTrack::Armed;
+                }
+            }
+        }
+    }
+
+    pub(crate) fn drawing_hide_live(&mut self) {
+        for d in self.drawings.values_mut() {
+            for sh in &mut d.shapes {
+                if let Some(c) = &mut sh.chart {
+                    c.hide_track = HideTrack::Live;
+                }
+            }
+        }
+    }
+
     pub(crate) fn drawing_cut(&mut self, src_sheet: SheetId, src: Rect, dst: CellAddr) {
         let dr = dst.row as i64 - src.r0 as i64;
         let dc = dst.col as i64 - src.c0 as i64;
         for d in self.drawings.values_mut() {
             for sh in &mut d.shapes {
                 let Some(c) = &mut sh.chart else { continue };
+                if std::mem::take(&mut c.pb_pending) {
+                    c.plot_by = 0;
+                    c.source = None;
+                }
+                let mut moved = false;
+                let before: Vec<Part> = c.series.iter().map(|s| s.values.clone()).collect();
+
+                let dest = Rect::new(
+                    (src.r0 as i64 + dr) as u32,
+                    (src.c0 as i64 + dc) as u32,
+                    (src.r1 as i64 + dr) as u32,
+                    (src.c1 as i64 + dc) as u32,
+                );
                 for p in c.parts_mut() {
                     let Part::Refs(v) = p else { continue };
                     for e in v.iter_mut() {
                         let r = e.1;
+                        let inside = e.0 == src_sheet
+                            && r.r0 >= src.r0
+                            && r.r1 <= src.r1
+                            && r.c0 >= src.c0
+                            && r.c1 <= src.c1;
+                        if !inside && e.0 == dst.sheet {
+                            let hit = dest.r0 <= r.r1
+                                && r.r0 <= dest.r1
+                                && dest.c0 <= r.c1
+                                && r.c0 <= dest.c1;
+                            let rows_all = dest.r0 <= r.r0 && r.r1 <= dest.r1;
+                            let cols_all = dest.c0 <= r.c0 && r.c1 <= dest.c1;
+                            if hit && rows_all && cols_all {
+                                e.0 = SheetId(u32::MAX);
+                            } else if hit && rows_all && !cols_all {
+                                if dest.c0 <= r.c0 {
+                                    e.1.c0 = dest.c1 + 1;
+                                } else if dest.c1 >= r.c1 {
+                                    e.1.c1 = dest.c0 - 1;
+                                }
+                            } else if hit && cols_all && !rows_all {
+                                if dest.r0 <= r.r0 {
+                                    e.1.r0 = dest.r1 + 1;
+                                } else if dest.r1 >= r.r1 {
+                                    e.1.r1 = dest.r0 - 1;
+                                }
+                            }
+                        }
                         if e.0 == src_sheet
                             && r.r0 >= src.r0
                             && r.r1 <= src.r1
                             && r.c0 >= src.c0
                             && r.c1 <= src.c1
                         {
+                            moved = true;
                             e.0 = dst.sheet;
                             e.1 = Rect::new(
                                 (r.r0 as i64 + dr) as u32,
@@ -723,15 +1086,39 @@ impl Workbook {
                         }
                     }
                 }
+                for p in c.parts_mut() {
+                    if let Part::Refs(v) = p {
+                        v.retain(|e| e.0 != SheetId(u32::MAX));
+                        if v.is_empty() {
+                            *p = Part::Dead;
+                        }
+                    }
+                }
+                for (s, b) in c.series.iter_mut().zip(&before) {
+                    if let (Part::Refs(n), Part::Refs(o)) = (&s.values, b) {
+                        let cells = |v: &Vec<(SheetId, Rect)>| {
+                            v.iter()
+                                .map(|(_, r)| (r.r1 - r.r0 + 1) * (r.c1 - r.c0 + 1))
+                                .sum::<u32>()
+                        };
+                        if cells(n) == 1 && cells(o) > 1 {
+                            s.fmt.values_ranged = true;
+                        }
+                    }
+                }
+                if moved {
+                    c.plot_by = 0;
+                }
             }
         }
     }
 }
 
-fn shift_part(p: &mut Part, s: &Shift) {
+fn shift_part(p: &mut Part, s: &Shift) -> bool {
     let Part::Refs(v) = p else {
-        return;
+        return false;
     };
+    let mut trimmed = false;
     let rows = s.axis == Axis::Rows;
     let mut out = Vec::new();
     for (sheet, r) in v.iter() {
@@ -739,12 +1126,12 @@ fn shift_part(p: &mut Part, s: &Shift) {
             out.push((*sheet, *r));
             continue;
         }
-        if let Some((a, b)) = s.limit {
-            let (lo, hi) = if rows { (r.c0, r.c1) } else { (r.r0, r.r1) };
-            if lo < a || hi > b {
-                out.push((*sheet, *r));
-                continue;
+        if s.limit.is_some() {
+            if let Some(n) = s.adjust_rect(r) {
+                trimmed |= s.trims(r);
+                out.push((*sheet, n));
             }
+            continue;
         }
         let (lo, hi) = if rows { (r.r0, r.r1) } else { (r.c0, r.c1) };
         if let Some((na, nb)) = s.map_span(lo, hi) {
@@ -759,11 +1146,9 @@ fn shift_part(p: &mut Part, s: &Shift) {
             out.push((*sheet, n));
         }
     }
-    *p = if out.is_empty() {
-        Part::Dead
-    } else {
-        Part::Refs(out)
-    };
+    let lost = out.is_empty();
+    *p = if lost { Part::Dead } else { Part::Refs(out) };
+    trimmed || lost
 }
 
 pub type Drawings = FxHashMap<SheetId, SheetDrawing>;

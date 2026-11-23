@@ -88,12 +88,8 @@ fn holidays(ctx: &mut EvalCtx, op: Option<&Operand>) -> R<Vec<i64>> {
         return Err(XlError::VALUE);
     }
     atp::visit_list(ctx, op, |ctx, v| {
-        let n = match v {
-            Value::Blank => return Ok(()),
-            Value::Number(n) => *n,
-            Value::Text(_) => ctx.to_number(v)?,
-            Value::Error(e) => return Err(*e),
-            _ => return Err(XlError::VALUE),
+        let Some(n) = holiday_number(ctx, v)? else {
+            return Ok(());
         };
         out.push(day(ctx, n)?);
         Ok(())
@@ -101,6 +97,29 @@ fn holidays(ctx: &mut EvalCtx, op: Option<&Operand>) -> R<Vec<i64>> {
     out.sort_unstable();
     out.dedup();
     Ok(out)
+}
+
+fn scalar_holiday(ctx: &mut EvalCtx, op: Option<&Operand>) -> Option<Value> {
+    match op? {
+        Operand::Val(Value::Array(_)) | Operand::Missing => None,
+        Operand::Val(v) => Some(v.clone()),
+        Operand::Ref(r) => {
+            let area = *r.single()?;
+            area.rect
+                .is_cell()
+                .then(|| ctx.cell_value(area.sheet, area.rect.r0, area.rect.c0))
+        }
+    }
+}
+
+fn holiday_number(ctx: &EvalCtx, v: &Value) -> R<Option<f64>> {
+    match v {
+        Value::Blank => Ok(None),
+        Value::Number(n) => Ok(Some(*n)),
+        Value::Text(_) => ctx.to_number(v).map(Some),
+        Value::Error(e) => Err(*e),
+        _ => Err(XlError::VALUE),
+    }
 }
 
 fn weekday(ctx: &EvalCtx, s: i64) -> usize {
@@ -167,9 +186,10 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
             let w = if intl {
                 let w = weekend_arg(ctx, a.get(2).and_then(|v| v.as_ref()), true);
 
-                let scalar = matches!(raw.get(hol_idx), Some(Operand::Val(v)) if !matches!(v, Value::Array(_)));
-                if w.is_err() && scalar {
-                    holidays(ctx, raw.get(hol_idx))?;
+                if w.is_err() {
+                    if let Some(v) = scalar_holiday(ctx, raw.get(hol_idx)) {
+                        holiday_number(ctx, &v)?;
+                    }
                 }
                 w?
             } else {
@@ -262,6 +282,9 @@ fn datedif(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let s = num(ctx, &a[0])?;
         let e = num(ctx, &a[1])?;
         let unit = text(&a[2])?;
+        if unit.chars().count() > 255 {
+            return Err(XlError::VALUE);
+        }
         let (sf, ef) = (s, e);
 
         let lim = sys(ctx).max_serial() + 1.0;

@@ -391,7 +391,7 @@ fn quote(n: &str) -> String {
     }
 }
 
-pub(super) fn decompile(rgce: &[u8], names: &[String]) -> Option<String> {
+pub(super) fn tokens_to_formula(rgce: &[u8], names: &[String]) -> Option<String> {
     let mut st: Vec<String> = Vec::new();
     let mut i = 0;
     while i < rgce.len() {
@@ -495,7 +495,7 @@ mod tests {
     }
 
     #[test]
-    fn decompile_round_trip() {
+    fn formula_round_trip() {
         let fs = f(&["Amount", "Unit Price"]);
         for s in [
             "IF(Amount>5,Amount,0)",
@@ -504,7 +504,7 @@ mod tests {
         ] {
             let (b, n) = compile(s, &fs).unwrap();
             let names: Vec<String> = n.iter().map(|i| fs[*i].clone()).collect();
-            assert_eq!(super::decompile(&b, &names).unwrap(), s);
+            assert_eq!(super::tokens_to_formula(&b, &names).unwrap(), s);
         }
     }
 

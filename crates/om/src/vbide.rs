@@ -13,6 +13,8 @@ use crate::typelib::Member;
 
 pub(crate) struct Ide {
     pub changed: bool,
+
+    pub opened: bool,
     workbook_code: Option<String>,
     sheet_codes: HashMap<SheetId, String>,
     project: String,
@@ -25,6 +27,7 @@ impl Default for Ide {
     fn default() -> Ide {
         Ide {
             changed: false,
+            opened: false,
             workbook_code: None,
             sheet_codes: HashMap::new(),
             project: "VBAProject".to_string(),
@@ -858,7 +861,7 @@ impl Application<'_> {
     }
 
     pub(crate) fn vbproject_handle(&mut self, b: BookId) -> Result<Variant, OmError> {
-        self.book(b)?;
+        self.book_mut(b)?.ide.opened = true;
         Ok(self.alloc(Object::VBProject(b)))
     }
 }

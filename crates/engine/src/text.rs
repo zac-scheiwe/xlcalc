@@ -87,21 +87,40 @@ pub fn eq_sheet_name(a: &str, b: &str) -> bool {
     if a.len() == b.len() && a.eq_ignore_ascii_case(b) {
         return true;
     }
-    let fold = |c: char| -> char {
-        if matches!(
-            c,
-            '\u{17f}' | '\u{b5}' | '\u{131}' | '\u{130}' | '\u{1e9b}' | '\u{345}'
-        ) {
-            return c;
-        }
-        let u = fold_upper(c);
-        let mut l = u.to_lowercase();
-        match (l.next(), l.next()) {
-            (Some(x), None) => x,
-            _ => u,
-        }
-    };
-    a.chars().map(fold).eq(b.chars().map(fold))
+    a.chars()
+        .map(fold_name_char)
+        .eq(b.chars().map(fold_name_char))
+}
+
+fn self_only(c: char) -> bool {
+    matches!(
+        c,
+        '\u{17f}' | '\u{b5}' | '\u{131}' | '\u{130}' | '\u{1e9b}' | '\u{345}'
+    )
+}
+
+fn fold_name_char(c: char) -> char {
+    if self_only(c) {
+        return c;
+    }
+    let u = fold_upper(c);
+    let mut l = u.to_lowercase();
+    match (l.next(), l.next()) {
+        (Some(x), None) => x,
+        _ => u,
+    }
+}
+
+pub fn name_key(s: &str) -> String {
+    s.chars()
+        .map(|c| {
+            if self_only(c) {
+                c
+            } else {
+                fold_upper(fold_name_char(c))
+            }
+        })
+        .collect()
 }
 
 pub fn fold_upper(c: char) -> char {
@@ -218,5 +237,18 @@ impl Wildcard {
     pub fn find(&self, text: &str, start: usize) -> Option<usize> {
         let units: Vec<u16> = text.encode_utf16().collect();
         (start..=units.len()).find(|&i| self.match_at(&units, i, 0, false))
+    }
+}
+
+#[cfg(test)]
+mod name_key_tests {
+    use super::name_key;
+
+    #[test]
+    fn dotless_i_and_long_s_stay_apart_and_kelvin_joins_k() {
+        assert_ne!(name_key("\u{131}"), name_key("I"));
+        assert_ne!(name_key("\u{17f}"), name_key("S"));
+        assert_eq!(name_key("\u{212a}x"), name_key("kX"));
+        assert_eq!(name_key("rate"), "RATE");
     }
 }

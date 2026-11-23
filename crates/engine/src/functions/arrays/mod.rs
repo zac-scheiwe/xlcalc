@@ -17,7 +17,7 @@ pub const DEFS: &[FnDef] = &[
     args("XLOOKUP", 3, 6, "R", lookup::xlookup),
     args("XMATCH", 2, 4, "R", lookup::xmatch),
     args("LOOKUP", 2, 3, "R", lookup::lookup),
-    args("SORT", 1, 4, "ERRR", shape::sort),
+    args("SORT", 1, 4, "RRRR", shape::sort),
     checked(args("SORTBY", 2, MANY254, "R", shape::sortby), sortby_pairs),
     args("UNIQUE", 1, 3, "RRR", shape::unique),
     args("TAKE", 2, 3, "RRR", |c, o| shape::take_drop(c, o, true)),
@@ -86,15 +86,6 @@ fn opt_number(ctx: &EvalCtx, op: Option<&Operand>) -> R<Option<f64>> {
         Some(Operand::Val(v)) => ctx.to_number(v).map(Some),
         Some(Operand::Ref(_)) => Err(XlError::VALUE),
     }
-}
-
-fn arg_error(ops: &[Operand]) -> R<()> {
-    for op in ops {
-        if let Operand::Val(Value::Error(e)) = op {
-            return Err(*e);
-        }
-    }
-    Ok(())
 }
 
 fn arg_error_typed(ctx: &EvalCtx, ops: &[Operand], kinds: &str) -> R<()> {
@@ -266,14 +257,16 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let text_at = |row: u32, col: u32| -> Value {
         let addr = crate::address::CellAddr::new(area.sheet, row, col);
         match wb.formula_text(addr) {
-            Some(t) => Value::from(normalize_formula(ctx_sheets(wb), &t)),
-            None => Value::Error(XlError::NA),
+            Some(t) if !t.is_empty() => Value::from(normalize_formula(ctx_sheets(wb), &t)),
+            _ => Value::Error(XlError::NA),
         }
     };
     let rect = area.rect;
     if rect.is_cell() {
         return Operand::Val(match text_at(rect.r0, rect.c0) {
-            e @ Value::Error(_) if ctx.arr_ctx != 0 => {
+            e @ Value::Error(_)
+                if ctx.node_cls == crate::eval::ptgclass::Class::Arr && !ctx.in_lambda =>
+            {
                 crate::value::Array::from_fn(1, 1, |_, _| e.clone()).into_value()
             }
             t => t,

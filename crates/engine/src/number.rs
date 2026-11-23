@@ -137,14 +137,21 @@ pub fn parse_literal(s: &str) -> Option<f64> {
     if !(-309..=307).contains(&sci_exp) {
         return None;
     }
-    let v = mp_pack(sig.parse().ok()?, dec_exp);
+    let v = pack_decimal(sig.parse().ok()?, dec_exp);
     if !v.is_finite() {
         return None;
     }
     Some(flush_subnormal(v))
 }
 
-fn mp_pack(d: u64, k: i64) -> f64 {
+pub(crate) fn tento(n: u32) -> f64 {
+    if n >= 309 {
+        return f64::INFINITY;
+    }
+    pack_decimal(1, i64::from(n))
+}
+
+fn pack_decimal(d: u64, k: i64) -> f64 {
     if d == 0 {
         return 0.0;
     }

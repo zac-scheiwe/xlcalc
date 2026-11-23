@@ -17,6 +17,22 @@ pub use host::{DebugItem, ExcelNames, Interaction, InvokeKind, Library, NoHost, 
 pub use interp::{is_instance, MacroLookup, ParamSig, ProcSignature, Project, Settings, Sink};
 pub use types::VType;
 
+thread_local! {
+    static ERROR_SOURCE: std::cell::RefCell<Option<(i32, String, String)>> =
+        const { std::cell::RefCell::new(None) };
+}
+
+pub fn note_error_source(e: &VbaError, source: &str) {
+    ERROR_SOURCE.with(|s| *s.borrow_mut() = Some((e.number, e.description.clone(), source.into())));
+}
+
+pub(crate) fn take_error_source(e: &VbaError) -> Option<String> {
+    ERROR_SOURCE
+        .with(|s| s.borrow_mut().take())
+        .filter(|(n, d, _)| *n == e.number && *d == e.description)
+        .map(|(_, _, src)| src)
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VbaError {
     pub number: i32,

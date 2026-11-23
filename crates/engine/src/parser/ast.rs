@@ -122,6 +122,13 @@ pub enum Expr {
     Text(String),
     Bool(bool),
     Error(XlError),
+
+    DeadRef(SheetSpec),
+
+    DeadTable {
+        sheet: SheetSpec,
+        text: String,
+    },
     Array(Vec<Vec<ArrayItem>>),
     Ref {
         sheet: Option<SheetSpec>,
@@ -166,6 +173,8 @@ pub enum Expr {
     Paren(Box<Expr>),
 
     Missing,
+
+    Unwritten,
 
     Ws {
         before: String,
@@ -243,6 +252,11 @@ impl Expr {
             Expr::Text(s) => Expr::Text(s.clone()),
             Expr::Bool(b) => Expr::Bool(*b),
             Expr::Error(e) => Expr::Error(*e),
+            Expr::DeadRef(s) => Expr::DeadRef(s.clone()),
+            Expr::DeadTable { sheet, text } => Expr::DeadTable {
+                sheet: sheet.clone(),
+                text: text.clone(),
+            },
             Expr::Array(a) => Expr::Array(a.clone()),
             Expr::Ref { sheet, kind } => Expr::Ref {
                 sheet: sheet.clone(),
@@ -281,6 +295,7 @@ impl Expr {
             },
             Expr::Paren(x) => Expr::Paren(x.clone()),
             Expr::Missing => Expr::Missing,
+            Expr::Unwritten => Expr::Unwritten,
             Expr::Ws {
                 before,
                 after,
@@ -307,6 +322,10 @@ impl Expr {
             (Expr::Text(a), Expr::Text(b)) => a == b,
             (Expr::Bool(a), Expr::Bool(b)) => a == b,
             (Expr::Error(a), Expr::Error(b)) => a == b,
+            (Expr::DeadRef(a), Expr::DeadRef(b)) => a == b,
+            (Expr::DeadTable { sheet: a, text: x }, Expr::DeadTable { sheet: b, text: y }) => {
+                a == b && x == y
+            }
             (Expr::Array(a), Expr::Array(b)) => a == b,
             (
                 Expr::Ref {
@@ -379,7 +398,7 @@ impl Expr {
                     right: r2,
                 },
             ) => o1 == o2 && l1 == l2 && r1 == r2,
-            (Expr::Missing, Expr::Missing) => true,
+            (Expr::Missing, Expr::Missing) | (Expr::Unwritten, Expr::Unwritten) => true,
             (
                 Expr::Ws {
                     before: b1,

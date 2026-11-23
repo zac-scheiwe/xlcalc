@@ -3,7 +3,7 @@ use xlcalc::{
 };
 use xlcalc_variant::{ObjectId, SafeArray, VarType, Variant};
 
-use crate::addr::{parse_areas_text, parse_range_text, MAX_COLS, MAX_ROWS};
+use crate::addr::{max_cols, max_rows, parse_areas_text, parse_range_text};
 use crate::app::{unsupported, Application, BookId, Mode, Object, SheetsKind, SortOwner};
 use crate::conv::Args;
 use crate::error::OmError;
@@ -18,6 +18,18 @@ struct NameEntry {
 
 const BAD_NAME: &str = "The syntax of this name isn't correct.\n\nVerify that the name:\n\t-Starts with a letter or underscore (_)\n\t-Doesn't include a space or character that isn't allowed\n\t-Doesn't conflict with an existing name in the workbook.";
 
+pub(crate) fn formula_refusal(text: &str) -> OmError {
+    let t = text.trim_end();
+    let msg = if t.ends_with(['+', '-', '*', '/', '^', '&', '=', '<', '>']) {
+        "This is an incomplete formula. It has an operator, like + or -, not followed by an operand. Try one of the following:\n\n\u{2022} Add the missing operand to the formula, or delete the extra operator.\n\u{2022} If this isn't a formula, don't use an equal sign (\"=\") or a minus sign (\"-\") at the start of the text, or precede it with a single quote (')."
+    } else {
+        "There's a problem with this formula.\n\nNot trying to type a formula?\nWhen the first character is an equal (\"=\") or minus (\"-\") sign, Excel thinks it's a formula:\n\n\u{2022} you type:   =1+1, cell shows:   2\n\nTo get around this, type an apostrophe ( ' ) first:\n\n\u{2022} you type:   '=1+1, cell shows:   =1+1"
+    };
+    let mut e = OmError::app_defined_with(msg);
+    e.error_info = true;
+    e
+}
+
 pub(crate) fn edit_error(e: EditError) -> OmError {
     let detail = e.to_string();
     match e {
@@ -29,7 +41,7 @@ pub(crate) fn edit_error(e: EditError) -> OmError {
 }
 
 pub(crate) fn whole_sheet() -> Rect {
-    Rect::new(0, 0, MAX_ROWS - 1, MAX_COLS - 1)
+    Rect::new(0, 0, max_rows() - 1, max_cols() - 1)
 }
 
 impl Application<'_> {
@@ -124,12 +136,20 @@ impl Application<'_> {
                     .unwrap_or(false),
                     None => false,
                 };
+                if which == "EnableEvents" && *slot {
+                    this.release_deferred_changes();
+                }
                 Ok(Variant::Empty)
             } else {
                 Ok(Variant::Bool(*slot))
             }
         };
         match (m.name, m.kind) {
+            ("ActiveDialog", Get) => Ok(Variant::Dispatch(None)),
+            ("AnswerWizard" | "Dummy101", Get) => Err(OmError::app_defined()),
+            ("Dummy22" | "Dummy23" | "FileFind" | "FileSearch", Get) => {
+                Err(OmError::exception(0x8000_4001_u32 as i32, None))
+            }
             ("Workbooks", Get) => Ok(self.alloc(Object::Workbooks)),
             ("AddIns", Get) => Ok(self.alloc(Object::AddIns)),
             ("AddIns2", Get) => Ok(self.alloc(Object::AddIns2)),
@@ -250,7 +270,10 @@ impl Application<'_> {
                 self.active_book()?.wb.settings().max_iterations as f64,
             )),
             ("MaxIterations", Put) => {
-                let x = self.put_f64(a)?.trunc();
+                let x = self
+                    .put_f64(a)
+                    .map_err(|_| OmError::unable_to_set("MaxIterations", "Application"))?
+                    .trunc();
                 if !(1.0..=32767.0).contains(&x) {
                     return Err(OmError::unable_to_set("MaxIterations", "Application"));
                 }
@@ -261,7 +284,9 @@ impl Application<'_> {
             }
             ("MaxChange", Get) => Ok(Variant::R8(self.active_book()?.wb.settings().max_change)),
             ("MaxChange", Put) => {
-                let x = self.put_f64(a)?;
+                let x = self
+                    .put_f64(a)
+                    .map_err(|_| OmError::unable_to_set("MaxChange", "Application"))?;
                 self.with_active(|wb| {
                     wb.set_max_change(x);
                 })?;
@@ -293,6 +318,35 @@ impl Application<'_> {
                 })
             }
             ("Union" | "Intersect", Func | Get) => self.union_intersect(m, a),
+            ("CentimetersToPoints" | "InchesToPoints", Func | Get) => {
+                let failed = || {
+                    OmError::app_defined_with(&format!(
+                        "{} method of Application class failed",
+                        m.name
+                    ))
+                };
+                let x = match a.get(0) {
+                    None => return Ok(Variant::Empty),
+                    Some(Variant::Null | Variant::Empty | Variant::Bool(false)) => 0.0,
+                    Some(Variant::Bool(true)) => 1.0,
+                    Some(Variant::Dispatch(_) | Variant::Array(_) | Variant::Error(_)) => {
+                        return Err(failed())
+                    }
+                    Some(_) => a.f64(0).map_err(|_| failed())?.unwrap_or(0.0),
+                };
+                Ok(Variant::R8(if m.name == "InchesToPoints" {
+                    x * 72.0
+                } else {
+                    x * 72.0 / 2.54
+                }))
+            }
+            ("GetCustomListNum", Func | Get) => match a.get(0) {
+                Some(Variant::Array(_)) => Ok(Variant::Bool(false)),
+                _ => Err(OmError::app_defined_with(
+                    "GetCustomListNum method of Application class failed",
+                )),
+            },
+            ("ConvertFormula", Func | Get) => self.convert_formula(a),
             (
                 "AutoCorrect"
                 | "AutoRecover"
@@ -373,6 +427,7 @@ impl Application<'_> {
                 Ok(Variant::Bool(true))
             }
             ("CutCopyMode", Get) => Ok(match self.clip {
+                Some(_) if self.clip_cut => Variant::I4(2),
                 Some(_) => Variant::I4(1),
                 None => Variant::I4(0),
             }),
@@ -386,7 +441,13 @@ impl Application<'_> {
                 Ok(self.alloc(Object::Names(id, None)))
             }
             (
-                "Worksheets" | "Sheets" | "Charts" | "Excel4MacroSheets" | "Excel4IntlMacroSheets",
+                "Worksheets"
+                | "Sheets"
+                | "Charts"
+                | "Excel4MacroSheets"
+                | "Excel4IntlMacroSheets"
+                | "Modules"
+                | "DialogSheets",
                 Get,
             ) => {
                 let id = self.active_book()?.id;
@@ -431,7 +492,25 @@ impl Application<'_> {
     fn calculate_linked(&mut self, full: bool) -> Result<(), OmError> {
         let id = self.active_book()?.id;
         self.book_mut(id)?;
-        for i in 0..self.books.len() {
+        let mut changed = false;
+
+        let mut order: Vec<usize> = Vec::new();
+        let mut rest: Vec<usize> = (0..self.books.len()).collect();
+        while !rest.is_empty() {
+            let pos = rest
+                .iter()
+                .position(|&i| {
+                    let Some(links) = self.book_links(i) else {
+                        return true;
+                    };
+                    links
+                        .iter()
+                        .all(|&s| s == i || order.contains(&s) || !rest.contains(&s))
+                })
+                .unwrap_or(0);
+            order.push(rest.remove(pos));
+        }
+        for i in order {
             if let crate::app::BookWb::Own(wb) = &mut self.books[i].wb {
                 if full {
                     wb.full_recalc();
@@ -439,9 +518,10 @@ impl Application<'_> {
                     wb.recalc();
                 }
             }
-            self.sync_links();
+            changed |= self.sync_links();
         }
-        for b in &mut self.books {
+
+        for b in self.books.iter_mut().filter(|_| changed) {
             if let crate::app::BookWb::Own(wb) = &mut b.wb {
                 if !wb.has_ext_links() {
                     continue;
@@ -518,6 +598,13 @@ impl Application<'_> {
         Ok(Application::put_value(a).string(0)?.unwrap_or_default())
     }
 
+    pub(crate) fn put_string_alpha(&self, a: &Args) -> Result<String, OmError> {
+        match &a.put {
+            Some(Variant::Bool(b)) => Ok(if *b { "True" } else { "False" }.to_string()),
+            _ => self.put_string(a),
+        }
+    }
+
     fn book_by_index(&self, v: &Variant, lcid: u32) -> Result<BookId, OmError> {
         if let Variant::Bstr(name) = v {
             return self
@@ -541,6 +628,16 @@ impl Application<'_> {
             .ok_or_else(OmError::bad_index)
     }
 
+    fn after_failed_chart_add(
+        &mut self,
+        r: Result<Variant, OmError>,
+        what: &str,
+    ) -> Result<Variant, OmError> {
+        if std::mem::take(&mut self.chart_add_failed) && r.is_ok() {
+            return Err(OmError::app_defined_with(what));
+        }
+        r
+    }
     pub(crate) fn workbooks_member(
         &mut self,
         m: &'static Member,
@@ -568,7 +665,11 @@ impl Application<'_> {
                     .collect();
                 Ok(self.alloc_enumerator(items))
             }
-            "Add" => self.add_with_events(a),
+            "Creator" => Ok(Variant::I4(0x5843_454C)),
+            "Add" => {
+                let r = self.add_with_events(a);
+                self.after_failed_chart_add(r, "Add method of Workbooks class failed")
+            }
             "Open" | "_Open" => self.open_with_events(a),
 
             "OpenXML" | "OpenText" | "OpenDatabase" | "CanCheckOut" | "CheckOut" => {
@@ -583,7 +684,11 @@ impl Application<'_> {
                     .get(1)
                     .is_some_and(|v| !crate::conv::is_missing(v) && *v != Variant::Empty);
                 if empty && !checkout && m.name != "OpenDatabase" {
-                    Err(OmError::hresult(crate::error::DISP_E_PARAMNOTOPTIONAL))
+                    let mut e = OmError::app_defined_with(
+                        "Sorry, we couldn't find . Is it possible it was moved, renamed or deleted?",
+                    );
+                    e.error_info = true;
+                    Err(e)
                 } else if (empty && checkout) || (second && m.name == "OpenXML") {
                     Err(OmError::exception(0x8007_0057_u32 as i32, None))
                 } else {
@@ -593,7 +698,7 @@ impl Application<'_> {
             "Close" => {
                 self.books.clear();
                 self.active = None;
-                Ok(Variant::Empty)
+                Ok(Variant::Bool(true))
             }
             _ => Err(unsupported("Workbooks", m)),
         }
@@ -739,6 +844,30 @@ impl Application<'_> {
         Ok(self.alloc(Object::Window(b, n)))
     }
 
+    pub(crate) fn rotate_window(&mut self, next: bool) {
+        let Some(cur) = self.current_window() else {
+            return;
+        };
+        let list = self.window_list();
+        if list.len() < 2 {
+            return;
+        }
+        let at = list.iter().position(|w| *w == cur);
+        let target = if next && at == Some(0) {
+            self.wins = list[1..].to_vec();
+            self.wins.push(list[0]);
+            list[1]
+        } else if !next && at == Some(0) {
+            self.wins = list.clone();
+            list[list.len() - 1]
+        } else {
+            return;
+        };
+        self.active = Some(target.0);
+        self.set_current_window(target);
+        self.window_swap_events(Some(cur), target);
+    }
+
     pub(crate) fn window_member(
         &mut self,
         b: BookId,
@@ -761,10 +890,31 @@ impl Application<'_> {
                     Variant::Bool(true)
                 })
             }
-            ("Caption", InvokeKind::Get) => match self.book(b)?.window.caption.clone() {
+
+            ("Close", InvokeKind::Func) => {
+                self.book(b)?;
+                let list = self.window_list();
+                if !list.contains(&(b, n)) {
+                    return Err(OmError::bad_index());
+                }
+                if list.iter().filter(|(x, _)| *x == b).count() < 2 {
+                    return self.close_book(b, a);
+                }
+                self.wins = list.into_iter().filter(|w| *w != (b, n)).collect();
+                self.cur_win.retain(|w| *w != (b, n));
+                self.book_mut(b)?.window.captions.remove(&n);
+                Ok(Variant::Bool(true))
+            }
+            ("Caption", InvokeKind::Put) => {
+                let c = self.put_string(a)?;
+                self.book_mut(b)?.window.captions.insert(n, c);
+                Ok(Variant::Empty)
+            }
+            ("Caption", InvokeKind::Get) => match self.book(b)?.window.captions.get(&n).cloned() {
                 Some(c) => Ok(Variant::Bstr(c)),
                 None => Ok(Variant::Bstr(self.window_caption((b, n))?)),
             },
+            ("NewWindow", InvokeKind::Func) => self.new_window(b),
             ("Panes", InvokeKind::Get) => {
                 self.book(b)?;
                 Ok(self.alloc(Object::Panes(b, n)))
@@ -772,6 +922,47 @@ impl Application<'_> {
             ("Index", InvokeKind::Get) => {
                 let at = self.window_list().iter().position(|&w| w == (b, n));
                 Ok(Variant::I4(at.map_or(1, |p| p as i32 + 1)))
+            }
+
+            ("WindowNumber", InvokeKind::Get) => {
+                let at = self.window_list().iter().position(|&w| w == (b, n));
+                Ok(Variant::R8(at.map_or(1, |p| p as i32 + 1) as f64))
+            }
+            ("ActiveChart", InvokeKind::Get) => {
+                let sheet = self.book(b)?.wb.active_sheet();
+                Ok(self.active_chart(b, sheet))
+            }
+            ("OnWindow", InvokeKind::Get) => Err(OmError::app_defined_with(
+                "Unable to get the OnWindow property of the Window class",
+            )),
+            ("DisplayDataTypeIcons", InvokeKind::Put) => {
+                if matches!(a.put, Some(Variant::Bstr(_))) {
+                    return Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0));
+                }
+                Err(OmError::exception(0x8000_4001_u32 as i32, None))
+            }
+            ("DisplayDataTypeIcons", InvokeKind::Get) => {
+                Err(OmError::exception(0x8000_4001_u32 as i32, None))
+            }
+            ("ActiveSheetView", InvokeKind::Get) => {
+                self.book(b)?;
+                Ok(self.alloc(Object::Stub("WorksheetView")))
+            }
+            ("Selection" | "VisibleRange", InvokeKind::Get) => {
+                let book = self.book(b)?;
+                let sheet = book.wb.active_sheet();
+                let rect = if m.name == "Selection" {
+                    book.wb
+                        .selection_of(sheet)
+                        .areas
+                        .first()
+                        .copied()
+                        .unwrap_or(Rect::cell(0, 0))
+                } else {
+                    let v = book.window.views.get(&sheet).cloned().unwrap_or_default();
+                    v.visible_rect()
+                };
+                self.new_range(b, sheet, rect, Mode::Cells)
             }
             _ => self.window_view_member(b, m, a),
         }
@@ -793,8 +984,25 @@ impl Application<'_> {
                 self.book(b)?;
                 Ok(Variant::Dispatch(Some(self.handle())))
             }
+
+            ("FollowHyperlink", Func) => {
+                let address = a.string(0)?.unwrap_or_default();
+                if address.is_empty() {
+                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+                }
+                let sub = a.string(1)?.unwrap_or_default();
+                let sheet = self.book(b)?.wb.active_sheet();
+                self.follow_target(b, sheet, &address, &sub)?;
+                Ok(Variant::Empty)
+            }
             (
-                "Worksheets" | "Sheets" | "Charts" | "Excel4MacroSheets" | "Excel4IntlMacroSheets",
+                "Worksheets"
+                | "Sheets"
+                | "Charts"
+                | "Excel4MacroSheets"
+                | "Excel4IntlMacroSheets"
+                | "Modules"
+                | "DialogSheets",
                 Get,
             ) => {
                 self.book(b)?;
@@ -854,7 +1062,7 @@ impl Application<'_> {
             ("ReadOnly", Get) => Ok(Variant::Bool(self.book(b)?.read_only)),
             ("HasVBProject", Get) => Ok(Variant::Bool(self.has_vb_project(b)?)),
             ("VBProject", Get) => self.vbproject_handle(b),
-            ("CodeName", Get) if !self.has_vb_project(b)? => Ok(Variant::Bstr(String::new())),
+            ("CodeName", Get) if !self.has_vba_content(b)? => Ok(Variant::Bstr(String::new())),
             ("CodeName", Get) => Ok(Variant::Bstr(self.code_name(b, None)?)),
             ("Save", Func) => self.save_with_events(b, |app| app.save_book(b)),
             ("SaveAs" | "_SaveAs", Func) => {
@@ -870,6 +1078,9 @@ impl Application<'_> {
                 Ok(Variant::Bool(self.book(b)?.wb.precision_as_displayed()))
             }
             ("PrecisionAsDisplayed", Put) => {
+                if matches!(a.put, Some(Variant::Bstr(_))) {
+                    return Err(OmError::unable_to_set("PrecisionAsDisplayed", "Workbook"));
+                }
                 let on = self.put_bool(a)?;
                 self.book_mut(b)?.wb.set_precision_as_displayed(on);
                 Ok(Variant::Empty)
@@ -888,6 +1099,25 @@ impl Application<'_> {
                 self.book_mut(b)?.no_remote_refs = !on;
                 Ok(Variant::Empty)
             }
+            ("DisplayDrawingObjects", Get) => Ok(Variant::I4(self.book(b)?.draw_objects)),
+            ("DisplayDrawingObjects", Put) => {
+                let v = if matches!(a.put, Some(Variant::Bool(true))) {
+                    -4104
+                } else {
+                    self.put_f64(a)? as i32
+                };
+                if ![-4104, 2, 3].contains(&v) {
+                    return Err(OmError::unable_to_set("DisplayDrawingObjects", "Workbook"));
+                }
+                self.book_mut(b)?.draw_objects = v;
+                Ok(Variant::Empty)
+            }
+            ("ReadOnlyRecommended", Get) => Ok(Variant::Bool(self.book(b)?.ro_recommended)),
+            ("ReadOnlyRecommended", Put) => {
+                let on = self.put_bool(a)?;
+                self.book_mut(b)?.ro_recommended = on;
+                Ok(Variant::Empty)
+            }
             ("SaveLinkValues", Get) => Ok(Variant::Bool(!self.book(b)?.no_link_values)),
             ("SaveLinkValues", Put) => {
                 let on = self.put_bool(a)?;
@@ -898,6 +1128,9 @@ impl Application<'_> {
                 self.book(b)?.wb.settings().date_system == DateSystem::D1904,
             )),
             ("Date1904", Put) => {
+                if matches!(a.put, Some(Variant::Bstr(_))) {
+                    return Err(OmError::unable_to_set("Date1904", "Workbook"));
+                }
                 let on = self.put_bool(a)?;
                 let ds = if on {
                     DateSystem::D1904
@@ -929,14 +1162,50 @@ impl Application<'_> {
                 self.coerce_wb_put(m, a)?;
                 Err(OmError::app_defined())
             }
+            ("HTMLProject", Get) => Err(OmError::app_defined_with(
+                "This method or property is no longer supported in this version of Excel.",
+            )),
             ("WorkIdentity", Get) => Ok(Variant::Bstr(String::new())),
-            ("_CodeName", Get) if !self.has_vb_project(b)? => Ok(Variant::Bstr(String::new())),
+            ("SmartTagOptions", Get) => Ok(Variant::Dispatch(None)),
+            ("OnSave" | "OnSheetActivate" | "OnSheetDeactivate", Get) => Ok(Variant::Empty),
+            ("_CodeName", Get) if !self.has_vba_content(b)? => Ok(Variant::Bstr(String::new())),
             ("_CodeName", Get) => Ok(Variant::Bstr(self.code_name(b, None)?)),
             ("DefaultSlicerStyle" | "DefaultTimelineStyle", Get) => {
                 let n = if m.name == "DefaultSlicerStyle" {
                     "SlicerStyleLight1"
                 } else {
                     "TimeSlicerStyleLight1"
+                };
+                Ok(self.alloc(Object::TableStyle(n.into())))
+            }
+            ("DefaultTableStyle" | "DefaultPivotTableStyle", Put) => {
+                if matches!(
+                    a.put,
+                    Some(
+                        Variant::Bool(_)
+                            | Variant::I4(_)
+                            | Variant::I2(_)
+                            | Variant::R8(_)
+                            | Variant::R4(_)
+                    )
+                ) {
+                    self.opts.insert(
+                        format!("{}:{}", b.0 + 1, m.name),
+                        Variant::Bstr("None".into()),
+                    );
+                }
+                Ok(Variant::Empty)
+            }
+            ("DefaultTableStyle" | "DefaultPivotTableStyle", Get)
+                if self.opts.contains_key(&format!("{}:{}", b.0 + 1, m.name)) =>
+            {
+                Ok(Variant::Bstr("None".into()))
+            }
+            ("DefaultTableStyle" | "DefaultPivotTableStyle", Get) => {
+                let n = if m.name == "DefaultTableStyle" {
+                    "TableStyleMedium2"
+                } else {
+                    "PivotStyleLight16"
                 };
                 Ok(self.alloc(Object::TableStyle(n.into())))
             }
@@ -964,8 +1233,7 @@ impl Application<'_> {
                 }
 
                 let key = format!("{}:AccuracyVersion", b.0 + 1);
-                self.opts
-                    .insert(key, Variant::I4(if n <= 2 { n } else { 0 }));
+                self.opts.insert(key, Variant::I4(n & 3));
                 Ok(Variant::Empty)
             }
             ("ProtectStructure", Get) => Ok(Variant::Bool(self.book(b)?.protect.is_some())),
@@ -980,7 +1248,10 @@ impl Application<'_> {
             }
             ("Saved", Get) => Ok(Variant::Bool(self.book(b)?.saved)),
             ("Saved", Put) => {
-                let v = self.put_bool(a)?;
+                let v = match a.put {
+                    Some(Variant::R8(x)) => x.round_ties_even() != 0.0,
+                    _ => self.put_bool(a)?,
+                };
                 self.book_mut(b)?.saved = v;
                 Ok(Variant::Empty)
             }
@@ -1001,10 +1272,17 @@ impl Application<'_> {
                 }
                 Ok(Variant::Bool(true))
             }
-            ("Close", Func) => self.close_with_events(b, a),
+            ("Close", Func) => {
+                let r = self.close_with_events(b, a);
+                self.after_failed_chart_add(r, "Close method of Workbook class failed")
+            }
             ("Windows", Get) => Ok(self.alloc(Object::BookWindows(b))),
             ("NewWindow", Func) => self.new_window(b),
-            ("LinkSources" | "UpdateLink" | "ChangeLink" | "BreakLink" | "OpenLinks", Func) => {
+            (
+                "LinkSources" | "UpdateLink" | "ChangeLink" | "BreakLink" | "OpenLinks"
+                | "LinkInfo",
+                Func,
+            ) => {
                 self.book(b)?;
                 self.link_member(b, m.name, a)
             }
@@ -1031,26 +1309,30 @@ impl Application<'_> {
                 SheetsKind::Charts => s.kind == SheetKind::Chart,
                 SheetsKind::Macro => s.kind == SheetKind::Macro,
                 SheetsKind::MacroIntl => s.kind == SheetKind::MacroIntl,
+                SheetsKind::Modules => s.kind == SheetKind::Module,
+                SheetsKind::Dialogs => s.kind == SheetKind::Dialog,
                 SheetsKind::Selected => selected.contains(&s.id),
+                SheetsKind::Subset(mask) => s.id.0 < 128 && mask >> s.id.0 & 1 == 1,
             })
             .map(|s| s.id)
             .collect())
     }
 
     pub(crate) fn sheet_object(&mut self, b: BookId, s: SheetId) -> Variant {
-        let chart = self
+        let kind = self
             .book(b)
             .ok()
             .and_then(|bk| bk.wb.sheet(s))
-            .is_some_and(|x| x.kind == SheetKind::Chart);
-        self.alloc(if chart {
-            Object::Chart(b, s)
-        } else {
-            Object::Worksheet(b, s)
+            .map(|x| x.kind);
+        self.alloc(match kind {
+            Some(SheetKind::Chart) => Object::Chart(b, s),
+            Some(SheetKind::Module) => Object::Module(b, s),
+            Some(SheetKind::Dialog) => Object::Dialog(b, s),
+            _ => Object::Worksheet(b, s),
         })
     }
 
-    fn active_chart(&mut self, b: BookId, s: SheetId) -> Variant {
+    pub(crate) fn active_chart(&mut self, b: BookId, s: SheetId) -> Variant {
         match self.sheet_object(b, s) {
             Variant::Dispatch(Some(id))
                 if matches!(self.arena.get(id), Some(Object::Chart(..))) =>
@@ -1078,6 +1360,10 @@ impl Application<'_> {
                 .filter(|id| list.contains(id))
                 .ok_or_else(OmError::bad_index);
         }
+
+        if matches!(v, Variant::R8(x) if x.abs() >= 2_147_483_647.5) {
+            return Err(OmError::exception(0x8002_000A_u32 as i32, None));
+        }
         let n = Args {
             values: vec![Some(v.clone())],
             put: None,
@@ -1100,8 +1386,24 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         match m.name {
             "Count" => Ok(Variant::I4(self.kind_sheets(b, kind)?.len() as i32)),
+            "Parent" => Ok(self.alloc(Object::Workbook(b))),
+            "Creator" => Ok(Variant::I4(0x5843_454C)),
             "Item" | "_Default" => {
                 let v = a.get(0).ok_or_else(OmError::bad_index)?;
+
+                if let (Variant::Array(_), "_Default") = (v, m.name) {
+                    let (_, _, items) =
+                        crate::conv::array_cells(v).ok_or_else(OmError::bad_index)?;
+                    let mut mask = 0u128;
+                    for item in &items {
+                        let s = self.sheet_by_index(b, kind, item, a.lcid)?;
+                        if s.0 >= 128 {
+                            return Err(OmError::bad_index());
+                        }
+                        mask |= 1 << s.0;
+                    }
+                    return Ok(self.alloc(Object::Sheets(b, SheetsKind::Subset(mask))));
+                }
                 let s = self.sheet_by_index(b, kind, v, a.lcid)?;
                 Ok(self.sheet_object(b, s))
             }
@@ -1120,7 +1422,10 @@ impl Application<'_> {
             "FillAcrossSheets" => self.sheets_fill_across(b, kind, a),
             "Copy" | "Move" => self.sheets_transfer(b, kind, m, a),
 
-            "Add2" if kind == SheetsKind::Charts => Err(OmError::app_defined()),
+            "Add2" if kind == SheetsKind::Charts => {
+                self.chart_add_failed = true;
+                Err(OmError::app_defined())
+            }
             "Add2" => Err(OmError::exception(0x8000_4001_u32 as i32, None)),
             _ => Err(unsupported("Sheets", m)),
         }
@@ -1148,7 +1453,22 @@ impl Application<'_> {
         let others_visible = wb
             .sheets()
             .any(|s| !ids.contains(&s.id) && wb.sheet_state(s.id) == Some(SheetState::Visible));
-        if v != 0 || ids.is_empty() || !others_visible || self.book(b)?.protect.is_some() {
+        if !matches!(v, 0 | 2) || ids.is_empty() || self.book(b)?.protect.is_some() {
+            return Err(bad());
+        }
+        if !others_visible {
+            let fraction = matches!(&a.put, Some(Variant::R8(x)) if x.fract() != 0.0);
+            if !fraction {
+                let first = ids[0];
+                self.book_mut(b)?
+                    .wb
+                    .set_active_sheet(first)
+                    .map_err(edit_error)?;
+            }
+            return Err(bad());
+        }
+
+        if v != 0 {
             return Err(bad());
         }
         for id in ids {
@@ -1167,12 +1487,17 @@ impl Application<'_> {
         let add = matches!(a.get(0), Some(Variant::Bool(false)));
         let ids: Vec<SheetId> = self.kind_sheets(b, kind)?;
         let wb = &self.book(b)?.wb;
-        let ids: Vec<SheetId> = ids
-            .into_iter()
-            .filter(|s| wb.sheet_state(*s) == Some(SheetState::Visible))
-            .collect();
-        if ids.is_empty() {
+
+        if ids.is_empty()
+            || ids
+                .iter()
+                .any(|s| wb.sheet_state(*s) != Some(SheetState::Visible))
+        {
             return Err(OmError::app_defined());
+        }
+
+        if matches!(a.get(0), Some(Variant::Empty)) {
+            return Ok(Variant::Bool(true));
         }
         for (i, id) in ids.into_iter().enumerate() {
             self.group_select(b, id, add || i > 0)?;
@@ -1211,8 +1536,12 @@ impl Application<'_> {
             self.sheet_levels(b, next, "Activate", "SheetActivate", &[]);
         }
         let mark = self.notice_mark(b);
+        let name = self.book(b)?.wb.sheet(id).map(|s| s.name.to_string());
+        self.book_mut(b)?.wb.delete_sheet(id).map_err(edit_error)?;
+        if let Some(name) = name {
+            self.follow_source_sheet_deleted(b, &name);
+        }
         let wb = &mut self.book_mut(b)?.wb;
-        wb.delete_sheet(id).map_err(edit_error)?;
         if successor.is_some() {
             let log = wb.notices_mut();
             let mark = mark.min(log.len());
@@ -1244,7 +1573,7 @@ impl Application<'_> {
         if let Some(t) = a.get(1) {
             let ok = matches!(
                 t,
-                Variant::I4(-4104 | -4163 | -4122) | Variant::I2(-4104 | -4163 | -4122)
+                Variant::I4(-4104 | 2 | -4122) | Variant::I2(-4104 | 2 | -4122)
             );
             if !ok {
                 return Err(OmError::app_defined());
@@ -1268,6 +1597,18 @@ impl Application<'_> {
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
+        let done = self.sheets_transfer_group(b, kind, m, a);
+        self.moving_group = false;
+        done
+    }
+
+    fn sheets_transfer_group(
+        &mut self,
+        b: BookId,
+        kind: SheetsKind,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
         let moving = m.name == "Move";
         if a.values.len() > 2 {
             return Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT));
@@ -1277,7 +1618,12 @@ impl Application<'_> {
             match a.get(i) {
                 None => Ok(None),
                 Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
-                    Some(Object::Worksheet(ob, s) | Object::Chart(ob, s)) => Ok(Some((*ob, *s))),
+                    Some(
+                        Object::Worksheet(ob, s)
+                        | Object::Chart(ob, s)
+                        | Object::Module(ob, s)
+                        | Object::Dialog(ob, s),
+                    ) => Ok(Some((*ob, *s))),
                     _ => Err(OmError::app_defined()),
                 },
                 Some(_) => Err(OmError::app_defined()),
@@ -1321,6 +1667,7 @@ impl Application<'_> {
                 }
             }
             Some((tb, t)) if tb != b => {
+                self.moving_group = moving;
                 for (i, &s) in ids.iter().enumerate() {
                     let at = if i == 0 {
                         t
@@ -1328,7 +1675,8 @@ impl Application<'_> {
                         self.book(tb)?.wb.active_sheet()
                     };
                     let h = self.sheet_object(tb, at);
-                    if before.is_some() {
+
+                    if i == 0 && before.is_some() {
                         call(self, s, Some(h), None)?;
                     } else {
                         call(self, s, None, Some(h))?;
@@ -1379,7 +1727,12 @@ impl Application<'_> {
         match v {
             None => Ok(None),
             Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
-                Some(Object::Worksheet(b, s) | Object::Chart(b, s)) => Ok(Some((*b, *s))),
+                Some(
+                    Object::Worksheet(b, s)
+                    | Object::Chart(b, s)
+                    | Object::Module(b, s)
+                    | Object::Dialog(b, s),
+                ) => Ok(Some((*b, *s))),
                 _ => Err(OmError::app_defined()),
             },
             Some(_) => Err(OmError::app_defined()),
@@ -1415,7 +1768,7 @@ impl Application<'_> {
                 return self.chart_sheet_to_new_book(b, s).map(Some);
             }
         }
-        if moving && self.book(b)?.wb.sheet_count() < 2 {
+        if moving && self.book(b)?.wb.sheet_count() < 2 && !self.moving_group {
             return Err(OmError::app_defined_with(
                 "Move method of Worksheet class failed",
             ));
@@ -1470,7 +1823,14 @@ impl Application<'_> {
         done.map_err(edit_error)?;
         self.book_mut(tb)?.saved = false;
         self.sync_links();
-        if moving {
+        if moving && self.book(b)?.wb.sheet_count() < 2 {
+            let close = Args {
+                values: vec![Some(Variant::Bool(false))],
+                put: None,
+                lcid: a.lcid,
+            };
+            self.close_book(b, &close)?;
+        } else if moving {
             let ghost = self.book(b)?.wb.external_sheet(&dst_name, &new_name);
             self.book_mut(b)?
                 .wb
@@ -1486,7 +1846,12 @@ impl Application<'_> {
         match v {
             None => Ok(None),
             Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
-                Some(Object::Worksheet(ob, s) | Object::Chart(ob, s)) if *ob == b => Ok(Some(*s)),
+                Some(
+                    Object::Worksheet(ob, s)
+                    | Object::Chart(ob, s)
+                    | Object::Module(ob, s)
+                    | Object::Dialog(ob, s),
+                ) if *ob == b => Ok(Some(*s)),
                 _ => Err(OmError::app_defined()),
             },
             Some(_) => Err(OmError::app_defined()),
@@ -1507,7 +1872,7 @@ impl Application<'_> {
         match &book.protect {
             Some(None) => book.protect = None,
             Some(Some(_)) => return Err(OmError::app_defined()),
-            None if structure => book.protect = Some(password),
+            None if structure => book.protect = Some(password.map(crate::sheetprot::Pw::Text)),
             None => {}
         }
         Ok(())
@@ -1517,7 +1882,7 @@ impl Application<'_> {
         let given = a.string(0)?;
         let book = self.book_mut(b)?;
         match &book.protect {
-            Some(Some(p)) if given.as_deref() != Some(p.as_str()) => Err(OmError::app_defined_with(
+            Some(Some(p)) if !p.matches(given.as_deref()) => Err(OmError::app_defined_with(
                 "The password you supplied is not correct. Verify that the CAPS LOCK key is off and be sure to use the correct capitalization.",
             )),
             _ => {
@@ -1531,19 +1896,28 @@ impl Application<'_> {
         let failed = || OmError::app_defined_with("Add method of Sheets class failed");
         self.refuse_if_protected(b, "Add method of Sheets class failed")?;
 
-        let own = |i: usize| {
-            let v = a.get(i);
-            let foreign = matches!(v, Some(Variant::Dispatch(Some(id)))
-                if matches!(self.arena.get(*id),
-                    Some(Object::Worksheet(ob, _) | Object::Chart(ob, _)) if *ob != b));
-            if foreign {
-                None
-            } else {
-                v
+        let peer = |i: usize| -> Result<Option<SheetId>, OmError> {
+            if let Some(Variant::Dispatch(Some(id))) = a.get(i) {
+                if let Some(
+                    Object::Worksheet(ob, s)
+                    | Object::Chart(ob, s)
+                    | Object::Module(ob, s)
+                    | Object::Dialog(ob, s),
+                ) = self.arena.get(*id)
+                {
+                    if *ob != b {
+                        let pos = self.book(*ob)?.wb.sheet_position(*s);
+                        let wb = &self.book(b)?.wb;
+                        return Ok(pos
+                            .filter(|&p| p < wb.sheet_count())
+                            .map(|p| wb.sheet_at(p).id));
+                    }
+                }
             }
+            self.sheet_arg(b, a.get(i))
         };
-        let before = self.sheet_arg(b, own(0)).map_err(|_| failed())?;
-        let after = self.sheet_arg(b, own(1)).map_err(|_| failed())?;
+        let before = peer(0).map_err(|_| failed())?;
+        let after = peer(1).map_err(|_| failed())?;
         if before.is_some() && after.is_some() {
             return Err(failed());
         }
@@ -1671,7 +2045,8 @@ impl Application<'_> {
             for &c in &made {
                 let r = self.chart_sheet_ref(b, c)?;
                 let wb = &mut self.book_mut(b)?.wb;
-                let (by, series) = crate::charts::series_from_block(wb, ss, rect, None, 51, &[]);
+                let (by, series) =
+                    xlcalc::chart_src::series_from_block(wb, ss, rect, None, 51, &[]);
                 if let Some(ch) = wb
                     .drawing_mut(c)
                     .get_mut(r.id)
@@ -1727,6 +2102,21 @@ impl Application<'_> {
         })
     }
 
+    pub(crate) fn legacy_sheet_member(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        let module = self.book(b)?.wb.sheet(s).map(|x| x.kind) == Some(SheetKind::Module);
+        match m.name {
+            "_CodeName" | "CodeName" => Err(OmError::app_defined()),
+            "Shapes" if module => Err(OmError::app_defined()),
+            _ => self.worksheet_member(b, s, m, a),
+        }
+    }
+
     pub(crate) fn worksheet_member(
         &mut self,
         b: BookId,
@@ -1744,7 +2134,7 @@ impl Application<'_> {
         }
         match (m.name, m.kind) {
             ("_CodeName", Get) => Ok(Variant::Bstr(
-                self.has_vb_project(b)?
+                self.has_vba_content(b)?
                     .then(|| self.code_name(b, Some(s)))
                     .transpose()?
                     .unwrap_or_default(),
@@ -1764,11 +2154,35 @@ impl Application<'_> {
                 if self.book(b)?.protect.is_some() {
                     return Err(OmError::app_defined());
                 }
-                let name = self.put_string(a)?;
+
+                let name = match Application::put_value(a).get(0) {
+                    Some(Variant::Bool(x)) => if *x { "True" } else { "False" }.to_string(),
+                    Some(Variant::Dispatch(_) | Variant::Array(_)) => {
+                        return Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))
+                    }
+                    _ => self.put_string(a)?,
+                };
+
+                if self
+                    .book(b)?
+                    .wb
+                    .sheets()
+                    .any(|x| x.id != s && x.name == name)
+                {
+                    let mut e = OmError::app_defined_with(
+                        "That name is already taken. Try a different one.",
+                    );
+                    e.error_info = true;
+                    return Err(e);
+                }
+                let was = self.book(b)?.wb.sheet(s).map(|x| x.name.to_string());
                 self.book_mut(b)?
                     .wb
                     .rename_sheet(s, &name)
                     .map_err(edit_error)?;
+                if let Some(was) = was {
+                    self.follow_source_rename(b, false, &was, &name);
+                }
                 Ok(Variant::Empty)
             }
             ("Type", Get) => Ok(Variant::I4(
@@ -1789,13 +2203,15 @@ impl Application<'_> {
             ("Cells", Get) => self.sheet_range(b, s, Mode::Cells),
             ("Hyperlinks", Get) => Ok(self.alloc(Object::Hyperlinks(b, s, whole_sheet()))),
             ("Comments", Get) => Ok(self.alloc(Object::Comments(b, s))),
+            ("CommentsThreaded", Get) => Ok(self.alloc(Object::ThreadList(b, s, None))),
             ("Rows", Get) => self.sheet_range(b, s, Mode::Rows),
             ("Columns", Get) => self.sheet_range(b, s, Mode::Columns),
             ("UsedRange", Get) => {
+                self.book_mut(b)?.wb.recompute_used_range_of(s);
                 let rect = self
                     .book(b)?
                     .wb
-                    .used_range(s)
+                    .used_range_with_formats(s)
                     .unwrap_or_else(|| Rect::cell(0, 0));
                 self.new_range(b, s, rect, Mode::Cells)
             }
@@ -1805,8 +2221,8 @@ impl Application<'_> {
                 Ok(Variant::Bool(true))
             }
             (
-                "AutoFilter" | "AutoFilterMode" | "FilterMode" | "ShowAllData" | "StandardWidth"
-                | "StandardHeight",
+                "AutoFilter" | "_AutoFilter" | "AutoFilterMode" | "FilterMode" | "ShowAllData"
+                | "StandardWidth" | "StandardHeight",
                 _,
             ) => self.sheet_view_member(b, s, m, a),
             ("Shapes" | "ChartObjects", Get | Func) => self.sheet_draw_member(b, s, m, a),
@@ -1842,6 +2258,12 @@ impl Application<'_> {
                         "Select method of Worksheet class failed",
                     ));
                 }
+                if matches!(a.get(0), Some(Variant::Bstr(_))) {
+                    return Err(OmError::app_defined());
+                }
+                if matches!(a.get(0), Some(Variant::Empty)) {
+                    return Ok(Variant::Bool(true));
+                }
                 let add = matches!(a.get(0), Some(Variant::Bool(false)));
                 self.group_select(b, s, add)?;
                 self.active = Some(b);
@@ -1857,15 +2279,26 @@ impl Application<'_> {
 
             ("Visible", Put) => {
                 let bad = || OmError::unable_to_set("Visible", "Worksheet");
-                if self.book(b)?.protect.is_some() {
-                    return Err(bad());
-                }
-                let state = match self.put_i32(a).map_err(|_| bad())? {
+                let protected = self.book(b)?.protect.is_some();
+
+                let n = match Application::put_value(a).get(0) {
+                    Some(Variant::R8(x)) if x.abs() < 2.0e9 => x.trunc() as i32,
+                    _ => self.put_i32(a).map_err(|_| bad())?,
+                };
+                let state = match n {
                     -1 | 1 => SheetState::Visible,
                     0 => SheetState::Hidden,
                     2 => SheetState::VeryHidden,
                     _ => return Err(bad()),
                 };
+
+                if protected {
+                    return if self.book(b)?.wb.sheet_state(s) == Some(state) {
+                        Ok(Variant::Empty)
+                    } else {
+                        Err(bad())
+                    };
+                }
                 self.book_mut(b)?
                     .wb
                     .set_sheet_state(s, state)
@@ -1873,11 +2306,19 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
 
-            ("CodeName", Get) if !self.has_vb_project(b)? => Ok(Variant::Bstr(
+            ("CodeName", Get) if !self.has_vba_content(b)? => Ok(Variant::Bstr(
                 self.sheet_code_name(b, s).unwrap_or_default(),
             )),
             ("CodeName", Get) => Ok(Variant::Bstr(self.code_name(b, Some(s))?)),
 
+            ("Delete" | "Move", Func)
+                if self.book(b)?.wb.sheet_state(s) == Some(SheetState::VeryHidden) =>
+            {
+                Err(OmError::app_defined_with(&format!(
+                    "{} method of Worksheet class failed",
+                    m.name
+                )))
+            }
             ("Delete", Func) if self.display_alerts => Ok(Variant::Bool(false)),
             ("Delete", Func) => {
                 self.refuse_if_protected(b, "Delete method of Worksheet class failed")?;
@@ -1888,7 +2329,13 @@ impl Application<'_> {
                 Ok(self.alloc(Object::PageBreaks(m.name == "HPageBreaks", Some((b, s)))))
             }
             ("ResetAllPageBreaks", Func) => {
-                self.book_mut(b)?.wb.reset_page_breaks(s);
+                let bk = self.book_mut(b)?;
+                bk.wb.reset_page_breaks(s);
+
+                if let Some(p) = bk.page_setup.get_mut(&s) {
+                    p.zoom = p.zoom.map(|_| 100);
+                    p.list_zoom = p.zoom.unwrap_or(0);
+                }
                 Ok(Variant::Empty)
             }
             ("Paste", Func) => self.sheet_paste(b, s, m, a),
@@ -1910,14 +2357,21 @@ impl Application<'_> {
                     return Err(OmError::app_defined());
                 }
                 let wb = &mut self.book_mut(b)?.wb;
-                let target = match (before, after) {
-                    (Some(t), _) => Some(t),
-                    (None, Some(t)) => {
-                        let p = wb.sheet_position(t).ok_or_else(OmError::app_defined)?;
-                        (p + 1 < wb.sheet_count()).then(|| wb.sheet_at(p + 1).id)
-                    }
+
+                let want = match (before, after) {
+                    (Some(t), _) => wb.sheet_position(t),
+                    (None, Some(t)) => wb.sheet_position(t).map(|p| p + 1),
                     _ => None,
+                }
+                .ok_or_else(OmError::app_defined)?;
+                let shown = |wb: &xlcalc::Workbook, i: usize| {
+                    wb.sheet_state(wb.sheet_at(i).id) == Some(xlcalc::SheetState::Visible)
                 };
+                let n = wb.sheet_count();
+                let place = (want..n)
+                    .find(|&i| shown(wb, i))
+                    .unwrap_or_else(|| (0..n).rev().find(|&i| shown(wb, i)).map_or(n, |i| i + 1));
+                let target = (place < n).then(|| wb.sheet_at(place).id);
 
                 if m.name == "Move" {
                     wb.move_sheet(s, target).map_err(edit_error)?;
@@ -1956,6 +2410,7 @@ impl Application<'_> {
             }
             ("Protection", Get) => Ok(self.alloc(Object::Protection(b, s))),
             ("Outline", Get) => Ok(self.alloc(Object::Outline(b, s))),
+            ("Tab", Get) => Ok(self.alloc(Object::Tab(b, s))),
             ("PageSetup", Get) => Ok(self.alloc(Object::PageSetup(b, s))),
             ("Protect", Func) => {
                 self.protect_sheet(b, s, a)?;
@@ -2006,7 +2461,15 @@ impl Application<'_> {
             }
         }
 
-        list.sort_by_key(|e| (e.bare.to_lowercase(), e.scope.is_none()));
+        list.sort_by_key(|e| {
+            (
+                e.bare.to_lowercase(),
+                e.scope.is_none(),
+                e.scope
+                    .and_then(|s| wb.sheet(s))
+                    .map_or_else(|| e.shown.to_lowercase(), |s| s.name.to_lowercase()),
+            )
+        });
         Ok(list)
     }
 
@@ -2053,6 +2516,10 @@ impl Application<'_> {
                                     e.shown.eq_ignore_ascii_case(t)
                                         || (scope.is_some() || e.scope.is_none())
                                             && e.bare.eq_ignore_ascii_case(t)
+                                        || scope.is_some()
+                                            && e.scope == scope
+                                            && t.rsplit_once('!')
+                                                .is_some_and(|x| e.bare.eq_ignore_ascii_case(x.1))
                                 })
                                 .cloned()
                                 .ok_or_else(OmError::app_defined)?,
@@ -2073,6 +2540,9 @@ impl Application<'_> {
                             .ok_or_else(OmError::bad_index)?
                     }
                     (None, None) => {
+                        if a.get(2).is_none() {
+                            return Err(OmError::hresult(crate::error::DISP_E_MEMBERNOTFOUND));
+                        }
                         let t = a.string(2)?.ok_or_else(OmError::app_defined)?;
                         let wb = &self.book(b)?.wb;
                         list.iter()
@@ -2097,25 +2567,70 @@ impl Application<'_> {
                 Ok(self.alloc_enumerator(items))
             }
             "Add" => {
+                if a.get(4) == Some(&Variant::Bool(true)) {
+                    let mut e = OmError::app_defined_with("Shortcut key must be a letter.");
+                    e.error_info = true;
+                    return Err(e);
+                }
                 let name = a
                     .string(0)?
                     .or(a.string(6)?)
                     .ok_or_else(OmError::app_defined)?;
-                let refers = a
-                    .string(1)?
-                    .or(a.string(7)?)
-                    .or(a.string(9)?)
-                    .or(a.string(10)?)
-                    .ok_or_else(OmError::app_defined)?;
+                let r1c1 = a.string(1)?.or(a.string(7)?).is_none();
+                let refers = match a.string(1)?.or(a.string(7)?) {
+                    Some(t) => t,
+
+                    None => {
+                        let t = a
+                            .string(9)?
+                            .or(a.string(10)?)
+                            .ok_or_else(OmError::app_defined)?;
+                        if t.starts_with('=') {
+                            crate::range::r1c1_to_a1(&t, 0, 0).ok_or_else(OmError::app_defined)?
+                        } else {
+                            t
+                        }
+                    }
+                };
+
+                let refers = if refers.trim().parse::<f64>().is_ok() {
+                    format!("={}", refers.trim())
+                } else {
+                    refers
+                };
                 let wb = &mut self.book_mut(b)?.wb;
-                wb.define_name_active(&name, &refers, scope)
-                    .map_err(edit_error)?;
+                if r1c1 {
+                    wb.define_name_active_r1c1(&name, &refers, scope)
+                } else {
+                    wb.define_name_active(&name, &refers, scope)
+                }
+                .map_err(edit_error)?;
+
+                let text = refers.trim().trim_start_matches('=');
+                let active = wb.active_sheet();
+                match crate::addr::parse_range_text(wb, active, &text.replace('$', "")) {
+                    Some((sheet, rect)) => {
+                        wb.note_exact_cell_format(xlcalc::CellAddr::new(sheet, rect.r0, rect.c0))
+                    }
+                    None => wb.note_number_format(None),
+                }
                 let bare = name.rsplit_once('!').map_or(name.as_str(), |x| x.1);
+
+                let want = match name.rsplit_once('!') {
+                    _ if scope.is_some() => scope,
+                    Some((sh, _)) => wb.sheet_by_name(sh.trim_matches('\'')).map(|s| s.id),
+                    None => {
+                        let active = wb.active_sheet();
+                        wb.names()
+                            .get(&bare.to_uppercase(), Some(active))
+                            .map(|_| active)
+                    }
+                };
                 let def = wb
                     .names()
                     .iter()
                     .filter(|d| d.name.eq_ignore_ascii_case(bare))
-                    .find(|d| scope.is_none() || d.scope == scope)
+                    .find(|d| d.scope == want)
                     .cloned()
                     .ok_or_else(OmError::app_defined)?;
                 let entry = NameEntry {
@@ -2123,13 +2638,14 @@ impl Application<'_> {
                     bare: def.name.clone(),
                     scope: def.scope,
                 };
-                if let Some(t) = a.i32(3)?.filter(|t| matches!(t, 1 | 2)) {
+
+                if let Some(t) = a.i32(3).ok().flatten().filter(|t| matches!(t, 1 | 2)) {
                     let key = def.name.to_uppercase();
                     self.book_mut(b)?
                         .wb
                         .set_name_macro_type(&key, def.scope, Some(t));
                 }
-                if a.bool(2)? == Some(false) {
+                if a.bool(2).ok().flatten() == Some(false) {
                     let key = def.name.to_uppercase();
                     self.book_mut(b)?
                         .wb
@@ -2200,10 +2716,66 @@ impl Application<'_> {
             None => def.name.clone(),
         };
         match (m.name, m.kind) {
-            ("RefersTo" | "RefersToR1C1", Put) => {
+            ("Comment", Get) => Ok(Variant::Bstr(
+                wb.names()
+                    .notes(key, scope)
+                    .map(|n| n.comment.clone())
+                    .unwrap_or_default(),
+            )),
+            ("Comment", Put) => {
+                let text = Application::put_value(a)
+                    .string(0)?
+                    .ok_or_else(OmError::type_mismatch)?;
+
+                let text: String = text.chars().take(255).collect();
+                self.book_mut(b)?
+                    .wb
+                    .set_name_notes(key, scope, Some(text), None);
+                Ok(Variant::Empty)
+            }
+
+            ("ShortcutKey", Get | Put) if wb.names().macro_type(key, scope).is_none() => {
+                Err(OmError::app_defined())
+            }
+
+            ("ShortcutKey", Get) => wb
+                .names()
+                .notes(key, scope)
+                .and_then(|n| n.shortcut.clone())
+                .map(Variant::Bstr)
+                .ok_or_else(OmError::app_defined),
+            ("ShortcutKey", Put) => {
+                let text = Application::put_value(a)
+                    .string(0)?
+                    .ok_or_else(OmError::type_mismatch)?;
+                self.book_mut(b)?
+                    .wb
+                    .set_name_notes(key, scope, None, Some(text));
+                Ok(Variant::Empty)
+            }
+            ("WorkbookParameter", Get) => Ok(Variant::Bool(false)),
+
+            ("WorkbookParameter", Put) => Err(OmError::exception(0x8007_0057_u32 as i32, None)),
+            (
+                "RefersTo" | "RefersToR1C1" | "RefersToLocal" | "RefersToR1C1Local" | "Value",
+                Put,
+            ) => {
                 let mut text = Application::put_value(a)
                     .string(0)?
                     .ok_or_else(OmError::type_mismatch)?;
+
+                if let Some(Variant::Bool(v)) = a.put {
+                    text = if v { "=TRUE" } else { "=FALSE" }.to_string();
+                }
+
+                if matches!(a.put, Some(Variant::Null | Variant::Empty)) {
+                    text = "=#N/A".to_string();
+                }
+
+                if text.is_empty() {
+                    self.book_mut(b)?.wb.delete_name(key, scope);
+                    return Ok(Variant::Empty);
+                }
 
                 if text.trim().parse::<f64>().is_ok() {
                     text = format!("={}", text.trim());
@@ -2212,7 +2784,17 @@ impl Application<'_> {
                 self.book_mut(b)?
                     .wb
                     .define_name(&name, &text, def.scope)
-                    .map_err(edit_error)?;
+                    .map_err(|e| match e {
+                        EditError::Compile(_) | EditError::Parse(_) => formula_refusal(&text),
+                        e => edit_error(e),
+                    })?;
+                Ok(Variant::Empty)
+            }
+            ("Visible", Put) => {
+                let v = Application::put_value(a)
+                    .bool(0)?
+                    .ok_or_else(OmError::type_mismatch)?;
+                self.book_mut(b)?.wb.set_name_visible(key, scope, v);
                 Ok(Variant::Empty)
             }
 
@@ -2221,7 +2803,10 @@ impl Application<'_> {
                     .string(0)?
                     .ok_or_else(OmError::type_mismatch)?;
                 let old = def.name.clone();
-                let _ = self.book_mut(b)?.wb.rename_name(&old, def.scope, &new);
+                let done = self.book_mut(b)?.wb.rename_name(&old, def.scope, &new);
+                if done.is_ok() && def.scope.is_none() {
+                    self.follow_source_rename(b, true, &old, &new);
+                }
                 Ok(Variant::Empty)
             }
             ("Name" | "NameLocal", Get) => Ok(Variant::Bstr(shown)),
@@ -2231,12 +2816,26 @@ impl Application<'_> {
             ("RefersToR1C1" | "RefersToR1C1Local", Get) => {
                 Ok(Variant::Bstr(format!("={}", wb.name_refers_to_r1c1(&def))))
             }
+
+            ("ValidWorkbookParameter", Get) => {
+                let text = wb.name_refers_to(&def);
+                let absolute = text
+                    .rsplit('!')
+                    .next()
+                    .is_some_and(|t| t.matches('$').count() == 2 && !t.contains(':'));
+                Ok(Variant::Bool(
+                    def.scope.is_none()
+                        && absolute
+                        && parse_range_text(wb, wb.active_sheet(), &text)
+                            .is_some_and(|(_, rect)| rect.is_cell()),
+                ))
+            }
             ("RefersToRange", Get) => {
                 let text = wb.name_refers_to(&def);
-                let (sheet, rect) =
-                    parse_range_text(wb, def.scope.unwrap_or(wb.active_sheet()), &text)
-                        .ok_or_else(OmError::app_defined)?;
-                self.new_range(b, sheet, rect, Mode::Cells)
+                let default = def.scope.unwrap_or(wb.active_sheet());
+                let (sheet, rects) =
+                    parse_areas_text(wb, default, &text).ok_or_else(OmError::app_defined)?;
+                self.new_multi(b, sheet, &rects, Mode::Cells)
             }
             ("Index", Get) => {
                 let list = self.name_list(b, None)?;
@@ -2383,6 +2982,8 @@ fn sheets_kind(property: &str) -> SheetsKind {
         "Charts" => SheetsKind::Charts,
         "Excel4MacroSheets" => SheetsKind::Macro,
         "Excel4IntlMacroSheets" => SheetsKind::MacroIntl,
+        "Modules" => SheetsKind::Modules,
+        "DialogSheets" => SheetsKind::Dialogs,
         _ => SheetsKind::All,
     }
 }

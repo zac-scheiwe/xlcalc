@@ -306,7 +306,8 @@ pub(crate) fn encode(
     src: &str,
     top: Cls,
 ) -> Result<Rgce, String> {
-    let expr = xlcalc::parser::parse(src).map_err(|e| e.to_string())?;
+    let src = crate::ftext::dead_refs(src, true);
+    let expr = xlcalc::parser::parse(&src).map_err(|e| e.to_string())?;
     let mut e = Enc {
         sheets,
         tables,
@@ -372,6 +373,7 @@ impl Enc<'_> {
 
     fn ixti(&mut self, spec: &SheetSpec) -> Result<u16, String> {
         match spec {
+            SheetSpec::Single(s) if s == "#REF!" => Ok(self.st.xti_index(-1, -1)),
             SheetSpec::Single(s) => {
                 let i = self.sheet_index(s)?;
                 Ok(self.st.xti_index(i, i))
@@ -459,6 +461,12 @@ impl Enc<'_> {
                 let c = error_code(x.as_str()).ok_or("error value")?;
                 self.out.extend([0x1C, c]);
             }
+            Expr::DeadRef(sheet) | Expr::DeadTable { sheet, .. } => {
+                let ix = self.ixti(sheet)?;
+                self.out.push(0x1C | cls.bits());
+                self.out.extend(ix.to_le_bytes());
+                self.out.extend([0u8; 6]);
+            }
             Expr::Array(rows) => self.array(rows, cls)?,
             Expr::Ref { sheet, kind } => self.reference(sheet.as_ref(), kind, cls)?,
             Expr::Name { sheet, name } => self.name(sheet.as_ref(), name, cls)?,
@@ -492,6 +500,8 @@ impl Enc<'_> {
                 self.out.push(0x15);
             }
             Expr::Missing => self.out.push(0x16),
+
+            Expr::Unwritten => {}
             Expr::Ws { expr, .. } => self.emit(expr, cls)?,
             Expr::Spill(_) => return Err("spill reference operator".into()),
             Expr::Field { .. } => return Err("data type field".into()),

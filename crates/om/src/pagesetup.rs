@@ -47,8 +47,19 @@ pub(crate) struct PageSetup {
     pub top: f64,
     pub zoom: Option<i32>,
 
+    pub list_zoom: i32,
+
+    pub list_sig: u64,
+
+    pub list_win: Option<(u32, u32)>,
+
+    pub slv_cached: bool,
+
     pub header_order: Vec<char>,
     pub footer_order: Vec<char>,
+
+    pub header_raw: Option<String>,
+    pub footer_raw: Option<String>,
 }
 
 impl Default for PageSetup {
@@ -85,8 +96,14 @@ impl Default for PageSetup {
             scale_with_doc: true,
             top: 54.0,
             zoom: Some(100),
+            list_zoom: 100,
+            list_sig: 0,
+            list_win: None,
+            slv_cached: false,
             header_order: Vec::new(),
             footer_order: Vec::new(),
+            header_raw: None,
+            footer_raw: None,
         }
     }
 }
@@ -96,7 +113,7 @@ pub(crate) type BookPageSetup = HashMap<SheetId, PageSetup>;
 const PRINT_AREA: &str = "PRINT_AREA";
 const PRINT_TITLES: &str = "PRINT_TITLES";
 
-fn paper_ok(n: i32) -> bool {
+pub(crate) fn paper_ok(n: i32) -> bool {
     matches!(n, 1 | 3 | 5..=9 | 11..=13 | 19 | 20 | 24..=28 | 30 | 34 | 37 | 43 | 66 | 70..=74 | 91 | 119..=130)
 }
 
@@ -116,16 +133,34 @@ fn touch(order: &mut Vec<char>, part: char, set: bool) {
     }
 }
 
+pub(crate) fn first_page_value(n: f64) -> Option<f64> {
+    if n >= 2_147_483_647.0 {
+        Some(2_147_483_647.0)
+    } else if n.abs() == 32_768.0 {
+        None
+    } else {
+        Some(n)
+    }
+}
+
 fn set_fail(prop: &str) -> OmError {
     OmError::unable_to_set(prop, "PageSetup")
 }
 
 impl Application<'_> {
     pub(crate) fn page_setup(&self, b: BookId, s: SheetId) -> PageSetup {
-        self.book(b)
-            .ok()
-            .and_then(|b| b.page_setup.get(&s).cloned())
-            .unwrap_or_default()
+        let Ok(book) = self.book(b) else {
+            return PageSetup::default();
+        };
+        let mut p = book.page_setup.get(&s).cloned().unwrap_or_default();
+
+        let sig = crate::pagegeom::layout_signature(&book.wb, s);
+        if p.list_sig != sig {
+            p.list_zoom = p.zoom.unwrap_or(0);
+            p.list_sig = sig;
+            p.list_win = Some(self.break_window(b, s));
+        }
+        p
     }
 
     fn name_parts(&self, b: BookId, s: SheetId, key: &str) -> Vec<String> {
@@ -142,7 +177,16 @@ impl Application<'_> {
             .collect()
     }
 
+    pub(crate) fn refresh_break_list(&mut self, b: BookId, s: SheetId) {
+        let win = self.break_window(b, s);
+        if let Some(p) = self.book_mut(b).ok().and_then(|b| b.page_setup.get_mut(&s)) {
+            p.list_zoom = p.zoom.unwrap_or(0);
+            p.list_win = Some(win);
+        }
+    }
+
     fn set_name_parts(&mut self, b: BookId, s: SheetId, key: &str, parts: &[String]) {
+        self.refresh_break_list(b, s);
         let Ok(book) = self.book_mut(b) else {
             return;
         };
@@ -178,7 +222,13 @@ impl Application<'_> {
             .unwrap_or_default()
     }
 
-    fn put_titles(&mut self, b: BookId, s: SheetId, rows: bool, text: &str) -> Result<(), OmError> {
+    pub(crate) fn put_titles(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        rows: bool,
+        text: &str,
+    ) -> Result<(), OmError> {
         let text = text.strip_prefix('=').unwrap_or(text);
         let prop = if rows {
             "PrintTitleRows"
@@ -195,19 +245,19 @@ impl Application<'_> {
                 return Err(set_fail(prop));
             }
             let r = areas[0];
-            let all_cols = r.c0 == 0 && r.c1 + 1 >= crate::addr::MAX_COLS;
-            let all_rows = r.r0 == 0 && r.r1 + 1 >= crate::addr::MAX_ROWS;
+            let all_cols = r.c0 == 0 && r.c1 + 1 >= crate::addr::max_cols();
+            let all_rows = r.r0 == 0 && r.r1 + 1 >= crate::addr::max_rows();
 
             let r = if rows {
                 if all_rows && !all_cols {
                     return Err(set_fail(prop));
                 }
-                Rect::new(r.r0, 0, r.r1, crate::addr::MAX_COLS - 1)
+                Rect::new(r.r0, 0, r.r1, crate::addr::max_cols() - 1)
             } else {
                 if all_cols && !all_rows {
                     return Err(set_fail(prop));
                 }
-                Rect::new(0, r.c0, crate::addr::MAX_ROWS - 1, r.c1)
+                Rect::new(0, r.c0, crate::addr::max_rows() - 1, r.c1)
             };
             mine.push(range_text(r, &abs_style()));
         }
@@ -229,7 +279,12 @@ impl Application<'_> {
         Ok(())
     }
 
-    fn put_print_area(&mut self, b: BookId, s: SheetId, text: &str) -> Result<(), OmError> {
+    pub(crate) fn put_print_area(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        text: &str,
+    ) -> Result<(), OmError> {
         let text = text.strip_prefix('=').unwrap_or(text);
         if text.is_empty() {
             self.set_name_parts(b, s, PRINT_AREA, &[]);
@@ -254,6 +309,9 @@ impl Application<'_> {
 
     pub(crate) fn header_footer_text(&self, b: BookId, s: SheetId, footer: bool) -> String {
         let p = self.page_setup(b, s);
+        if let Some(raw) = if footer { &p.footer_raw } else { &p.header_raw } {
+            return raw.clone();
+        }
         let (order, l, c, r) = if footer {
             (
                 &p.footer_order,
@@ -290,6 +348,10 @@ impl Application<'_> {
         self.title_part(b, s, true)
     }
 
+    pub(crate) fn print_title_columns(&self, b: BookId, s: SheetId) -> String {
+        self.title_part(b, s, false)
+    }
+
     pub(crate) fn pages_member(
         &mut self,
         b: BookId,
@@ -298,7 +360,11 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
         match (m.name, m.kind) {
-            ("Count", Get) => Ok(Variant::I4(1)),
+            ("Count", Get) => {
+                let used = self.book(b)?.wb.used_range(s).is_some();
+                Ok(Variant::I4(i32::from(used)))
+            }
+            ("_NewEnum", Get) => Ok(self.alloc_enumerator(Vec::new())),
             ("Count", _) => Err(OmError::hresult(xlcalc_variant::HResult(
                 0x8002_0003_u32 as i32,
             ))),
@@ -327,7 +393,7 @@ impl Application<'_> {
         );
         if by_type && m.kind == InvokeKind::Put {
             self.coerce_wb_put(m, a)?;
-            if m.name == "PrintErrors" && matches!(a.put, Some(Variant::Bool(_))) {
+            if m.name == "PrintErrors" && matches!(a.put, Some(Variant::Bool(true))) {
                 return Err(OmError::exception(0x8007_0057_u32 as i32, None));
             }
         }
@@ -407,6 +473,7 @@ impl Application<'_> {
                 "ScaleWithDocHeaderFooter" => Variant::Bool(p.scale_with_doc),
                 "TopMargin" => Variant::R8(p.top),
                 "Zoom" => p.zoom.map_or(Variant::Bool(false), Variant::I4),
+                "ChartSize" => Variant::Error(0x800A_07FA_u32 as i32),
                 "Application" => Variant::Dispatch(Some(self.handle())),
                 "Creator" => Variant::I4(CREATOR),
                 "Parent" => self.alloc(Object::Worksheet(b, s)),
@@ -422,10 +489,26 @@ impl Application<'_> {
 
         if matches!(
             name,
-            "Order" | "Orientation" | "PaperSize" | "FirstPageNumber"
+            "Order"
+                | "Orientation"
+                | "PaperSize"
+                | "FirstPageNumber"
+                | "TopMargin"
+                | "BottomMargin"
+                | "LeftMargin"
+                | "RightMargin"
+                | "HeaderMargin"
+                | "FooterMargin"
         ) {
             if let Some(Some(Variant::Bool(t))) = value.values.first() {
                 value.values[0] = Some(Variant::I4(i32::from(*t)));
+            }
+        }
+
+        if name.ends_with("Header") || name.ends_with("Footer") {
+            if let Some(Some(Variant::Bool(t))) = value.values.first() {
+                let text = if *t { "TRUE" } else { "FALSE" };
+                value.values[0] = Some(Variant::Bstr(text.to_string()));
             }
         }
         let a = &value;
@@ -436,7 +519,7 @@ impl Application<'_> {
 
         let hf = |a: &Args| -> Result<String, OmError> {
             let t = a.string(0)?.ok_or_else(OmError::type_mismatch)?;
-            if t.encode_utf16().count() > 255 {
+            if t.encode_utf16().count() > 253 {
                 Err(fail())
             } else {
                 Ok(t)
@@ -457,6 +540,39 @@ impl Application<'_> {
                 }
             }
         };
+
+        let broken = p.fit_tall.is_some_and(|n| n > 65535) || p.fit_wide.is_some_and(|n| n > 65535);
+        if broken
+            && matches!(
+                name,
+                "BlackAndWhite"
+                    | "BottomMargin"
+                    | "CenterFooter"
+                    | "CenterHeader"
+                    | "CenterHorizontally"
+                    | "CenterVertically"
+                    | "Draft"
+                    | "FirstPageNumber"
+                    | "FooterMargin"
+                    | "HeaderMargin"
+                    | "LeftFooter"
+                    | "LeftHeader"
+                    | "LeftMargin"
+                    | "Order"
+                    | "Orientation"
+                    | "PaperSize"
+                    | "PrintGridlines"
+                    | "PrintHeadings"
+                    | "PrintNotes"
+                    | "PrintQuality"
+                    | "RightFooter"
+                    | "RightHeader"
+                    | "RightMargin"
+                    | "TopMargin"
+            )
+        {
+            return Err(fail());
+        }
         match name {
             "AlignMarginsHeaderFooter" => p.align_margins = boolean(a)?,
             "BlackAndWhite" => p.black_and_white = boolean(a)?,
@@ -464,37 +580,38 @@ impl Application<'_> {
             "CenterFooter" => {
                 p.center_footer = hf(a)?;
                 touch(&mut p.footer_order, 'C', !p.center_footer.is_empty());
+                p.footer_raw = None;
             }
             "CenterHeader" => {
                 p.center_header = hf(a)?;
                 touch(&mut p.header_order, 'C', !p.center_header.is_empty());
+                p.header_raw = None;
             }
             "CenterHorizontally" => p.center_horizontally = boolean(a)?,
             "CenterVertically" => p.center_vertically = boolean(a)?,
             "DifferentFirstPageHeaderFooter" => p.different_first = boolean(a)?,
+            "ChartSize" => return Err(fail()),
             "Draft" => p.draft = boolean(a)?,
             "FirstPageNumber" => {
-                let n = real(a)?.trunc();
-
-                p.first_page = if n >= 2_147_483_647.0 {
-                    Some(2_147_483_647.0)
-                } else if n.abs() == 32_768.0 {
+                p.first_page = if matches!(a.get(0), Some(Variant::I4(-4105))) {
                     None
                 } else {
-                    Some(n)
+                    first_page_value(real(a)?.trunc())
                 };
             }
-            "FitToPagesTall" => p.fit_tall = counted(a, 1, 65535)?,
-            "FitToPagesWide" => p.fit_wide = counted(a, 1, 65535)?,
+            "FitToPagesTall" => p.fit_tall = counted(a, 1, i32::MAX)?,
+            "FitToPagesWide" => p.fit_wide = counted(a, 1, i32::MAX)?,
             "FooterMargin" => p.footer_margin = real(a)?,
             "HeaderMargin" => p.header_margin = real(a)?,
             "LeftFooter" => {
                 p.left_footer = hf(a)?;
                 touch(&mut p.footer_order, 'L', !p.left_footer.is_empty());
+                p.footer_raw = None;
             }
             "LeftHeader" => {
                 p.left_header = hf(a)?;
                 touch(&mut p.header_order, 'L', !p.left_header.is_empty());
+                p.header_raw = None;
             }
             "LeftMargin" => p.left = real(a)?,
             "OddAndEvenPagesHeaderFooter" => p.odd_even = boolean(a)?,
@@ -528,11 +645,7 @@ impl Application<'_> {
             },
             "PrintErrors" => match a.i32(0)? {
                 Some(n @ 0..=3) => p.errors = n,
-                _ => {
-                    return Err(OmError::app_defined_with(
-                        "Invalid data value for parameter.",
-                    ));
-                }
+                _ => return Err(OmError::exception(0x8007_0057_u32 as i32, None)),
             },
             "PrintGridlines" => p.gridlines = boolean(a)?,
             "PrintHeadings" => p.headings = boolean(a)?,
@@ -556,16 +669,22 @@ impl Application<'_> {
             "RightFooter" => {
                 p.right_footer = hf(a)?;
                 touch(&mut p.footer_order, 'R', !p.right_footer.is_empty());
+                p.footer_raw = None;
             }
             "RightHeader" => {
                 p.right_header = hf(a)?;
                 touch(&mut p.header_order, 'R', !p.right_header.is_empty());
+                p.header_raw = None;
             }
             "RightMargin" => p.right = real(a)?,
             "ScaleWithDocHeaderFooter" => p.scale_with_doc = boolean(a)?,
             "TopMargin" => p.top = real(a)?,
             "Zoom" => p.zoom = counted(a, 10, 400)?,
             _ => return Err(unsupported("PageSetup", m)),
+        }
+        if !matches!(name, "Zoom" | "FitToPagesWide" | "FitToPagesTall") {
+            p.list_zoom = p.zoom.unwrap_or(0);
+            p.list_win = Some(self.break_window(b, s));
         }
         self.book_mut(b)?.page_setup.insert(s, p);
         Ok(Variant::Empty)

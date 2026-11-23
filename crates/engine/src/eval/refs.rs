@@ -52,16 +52,22 @@ pub fn resolve(ctx: &mut EvalCtx, sheet: &SheetRef, cref: &CRef) -> Operand {
     match sheets.len() {
         0 if matches!(sheet, SheetRef::Sheet(_) | SheetRef::Span(..)) => Operand::err(XlError::REF),
 
+        0 if matches!(sheet, SheetRef::Missing(n) if n.starts_with('\u{3}')) => {
+            Operand::err(XlError::NAME)
+        }
+
         0 => {
             let n = rect.cell_count() as usize;
-            if n > 1 && n <= 2_097_152 {
+            if n > 1 && n <= MATERIALISE_MAX {
                 let (rows, cols) = (rect.rows(), rect.cols());
                 Operand::Val(
                     crate::value::Array::new(rows, cols, vec![Value::Error(XlError::REF); n])
                         .into_value(),
                 )
-            } else if n > 2_097_152 && ctx.fn_depth == 0 {
+            } else if moper_alloc_fails(&rect) && ctx.fn_depth == 0 {
                 Operand::Val(Value::Number(0.0))
+            } else if n > MATERIALISE_MAX && ctx.fn_depth == 0 {
+                Operand::err(XlError::SPILL)
             } else {
                 Operand::err(XlError::REF)
             }
@@ -142,7 +148,7 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
     let outer = ctx.name_scope.replace(def.scope);
     let outer_key = ctx
         .name_key
-        .replace(crate::value::Text::from(def.name.to_uppercase()));
+        .replace(crate::value::Text::from(crate::text::name_key(&def.name)));
     let out = ctx.eval(&formula.root);
     ctx.name_key = outer_key;
     ctx.name_scope = outer;
@@ -303,4 +309,38 @@ pub fn ref_op(_ctx: &mut EvalCtx, op: BinOp, l: Operand, r: Operand) -> Operand 
         }
         _ => Operand::err(XlError::VALUE),
     }
+}
+
+const MATERIALISE_MAX: usize = 2_097_152;
+
+pub(crate) fn moper_alloc_fails(rect: &Rect) -> bool {
+    let (rows, cols) = (rect.rows() as u64, rect.cols() as u64);
+    if rows > 0x100000 || cols > 0x100000 {
+        return true;
+    }
+    let n = rows * cols;
+    n >= 1 << 32 || (n - 1) * 0x28 + 0x2c >= 1 << 32
+}
+
+pub(crate) fn is_huge_missing_root(
+    wb: &crate::workbook::Workbook,
+    fid: crate::workbook::FormulaId,
+) -> bool {
+    use crate::formula::Node;
+    fn walk(n: &Node, host: crate::address::CellAddr) -> bool {
+        match n {
+            Node::Ref(SheetRef::Missing(name), cref) => {
+                !name.starts_with('\u{3}')
+                    && resolve_rect(cref, host, false).is_some_and(|r| moper_alloc_fails(&r))
+            }
+            Node::Unary(_, a) | Node::Percent(a) | Node::Paren(a) => walk(a, host),
+            Node::Binary(op, a, b) => {
+                !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union)
+                    && (walk(a, host) || walk(b, host))
+            }
+            _ => false,
+        }
+    }
+    let f = wb.formula(fid);
+    walk(&f.formula.root, f.addr)
 }

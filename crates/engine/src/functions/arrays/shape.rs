@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use super::super::args::R;
 use super::{
-    arg_error, arg_error_typed, array_value, check_result_size, collate, opt_flag, opt_number,
-    xl_cmp, Src,
+    arg_error_typed, array_value, check_result_size, collate, opt_flag, opt_number, xl_cmp, Src,
 };
 use crate::address::MAX_ROWS;
 use crate::eval::{EvalCtx, Operand};
@@ -109,8 +108,26 @@ pub fn sort(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 fn sort_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
-        arg_error(&ops[1..])?;
         let src = Src::from_operand_3d(&ops[0])?;
+        if matches!(&src, Src::Area(a) if a.rect.is_cell()) {
+            if let Value::Error(e) = ctx.deref(ops[0].clone()) {
+                return Err(e);
+            }
+        }
+
+        for (i, op) in ops.iter().enumerate().skip(1) {
+            match op {
+                Operand::Val(Value::Error(e)) => return Err(*e),
+                Operand::Ref(r) if r.single().is_some_and(|a| a.rect.is_cell()) => {
+                    match ctx.deref(op.clone()) {
+                        Value::Error(e) => return Err(e),
+                        Value::Blank if i < 3 => return Err(XlError::VALUE),
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        }
         let by_col = opt_flag(ops.get(3))?;
         let indexes = match ops.get(1) {
             None | Some(Operand::Missing) => vec![1.0],
@@ -274,30 +291,37 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         if let (Src::Area(_), 1, Value::Error(e)) = (&src, a.len(), &a.data[0]) {
             return Err(*e);
         }
-        let mut keys: Vec<(Arc<Array>, bool)> = Vec::new();
-        let mut by_col: Option<bool> = None;
 
-        let mut shape: Option<(u32, u32)> = None;
+        let mut read: Vec<(Arc<Array>, f64)> = Vec::new();
         let mut i = 1;
         while i < ops.len() {
             let by = Src::from_operand_3d(&ops[i])?.to_array(ctx)?;
-            let desc = match ops.get(i + 1) {
-                None | Some(Operand::Missing) => false,
+
+            if let (Operand::Ref(_), 1, Value::Error(e)) = (&ops[i], by.len(), &by.data[0]) {
+                return Err(*e);
+            }
+            let order = match ops.get(i + 1) {
+                None | Some(Operand::Missing) => 1.0,
                 Some(Operand::Val(Value::Error(e))) => return Err(*e),
                 Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
-                Some(Operand::Val(v)) => order_of(ctx.to_number(v)?)?,
+                Some(Operand::Val(v)) => ctx.to_number(v)?,
                 Some(op @ Operand::Ref(_)) => {
                     let v = Src::from_operand_3d(op)?.to_array(ctx)?;
                     if v.len() != 1 {
                         return Err(XlError::VALUE);
                     }
-                    order_of(ctx.to_number(&v.data[0])?)?
+                    ctx.to_number(&v.data[0])?
                 }
             };
+            read.push((by, order));
+            i += 2;
+        }
+        let mut keys: Vec<(Arc<Array>, bool)> = Vec::new();
+        let mut by_col: Option<bool> = None;
 
-            if let (Operand::Ref(_), 1, Value::Error(e)) = (&ops[i], by.len(), &by.data[0]) {
-                return Err(*e);
-            }
+        let mut shape: Option<(u32, u32)> = None;
+        for (by, order) in read {
+            let desc = order_of(order)?;
             if *shape.get_or_insert((by.rows, by.cols)) != (by.rows, by.cols) {
                 return Err(XlError::VALUE);
             }
@@ -324,7 +348,6 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 by_col = Some(b);
             }
             keys.push((by, desc));
-            i += 2;
         }
 
         if by_col.is_none() && a.rows > 1 && a.cols > 1 {
@@ -381,10 +404,20 @@ pub fn unique(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let g = g.clone();
         return unique_refs(ctx, &g, ops);
     }
-    if let Some(r) = lift_flags(ctx, ops, &[1, 2], unique_one, None) {
+
+    let ops: Vec<Operand> = ops
+        .iter()
+        .enumerate()
+        .map(|(i, o)| match o {
+            Operand::Ref(r) if i > 0 && r.single().is_some_and(|a| a.rect.is_cell()) => {
+                Operand::Val(ctx.deref(o.clone()))
+            }
+            o => o.clone(),
+        })
+        .collect();
+    if let Some(r) = lift_flags(ctx, &ops, &[1, 2], unique_one, None) {
         return r;
     }
-
     let ops: Vec<Operand> = ops
         .iter()
         .enumerate()
@@ -463,6 +496,12 @@ fn unique_refs(ctx: &mut EvalCtx, g: &crate::eval::RefGrid, ops: &[Operand]) -> 
 fn unique_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
         let src = Src::from_operand_3d(&ops[0])?;
+
+        if matches!(&src, Src::Area(a) if a.rect.is_cell()) {
+            if let Value::Error(e) = ctx.deref(ops[0].clone()) {
+                return Err(e);
+            }
+        }
         let by_col = opt_flag(ops.get(1))?;
         let once = opt_flag(ops.get(2))?;
         let a = src.to_array(ctx)?;

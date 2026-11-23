@@ -51,7 +51,10 @@ impl Workbook {
             .ok_or_else(|| EditError::Compile(format!("no such table '{name}'")))
     }
 
-    fn rewrite_nodes(&mut self, f: &mut dyn FnMut(&Node, CellAddr) -> Option<Node>) -> bool {
+    pub(crate) fn rewrite_nodes(
+        &mut self,
+        f: &mut dyn FnMut(&Node, CellAddr) -> Option<Node>,
+    ) -> bool {
         let mut any = false;
         let ids: Vec<_> = self.formula_ids().collect();
         for fid in ids {
@@ -145,9 +148,13 @@ impl Workbook {
         if bad || taken {
             return Err(EditError::BadName(new.to_string()));
         }
+        let notes = self.names.notes(&old_key, scope).cloned();
         self.names.delete(&old_key, scope);
         def.name = new.to_string();
         self.names.insert(def);
+        if let Some(n) = notes {
+            *self.names.notes_mut(&new_key, scope) = n;
+        }
         let (key_text, display): (crate::value::Text, crate::value::Text) =
             (new_key.as_str().into(), new.into());
         self.rewrite_nodes(&mut |n, _| match n {
@@ -384,6 +391,34 @@ impl Workbook {
         self.command(Command::Table, |wb| wb.set_table_headers_run(name, show))
     }
 
+    pub(super) fn plain_refs_touch(&self, sheet: SheetId, rect: Rect) -> bool {
+        let mut deps = Vec::new();
+        self.graph.dependents_of_rect(sheet, &rect, &mut deps);
+        let hit =
+            |v: Vec<(SheetId, Rect)>| v.iter().any(|(s, r)| *s == sheet && r.intersects(&rect));
+        deps.iter().any(|&fid| {
+            let f = self.formula(fid);
+            hit(crate::graph::plain_ref_rects(self, &f.formula, f.addr))
+        }) || self.names.iter().any(|n| {
+            if !self.names.is_visible(&n.name.to_uppercase(), n.scope) {
+                return false;
+            }
+
+            let mut relative = false;
+            crate::formula::walk(&n.formula.root, &mut |x| {
+                if let Node::Ref(_, c) = x {
+                    relative |= match *c {
+                        CRef::Cell { row, col } => !row.abs || !col.abs,
+                        CRef::Area { r0, c0, r1, c1 } => !(r0.abs && c0.abs && r1.abs && c1.abs),
+                        CRef::Cols { c0, c1 } => !(c0.abs && c1.abs),
+                        CRef::Rows { r0, r1 } => !(r0.abs && r1.abs),
+                    };
+                }
+            });
+            !relative && hit(crate::graph::plain_ref_rects(self, &n.formula, n.host()))
+        })
+    }
+
     fn set_table_headers_run(&mut self, name: &str, show: bool) -> Result<RecalcReport, EditError> {
         let ti = self.table_position(name)?;
         let t = self.tables[ti].clone();
@@ -404,7 +439,8 @@ impl Workbook {
                 && (c0..=c1).all(|c| {
                     self.sheet(t.sheet)
                         .is_some_and(|s| s.cells.get(t.rect.r0 - 1, c).is_none())
-                });
+                })
+                && !self.plain_refs_touch(t.sheet, Rect::new(t.rect.r0 - 1, c0, t.rect.r0 - 1, c1));
             self.settings.mode = CalcMode::Manual;
             let row = if free {
                 t.rect.r0 - 1
@@ -442,6 +478,19 @@ impl Workbook {
             }
         }
         self.settings.mode = mode;
+        if !show {
+            let (ar, ac) = self.active_cell_of(self.session.active);
+            for t in &mut self.tables {
+                t.list_sel = t.rect.contains(ar, ac);
+            }
+
+            if t.rect.r0 == ar && (c0..=c1).contains(&ac) {
+                let active = self.session.active;
+                self.session
+                    .selection
+                    .insert(active, crate::Selection::cell(ar + 1, ac));
+            }
+        }
         let name = self.tables[ti].name.clone();
         Ok(self.table_changed(&name))
     }
@@ -481,7 +530,11 @@ impl Workbook {
             None => {
                 generated = true;
                 let all: Vec<String> = assigned.iter().chain(old).cloned().collect();
-                match left.and_then(|l| super::tables::next_header_name(l, &all)) {
+
+                match left
+                    .filter(|_| t.headers)
+                    .and_then(|l| super::tables::next_header_name(l, &all))
+                {
                     Some(n) => n,
                     None => {
                         let mut k = 1;
@@ -544,9 +597,9 @@ impl Workbook {
         if let (Ok(_), Some((sheet, old, filtered))) = (&r, before) {
             if let Ok(i) = self.table_position(name) {
                 let now = self.tables[i].rect;
-
-                if now != old && sheet != self.session.active {
-                    self.view_clear_range_filter_criteria(sheet);
+                if now != old {
+                    let tname = self.tables[i].name.clone();
+                    self.view_table_rows_changed(sheet, &tname);
                 }
                 if filtered && now.r1 < old.r1 {
                     self.view_show_rows(sheet, now.r1 + 1, old.r1);
@@ -644,8 +697,8 @@ impl Workbook {
                                 && r.r1 <= old_de
                                 && r.r1 == old_de
                                 && (!t.totals || r.r0 <= d0)
-                                && t.rect.c0 <= r.c0
-                                && r.c1 <= t.rect.c1 =>
+                                && t.rect.c0.max(rect.c0) <= r.c0
+                                && r.c1 <= t.rect.c1.min(rect.c1) =>
                         {
                             changed = true;
                             crate::structure::RefEdit::Set(
@@ -741,6 +794,7 @@ impl Workbook {
 
         let early = row_passes > 0;
         let mut first = None;
+        let mut quiet_vol = false;
         if early {
             if shrunk {
                 let keep = (t.sheet, newrect);
@@ -757,9 +811,23 @@ impl Workbook {
             }
             if shrunk {
                 self.calc.relink_scope = Some(self.dropped_rows_scope(&t, new_end, &snapshot));
-                first = Some(self.relink_and_recalc());
+
+                quiet_vol = self.calc.circular.is_empty()
+                    && !(self.calc.volatile.is_empty() && self.calc.host_volatile.is_empty());
+                first = Some(if quiet_vol {
+                    self.silently(|wb| wb.relink_and_recalc())
+                } else {
+                    self.relink_and_recalc()
+                });
             } else {
-                self.notify_cell_change(t.sheet);
+                quiet_vol = self.calc.circular.is_empty()
+                    && new_end <= t.rect.r1 + 1
+                    && !(self.calc.volatile.is_empty() && self.calc.host_volatile.is_empty());
+                if quiet_vol {
+                    self.silently(|wb| wb.notify_cell_change(t.sheet));
+                } else {
+                    self.notify_cell_change(t.sheet);
+                }
             }
             row_passes -= 1;
         }
@@ -770,7 +838,13 @@ impl Workbook {
             self.recalc_point();
         }
         if early {
+            let quiet =
+                quiet_vol && self.calc.dirty_list.is_empty() && self.calc.circular.is_empty();
+            self.calc.skip_host_volatile = quiet;
+            self.calc.skip_volatile = quiet;
             let last = self.recalc_point();
+            self.calc.skip_host_volatile = false;
+            self.calc.skip_volatile = false;
             return Ok(first.unwrap_or(last));
         }
         if shrunk {
@@ -900,7 +974,7 @@ impl Workbook {
             }
 
             let ending = self.formulas_with_area_end(sheet, old_t);
-            let _ = self.move_range(
+            let _ = self.move_range_for_resize(
                 sheet,
                 Rect::new(old_t, oc0, old_t, kc1),
                 CellAddr::new(sheet, tmp, oc0),
@@ -908,7 +982,7 @@ impl Workbook {
             let _ = self.shift(row_shift(old_t, false));
             let _ = self.shift(row_shift(new_end, true));
 
-            let _ = self.move_range(
+            let _ = self.move_range_for_resize(
                 sheet,
                 Rect::new(tmp, oc0, tmp, kc1),
                 CellAddr::new(sheet, new_end, oc0),
@@ -964,6 +1038,10 @@ impl Workbook {
     }
 
     fn resize_table_columns(&mut self, ti: usize, t: &Table, rect: Rect, auto: bool) {
+        self.notes.change_late = rect.c0 != t.rect.c0
+            || rect.c1 != t.rect.c1
+            || rect.r1 < t.rect.r1
+            || (rect.r1 > t.rect.r1 && (!self.calc.circular.is_empty() || rect.r1 > t.rect.r1 + 1));
         let (oc0, oc1) = (t.rect.c0, t.rect.c1);
         let mut columns: Vec<String> = Vec::new();
         let mut calc: Vec<bool> = Vec::new();

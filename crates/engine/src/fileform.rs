@@ -239,6 +239,11 @@ impl Ctx<'_> {
                 .and_then(|h| self.wb.table_at(h))
                 .map(|t| t.name.clone())
         });
+
+        let table = table.map(|t| match self.wb.table_by_name(&t) {
+            Some(x) => crate::workbook::tables::table_display_name(&x.name),
+            None => t,
+        });
         let spec = match spec.strip_prefix('@') {
             Some("") => "[#This Row]".to_string(),
             Some(rest) if rest.starts_with('[') => format!("[[#This Row],{rest}]"),
@@ -449,6 +454,19 @@ const HIDDEN_PLAIN: &[&str] = &[
     "THAIYEAR",
     "WORKDAY.INTL",
 ];
+
+pub(crate) fn hidden_name_for_call(name: &str) -> Option<String> {
+    let up = crate::formula::strip_prefixes(name).to_uppercase();
+    let id = crate::functions::lookup(&up)?;
+    let def = crate::functions::def(id).name;
+    if HIDDEN_PLAIN.contains(&def) {
+        return Some(format!("_xlfn.{def}"));
+    }
+    if file_prefix(def).is_empty() {
+        return None;
+    }
+    hidden_tokens(&prefixed(def)).into_iter().next()
+}
 
 fn hidden_tokens(text: &str) -> Vec<String> {
     let b = text.as_bytes();

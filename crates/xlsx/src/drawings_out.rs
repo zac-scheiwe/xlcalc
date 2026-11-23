@@ -179,7 +179,28 @@ fn num(v: f64) -> String {
     crate::write::number_text(v)
 }
 
-fn axis_xml(a: &ChartAxis, kind: &str, id: u32, cross: u32, pos: &str, between: bool) -> String {
+fn crosses_xml(c: &Chart, other: &str) -> String {
+    use xlcalc::drawing::BagVal;
+    match c.bag.get(&format!("{other}.Crosses")) {
+        Some(BagVal::I(-4114)) => match c.bag.get(&format!("{other}.CrossesAt")) {
+            Some(BagVal::D(v)) => format!("<c:crossesAt val=\"{}\"/>", num(*v)),
+            _ => "<c:crosses val=\"autoZero\"/>".into(),
+        },
+        Some(BagVal::I(2)) => "<c:crosses val=\"max\"/>".into(),
+        Some(BagVal::I(4)) => "<c:crosses val=\"min\"/>".into(),
+        _ => "<c:crosses val=\"autoZero\"/>".into(),
+    }
+}
+
+fn axis_xml(
+    a: &ChartAxis,
+    kind: &str,
+    ids: (u32, u32),
+    pos: &str,
+    between: bool,
+    crosses: &str,
+) -> String {
+    let (id, cross) = ids;
     let orient = if a.reverse { "maxMin" } else { "minMax" };
     let mut s =
         format!("<c:{kind}><c:axId val=\"{id}\"/><c:scaling><c:orientation val=\"{orient}\"/>");
@@ -205,9 +226,7 @@ fn axis_xml(a: &ChartAxis, kind: &str, id: u32, cross: u32, pos: &str, between: 
         ));
     }
     s.push_str("<c:numFmt formatCode=\"General\" sourceLinked=\"1\"/><c:majorTickMark val=\"out\"/><c:minorTickMark val=\"none\"/><c:tickLblPos val=\"nextTo\"/>");
-    s.push_str(&format!(
-        "<c:crossAx val=\"{cross}\"/><c:crosses val=\"autoZero\"/>"
-    ));
+    s.push_str(&format!("<c:crossAx val=\"{cross}\"/>{crosses}"));
     if kind == "catAx" {
         s.push_str("<c:auto val=\"1\"/><c:lblAlgn val=\"ctr\"/><c:lblOffset val=\"100\"/><c:noMultiLvlLbl val=\"0\"/>");
     } else {
@@ -216,13 +235,104 @@ fn axis_xml(a: &ChartAxis, kind: &str, id: u32, cross: u32, pos: &str, between: 
         if let Some(m) = a.major {
             s.push_str(&format!("<c:majorUnit val=\"{}\"/>", num(m)));
         }
+
+        if let Some(m) = a.minor {
+            s.push_str(&format!("<c:minorUnit val=\"{}\"/>", num(m)));
+        }
     }
     s.push_str(&format!("</c:{kind}>"));
     s
 }
 
+fn chart_groups(c: &Chart) -> Vec<(i32, i32, Vec<usize>)> {
+    let mut groups: Vec<(i32, i32, Vec<usize>)> = Vec::new();
+    for g in [1, 2] {
+        for (i, ser) in c.series.iter().enumerate() {
+            let t = if ser.chart_type == 0 {
+                c.chart_type
+            } else {
+                ser.chart_type
+            };
+            if ser.axis_group.clamp(1, 2) != g {
+                continue;
+            }
+            match groups
+                .iter_mut()
+                .find(|x| x.1 == g && type_parts(x.0) == type_parts(t))
+            {
+                Some(x) => x.2.push(i),
+                None => groups.push((t, g, vec![i])),
+            }
+        }
+    }
+    if groups.is_empty() {
+        groups.push((c.chart_type, 1, Vec::new()));
+    }
+    groups
+}
+
+fn group_xml(wb: &Workbook, c: &Chart, t: i32, idxs: &[usize], ax_ids: &str) -> String {
+    let (el, dir, grouping) = type_parts(t);
+    let scatter = el == "scatterChart" || el == "bubbleChart";
+    let mut s = format!("<c:{el}>");
+    match el {
+        "barChart" => s.push_str(&format!(
+            "<c:barDir val=\"{dir}\"/><c:grouping val=\"{grouping}\"/><c:varyColors val=\"0\"/>"
+        )),
+        "lineChart" | "areaChart" => s.push_str(&format!(
+            "<c:grouping val=\"{grouping}\"/><c:varyColors val=\"0\"/>"
+        )),
+        "pieChart" | "doughnutChart" => s.push_str("<c:varyColors val=\"1\"/>"),
+        "scatterChart" => {
+            let style = if matches!(t, 72 | 73) {
+                "smoothMarker"
+            } else {
+                "lineMarker"
+            };
+            s.push_str(&format!(
+                "<c:scatterStyle val=\"{style}\"/><c:varyColors val=\"0\"/>"
+            ));
+        }
+        "radarChart" => s.push_str("<c:radarStyle val=\"marker\"/><c:varyColors val=\"0\"/>"),
+        _ => s.push_str("<c:varyColors val=\"0\"/>"),
+    }
+    for &i in idxs {
+        let ser = &c.series[i];
+        let st = if ser.chart_type == 0 {
+            t
+        } else {
+            ser.chart_type
+        };
+        s.push_str(&format!(
+            "<c:ser><c:idx val=\"{i}\"/><c:order val=\"{i}\"/>"
+        ));
+        s.push_str(&part_xml(wb, "tx", &ser.name, false));
+        s.push_str(&crate::serfmt_xml::series_pre(el, st, &ser.fmt));
+        if scatter {
+            s.push_str(&part_xml(wb, "xVal", &ser.x, true));
+            s.push_str(&part_xml(wb, "yVal", &ser.values, true));
+        } else {
+            s.push_str(&part_xml(wb, "cat", &ser.x, false));
+            s.push_str(&part_xml(wb, "val", &ser.values, true));
+        }
+        if el == "lineChart" || el == "scatterChart" {
+            s.push_str(&crate::serfmt_xml::smooth(st, &ser.fmt));
+        }
+        s.push_str("</c:ser>");
+    }
+    match el {
+        "barChart" => s.push_str("<c:gapWidth val=\"150\"/>"),
+        "doughnutChart" => s.push_str("<c:firstSliceAng val=\"0\"/><c:holeSize val=\"50\"/>"),
+        "pieChart" => s.push_str("<c:firstSliceAng val=\"0\"/>"),
+        _ => {}
+    }
+    s.push_str(ax_ids);
+    s.push_str(&format!("</c:{el}>"));
+    s
+}
+
 pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
-    let (el, dir, grouping) = type_parts(c.chart_type);
+    let (el, dir, _) = type_parts(c.chart_type);
     let scatter = el == "scatterChart" || el == "bubbleChart";
     let no_axes = matches!(el, "pieChart" | "doughnutChart");
     let mut s = String::from(rawxml::DECL);
@@ -242,88 +352,78 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
         s.push_str(&format!("<c:title>{body}<c:overlay val=\"0\"/></c:title>"));
     }
     s.push_str(&format!(
-        "<c:autoTitleDeleted val=\"{}\"/><c:plotArea><c:layout/><c:{el}>",
+        "<c:autoTitleDeleted val=\"{}\"/><c:plotArea><c:layout/>",
         u8::from(!c.has_title)
     ));
-    match el {
-        "barChart" => s.push_str(&format!(
-            "<c:barDir val=\"{dir}\"/><c:grouping val=\"{grouping}\"/><c:varyColors val=\"0\"/>"
-        )),
-        "lineChart" | "areaChart" => s.push_str(&format!(
-            "<c:grouping val=\"{grouping}\"/><c:varyColors val=\"0\"/>"
-        )),
-        "pieChart" | "doughnutChart" => s.push_str("<c:varyColors val=\"1\"/>"),
-        "scatterChart" => {
-            let style = if matches!(c.chart_type, 72 | 73) {
-                "smoothMarker"
-            } else {
-                "lineMarker"
-            };
-            s.push_str(&format!(
-                "<c:scatterStyle val=\"{style}\"/><c:varyColors val=\"0\"/>"
-            ));
-        }
-        "radarChart" => s.push_str("<c:radarStyle val=\"marker\"/><c:varyColors val=\"0\"/>"),
-        _ => s.push_str("<c:varyColors val=\"0\"/>"),
-    }
-    for (i, ser) in c.series.iter().enumerate() {
-        s.push_str(&format!(
-            "<c:ser><c:idx val=\"{i}\"/><c:order val=\"{i}\"/>"
-        ));
-        s.push_str(&part_xml(wb, "tx", &ser.name, false));
-        s.push_str(&crate::serfmt_xml::series_pre(el, c.chart_type, &ser.fmt));
-        if scatter {
-            s.push_str(&part_xml(wb, "xVal", &ser.x, true));
-            s.push_str(&part_xml(wb, "yVal", &ser.values, true));
+    let groups = chart_groups(c);
+    let secondary = groups.iter().any(|g| g.1 == 2);
+    for (t, g, idxs) in &groups {
+        let ids = if *g == 2 {
+            "<c:axId val=\"333333333\"/><c:axId val=\"444444444\"/>"
         } else {
-            s.push_str(&part_xml(wb, "cat", &ser.x, false));
-            s.push_str(&part_xml(wb, "val", &ser.values, true));
-        }
-        if el == "lineChart" || el == "scatterChart" {
-            s.push_str(&crate::serfmt_xml::smooth(c.chart_type, &ser.fmt));
-        }
-        s.push_str("</c:ser>");
+            "<c:axId val=\"111111111\"/><c:axId val=\"222222222\"/>"
+        };
+        s.push_str(&group_xml(wb, c, *t, idxs, if no_axes { "" } else { ids }));
     }
-    match el {
-        "barChart" => s.push_str("<c:gapWidth val=\"150\"/>"),
-        "doughnutChart" => s.push_str("<c:firstSliceAng val=\"0\"/><c:holeSize val=\"50\"/>"),
-        "pieChart" => s.push_str("<c:firstSliceAng val=\"0\"/>"),
-        _ => {}
-    }
-    if !no_axes {
-        s.push_str("<c:axId val=\"111111111\"/><c:axId val=\"222222222\"/>");
-    }
-    s.push_str(&format!("</c:{el}>"));
     if !no_axes {
         if scatter {
             s.push_str(&axis_xml(
                 &c.axes[0],
                 "valAx",
-                111_111_111,
-                222_222_222,
+                (111_111_111, 222_222_222),
                 "b",
                 false,
+                &crosses_xml(c, "Axis2"),
             ));
         } else {
             let p = if dir == "bar" { "l" } else { "b" };
             s.push_str(&axis_xml(
                 &c.axes[0],
                 "catAx",
-                111_111_111,
-                222_222_222,
+                (111_111_111, 222_222_222),
                 p,
                 true,
+                &crosses_xml(c, "Axis2"),
             ));
         }
         let p = if dir == "bar" { "b" } else { "l" };
         s.push_str(&axis_xml(
             &c.axes[1],
             "valAx",
-            222_222_222,
-            111_111_111,
+            (222_222_222, 111_111_111),
             p,
             !scatter,
+            &crosses_xml(c, "Axis1"),
         ));
+        if secondary {
+            let p = if dir == "bar" { "t" } else { "r" };
+            let v = axis_xml(
+                &c.axes[2],
+                "valAx",
+                (444_444_444, 333_333_333),
+                p,
+                !scatter,
+                "<c:crosses val=\"max\"/>",
+            );
+            s.push_str(&v);
+            let (kind, p) = if scatter {
+                ("valAx", "b")
+            } else if dir == "bar" {
+                ("catAx", "l")
+            } else {
+                ("catAx", "b")
+            };
+            let x = axis_xml(
+                &ChartAxis::new(false),
+                kind,
+                (333_333_333, 444_444_444),
+                p,
+                true,
+                "",
+            )
+            .replace("<c:delete val=\"0\"/>", "<c:delete val=\"1\"/>");
+            s.push_str(&x);
+        }
     }
     s.push_str("</c:plotArea>");
     if c.has_legend {
@@ -410,25 +510,21 @@ fn c_nv_pr(s: &Shape) -> String {
     if !s.visible {
         t.push_str(" hidden=\"1\"");
     }
-    t.push_str("/>");
+    match &s.props.hlink {
+        Some(l) => {
+            t.push_str(&format!(
+                "><a:hlinkClick xmlns:r=\"{}\" r:id=\"{}\"",
+                &REL[..REL.len() - 1],
+                l.rid
+            ));
+            if let Some(tip) = l.screen_tip.as_ref().filter(|t| !t.is_empty()) {
+                t.push_str(&format!(" tooltip=\"{}\"", escape_attr(tip)));
+            }
+            t.push_str("/></xdr:cNvPr>");
+        }
+        None => t.push_str("/>"),
+    }
     t
-}
-
-fn tx_body(s: &Shape) -> String {
-    let paras: String = if s.text.is_empty() {
-        "<a:p><a:endParaRPr lang=\"en-US\"/></a:p>".to_string()
-    } else {
-        s.text
-            .split('\n')
-            .map(|l| {
-                format!(
-                    "<a:p><a:r><a:rPr lang=\"en-US\"/><a:t>{}</a:t></a:r></a:p>",
-                    escape_text(l)
-                )
-            })
-            .collect()
-    };
-    format!("<xdr:txBody><a:bodyPr/><a:lstStyle/>{paras}</xdr:txBody>")
 }
 
 fn group_body(wb: &Workbook, sheet: SheetId, s: &Shape, kids: &[u32]) -> String {
@@ -479,13 +575,13 @@ fn shape_body(
             c_nv_pr(s),
             xfrm(wb, sheet, s),
             type_prst(*t),
-            tx_body(s)
+            crate::drawings_text::tx_body(s)
         ),
         ShapeKind::TextBox => format!(
             "<xdr:sp macro=\"\" textlink=\"\"><xdr:nvSpPr>{}<xdr:cNvSpPr txBox=\"1\"/></xdr:nvSpPr><xdr:spPr>{}<a:prstGeom prst=\"rect\"><a:avLst/></a:prstGeom><a:noFill/></xdr:spPr>{}</xdr:sp>",
             c_nv_pr(s),
             xfrm(wb, sheet, s),
-            tx_body(s)
+            crate::drawings_text::tx_body(s)
         ),
         ShapeKind::Line => format!(
             "<xdr:cxnSp macro=\"\"><xdr:nvCxnSpPr>{}<xdr:cNvCxnSpPr/></xdr:nvCxnSpPr><xdr:spPr>{}<a:prstGeom prst=\"line\"><a:avLst/></a:prstGeom><a:ln w=\"9525\"><a:solidFill><a:schemeClr val=\"tx1\"/></a:solidFill></a:ln></xdr:spPr></xdr:cxnSp>",
@@ -541,6 +637,7 @@ fn patch_item(
     same.alt_text = old.alt_text.clone();
     same.visible = old.visible;
     same.text = old.text.clone();
+    same.props.tf = old.props.tf.clone();
     same.flip_h = old.flip_h;
     same.flip_v = old.flip_v;
     same.rotation = old.rotation;
@@ -612,10 +709,10 @@ fn patch_item(
             ),
         );
     }
-    if new.text != old.text {
+    if new.text != old.text || new.props.tf != old.props.tf {
         let ts = body.find("<xdr:txBody>")?;
         let te = ts + body[ts..].find("</xdr:txBody>")? + "</xdr:txBody>".len();
-        body.replace_range(ts..te, &tx_body(new));
+        body.replace_range(ts..te, &crate::drawings_text::tx_body(new));
     }
     let wrapped = wrap_anchor(wb, sheet, &new.pos, "\u{1}");
     let (head, foot) = wrapped.split_once('\u{1}')?;
@@ -671,11 +768,24 @@ pub(crate) fn plan(
     namer: &mut Namer,
     warnings: &mut Vec<String>,
 ) -> Option<Option<Built>> {
-    let model: Vec<Shape> = wb.drawing(sheet).map_or(Vec::new(), |d| d.shapes.clone());
+    let mut model: Vec<Shape> = wb.drawing(sheet).map_or(Vec::new(), |d| d.shapes.clone());
     let src = pkg.and_then(|p| {
         drawing_part_of(p, sheet_part)
             .and_then(|(dp, rid)| read_drawing(wb, sheet, p, &dp).map(|parsed| (dp, rid, parsed)))
     });
+
+    for sh in &mut model {
+        sh.props.hlink = wb
+            .hyperlinks(sheet)
+            .iter()
+            .find(|l| l.shape == Some(sh.id))
+            .map(|l| xlcalc::drawing::ShapeLink {
+                address: l.address.clone(),
+                sub_address: l.sub_address.clone(),
+                screen_tip: l.screen_tip.clone(),
+                rid: String::new(),
+            });
+    }
     let src_shapes: Vec<&Shape> = src.as_ref().map_or(Vec::new(), |(_, _, p)| {
         p.items
             .iter()
@@ -705,6 +815,40 @@ pub(crate) fn plan(
             Vec::new(),
         ),
     };
+    for sh in &mut model {
+        let src_link = src_items
+            .iter()
+            .filter_map(|i| i.shape.as_ref())
+            .chain(src_items.iter().flat_map(|i| i.members.iter()))
+            .find(|o| o.id == sh.id)
+            .and_then(|o| o.props.hlink.clone());
+        let Some(l) = sh.props.hlink.as_mut() else {
+            continue;
+        };
+        match src_link {
+            Some(old) if old == *l => l.rid = old.rid,
+            _ => {
+                l.rid = (namer.rel)();
+                let target = match (l.address.is_empty(), l.sub_address.is_empty()) {
+                    (_, true) => crate::hyperlinks::target_of(&l.address),
+                    (true, false) => format!("#{}", l.sub_address),
+                    (false, false) => {
+                        format!(
+                            "{}#{}",
+                            crate::hyperlinks::target_of(&l.address),
+                            l.sub_address
+                        )
+                    }
+                };
+                rels.push(Rel {
+                    id: l.rid.clone(),
+                    ty: format!("{REL}hyperlink"),
+                    target,
+                    external: !l.address.is_empty(),
+                });
+            }
+        }
+    }
     let mut root = root.unwrap_or_else(|| Tag::new("xdr:wsDr"));
     for (k, v) in [("xmlns:xdr", NS_XDR), ("xmlns:a", NS_A)] {
         if root.get(k).is_none() {

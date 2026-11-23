@@ -116,82 +116,135 @@ pub(crate) enum Order {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum After {
+pub(crate) enum Recalc {
     Never,
 
-    Ran,
+    Auto,
 
-    RanAnyMode,
+    Forced,
 
     Always,
+}
 
-    PerPass,
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Dispatch {
+    Direct,
+
+    Menu(u16),
+
+    Table,
+
+    Unlisted,
+}
+
+impl Dispatch {
+    pub(crate) const fn after_at(self) -> AfterAt {
+        match self {
+            Dispatch::Direct => AfterAt::Recalc,
+            Dispatch::Menu(_) | Dispatch::Table | Dispatch::Unlisted => AfterAt::CommandEnd,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct Rule {
     pub order: Order,
 
+    pub dispatch: Dispatch,
+
     pub change: bool,
 
     pub calc: bool,
-    pub after: After,
+
+    pub recalc: Recalc,
 }
 
-const fn r(order: Order, change: bool, calc: bool, after: After) -> Rule {
+const fn r(site: Site, dispatch: Dispatch, change: bool, calc: bool, recalc: Recalc) -> Rule {
     Rule {
-        order,
+        order: order(site, dispatch.after_at()),
+        dispatch,
         change,
         calc,
-        after,
+        recalc,
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Site {
+    ChangeAfterRecalc,
+
+    ChangeBeforeRecalc,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum AfterAt {
+    Recalc,
+
+    CommandEnd,
+}
+
+const fn order(site: Site, after: AfterAt) -> Order {
+    match (site, after) {
+        (Site::ChangeBeforeRecalc, _) => Order::ChangeFirst,
+        (Site::ChangeAfterRecalc, AfterAt::Recalc) => Order::CalcFirst,
+        (Site::ChangeAfterRecalc, AfterAt::CommandEnd) => Order::CalcThenChange,
     }
 }
 
 pub(crate) const fn rule(cmd: Command) -> Rule {
-    use After::{Always, Never, PerPass, Ran, RanAnyMode};
-    use Order::{CalcFirst, CalcThenChange, ChangeFirst};
+    use Dispatch::{Direct, Menu, Table, Unlisted};
+    use Recalc::{Always, Auto, Forced, Never};
+    use Site::{ChangeAfterRecalc as AfterRecalc, ChangeBeforeRecalc as BeforeRecalc};
     match cmd {
-        Command::Entry => r(CalcFirst, true, true, Ran),
+        Command::Entry => r(AfterRecalc, Direct, true, true, Auto),
 
-        Command::ArrayEntry
-        | Command::Clear
-        | Command::ClearContents
-        | Command::Delete
-        | Command::Fill => r(CalcThenChange, true, true, Ran),
-        Command::ClearFormats
-        | Command::Insert
-        | Command::Copy
-        | Command::Cut
-        | Command::PasteSpecial
-        | Command::Replace
-        | Command::RemoveDuplicates => r(ChangeFirst, true, true, Ran),
+        Command::Delete => r(AfterRecalc, Menu(0x36), true, true, Auto),
 
-        Command::DataSeries => r(ChangeFirst, false, true, Ran),
-        Command::Format | Command::TableAdd => r(ChangeFirst, false, false, Never),
+        Command::ClearContents => r(AfterRecalc, Menu(0x5d6), true, true, Auto),
+        Command::Clear | Command::ClearFormats => r(AfterRecalc, Menu(0x34), true, true, Auto),
 
-        Command::Sort
-        | Command::Scenario
-        | Command::TextToColumns
-        | Command::Subtotal
-        | Command::Merge
-        | Command::Table
-        | Command::DataTable
-        | Command::View
-        | Command::Name
-        | Command::Pivot
-        | Command::Atp
-        | Command::Control => r(ChangeFirst, false, true, Ran),
+        Command::PasteSpecial => r(BeforeRecalc, Menu(0x35), true, true, Auto),
 
-        Command::TableResize => r(ChangeFirst, true, true, PerPass),
+        Command::Copy => r(BeforeRecalc, Menu(0x32), true, true, Auto),
 
-        Command::GoalSeek => r(ChangeFirst, false, true, RanAnyMode),
-        Command::Calculate => r(ChangeFirst, false, true, Always),
-        Command::CalculateSheet => r(ChangeFirst, false, true, Never),
-        Command::Setting => r(ChangeFirst, false, true, Ran),
-        Command::AddSheet | Command::ActivateSheet => r(ChangeFirst, false, false, Never),
-        Command::CopySheet | Command::RenameSheet => r(CalcThenChange, false, true, Ran),
-        Command::MoveSheet => r(CalcThenChange, false, true, Ran),
-        Command::DeleteSheet => r(CalcThenChange, false, true, Ran),
+        Command::RemoveDuplicates => r(BeforeRecalc, Menu(0x377), true, true, Auto),
+
+        Command::ArrayEntry | Command::Fill => r(AfterRecalc, Table, true, true, Auto),
+
+        Command::Insert => r(BeforeRecalc, Menu(0x37), true, true, Auto),
+        Command::Cut => r(BeforeRecalc, Menu(0x31), true, true, Auto),
+
+        Command::Replace => r(BeforeRecalc, Direct, true, true, Auto),
+
+        Command::DataSeries => r(BeforeRecalc, Menu(0x28), true, true, Auto),
+        Command::Format | Command::TableAdd => r(BeforeRecalc, Direct, false, false, Never),
+
+        Command::Sort => r(BeforeRecalc, Menu(0x27), false, true, Auto),
+        Command::Scenario => r(BeforeRecalc, Menu(0x135), false, true, Auto),
+        Command::Subtotal => r(BeforeRecalc, Menu(0x18e), false, true, Auto),
+        Command::DataTable => r(BeforeRecalc, Menu(0x29), false, true, Auto),
+        Command::View => r(BeforeRecalc, Menu(0x1bf), false, true, Auto),
+        Command::TextToColumns => r(BeforeRecalc, Menu(0x1a6), false, true, Auto),
+        Command::Merge => r(BeforeRecalc, Menu(0x1e8), false, true, Auto),
+        Command::Control => r(BeforeRecalc, Menu(0x1b3), false, true, Auto),
+
+        Command::Atp => r(BeforeRecalc, Unlisted, false, true, Auto),
+
+        Command::Table | Command::Name | Command::Pivot | Command::Setting => {
+            r(BeforeRecalc, Direct, false, true, Auto)
+        }
+        Command::TableResize => r(BeforeRecalc, Direct, true, true, Auto),
+
+        Command::GoalSeek => r(BeforeRecalc, Menu(0xc6), false, true, Forced),
+        Command::Calculate => r(BeforeRecalc, Menu(0x1f), false, true, Always),
+
+        Command::CalculateSheet => r(BeforeRecalc, Menu(0xa7), false, true, Never),
+        Command::AddSheet | Command::ActivateSheet => r(BeforeRecalc, Direct, false, false, Never),
+
+        Command::CopySheet => r(AfterRecalc, Menu(0x11b), false, true, Auto),
+        Command::DeleteSheet => r(AfterRecalc, Menu(0x181), false, true, Auto),
+        Command::RenameSheet => r(AfterRecalc, Menu(0x182), false, true, Auto),
+        Command::MoveSheet => r(AfterRecalc, Menu(0x11a), false, true, Auto),
     }
 }
 
@@ -240,6 +293,8 @@ pub(crate) struct Notes {
     active: Option<SheetId>,
 
     pub(crate) no_after: bool,
+
+    pub(crate) change_late: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -298,6 +353,7 @@ impl Notes {
         self.partial.clear();
         self.active = None;
         self.no_after = false;
+        self.change_late = false;
     }
 
     fn finish(
@@ -324,17 +380,23 @@ impl Notes {
 
         let ran = !self.passes.is_empty();
         let auto = mode == CalcMode::Automatic;
-        let per_pass = rule.after == After::PerPass && auto;
-        let after = match rule.after {
-            After::Never | After::PerPass => false,
-            After::Ran => ran && auto,
-            After::RanAnyMode => ran,
-            After::Always => true,
-        };
+        let per_pass =
+            rule.dispatch.after_at() == AfterAt::Recalc && rule.recalc == Recalc::Auto && auto;
+        let after = !per_pass
+            && match rule.recalc {
+                Recalc::Never => false,
+                Recalc::Auto => ran && auto,
+                Recalc::Forced => ran,
+                Recalc::Always => true,
+            };
         let mut calc: Vec<Notice> = Vec::new();
         let mut posted = false;
+        let late = self.change_late && rule.order == Order::ChangeFirst;
+        let mut last_start = 0;
         for n in calcs {
-            if per_pass && n.is_some() {
+            last_start = calc.len();
+
+            if per_pass && n.is_some() && !self.no_after {
                 calc.extend(n);
                 calc.push(Notice::AfterCalculate);
                 posted = true;
@@ -355,6 +417,13 @@ impl Notes {
             Order::CalcThenChange => {
                 log.extend(calc);
                 log.append(&mut slot);
+                log.extend(after);
+            }
+            Order::ChangeFirst if late && last_start > 0 => {
+                let tail = calc.split_off(last_start);
+                log.extend(calc);
+                log.append(&mut slot);
+                log.extend(tail);
                 log.extend(after);
             }
             Order::ChangeFirst => {
@@ -424,13 +493,18 @@ pub(crate) fn fill_rest(src: Rect, dst: Rect) -> Vec<Rect> {
     vec![rest]
 }
 
-pub(crate) fn series_rest(range: Rect, rows: Option<bool>) -> Vec<Rect> {
-    let rows = rows.unwrap_or(range.cols() >= range.rows());
-    match rows {
-        true if range.cols() > 1 => vec![Rect::new(range.r0, range.c0 + 1, range.r1, range.c1)],
-        false if range.rows() > 1 => vec![Rect::new(range.r0 + 1, range.c0, range.r1, range.c1)],
-        _ => Vec::new(),
-    }
+pub(crate) fn bounds(cells: impl Iterator<Item = CellAddr>) -> Option<Rect> {
+    cells.fold(None, |acc: Option<Rect>, a| {
+        Some(match acc {
+            None => cell(a),
+            Some(r) => Rect::new(
+                r.r0.min(a.row),
+                r.c0.min(a.col),
+                r.r1.max(a.row),
+                r.c1.max(a.col),
+            ),
+        })
+    })
 }
 
 pub(crate) fn note_cut(wb: &mut Workbook, sheet: SheetId, src: Rect, dst: CellAddr) {
@@ -500,10 +574,16 @@ impl Workbook {
             let p = &self.notes.passes[i];
 
             if p.silent {
+                add_new(&mut pending, &p.sheets);
                 out.push(None);
                 continue;
             }
             add_new(&mut pending, &p.sheets);
+            let sheets = self.by_name(std::mem::take(&mut pending));
+            out.push((!sheets.is_empty()).then_some(Notice::Calculated { sheets }));
+        }
+
+        if fires && self.notes.passes.last().is_some_and(|p| p.silent) {
             let sheets = self.by_name(std::mem::take(&mut pending));
             out.push((!sheets.is_empty()).then_some(Notice::Calculated { sheets }));
         }
@@ -713,7 +793,10 @@ mod tests {
         };
         wb.data_series(s, rect(0, 15, 4, 15), &spec).unwrap();
 
-        assert_eq!(wb.take_notices(), [Notice::AfterCalculate]);
+        assert_eq!(
+            wb.take_notices(),
+            [changed(s, &[rect(1, 15, 4, 15)]), Notice::AfterCalculate]
+        );
     }
 
     #[test]

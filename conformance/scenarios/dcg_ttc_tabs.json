@@ -1,0 +1,1 @@
+{"sheets":["Sheet1"],"steps":[{"op":"set","cell":"Sheet1!A1","input":"a\tb  c"},{"op":"set","cell":"Sheet1!A2","input":"d\te  f"},{"op":"set","cell":"Sheet1!A3","input":"g\th  i"},{"op":"text_to_columns","range":"Sheet1!A1:A3","dest":"Sheet1!C1","type":"fixed"},{"op":"read","range":"Sheet1!A1:K5"}]}

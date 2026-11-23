@@ -135,7 +135,8 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let rate = sub(1.0, crate::xmath::pow(div(salvage, cost), div(1.0, life)));
         let rate = round_decimal(rate, 3, RoundMode::HalfAway);
         let first = mul(div(month, 12.0), mul(cost, rate));
-        if pf == 1.0 {
+
+        if pf == 1.0 && !partial {
             return finite(first).map(Value::num);
         }
         let mut book = sub(cost, first);
@@ -153,7 +154,7 @@ pub fn db(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 }
 
 fn vdb_switch(cost: f64, salvage: f64, life: f64, start: f64, end: f64, factor: f64) -> R<f64> {
-    let f = std::cell::RefCell::new(crate::x87::MpFlag::default());
+    let f = std::cell::RefCell::new(crate::x87::MathFlag::default());
     let add = |a: f64, b: f64| f.borrow_mut().add(a, b);
     let sub = |a: f64, b: f64| f.borrow_mut().add(a, -b);
     let mul = |a: f64, b: f64| f.borrow_mut().mul(a, b);
@@ -385,6 +386,9 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
                 x87::mul(rate, book)
             };
             book = x87::sub(book, d);
+            if d == 0.0 {
+                break;
+            }
             k += 1.0;
         }
         Ok(round0(d))
@@ -396,7 +400,11 @@ pub fn amorlinc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let m = amor_args(ctx, a)?;
 
         let m = Amor {
-            period: m.period_raw.ceil(),
+            period: if m.period_raw > 0.0 && m.period_raw < 1.0 {
+                1.0
+            } else {
+                m.period_raw.trunc()
+            },
             ..m
         };
         let sys = atp::date_system(ctx);
@@ -405,24 +413,70 @@ pub fn amorlinc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         let delta = x87::sub(m.cost, m.salvage);
         let yf = amor_yearfrac(sys, m.purchased, m.first, m.basis)?;
         let r0 = x87::mul(x87::mul(yf, m.rate), m.cost);
-        let full = x87::div(x87::sub(delta, r0), one).trunc();
-        let r = if m.period == 0.0 {
-            r0.min(delta)
-        } else if m.period <= full {
-            one
-        } else if m.period == full + 1.0 {
-            let mut b = x87::sub(delta, r0);
-            let mut i = 0.0;
-            while i < full {
-                b = x87::sub(b, one);
-                i += 1.0;
-            }
-            b
-        } else {
-            0.0
-        };
+        if m.period == 0.0 {
+            return Ok(r0.min(delta));
+        }
+
+        if m.period > x87::div(1.0, m.rate).ceil() {
+            return Ok(0.0);
+        }
+        let rem = x87::sub(delta, r0.min(delta));
+        let r = amorlinc_steps(rem, one, m.period);
         Ok(if r > 0.0 { r } else { 0.0 })
     })())
+}
+
+fn amorlinc_steps(mut rem: f64, mut one: f64, period: f64) -> f64 {
+    let mut done = 0.0;
+    while done < period {
+        if one > rem {
+            one = rem;
+        }
+        let left = period - done;
+        let jump = if rem >= f64::MIN_POSITIVE && one >= 0.0 {
+            amorlinc_jump(rem, one, left)
+        } else {
+            None
+        };
+        match jump {
+            Some((new_rem, n)) => {
+                rem = new_rem;
+                done += n;
+            }
+            None => {
+                rem = x87::sub(rem, one);
+                if rem < 0.0 {
+                    rem = 0.0;
+                }
+                done += 1.0;
+            }
+        }
+    }
+    one
+}
+
+fn amorlinc_jump(rem: f64, one: f64, left: f64) -> Option<(f64, f64)> {
+    let e = ((rem.to_bits() >> 52) & 0x7ff) as i32 - 1023;
+    let up = |x: f64, k: i32| x * 2f64.powi(k / 2) * 2f64.powi(k - k / 2);
+    let m = up(rem, 52 - e);
+    let t = up(one, 52 - e);
+    let frac = t - t.floor();
+    if (frac - 0.5).abs() < 1.0 / 512.0 || t >= 4503599627370496.0 {
+        return None;
+    }
+    let q = t.round();
+    if q == 0.0 {
+        return Some((rem, left));
+    }
+    let floor = 4503599627370496.0;
+    let n = ((m - floor) / q)
+        .floor()
+        .min(((m - t) / q).floor())
+        .min(left);
+    if n < 1.0 {
+        return None;
+    }
+    Some((up(m - n * q, e - 52), n))
 }
 
 fn dollar(ctx: &mut EvalCtx, a: &[Arg], to_decimal: bool) -> Value {
@@ -456,4 +510,51 @@ pub fn dollarde(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
 
 pub fn dollarfr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     dollar(ctx, a, false)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn naive(mut rem: f64, mut one: f64, period: u32) -> f64 {
+        for _ in 0..period {
+            if one > rem {
+                one = rem;
+            }
+            rem = x87::sub(rem, one);
+            if rem < 0.0 {
+                rem = 0.0;
+            }
+        }
+        one
+    }
+
+    #[test]
+    fn amorlinc_jump_matches_stepwise_loop() {
+        let cases = [
+            (900.0, 1e-3, 700_000),
+            (900.0 - 1e-6, 1.0000000000000002e-6, 900_000),
+            (1234.5678, 0.0123, 100_000),
+            (1234.5678, 0.0123, 100_300),
+            (50.0, 7.0, 20),
+            (1e-3, 1e-9, 1_000_000),
+            (1.0, 0.1, 15),
+            (3.0, 0.5, 9),
+            (900.0, 1e-17, 100_000),
+        ];
+        for (rem, one, period) in cases {
+            let got = amorlinc_steps(rem, one, f64::from(period));
+            let want = naive(rem, one, period);
+            assert_eq!(got.to_bits(), want.to_bits(), "{rem} {one} {period}");
+        }
+    }
+
+    #[test]
+    fn amorlinc_huge_counts_finish_at_once() {
+        let start = std::time::Instant::now();
+        assert_eq!(amorlinc_steps(900.0, 1e-12, 1e9), 1e-12);
+        assert_eq!(amorlinc_steps(900.0, 1e-9, 1e9), 1e-9);
+        assert_eq!(amorlinc_steps(900.0, 0.0, 1e300), 0.0);
+        assert!(start.elapsed().as_secs() < 5);
+    }
 }

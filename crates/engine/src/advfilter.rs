@@ -4,7 +4,7 @@ use crate::eval::{Area, EvalCtx};
 use crate::functions::criteria::db::matching_records;
 use crate::text::eq_ci;
 use crate::value::Value;
-use crate::workbook::{CalcMode, Command, EditError, Workbook};
+use crate::workbook::{CalcMode, Command, EditError, Op, Workbook};
 
 #[derive(Clone, Debug)]
 pub struct AdvancedFilterSpec {
@@ -57,7 +57,12 @@ impl Workbook {
                 }
             }
         }
-        self.view_mut(sheet).filters.retain(|f| f.table.is_some());
+        let v = self.view_mut(sheet);
+        v.filters.retain(|f| f.table.is_some());
+
+        if !old.is_empty() {
+            v.fm = false;
+        }
         changed
     }
 
@@ -94,6 +99,12 @@ impl Workbook {
                 matching_records(&mut ctx, &db, &crit).map_err(|_| bad())?
             }
         };
+
+        self.define_filter_name(sheet, "_FilterDatabase", sheet, list, true);
+        match spec.criteria {
+            Some((cs, crect)) => self.define_filter_name(sheet, "Criteria", cs, crect, false),
+            None => self.drop_filter_name(sheet, "Criteria"),
+        }
         let rows: Vec<u32> = (list.r0 + 1..=list.r1).collect();
         let row_vals = |wb: &Workbook, r: u32, cols: &[u32]| -> Vec<Value> {
             cols.iter()
@@ -125,7 +136,9 @@ impl Workbook {
                         v.hidden_rows.insert(r);
                     }
                 }
+
                 v.adv = keep.contains(&false).then_some(list);
+                v.fm = v.adv.is_some();
                 for &r in changed
                     .iter()
                     .filter(|&&r| r > list.r0 && r <= list.r1 && !keep[(r - list.r0 - 1) as usize])
@@ -135,6 +148,8 @@ impl Workbook {
                 changed.sort_unstable();
                 changed.dedup();
                 self.rows_visibility_changed(sheet, &changed);
+
+                self.mark_area_dependents(sheet, (list.r0 + 1, list.c0, list.r1, list.c1));
                 Ok(self.view_settle())
             }
             Some((ds, drect)) => {
@@ -155,6 +170,19 @@ impl Workbook {
 
                 let first = self.value(CellAddr::new(ds, drect.r0, drect.c0));
                 let own_headers = drect.is_cell() && first.is_blank();
+
+                if own_headers
+                    && (1..list.cols()).any(|k| {
+                        drect.c0 + k < crate::address::MAX_COLS
+                            && !self
+                                .value(CellAddr::new(ds, drect.r0, drect.c0 + k))
+                                .is_blank()
+                    })
+                {
+                    return Err(EditError::Compile(
+                        "The extract range has a missing or invalid field name.".into(),
+                    ));
+                }
                 let mut cols: Vec<(u32, u32)> = Vec::new();
                 if own_headers {
                     cols.extend((0..list.cols()).map(|j| {
@@ -194,6 +222,13 @@ impl Workbook {
                     .collect();
 
                 let (lo, hi) = (cols[0].1, cols[cols.len() - 1].1);
+                self.define_filter_name(
+                    sheet,
+                    "Extract",
+                    ds,
+                    Rect::new(drect.r0, lo, drect.r0, hi),
+                    false,
+                );
                 let below = Rect::new((drect.r0 + 1).min(MAX_ROWS - 1), lo, MAX_ROWS - 1, hi);
                 let old: Vec<(u32, u32)> = self
                     .sheet(ds)
@@ -205,6 +240,16 @@ impl Workbook {
                     report.changed.push(to);
                     self.set_value_raw(to, Value::Blank);
                 }
+
+                let empty_head = |wb: &Workbook, sc: u32| {
+                    own_headers
+                        && matches!(wb.value(CellAddr::new(sheet, list.r0, sc)), Value::Text(ref t) if t.is_empty())
+                };
+                let cols: Vec<(u32, u32)> = cols
+                    .iter()
+                    .copied()
+                    .filter(|&(sc, _)| !empty_head(self, sc))
+                    .collect();
                 let mut pairs = Vec::new();
                 let mut writes = Vec::new();
                 for (k, &r) in out.iter().enumerate() {
@@ -229,7 +274,9 @@ impl Workbook {
                 if own_headers {
                     let head = Rect::new(list.r0, list.c0, list.r0, list.c1);
                     let dst = CellAddr::new(ds, drect.r0, drect.c0);
-                    let r = self.copy_range_with(sheet, head, dst, false)?;
+                    let r = self.with_op(Op::DeferPasteRecalc, bad_header, |wb| {
+                        wb.copy_range_with(sheet, head, dst, false)
+                    })?;
                     report.changed.extend(r.changed);
                 }
                 if bad_header {
@@ -249,5 +296,41 @@ impl Workbook {
                 Ok(report)
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AdvancedFilterSpec;
+    use crate::address::{CellAddr, Rect};
+    use crate::value::Value;
+    use crate::workbook::Workbook;
+
+    #[test]
+    fn refused_copy_keeps_source_values_until_recalc() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let a = |r, c| CellAddr::new(s, r, c);
+        wb.set_input(a(0, 0), "k").unwrap();
+        wb.set_input(a(0, 1), "=COUNTA(D1:D5)").unwrap();
+        wb.set_input(a(0, 3), "x").unwrap();
+        wb.set_input(a(1, 3), "y").unwrap();
+        for r in 1..3 {
+            wb.set_input(a(r, 0), "a").unwrap();
+            wb.set_input(a(r, 1), "1").unwrap();
+        }
+        assert!(matches!(wb.value(a(0, 1)), Value::Number(n) if n == 2.0));
+        let spec = AdvancedFilterSpec {
+            list: (s, Rect::new(0, 0, 2, 1)),
+            criteria: None,
+            copy_to: Some((s, Rect::cell(9, 5))),
+            unique: false,
+        };
+        assert!(wb.advanced_filter(&spec).is_err());
+        let copied = a(9, 6);
+        assert!(wb.formula_text(copied).is_some());
+        assert!(matches!(wb.value(copied), Value::Number(n) if n == 2.0));
+        wb.set_input(a(20, 20), "1").unwrap();
+        assert!(matches!(wb.value(copied), Value::Number(n) if n == 0.0));
     }
 }

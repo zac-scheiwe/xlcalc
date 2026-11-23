@@ -39,6 +39,12 @@ pub fn mark_dirty(wb: &mut Workbook, fid: FormulaId) {
     let mut deps = Vec::new();
     let mut seen_blocks = FxHashSet::default();
     while let Some(f) = work.pop() {
+        if f != fid
+            && wb.calc.defer_host
+            && crate::host::calls_host(wb, &wb.formula(f).formula.root)
+        {
+            continue;
+        }
         let cell = wb.formula(f);
 
         if cell.dirty
@@ -89,6 +95,9 @@ pub fn mark_dirty(wb: &mut Workbook, fid: FormulaId) {
         wb.calc.dirty_list.push(f);
         if wb.settings.mode != crate::workbook::CalcMode::Automatic {
             wb.calc.entered.push(f);
+            if !wb.calc.settled.is_empty() {
+                wb.calc.settled.retain(|&g| g != f);
+            }
         }
         deps.clear();
         match spill {
@@ -208,9 +217,27 @@ fn name_changed_scoped(
 }
 
 pub fn recalc_only(wb: &mut Workbook, cells: &[CellAddr]) -> RecalcReport {
+    let keep = wb.settings.mode != crate::workbook::CalcMode::Automatic
+        && (!wb.settings.multi_threaded && wb.calc.cmd_manual
+            || !wb.calc.circular.is_empty()
+            || !(wb.calc.volatile.is_empty() && wb.calc.host_volatile.is_empty()));
+    recalc_only_with(wb, cells, keep)
+}
+
+pub(crate) fn recalc_only_with(
+    wb: &mut Workbook,
+    cells: &[CellAddr],
+    keep_walk: bool,
+) -> RecalcReport {
     let mut report = RecalcReport::default();
     wb.calc.pass += 1;
-    wb.calc.walk.invalidate();
+
+    let any = cells
+        .iter()
+        .any(|&a| wb.formula_at(a).is_some_and(|fid| wb.formula(fid).dirty));
+    if any && !keep_walk {
+        wb.calc.walk.invalidate();
+    }
     for &a in cells {
         if let Some(fid) = wb.formula_at(a) {
             if wb.formula(fid).dirty {
@@ -218,7 +245,67 @@ pub fn recalc_only(wb: &mut Workbook, cells: &[CellAddr]) -> RecalcReport {
             }
         }
     }
+    if keep_walk {
+        let (formulas, circular) = (&wb.formulas, &wb.calc.circular);
+        let mut walk = std::mem::take(&mut wb.calc.walk);
+        walk.settle(|f| {
+            formulas
+                .get(f as usize)
+                .and_then(|c| c.as_ref())
+                .is_some_and(|c| !c.dirty && !circular.contains(&f))
+        });
+        wb.calc.walk = walk;
+    }
 
+    if wb.settings.mode == crate::workbook::CalcMode::Automatic {
+        wb.notes.calculated(&report.sheets);
+    }
+    finish_report(report)
+}
+
+pub(crate) fn out_of_bound(wb: &Workbook, fid: FormulaId) -> bool {
+    wb.calc
+        .bound
+        .is_some_and(|s| wb.formula(fid).addr.sheet != s || wb.calc.circular.contains(&fid))
+}
+
+pub(crate) fn recalc_sheet_bounded(
+    wb: &mut Workbook,
+    sheet: SheetId,
+    cells: &[CellAddr],
+) -> RecalcReport {
+    let mut report = RecalcReport::default();
+    wb.calc.pass += 1;
+    wb.calc.bound = Some(sheet);
+    wb.calc.bound_stale.clear();
+    for &a in cells {
+        let Some(fid) = wb.formula_at(a) else {
+            continue;
+        };
+        if !wb.formula(fid).dirty {
+            continue;
+        }
+        if wb.calc.circular.contains(&fid) {
+            calc_root(wb, fid, &mut report);
+        } else {
+            calc_root_collect(wb, fid, &mut report);
+        }
+    }
+    wb.calc.bound = None;
+    for fid in std::mem::take(&mut wb.calc.bound_stale) {
+        if live(wb, fid) && !wb.formula(fid).dirty {
+            mark_dirty(wb, fid);
+        }
+    }
+    let (formulas, circular) = (&wb.formulas, &wb.calc.circular);
+    let mut walk = std::mem::take(&mut wb.calc.walk);
+    walk.settle(|f| {
+        formulas
+            .get(f as usize)
+            .and_then(|c| c.as_ref())
+            .is_some_and(|c| !c.dirty && !circular.contains(&f))
+    });
+    wb.calc.walk = walk;
     if wb.settings.mode == crate::workbook::CalcMode::Automatic {
         wb.notes.calculated(&report.sheets);
     }
@@ -285,8 +372,20 @@ pub fn recalc_with(wb: &mut Workbook, tables: bool) -> RecalcReport {
 }
 
 fn recalc_with_inner(wb: &mut Workbook, tables: bool) -> RecalcReport {
+    wb.calc.sheet_calc_pending = false;
     wb.one_pass(|wb| {
         let mut report = recalc_cells(wb);
+        if std::mem::take(&mut wb.calc.spill_resized) && !wb.bookkeeping() {
+            let hold = !wb.calc.circular.is_empty() || wb.op_on(Op::HoldIter);
+            let more = wb.with_op(Op::HoldIter, hold, recalc_cells);
+            report.add_sheets(&more);
+            report.changed.extend(more.changed);
+            report.evaluations += more.evaluations;
+            report.circular = report.circular.or(more.circular);
+        }
+        if tables && !wb.op_on(Op::HoldIter) {
+            crate::datatable::mark_self_fed(wb);
+        }
         if tables && wb.data_tables.iter().any(|t| t.dirty) {
             crate::datatable::table_pass(wb, &mut report);
             report = finish_report(report);
@@ -364,9 +463,11 @@ pub(crate) fn dead_host_formulas(wb: &Workbook) -> Vec<FormulaId> {
 }
 
 pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
+    wb.flush_creation();
     note_sheet_rows(wb);
     wb.calc.entered.clear();
     wb.calc.entered_groups.clear();
+    wb.calc.settled.clear();
     let mut report = RecalcReport::default();
     wb.calc.pass += 1;
     wb.calc.now = wb.calc.fixed_now.unwrap_or_else(current_serial);
@@ -402,7 +503,7 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
         .names
         .iter()
         .filter(|d| d.formula.volatile && !wb.calc.skip_volatile)
-        .map(|d| d.name.to_uppercase())
+        .map(|d| crate::text::name_key(&d.name))
         .collect();
     let mut users = Vec::new();
     for key in volatile_names {
@@ -416,11 +517,25 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
     if crate::walk::active(wb) {
         crate::walk::recalc(wb, &mut report);
         wb.calc.dirty_list.clear();
+
+        if wb.settings.iteration && !wb.op_on(Op::HoldIter) {
+            let pass = wb.calc.pass;
+            let members: Vec<FormulaId> = wb.calc.circular.iter().copied().collect();
+            for &f in &members {
+                wb.formula_mut(f).circular_pass = pass;
+            }
+            if !members.is_empty() {
+                iterate(wb, members, &mut report);
+            }
+        }
         report.circular = wb.calc.circular_ref.first().copied();
         wb.note_pass(&report.sheets);
         return finish_report(report);
     }
-    wb.calc.walk.invalidate();
+
+    if wb.settings.mode == crate::workbook::CalcMode::Automatic {
+        wb.calc.walk.invalidate();
+    }
 
     let circular: Vec<FormulaId> = wb.calc.circular.drain().collect();
     for &fid in &circular {
@@ -499,6 +614,24 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
             wb.formula_mut(fid).member_retry = true;
         }
     }
+
+    let pass = wb.calc.pass;
+    if !iterative
+        && wb.settings.multi_threaded
+        && wb.settings.mode == crate::workbook::CalcMode::Automatic
+        && wb
+            .calc
+            .circular
+            .iter()
+            .any(|&f| live(wb, f) && wb.formula(f).circular_pass == pass)
+    {
+        wb.settings.multi_threaded = false;
+        wb.calc.walk.invalidate();
+        crate::walk::recalc(wb, &mut report);
+        wb.calc.dirty_list.clear();
+        wb.settings.multi_threaded = true;
+        wb.calc.walk.invalidate();
+    }
     if iterative && !wb.op_on(Op::HoldIter) {
         let pass = wb.calc.pass;
         let members: Vec<FormulaId> = wb
@@ -513,6 +646,17 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
         }
     }
     report.circular = wb.calc.circular_ref.first().copied();
+    if wb.settings.mode != crate::workbook::CalcMode::Automatic {
+        let (formulas, circular) = (&wb.formulas, &wb.calc.circular);
+        let mut walk = std::mem::take(&mut wb.calc.walk);
+        walk.settle(|f| {
+            formulas
+                .get(f as usize)
+                .and_then(|c| c.as_ref())
+                .is_some_and(|c| !c.dirty && !circular.contains(&f))
+        });
+        wb.calc.walk = walk;
+    }
     wb.note_pass(&report.sheets);
     finish_report(report)
 }
@@ -587,7 +731,7 @@ fn parallel_phase(wb: &mut Workbook, report: &mut RecalcReport) {
     for d in wb.names.iter().filter(|d| d.formula.volatile) {
         users.clear();
         wb.graph
-            .dependents_of_name(&d.name.to_uppercase(), &mut users);
+            .dependents_of_name(&crate::text::name_key(&d.name), &mut users);
         volatile_users.extend(users.iter().copied());
     }
     for (i, &f) in dirty.iter().enumerate() {
@@ -710,7 +854,7 @@ fn dirty_precedents_limited(wb: &Workbook, fid: FormulaId, out: &mut Vec<Formula
     let pass = wb.calc.pass;
     let consider = |g: FormulaId, out: &mut Vec<FormulaId>| {
         let f = wb.formula(g);
-        if f.dirty && !f.on_stack && f.circular_pass != pass && g != fid {
+        if f.dirty && !f.on_stack && f.circular_pass != pass && g != fid && !out_of_bound(wb, g) {
             out.push(g);
         }
     };
@@ -892,6 +1036,9 @@ fn calc_root_collect(wb: &mut Workbook, root: FormulaId, report: &mut RecalcRepo
                 wb.calc.read_spill = observed.read_spill && !observed.spill_masked;
                 note_host_volatile(wb, top, observed.host_volatile);
                 store_result(wb, top, value, report);
+                if observed.read_dirty {
+                    wb.calc.bound_stale.push(top);
+                }
 
                 let pass = wb.calc.pass;
                 if let Some(&(p_pass, p)) = wb.calc.waited.get(&top) {
@@ -1314,16 +1461,79 @@ fn iterate(wb: &mut Workbook, mut members: Vec<FormulaId>, report: &mut RecalcRe
     }
 }
 
+pub(crate) fn stuck_active(wb: &Workbook) -> bool {
+    wb.calc.stuck_huge.iter().any(|&g| {
+        wb.formulas.get(g as usize).is_some_and(|f| f.is_some())
+            && crate::eval::refs::is_huge_missing_root(wb, g)
+    })
+}
+
+fn reads_stuck(wb: &Workbook, fid: FormulaId, seen: &mut Vec<FormulaId>) -> bool {
+    if seen.contains(&fid) {
+        return false;
+    }
+    seen.push(fid);
+    for p in &wb.formula(fid).precedents {
+        match p {
+            crate::graph::Prec::Cell(s, r, c) => {
+                if let Some(g) = wb.formula_at(CellAddr::new(*s, *r, *c)) {
+                    if wb.calc.stuck_huge.contains(&g) || reads_stuck(wb, g, seen) {
+                        return true;
+                    }
+                }
+            }
+            crate::graph::Prec::Range(s, rect) => {
+                let in_rect = |g: &FormulaId| {
+                    let a = wb.formula(*g).addr;
+                    a.sheet == *s && rect.contains(a.row, a.col)
+                };
+                if wb.calc.stuck_huge.iter().any(in_rect) {
+                    return true;
+                }
+            }
+            crate::graph::Prec::Name(_) => {}
+        }
+    }
+    false
+}
+
 pub(crate) fn store_result(
     wb: &mut Workbook,
     fid: FormulaId,
     value: Value,
     report: &mut RecalcReport,
 ) {
-    let (addr, old_spill) = {
-        let f = wb.formula(fid);
-        (f.addr, f.spill)
+    let shape_of = |v: &Value| match v {
+        Value::Array(a) => (a.rows, a.cols),
+        _ => (1, 1),
     };
+    let (addr, old_spill, first_store, old_shape) = {
+        let f = wb.formula(fid);
+        (f.addr, f.spill, f.stored == 0, shape_of(&f.value))
+    };
+    let new_shape = shape_of(&value);
+    let (value, stuck_now) = if crate::eval::refs::is_huge_missing_root(wb, fid) {
+        (Value::Number(0.0), true)
+    } else {
+        (value, false)
+    };
+
+    let value = if !stuck_now
+        && wb.calc.stuck_members.contains(&fid)
+        && stuck_active(wb)
+        && reads_stuck(wb, fid, &mut Vec::new())
+    {
+        Value::Number(0.0)
+    } else {
+        value
+    };
+    if stuck_now {
+        wb.calc.stuck_pending = true;
+        wb.calc.bulk_stuck |= wb.calc.bulk;
+        if !wb.calc.stuck_huge.contains(&fid) {
+            wb.calc.stuck_huge.push(fid);
+        }
+    }
     let value = if wb.precision_as_displayed() {
         wb.precision_result(addr, value)
     } else {
@@ -1343,7 +1553,12 @@ pub(crate) fn store_result(
         Value::Array(a) if a.rows > 1 || a.cols > 1 => {
             let r1 = addr.row as u64 + a.rows as u64 - 1;
             let c1 = addr.col as u64 + a.cols as u64 - 1;
-            if r1 >= MAX_ROWS as u64 || c1 >= MAX_COLS as u64 {
+            if (r1 >= MAX_ROWS as u64 || c1 >= MAX_COLS as u64)
+                && wb.calc.stuck_members.contains(&fid)
+                && stuck_active(wb)
+            {
+                Value::Number(0.0)
+            } else if r1 >= MAX_ROWS as u64 || c1 >= MAX_COLS as u64 {
                 blocked = Some(Rect::new(addr.row, addr.col, MAX_ROWS - 1, MAX_COLS - 1));
                 Value::Error(XlError::SPILL)
             } else {
@@ -1358,7 +1573,11 @@ pub(crate) fn store_result(
                     || wb.merge_intersects(addr.sheet, &want)
                     || sh.cells.any_in(want, Some((addr.row, addr.col)))
                     || sh.spills.intersecting(&want).iter().any(|(g, _)| *g != fid);
-                if occupied {
+                if occupied && wb.calc.stuck_members.contains(&fid) && stuck_active(wb) {
+                    Value::Number(0.0)
+                } else if wb.calc.stuck_members.contains(&fid) && stuck_active(wb) {
+                    a.data[0].clone()
+                } else if occupied {
                     blocked = Some(want);
                     Value::Error(XlError::SPILL)
                 } else {
@@ -1408,6 +1627,14 @@ pub(crate) fn store_result(
         }
     }
     snapshot_holes(wb, addr.sheet, &[fid]);
+
+    if !first_store
+        && old_shape != new_shape
+        && wb.formula(fid).array.is_none()
+        && (old_spill.is_some() || new_spill.is_some() || old_shape != (1, 1))
+    {
+        wb.calc.spill_resized = true;
+    }
     if changed {
         report.changed.push(addr);
 

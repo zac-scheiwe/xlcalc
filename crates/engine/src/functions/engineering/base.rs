@@ -186,27 +186,47 @@ pub fn decimal(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if !(2.0..=36.0).contains(&radix) {
             return Err(XlError::NUM);
         }
-        let mut v = 0.0f64;
-        let mut body = s.trim_start_matches(' ');
-        if radix == 16.0 {
-            let z = body.trim_start_matches('0');
-            if let Some(r) = z.strip_prefix(['x', 'X']) {
-                body = r;
+        parse_radix_text(&s, radix).map(Value::num)
+    })())
+}
+
+fn parse_radix_text(s: &str, radix: f64) -> Result<f64, XlError> {
+    let mut body = s.trim_start_matches([' ', '\t']).trim_start_matches('0');
+    if body.is_empty() {
+        return Ok(0.0);
+    }
+    if radix == 16.0 {
+        if let Some(r) = body.strip_suffix(['h', 'H']) {
+            body = r;
+        }
+        if let Some(r) = body.strip_prefix(['x', 'X']) {
+            body = r.trim_start_matches('0');
+            if body.is_empty() {
+                return Ok(0.0);
             }
         }
-
-        let mut p = 1.0f64;
-        for c in body.chars().rev() {
-            let d = c
-                .to_digit(36)
-                .filter(|d| *d < radix as u32)
-                .ok_or(XlError::NUM)?;
-            let term = crate::x87::mul(d as f64, p);
-            p = crate::x87::mul(p, radix);
-            v = crate::x87::add(v, term);
+    }
+    if radix == 2.0 {
+        if let Some(r) = body.strip_suffix(['b', 'B']) {
+            body = r;
         }
-        Ok(Value::num(v))
-    })())
+    }
+    if body.is_empty() {
+        return Err(XlError::NUM);
+    }
+
+    let mut v = 0.0f64;
+    let mut p = 1.0f64;
+    for c in body.chars().rev() {
+        let d = c
+            .to_digit(36)
+            .filter(|d| *d < radix as u32)
+            .ok_or(XlError::NUM)?;
+        let term = crate::x87::mul(d as f64, p);
+        p = crate::x87::mul(p, radix);
+        v = crate::x87::add(v, term);
+    }
+    Ok(v)
 }
 
 pub fn roman(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -381,6 +401,31 @@ mod tests {
         assert_eq!(roman_text(1990, 4), "MXM");
         assert_eq!(roman_text(3888, 0), "MMMDCCCLXXXVIII");
         assert_eq!(roman_text(0, 0), "");
+    }
+
+    #[test]
+    fn decimal_text_padding_and_affixes() {
+        let d = parse_radix_text;
+        assert_eq!(d("\t101", 2.0), Ok(5.0));
+        assert_eq!(d(" \t 0101", 2.0), Ok(5.0));
+        assert_eq!(d("\t\t101", 2.0), Ok(5.0));
+        assert_eq!(d("\n101", 2.0), Err(XlError::NUM));
+        assert_eq!(d("\r101", 2.0), Err(XlError::NUM));
+        assert_eq!(d("\u{a0}101", 2.0), Err(XlError::NUM));
+        assert_eq!(d("101 ", 2.0), Err(XlError::NUM));
+        assert_eq!(d("101\t", 2.0), Err(XlError::NUM));
+        assert_eq!(d("0x\tff", 16.0), Err(XlError::NUM));
+        assert_eq!(d("\t0xff", 16.0), Ok(255.0));
+        assert_eq!(d("\t", 2.0), Ok(0.0));
+        assert_eq!(d("x", 16.0), Ok(0.0));
+        assert_eq!(d("101b", 2.0), Ok(5.0));
+        assert_eq!(d("101B", 2.0), Ok(5.0));
+        assert_eq!(d("b", 2.0), Err(XlError::NUM));
+        assert_eq!(d("ffh", 16.0), Ok(255.0));
+        assert_eq!(d("FFH", 16.0), Ok(255.0));
+        assert_eq!(d("h", 16.0), Err(XlError::NUM));
+        assert_eq!(d("ffh", 10.0), Err(XlError::NUM));
+        assert_eq!(d("zz", 36.0), Ok(1295.0));
     }
 
     #[test]

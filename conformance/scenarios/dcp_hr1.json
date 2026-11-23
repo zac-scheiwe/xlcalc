@@ -1,0 +1,148 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "v"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "f"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "i"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "h"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B8",
+   "input": "g"
+  },
+  {
+   "op": "hide_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 1
+  },
+  {
+   "op": "hide_rows",
+   "sheet": "Sheet1",
+   "at": 5,
+   "count": 1
+  },
+  {
+   "op": "hide_rows",
+   "sheet": "Sheet1",
+   "at": 8,
+   "count": 1
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:B8')",
+   "call": "Sort",
+   "named": {
+    "Key1": {
+     "path": "Worksheets('Sheet1').Range('A1')"
+    },
+    "Order1": 1,
+    "Header": 1
+   }
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 10
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B9"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Range('A1:B12')",
+   "call": "Sort",
+   "named": {
+    "Key1": {
+     "path": "Worksheets('Sheet1').Range('B1')"
+    },
+    "Order1": 2,
+    "Header": 1
+   }
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 14
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B13"
+  }
+ ]
+}

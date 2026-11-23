@@ -1,0 +1,202 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "",
+   "prop": "DisplayAlerts",
+   "value": false
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "kA"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "kB"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "9"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B7",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A8",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B8",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A9",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B9",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A10",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B10",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A11",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B11",
+   "input": "0"
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!A1:B11",
+   "keys": [
+    {
+     "key": 1,
+     "order": "asc"
+    }
+   ],
+   "header": true
+  },
+  {
+   "op": "subtotal",
+   "range": "Sheet1!A1:B11",
+   "group": 1,
+   "function": "sum",
+   "totals": [
+    2
+   ],
+   "replace": true,
+   "pagebreaks": false,
+   "below": true
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 20
+  },
+  {
+   "op": "hide_rows",
+   "sheet": "Sheet1",
+   "at": 2,
+   "count": 4
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!A1:B16",
+   "keys": [
+    {
+     "key": 2,
+     "order": "desc"
+    }
+   ],
+   "header": true
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 20
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B20"
+  },
+  {
+   "op": "outline_show",
+   "sheet": "Sheet1",
+   "level": 3
+  },
+  {
+   "op": "sort",
+   "range": "Sheet1!A2:B15",
+   "keys": [
+    {
+     "key": 2,
+     "order": "desc"
+    }
+   ]
+  },
+  {
+   "op": "rowstate",
+   "sheet": "Sheet1",
+   "rows": 20
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:B20"
+  }
+ ]
+}

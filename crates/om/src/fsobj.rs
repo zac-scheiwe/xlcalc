@@ -619,7 +619,7 @@ fn set_attrs(path: &str, attrs: i32) -> Result<(), VbaError> {
 }
 
 #[cfg(windows)]
-fn ole_date(t: io::Result<std::time::SystemTime>) -> Variant {
+pub(crate) fn ole_date(t: io::Result<std::time::SystemTime>) -> Variant {
     use windows::Win32::Foundation::{FILETIME, SYSTEMTIME};
     use windows::Win32::System::Time::{FileTimeToSystemTime, SystemTimeToTzSpecificLocalTime};
     let Ok(t) = t else {
@@ -656,7 +656,7 @@ fn ole_date(t: io::Result<std::time::SystemTime>) -> Variant {
 }
 
 #[cfg(not(windows))]
-fn ole_date(t: io::Result<std::time::SystemTime>) -> Variant {
+pub(crate) fn ole_date(t: io::Result<std::time::SystemTime>) -> Variant {
     let secs = t
         .ok()
         .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())

@@ -1,0 +1,1115 @@
+{
+"sheets": [
+"o01",
+"o02",
+"o03",
+"o04",
+"o05",
+"o09",
+"o10",
+"o11"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "o01!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o01!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o01!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o01!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o01!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "set",
+"cell": "o01!C2",
+"input": "=A2+B2"
+},
+{
+"op": "setv",
+"cell": "o01!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o01!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "set",
+"cell": "o01!C3",
+"input": "=A3+B3"
+},
+{
+"op": "setv",
+"cell": "o01!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "o01!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "set",
+"cell": "o01!C4",
+"input": "=A4+B4"
+},
+{
+"op": "setv",
+"cell": "o01!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o01!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "set",
+"cell": "o01!C5",
+"input": "=A5+B5"
+},
+{
+"op": "setv",
+"cell": "o01!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "o01!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "set",
+"cell": "o01!C6",
+"input": "=A6+B6"
+},
+{
+"op": "array",
+"range": "o01!C2",
+"input": "=A2+B2"
+},
+{
+"op": "array",
+"range": "o01!C3",
+"input": "=A3+B3"
+},
+{
+"op": "array",
+"range": "o01!C4",
+"input": "=A4+B4"
+},
+{
+"op": "array",
+"range": "o01!C5",
+"input": "=A5+B5"
+},
+{
+"op": "array",
+"range": "o01!C6",
+"input": "=A6+B6"
+},
+{
+"op": "table",
+"name": "T_o01",
+"range": "o01!A1:C6"
+},
+{
+"op": "setv",
+"cell": "o01!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o01!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o01!A1:D9"
+},
+{
+"op": "setv",
+"cell": "o02!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o02!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o02!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o02!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o02!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "o02!C2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o02!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o02!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "o02!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o02!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "o02!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "o02!C4",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o02!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o02!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "o02!C5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o02!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "o02!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "o02!C6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "array",
+"range": "o02!C2:C6",
+"input": "=A2:A6+B2:B6"
+},
+{
+"op": "table",
+"name": "T_o02",
+"range": "o02!A1:C6"
+},
+{
+"op": "setv",
+"cell": "o02!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o02!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o02!A1:D9"
+},
+{
+"op": "setv",
+"cell": "o03!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o03!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o03!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o03!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o03!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "o03!C2",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o03!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o03!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "o03!C3",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o03!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "o03!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "o03!C4",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o03!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o03!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "o03!C5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o03!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "o03!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "o03!C6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "set",
+"cell": "o03!C2",
+"input": "=SEQUENCE(5)"
+},
+{
+"op": "table",
+"name": "T_o03",
+"range": "o03!A1:C6"
+},
+{
+"op": "setv",
+"cell": "o03!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o03!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o03!A1:D9"
+},
+{
+"op": "setv",
+"cell": "o04!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o04!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o04!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o04!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o04!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "set",
+"cell": "o04!C2",
+"input": "=A2+B2"
+},
+{
+"op": "setv",
+"cell": "o04!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o04!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "set",
+"cell": "o04!C3",
+"input": "=A3+B3"
+},
+{
+"op": "setv",
+"cell": "o04!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "o04!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "set",
+"cell": "o04!C4",
+"input": "=A4+B4"
+},
+{
+"op": "setv",
+"cell": "o04!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o04!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "o04!C5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o04!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "o04!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "o04!C6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "set",
+"cell": "o04!C5",
+"input": "=SEQUENCE(2)"
+},
+{
+"op": "table",
+"name": "T_o04",
+"range": "o04!A1:C6"
+},
+{
+"op": "setv",
+"cell": "o04!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o04!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o04!A1:D9"
+},
+{
+"op": "setv",
+"cell": "o05!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o05!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o05!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o05!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o05!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "set",
+"cell": "o05!C2",
+"input": "=A2+B2"
+},
+{
+"op": "setv",
+"cell": "o05!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o05!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "set",
+"cell": "o05!C3",
+"input": "=A3+B3"
+},
+{
+"op": "setv",
+"cell": "o05!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "o05!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "set",
+"cell": "o05!C4",
+"input": "=A4+B4"
+},
+{
+"op": "setv",
+"cell": "o05!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "o05!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "set",
+"cell": "o05!C5",
+"input": "=A5+B5"
+},
+{
+"op": "setv",
+"cell": "o05!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "o05!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "o05!C6",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "set",
+"cell": "o05!C6",
+"input": "=SEQUENCE(3)"
+},
+{
+"op": "table",
+"name": "T_o05",
+"range": "o05!A1:C6"
+},
+{
+"op": "setv",
+"cell": "o05!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o05!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o05!A1:D9"
+},
+{
+"op": "setv",
+"cell": "o09!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o09!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o09!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o09!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o09!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "set",
+"cell": "o09!C2",
+"input": "=SEQUENCE(3)"
+},
+{
+"op": "table",
+"name": "T_o09",
+"range": "o09!A1:C2"
+},
+{
+"op": "setv",
+"cell": "o09!A3",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o09!B3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o09!A1:D5"
+},
+{
+"op": "setv",
+"cell": "o10!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o10!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o10!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o10!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o10!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "o10!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o10!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "set",
+"cell": "o10!C3",
+"input": "=SEQUENCE(3)"
+},
+{
+"op": "table",
+"name": "T_o10",
+"range": "o10!A1:C3"
+},
+{
+"op": "setv",
+"cell": "o10!A4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o10!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o10!A1:D6"
+},
+{
+"op": "setv",
+"cell": "o11!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "o11!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "o11!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "o11!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "o11!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "set",
+"cell": "o11!C2",
+"input": "=A2+B2"
+},
+{
+"op": "setv",
+"cell": "o11!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "o11!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "set",
+"cell": "o11!C3",
+"input": "=SEQUENCE(3)"
+},
+{
+"op": "table",
+"name": "T_o11",
+"range": "o11!A1:C3"
+},
+{
+"op": "setv",
+"cell": "o11!A4",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "o11!B4",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "o11!A1:D6"
+}
+]
+}

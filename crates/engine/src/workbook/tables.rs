@@ -252,11 +252,100 @@ use crate::calc::{self, RecalcReport};
 use crate::value::Value;
 use crate::workbook::{EditError, Entry, Workbook};
 
+pub fn table_display_name(name: &str) -> String {
+    let word = |c: char| c.is_alphanumeric() || matches!(c, '_' | '.' | '\\' | '?');
+    let mut s: String = name
+        .chars()
+        .map(|c| if word(c) { c } else { '_' })
+        .collect();
+    if s.chars()
+        .next()
+        .is_some_and(|c| !(c.is_alphabetic() || c == '_' || c == '\\'))
+        || starts_with_numbered_r1c1(&s)
+    {
+        s.insert(0, '_');
+    } else if crate::address::parse_a1_cell(&s).is_some()
+        || ["R", "C", "RC"].iter().any(|r| s.eq_ignore_ascii_case(r))
+    {
+        s.push('_');
+    }
+    s
+}
+
+fn starts_with_numbered_r1c1(s: &str) -> bool {
+    let b = s.as_bytes();
+    let number = |i: usize| -> (usize, Option<u64>) {
+        let n = b[i..].iter().take_while(|c| c.is_ascii_digit()).count();
+        let v = (n > 0).then(|| s[i..i + n].parse::<u64>().unwrap_or(u64::MAX));
+        (i + n, v)
+    };
+    let mut i = 0;
+    let mut numbered = false;
+    if b.first().is_some_and(|c| c.eq_ignore_ascii_case(&b'R')) {
+        let (j, v) = number(1);
+        if let Some(v) = v {
+            if !(1..=1_048_576).contains(&v) {
+                return false;
+            }
+            numbered = true;
+        }
+        i = j;
+    }
+    if b.get(i).is_some_and(|c| c.eq_ignore_ascii_case(&b'C')) {
+        if let (_, Some(v)) = number(i + 1) {
+            if !(1..=16_384).contains(&v) {
+                return false;
+            }
+            numbered = true;
+        }
+    }
+    numbered
+}
+
 impl Workbook {
     pub fn table_by_name(&self, name: &str) -> Option<&Table> {
         self.tables
             .iter()
             .find(|t| crate::text::eq_ordinal_ci(&t.name, name))
+            .or_else(|| {
+                self.tables
+                    .iter()
+                    .find(|t| crate::text::eq_ordinal_ci(&table_display_name(&t.name), name))
+            })
+    }
+
+    pub fn table_text_area(
+        &self,
+        body: &str,
+        host: CellAddr,
+    ) -> Option<Result<crate::Area, crate::XlError>> {
+        let (tname, inner) = match body.find('[') {
+            Some(i) if body.ends_with(']') => (&body[..i], Some(&body[i + 1..body.len() - 1])),
+            _ => (body, None),
+        };
+
+        let t = self
+            .tables
+            .iter()
+            .find(|t| crate::text::eq_ordinal_ci(&table_display_name(&t.name), tname.trim()))?;
+        let mut spec = match inner {
+            None => Spec {
+                items: Items::DATA,
+                ..Default::default()
+            },
+            Some(i) => parse_spec(i).ok()?,
+        };
+        if let Some((a, b)) = spec.cols.clone() {
+            let canon = |c: &str| {
+                t.columns
+                    .iter()
+                    .find(|x| crate::text::eq_ordinal_ci(x, c))
+                    .cloned()
+            };
+            spec.cols = Some((canon(&a)?, canon(&b)?));
+        }
+        let tn = t.name.clone();
+        Some(crate::eval::refs::struct_rect(self, &tn, &spec, host))
     }
 
     pub fn tables_made(&self) -> usize {
@@ -311,11 +400,23 @@ impl Workbook {
         rect: Rect,
     ) -> Result<RecalcReport, EditError> {
         let r = self.command(Command::TableAdd, |wb| wb.add_table_run(name, sheet, rect));
-        if r.is_ok() {
-            let (sr, sc) = self.sheet_sel(sheet);
+
+        let (sr, sc) = self.sheet_sel(sheet);
+        if r.is_ok() || sheet != self.session.active {
             self.view_notify_sel(sheet, sr, sc);
         }
+        if sheet != self.session.active {
+            self.view_leave_tables(sheet);
+        }
         r
+    }
+
+    pub fn table_create_off_sheet(&mut self, sheet: SheetId) {
+        if sheet != self.session.active {
+            let (sr, sc) = self.sheet_sel(sheet);
+            self.view_notify_sel(sheet, sr, sc);
+            self.view_leave_tables(sheet);
+        }
     }
 
     fn add_table_run(
@@ -355,6 +456,16 @@ impl Workbook {
                 "multi-cell array formulas aren't allowed in tables".into(),
             ));
         }
+
+        if self.merges(sheet).iter().any(|m| m.intersects(&rect)) {
+            self.apply_style_with(sheet, rect, &|s: &crate::style::Style| {
+                let mut n = s.clone();
+                if n.alignment.horizontal == crate::style::HAlign::CenterAcrossSelection {
+                    n.alignment.horizontal = crate::style::HAlign::Center;
+                }
+                n
+            });
+        }
         self.unmerge_for_table(sheet, rect);
         if name.is_empty() || self.table_by_name(name).is_some() {
             return Err(EditError::BadName(name.to_string()));
@@ -372,9 +483,25 @@ impl Workbook {
         let mut columns: Vec<String> = Vec::new();
 
         let named: Vec<Option<String>> = (rect.c0..=rect.c1)
-            .map(|c| match self.value(CellAddr::new(sheet, rect.r0, c)) {
-                Value::Blank => None,
-                v => Some(self.header_text(CellAddr::new(sheet, rect.r0, c), &v)),
+            .map(|c| {
+                let a = CellAddr::new(sheet, rect.r0, c);
+
+                let member = self
+                    .sheet(sheet)
+                    .is_some_and(|sh| sh.cells.get(a.row, a.col).is_none())
+                    && self.spill_anchor(a).is_some();
+
+                let blocked = self.formula_at(a).is_some_and(|f| {
+                    self.formula(f)
+                        .spill
+                        .is_some_and(|r| r.rows() * r.cols() > 1)
+                });
+                match self.value(a) {
+                    Value::Blank => None,
+                    _ if member => None,
+                    _ if blocked => Some("#SPILL!".to_string()),
+                    v => Some(self.header_text(a, &v)),
+                }
             })
             .collect();
 
@@ -430,6 +557,7 @@ impl Workbook {
                 calc::cell_changed(self, a);
             }
         }
+        self.grow_cell_table_for_new_table(sheet, rect);
         self.tables_made += 1;
         self.tables.push(Table {
             name: name.to_string(),
@@ -463,6 +591,7 @@ impl Workbook {
         let (ar, ac) = self.active_cell_of(sheet);
         self.tables[ti].list_sel = sheet == self.session.active && rect.contains(ar, ac);
         self.sbr_table_added(ti);
+        self.widen_for_new_table(sheet, rect);
         let d_first = rect.r0 + 1;
         let snap: Vec<Option<Arc<str>>> = (rect.c0..=rect.c1)
             .map(|c| self.counted_row_format(sheet, c, d_first, rect.r1 + 1))
@@ -472,6 +601,7 @@ impl Workbook {
             self.init_col_dxf(ti, c);
         }
         self.infer_calc_columns(ti);
+        self.create_filters_on_list(sheet, name, rect);
 
         let anchors: Vec<_> = self
             .sheet(sheet)
@@ -500,31 +630,84 @@ impl Workbook {
         Ok(self.table_changed(name))
     }
 
+    fn grow_cell_table_for_new_table(&mut self, sheet: SheetId, rect: Rect) {
+        let n = rect.cols();
+        let base = self.cellfmt.base().clone();
+        let mut i = 0;
+        while i + 1 < n {
+            let a = CellAddr::new(sheet, rect.r0, rect.c0 + i);
+            let default_xf = !self.has_apostrophe(a) && *self.cell_style(a) == *base;
+            let linked = self
+                .hyperlinks(sheet)
+                .iter()
+                .any(|h| h.rect.contains(a.row, a.col));
+            if !default_xf && !linked {
+                break;
+            }
+            i += 1;
+        }
+        if let Some(sh) = self.sheet_mut(sheet) {
+            sh.cells.extend_sticky(rect);
+            sh.cells.extend_sticky(Rect::new(rect.r0, i, rect.r0, i));
+        }
+    }
+
     fn infer_calc_columns(&mut self, ti: usize) {
         let (d0, d1) = self.tables[ti].data_rows();
         let (sheet, c0) = (self.tables[ti].sheet, self.tables[ti].rect.c0);
-        let n = d1 - d0 + 1;
+        let w0 = if d1 >= d0 + 4 { d1 - 4 } else { d0 };
         for idx in 0..self.tables[ti].columns.len() {
             let col = c0 + idx as u32;
-            let key = |r: u32| -> Option<String> {
-                self.formula_at(CellAddr::new(sheet, r, col))
-                    .filter(|&f| !self.formula(f).spill.is_some_and(|s| !s.is_cell()))
-                    .map(|f| format!("{:?}", self.formula(f).formula.root))
+
+            let key = |r: u32| -> Option<(bool, String)> {
+                let f = self.formula_at(CellAddr::new(sheet, r, col))?;
+                let fc = self.formula(f);
+                if fc.array.is_some_and(|(h, w)| h * w > 1) {
+                    return None;
+                }
+                Some((fc.array.is_some(), format!("{:?}", fc.formula.root)))
             };
             let Some(last) = key(d1) else {
                 continue;
             };
-            let same = (d0..=d1)
-                .filter(|&r| key(r).as_deref() == Some(last.as_str()))
-                .count() as u32;
-            if same + 1 < n {
+            let exceptions = (w0..=d1)
+                .filter(|&r| key(r).as_ref() != Some(&last))
+                .count();
+            if exceptions > 1 {
                 continue;
+            }
+            if d1 != d0 {
+                let Some(fid) = self.formula_at(CellAddr::new(sheet, d1, col)) else {
+                    continue;
+                };
+                let mut off_sheet = false;
+                let mut row_off = |rc: &crate::formula::Rc| {
+                    if !rc.abs {
+                        let row = d0 as i64 + rc.v as i64;
+                        off_sheet |= !(0..crate::address::MAX_ROWS as i64).contains(&row);
+                    }
+                };
+                crate::structure::map_refs(&self.formula(fid).formula.root, &mut |_, c| {
+                    use crate::formula::CRef;
+                    match c {
+                        CRef::Cell { row, .. } => row_off(row),
+                        CRef::Area { r0, r1, .. } | CRef::Rows { r0, r1 } => {
+                            row_off(r0);
+                            row_off(r1);
+                        }
+                        CRef::Cols { .. } => {}
+                    }
+                    None
+                });
+                if off_sheet {
+                    continue;
+                }
             }
             let name = self.tables[ti].columns[idx].to_lowercase();
             let t = &mut self.tables[ti];
             t.calc[idx] = true;
             t.calc_key.retain(|(n, _)| *n != name);
-            t.calc_key.push((name, last));
+            t.calc_key.push((name, last.1));
         }
     }
 
@@ -715,20 +898,13 @@ impl Workbook {
             return Ok(RecalcReport::default());
         }
 
-        if !show {
-            let mut deps = Vec::new();
-            let row = Rect::new(t.rect.r1, t.rect.c0, t.rect.r1, t.rect.c1);
-            self.graph.dependents_of_rect(t.sheet, &row, &mut deps);
-
-            let read = deps.iter().any(|&fid| {
-                let f = self.formula(fid);
-                crate::graph::plain_ref_rects(self, &f.formula, f.addr)
-                    .iter()
-                    .any(|(s, r)| *s == t.sheet && r.intersects(&row))
-            });
-            if read {
-                return Ok(RecalcReport::default());
-            }
+        if !show
+            && self.plain_refs_touch(
+                t.sheet,
+                Rect::new(t.rect.r1, t.rect.c0, t.rect.r1, t.rect.c1),
+            )
+        {
+            return Ok(RecalcReport::default());
         }
 
         let row = if show { t.rect.r1 + 1 } else { t.rect.r1 };
@@ -978,6 +1154,10 @@ impl Workbook {
     }
 
     pub(crate) fn calc_fill_column(&mut self, ti: usize, addr: CellAddr) {
+        self.outside_creation(|wb| wb.calc_fill_column_in(ti, addr));
+    }
+
+    fn calc_fill_column_in(&mut self, ti: usize, addr: CellAddr) {
         let (d0, d1) = self.tables[ti].data_rows();
         let idx = (addr.col - self.tables[ti].rect.c0) as usize;
 
@@ -1028,6 +1208,9 @@ impl Workbook {
                         .map(|f| format!("{:?}", self.formula(f).formula.root))
                         == src_key
                 {
+                    if let Some(fid) = self.formula_at(CellAddr::new(addr.sheet, r, addr.col)) {
+                        self.chain_to_top(fid);
+                    }
                     skipped = true;
                     continue;
                 }
@@ -1048,10 +1231,8 @@ impl Workbook {
                     self.store_format(to, "General");
                 }
             } else {
-                if !filled.is_empty() {
-                    if let Some(fid) = self.formula_at(addr) {
-                        self.chain_to_top(fid);
-                    }
+                if let Some(fid) = self.formula_at(addr) {
+                    self.chain_to_top(fid);
                 }
                 filled.push(addr);
             }
@@ -1100,96 +1281,18 @@ impl Workbook {
     ) {
         let mut filled: Vec<CellAddr> = Vec::new();
         let t = self.tables[ti].clone();
-        let (d0, d1) = t.data_rows();
-        for (idx, &is_calc) in t.calc.iter().enumerate() {
-            if !is_calc {
-                continue;
-            }
-            let col = t.rect.c0 + idx as u32;
-            let sheet = t.sheet;
-            let snap = sources.iter().find(|s| s.0 == col).cloned();
-            let found = match snap {
-                Some((_, fid, arc)) => Some((self.formula(fid).addr.row, Some((fid, arc)))),
-                None => {
-                    let order: Vec<u32> = (d0..rows.0).rev().chain(rows.1 + 1..=d1).collect();
-                    self.calc_source_row(&t, idx, &order).map(|r| (r, None))
-                }
-            };
-            let Some((sr, swap)) = found else {
-                if let Some(snap) = self.calc_snapshot(&t, idx) {
-                    for r in rows.0..=rows.1 {
-                        let to = CellAddr::new(sheet, r, col);
-                        if self
-                            .sheet(sheet)
-                            .is_some_and(|s| s.cells.get(r, col).is_some())
-                        {
-                            continue;
-                        }
-                        let text = crate::formula_print::print_node(self, &snap.root, to);
-                        self.set_compiled_formula(to, snap.clone(), text);
-                        filled.push(to);
-                        if typed {
-                            let f = t.col_dxf(&t.columns[idx]);
-                            self.store_format(to, f.as_deref().unwrap_or("General"));
-                        }
-                    }
-                }
-                continue;
-            };
-            let sf = self.formula_at(CellAddr::new(sheet, sr, col)).unwrap();
 
-            for r in rows.0..=rows.1 {
-                if self
-                    .sheet(sheet)
-                    .is_some_and(|s| s.cells.get(r, col).is_some())
-                {
-                    self.fmt_copy_pairs(&[(
-                        CellAddr::new(sheet, sr, col),
-                        CellAddr::new(sheet, r, col),
-                    )]);
+        let mut fill = |wb: &mut Workbook| {
+            for (idx, &is_calc) in t.calc.iter().enumerate() {
+                if is_calc {
+                    wb.table_fill_new_rows_col(&t, idx, rows, sources, typed, &mut filled);
                 }
             }
-            if !self.fill_fits(sf, sheet, col, rows.0..=rows.1) {
-                continue;
-            }
-
-            let swapped = swap.is_some();
-            let kept = swap.map(|(fid, arc)| {
-                let old = std::mem::replace(&mut self.formula_mut(fid).formula, arc);
-                (fid, old)
-            });
-            let from = Rect::new(sr, col, sr, col);
-            let order: Vec<u32> = (d0..rows.0).rev().chain(rows.1 + 1..=d1).collect();
-            let def = if swapped {
-                None
-            } else {
-                self.calc_definition_over(&t, idx, &order)
-            };
-            for r in rows.0..=rows.1 {
-                if self
-                    .sheet(sheet)
-                    .is_some_and(|s| s.cells.get(r, col).is_some())
-                {
-                    continue;
-                }
-                let _ = self.copy_range(sheet, from, CellAddr::new(sheet, r, col));
-                if let Some(def) = &def {
-                    let to = CellAddr::new(sheet, r, col);
-                    let text = crate::formula_print::print_node(self, &def.root, to);
-                    self.set_compiled_formula(to, def.clone(), text);
-                }
-                filled.push(CellAddr::new(sheet, r, col));
-                if typed {
-                    if let Some(f) = t.col_dxf(&t.columns[idx]) {
-                        self.store_format(CellAddr::new(sheet, r, col), &f);
-                    } else if sr + 1 != r {
-                        self.store_format(CellAddr::new(sheet, r, col), "General");
-                    }
-                }
-            }
-            if let Some((fid, old)) = kept {
-                self.formula_mut(fid).formula = old;
-            }
+        };
+        if typed {
+            self.outside_creation(&mut fill);
+        } else {
+            self.creating_formulas(&mut fill);
         }
         if self.settings.mode != crate::workbook::CalcMode::Automatic && !filled.is_empty() {
             if typed {
@@ -1201,6 +1304,103 @@ impl Workbook {
                     }
                 }
             }
+        }
+    }
+
+    fn table_fill_new_rows_col(
+        &mut self,
+        t: &Table,
+        idx: usize,
+        rows: (u32, u32),
+        sources: &[(u32, FormulaId, Arc<Formula>)],
+        typed: bool,
+        filled: &mut Vec<CellAddr>,
+    ) {
+        let (d0, d1) = t.data_rows();
+        let col = t.rect.c0 + idx as u32;
+        let sheet = t.sheet;
+        let snap = sources.iter().find(|s| s.0 == col).cloned();
+        let found = match snap {
+            Some((_, fid, arc)) => Some((self.formula(fid).addr.row, Some((fid, arc)))),
+            None => {
+                let order: Vec<u32> = (d0..rows.0).rev().chain(rows.1 + 1..=d1).collect();
+                self.calc_source_row(t, idx, &order).map(|r| (r, None))
+            }
+        };
+        let Some((sr, swap)) = found else {
+            if let Some(snap) = self.calc_snapshot(t, idx) {
+                for r in rows.0..=rows.1 {
+                    let to = CellAddr::new(sheet, r, col);
+                    if self
+                        .sheet(sheet)
+                        .is_some_and(|s| s.cells.get(r, col).is_some())
+                    {
+                        continue;
+                    }
+                    let text = crate::formula_print::print_node(self, &snap.root, to);
+                    self.set_compiled_formula(to, snap.clone(), text);
+                    filled.push(to);
+                    if typed {
+                        let f = t.col_dxf(&t.columns[idx]);
+                        self.store_format(to, f.as_deref().unwrap_or("General"));
+                    }
+                }
+            }
+            return;
+        };
+        let sf = self.formula_at(CellAddr::new(sheet, sr, col)).unwrap();
+
+        for r in rows.0..=rows.1 {
+            if self
+                .sheet(sheet)
+                .is_some_and(|s| s.cells.get(r, col).is_some())
+            {
+                self.fmt_copy_pairs(&[(
+                    CellAddr::new(sheet, sr, col),
+                    CellAddr::new(sheet, r, col),
+                )]);
+            }
+        }
+        if !self.fill_fits(sf, sheet, col, rows.0..=rows.1) {
+            return;
+        }
+
+        let swapped = swap.is_some();
+        let kept = swap.map(|(fid, arc)| {
+            let old = std::mem::replace(&mut self.formula_mut(fid).formula, arc);
+            (fid, old)
+        });
+        let from = Rect::new(sr, col, sr, col);
+        let order: Vec<u32> = (d0..rows.0).rev().chain(rows.1 + 1..=d1).collect();
+        let def = if swapped {
+            None
+        } else {
+            self.calc_definition_over(t, idx, &order)
+        };
+        for r in rows.0..=rows.1 {
+            if self
+                .sheet(sheet)
+                .is_some_and(|s| s.cells.get(r, col).is_some())
+            {
+                continue;
+            }
+            let _ = self.copy_range(sheet, from, CellAddr::new(sheet, r, col));
+            if let Some(def) = &def {
+                let to = CellAddr::new(sheet, r, col);
+                let text = crate::formula_print::print_node(self, &def.root, to);
+                self.set_compiled_formula(to, def.clone(), text);
+            }
+            filled.push(CellAddr::new(sheet, r, col));
+            if typed {
+                if let Some(f) = t.col_dxf(&t.columns[idx]) {
+                    self.store_format(CellAddr::new(sheet, r, col), &f);
+                } else if sr + 1 != r {
+                    self.store_format(CellAddr::new(sheet, r, col), "General");
+                }
+            }
+        }
+        if let Some((fid, old)) = kept {
+            self.formula_mut(fid).formula = old;
         }
     }
 
@@ -1730,6 +1930,14 @@ impl Workbook {
                 let t = self.tables[ti].rect;
                 s == addr.sheet && d.c0 <= t.c1 && d.c1 > t.c1 && d.r0 >= t.r0 && d.r0 <= t.r1
             })
+        {
+            return;
+        }
+
+        if grow_col
+            && self
+                .paste_block()
+                .is_some_and(|(s, d)| s == addr.sheet && d.r1 > self.tables[ti].rect.r1)
         {
             return;
         }
@@ -2318,6 +2526,22 @@ pub fn parse_spec(inner: &str) -> Result<Spec, String> {
             spec.items.this_row = true;
             any_item = true;
             let rest = p[1..].trim();
+
+            let mut depth = 0;
+            let bare_punct = rest.chars().any(|c| {
+                match c {
+                    '[' => depth += 1,
+                    ']' => depth -= 1,
+                    _ if depth == 0 => {
+                        return c.is_ascii_punctuation() && !matches!(c, ':' | '|' | '\'');
+                    }
+                    _ => {}
+                }
+                false
+            });
+            if bare_punct {
+                return Err("a column after '@' with punctuation needs brackets".into());
+            }
             if !rest.is_empty() {
                 col_parts.push(rest.to_string());
             }
@@ -2567,5 +2791,61 @@ mod tests {
         assert_eq!(t("Unit Price"), "Sales[Unit Price]");
         assert_eq!(t("#Data"), "Sales[#Data]");
         assert_eq!(t(""), "Sales");
+    }
+
+    #[test]
+    fn creation_infers_calc_columns_from_the_last_five_rows() {
+        use crate::address::CellAddr;
+
+        let calc = |pat: &str, top: u32, f: &dyn Fn(u32) -> String| -> bool {
+            let mut wb = crate::workbook::Workbook::new();
+            let s = wb.sheet_at(0).id;
+            for c in 0..3u32 {
+                let a = CellAddr::new(s, top - 1, c);
+                wb.set_input(a, ["X", "Y", "Z"][c as usize]).unwrap();
+            }
+            for (i, ch) in pat.chars().enumerate() {
+                let r = top + 1 + i as u32;
+                wb.set_input(CellAddr::new(s, r - 1, 0), &r.to_string())
+                    .unwrap();
+                wb.set_input(CellAddr::new(s, r - 1, 1), "1").unwrap();
+                let input = match ch {
+                    'F' => f(r),
+                    'G' => format!("=A{r}*B{r}"),
+                    'K' => "5".to_string(),
+                    _ => continue,
+                };
+                wb.set_input(CellAddr::new(s, r - 1, 2), &input).unwrap();
+            }
+            let last = top - 1 + pat.len() as u32;
+            wb.add_table("T", s, Rect::new(top - 1, 0, last, 2))
+                .unwrap();
+            wb.table_by_name("T").unwrap().calc[2]
+        };
+        let plain = |r: u32| format!("=A{r}+B{r}");
+        assert!(calc("FFFFFFFFFF", 1, &plain));
+
+        assert!(calc("KKKKKFFFFF", 1, &plain));
+        assert!(calc("KKKKKKFFFF", 1, &plain));
+        assert!(!calc("KKKKKKKFFF", 1, &plain));
+
+        assert!(calc("FFFFFFFFKF", 1, &plain));
+        assert!(!calc("FFFFFFFKKF", 1, &plain));
+        assert!(!calc("FFFFFFFFFK", 1, &plain));
+        assert!(!calc("FFFFFFFFFB", 1, &plain));
+        assert!(calc("FFFFFFFF_F", 1, &plain));
+        assert!(calc("GGGGGGFFFF", 1, &plain));
+        assert!(!calc("FFFFFFFFFG", 1, &plain));
+
+        assert!(calc("F", 1, &plain));
+        assert!(calc("KF", 1, &plain));
+        assert!(!calc("FK", 1, &plain));
+        assert!(!calc("KKF", 1, &plain));
+
+        assert!(calc("KKKKKFFFFF", 4, &|r| format!("=A{}+B{r}", r - 4)));
+        assert!(!calc("KKKKKFFFFF", 4, &|r| format!("=A{}+B{r}", r - 5)));
+
+        assert!(!calc("KKKKKFFFFF", 4, &|r| format!("=A${}+B{r}", r - 4)));
+        assert!(calc("KKKKKFFFFF", 4, &|r| format!("=$A$2+B{r}")));
     }
 }

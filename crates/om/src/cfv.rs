@@ -1,3 +1,4 @@
+use crate::sheetprot::ProtObject;
 use xlcalc::cfv::{CfKind, CfRule, Dv, Dxf, IconSetSpec, ScaleCrit};
 use xlcalc::{CellAddr, Rect, SheetId};
 use xlcalc_variant::{HResult, Variant};
@@ -120,20 +121,40 @@ impl Application<'_> {
         match (m.name, m.kind) {
             ("Index", Get) => Ok(i4(k as i32 + 1)),
             ("Type", Get) => Ok(i4(c.ty)),
+
             ("Type", Put) => {
-                let t = Application::put_value(a)
-                    .i32(0)?
-                    .ok_or_else(OmError::app_defined)?;
-                if !(0..=5).contains(&t) {
+                let t = Application::put_value(a).i32(0)?.ok_or_else(invalid_arg)?;
+                let last = crits.len() - 1;
+                let bad = !(0..=5).contains(&t) || (t == 2 && k != last) || (t == 1 && k != 0);
+                if bad {
+                    return Err(invalid_arg());
+                }
+                let (first, end) = (k == 0, k == last);
+                self.scale_edit(book, sheet, id, k, |c| {
+                    c.ty = t;
+                    if t == 4 {
+                        return;
+                    }
+                    c.formula = None;
+                    c.value = match t {
+                        3 if first => 0.0,
+                        3 if end => 100.0,
+                        5 if first => 10.0,
+                        5 if end => 90.0,
+                        3 | 5 => 50.0,
+                        _ => 0.0,
+                    };
+                })
+            }
+            ("Value", Get) => match &c.formula {
+                Some(f) => Ok(Variant::Bstr(f.clone())),
+                None => Ok(Variant::R8(c.value)),
+            },
+
+            ("Value", Put) => {
+                if matches!(c.ty, 1 | 2) {
                     return Err(OmError::app_defined());
                 }
-                self.scale_edit(book, sheet, id, k, |c| c.ty = t)
-            }
-            ("Value", Get) => match (&c.formula, c.ty) {
-                (Some(f), 4) => Ok(Variant::Bstr(f.clone())),
-                _ => Ok(Variant::R8(c.value)),
-            },
-            ("Value", Put) => {
                 let v = Application::put_value(a);
                 if let Ok(Some(n)) = v.f64(0) {
                     self.scale_edit(book, sheet, id, k, |c| {
@@ -142,6 +163,11 @@ impl Application<'_> {
                     })
                 } else {
                     let t = v.string(0)?.ok_or_else(OmError::app_defined)?;
+                    let t = if t.starts_with('=') {
+                        t
+                    } else {
+                        format!("=\"{}\"", t.replace('"', "\"\""))
+                    };
                     self.scale_edit(book, sheet, id, k, |c| c.formula = Some(t))
                 }
             }
@@ -261,6 +287,9 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
+        if self.fc_poisoned {
+            return Err(OmError::app_defined());
+        }
         let (sheet, rect) = self.cf_target(r)?;
         match (m.name, m.kind) {
             ("Count", Get) => Ok(i4(self.cf_ids(r)?.len() as i32)),
@@ -296,7 +325,10 @@ impl Application<'_> {
                 sh.rules.retain(|x| !x.applies.is_empty());
                 Ok(Variant::Empty)
             }
-            ("Add", Func) => self.cf_add(r, sheet, rect, a),
+            ("Add", Func) => {
+                self.object_guard(r.book, sheet, ProtObject::FormatCondition, None)?;
+                self.cf_add(r, sheet, rect, a)
+            }
             ("AddTop10", Func) => self.cf_push(
                 r.book,
                 sheet,
@@ -385,6 +417,9 @@ impl Application<'_> {
                 CfKind::CellValue(op)
             }
             2 => {
+                if matches!(a.get(2), Some(Variant::Empty)) {
+                    return Err(invalid());
+                }
                 let f = f1.as_ref().ok_or_else(needed)?;
                 if f.is_empty() {
                     return Err(invalid());
@@ -481,7 +516,18 @@ impl Application<'_> {
             f2,
             dxf: Dxf::default(),
         };
-        let id = wb.cfv_sheet_mut(sheet).add_rule(rule);
+        let sh = wb.cfv_sheet_mut(sheet);
+        let id = sh.add_rule(rule);
+
+        let block: Vec<u32> = sh
+            .rules
+            .iter()
+            .filter(|r| r.id != id && r.applies == [rect])
+            .map(|r| r.id)
+            .collect();
+        for b in block.into_iter().rev() {
+            sh.list_first_in_priority(b);
+        }
         Ok(self.cf_handle(book, sheet, id, rect))
     }
 
@@ -503,7 +549,7 @@ impl Application<'_> {
             (pos, sh.rules[pos].clone())
         };
         let anchor = CellAddr::new(sheet, rule.anchor().0, rule.anchor().1);
-        let owner = StyleOwner::Cond(book, sheet, id);
+        let owner = StyleOwner::Cond(book, sheet, id, scope);
         if let Some(r) = self.cf_deco_member(book, sheet, id, &rule, m, a) {
             return r;
         }
@@ -536,19 +582,23 @@ impl Application<'_> {
             }
             ("ModifyAppliesToRange", Func) => {
                 let (_, to_sheet, rects) = self.range_areas(a.get(0))?;
-                if to_sheet != sheet || rects.len() != 1 {
+                if to_sheet != sheet || rects.is_empty() {
                     return Err(OmError::app_defined());
                 }
-                let rect = rects[0];
+
                 let old = anchor;
-                let new = CellAddr::new(sheet, rect.r0, rect.c0);
+                let new = CellAddr::new(
+                    sheet,
+                    rects.iter().map(|r| r.r0).min().unwrap_or(0),
+                    rects.iter().map(|r| r.c0).min().unwrap_or(0),
+                );
                 let wb = &mut self.book_mut(book)?.wb;
                 let moved = [&rule.f1, &rule.f2].map(|f| {
                     f.as_ref()
                         .map(|t| wb.cfv_retarget(t, old, new).unwrap_or_else(|| t.clone()))
                 });
                 self.cf_edit(book, sheet, id, |r| {
-                    r.applies = vec![rect];
+                    r.applies = rects;
                     let [f1, f2] = moved;
                     r.f1 = f1;
                     r.f2 = f2;
@@ -900,6 +950,26 @@ impl Application<'_> {
             .is_ok_and(|b| b.wb.dv_at(CellAddr::new(sheet, rect.r0, rect.c0)).is_some())
     }
 
+    pub(crate) fn validation_multi_member(
+        &mut self,
+        r: &RangeRef,
+        m: &'static Member,
+    ) -> Result<Variant, OmError> {
+        match (m.name, m.kind) {
+            ("Value", InvokeKind::Get) => {
+                let (sheet, rect) = self.resolve(r).map_err(|_| OmError::app_defined())?;
+                let wb = &self.book(r.book)?.wb;
+                Ok(Variant::Bool(
+                    wb.dv_value(CellAddr::new(sheet, rect.r0, rect.c0))
+                        .unwrap_or(true),
+                ))
+            }
+            ("ErrorTitle" | "InputTitle", InvokeKind::Get) => Ok(Variant::BstrNull),
+            ("IMEMode", InvokeKind::Get) => Ok(i4(0)),
+            _ => Err(OmError::app_defined()),
+        }
+    }
+
     pub(crate) fn validation_member(
         &mut self,
         r: &RangeRef,
@@ -915,6 +985,7 @@ impl Application<'_> {
         };
         match (m.name, m.kind) {
             ("Add" | "Modify", Func) => {
+                self.object_guard(r.book, sheet, ProtObject::Validation, None)?;
                 let modify = m.name == "Modify";
                 let old = find(self)?;
                 if modify && old.is_none() {
@@ -952,6 +1023,21 @@ impl Application<'_> {
                     return Err(none());
                 }
                 let keep = old.as_ref().filter(|_| modify);
+
+                if modify {
+                    let wb = &self.book(r.book)?.wb;
+                    if let Some(d0) = wb.dv_at(top) {
+                        let same = (rect.r0..=rect.r1.min(rect.r0 + 10_000)).all(|row| {
+                            (rect.c0..=rect.c1.min(rect.c0 + 1_000)).all(|col| {
+                                wb.dv_at(CellAddr::new(sheet, row, col))
+                                    .is_some_and(|d| std::ptr::eq(d, d0))
+                            })
+                        });
+                        if !same {
+                            return Err(none());
+                        }
+                    }
+                }
                 let alert = a.i32(1)?.unwrap_or(keep.map_or(1, |o| o.alert));
                 let op = a.i32(2)?.unwrap_or(keep.map_or(1, |o| o.op));
                 if !(1..=3).contains(&alert) || !(1..=8).contains(&op) {
@@ -975,6 +1061,15 @@ impl Application<'_> {
                 {
                     return Err(OmError::app_defined());
                 }
+                if matches!(ty, 1 | 4..=6) {
+                    let wb = &self.book(r.book)?.wb;
+                    let limits = [(&f1, true), (&f2, two)];
+                    if limits.iter().any(|(f, used)| {
+                        *used && f.as_deref().is_some_and(|t| !wb.dv_limit_ok(ty, t, top))
+                    }) {
+                        return Err(none());
+                    }
+                }
                 let wb = &mut self.book_mut(r.book)?.wb;
                 let conv = |f: Option<String>| -> Result<Option<String>, OmError> {
                     match f {
@@ -989,7 +1084,45 @@ impl Application<'_> {
                         other => Ok(other),
                     }
                 };
-                let (f1, f2) = (conv(f1)?, if two { conv(f2)? } else { None });
+
+                if ty == 4
+                    && [&f1, &f2].iter().any(|f| {
+                        f.as_deref().is_some_and(|t| {
+                            !t.starts_with('=')
+                                && t.parse::<f64>().is_err()
+                                && t.contains(':')
+                                && !t.contains(['/', '-'])
+                        })
+                    })
+                {
+                    return Err(OmError::app_defined());
+                }
+
+                let plain = |f: Option<String>| {
+                    f.map(|t| match t.strip_prefix('=') {
+                        Some(n)
+                            if matches!(ty, 1 | 2 | 6)
+                                && !n.is_empty()
+                                && n.chars().all(|c| c.is_ascii_digit() || c == '.')
+                                && n.parse::<f64>().is_ok() =>
+                        {
+                            n.to_string()
+                        }
+                        _ => t,
+                    })
+                };
+                let (f1, f2) = (conv(plain(f1))?, if two { conv(plain(f2))? } else { None });
+
+                if matches!(ty, 1 | 2 | 4 | 5 | 6) && matches!(op, 1 | 2) {
+                    if let (Some(Ok(x)), Some(Ok(y))) = (
+                        f1.as_deref().map(str::parse::<f64>),
+                        f2.as_deref().map(str::parse::<f64>),
+                    ) {
+                        if x > y {
+                            return Err(none());
+                        }
+                    }
+                }
                 let dv = Dv {
                     applies: vec![rect],
                     kind: ty,
@@ -1005,7 +1138,6 @@ impl Application<'_> {
                     input_message: String::new(),
                     error_title: String::new(),
                     error_message: String::new(),
-                    touched: false,
                 };
                 let sh = wb.cfv_sheet_mut(sheet);
                 match keep {
@@ -1020,7 +1152,6 @@ impl Application<'_> {
                             input_message: o.input_message.clone(),
                             error_title: o.error_title.clone(),
                             error_message: o.error_message.clone(),
-                            touched: o.touched,
                             ..dv
                         };
                         if let Some(d) = sh.dvs.iter_mut().find(|d| d.applies == o.applies) {
@@ -1043,20 +1174,35 @@ impl Application<'_> {
             }
             ("Delete", Func) => {
                 let wb = &mut self.book_mut(r.book)?.wb;
-                let sh = wb.cfv_sheet_mut(sheet);
-                for d in &mut sh.dvs {
+                let mut dvs = wb.cfv_sheet_mut(sheet).dvs.clone();
+                for d in &mut dvs {
+                    let (r0, c0) = d.anchor();
                     d.applies = d.applies.iter().flat_map(|x| x.subtract(&rect)).collect();
+                    if d.applies.is_empty() {
+                        continue;
+                    }
+
+                    let (r1, c1) = d.anchor();
+                    if (r0, c0) != (r1, c1) {
+                        let (from, to) =
+                            (CellAddr::new(sheet, r0, c0), CellAddr::new(sheet, r1, c1));
+                        for f in [&mut d.f1, &mut d.f2] {
+                            if let Some(t) = f.as_deref().filter(|t| t.starts_with('=')) {
+                                if let Some(n) = wb.cfv_retarget(t, from, to) {
+                                    *f = Some(n);
+                                }
+                            }
+                        }
+                    }
                 }
-                sh.dvs.retain(|d| !d.applies.is_empty());
+                dvs.retain(|d| !d.applies.is_empty());
+                wb.cfv_sheet_mut(sheet).dvs = dvs;
                 Ok(Variant::Empty)
             }
+
             ("Value", Get) => {
                 let wb = &self.book(r.book)?.wb;
-                let ok = (rect.r0..=rect.r1.min(rect.r0 + 10_000)).all(|row| {
-                    (rect.c0..=rect.c1.min(rect.c0 + 1_000))
-                        .all(|col| wb.dv_value(CellAddr::new(sheet, row, col)).unwrap_or(true))
-                });
-                Ok(Variant::Bool(ok))
+                Ok(Variant::Bool(wb.dv_value(top).unwrap_or(true)))
             }
             ("ErrorTitle" | "InputTitle", Get) if find(self)?.is_none() => Ok(Variant::BstrNull),
 
@@ -1118,6 +1264,14 @@ impl Application<'_> {
                                     Err(_) => f.clone(),
                                 }))
                             }
+
+                            Some(f) if dv.kind == 3 && f.contains(['/', '-']) => {
+                                let wb = &self.book(r.book)?.wb;
+                                Ok(Variant::Bstr(match wb.dv_literal(4, f) {
+                                    Some(n) => wb.dv_literal_shown(4, n),
+                                    None => f.clone(),
+                                }))
+                            }
                             Some(f) => Ok(Variant::Bstr(f.clone())),
                             None => Ok(Variant::Bstr(String::new())),
                         }
@@ -1147,7 +1301,7 @@ impl Application<'_> {
                         })
                     }
                     ("ErrorTitle" | "ErrorMessage" | "InputTitle" | "InputMessage", Put) => {
-                        let s = Application::put_value(a).string(0)?.unwrap_or_default();
+                        let s = self.put_string_alpha(a)?;
                         let limit = match m.name {
                             "ErrorMessage" => 225,
                             "InputMessage" => 255,

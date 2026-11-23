@@ -141,6 +141,10 @@ pub fn t_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
             let (m1, v1) = sample_var(&x);
             let (m2, v2) = sample_var(&y);
 
+            if !v1.is_finite() || !v2.is_finite() {
+                return Err(XlError::NUM);
+            }
+
             if kind == 2.0 {
                 let df = n1 + n2 - 2.0;
                 let ss = x87::add(x87::mul(n1 - 1.0, v1), x87::mul(n2 - 1.0, v2));
@@ -191,6 +195,10 @@ pub fn f_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         if v1 == 0.0 || v2 == 0.0 {
             return Err(XlError::DIV0);
         }
+
+        if !v1.is_finite() || !v2.is_finite() {
+            return Err(XlError::NUM);
+        }
         let (d1, d2) = (x.len() as f64 - 1.0, y.len() as f64 - 1.0);
 
         let (f, dn, dd) = if v1 > v2 {
@@ -224,9 +232,6 @@ pub fn chisq_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
                 return Err(*err);
             }
             if let (Value::Number(a), Value::Number(e)) = (a, e) {
-                if *e < 0.0 {
-                    return Err(XlError::NUM);
-                }
                 if *e == 0.0 {
                     return Err(XlError::DIV0);
                 }
@@ -242,6 +247,9 @@ pub fn chisq_test(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         };
         if df < 1.0 {
             return Err(XlError::NA);
+        }
+        if chi < 0.0 {
+            return Err(XlError::NUM);
         }
         Ok(chisq_upper(chi, df))
     })())

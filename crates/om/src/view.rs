@@ -1,7 +1,8 @@
+use crate::sheetprot::ProtObject;
 use xlcalc::{FilterSpec, Rect, SheetId, Table};
 use xlcalc_variant::Variant;
 
-use crate::addr::{MAX_COLS, MAX_ROWS};
+use crate::addr::{max_cols, max_rows};
 use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef, SortOwner};
 use crate::conv::Args;
 use crate::error::OmError;
@@ -9,16 +10,16 @@ use crate::objects::edit_error;
 use crate::typelib::{InvokeKind, Member};
 
 fn axis(rect: Rect, mode: Mode) -> Option<bool> {
-    let rows = rect.c0 == 0 && rect.c1 == MAX_COLS - 1;
-    let cols = rect.r0 == 0 && rect.r1 == MAX_ROWS - 1;
+    let rows = rect.c0 == 0 && rect.c1 == max_cols() - 1;
+    let cols = rect.r0 == 0 && rect.r1 == max_rows() - 1;
     match (mode, rows, cols) {
+        (Mode::Cells, _, _) => None,
         (Mode::Columns, _, true) => Some(false),
         (_, true, _) => Some(true),
         (_, _, true) => Some(false),
 
         (Mode::Rows, _, _) => Some(true),
         (Mode::Columns, _, _) => Some(false),
-        _ => None,
     }
 }
 
@@ -45,7 +46,7 @@ impl Application<'_> {
         let book = r.book;
         match (m.name, m.kind) {
             ("Hidden", Get) => {
-                let rows = axis(rect, r.mode).ok_or_else(OmError::app_defined)?;
+                let rows = axis(rect, r.eff_mode()).ok_or_else(OmError::app_defined)?;
                 let wb = &self.book(book)?.wb;
                 let (list, lo, hi) = if rows {
                     (wb.hidden_rows(sheet), rect.r0, rect.r1)
@@ -57,7 +58,7 @@ impl Application<'_> {
             }
             ("Hidden", Put) => {
                 let hide = self.put_bool(a)?;
-                let rows = axis(rect, r.mode).ok_or_else(OmError::app_defined)?;
+                let rows = axis(rect, r.eff_mode()).ok_or_else(OmError::app_defined)?;
                 let wb = &mut self.book_mut(book)?.wb;
                 if rows {
                     wb.set_rows_hidden(sheet, rect.r0, rect.rows(), hide)
@@ -99,13 +100,23 @@ impl Application<'_> {
             ("ColumnWidth", Get) => {
                 let wb = &self.book(book)?.wb;
                 let w = wb.column_width(sheet, rect.c0);
-                Ok(
-                    if (rect.c0..=rect.c1).all(|c| wb.column_width(sheet, c) == w) {
-                        Variant::R8(w)
-                    } else {
-                        Variant::Null
-                    },
-                )
+
+                let whole = (rect.r0 == 0 && rect.r1 + 1 >= 1_048_576)
+                    || (rect.c0 == 0 && rect.c1 + 1 >= 16_384);
+                let differs = if whole {
+                    let pop = wb.populated_lines(sheet, false);
+                    let mut ws = pop
+                        .range(rect.c0..=rect.c1)
+                        .map(|c| wb.column_width(sheet, *c));
+                    ws.next().is_some_and(|f| ws.any(|x| x != f))
+                } else {
+                    (rect.c0..=rect.c1).any(|c| wb.column_width(sheet, c) != w)
+                };
+                Ok(if differs {
+                    Variant::Null
+                } else {
+                    Variant::R8(w)
+                })
             }
             ("Width", Get) => {
                 let wb = &self.book(book)?.wb;
@@ -119,13 +130,20 @@ impl Application<'_> {
             ("RowHeight", Get) => {
                 let wb = &self.book(book)?.wb;
                 let h = wb.row_height(sheet, rect.r0);
-                Ok(
-                    if (rect.r0..=rect.r1).all(|r| wb.row_height(sheet, r) == h) {
-                        Variant::R8(h)
-                    } else {
-                        Variant::Null
-                    },
-                )
+                let pop = wb.populated_lines(sheet, true);
+                let mut hs = pop
+                    .range(rect.r0..=rect.r1)
+                    .map(|r| wb.row_height(sheet, *r));
+
+                let differs = hs.next().is_some_and(|f| hs.any(|x| x != f))
+                    || wb.row_custom_heights(sheet).iter().any(|(r, _)| {
+                        (rect.r0..=rect.r1).contains(r) && wb.row_height(sheet, *r) != h
+                    });
+                Ok(if differs {
+                    Variant::Null
+                } else {
+                    Variant::R8(h)
+                })
             }
             ("Height", Get) => {
                 let wb = &self.book(book)?.wb;
@@ -136,13 +154,17 @@ impl Application<'_> {
             ("Left", Get) => {
                 let wb = &self.book(book)?.wb;
                 Ok(Variant::R8(
-                    (0..rect.c0).map(|c| wb.column_points(sheet, c)).sum(),
+                    (0..rect.c0)
+                        .map(|c| wb.column_points(sheet, c))
+                        .fold(0.0, |x, y| x + y),
                 ))
             }
             ("Top", Get) => {
                 let wb = &self.book(book)?.wb;
                 Ok(Variant::R8(
-                    (0..rect.r0).map(|r| wb.row_height(sheet, r)).sum(),
+                    (0..rect.r0)
+                        .map(|r| wb.row_height(sheet, r))
+                        .fold(0.0, |x, y| x + y),
                 ))
             }
             ("RowHeight", Put) => {
@@ -176,9 +198,12 @@ impl Application<'_> {
                 if !(0.0..=255.0).contains(&cw) {
                     return Err(OmError::unable_to_set("ColumnWidth", "Range"));
                 }
-                self.book_mut(book)?
-                    .wb
-                    .set_column_width(sheet, rect.c0, rect.c1, cw);
+                let wb = &mut self.book_mut(book)?.wb;
+
+                if cw > 0.0 && rect.is_full_rows() {
+                    wb.set_sheet_standard_width(sheet, cw);
+                }
+                wb.set_column_width(sheet, rect.c0, rect.c1, cw);
                 Ok(Variant::Empty)
             }
             _ => Err(unsupported("Range", m)),
@@ -270,14 +295,28 @@ impl Application<'_> {
             .iter()
             .find(|t| t.sheet == sheet && t.rect == rect)
             .map(|t| t.name.clone());
-        if a.get(4).is_some() || a.get(5).is_some() {
+
+        if !matches!(a.get(4), None | Some(Variant::I4(1))) || a.get(5).is_some() {
             return Err(unsupported("Range", m));
         }
         let Some(field) = a.i32(0)? else {
-            if table.is_some() {
-                return Err(OmError::unsupported(
-                    "Range.AutoFilter switching a table's filter buttons",
-                ));
+            if a.get(1).is_some() {
+                return Err(OmError::app_defined());
+            }
+            if let Some(name) = table {
+                let on = self
+                    .book(book)?
+                    .wb
+                    .tables()
+                    .iter()
+                    .any(|t| t.name == name && t.show_filter);
+                let wb = &mut self.book_mut(book)?.wb;
+                if on {
+                    wb.autofilter_off(sheet, Some(&name)).map_err(edit_error)?;
+                } else {
+                    wb.table_filter_on(&name);
+                }
+                return Ok(Variant::Bool(true));
             }
             self.book_mut(book)?
                 .wb
@@ -286,7 +325,9 @@ impl Application<'_> {
             return Ok(Variant::Bool(true));
         };
         let criteria1: Option<String> = match a.get(1) {
-            None => None,
+            None | Some(Variant::Null | Variant::Empty) => None,
+
+            Some(Variant::Bool(b)) => Some(if *b { "TRUE" } else { "FALSE" }.to_string()),
             Some(Variant::Bstr(s)) => Some(s.clone()),
             Some(Variant::Array(arr)) => {
                 let mut items = Vec::new();
@@ -304,11 +345,16 @@ impl Application<'_> {
             Some(_) => return Err(OmError::type_mismatch()),
         };
 
-        let op_code = match a.i32(2)? {
+        let op_arg = match a.get(2) {
+            Some(Variant::Null | Variant::Empty) => return Err(OmError::app_defined()),
+            Some(Variant::Bool(true)) => None,
+            _ => a.i32(2)?,
+        };
+        let op_code = match op_arg {
             Some(1) if a.get(3).is_none() => 0,
             o => o.unwrap_or(0),
         };
-        let operator = match a.i32(2)? {
+        let operator = match op_arg {
             None | Some(1) => "and",
             Some(2) => "or",
             Some(3) => "top10",
@@ -338,22 +384,21 @@ impl Application<'_> {
         } else {
             each.iter().map(|s| Some(s.as_str())).collect()
         };
+
+        let wb = &mut self.book_mut(book)?.wb;
+        let locale = crate::conv::input_locale(a.lcid, wb.locale());
         for criteria1 in runs {
-            self.book_mut(book)?
-                .wb
-                .autofilter(
-                    sheet,
-                    rect,
-                    table.as_deref(),
-                    FilterSpec {
-                        field,
-                        criteria1,
-                        operator: Some(operator),
-                        criteria2: criteria2.as_deref(),
-                        op_code,
-                    },
-                )
-                .map_err(edit_error)?;
+            let spec = FilterSpec {
+                field,
+                criteria1,
+                operator: Some(operator),
+                criteria2: criteria2.as_deref(),
+                op_code,
+            };
+            wb.with_input_locale(&locale, |wb| {
+                wb.autofilter(sheet, rect, table.as_deref(), spec)
+            })
+            .map_err(edit_error)?;
         }
 
         if op_code == 7 {
@@ -378,11 +423,11 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
         match (m.name, m.kind) {
-            ("AutoFilter", Get) => {
+            ("AutoFilter" | "_AutoFilter", Get) => {
                 if self.book(b)?.wb.sheet_autofilter_missing(s) {
                     Ok(Variant::Dispatch(None))
                 } else {
-                    Ok(self.alloc(Object::AutoFilter(b, s)))
+                    Ok(self.alloc(Object::AutoFilter(b, s, None)))
                 }
             }
             ("AutoFilterMode", Get) => Ok(Variant::Bool(self.book(b)?.wb.autofilter_mode(s))),
@@ -426,9 +471,13 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
         match (m.name, m.kind) {
-            ("AutoFilter", Get) => Ok(self.alloc(Object::AutoFilter(b, t.sheet))),
+            ("AutoFilter" | "_AutoFilter", Get) if !t.show_filter => Ok(Variant::Dispatch(None)),
+            ("AutoFilter" | "_AutoFilter", Get) => {
+                Ok(self.alloc(Object::AutoFilter(b, t.sheet, Some(t.name.clone()))))
+            }
             ("ShowAutoFilter", Get) => Ok(Variant::Bool(t.show_filter)),
             ("ShowAutoFilter", Put) => {
+                self.object_guard(b, t.sheet, ProtObject::TableFilter, None)?;
                 let on = self.put_bool(a)?;
                 if on {
                     self.book_mut(b)?.wb.table_filter_on(&t.name);
@@ -448,6 +497,7 @@ impl Application<'_> {
         &mut self,
         b: BookId,
         s: SheetId,
+        table: Option<&str>,
         m: &'static Member,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
@@ -456,7 +506,14 @@ impl Application<'_> {
                 self.book_mut(b)?.wb.reapply_filter(s).map_err(edit_error)?;
                 Ok(Variant::Empty)
             }
-            ("FilterMode", Get) => Ok(Variant::Bool(self.book(b)?.wb.filter_mode(s))),
+            ("FilterMode", Get) => Ok(Variant::Bool(
+                self.book(b)?.wb.autofilter_object_mode(s, table),
+            )),
+
+            ("ShowAllData", Func) => {
+                self.book_mut(b)?.wb.show_all_data(s).ok();
+                Ok(Variant::Empty)
+            }
             ("Range", Get) => {
                 let v = self
                     .book(b)?
@@ -466,7 +523,7 @@ impl Application<'_> {
                 self.new_range(b, s, v.rect, Mode::Cells)
             }
             ("Filters", Get) => Ok(self.alloc(Object::Filters(b, s))),
-            ("Sort", Get) => Ok(self.alloc(Object::Sort(SortOwner::Sheet(b, s)))),
+            ("Sort", Get) => Ok(self.alloc(Object::Sort(SortOwner::Filter(b, s)))),
             ("Parent", Get) => Ok(self.alloc(Object::Worksheet(b, s))),
             _ => Err(unsupported("AutoFilter", m)),
         }
@@ -532,7 +589,18 @@ impl Application<'_> {
                 Some(t) => Ok(Variant::Bstr(t)),
                 None => Err(OmError::app_defined()),
             },
-            "Operator" => Ok(Variant::I4(col.as_ref().map_or(0, |c| c.op))),
+
+            "Operator" => Ok(Variant::I4(
+                col.as_ref().ok_or_else(OmError::app_defined)?.op,
+            )),
+            "Count" => {
+                let c = col.as_ref().ok_or_else(OmError::app_defined)?;
+                Ok(Variant::I4(if c.values.len() > 1 {
+                    c.values.len() as i32
+                } else {
+                    1 + i32::from(c.c2.is_some())
+                }))
+            }
             _ => Err(unsupported("Filter", m)),
         }
     }

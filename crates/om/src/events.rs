@@ -139,6 +139,8 @@ struct Ctx {
     values: Vec<(&'static str, Variant)>,
 
     win: Option<(BookId, u32)>,
+
+    link: Option<u32>,
 }
 
 impl<'v> Application<'v> {
@@ -418,10 +420,49 @@ impl<'v> Application<'v> {
             target: target.to_vec(),
             values: Vec::new(),
             win: None,
+            link: None,
         };
+        let was_on = self.enable_events;
         self.raise(EventSource::Worksheet(b, s), sheet_event, &cx);
+        if was_on && !self.enable_events && sheet_event == "Change" {
+            self.deferred_changes.push((b, s, target.to_vec()));
+            return;
+        }
         self.raise(EventSource::Workbook(b), book_event, &cx);
         self.raise(EventSource::Application, book_event, &cx);
+    }
+
+    pub(crate) fn raise_follow_hyperlink(&mut self, b: BookId, s: SheetId, link: u32) {
+        if self.book(b).map_or(true, |bk| bk.wb.sheet(s).is_none()) {
+            return;
+        }
+        let cx = Ctx {
+            book: Some(b),
+            sheet: Some(s),
+            link: Some(link),
+            ..Ctx::default()
+        };
+        self.raise(EventSource::Worksheet(b, s), "FollowHyperlink", &cx);
+        self.raise(EventSource::Workbook(b), "SheetFollowHyperlink", &cx);
+        self.raise(EventSource::Application, "SheetFollowHyperlink", &cx);
+    }
+
+    pub(crate) fn release_deferred_changes(&mut self) {
+        for (b, s, target) in std::mem::take(&mut self.deferred_changes) {
+            if self.book(b).map_or(true, |bk| bk.wb.sheet(s).is_none()) {
+                continue;
+            }
+            let cx = Ctx {
+                book: Some(b),
+                sheet: Some(s),
+                target,
+                values: Vec::new(),
+                win: None,
+                link: None,
+            };
+            self.raise(EventSource::Workbook(b), "SheetChange", &cx);
+            self.raise(EventSource::Application, "SheetChange", &cx);
+        }
     }
 
     fn raise(&mut self, source: EventSource, name: &str, cx: &Ctx) -> Vec<Variant> {
@@ -493,6 +534,10 @@ impl<'v> Application<'v> {
                 Some(b) => self.alloc(Object::Workbook(b)),
                 None => Variant::Dispatch(None),
             },
+            "Target" if cx.link.is_some() => match (cx.book, cx.sheet, cx.link) {
+                (Some(b), Some(s), Some(l)) => self.alloc(Object::Hyperlink(b, s, l)),
+                _ => Variant::Dispatch(None),
+            },
             "Target" => match (cx.book, cx.sheet) {
                 (Some(b), Some(s)) if !cx.target.is_empty() => self
                     .new_multi(b, s, &cx.target, Mode::Cells)
@@ -519,7 +564,7 @@ impl<'v> Application<'v> {
             .map(|(_, n)| n.clone())
     }
 
-    fn ensure_code_name(&mut self, b: BookId, s: SheetId) -> Result<String, OmError> {
+    pub(crate) fn ensure_code_name(&mut self, b: BookId, s: SheetId) -> Result<String, OmError> {
         if let Some(n) = self.sheet_code_name(b, s) {
             return Ok(n);
         }

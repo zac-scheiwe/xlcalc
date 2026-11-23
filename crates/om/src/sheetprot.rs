@@ -4,9 +4,10 @@ use xlcalc::{CellAddr, Rect, SheetId};
 
 use crate::app::{unsupported, Application, BookId, Object};
 use crate::conv::Args;
-use crate::error::OmError;
+use crate::error::{vba_scode, OmError};
 use crate::typelib::{InvokeKind, Member};
 use xlcalc_variant::Variant;
+use xlcalc_xlsx::PassHash;
 
 pub(crate) const LOCKED_CELL: &str = "The cell or chart you're trying to change is on a protected sheet. To make a change, unprotect the sheet. You might be requested to enter a password.";
 
@@ -35,13 +36,15 @@ const INS_ROWS: usize = 4;
 const DEL_COLUMNS: usize = 6;
 const DEL_ROWS: usize = 7;
 const SORTING: usize = 8;
+const FILTERING: usize = 9;
+const INS_HYPERLINKS: usize = 5;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct SheetProt {
     pub contents: bool,
     pub objects: bool,
     pub scenarios: bool,
-    pub password: Option<String>,
+    pub password: Option<Pw>,
     pub ui_only: bool,
     pub allow: [bool; 11],
     pub selection: i32,
@@ -51,6 +54,45 @@ impl SheetProt {
     fn any(&self) -> bool {
         self.contents || self.objects || self.scenarios
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum Pw {
+    Text(String),
+    Hash(PassHash),
+}
+
+impl Pw {
+    pub(crate) fn matches(&self, given: Option<&str>) -> bool {
+        match self {
+            Pw::Text(t) => given == Some(t.as_str()),
+            Pw::Hash(h) => given.is_some_and(|g| h.matches(g)),
+        }
+    }
+
+    fn hash(&self) -> PassHash {
+        match self {
+            Pw::Text(t) => PassHash::Legacy(xlcalc_xlsx::legacy_hash(t)),
+            Pw::Hash(h) => h.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct EditRange {
+    pub title: String,
+    pub rects: Vec<Rect>,
+    pub password: Option<Pw>,
+}
+
+pub(crate) type BookEditRanges = HashMap<SheetId, Vec<EditRange>>;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ProtObject {
+    Validation,
+    FormatCondition,
+    Hyperlink,
+    TableFilter,
 }
 
 pub(crate) type BookSheetProt = HashMap<SheetId, SheetProt>;
@@ -92,19 +134,23 @@ impl Application<'_> {
         if password.as_ref().is_some_and(|p| p.chars().count() > 255) {
             return Err(OmError::app_defined());
         }
+        let password = password.map(Pw::Text);
         let old = self.sheet_prot(b, s);
         let mut allow = [false; 11];
         for (i, flag) in allow.iter_mut().enumerate() {
             *flag = a.bool(5 + i)?.unwrap_or(false);
         }
         let objects = a.bool(1)?.unwrap_or(true);
-        let contents = a.bool(2)?.unwrap_or(true);
+
+        let contents = a
+            .bool(2)?
+            .unwrap_or(!(old.any() && a.bool(1)? == Some(false)));
         let scenarios = a.bool(3)?.unwrap_or(true);
-        let new = SheetProt {
+        let mut new = SheetProt {
             objects,
             contents,
             scenarios,
-            password: if old.any() { old.password } else { password },
+            password: None,
             ui_only: a.bool(4)?.unwrap_or(old.ui_only),
             allow: if contents || objects || scenarios {
                 allow
@@ -112,6 +158,25 @@ impl Application<'_> {
                 old.allow
             },
             selection: old.selection,
+        };
+
+        let changed = (
+            new.objects,
+            new.contents,
+            new.scenarios,
+            new.ui_only,
+            new.allow,
+        ) != (
+            old.objects,
+            old.contents,
+            old.scenarios,
+            old.ui_only,
+            old.allow,
+        );
+        new.password = match (old.any(), old.password) {
+            (false, _) => password,
+            (true, Some(p)) => Some(p),
+            (true, None) => password.filter(|_| changed),
         };
         self.set_sheet_prot(b, s, new)
     }
@@ -147,22 +212,179 @@ impl Application<'_> {
         }
     }
 
+    fn edit_ranges(&self, b: BookId, s: SheetId) -> Vec<EditRange> {
+        self.book(b)
+            .ok()
+            .and_then(|bk| bk.edit_ranges.get(&s).cloned())
+            .unwrap_or_default()
+    }
+
+    fn edit_ranges_mut(&mut self, b: BookId, s: SheetId) -> Result<&mut Vec<EditRange>, OmError> {
+        Ok(self.book_mut(b)?.edit_ranges.entry(s).or_default())
+    }
+
     pub(crate) fn allow_edit_ranges_member(
         &mut self,
         b: BookId,
         s: SheetId,
         m: &'static Member,
+        a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
+        let list = self.edit_ranges(b, s);
         match (m.name, m.kind) {
-            ("Count", Get) => Ok(Variant::I4(0)),
+            ("Count", Get) => Ok(Variant::I4(list.len() as i32)),
             ("Application", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
             ("Creator", Get) => Ok(Variant::I4(CREATOR)),
             ("Parent", Get) => Ok(self.alloc(Object::Protection(b, s))),
-            ("Item" | "_Default", _) => Err(OmError::hresult(xlcalc_variant::HResult(
-                0x8002_000B_u32 as i32,
-            ))),
+            ("Item" | "_Default", Get) => {
+                let i = match a.get(0) {
+                    Some(Variant::Bstr(t)) => list
+                        .iter()
+                        .position(|r| r.title.eq_ignore_ascii_case(t))
+                        .ok_or_else(OmError::app_defined)?,
+                    _ => {
+                        let n = a.i32(0)?.ok_or_else(OmError::app_defined)?;
+                        usize::try_from(n - 1)
+                            .ok()
+                            .filter(|&i| i < list.len())
+                            .ok_or_else(OmError::app_defined)?
+                    }
+                };
+                Ok(self.alloc(Object::AllowEditRange(b, s, i)))
+            }
+            ("Add", Func) => {
+                if self.sheet_prot(b, s).any() {
+                    return Err(OmError::app_defined());
+                }
+                let title = a.string(0)?.unwrap_or_default();
+                let (_, _, rects) = self.range_areas(a.get(1))?;
+                let password = a.string(2)?.filter(|p| !p.is_empty()).map(Pw::Text);
+                let ranges = self.edit_ranges_mut(b, s)?;
+                ranges.push(EditRange {
+                    title,
+                    rects,
+                    password,
+                });
+                let i = ranges.len() - 1;
+                Ok(self.alloc(Object::AllowEditRange(b, s, i)))
+            }
             _ => Err(unsupported("AllowEditRanges", m)),
+        }
+    }
+
+    pub(crate) fn allow_edit_range_member(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        i: usize,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        use InvokeKind::*;
+        let Some(me) = self.edit_ranges(b, s).get(i).cloned() else {
+            return Err(OmError::app_defined());
+        };
+        match (m.name, m.kind) {
+            ("Title", Get) => Ok(Variant::Bstr(me.title)),
+            ("Title", Put) => {
+                let t = match &a.put {
+                    Some(Variant::Bstr(t)) => t.clone(),
+                    _ => return Err(OmError::app_defined()),
+                };
+                self.edit_ranges_mut(b, s)?[i].title = t;
+                Ok(Variant::Empty)
+            }
+            ("Range", Get) => self.new_multi(b, s, &me.rects, crate::app::Mode::Cells),
+            ("Range", PutRef) => {
+                let (_, _, rects) = self.range_areas(a.get(0))?;
+                self.edit_ranges_mut(b, s)?[i].rects = rects;
+                Ok(Variant::Empty)
+            }
+            ("Delete", Func) => {
+                self.edit_ranges_mut(b, s)?.remove(i);
+                Ok(Variant::Empty)
+            }
+            ("ChangePassword", Func) => {
+                let p = a.string(0)?.filter(|p| !p.is_empty()).map(Pw::Text);
+                self.edit_ranges_mut(b, s)?[i].password = p;
+                Ok(Variant::Empty)
+            }
+            ("Unprotect", Func) => Ok(Variant::Empty),
+            _ => Err(unsupported("AllowEditRange", m)),
+        }
+    }
+
+    pub(crate) fn protection_for_save(&self, b: BookId) -> Option<xlcalc_xlsx::Protection> {
+        let bk = self.book(b).ok()?;
+        let mut sheets = Vec::new();
+        for s in bk.wb.sheets().map(|s| s.id) {
+            let sp = bk.sheet_prot.get(&s).filter(|p| p.any()).map(|p| {
+                xlcalc_xlsx::sheet_protection_xml(&xlcalc_xlsx::SheetProtection {
+                    contents: p.contents,
+                    objects: p.objects,
+                    scenarios: p.scenarios,
+                    allow: p.allow,
+                    password: p.password.as_ref().map(Pw::hash),
+                })
+            });
+            let defs: Vec<xlcalc_xlsx::EditRangeDef> = bk
+                .edit_ranges
+                .get(&s)
+                .map(|v| {
+                    v.iter()
+                        .map(|r| xlcalc_xlsx::EditRangeDef {
+                            title: r.title.clone(),
+                            rects: r.rects.clone(),
+                            password: r.password.as_ref().map(Pw::hash),
+                        })
+                        .collect()
+                })
+                .unwrap_or_default();
+            sheets.push((s, sp, xlcalc_xlsx::protected_ranges_xml(&defs)));
+        }
+        let book = bk
+            .protect
+            .as_ref()
+            .map(|p| xlcalc_xlsx::book_protection_xml(p.as_ref().map(Pw::hash).as_ref()));
+        Some(xlcalc_xlsx::Protection { book, sheets })
+    }
+
+    pub(crate) fn protection_from_file(&mut self, b: BookId, pkg: &xlcalc_xlsx::Package) {
+        let Ok(bk) = self.book_mut(b) else {
+            return;
+        };
+        let ids: Vec<SheetId> = bk.wb.sheets().map(|s| s.id).collect();
+        for s in ids {
+            let (prot, ranges) = xlcalc_xlsx::read_sheet_protection(pkg, s);
+            if let Some(p) = prot.filter(|p| p.contents || p.objects || p.scenarios) {
+                bk.sheet_prot.insert(
+                    s,
+                    SheetProt {
+                        contents: p.contents,
+                        objects: p.objects,
+                        scenarios: p.scenarios,
+                        password: p.password.map(Pw::Hash),
+                        ui_only: false,
+                        allow: p.allow,
+                        selection: 0,
+                    },
+                );
+            }
+            if !ranges.is_empty() {
+                let list = ranges
+                    .into_iter()
+                    .map(|r| EditRange {
+                        title: r.title,
+                        rects: r.rects,
+                        password: r.password.map(Pw::Hash),
+                    })
+                    .collect();
+                bk.edit_ranges.insert(s, list);
+            }
+        }
+        if let Some(p) = xlcalc_xlsx::read_book_protection(pkg) {
+            bk.protect = Some(p.map(Pw::Hash));
         }
     }
 
@@ -176,7 +398,12 @@ impl Application<'_> {
         if !old.any() {
             return Ok(false);
         }
-        if old.password.is_some() && a.string(0)? != old.password {
+        let given = a.string(0)?;
+        if old
+            .password
+            .as_ref()
+            .is_some_and(|p| !p.matches(given.as_deref()))
+        {
             return Err(OmError::app_defined_with(BAD_PASSWORD));
         }
         self.set_sheet_prot(
@@ -207,10 +434,20 @@ impl Application<'_> {
             password: None,
             ..old.clone()
         };
-        if old.any() && !new.any() && old.password.is_some() && old.password != password {
+        if old.any()
+            && !new.any()
+            && old
+                .password
+                .as_ref()
+                .is_some_and(|p| !p.matches(password.as_deref()))
+        {
             return Ok(false);
         }
-        let password = if old.any() { old.password } else { password };
+        let password = if old.any() {
+            old.password
+        } else {
+            password.map(Pw::Text)
+        };
         self.set_sheet_prot(b, s, SheetProt { password, ..new })?;
         Ok(true)
     }
@@ -259,7 +496,7 @@ impl Application<'_> {
         p.contents && !p.ui_only && !p.allow[FMT_CELLS]
     }
 
-    fn any_locked(&self, b: BookId, s: SheetId, rect: Rect) -> bool {
+    pub(crate) fn any_locked(&self, b: BookId, s: SheetId, rect: Rect) -> bool {
         let Ok(book) = self.book(b) else {
             return false;
         };
@@ -274,6 +511,50 @@ impl Application<'_> {
                     .map_or((r, c), |m| (m.r0, m.c0));
                 book.wb.cell_style(CellAddr::new(s, r, c)).locked
             })
+    }
+
+    pub(crate) fn object_guard(
+        &self,
+        b: BookId,
+        s: SheetId,
+        kind: ProtObject,
+        rect: Option<Rect>,
+    ) -> Result<(), OmError> {
+        let p = self.sheet_prot(b, s);
+
+        if !p.contents || (p.ui_only && kind != ProtObject::Hyperlink) {
+            return Ok(());
+        }
+        let allowed = match kind {
+            ProtObject::Validation => false,
+            ProtObject::FormatCondition => p.allow[FMT_CELLS],
+            ProtObject::Hyperlink => p.allow[INS_HYPERLINKS],
+            ProtObject::TableFilter => p.allow[FILTERING],
+        };
+        if allowed
+            && kind == ProtObject::Hyperlink
+            && rect.is_some_and(|r| self.any_locked(b, s, r))
+        {
+            return Err(OmError::app_defined());
+        }
+        if allowed {
+            Ok(())
+        } else {
+            Err(OmError::app_defined())
+        }
+    }
+
+    pub(crate) fn table_guard(&self, b: BookId, s: SheetId, add: bool) -> Result<(), OmError> {
+        let p = self.sheet_prot(b, s);
+        if !p.contents || p.ui_only {
+            return Ok(());
+        }
+        let msg = "Table features aren't available because the sheet is protected.";
+        if add {
+            Err(OmError::exception(vba_scode(3000), Some(msg)))
+        } else {
+            Err(OmError::app_defined_with(msg))
+        }
     }
 
     pub(crate) fn protect_guard(
@@ -298,8 +579,8 @@ impl Application<'_> {
                 _ => Ok(()),
             };
         }
-        let entire_rows = rect.c0 == 0 && rect.c1 + 1 >= crate::addr::MAX_COLS;
-        let entire_cols = rect.r0 == 0 && rect.r1 + 1 >= crate::addr::MAX_ROWS;
+        let entire_rows = rect.c0 == 0 && rect.c1 + 1 >= crate::addr::max_cols();
+        let entire_cols = rect.r0 == 0 && rect.r1 + 1 >= crate::addr::max_rows();
         let writes = matches!(
             name,
             "Value"
@@ -341,6 +622,12 @@ impl Application<'_> {
                 _ => return Ok(()),
             };
             return if allowed { Ok(()) } else { Err(fail(name)) };
+        }
+
+        if m.kind == Get && matches!(name, "CurrentRegion" | "Dependents" | "DirectDependents") {
+            let mut e = OmError::app_defined_with(PROTECTED_COMMAND);
+            e.error_info = true;
+            return Err(e);
         }
         if m.kind == Func {
             let failed =
@@ -390,6 +677,8 @@ impl Application<'_> {
                     }
                 }
                 "Merge" | "UnMerge" => return Err(failed()),
+
+                "RemoveDuplicates" => return Err(OmError::app_defined()),
                 "AutoFit" => {
                     let ok = if entire_cols {
                         p.allow[FMT_COLUMNS]

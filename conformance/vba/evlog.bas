@@ -193,11 +193,33 @@ Public Sub OnChange(ByVal sh As Object, ByVal tgt As Range)
         End If
     Case 4
         If tgt.Cells.Count = 1 And tgt.Column = 7 Then WriteK sh, tgt
+    Case 5, 6, 7, 8
+        If tgt.Cells.Count = 1 And tgt.Column = 7 Then InnerCmd sh, tgt
     End Select
     Exit Sub
 EH:
     LogLine "OnChange error " & Err.Number
     Application.EnableEvents = True
+End Sub
+
+Public Sub InnerCmd(ByVal sh As Object, ByVal tgt As Range)
+    On Error GoTo EH
+    LogLine String(Depth, ">") & "Inner " & Mode & " in"
+    If Mode = 7 Then
+        Application.Calculate
+    ElseIf Safe(sh.Cells(tgt.Row, 9)) Then
+        If Mode = 5 Then
+            sh.Cells(tgt.Row, 9).ClearContents
+        ElseIf Mode = 6 Then
+            sh.Cells(tgt.Row, 9).Delete Shift:=xlUp
+        Else
+            sh.Cells(tgt.Row, 9).Insert Shift:=xlDown
+        End If
+    End If
+    LogLine String(Depth, ">") & "Inner out"
+    Exit Sub
+EH:
+    LogLine "InnerCmd error " & Err.Number
 End Sub
 
 Public Sub WriteK(ByVal sh As Object, ByVal tgt As Range)

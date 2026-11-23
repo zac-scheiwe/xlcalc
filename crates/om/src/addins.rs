@@ -22,6 +22,8 @@ pub(crate) struct DocProps {
     pub keywords: String,
 
     pub password: bool,
+
+    pub custom: Vec<(String, Variant)>,
 }
 
 impl Default for DocProps {
@@ -33,6 +35,7 @@ impl Default for DocProps {
             author: "zac".into(),
             keywords: String::new(),
             password: false,
+            custom: Vec::new(),
         }
     }
 }
@@ -271,6 +274,7 @@ pub(crate) fn doc_props(package: &xlcalc_xlsx::Package) -> DocProps {
         author: core_property(&core, "dc:creator"),
         keywords: core_property(&core, "cp:keywords"),
         password: false,
+        custom: Vec::new(),
     }
 }
 
@@ -729,6 +733,7 @@ impl<'v> Application<'v> {
                 Ok(Variant::Empty)
             }),
             ("WritePassword", InvokeKind::Put) => Ok(Variant::Empty),
+            ("WritePassword", InvokeKind::Get) => Ok(Variant::Bstr("********".into())),
             ("Password", InvokeKind::Get) => self.book(b).map(|_| Variant::Bstr("********".into())),
             _ => return None,
         };
@@ -736,6 +741,9 @@ impl<'v> Application<'v> {
     }
 
     fn put_text(&self, a: &Args) -> Result<String, OmError> {
+        if let Some(Variant::Bool(t)) = a.put {
+            return Ok(if t { "TRUE" } else { "FALSE" }.to_string());
+        }
         Ok(Application::put_value(a).string(0)?.unwrap_or_default())
     }
 }
@@ -749,6 +757,61 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         match (m.name, m.kind) {
+            ("Count", InvokeKind::Get) if custom => {
+                Ok(Variant::I4(self.book(b)?.props.custom.len() as i32))
+            }
+            ("Add", InvokeKind::Func) if custom => {
+                let missing = |i: usize| a.get(i).is_none();
+                let name = match a.get(0) {
+                    Some(Variant::Empty | Variant::Null) => {
+                        return Err(OmError::exception(0x8000_FFFF_u32 as i32, None));
+                    }
+                    _ => a.string(0)?.unwrap_or_default(),
+                };
+                let linked = match a.get(1) {
+                    Some(Variant::Empty | Variant::Null) => true,
+                    _ => a
+                        .bool(1)
+                        .map_err(|_| OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 2))?
+                        .unwrap_or(false),
+                };
+                let value = a.get(3).cloned().unwrap_or(Variant::Empty);
+                let props = &mut self.book_mut(b)?.props;
+                if linked
+                    || missing(2)
+                    || missing(3)
+                    || props
+                        .custom
+                        .iter()
+                        .any(|(n, _)| n.eq_ignore_ascii_case(&name))
+                {
+                    return Err(OmError::exception(0x8000_4005_u32 as i32, None));
+                }
+                props.custom.push((name.clone(), value));
+                Ok(self.alloc(Object::DocProp(b, format!("\u{1}{name}"))))
+            }
+            ("Item" | "_Default", InvokeKind::Get) if custom => {
+                let found = match a.get(0) {
+                    Some(Variant::Bstr(s)) => self
+                        .book(b)?
+                        .props
+                        .custom
+                        .iter()
+                        .find(|(n, _)| n.eq_ignore_ascii_case(s))
+                        .map(|(n, _)| n.clone()),
+                    Some(Variant::I4(_) | Variant::R8(_) | Variant::I2(_)) => {
+                        let i = a.i32(0)?.unwrap_or(0);
+                        let c = &self.book(b)?.props.custom;
+                        usize::try_from(i - 1)
+                            .ok()
+                            .and_then(|i| c.get(i))
+                            .map(|(n, _)| n.clone())
+                    }
+                    _ => return Err(OmError::exception(0x8007_0057_u32 as i32, None)),
+                };
+                let n = found.ok_or_else(OmError::bad_index)?;
+                Ok(self.alloc(Object::DocProp(b, format!("\u{1}{n}"))))
+            }
             ("Item" | "_Default", InvokeKind::Get) if !custom => {
                 let name = a.string(0)?.ok_or_else(OmError::bad_index)?;
                 if self.book_mut(b)?.props.slot(&name).is_none() {
@@ -769,6 +832,29 @@ impl Application<'_> {
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
+        if let Some(cn) = name.strip_prefix('\u{1}') {
+            let props = &mut self.book_mut(b)?.props;
+            let i = props.custom.iter().position(|(n, _)| n == cn);
+            return match (m.name, m.kind, i) {
+                ("Value" | "_Default", InvokeKind::Get, Some(i)) => Ok(props.custom[i].1.clone()),
+                ("Value" | "_Default", InvokeKind::Put, Some(i)) => {
+                    props.custom[i].1 = Application::put_value(a)
+                        .get(0)
+                        .cloned()
+                        .unwrap_or(Variant::Empty);
+                    Ok(Variant::Empty)
+                }
+                ("Name", InvokeKind::Get, Some(i)) => Ok(Variant::Bstr(props.custom[i].0.clone())),
+                ("Delete", InvokeKind::Func, Some(i)) => {
+                    props.custom.remove(i);
+                    Ok(Variant::Empty)
+                }
+                ("Parent", InvokeKind::Get, _) => Ok(self.alloc(Object::Workbook(b))),
+                ("Application", InvokeKind::Get, _) => Ok(Variant::Dispatch(Some(self.handle()))),
+                (_, _, None) => Err(OmError::app_defined()),
+                _ => Err(crate::app::unsupported("DocumentProperty", m)),
+            };
+        }
         match (m.name, m.kind) {
             ("Value" | "_Default", InvokeKind::Get) => {
                 let v = self

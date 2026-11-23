@@ -1,0 +1,283 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "",
+   "prop": "AskToUpdateLinks",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Add"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1)",
+   "prop": "Name",
+   "value": "Data"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1).Range('A1')",
+   "prop": "Value2",
+   "value": 5
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/p1o.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Add"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1).Range('A1')",
+   "prop": "Formula",
+   "value": "=INDIRECT(\"[p1o.xlsx]Data!A1\")"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1).Range('A2')",
+   "prop": "Formula",
+   "value": "=[p1o.xlsx]Data!A1+1"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/pdep.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Add"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1).Range('A1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/pplain.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('pplain.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Add"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1).Range('A1')",
+   "prop": "Formula",
+   "value": "=[p1o.xlsx]Data!A1*3"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/plink.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('plink.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Add"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets(1).Range('A1')",
+   "prop": "Formula",
+   "value": "=[pdep.xlsx]Sheet1!A2*3"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/plive.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('plive.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('p1o.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/pplain.xlsx",
+    0
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('pplain.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/plink.xlsx",
+    0
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('plink.xlsx').Worksheets(1).Range('A1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('plink.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/plive.xlsx",
+    0
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('plive.xlsx').Worksheets(1).Range('A1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('plive.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Application",
+   "call": "Calculate"
+  },
+  {
+   "op": "om_get",
+   "path": "Workbooks('pdep.xlsx').Worksheets(1).Range('A1:A2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "Workbooks('pdep.xlsx')",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "",
+   "prop": "AskToUpdateLinks",
+   "value": true
+  }
+ ]
+}

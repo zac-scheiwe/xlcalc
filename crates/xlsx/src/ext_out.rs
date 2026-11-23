@@ -149,6 +149,12 @@ pub fn link_part(
         external: true,
     };
     let mut rels = vec![mk("rId1", main)];
+
+    if link.dir().is_empty() {
+        rels[0].ty =
+            "http://schemas.microsoft.com/office/2006/relationships/xlExternalLinkPath/xlPathMissing"
+                .into();
+    }
     if let Some(a) = abs {
         rels.push(mk("rId2", a));
     }
@@ -170,8 +176,7 @@ mod tests {
     fn link(p: &str) -> ExtLink {
         ExtLink {
             path: p.into(),
-            open: false,
-            broken: false,
+            ..Default::default()
         }
     }
 

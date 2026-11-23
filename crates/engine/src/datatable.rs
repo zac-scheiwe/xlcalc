@@ -317,6 +317,63 @@ pub(crate) fn table_cell_dirtied(wb: &mut Workbook, addr: CellAddr) {
     }
 }
 
+pub(crate) fn mark_self_fed(wb: &mut Workbook) {
+    for i in 0..wb.data_tables.len() {
+        if !wb.data_tables[i].dirty && self_fed(wb, &wb.data_tables[i]) {
+            wb.data_tables[i].dirty = true;
+        }
+    }
+}
+
+fn self_fed(wb: &Workbook, t: &DataTable) -> bool {
+    let Some(ins) = inputs(wb, t) else {
+        return false;
+    };
+    let targets: Vec<CellAddr> = ins.iter().filter_map(|(_, a)| *a).collect();
+    if targets.is_empty() {
+        return false;
+    }
+    let mut firsts = Vec::new();
+    if ins[0].0 {
+        firsts.push(CellAddr::new(t.sheet, t.rect.r0, t.rect.c0 + 1));
+    }
+    if ins[1].0 {
+        firsts.push(CellAddr::new(t.sheet, t.rect.r0 + 1, t.rect.c0));
+    }
+    let mut seen: rustc_hash::FxHashSet<FormulaId> = Default::default();
+    let mut work: Vec<FormulaId> = firsts.iter().filter_map(|&a| wb.formula_at(a)).collect();
+    while let Some(f) = work.pop() {
+        if !seen.insert(f) {
+            continue;
+        }
+        let cell = wb.formula(f);
+        if is_table_formula(&cell.formula) {
+            continue;
+        }
+        for p in &cell.precedents {
+            let (s, rect) = match p {
+                crate::graph::Prec::Cell(s, r, c) => (*s, Rect::cell(*r, *c)),
+                crate::graph::Prec::Range(s, rect) => (*s, *rect),
+                _ => continue,
+            };
+            if targets
+                .iter()
+                .any(|a| a.sheet == s && rect.contains(a.row, a.col))
+            {
+                return true;
+            }
+            if let Some(sh) = wb.sheet(s) {
+                for (_, _, e) in sh.cells.iter_rect(rect) {
+                    if let Entry::Formula(g) = e {
+                        work.push(*g);
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
 fn reads_results(wb: &Workbook, t: &DataTable, u: &DataTable) -> bool {
     let target = u.interior();
     let mut seen: rustc_hash::FxHashSet<FormulaId> = Default::default();

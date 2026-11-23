@@ -15,6 +15,34 @@ pub(crate) struct LastSolve {
     answer: i16,
 }
 
+const LIN_TOL: f64 = 1e-7;
+
+struct Chk {
+    vals0: Vec<f64>,
+    coefs: Vec<Vec<f64>>,
+}
+
+fn ref_inside(r: &Ref, outer: &Ref) -> bool {
+    r.r0 >= outer.r0
+        && r.c0 >= outer.c0
+        && r.r0 + r.rows <= outer.r0 + outer.rows
+        && r.c0 + r.cols <= outer.c0 + outer.cols
+}
+
+fn sol_vals(m: &Model, p: &Probe) -> Vec<f64> {
+    let mut v = vec![p.obj];
+    for (ci, con) in m.cons.iter().enumerate() {
+        if con.rel >= 4 {
+            continue;
+        }
+        for e in 0..p.lhs[ci].len() {
+            let r = &p.rhs[ci];
+            v.push(p.lhs[ci][e] - r[if r.len() == 1 { 0 } else { e }]);
+        }
+    }
+    v
+}
+
 enum Rhs {
     Num(f64),
     Text(String),
@@ -61,6 +89,27 @@ impl Model {
 }
 
 impl Application<'_> {
+    fn sol_bound_rhs(&self, c: &Ctx, con: &Con) -> Result<Option<Vec<f64>>, OmError> {
+        let t = match &con.rhs {
+            Rhs::Num(b) => return Ok(Some(vec![*b])),
+            Rhs::Text(t) => t,
+        };
+        let Some(r) = parse_ref(t, &c.sname) else {
+            return Ok(None);
+        };
+        let wb = &self.book(c.book)?.wb;
+        let mut v = Vec::new();
+        for row in r.r0..r.r0 + r.rows {
+            for col in r.c0..r.c0 + r.cols {
+                match wb.value(CellAddr::new(c.sheet, row, col)) {
+                    Value::Number(x) => v.push(x),
+                    _ => return Ok(None),
+                }
+            }
+        }
+        Ok((v.len() == 1 || v.len() == (con.lhs.rows * con.lhs.cols) as usize).then_some(v))
+    }
+
     fn sol_grg(
         &mut self,
         c: &Ctx,
@@ -93,15 +142,18 @@ impl Application<'_> {
                 }
                 continue;
             }
-            if let (true, Rhs::Num(b)) = (inside(&con.lhs), &con.rhs) {
+            if let (true, Some(bs)) = (inside(&con.lhs), self.sol_bound_rhs(c, con)?) {
+                let mut k = 0;
                 for r in con.lhs.r0..con.lhs.r0 + con.lhs.rows {
                     for col in con.lhs.c0..con.lhs.c0 + con.lhs.cols {
                         let j = idx(r, col);
+                        let b = bs[if bs.len() == 1 { 0 } else { k }];
+                        k += 1;
                         if con.rel != 3 {
-                            hi[j] = hi[j].min(*b);
+                            hi[j] = hi[j].min(b);
                         }
                         if con.rel != 1 {
-                            lo[j] = lo[j].max(*b);
+                            lo[j] = lo[j].max(b);
                         }
                     }
                 }
@@ -128,6 +180,9 @@ impl Application<'_> {
                 .collect()
         };
         let central = self.sol_num(c, "solver_drv") == Some(2.0);
+        let tol = self.sol_num(c, "solver_pre").unwrap_or(1e-8);
+        let conv = self.sol_num(c, "solver_cvg").map_or(1e-5, |v| v / 10.0);
+        let scaling = self.sol_num(c, "solver_scl") == Some(1.0);
         let mut ev = |x: &[f64]| -> Result<crate::solver_grg::Eval, OmError> {
             let pr = self.sol_probe(c, m, x)?;
             let (mut v, mut lhs, mut rhs) = (Vec::new(), Vec::new(), Vec::new());
@@ -157,6 +212,9 @@ impl Application<'_> {
                 rel: &rel,
                 central,
                 val: (m.typ == 3).then_some(m.val),
+                tol,
+                conv,
+                scaling,
             };
             let pre = if root && !int_vars.is_empty() { 2 } else { 1 };
             let (x, e, st) = crate::solver_grg::grg(&prob, xs, pre, &mut ev)?;
@@ -397,6 +455,11 @@ impl Application<'_> {
     }
 
     fn sol_probe(&mut self, c: &Ctx, m: &Model, x: &[f64]) -> Result<Probe, OmError> {
+        self.sol_set_point(c, m, x)?;
+        self.sol_read(c, m)
+    }
+
+    fn sol_set_point(&mut self, c: &Ctx, m: &Model, x: &[f64]) -> Result<(), OmError> {
         let wb = &mut self.book_mut(c.book)?.wb;
 
         let mode = wb.settings().mode;
@@ -410,6 +473,10 @@ impl Application<'_> {
         }
         wb.recalc();
         wb.set_mode(mode);
+        Ok(())
+    }
+
+    fn sol_read(&self, c: &Ctx, m: &Model) -> Result<Probe, OmError> {
         let wb = &self.book(c.book)?.wb;
         let num = |v: Value| match v {
             Value::Number(n) => Ok(n),
@@ -449,6 +516,62 @@ impl Application<'_> {
             });
         }
         Ok(Probe { obj, lhs, rhs })
+    }
+
+    fn sol_direct_conflict(&self, c: &Ctx, m: &Model) -> Result<bool, OmError> {
+        let n = (m.adj.rows * m.adj.cols) as usize;
+        let mut lo = vec![if m.nonneg { 0.0 } else { f64::NEG_INFINITY }; n];
+        let mut hi = vec![f64::INFINITY; n];
+        for con in &m.cons {
+            if !ref_inside(&con.lhs, &m.adj) || !(1..=5).contains(&con.rel) || con.rel == 4 {
+                continue;
+            }
+            let vals = if con.rel == 5 {
+                None
+            } else {
+                match self.sol_bound_rhs(c, con)? {
+                    Some(v) => Some(v),
+                    None => continue,
+                }
+            };
+            let mut k = 0;
+            for r in con.lhs.r0..con.lhs.r0 + con.lhs.rows {
+                for col in con.lhs.c0..con.lhs.c0 + con.lhs.cols {
+                    let j = ((r - m.adj.r0) * m.adj.cols + (col - m.adj.c0)) as usize;
+                    match (&vals, con.rel) {
+                        (None, _) => {
+                            lo[j] = lo[j].max(0.0);
+                            hi[j] = hi[j].min(1.0);
+                        }
+                        (Some(v), rel) => {
+                            let b = v[if v.len() == 1 { 0 } else { k }];
+                            if rel != 3 {
+                                hi[j] = hi[j].min(b);
+                            }
+                            if rel != 1 {
+                                lo[j] = lo[j].max(b);
+                            }
+                        }
+                    }
+                    k += 1;
+                }
+            }
+        }
+        Ok((0..n).any(|j| lo[j] > hi[j]))
+    }
+
+    fn sol_nonlinear_probes(&mut self, c: &Ctx, m: &Model, n: usize) -> Result<(), OmError> {
+        self.sol_set_point(c, m, &vec![0.0; n])?;
+        self.sol_nonlinear_probes_8(c, m, n)
+    }
+
+    fn sol_nonlinear_probes_8(&mut self, c: &Ctx, m: &Model, n: usize) -> Result<(), OmError> {
+        for j in 0..n {
+            let mut x = vec![0.0; n];
+            x[j] = 8.0;
+            self.sol_set_point(c, m, &x)?;
+        }
+        Ok(())
     }
 
     fn sol_set_cells(
@@ -495,7 +618,8 @@ impl Application<'_> {
             Some(Variant::Bstr(s)) => Some(s.clone()),
             _ => None,
         };
-        let result = self.sol_solve_inner(c, &m, n, show.as_deref());
+        let mut chk = None;
+        let result = self.sol_solve_inner(c, &m, n, show.as_deref(), &mut chk);
 
         let (code, x) = match result {
             Ok(r) => r,
@@ -514,6 +638,25 @@ impl Application<'_> {
                 .map(|(a, v)| (*a, Value::Number(*v)))
                 .collect();
             self.sol_set_cells(c.book, &new)?;
+
+            if let (Some(chk), true) = (&chk, code <= 14) {
+                let actual = sol_vals(&m, &self.sol_read(c, &m)?);
+                let bad = actual.iter().enumerate().any(|(i, a)| {
+                    let pred =
+                        chk.vals0[i] + chk.coefs[i].iter().zip(&x).map(|(p, q)| p * q).sum::<f64>();
+                    (a - pred).abs() > LIN_TOL
+                });
+                if bad {
+                    self.sol_nonlinear_probes_8(c, &m, n)?;
+                    self.sol_set_cells(c.book, &old)?;
+                    self.solver_last = Some(LastSolve {
+                        book: c.book,
+                        cells: old,
+                        answer: 7,
+                    });
+                    return int(7);
+                }
+            }
         }
         self.solver_last = Some(LastSolve {
             book: c.book,
@@ -529,6 +672,7 @@ impl Application<'_> {
         m: &Model,
         n: usize,
         show: Option<&str>,
+        chk: &mut Option<Chk>,
     ) -> Result<SolAnswer, OmError> {
         if m.eng == 1 && m.cons.iter().all(|k| k.rel != 6) {
             return self.sol_grg(c, m, n);
@@ -553,23 +697,56 @@ impl Application<'_> {
             v
         };
         let tol = self.sol_num(c, "solver_tol").unwrap_or(0.0);
-        let mut pts = vec![vec![0.0; n]];
-        for j in 0..n {
-            let mut e = vec![0.0; n];
-            e[j] = 1.0;
-            pts.push(e);
+
+        if self.sol_direct_conflict(c, m)? {
+            return Ok((20, Some(vec![0.0; n])));
         }
+
+        let zeros = vec![0.0; n];
+        self.sol_set_point(c, m, &zeros)?;
+        let p_eight = self.sol_probe(c, m, &vec![8.0; n])?;
+        let p_four = self.sol_probe(c, m, &vec![4.0; n])?;
+        self.sol_set_point(c, m, &start)?;
         let mut probes = Vec::new();
-        for p in &pts {
-            probes.push(self.sol_probe(c, m, p)?);
+        for k in 0..=n {
+            let pt: Vec<f64> = (0..n).map(|j| if j < k { 1.0 } else { 0.0 }).collect();
+            probes.push(self.sol_probe(c, m, &pt)?);
+        }
+        self.sol_set_point(c, m, &start)?;
+        let vals: Vec<Vec<f64>> = probes.iter().map(|p| sol_vals(m, p)).collect();
+
+        let nv = vals[0].len();
+        let coefs: Vec<Vec<f64>> = (0..nv)
+            .map(|i| (0..n).map(|j| vals[j + 1][i] - vals[j][i]).collect())
+            .collect();
+        let predict = |x: &[f64]| -> Vec<f64> {
+            (0..nv)
+                .map(|i| vals[0][i] + coefs[i].iter().zip(x).map(|(a, b)| a * b).sum::<f64>())
+                .collect()
+        };
+        let off = |actual: &[f64], x: &[f64]| {
+            actual
+                .iter()
+                .zip(predict(x))
+                .any(|(a, b)| (a - b).abs() > LIN_TOL)
+        };
+        let nonlinear_8 = off(&sol_vals(m, &p_eight), &vec![8.0; n]);
+        let nonlinear_4 = off(&sol_vals(m, &p_four), &vec![4.0; n]);
+        if nonlinear_8 || nonlinear_4 {
+            self.sol_nonlinear_probes(c, m, n)?;
+            return Ok((7, None));
         }
         let p0 = &probes[0];
         let coef = |f: &dyn Fn(&Probe) -> f64| -> (Vec<f64>, f64) {
             let c0 = f(p0);
-            ((0..n).map(|j| f(&probes[j + 1]) - c0).collect(), c0)
+            (
+                (0..n).map(|j| f(&probes[j + 1]) - f(&probes[j])).collect(),
+                c0,
+            )
         };
         let (obj, obj0) = coef(&|p| p.obj);
         let mut rows = Vec::new();
+        let mut direct: Vec<bool> = Vec::new();
         let mut ints = Vec::new();
         let mut groups: Vec<Vec<usize>> = Vec::new();
         for (ci, con) in m.cons.iter().enumerate() {
@@ -590,6 +767,7 @@ impl Application<'_> {
                 }
                 continue;
             }
+            let is_direct = ref_inside(&con.lhs, &m.adj);
             for e in 0..probes[0].lhs[ci].len() {
                 let rhs_at = |p: &Probe| {
                     let r = &p.rhs[ci];
@@ -606,14 +784,18 @@ impl Application<'_> {
                     rel,
                     rhs: -a0,
                 });
+                direct.push(is_direct);
             }
         }
+        let nrows_user = rows.len();
         let mut lp = Lp {
             n,
             obj: obj.clone(),
             maximize: m.typ == 1,
             rows,
             nonneg: m.nonneg,
+            direct: Vec::new(),
+            start: start.clone(),
         };
         if m.typ == 3 {
             lp.rows.push(Row {
@@ -621,6 +803,7 @@ impl Application<'_> {
                 rel: Rel::Eq,
                 rhs: m.val - obj0,
             });
+            direct.push(false);
             lp.obj = vec![0.0; n];
             lp.maximize = true;
         }
@@ -633,35 +816,25 @@ impl Application<'_> {
                     rel: Rel::Le,
                     rhs: 1.0,
                 });
+
+                direct.push(false);
             }
+        }
+        if xlcalc::solver::bounds_conflict(&lp, &direct) {
+            return Ok((20, Some(zeros)));
+        }
+        lp.direct = direct.clone();
+        for (k, d) in lp.direct.iter_mut().enumerate() {
+            *d |= k >= nrows_user;
         }
 
-        let test: Vec<f64> = (0..n).map(|j| 1.5 + j as f64).collect();
-        let pt = self.sol_probe(c, m, &test)?;
-        let close = |a: f64, b: f64| (a - b).abs() <= 1e-9 * (1.0 + a.abs().max(b.abs()));
-        let affine = |f: &dyn Fn(&Probe) -> f64| {
-            let (co, c0) = coef(f);
-            c0 + co.iter().zip(&test).map(|(a, b)| a * b).sum::<f64>()
-        };
-        let mut linear = close(affine(&|p| p.obj), pt.obj);
-        for (ci, con) in m.cons.iter().enumerate() {
-            if con.rel >= 4 {
-                continue;
-            }
-            for e in 0..pt.lhs[ci].len() {
-                let r = |p: &Probe| {
-                    let r = &p.rhs[ci];
-                    r[if r.len() == 1 { 0 } else { e }]
-                };
-                linear &= close(affine(&|p| p.lhs[ci][e] - r(p)), pt.lhs[ci][e] - r(&pt));
-            }
+        if !ints.is_empty() {
+            self.sol_set_point(c, m, &zeros)?;
         }
-        if !linear {
-            return Ok((7, None));
-        }
-        if xlcalc::solver::bounds_conflict(&lp) {
-            return Ok((20, None));
-        }
+        *chk = Some(Chk {
+            vals0: vals[0].clone(),
+            coefs,
+        });
         let int_vars: Vec<usize> = {
             let mut v: Vec<usize> = ints.iter().map(|x| x.0).collect();
             v.sort_unstable();
@@ -684,6 +857,14 @@ impl Application<'_> {
             }
             fixings = next;
         }
+
+        if groups.is_empty() {
+            match solve(&lp) {
+                LpStatus::Optimal(x) => self.sol_set_point(c, m, &x)?,
+                LpStatus::Unbounded => return Ok((4, Some(zeros))),
+                LpStatus::Infeasible(x) => return Ok((5, Some(x))),
+            }
+        }
         let mut best: Option<(f64, Vec<f64>)> = None;
         let mut gap_stop = false;
         for fix in &fixings {
@@ -698,7 +879,7 @@ impl Application<'_> {
                 });
             }
             match branch_and_bound(&node, obj0, &int_vars, n, groups.is_empty(), tol, &start) {
-                Bnb::Unbounded => return Ok((4, None)),
+                Bnb::Unbounded => return Ok((4, Some(zeros))),
                 Bnb::Infeasible(x) => {
                     if groups.is_empty() {
                         return Ok((5, Some(x)));
@@ -726,6 +907,7 @@ impl Application<'_> {
         }
         Ok(match best {
             Some((_, x)) => (if gap_stop { 14 } else { 0 }, Some(x)),
+            None if groups.is_empty() => (5, Some(zeros)),
             None => (5, None),
         })
     }

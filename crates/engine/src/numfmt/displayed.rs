@@ -1,6 +1,6 @@
 use super::decimal::Dec;
 use super::parse::{Body, DateTok, Item};
-use super::render::{calc_fraction, frac_spec, mp_frac};
+use super::render::{calc_fraction, fractional_part};
 use super::NumberFormat;
 use crate::x87;
 
@@ -101,8 +101,8 @@ impl NumberFormat {
             }
             Body::Frac(l) => {
                 let int = a.trunc();
-                let frac = mp_frac(a);
-                match calc_fraction(frac, frac_spec(&l.den), l.has_int) {
+                let frac = fractional_part(a);
+                match calc_fraction(frac, l.den_field, l.has_int) {
                     Some((num, den)) => signed(x87::add(x87::div(num as f64, den as f64), int)),
                     None => frac,
                 }

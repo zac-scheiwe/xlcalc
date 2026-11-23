@@ -2,6 +2,8 @@ pub mod args;
 pub mod arrays;
 pub mod calendar;
 mod casemap;
+mod casemap_letters;
+mod cellformat;
 pub mod criteria;
 pub mod datetime;
 pub mod dynamic;
@@ -93,8 +95,22 @@ pub const fn checked(
 }
 
 const REFERENCE_FUNCTIONS: &[&str] = &[
-    "INDEX", "OFFSET", "INDIRECT", "IF", "IFS", "CHOOSE", "SWITCH", "XLOOKUP", "LET", "TAKE",
-    "DROP", "REDUCE",
+    "INDEX",
+    "OFFSET",
+    "INDIRECT",
+    "IF",
+    "IFS",
+    "CHOOSE",
+    "SWITCH",
+    "XLOOKUP",
+    "LET",
+    "TAKE",
+    "DROP",
+    "REDUCE",
+    "TEXTREF",
+    "ABSREF",
+    "SELECTION",
+    "ACTIVE.CELL",
 ];
 
 pub fn can_be_called(e: &crate::parser::ast::Expr) -> bool {
@@ -111,6 +127,7 @@ pub fn can_be_called(e: &crate::parser::ast::Expr) -> bool {
             }
             | Expr::Percent(_) => false,
             Expr::Error(err) => *err == crate::value::XlError::REF,
+            Expr::DeadRef(_) | Expr::DeadTable { .. } => true,
             Expr::Binary { op, .. } => matches!(
                 op,
                 crate::parser::ast::BinOp::Range
@@ -143,7 +160,9 @@ pub fn is_reference_expr(e: &crate::parser::ast::Expr) -> bool {
                 op: UnaryOp::Implicit,
                 ..
             } => true,
-            Expr::Error(crate::value::XlError::REF) => true,
+            Expr::Error(crate::value::XlError::REF) | Expr::DeadRef(_) | Expr::DeadTable { .. } => {
+                true
+            }
 
             Expr::Field { expr, .. } => {
                 let mut b = expr.unwrap_ws();
@@ -252,6 +271,7 @@ static REGISTRY: LazyLock<Registry> = LazyLock::new(|| {
         stats::DEFS,
         logical::DEFS,
         xlm::DEFS,
+        xlm::REF_DEFS,
         info::DEFS,
         text::DEFS,
         lookup::DEFS,
@@ -278,6 +298,10 @@ static REGISTRY: LazyLock<Registry> = LazyLock::new(|| {
 
 pub fn lookup(upper_name: &str) -> Option<FuncId> {
     REGISTRY.by_name.get(upper_name).copied()
+}
+
+pub(crate) fn count() -> usize {
+    REGISTRY.defs.len()
 }
 
 pub fn def(id: FuncId) -> &'static FnDef {

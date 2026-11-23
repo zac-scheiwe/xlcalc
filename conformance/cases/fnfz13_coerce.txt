@@ -1,0 +1,1868 @@
+="TRUE"<="1e"
+="15:30:45.5"^"1e308"
+="12:30"&0.5
+="13/13/2020"<0
+="1 2">"Infinity"
+="NaN"*"4.9E-324"
+="-$5"/"Jan 1"
+="1E+3">Data!B6
+="1.5.5"<=Data!B5
+=Data!B6>"1,000"
+="15:30:45.5"^"1.7976931348623157E308"
+=0.5>="2020-13-01"
+="1-Jan">"12:30:45.123456"
+="1,2"%
+="1_000"-"#N/A"
+=-1>="-1e309"
+="- 5"-"1/2/2020"
+="1 2"<="1 2"
+="1e"<>"(5)"
+="5%%"*"5%%"
+=Data!B12^"1E-400"
+=Data!B6:B7^"5."
+="1:60"%
+="5.">=TRUE
+="1.7976931348623157E308"=" 12 "
+=" 12 "/"-$5"
+="12:30:45.123456"*{1,"a"}
+="13/13/2020">="-1e309"
+="12:30:45.123456"<>"5."
+="1,2"-"1:2:3"
+=Data!C1<>"12abc"
+="(5)"*"Infinity"
+="12:30:45.123456"*FALSE
+="5%"<>1
+=Data!B3<=Data!Z1
+="1e308"^"1E+3"
+=1*"2020-13-01"
+=Data!B6:B7>="00012"
+="12/31/9999"<>"123456789012345678"
+="1/2"-"12:30:45.123456"
+="1/2"<"Jan 1"
+="1e5.5"+"1,2"
+=""&"12:30:45.123456"
+="1/2/2020">"abc12"
+="2020-13-01"<"12/31/9999"
+="-5"%
+=Data!B12>" "
+=".5"%
+="$-5"%
+="-1e309"<1
+="3PM">="1 000"
+=" 12 "<>"2020-01-01"
+=0.5-0
+=TRUE&"2020-13-01"
+=1="$-5"
+="%5"^Data!B6
+="TRUE"*"abc12"
+="1900-01-00">="1 000"
+="1e"%
+="1e308">="abc12"
+="+5"*"$1,234.50"
+="$-5"<>"Jan 1"
+="1:60"<>"12:30"
+=Data!B3-"2020-01-01"
+="12:30:45.123456"<>"Jan 1"
+="TRUE"^"12abc"
+="2020-01-01"/Data!B6:B7
+="3:30 PM"&"$-5"
+="1-Jan"=0
+=1E-320+"1-Jan"
+="3PM">"-$5"
+="1E-400"<>"5."
+=-1&"0x10"
+=Data!Z1&"1:2:3"
+="-1e309"^"NaN"
+=Data!B2<"1 2"
+="1:60"+TRUE
+="12/31/9999">="1/2"
+="123456789012345678"&"%5"
+="(5)"%
+="1900-01-00">="2020-13-01"
+="1-Jan"*"1d3"
+="+5"*1E-320
+="1e5.5"%
+="1 2"%
+=Data!A1:A3^"1e308"
+="1/2">0
+=Data!B3-TRUE
+=0.5<Data!B9
+=Data!B12<="1,000"
+="1/2"/1E308
+="$-5"<=Data!Z1
+="1.7976931348623157E308"*"1.5.5"
+="0.30000000000000004"%
+="1/2/2020"^"2020-13-01"
+="1.5.5"<=TRUE
+="1_000"/"Jan-20"
+="5 %"<"-1e309"
+="2020-01-01"<>Data!B12
+="-5"/0
+="1d3"<>TRUE
+="1/2"=Data!B6
+=-1>="1 000"
+="abc12"="1:60"
+="12abc"-TRUE
+="Jan-20"&0.5
+=0.5/"abc12"
+="Jan 1"*"5."
+="12abc"/Data!B3
+="12abc"&".5"
+="1900-01-00"<"1,000"
+="4.9E-324"<="3:30 PM"
+=Data!B9%
+="0.30000000000000004"+1
+="5."^TRUE
+="1,2"-"1_000"
+=Data!B6:B7-"true"
+=Data!B5%
+="1/2"%
+="$1,234.50"<>Data!B2
+="1e"="1.7976931348623157E308"
+="-$5"%
+=""<>Data!B5
+="- 5">"Infinity"
+="1/2/2020"<"(1,000)"
+=-1<="2020-01-01"
+="1E+3"+Data!B6:B7
+="- 5"<=Data!B12
+="123456789012345678"<="1 000"
+="Infinity"-"1.7976931348623157E308"
+=Data!B6:B7<".5"
+=Data!B3^"%5"
+=" "=TRUE
+=TRUE="1,000"
+="1,2">="1e"
+="-$5"*FALSE
+="1:2:3"<={1,"a"}
+="+5"&"2020-01-01"
+=1E-320="abc12"
+=0&"true"
+="(5)">="-5"
+="1,000"*"Infinity"
+=-1/" "
+=TRUE>"0.1e-2"
+=Data!Z1/Data!C1
+="2020-13-01">"1900-01-00"
+="4.9E-324"^"1d3"
+=Data!Z1-" "
+="4.9E-324"<=Data!B5
+="(5)"<="(5)"
+="Jan 1"^"1-Jan"
+="1/2/2020"^Data!B12
+="(5)"/"12:30"
+="5%%"-Data!B12
+="12/31/9999"<"1e5.5"
+="+5"<>"15:30:45.5"
+="1.5.5">={1,"a"}
+="(5)"*"1.7976931348623157E308"
+=Data!B5*"$1,234.50"
+="%5"^"5 %"
+="12:30">="1,,2"
+=0*Data!A1:A3
+="1,000">"(1,000)"
+="%5"="TRUE"
+="1_000"*"true"
+="Jan-20"<"true"
+="1 2"&"1E-400"
+="24:00"&"1e3"
+="1d3"<" "
+="13/13/2020"^"$-5"
+=Data!B9>"3PM"
+=1+TRUE
+="-$5">"12:30:45.123456"
+=Data!Z1&"$5"
+="(1,000)"*Data!B3
+=1E-320>"Jan 1"
+="1_000"<>".5"
+=Data!A1:A3*"true"
+="-$5">0.5
+="2020-13-01"&"1-Jan"
+="#N/A"<"$-5"
+=TRUE%
+="2020-13-01"<"TRUE"
+="$-5"<>Data!B6:B7
+="2020-13-01"-" 12 "
+="15:30:45.5"^"TRUE"
+="12:30">0.5
+="1e308"^Data!B3
+="1:60"+"1_000"
+="-$5">="1e"
+=Data!B6="1d3"
+="(5)">="4.9E-324"
+="1900-01-00"="1 2"
+="24:00"<"1/2/2020"
+=1E308<="(5)"
+="+5"<>"1900-01-00"
+=Data!B12>="5%"
+="TRUE"/"1 2"
+="true"<>1E-320
+="12abc"=Data!B2
+="123456789012345678"/"- 5"
+="5%">="3PM"
+=".5"<>"5 %"
+=Data!B5^" 12 "
+="+5"%
+=Data!B12%
+="-1e309"<>"123456789012345678"
+="5%"={1,"a"}
+="12/31/9999"+"true"
+="12/31/9999"/"-5"
+=Data!Z1^"1E-400"
+="1 2"+"5 %"
+="-$5"&"1E+3"
+=Data!A1:A3>="$-5"
+=Data!B5+"1:2:3"
+=1E308<>"0x10"
+="-5"/"5."
+="3PM">"1e"
+={1,"a"}>"1E-400"
+="1E-400"^"1_000"
+=Data!B2>" 12 "
+=1="12/31/9999"
+=Data!B3<>Data!B2
+="1e309"="2020-01-01"
+="-1e309"<=Data!B2
+="-$5"/"true"
+="5 %">"1900-01-00"
+="1e3"*"0.1e-2"
+="2020-13-01"<="true"
+=".5"&"1d3"
+="$5">"-1e309"
+="1:2:3"="+5"
+="Jan 1"&{1,"a"}
+=-1<>"1/2"
+="1.7976931348623157E308"/"1,2"
+=1>1
+="5 %"="5 %"
+="1900-01-00"="5."
+="00012">=Data!B2
+="3PM"="1,2"
+="1:2:3"^"Jan-20"
+=TRUE&"3:30 PM"
+="NaN"<="1_000"
+={"1","2"}<Data!C1
+="12:30"^"0.1e-2"
+=1=" "
+="(5)"-"13/13/2020"
+=1/Data!B2
+="">="$-5"
+="1-Jan"&"15:30:45.5"
+=Data!C1^Data!A1:A3
+="24:00"=Data!B2
+=Data!B2<>1E-320
+=Data!A1:A3<="1900-01-00"
+=Data!B6&"1-Jan"
+="1:60"<>"5 %"
+="(1,000)">"Jan 1"
+="-$5"<>"Jan 1"
+="- 5"<="true"
+="2020-01-01"<="2020-01-01"
+="$1,234.50"*"123456789012345678"
+="12abc">="1E+3"
+="4.9E-324"%
+="12:30"%
+="NaN"/"1:2:3"
+=Data!B3%
+="true"-"Infinity"
+=1E-320+"1e308"
+="-5"-"1.7976931348623157E308"
+="1d3"&"-1e309"
+="1-Jan"+"1.7976931348623157E308"
+="$-5"/"Jan-20"
+=Data!Z1="2020-13-01"
+="Jan 1"&"13/13/2020"
+="5%%"^"1,000"
+="1,,2"="1.5.5"
+="$1,234.50"-Data!B6
+="5%"/"1-Jan"
+="1 000"*"24:00"
+="12/31/9999">TRUE
+="1-Jan"<>"13/13/2020"
+={1,"a"}-"1/2"
+={1,"a"}*Data!B2
+="3PM">"- 5"
+="-1e309"/"15:30:45.5"
+="1e309">"0.1e-2"
+="15:30:45.5"<"1e308"
+="Infinity"&0.5
+=Data!B2>="0.1e-2"
+="0x10"*-1
+=Data!B6&"5."
+=Data!B3<=1E308
+="1 2"+"1-Jan"
+="Infinity">="00012"
+="abc12"="0.30000000000000004"
+=1E308<"12abc"
+="(5)"<0
+="1/2"-"1 2"
+="true"<"-5"
+=1E308<Data!Z1
+="NaN"<=Data!B3
+="0.1e-2"<=Data!Z1
+="1e309"<"$-5"
+="-1e309"%
+="1:2:3"^0
+=" "%
+=Data!B6*"1/2"
+="0.1e-2"/"12:30"
+="4.9E-324">"NaN"
+="-1e309"<"1E-400"
+="0x10"^"5%%"
+="NaN"/"3PM"
+=" 12 "<{"1","2"}
+="%5">="0.1e-2"
+=Data!B12/"1d3"
+="abc12">"12/31/9999"
+="TRUE">="1.5.5"
+="1e3"&"1e"
+="-1e309"="1d3"
+="13/13/2020"<"- 5"
+=Data!B9="12:30"
+="Infinity"%
+="$-5"&"(1,000)"
+="1_000"+"1 2"
+="#N/A">="12abc"
+="3:30 PM"^" 12 "
+=Data!B6<0.5
+="0.30000000000000004"^TRUE
+="(1,000)"=-1
+="24:00"+Data!B2
+="1e"<"1E+3"
+=TRUE&"#N/A"
+="#N/A"<"5."
+=1="1e5.5"
+="12/31/9999"%
+=1&"1,2"
+="3PM"+1
+="15:30:45.5">="1e308"
+="3PM">=FALSE
+=" 12 ">"15:30:45.5"
+="1d3"="abc12"
+="1900-01-00"/"abc12"
+=" "/"5%%"
+="1E+3"<>"1e308"
+="1.7976931348623157E308"/"1:2:3"
+="12:30:45.123456">="abc12"
+="$1,234.50"-"Jan 1"
+={1,"a"}+"$1,234.50"
+=0/0.5
+="12:30"<>TRUE
+="1-Jan"%
+="1e308"<>"123456789012345678"
+="Jan 1"-"0x10"
+=""^"12:30"
+=Data!A1:A3>"0.1e-2"
+="5."<"Jan 1"
+="0.1e-2">=1E-320
+="1,,2"%
+="15:30:45.5"<"-5"
+="5 %"=1E-320
+="1e308"+"1,2"
+="5%"<"-1e309"
+="$-5"<>"5%"
+="1E+3"<"0x10"
+="3PM"/"0x10"
+=""%
+="+5">="$1,234.50"
+=0.5<="abc12"
+="-5"+"1:2:3"
+="1-Jan"<=-1
+="1e308"/"Jan 1"
+="15:30:45.5"%
+="1_000"<="3:30 PM"
+=Data!B6:B7*"1:2:3"
+=1*Data!C1
+="1e309"="NaN"
+="1e309"^"(1,000)"
+="1,2"/"$5"
+="$5"*"1.5.5"
+="1_000"^Data!A1:A3
+=1E-320>="5%%"
+=" 12 "-FALSE
+="0.30000000000000004"^"3PM"
+="+5"^"-1e309"
+={1,"a"}*"%5"
+=TRUE<>"-$5"
+="3:30 PM"*"%5"
+="TRUE"=".5"
+="NaN"=Data!B12
+="#N/A"<>0
+="1 000"^1E-320
+="1.5.5">Data!B6:B7
+="$5"<Data!A1:A3
+="- 5"-1
+=1E-320<"Jan-20"
+=" 12 ">"1 000"
+="1900-01-00"<>"1e"
+="- 5">={1,"a"}
+="(1,000)"&Data!B2
+="13/13/2020"*"-1e309"
+="4.9E-324"&"0x10"
+="-1e309"<>"5%%"
+="2020-01-01"<>Data!A1:A3
+="1_000">"+5"
+="1_000"=Data!B2
+="1e308"*Data!B2
+="NaN"/"1E+3"
+="3PM">"5%%"
+="-5"^"1e5.5"
+="- 5">="5 %"
+="TRUE"&"1/2"
+="2020-13-01"&0.5
+=0.5%
+="2020-13-01"+{1,"a"}
+="-1e309"+"1-Jan"
+="1e3"^"$1,234.50"
+="3:30 PM">="12/31/9999"
+=Data!B6<>"1,,2"
+="4.9E-324"<>"1e308"
+="2020-13-01"+" "
+="24:00"<>"1E-400"
+="5 %"&".5"
+=1E308^"+5"
+="-1e309"*FALSE
+="-$5">-1
+="$5"+"1/2"
+="-1e309"^"$1,234.50"
+="1_000"/Data!A1:A3
+=FALSE<"00012"
+=Data!Z1<{"1","2"}
+="1E-400"&"1,2"
+="1:60"^"3:30 PM"
+="1.5.5"/"1E+3"
+="1e"+Data!B6:B7
+="12abc"<=Data!B3
+="1e308"+"1:60"
+="1e308">"1e3"
+=Data!C1&{1,"a"}
+="5%%"<={"1","2"}
+="1900-01-00"<>"2020-01-01"
+="$-5"&"- 5"
+=Data!B6%
+="abc12"%
+=".5"^"NaN"
+="123456789012345678">"+5"
+="(1,000)"^"%5"
+="12:30"&"5%"
+="+5"<"#N/A"
+="24:00">=Data!C1
+=Data!B5+"0.1e-2"
+="1e309"<>"0.30000000000000004"
+="1e309">"5%%"
+=Data!B3<>Data!B6
+="2020-13-01">=Data!Z1
+="1.5.5"<Data!B6:B7
+=Data!B6:B7&".5"
+="2020-01-01"/"%5"
+="1,000"^"0.30000000000000004"
+="1e3"="(1,000)"
+="1_000"-0
+=Data!B6+"- 5"
+=Data!B2>="Jan 1"
+=" 12 "<>"1,000"
+=TRUE<"Jan-20"
+=1E308*Data!B6
+="1 000"&".5"
+="-1e309"<"1.5.5"
+="1 2"+"3PM"
+="1,000">"$-5"
+=Data!C1^Data!B12
+="123456789012345678">"1.7976931348623157E308"
+="1d3"=Data!B12
+="TRUE">="12:30:45.123456"
+={"1","2"}<="15:30:45.5"
+="1/2"="5."
+="13/13/2020"+"1e309"
+="12:30:45.123456"+"(1,000)"
+=Data!B9-Data!B3
+=Data!A1:A3<>"12/31/9999"
+="12abc"<="1-Jan"
+="5."^Data!B2
+=Data!B5>"5 %"
+="1.5.5"*"$5"
+="abc12"<"(1,000)"
+="1_000"+"1/2/2020"
+="1/2/2020"<>Data!Z1
+="1e308"%
+="1.7976931348623157E308"&"5."
+="1,2"*"3:30 PM"
+=Data!A1:A3%
+="5%"*Data!B12
+="5 %"-"13/13/2020"
+=FALSE>="1e"
+=Data!B2<="1.5.5"
+="abc12"<"1e"
+="5%"+"1e"
+=1>TRUE
+=Data!B3>"1e309"
+="Jan 1"-"1e3"
+="Infinity"<>"true"
+="1.5.5"="#N/A"
+="-$5"<"1.5.5"
+=1<>"5%"
+="123456789012345678"="1d3"
+="1/2/2020"<>Data!C1
+="- 5"-{"1","2"}
+="$1,234.50">="2020-13-01"
+="true"<"1E+3"
+="1 000"<" "
+=1-{1,"a"}
+="1e5.5"+"1 000"
+="1E+3"%
+=1E308%
+="1/2"&"true"
+="TRUE"*"1,,2"
+="1e309"*Data!B6
+="-$5"+"- 5"
+=0<"15:30:45.5"
+="(5)">="Infinity"
+=0%
+="-$5"+1E-320
+=Data!B6:B7*"5%%"
+="0.1e-2">=Data!B5
+="12:30"^"+5"
+="(1,000)"%
+="1,000"&Data!B9
+="NaN"/"2020-01-01"
+=1^"%5"
+="Jan-20"="1_000"
+="1,,2"&"1,,2"
+="$5"<"1e3"
+=1E308>="1/2/2020"
+=" "+"4.9E-324"
+="15:30:45.5"=Data!B12
+=Data!B5&"Infinity"
+="0.30000000000000004"*-1
+="$-5"/"0x10"
+="-1e309"="13/13/2020"
+="+5"=" 12 "
+="$-5">{"1","2"}
+="(5)"^"$-5"
+="1 000"%
+=0+" 12 "
+="5."%
+=Data!B6&"-5"
+="12:30:45.123456">"4.9E-324"
+="(5)">="1/2/2020"
+=Data!B5^"Jan 1"
+=0.5*"abc12"
+="12abc"*"$1,234.50"
+=Data!C1^"+5"
+=Data!B2^Data!B12
+="1-Jan"-"abc12"
+="1d3"&"5."
+="1e309"/1E308
+="1,000"%
+="$1,234.50"*0.5
+=-1*"2020-13-01"
+="0x10"-Data!B6
+="5%%">="12/31/9999"
+="1e309"^"2020-13-01"
+="+5"<"1:2:3"
+="1E+3"+"5."
+="-5"<>"NaN"
+="0.30000000000000004"&Data!C1
+="1:2:3"+"Jan-20"
+=Data!B6:B7*"12:30"
+="$1,234.50">"$-5"
+="12:30:45.123456"<>"1/2/2020"
+="15:30:45.5"<=Data!B6
+="15:30:45.5"^{1,"a"}
+="1E+3">="1-Jan"
+="0x10"<Data!Z1
+=1E-320<="TRUE"
+="$1,234.50"-Data!B5
+="1.7976931348623157E308"="true"
+="$5"<Data!Z1
+="1e309"*"Jan 1"
+="Jan 1"&"1e5.5"
+="+5"-"$-5"
+="5."+"1d3"
+="1 2"="-$5"
+="Jan-20"&"4.9E-324"
+="abc12"/"1/2"
+="1,,2">Data!B6:B7
+="3PM"%
+="12/31/9999"+"$5"
+=0>="+5"
+=1<>"-5"
+="#N/A"%
+="$-5"&"1e"
+=Data!A1:A3<>"(1,000)"
+="4.9E-324"<=Data!B3
+="1/2"<"1,,2"
+="1:60"+"0.1e-2"
+="1e309"^"1E-400"
+="5."="3:30 PM"
+=Data!B6:B7="1e5.5"
+=" 12 "="2020-01-01"
+="1:2:3"-TRUE
+="1/2/2020"="%5"
+="1:2:3"-".5"
+=FALSE+"true"
+="3:30 PM"/"true"
+=1E-320-Data!C1
+="1e3"*"1E-400"
+="1E-400"&{1,"a"}
+="Jan-20"*"1e309"
+=Data!A1:A3>"1_000"
+=Data!C1>="1e309"
+="5%"<>"1/2"
+=1%
+="1e3"%
+="1d3"/{1,"a"}
+="true"="3PM"
+="1,2"&Data!B6:B7
+="NaN"&" 12 "
+="15:30:45.5"<="-$5"
+="1.5.5">="Jan 1"
+="12abc"<=".5"
+=" 12 ">"-1e309"
+="1,,2"^1
+="0x10"<Data!B5
+="">="0x10"
+="24:00">"abc12"
+="1,000"^"1e5.5"
+="12/31/9999"="Jan 1"
+=Data!B12>"$5"
+="+5"+"TRUE"
+="(1,000)"<="1:2:3"
+="123456789012345678"<>"1 000"
+="TRUE"^"12:30"
+="1e309"<="1.7976931348623157E308"
+="5%"^"1_000"
+="1E+3"-"+5"
+="$5"=Data!Z1
+="1:60"<>"0.30000000000000004"
+="0.30000000000000004"+"1/2/2020"
+=1="00012"
+=Data!A1:A3^"2020-13-01"
+="0x10"<="5 %"
+="1,,2"+-1
+="1,000">Data!B2
+="1-Jan"<>"1d3"
+="1/2/2020"="1_000"
+="15:30:45.5"+Data!B9
+="Jan 1"%
+="#N/A"+""
+="-$5"/"2020-01-01"
+="1d3"+Data!B3
+="3PM"/"-$5"
+="TRUE"<="2020-13-01"
+="5%"+" 12 "
+="5%"+"1,000"
+="abc12"<>"2020-01-01"
+="13/13/2020"<>"$-5"
+="1e309"/"1,,2"
+="00012"^"5%%"
+=""<="1900-01-00"
+=0>="#N/A"
+="2020-01-01"*{1,"a"}
+="Jan 1"-"NaN"
+="1 000"<>-1
+=""<>Data!B2
+="1E+3"<=".5"
+="3:30 PM"*"1,000"
+="1,2">-1
+="0x10"%
+="1e308"&"5%"
+=Data!B3/"1,,2"
+="true">"-$5"
+="1_000"<="1/2/2020"
+=Data!B6="TRUE"
+="- 5"%
+="1e308"="%5"
+="2020-13-01"<>"1 000"
+="3:30 PM"*"12/31/9999"
+=Data!C1<>"00012"
+=Data!B6<>"Jan-20"
+="15:30:45.5"-"00012"
+="+5"/"24:00"
+="Jan-20"="1d3"
+=-"true"
+=-"1E-400"
+=-"0x10"
+=-"12:30"
+=-" "
+=-Data!B2
+=-"(1,000)"
+=-"13/13/2020"
+=-Data!A1:A3
+=-"5."
+=-"5%%"
+=-Data!C1
+=-"1:60"
+=-Data!Z1
+=-"12/31/9999"
+=-"1 2"
+=-Data!B3
+=-"1e309"
+=-Data!B12
+=-"1e3"
+=-1
+=-"24:00"
+=-"abc12"
+=-"1e308"
+=-"2020-13-01"
+=-"1 000"
+=-0.5
+=-"TRUE"
+=-"1e"
+=-"-$5"
+=-"NaN"
+=-"(5)"
+=--"-5"
+=--1E308
+=--{1,"a"}
+=--"1.5.5"
+=--"%5"
+=--"1e308"
+=--"1 2"
+=--"15:30:45.5"
+=--Data!B5
+=--"#N/A"
+=--"12:30:45.123456"
+=--{"1","2"}
+=--"00012"
+=--"TRUE"
+=--FALSE
+=--Data!B12
+=--"Jan 1"
+=--0
+=--"123456789012345678"
+=--"1_000"
+=--"$1,234.50"
+=--"abc12"
+=--1E-320
+=--Data!B6
+=--"0.1e-2"
+=--"12/31/9999"
+=--Data!B3
+=--"3PM"
+=--"1E-400"
+=--"1e309"
+=--"(1,000)"
+=--"5%"
+=--"1/2/2020"
+=--"1e5.5"
+=--"1/2"
+=--"-1e309"
+=--TRUE
+=--"12:30"
+=--" "
+=--"12abc"
+=---1
+=+"1e"
+=+"1-Jan"
+=+"5."
+=+"15:30:45.5"
+=+" 12 "
+=+Data!B12
+=+Data!A1:A3
+=+"1e5.5"
+=+"12:30:45.123456"
+=+"-5"
+=+"1/2"
+=+"+5"
+=+"(5)"
+=+"1:2:3"
+=+"2020-01-01"
+=+"1e3"
+=+"3:30 PM"
+="true"&1E-5
+=1E-320&1E-7
+="1e308"&0.1
+="12:30"&123456789012345678
+=Data!A1:A3&1/3
+="13/13/2020"&123456789012345678
+="+5"&1E-7
+="1,2"&100000000000000000000
+="1 000"&2^70
+="2020-13-01"&2^53
+="1.5.5"&-0
+=Data!B3&1
+=0.5&2^70
+="15:30:45.5"&2^70
+="3PM"&1E15
+=" 12 "&1E15
+="1d3"&12345678901234567890
+="0.30000000000000004"&1
+="1-Jan"&123456789012345678
+="12/31/9999"&1/3
+={"1","2"}&1.5
+="1e3"&100000000000000000000
+="$5"&-0
+="0x10"&TRUE
+="1e308"&1E-5
+="1e308"&2^70
+=1E-320&2^70
+="NaN"&100000000000000000000
+="1,2"&TRUE+1
+=Data!B3&1.5
+="Jan 1"&2^70
+="-5"&1E-5
+="1,2"&12345678901234567890
+="abc12"&0.1
+="0x10"&-0
+="1e"&123456789012345678
+=1&1.5
+="Jan-20"&0.1
+="abc12"&TRUE+1
+=1&0.1+0.2
+="2020-01-01"&TRUE
+={"1","2"}&-0
+=1E-320&2^53
+="-1e309"&100000000000000000000
+="Jan 1"&12345678901234567890
+="3:30 PM"&2^70
+=Data!B6:B7&2^53
+=Data!Z1&TRUE
+="$-5"&1E21
+="Infinity"&TRUE
+=1E-320&TRUE+1
+="13/13/2020"&100000000000000000000
+="$-5"&-0
+=" 12 "&0.1
+="1-Jan"&1E-5
+="1e309"&123456789012345678
+="1 2"&12345678901234567890
+="TRUE"&2^70
+="3PM"&1.5
+="0.30000000000000004"&1E15
+=Data!B6&1/3
+="1 2"&1E-5
+="true"&0.1+0.2
+="2020-13-01"&1E-7
+="abc12"&1
+=Data!Z1&100000000000000000000
+=Data!C1&1/3
+="5 %"&0.1
+="2020-13-01"&1E15
+=Data!A1:A3&0.1+0.2
+="13/13/2020"&1E-5
+="00012"&2^53
+=0&1/3
+="12:30"&0.1
+=VALUE("1/2/2020")
+=VALUE("1900-01-00")
+=VALUE("12:30:45.123456")
+=VALUE({1,"a"})
+=VALUE(Data!B3)
+=VALUE(Data!B5)
+=VALUE("")
+=VALUE("1 2")
+=VALUE("- 5")
+=VALUE("1d3")
+=VALUE("TRUE")
+=VALUE("1,000")
+=VALUE("abc12")
+=VALUE("1e308")
+=VALUE("24:00")
+=VALUE("15:30:45.5")
+=VALUE("0.1e-2")
+=VALUE("12:30")
+=VALUE("+5")
+=VALUE("2020-01-01")
+=VALUE("3:30 PM")
+=VALUE(1)
+=VALUE("(5)")
+=VALUE("0x10")
+=VALUE(Data!Z1)
+=VALUE("1:2:3")
+=VALUE("1-Jan")
+=VALUE(Data!B2)
+=VALUE(1E-320)
+=VALUE("4.9E-324")
+=VALUE("2020-13-01")
+=VALUE("13/13/2020")
+=VALUE("Infinity")
+=VALUE("5%")
+=VALUE("12abc")
+=VALUE("1 000")
+=VALUE(Data!A1:A3)
+=VALUE("%5")
+=VALUE("1.7976931348623157E308")
+=VALUE(-1)
+=VALUE("$5")
+=VALUE("1/2")
+=VALUE(1E308)
+=VALUE("1E+3")
+=VALUE("123456789012345678")
+=VALUE(Data!B12)
+=VALUE("$-5")
+=VALUE(".5")
+=VALUE("5 %")
+=VALUE("1.5.5")
+=VALUE("#N/A")
+=VALUE("1:60")
+=VALUE("3PM")
+=VALUE("5.")
+=VALUE(" 12 ")
+=VALUE(TRUE)
+=VALUE("1,2")
+=VALUE(0)
+=VALUE("true")
+=VALUE("Jan-20")
+=VALUE(Data!B9)
+=VALUE("1e5.5")
+=VALUE("5%%")
+=VALUE(Data!B6:B7)
+=VALUE("1e3")
+=NUMBERVALUE("24:00",".",",")
+=NUMBERVALUE("-$5",".","x")
+=NUMBERVALUE("1e",,)
+=NUMBERVALUE("12/31/9999","...",",")
+=NUMBERVALUE("15:30:45.5",","," ")
+=NUMBERVALUE("$1,234.50","x",".")
+=NUMBERVALUE(0,,",")
+=NUMBERVALUE(TRUE,," ")
+=NUMBERVALUE(Data!Z1,"...",".")
+=NUMBERVALUE("#N/A","x","x")
+=NUMBERVALUE("5.","...",".")
+=NUMBERVALUE("12:30","x",)
+=NUMBERVALUE("NaN"," ","x")
+=NUMBERVALUE("(1,000)",,",")
+=NUMBERVALUE("1e5.5",",",".")
+=NUMBERVALUE("12/31/9999",",",",")
+=NUMBERVALUE("5%"," ",",")
+=NUMBERVALUE(Data!B3,,"x")
+=NUMBERVALUE("12abc",",",)
+=NUMBERVALUE("15:30:45.5"," ",",")
+=NUMBERVALUE("5 %","...",",")
+=NUMBERVALUE("Infinity",".","x")
+=NUMBERVALUE(Data!B2,","," ")
+=NUMBERVALUE("Jan-20",,)
+=NUMBERVALUE("1_000"," ",)
+=NUMBERVALUE("0x10",","," ")
+=NUMBERVALUE("",".",".")
+=NUMBERVALUE("12:30",".",)
+=NUMBERVALUE("3PM",","," ")
+=NUMBERVALUE("12:30:45.123456","x",",")
+=NUMBERVALUE("1e3","x","x")
+=NUMBERVALUE("3:30 PM","...",)
+=NUMBERVALUE(Data!C1,"...",)
+=NUMBERVALUE("%5","x","x")
+=NUMBERVALUE("1e308",",",".")
+=NUMBERVALUE("1,000","."," ")
+=NUMBERVALUE(Data!B12,",","x")
+=NUMBERVALUE("00012",",",",")
+=NUMBERVALUE(TRUE,"."," ")
+=NUMBERVALUE("1 2","x","x")
+=NUMBERVALUE("12:30",," ")
+=NUMBERVALUE("abc12"," ",",")
+=NUMBERVALUE("1:60","...",".")
+=NUMBERVALUE("1E+3",,".")
+=NUMBERVALUE("15:30:45.5","x",".")
+=NUMBERVALUE("1 000",","," ")
+=NUMBERVALUE("12:30:45.123456"," ",)
+=NUMBERVALUE("TRUE","...",".")
+=NUMBERVALUE("NaN",",",",")
+=NUMBERVALUE("1e308","..."," ")
+=NUMBERVALUE("1,2"," ",",")
+=NUMBERVALUE("-5","."," ")
+=NUMBERVALUE("1e5.5",".","x")
+=NUMBERVALUE("5%","...",".")
+=NUMBERVALUE("1,000","x",)
+=NUMBERVALUE("$-5","..."," ")
+=NUMBERVALUE(Data!B5,".","x")
+=NUMBERVALUE({"1","2"}," ",)
+=NUMBERVALUE(Data!B2,"...",",")
+=NUMBERVALUE(" ",,)
+=NUMBERVALUE("12:30"," ",)
+=NUMBERVALUE({"1","2"}," ",".")
+=NUMBERVALUE("TRUE"," ",".")
+=NUMBERVALUE(Data!B2,".",)
+=NUMBERVALUE(Data!Z1," "," ")
+=NUMBERVALUE("1e309",,)
+=NUMBERVALUE("5.","..."," ")
+=NUMBERVALUE("2020-01-01","x",".")
+=NUMBERVALUE(Data!B5," ",)
+=NUMBERVALUE("TRUE",".",",")
+=NUMBERVALUE("abc12",,",")
+=NUMBERVALUE(Data!B12,"...",",")
+=NUMBERVALUE("12abc",,)
+=NUMBERVALUE("3PM",".",",")
+=NUMBERVALUE("3:30 PM",,"x")
+=NUMBERVALUE("abc12",,"x")
+=NUMBERVALUE(".5","...",)
+=NUMBERVALUE("-$5"," "," ")
+=NUMBERVALUE("5%%",,)
+=SUM("5%%","1e3")
+=SUM("1 2","-5")
+=SUM("1,,2","1/2/2020")
+=SUM(Data!A1:A3," 12 ")
+=SUM("1e308","NaN")
+=SUM("Infinity",1E308)
+=SUM(Data!B3,"3:30 PM")
+=SUM("15:30:45.5","#N/A")
+=SUM("1.5.5","1.7976931348623157E308")
+=SUM("%5","true")
+=SUM("1 000","5%")
+=SUM(Data!B9,"TRUE")
+=SUM("1_000","- 5")
+=SUM("(5)","+5")
+=SUM("1,2","1.5.5")
+=SUM("1e309",{"1","2"})
+=SUM("1/2","(5)")
+=SUM("1:2:3"," ")
+=SUM(" 12 ","1/2/2020")
+=SUM("15:30:45.5",-1)
+=SUM("4.9E-324",1E308)
+=SUM("1e5.5"," 12 ")
+=SUM(FALSE,Data!B12)
+=SUM("1,,2","NaN")
+=SUM("1 000","(5)")
+=SUM("1.5.5",Data!B6:B7)
+=SUM("1E+3",Data!B9)
+=SUM("1900-01-00","1,,2")
+=SUM("1:60","1,000")
+=SUM("Jan 1","1e5.5")
+=SUM("1,000",Data!B6)
+=SUM("3PM","abc12")
+=SUM("3PM","-$5")
+=SUM(Data!B5,"1.7976931348623157E308")
+=SUM("%5","(1,000)")
+=SUM("1e5.5","12:30")
+=SUM("-5","00012")
+=SUM("1 000","00012")
+=SUM(TRUE,TRUE)
+=SUM("1,,2","-1e309")
+=COUNT("1.7976931348623157E308","1900-01-00",Data!B1:B12)
+=PRODUCT(TRUE,Data!Z1,Data!B1:B12)
+=MIN("123456789012345678","1,000",TRUE)
+=COUNT("12abc",{1,"a"},TRUE)
+=MAX(Data!B6:B7,"1,2",Data!B1:B12)
+=PRODUCT("15:30:45.5",Data!Z1,1)
+=COUNTA("1/2/2020",Data!B9,Data!B6)
+=MAX("+5","3:30 PM",Data!B6)
+=COUNT(Data!Z1,"Jan-20",Data!B1:B12)
+=AVERAGE("NaN","abc12",TRUE)
+=MIN("2020-01-01","1e5.5","3")
+=MAX("1.5.5","Jan-20","3")
+=COUNT("1-Jan","1:2:3",TRUE)
+=MAX("5%","1E-400",1)
+=PRODUCT("2020-13-01","1_000",TRUE)
+=PRODUCT("12abc",1E308,Data!B1:B12)
+=SUM("3PM","1d3","3")
+=COUNTA("13/13/2020","0.30000000000000004",1)
+=MIN("2020-01-01",TRUE,Data!B6)
+=MAX("1/2/2020","-1e309",Data!B6)
+=MIN("5%",{"1","2"},"3")
+=PRODUCT(FALSE," 12 ",Data!B6)
+=SUM("2020-01-01","1,2","3")
+=COUNTA("1_000",{1,"a"},Data!B1:B12)
+=MIN(0,"12/31/9999","3")
+=PRODUCT(Data!Z1,0.5,1)
+=COUNTA("12:30","1.5.5",TRUE)
+=MAX("1.5.5","1e308","3")
+=COUNTA("1,000","1e",TRUE)
+=MIN(" ","(1,000)",Data!B1:B12)
+=COUNT(Data!B2,"Jan-20",Data!B1:B12)
+=AVERAGE("-5","TRUE",1)
+=COUNT("Jan 1",Data!Z1,Data!B6)
+=MIN(0.5,"00012","3")
+=SUM({"1","2"},{1,"a"},"3")
+=MIN("TRUE","1 2",TRUE)
+=PRODUCT("15:30:45.5",FALSE,"3")
+=AVERAGE("1E+3","1E-400",Data!B1:B12)
+=MIN("1e","- 5",1)
+=AVERAGE("0.30000000000000004",Data!B6,"3")
+=PRODUCT("1e5.5","24:00","3")
+=MIN("1 2","TRUE",TRUE)
+=MIN("Jan-20",FALSE,Data!B6)
+=MAX("15:30:45.5",Data!B3,Data!B1:B12)
+=MIN("1.7976931348623157E308","12abc",Data!B6)
+=MAX("$-5","1.7976931348623157E308","3")
+=COUNTA("2020-13-01",Data!B6:B7,Data!B1:B12)
+=COUNTA("#N/A","(1,000)",Data!B1:B12)
+=SUM("12:30",Data!B6,1)
+=SUM("0.1e-2","$1,234.50","3")
+=MIN({1,"a"},"true","3")
+=AVERAGE("1/2/2020",1E308,TRUE)
+=MIN("1E-400","1900-01-00",Data!B6)
+=MAX(".5","-$5",Data!B6)
+=MIN("Jan 1",Data!A1:A3,TRUE)
+=MAX(0," 12 ",1)
+=AVERAGE("1,,2","1 000",1)
+=COUNTA("15:30:45.5","abc12",1)
+=MAX("123456789012345678","5%",Data!B6)
+=AVERAGE("-5","1,2","3")
+=MIN("5%",Data!B12,1)
+=COUNTA({1,"a"},"1e3",TRUE)
+=COUNTA("1e5.5","12:30:45.123456",Data!B6)
+=COUNT("0.1e-2","1e5.5",Data!B6)
+=COUNTA("0x10","0.1e-2",TRUE)
+=COUNT(Data!B6,"1e3","3")
+=MAX("Jan-20","1/2/2020","3")
+=AVERAGE("1E+3","1e",Data!B6)
+=AVERAGE("","Infinity",Data!B1:B12)
+=SUM(0,"5 %",Data!B1:B12)
+=MAX("12:30:45.123456","$-5",Data!B6)
+=PRODUCT(Data!B6:B7,"-$5",TRUE)
+=MIN("2020-13-01","2020-13-01",1)
+=COUNT("1-Jan","0x10","3")
+=SUM(" 12 ","1.7976931348623157E308",1)
+=COUNTA("$1,234.50","3:30 PM","3")
+=SUM(" ","1e",Data!B1:B12)
+=AVERAGE("1,000","(1,000)",TRUE)
+=MIN("1 2","1,,2",TRUE)
+=MAX("5 %",Data!B2,Data!B6)
+=LOWER("1e5.5")
+=TRUNC("3PM")
+=TIMEVALUE("(5)")
+=DEC2BIN("Jan-20")
+=TRUNC("2020-13-01")
+=TRUNC("$5")
+=TRUNC("NaN")
+=UNICODE("1E+3")
+=INT("0.30000000000000004")
+=UNICODE("123456789012345678")
+=ISBLANK("$5")
+=ISBLANK("$1,234.50")
+=LEN("3:30 PM")
+=ISLOGICAL("1d3")
+=LOWER("1,000")
+=DATEVALUE("12/31/9999")
+=ISNUMBER("NaN")
+=LN("5 %")
+=SIGN(1E-320)
+=ISNUMBER(Data!B6:B7)
+=DATEVALUE("-1e309")
+=TRUNC("3:30 PM")
+=BIN2DEC("1d3")
+=EVEN(" ")
+=EVEN("1,2")
+=OCT2DEC("13/13/2020")
+=OCT2DEC("1,000")
+=FACT("(5)")
+=ISLOGICAL(TRUE)
+=UNICODE(Data!B9)
+=TIMEVALUE("5%%")
+=DATEVALUE("1/2/2020")
+=LOWER("1-Jan")
+=DEC2BIN(Data!B3)
+=T(" 12 ")
+=FACT(" 12 ")
+=CODE("12/31/9999")
+=T(0)
+=BIN2DEC("1E+3")
+=UNICODE(TRUE)
+=BIN2DEC("abc12")
+=ISLOGICAL("1.7976931348623157E308")
+=LEN(Data!B2)
+=ISBLANK("24:00")
+=ROW({"1","2"})
+=DEC2BIN("$-5")
+=CODE("(1,000)")
+=TIMEVALUE(Data!B6:B7)
+=ISTEXT("0x10")
+=CODE("1.5.5")
+=ROW({1,"a"})
+=BIN2DEC("-1e309")
+=TYPE({1,"a"})
+=LEN("#N/A")
+=NOT(Data!B3)
+=SIGN("13/13/2020")
+=ISNUMBER("123456789012345678")
+=HEX2DEC("(5)")
+=BIN2DEC("15:30:45.5")
+=INT("1d3")
+=HEX2DEC("1900-01-00")
+=ISTEXT("%5")
+=SIGN("1d3")
+=ROW("$5")
+=LOWER("(1,000)")
+=ISERR(Data!Z1)
+=ROW("true")
+=ISNUMBER(1E-320)
+=CODE({1,"a"})
+=TRUNC("24:00")
+=ISERR("Infinity")
+=CODE("4.9E-324")
+=ISERR("")
+=TRUNC("1E-400")
+=CODE("abc12")
+=INT("13/13/2020")
+=LN("1/2")
+=ISLOGICAL("(1,000)")
+=CODE(" ")
+=T("1,000")
+=SIGN("1e")
+=TRUNC("#N/A")
+=SQRT("1,000")
+=UNICODE(0)
+=TYPE(0.5)
+=CODE(Data!B5)
+=ISERR("Jan-20")
+=FACT(1E308)
+=TRUNC(Data!B12)
+=TYPE("1.7976931348623157E308")
+=BIN2DEC("1,2")
+=DEC2BIN("NaN")
+=DATEVALUE(Data!B6:B7)
+=DEC2HEX("1900-01-00")
+=LEN("true")
+=ROW("#N/A")
+=LOWER("1/2")
+=SIGN("Jan 1")
+=FACT("5%")
+=LEN("- 5")
+=TIMEVALUE(Data!B6)
+=ISBLANK("00012")
+=SQRT("0.1e-2")
+=CODE("$-5")
+=HEX2DEC("- 5")
+=TIMEVALUE("12:30:45.123456")
+=SIGN("1:60")
+=ROW("00012")
+=TYPE("Jan 1")
+=LN("$5")
+=ABS("$-5")
+=DEC2BIN("0x10")
+=ISLOGICAL("1e3")
+=LN("1e5.5")
+=HEX2DEC("1.7976931348623157E308")
+=OCT2DEC("1E+3")
+=ROW("NaN")
+=TIMEVALUE({"1","2"})
+=DEC2HEX("#N/A")
+=LOWER("1e308")
+=N("1,,2")
+=BIN2DEC("5%%")
+=HEX2DEC(" 12 ")
+=ABS("5.")
+=UNICODE("Jan 1")
+=LEN("abc12")
+=T(Data!B3)
+=ABS("24:00")
+=ISERR(" 12 ")
+=HEX2DEC("%5")
+=CODE("13/13/2020")
+=TRUNC("1e309")
+=NOT("true")
+=ISLOGICAL("")
+=SQRT("1e308")
+=NOT("15:30:45.5")
+=HEX2DEC(FALSE)
+=ISLOGICAL("13/13/2020")
+=LEN("1-Jan")
+=LN("1e309")
+=FACT("12abc")
+=ISBLANK("Jan-20")
+=ISERR("4.9E-324")
+=N(" ")
+=SIGN(Data!B6)
+=TIMEVALUE("1e308")
+=SIGN("1e309")
+=SIGN("24:00")
+=FACT("1e309")
+=DATEVALUE(FALSE)
+=DEC2HEX("%5")
+=TIMEVALUE("2020-13-01")
+=SIGN("1,2")
+=ISBLANK("#N/A")
+=HEX2DEC("NaN")
+=CODE(FALSE)
+=DEC2BIN(Data!B12)
+=INT("- 5")
+=ROW(Data!A1:A3)
+=BIN2DEC(Data!B3)
+=SIGN(" ")
+=TYPE(0)
+=ROW("(1,000)")
+=LOWER("true")
+=CODE(-1)
+=UNICODE("1:2:3")
+=CODE(Data!B6:B7)
+=ISLOGICAL(Data!Z1)
+=BIN2DEC("- 5")
+=SIGN("(1,000)")
+=LOWER("15:30:45.5")
+=LOWER("1 000")
+=T(1)
+=ISNUMBER("")
+=LN("1e")
+=FACT("5%%")
+=LOWER(".5")
+=ISTEXT(Data!B5)
+=N(Data!C1)
+=ABS("(1,000)")
+=DATEVALUE(0.5)
+=SIGN("12/31/9999")
+=LN("(5)")
+=ABS("12:30")
+=INT(1E-320)
+=SIGN({1,"a"})
+=ISTEXT("12:30:45.123456")
+=N("1/2/2020")
+=HEX2DEC({"1","2"})
+=LOWER("TRUE")
+=SQRT("1,,2")
+=OCT2DEC(1)
+=LOWER("1e3")
+=SQRT("5.")
+=ISBLANK("0.30000000000000004")
+=SQRT(Data!B6:B7)
+=LEN("1.7976931348623157E308")
+=OCT2DEC("1:2:3")
+=SIGN(Data!B9)
+=SIGN("1e3")
+=INT(Data!C1)
+=SIGN("1 000")
+=HEX2DEC("1/2/2020")
+=IF(0.5,1,2)
+=IF("+5",1,2)
+=IF("5.",1,2)
+=IF("true",1,2)
+=IF(" 12 ",1,2)
+=IF({1,"a"},1,2)
+=IF("0.1e-2",1,2)
+=IF("Jan-20",1,2)
+=IF("1/2",1,2)
+=IF("5%",1,2)
+=IF("1E+3",1,2)
+=IF("1,000",1,2)
+=IF(Data!A1:A3,1,2)
+=IF(1,1,2)
+=IF(" ",1,2)
+=IF("1_000",1,2)
+=IF("12/31/9999",1,2)
+=IF("1,2",1,2)
+=IF(Data!B12,1,2)
+=IF("13/13/2020",1,2)
+=IF("0.30000000000000004",1,2)
+=IF("1e308",1,2)
+=IF("Infinity",1,2)
+=IF(1E-320,1,2)
+=IF("TRUE",1,2)
+=IF("5 %",1,2)
+=IF("123456789012345678",1,2)
+=IF("#N/A",1,2)
+=IF("1e5.5",1,2)
+=IF("2020-01-01",1,2)
+=IF(Data!B5,1,2)
+=IF(Data!C1,1,2)
+=IF("",1,2)
+=IF("1 2",1,2)
+=IF("12abc",1,2)
+=IF("0x10",1,2)
+=IF(Data!B6,1,2)
+=IF("12:30",1,2)
+=IF("-5",1,2)
+=IF("3:30 PM",1,2)
+=AND({"1","2"},"1_000")
+=AND("- 5","(1,000)")
+=AND("1/2","")
+=AND("-$5",-1)
+=AND("","1/2")
+=AND("3:30 PM","1e5.5")
+=AND("abc12","1e308")
+=AND("1,000","1E+3")
+=AND("1.5.5","Jan 1")
+=AND("3PM","-1e309")
+=AND("5%","123456789012345678")
+=AND("1_000",Data!B2)
+=AND("Jan-20"," ")
+=AND("4.9E-324","2020-13-01")
+=AND("00012",Data!B12)
+=AND(Data!B6,"12:30")
+=AND("1-Jan","00012")
+=AND("Jan 1","1 000")
+=AND(Data!Z1,"Infinity")
+=AND("TRUE","5%")
+=AND("+5","0.1e-2")
+=AND("3:30 PM","0.30000000000000004")
+=AND("Jan-20",1)
+=AND(1E-320,"1d3")
+=AND("5%",FALSE)
+=OR(Data!B5,"1_000")
+=OR("5 %",0)
+=OR("13/13/2020","1/2/2020")
+=OR(1E-320,"NaN")
+=OR(Data!B3,{1,"a"})
+=OR("00012",Data!C1)
+=OR("-$5","1,2")
+=OR("Infinity","%5")
+=OR("4.9E-324",Data!B5)
+=OR("+5","Jan 1")
+=OR("12:30",1E-320)
+=OR("12abc","1-Jan")
+=OR("Jan-20","Jan 1")
+=OR("- 5",FALSE)
+=OR("TRUE","3:30 PM")
+=OR("1 2","1d3")
+=OR("5%%","0.30000000000000004")
+=OR(0.5,"5.")
+=OR("1e309","3PM")
+=OR(Data!A1:A3,"1,,2")
+=OR("1 000","2020-01-01")
+=OR("%5","1.5.5")
+=OR("2020-13-01"," ")
+=OR("$5","")
+=OR("(1,000)","- 5")
+=XOR(" ","1/2")
+=XOR(" ","0.1e-2")
+=XOR("3:30 PM",Data!Z1)
+=XOR("1:2:3",{"1","2"})
+=XOR("#N/A"," 12 ")
+=XOR("0x10","TRUE")
+=XOR("- 5","true")
+=XOR("3PM","12:30")
+=XOR("$1,234.50","-1e309")
+=XOR("(1,000)"," 12 ")
+=XOR(TRUE,"$5")
+=XOR(1,"-1e309")
+=XOR("5%","13/13/2020")
+=XOR("00012","$5")
+=XOR("1E+3","1d3")
+="1 000"=TRUE
+="12abc"=0
+="$1,234.50"=""
+="- 5"="TRUE"
+="+5"=0
+="+5"=TRUE
+="1.5.5"=TRUE
+="$1,234.50"=FALSE
+="1,,2"=FALSE
+="15:30:45.5"="0"
+=Data!B3="0"
+=Data!B6="0"
+="1d3"=""
+="24:00"=Data!B9
+="-$5"=0
+="1d3"=0
+=Data!Z1="TRUE"
+="2020-01-01"=""
+=Data!B3=0
+=Data!B9=Data!B9
+=" 12 "="0"
+="12/31/9999"=FALSE
+=Data!B6:B7="TRUE"
+="1.7976931348623157E308"=0
+="24:00"=FALSE
+="1,2"=Data!Z1
+="00012"=""
+="5%"="TRUE"
+="1E-400"=FALSE
+=0=Data!Z1
+="2020-01-01"=0
+="123456789012345678"=0
+=0=FALSE
+="NaN"=FALSE
+="$-5"="0"
+="-$5"=""
+="1d3"="0"
+=TRUE=Data!B9
+="1,2"=""
+=""=Data!Z1
+=Data!B12=0
+="-1e309"=FALSE
+="%5"="0"
+="$5"=TRUE
+="Infinity"=Data!Z1
+="Jan-20"=Data!B9
+=Data!C1=Data!B9
+="Jan 1"="TRUE"
+="1E+3"=Data!B9
+="0.30000000000000004"=0
+="#N/A"=TRUE
+=Data!B12=FALSE
+="5."=0
+="1d3"=Data!Z1
+="2020-13-01"="0"
+=Data!B9=TRUE
+="1d3"="TRUE"
+=".5"=1
+=SUMPRODUCT({"a",2,3},Data!A1:A3)
+=SUMPRODUCT(Data!B6:B8,{"1","2","3"})
+=SUMPRODUCT({1,2,3},{"1","2","3"})
+=SUMPRODUCT(Data!B1:B3,{"1","2","3"})
+=SUMPRODUCT(Data!B1:B3,{4,5,6})
+=SUMPRODUCT(Data!B6:B8,{TRUE,TRUE,TRUE})
+=SUMPRODUCT(Data!A1:A3,{"1","2","3"})
+=SUMPRODUCT(Data!A1:A3,{1,2,3})
+=SUMPRODUCT({"a",2,3},{1,2,3})
+=SUMPRODUCT({"a",2,3},{TRUE,TRUE,TRUE})
+=SUMPRODUCT(Data!B6:B8,{4,5,6})
+=SUMPRODUCT({1,2,3},{TRUE,TRUE,TRUE})
+=SUMPRODUCT({"a",2,3},{"1","2","3"})
+=SUMPRODUCT({TRUE,FALSE,TRUE},Data!A1:A3)
+=SUMPRODUCT(Data!B6:B8,Data!A1:A3)
+=SUMPRODUCT({TRUE,FALSE,TRUE},{"1","2","3"})
+=SUMPRODUCT({TRUE,FALSE,TRUE},{4,5,6})
+=SUMPRODUCT(Data!B1:B3,{1,2,3})
+=SUMPRODUCT({TRUE,FALSE,TRUE},{TRUE,TRUE,TRUE})
+=SUMPRODUCT({1,2,3},Data!A1:A3)
+=SUMPRODUCT({1,2,3},{1,2,3})
+=SUMPRODUCT(Data!B6:B8,{1,2,3})
+=SUMPRODUCT(Data!A1:A3,{TRUE,TRUE,TRUE})
+=SUMPRODUCT({"a",2,3},{4,5,6})
+=SUMPRODUCT(--Data!C1:C5="apple")
+=SUMPRODUCT(--{"1","2","x"})
+=SUMPRODUCT(--{TRUE,FALSE,TRUE})
+=SUMPRODUCT(--Data!B1:B6)
+=SUMPRODUCT(--Data!A1:A3>1)
+=SUMPRODUCT({1,2,3}*{TRUE,FALSE,TRUE})
+=SUMPRODUCT(Data!A1:A3*Data!B1:B3)
+=SUMPRODUCT(Data!A1:A3*{TRUE,FALSE,TRUE})
+=SUMPRODUCT({1,2,3}*Data!B1:B3)
+=SUMPRODUCT({1,2,3}*{"a",1,1})
+=SUMPRODUCT({1,2,3}*{"1","2","3"})
+=SUMPRODUCT(Data!A1:A3*{"1","2","3"})
+=SUMPRODUCT(Data!A1:A3*{"a",1,1})
+=AVERAGEIF(Data!E1:E6,">1/1/2020")
+=AVERAGEIF(Data!E1:E6,Data!A3)
+=COUNTIF(Data!B1:B12,"a?b")
+=COUNTIF(Data!F1:F6,"><3")
+=AVERAGEIF(Data!F1:F6,Data!A3)
+=SUMIF(Data!B1:B12,"=TRUE")
+=AVERAGEIF(Data!E1:E6,"a*")
+=COUNTIF(Data!F1:F6,"?*")
+=COUNTIF(Data!B1:B12,"="&")
+=SUMIF(Data!C1:C10,TRUE)
+=COUNTIF(Data!C1:C10,"=")
+=SUMIF(Data!C1:C10,">=2020-01-01")
+=COUNTIF(Data!F1:F6,Data!B2)
+=AVERAGEIF(Data!E1:E6,">"&Data!E1)
+=SUMIF(Data!C1:C10,"*~?*")
+=AVERAGEIF(Data!E1:E6,"~*")
+=SUMIF(Data!B1:B12,"=")
+=AVERAGEIF(Data!E1:E6,"?*")
+=SUMIF(Data!F1:F6,TRUE)
+=SUMIF(Data!F1:F6,"=#N/A")
+=COUNTIF(Data!F1:F6,"<=1E2")
+=SUMIF(Data!A1:A10,"<=1E2")
+=COUNTIF(Data!C1:C10,"#N/A")
+=SUMIF(Data!E1:E6,Data!B2)
+=SUMIF(Data!F1:F6,"~*")
+=SUMIF(Data!C1:C10,"<=1E2")
+=COUNTIF(Data!E1:E6,"~*")
+=COUNTIF(Data!C1:C10,"<0.5")
+=AVERAGEIF(Data!A1:A10,">"&Data!E1)
+=COUNTIF(Data!C1:C10,"="&")
+=COUNTIF(Data!B1:B12,"=text")
+=COUNTIF(Data!A1:A10,Data!A3)
+=AVERAGEIF(Data!C1:C10,">=2020-01-01")
+=SUMIF(Data!C1:C10,")
+=COUNTIF(Data!A1:A10,"=")
+=COUNTIF(Data!A1:A10,"<>")
+=SUMIF(Data!B1:B12,">=2020-01-01")
+=SUMIF(Data!E1:E6,TRUE)
+=SUMIF(Data!C1:C10,"=")
+=SUMIF(Data!A1:A10,"1")
+=SUMIF(Data!B1:B12,"*~?*")
+=SUMIF(Data!B1:B12,"="&")
+=SUMIF(Data!B1:B12,"=1")
+=SUMIF(Data!F1:F6,"=")
+=AVERAGEIF(Data!F1:F6,">3")
+=AVERAGEIF(Data!B1:B12,TRUE)
+=AVERAGEIF(Data!E1:E6,"1")
+=AVERAGEIF(Data!C1:C10,"=TRUE")
+=SUMIF(Data!F1:F6,"<0.5")
+=AVERAGEIF(Data!C1:C10,">1/1/2020")
+=SUMIF(Data!E1:E6,"=")
+=SUMIF(Data!A1:A10,"~*")
+=COUNTIF(Data!E1:E6,Data!A3)
+=AVERAGEIF(Data!C1:C10,"="&")
+=AVERAGEIF(Data!F1:F6,"<=1E2")
+=COUNTIF(Data!F1:F6,">=2020-01-01")
+=COUNTIF(Data!A1:A10,"<0.5")
+=AVERAGEIF(Data!C1:C10,"=text")
+=SUMIF(Data!E1:E6,">3")
+=AVERAGEIF(Data!A1:A10,Data!B5)
+=SUMIF(Data!B1:B12,")
+=SUMIF(Data!B1:B12,"<"&"b")
+=AVERAGEIF(Data!E1:E6,")
+=COUNTIF(Data!C1:C10,">3")
+=COUNTIF(Data!B1:B12,"><3")
+=AVERAGEIF(Data!E1:E6,"<"&"b")
+=COUNTIF(Data!E1:E6,"a*")
+=COUNTIF(Data!F1:F6,"=text")
+=AVERAGEIF(Data!F1:F6,"=TRUE")
+=AVERAGEIF(Data!B1:B12,"1")
+=COUNTIF(Data!A1:A10,")
+=AVERAGEIF(Data!E1:E6,"=#N/A")
+=AVERAGEIF(Data!A1:A10,"<=1E2")
+=AVERAGEIF(Data!F1:F6,"#N/A")
+=AVERAGEIF(Data!A1:A10,"<>")
+=COUNTIF(Data!F1:F6,"<"&"b")
+=COUNTIF(Data!E1:E6,"a?b")
+=AVERAGEIF(Data!F1:F6,"<"&"b")
+=AVERAGEIF(Data!F1:F6,Data!B2)
+=SUMIF(Data!E1:E6,"?*")
+=SUMIF(Data!A1:A10,"=")
+=AVERAGEIF(Data!B1:B12,">3")
+=COUNTIF(Data!A1:A10,">=2020-01-01")
+=COUNTIF(Data!C1:C10,"><3")
+=AVERAGEIF(Data!E1:E6,"><3")
+=COUNTIF(Data!A1:A10,"<=1E2")
+=SUMIF(Data!F1:F6,">3")
+=SUMIF(Data!A1:A10,"=#N/A")
+=AVERAGEIF(Data!B1:B12,Data!A3)
+=AVERAGEIF(Data!B1:B12,"=TRUE")
+=AVERAGEIF(Data!C1:C10,"*~?*")
+=SUMIF(Data!C1:C10,"a?b")
+=AVERAGEIF(Data!B1:B12,"#N/A")
+=SUMIF(Data!A1:A10,Data!A3)
+=SUMIF(Data!C1:C10,">3")
+=AVERAGEIF(Data!F1:F6,")
+=COUNTIF(Data!B1:B12,">1/1/2020")
+=AVERAGEIF(Data!A1:A10,"a?b")
+=AVERAGEIF(Data!C1:C10,"><3")
+=COUNTIF(Data!B1:B12,"<0.5")
+=SUMIF(Data!B1:B12,"<>")
+=COUNTIF(Data!C1:C10,"=TRUE")
+=SUMIF(Data!E1:E6,"=#N/A")
+=COUNTIF(Data!E1:E6,"><3")
+=SUMIF(Data!E1:E6,"<"&"b")
+=AVERAGEIF(Data!C1:C10,"=")
+=AVERAGEIF(Data!C1:C10,"?*")
+=AVERAGEIF(Data!C1:C10,"<=1E2")
+=SUMIF(Data!B1:B12,">1/1/2020")
+=COUNTIF(Data!B1:B12,"=TRUE")
+=AVERAGEIF(Data!E1:E6,"*~?*")
+=COUNTIF(Data!C1:C10,"a*")
+=SUMIF(Data!B1:B12,Data!B2)
+=SUMIF(Data!E1:E6,"=TRUE")
+=AVERAGEIF(Data!A1:A10,">3")
+=COUNTIF(Data!A1:A10,Data!B2)
+=AVERAGEIF(Data!E1:E6,">3")
+=COUNTIF(Data!F1:F6,"a*")
+=COUNTIF(Data!B1:B12,"?*")
+=COUNTIF(Data!B1:B12,">=2020-01-01")
+=SUMIF(Data!E1:E6,"<>")
+=COUNTIF(Data!E1:E6,"<>")
+=AVERAGEIF(Data!F1:F6,"=")
+=AVERAGEIF(Data!B1:B12,"=text")
+=COUNTIF(Data!C1:C10,"<=1E2")
+=AVERAGEIF(Data!A1:A10,Data!A3)
+=SUMIF(Data!F1:F6,")
+=COUNTIF(Data!C1:C10,"<>")
+=AVERAGEIF(Data!B1:B12,"=")
+=SUMIF(Data!E1:E6,"1")
+=COUNTIF(Data!B1:B12,"=1")
+=SUMIF(Data!E1:E6,"=text")
+=AVERAGEIF(Data!A1:A10,TRUE)
+=COUNTIF(Data!A1:A10,"<"&"b")
+=COUNTIF(Data!A1:A10,"=TRUE")
+=SUMIF(Data!C1:C10,"=text")
+=SUMIF(Data!C1:C10,"=#N/A")
+=AVERAGEIF(Data!A1:A10,"a*")
+=AVERAGEIF(Data!F1:F6,"=1")
+=SUMIF(Data!C1:C10,">1/1/2020")
+=COUNTIF(Data!F1:F6,"=")
+=SUMIF(Data!F1:F6,"?*")
+=AVERAGEIF(Data!B1:B12,">1/1/2020")
+=COUNTIF(Data!C1:C10,"*~?*")
+=COUNTIF(Data!C1:C10,"=1")
+=SUMIF(Data!C1:C10,"=1")
+=AVERAGEIF(Data!B1:B12,"<"&"b")
+=SUMIF(Data!B1:B12,">"&Data!E1)
+=COUNTIF(Data!E1:E6,">1/1/2020")
+=SUMIF(Data!F1:F6,"<>")
+=AVERAGEIF(Data!B1:B12,"~*")
+=SUMIF(Data!F1:F6,"a*")
+=AVERAGEIF(Data!F1:F6,">"&Data!E1)
+=SUMIF(Data!E1:E6,"a*")
+=SUMIF(Data!A1:A10,"=TRUE")
+=AVERAGEIF(Data!C1:C10,">"&Data!E1)
+=AVERAGEIF(Data!F1:F6,"a?b")
+=AVERAGEIF(Data!B1:B12,")
+=COUNTIF(Data!B1:B12,"=")
+=AVERAGEIF(Data!A1:A10,"*~?*")
+=SUMIF(Data!F1:F6,Data!B5)
+=AVERAGEIF(Data!B1:B12,"a*")
+=SUMIF(Data!A1:A10,"a?b")
+=AVERAGEIF(Data!A1:A10,"=#N/A")
+=COUNTIF(Data!A1:A10,"="&")
+=COUNTIF(Data!C1:C10,"=#N/A")
+=AVERAGEIF(Data!B1:B12,"="&")
+=COUNTIF(Data!F1:F6,"~*")
+=COUNTIF(Data!F1:F6,"<>")
+=COUNTIF(Data!F1:F6,TRUE)
+=AVERAGEIF(Data!E1:E6,">=2020-01-01")
+=COUNTIFS(Data!A1:A10,">3",Data!A1:A10,5)
+=COUNTIFS(Data!A1:A10,4,Data!A1:A10,"<>4")
+=COUNTIFS(Data!A1:A10,"<>5",Data!A1:A10,5)
+=COUNTIFS(Data!D1:D10,"<10",Data!A1:A10,5)
+=COUNTIFS(Data!D1:D10,">3",Data!D1:D10,">=4")
+=COUNTIFS(Data!D1:D10,">3",Data!A1:A10,"<>4")
+=COUNTIFS(Data!D1:D10,"=4",Data!A1:A10,"<>4")
+=COUNTIFS(Data!A1:A10,"<10",Data!A1:A10,5)
+=COUNTIFS(Data!A1:A10,">3",Data!D1:D10,5)
+=COUNTIFS(Data!D1:D10,">3",Data!D1:D10,"<>4")
+=COUNTIFS(Data!A1:A10,4,Data!D1:D10,">=4")
+=COUNTIFS(Data!A1:A10,"=4",Data!D1:D10,">=4")
+=COUNTIFS(Data!A1:A10,"<>5",Data!D1:D10,5)
+=COUNTIFS(Data!A1:A10,"<>5",Data!D1:D10,">=4")
+=COUNTIFS(Data!A1:A10,">3",Data!A1:A10,">=4")
+=COUNTIFS(Data!A1:A10,4,Data!A1:A10,">=4")
+=COUNTIFS(Data!A1:A10,">3",Data!D1:D10,"<>4")
+=COUNTIFS(Data!D1:D10,4,Data!D1:D10,">=4")
+=COUNTIFS(Data!A1:A10,"<10",Data!D1:D10,5)
+=COUNTIFS(Data!A1:A10,4,Data!D1:D10,5)
+=COUNTIFS(Data!D1:D10,">3",Data!D1:D10,5)
+=COUNTIFS(Data!A1:A10,"<>5",Data!A1:A10,"<>4")
+=COUNTIFS(Data!D1:D10,">3",Data!A1:A10,">=4")
+=COUNTIFS(Data!A1:A10,"<10",Data!A1:A10,"<>4")
+=COUNTIFS(Data!D1:D10,"<>5",Data!D1:D10,">=4")
+=COUNTIFS(Data!D1:D10,4,Data!A1:A10,"<>4")
+=COUNTIFS(Data!D1:D10,"<10",Data!A1:A10,"<>4")
+=COUNTIFS(Data!A1:A10,"=4",Data!D1:D10,"<>4")
+=COUNTIFS(Data!A1:A10,"=4",Data!A1:A10,"<>4")
+=COUNTIFS(Data!D1:D10,"<>5",Data!A1:A10,">=4")
+=MATCH("",{1,"1",TRUE},)
+=MATCH("1_000",Data!C1:C10,)
+=MATCH("12/31/9999",Data!B1:B12,-1)
+=MATCH("1e5.5",{1,"1",TRUE},)
+=MATCH("00012",{"a","B","c"},0)
+=MATCH("Jan-20",{1,"1",TRUE},1)
+=MATCH(" ",{1,"1",TRUE},)
+=MATCH("(1,000)",Data!C1:C10,0)
+=MATCH("abc12",Data!A1:A10,0)
+=MATCH("%5",Data!A1:A10,1)
+=MATCH("12/31/9999",Data!B1:B12,1)
+=MATCH("1,000",Data!B1:B12,1)
+=MATCH("1e308",{"a","B","c"},)
+=MATCH("- 5",Data!C1:C10,-1)
+=MATCH(TRUE,{1,"1",TRUE},-1)
+=MATCH(Data!A1:A3,{"a","B","c"},0)
+=MATCH("1/2/2020",Data!A1:A10,1)
+=MATCH("-$5",Data!B1:B12,)
+=MATCH("1E-400",{"a","B","c"},0)
+=MATCH("1900-01-00",Data!A1:A10,1)
+=MATCH("0.30000000000000004",Data!A1:A10,0)
+=MATCH("NaN",{1,"1",TRUE},-1)
+=MATCH("1900-01-00",Data!C1:C10,-1)
+=MATCH("$1,234.50",Data!A1:A10,1)
+=MATCH("#N/A",{1,"1",TRUE},)
+=MATCH("Jan-20",Data!C1:C10,1)
+=MATCH("1e3",Data!B1:B12,0)
+=MATCH(Data!C1,Data!A1:A10,)
+=MATCH("1d3",Data!B1:B12,1)
+=MATCH("1e",Data!A1:A10,-1)
+=MATCH("1 000",Data!B1:B12,1)
+=MATCH("1.5.5",Data!C1:C10,0)
+=MATCH("1/2/2020",Data!B1:B12,1)
+=MATCH("1 000",Data!C1:C10,0)
+=MATCH("13/13/2020",Data!A1:A10,0)
+=MATCH("12/31/9999",Data!B1:B12,0)
+=MATCH("1e5.5",Data!A1:A10,-1)
+=MATCH("-5",{1,"1",TRUE},)
+=MATCH("24:00",Data!C1:C10,-1)
+=MATCH("1-Jan",Data!B1:B12,0)
+=MATCH("TRUE",Data!B1:B12,)
+=MATCH("-5",{"a","B","c"},-1)
+=MATCH(" 12 ",Data!A1:A10,0)
+=MATCH("0.30000000000000004",Data!C1:C10,0)
+=MATCH(Data!B6:B7,Data!C1:C10,)
+=MATCH(0,Data!B1:B12,0)
+=MATCH("1E-400",{1,"1",TRUE},)
+=MATCH(" ",{"a","B","c"},0)
+=MATCH(1E-320,Data!B1:B12,-1)
+=MATCH("5%%",Data!A1:A10,)
+=MATCH("00012",Data!C1:C10,0)
+=MATCH("",Data!B1:B12,0)
+=MATCH("1 2",Data!C1:C10,0)
+=MATCH("5%%",Data!C1:C10,1)
+=MATCH(0.5,Data!C1:C10,-1)
+=MATCH("1_000",Data!A1:A10,0)
+=MATCH(-1,Data!B1:B12,0)
+=MATCH("-$5",{"a","B","c"},-1)
+=MATCH("TRUE",{"a","B","c"},1)
+=MATCH(Data!B12,Data!A1:A10,1)
+=MATCH("(5)",Data!C1:C10,)
+=MATCH("true",Data!B1:B12,)
+=MATCH("1/2",{1,"1",TRUE},0)
+=MATCH("Jan-20",Data!B1:B12,1)
+=MATCH("-$5",Data!C1:C10,0)
+=MATCH("(1,000)",Data!C1:C10,)
+=MATCH(Data!B2,Data!A1:A10,-1)
+=MATCH("1_000",Data!A1:A10,1)
+=MATCH("12:30:45.123456",Data!C1:C10,1)
+=MATCH("12:30:45.123456",Data!B1:B12,0)
+=MATCH("-$5",{1,"1",TRUE},1)
+=MATCH("4.9E-324",Data!B1:B12,1)
+=MATCH(1E-320,Data!A1:A10,-1)
+=MATCH("$-5",Data!C1:C10,-1)
+=MATCH("1.5.5",{1,"1",TRUE},-1)
+=MATCH("5.",{1,"1",TRUE},0)
+=MATCH("$5",Data!C1:C10,0)
+=MATCH("1/2/2020",{1,"1",TRUE},-1)
+=MATCH({1,"a"},Data!A1:A10,1)
+=MATCH("Infinity",Data!B1:B12,)
+=MATCH("24:00",Data!A1:A10,-1)
+=MATCH("-5",{1,"1",TRUE},0)
+=MATCH("0.30000000000000004",Data!C1:C10,1)
+=MATCH(".5",Data!B1:B12,-1)
+=MATCH("- 5",Data!B1:B12,1)
+=MATCH("1900-01-00",{1,"1",TRUE},0)
+=MATCH(Data!B2,Data!C1:C10,-1)
+=MATCH(0.5,Data!B1:B12,1)
+=MATCH("TRUE",Data!C1:C10,)
+=MATCH(Data!B6,Data!A1:A10,0)
+=MATCH("Infinity",Data!A1:A10,0)
+=MATCH("123456789012345678",Data!A1:A10,1)
+=MATCH("1:60",{"a","B","c"},-1)
+=MATCH("2020-13-01",Data!C1:C10,1)
+=MATCH("-1e309",{"a","B","c"},0)
+=MATCH("Jan 1",Data!A1:A10,1)
+=VLOOKUP(".5",Data!A1:C10,2,1)
+=VLOOKUP("1 2",Data!A1:C10,0,)
+=VLOOKUP("1/2",Data!A1:C10,2,FALSE)
+=VLOOKUP("24:00",Data!A1:C10,TRUE,0)
+=VLOOKUP("5.",Data!A1:C10,TRUE,1)
+=VLOOKUP("",Data!A1:C10,TRUE,1)
+=VLOOKUP("#N/A",Data!A1:C10,3,0)
+=VLOOKUP(-1,Data!A1:C10,0,)
+=VLOOKUP("Infinity",Data!A1:C10,2,)
+=VLOOKUP("5 %",Data!A1:C10,2,TRUE)
+=VLOOKUP(" ",Data!A1:C10,4,TRUE)
+=VLOOKUP("1,2",Data!A1:C10,0,)
+=VLOOKUP("-1e309",Data!A1:C10,1,FALSE)
+=VLOOKUP("abc12",Data!A1:C10,4,)
+=VLOOKUP("12:30:45.123456",Data!A1:C10,TRUE,)
+=VLOOKUP("2020-13-01",Data!A1:C10,2,TRUE)
+=VLOOKUP(Data!B6:B7,Data!A1:C10,0,)
+=VLOOKUP(Data!C1,Data!A1:C10,2,FALSE)
+=VLOOKUP("5.",Data!A1:C10,3,)
+=VLOOKUP("1-Jan",Data!A1:C10,TRUE,1)
+=VLOOKUP(1E308,Data!A1:C10,4,)
+=VLOOKUP("Jan-20",Data!A1:C10,TRUE,1)
+=VLOOKUP("0.1e-2",Data!A1:C10,0,)
+=VLOOKUP("12/31/9999",Data!A1:C10,TRUE,FALSE)
+=VLOOKUP("",Data!A1:C10,3,TRUE)
+=VLOOKUP(Data!B12,Data!A1:C10,1.9,)
+=VLOOKUP("5.",Data!A1:C10,0,FALSE)
+=VLOOKUP("4.9E-324",Data!A1:C10,3,TRUE)
+=VLOOKUP(Data!C1,Data!A1:C10,1,1)
+=VLOOKUP(1E-320,Data!A1:C10,1,0)
+=VLOOKUP("NaN",Data!A1:C10,3,)
+=VLOOKUP(0,Data!A1:C10,0,0)
+=VLOOKUP("0.30000000000000004",Data!A1:C10,TRUE,TRUE)
+=VLOOKUP("true",Data!A1:C10,3,)
+=VLOOKUP(0.5,Data!A1:C10,2,1)
+=VLOOKUP(Data!A1:A3,Data!A1:C10,1,0)
+=VLOOKUP("1d3",Data!A1:C10,1.9,0)
+=VLOOKUP("Infinity",Data!A1:C10,4,0)
+=VLOOKUP("12:30",Data!A1:C10,0,TRUE)
+=VLOOKUP(Data!B12,Data!A1:C10,4,FALSE)
+=VLOOKUP("1/2",Data!A1:C10,0,1)
+=VLOOKUP("123456789012345678",Data!A1:C10,2,TRUE)
+=VLOOKUP(Data!B6,Data!A1:C10,3,)
+=VLOOKUP("-$5",Data!A1:C10,1,FALSE)
+=VLOOKUP("2020-13-01",Data!A1:C10,1,0)
+=VLOOKUP(Data!B3,Data!A1:C10,1.9,0)
+=VLOOKUP("12:30",Data!A1:C10,TRUE,0)
+=VLOOKUP(" ",Data!A1:C10,4,1)
+=VLOOKUP(-1,Data!A1:C10,1,FALSE)
+=VLOOKUP(Data!B6,Data!A1:C10,1.9,)
+=VLOOKUP("$-5",Data!A1:C10,TRUE,1)
+=VLOOKUP("12:30:45.123456",Data!A1:C10,1,)
+=VLOOKUP("2020-13-01",Data!A1:C10,2,0)
+=VLOOKUP("1:60",Data!A1:C10,TRUE,FALSE)
+=VLOOKUP("abc12",Data!A1:C10,1.9,FALSE)
+=VLOOKUP("0x10",Data!A1:C10,3,FALSE)
+=VLOOKUP("1 000",Data!A1:C10,4,FALSE)
+=VLOOKUP("15:30:45.5",Data!A1:C10,TRUE,)

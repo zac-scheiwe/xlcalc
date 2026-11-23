@@ -75,8 +75,8 @@ fn vba_code(code: &str, dated: bool) -> String {
                 i = stop;
                 continue;
             }
+
             ';' => {
-                digits = false;
                 point = false;
                 out.push(c);
             }
@@ -95,7 +95,9 @@ fn vba_code(code: &str, dated: bool) -> String {
                 continue;
             }
             '*' => i += 1,
-            ',' if point && !matches!(chars.get(i + 1), Some('0' | '#' | ',')) => {}
+            ',' if !dated && point && !matches!(chars.get(i + 1), Some('0' | '#' | ',')) => {}
+
+            '.' if point && !dated => lit(&mut out, c),
             '.' => {
                 point = true;
                 out.push(c);
@@ -335,6 +337,7 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
         let l = code.to_ascii_lowercase();
         l.contains("am/pm") || l.contains("a/p") || l.contains("ampm")
     };
+    let dated = has_date_field(code);
     let mut out = String::new();
     let mut after_h = false;
     let mut i = 0;
@@ -377,7 +380,12 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
             if c == '/' {
                 out.push('\\');
             }
-            out.push(c);
+
+            if dated && matches!(c, '.' | ',' | '%' | '#' | '0'..='9') {
+                quote(&mut out, &c.to_string());
+            } else {
+                out.push(c);
+            }
             i += 1;
             continue;
         }
@@ -400,11 +408,14 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
                     word.to_string()
                 };
                 quote(&mut out, &word);
+
+                after_h = false;
                 i += if short { 3 } else { 5 };
             }
             'a' if rest.starts_with("ampm") => {
                 let (am, pm) = designators(ctx);
                 quote(&mut out, if p.secs >= 43_200 { pm } else { am });
+                after_h = false;
                 i += 4;
             }
             'd' if run >= 5 => {
@@ -419,6 +430,7 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
                     "dddd, d mmmm yyyy"
                 };
                 let code = if run == 5 { short } else { long };
+                after_h = false;
                 out.push_str(&vba_dates(ctx, wk, code, x)?);
                 if run > 6 {
                     out.push_str(&"d".repeat(run - 6));
@@ -426,6 +438,7 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
                 i += run;
             }
             'y' => {
+                after_h = false;
                 let mut left = run;
                 while left > 0 {
                     if left >= 4 {
@@ -509,11 +522,30 @@ fn vba_dates(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, Vb
                 let text = match run {
                     1 => p.month.to_string(),
                     2 => format!("{:02}", p.month),
+
+                    3 if p.month == 9 && ctx.locale != Locale::EN_US => "Sept".to_string(),
                     3 => name[..3].to_string(),
                     4 => name,
                     _ => format!("{name}{}", p.month),
                 };
                 quote(&mut out, &text);
+                i += run;
+            }
+
+            's' if run > 2 => {
+                let sec = p.secs % 60;
+                for k in 0..run.div_ceil(2) {
+                    let pair = 2 * k + 1 < run;
+                    quote(
+                        &mut out,
+                        &if pair {
+                            format!("{sec:02}")
+                        } else {
+                            sec.to_string()
+                        },
+                    );
+                }
+                after_h = false;
                 i += run;
             }
             'd' | 'h' | 's' => {
@@ -581,7 +613,8 @@ fn has_date_field(code: &str) -> bool {
             '"' => quoted = !quoted,
             '[' if !quoted => bracket = true,
             ']' if !quoted => bracket = false,
-            '0' | '#' if !quoted && !bracket => return false,
+
+            '0' | '#' | '.' if !quoted && !bracket => return false,
             _ if quoted || bracket => {}
             'a' | 'A' => {
                 let rest: String = chars[i..].iter().take(5).collect::<String>().to_lowercase();
@@ -629,72 +662,216 @@ fn fill_sections(code: &str) -> String {
     secs.join(";")
 }
 
-fn zero_by_rounding(code: &str, x: f64) -> f64 {
-    let secs = sections(code);
-    if secs.len() < 2 || x == 0.0 {
-        return x;
+struct Layout {
+    chars: Vec<char>,
+    active: Vec<bool>,
+
+    int: usize,
+
+    dec: usize,
+
+    scale: Vec<usize>,
+
+    pct: i32,
+
+    exp: Option<usize>,
+    point: Option<usize>,
+}
+
+fn layout(sec: &str) -> Layout {
+    let chars: Vec<char> = sec.chars().collect();
+    let mut active = vec![false; chars.len()];
+    let (mut quoted, mut escaped, mut bracket) = (false, false, false);
+    for (i, &c) in chars.iter().enumerate() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        match c {
+            '"' => quoted = !quoted,
+            '\\' if !quoted => escaped = true,
+            '[' if !quoted => bracket = true,
+            ']' if !quoted && bracket => bracket = false,
+            _ if !quoted && !bracket => active[i] = true,
+            _ => {}
+        }
     }
-    let first = &secs[0];
-    let decimals = first.split_once('.').map_or(0, |(_, d)| {
-        d.chars().take_while(|c| matches!(c, '0' | '#')).count()
-    });
-    let percent = first.matches('%').count() as i32;
-    let scale = 10f64.powi(decimals as i32);
-    let shown = (x.abs() * 100f64.powi(percent) * scale).round();
-    if shown == 0.0 {
-        0.0
-    } else {
-        x
+    let on = |i: usize, set: &[char]| active[i] && set.contains(&chars[i]);
+    let exp = (0..chars.len())
+        .find(|&i| on(i, &['E', 'e']) && matches!(chars.get(i + 1), Some('+' | '-')));
+    let mant_end = exp.unwrap_or(chars.len());
+    let point = (0..mant_end).find(|&i| on(i, &['.']));
+    let int_end = point.unwrap_or(mant_end);
+    let digit = |i: usize| on(i, &['0', '#']);
+    let int = (0..int_end).filter(|&i| digit(i)).count();
+    let dec = (int_end..mant_end).filter(|&i| digit(i)).count();
+    let scale = (0..int_end)
+        .rev()
+        .find(|&i| digit(i))
+        .map_or(Vec::new(), |l| {
+            (l + 1..int_end).take_while(|&i| on(i, &[','])).collect()
+        });
+    let pct = (0..chars.len()).filter(|&i| on(i, &['%'])).count() as i32;
+    Layout {
+        chars,
+        active,
+        int,
+        dec,
+        scale,
+        pct,
+        exp,
+        point,
     }
 }
 
-fn wide_scientific(ctx: &RtContext, code: &str, x: f64) -> Option<Result<String, VbaError>> {
-    if code.contains(';') || code.contains('"') {
-        return None;
-    }
-    let at = code.find(['E', 'e'])?;
-    let sign = code[at + 1..]
-        .chars()
-        .next()
-        .filter(|c| matches!(c, '+' | '-'))?;
-    let mant = &code[..at];
-    let int_digits = mant
-        .split('.')
-        .next()?
-        .chars()
-        .filter(|c| matches!(c, '0' | '#'))
-        .count();
-    if int_digits < 2 || !mant.chars().all(|c| matches!(c, '0' | '#' | '.' | ',')) {
-        return None;
-    }
-    let rest = &code[at + 2..];
-    let zeros = rest.chars().take_while(|&c| c == '0').count();
-    let suffix = &rest[zeros..];
-    let mut e = if x == 0.0 {
-        0
+fn section_index(n: usize, x: f64) -> usize {
+    if x < 0.0 && n >= 2 {
+        1
+    } else if x == 0.0 && n >= 3 {
+        2
     } else {
-        x.abs().log10().floor() as i32 - (int_digits as i32 - 1)
+        0
+    }
+}
+
+fn zero_by_rounding(code: &str, x: f64) -> Option<(String, f64)> {
+    let secs = sections(code);
+    if secs.len() < 2 || x == 0.0 {
+        return None;
+    }
+    let l = layout(&secs[section_index(secs.len(), x)]);
+
+    if l.exp.is_some() || l.int + l.dec == 0 {
+        return None;
+    }
+    let scaled = x.abs() * 100f64.powi(l.pct) / 1000f64.powi(l.scale.len() as i32);
+    if (scaled * 10f64.powi(l.dec as i32)).round() != 0.0 {
+        return None;
+    }
+
+    let p = x.abs().log10().floor() as i32;
+    let shown = if shift(x.abs(), -p) >= 5.0 {
+        shift(1.0, p.min(-(l.dec as i32)).min(0))
+    } else {
+        0.0
     };
-    let zeroed = mant.replace('#', "0");
-    let nf = NumberFormat::parse(if x == 0.0 { &zeroed } else { mant }).ok()?;
-    let locale = engine_locale(ctx);
-    let shown = |e: i32| nf.format_vba(x / 10f64.powi(e), &locale).map(|r| r.text);
-    let mut text = shown(e).ok()?;
-    let digits = |t: &str| t.chars().filter(char::is_ascii_digit).count();
-    if x != 0.0 && digits(&text) > int_digits + mant.split('.').nth(1).map_or(0, str::len) {
-        e += 1;
-        text = shown(e).ok()?;
+    let zero = if secs.len() >= 3 { 2 } else { 0 };
+    Some((secs[zero].clone(), shown))
+}
+
+fn shift(m: f64, p: i32) -> f64 {
+    if p.abs() > 300 {
+        m * 10f64.powi(p / 2) * 10f64.powi(p - p / 2)
+    } else if p < 0 {
+        m / 10f64.powi(-p)
+    } else {
+        m * 10f64.powi(p)
+    }
+}
+
+fn sci_section(
+    ctx: &RtContext,
+    sec: &str,
+    x: f64,
+    lower: bool,
+    signed: bool,
+) -> Option<Result<String, VbaError>> {
+    let l = layout(sec);
+    let at = l.exp?;
+    let c = &l.chars;
+    let scaled = x.abs() * 100f64.powi(l.pct) / 1000f64.powi(l.scale.len() as i32);
+    let (n, d) = (l.int as i32, l.dec as i32);
+    let mut e = 0;
+    if scaled != 0.0 && scaled.is_finite() {
+        let mut p = scaled.log10().floor() as i32;
+        if shift(scaled, -p) >= 10.0 {
+            p += 1;
+        } else if shift(scaled, -p) < 1.0 {
+            p -= 1;
+        }
+        e = p - (n - 1);
+        if shift(scaled, d - e).round() >= 10f64.powi(n + d) {
+            e += 1;
+        }
+    }
+    let m = shift(scaled, -e);
+    let mut j = at + 2;
+    let mut zeros = 0;
+    while j < c.len() && l.active[j] && matches!(c[j], '0' | '#') {
+        zeros += usize::from(c[j] == '0');
+        j += 1;
     }
     let sgn = if e < 0 {
         "-"
-    } else if sign == '+' {
+    } else if c[at + 1] == '+' {
         "+"
     } else {
         ""
     };
-    let exp = format!("{:0width$}", e.abs(), width = zeros);
-    let marker = if code.contains('e') { 'e' } else { 'E' };
-    Some(Ok(format!("{text}{marker}{sgn}{exp}{suffix}")))
+    let mark = if lower { 'e' } else { 'E' };
+    let exp_text = format!("{mark}{sgn}{:0w$}", e.abs(), w = zeros.max(1));
+    let mut out = String::new();
+    let mut seen_zero = false;
+    let mut quirk = e == 2 && l.pct == 0;
+    let mut i = 0;
+    while i < c.len() {
+        let ch = c[i];
+        if i == at {
+            out.push('"');
+            out.push_str(&exp_text);
+            out.push('"');
+            i = j;
+            continue;
+        }
+        let frac = l.point.is_some_and(|p| i > p) && i < at;
+        if l.active[i] {
+            match ch {
+                ',' if frac || l.scale.contains(&i) => {}
+                '%' => out.push_str("\"%\""),
+                '#' if !frac && i < at && x == 0.0 => out.push('0'),
+                '#' if frac && seen_zero && quirk => {
+                    out.push('0');
+                    quirk = false;
+                }
+                _ => {
+                    seen_zero |= frac && ch == '0';
+                    out.push(ch);
+                }
+            }
+        } else {
+            out.push(ch);
+        }
+        i += 1;
+    }
+    let Ok(nf) = NumberFormat::parse(&out) else {
+        return Some(Err(VbaError::new(5)));
+    };
+    let v = if signed { -m } else { m };
+    Some(
+        nf.format_vba(v, &engine_locale(ctx))
+            .map(|r| r.text)
+            .map_err(|_| VbaError::new(5)),
+    )
+}
+
+fn percent_text(ctx: &RtContext, s: &str) -> Option<f64> {
+    let head = s.trim_end().strip_suffix('%')?.trim_end();
+    if head.ends_with('%') {
+        return None;
+    }
+    double(ctx, &Variant::Bstr(head.to_string()))
+        .ok()
+        .map(|x| x / 100.0)
+}
+
+fn lower_mark(code: &str, idx: usize) -> bool {
+    let secs = sections(code);
+    let sec = match secs.get(idx) {
+        Some(s) if !s.is_empty() => s,
+        _ => &secs[0],
+    };
+    let l = layout(sec);
+    l.exp.is_some_and(|i| l.chars[i] == 'e')
 }
 
 fn drop_decimal_commas(code: &str) -> String {
@@ -715,32 +892,6 @@ fn drop_decimal_commas(code: &str) -> String {
     out
 }
 
-fn sci_fraction_zeros(code: &str, x: f64) -> String {
-    let (Some(point), Some(e)) = (code.find('.'), code.find(['E', 'e'])) else {
-        return code.to_string();
-    };
-    if !(100.0..1000.0).contains(&x.abs())
-        || code.contains(['"', ';', '\\'])
-        || e < point
-        || !matches!(code[e + 1..].chars().next(), Some('+' | '-'))
-    {
-        return code.to_string();
-    }
-    let mut seen_zero = false;
-    let frac: String = code[point..e]
-        .chars()
-        .map(|c| {
-            seen_zero |= c == '0';
-            if c == '#' && seen_zero {
-                '0'
-            } else {
-                c
-            }
-        })
-        .collect();
-    format!("{}{frac}{}", &code[..point], &code[e..])
-}
-
 fn render(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, VbaError> {
     let dated = has_date_field(code);
     let mut plain = fill_sections(&vba_code(code, dated));
@@ -751,23 +902,33 @@ fn render(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, VbaEr
     if dated && x == 0.0 {
         plain = sections(&plain).swap_remove(0);
     }
-    if !dated {
-        plain = sci_fraction_zeros(&plain, x);
-    }
     if plain.is_empty() && !code.is_empty() {
         return Ok(String::new());
     }
-    let x = if dated {
+    let mut x = if dated {
         whole_time(&plain, x)
+    } else if let Some((sec, shown)) = zero_by_rounding(&plain, x) {
+        plain = sec;
+        shown
     } else {
-        zero_by_rounding(&plain, x)
+        x
     };
     if dated && (x.trunc() > 2_958_465.0 || x.trunc() < -657_434.0) {
         return Err(VbaError::new(6));
     }
     if !dated {
-        if let Some(r) = wide_scientific(ctx, &plain, x) {
+        let secs = sections(&plain);
+        let idx = section_index(secs.len(), x);
+        let signed = idx == 0 && x < 0.0;
+        if let Some(r) = sci_section(ctx, &secs[idx], x, lower_mark(code, idx), signed) {
             return r;
+        }
+
+        if secs.iter().any(|sec| layout(sec).exp.is_some()) {
+            plain = secs[idx].clone();
+            if idx == 1 {
+                x = x.abs();
+            }
         }
     }
     let out = vba_dates(ctx, wk, &plain, x)?;
@@ -786,11 +947,7 @@ fn render(ctx: &RtContext, wk: Week, code: &str, x: f64) -> Result<String, VbaEr
         .format_vba(x, &engine_locale(ctx))
         .map(|r| r.text)
         .map_err(|_| VbaError::new(5))?;
-    Ok(if !dated && code.contains("e+") || code.contains("e-") {
-        text.replacen('E', "e", 1)
-    } else {
-        text
-    })
+    Ok(text)
 }
 
 fn general_date_code(ctx: &RtContext, x: f64) -> String {
@@ -870,7 +1027,8 @@ fn format_impl(ctx: &RtContext, a: &[Variant]) -> R {
 
     let number = match &value {
         Variant::Bstr(s) if !fmt.is_empty() && !text_marks && !s.is_empty() => {
-            let dotted_time = named(ctx, &fmt).is_none()
+            let dotted_time = (named(ctx, &fmt).is_none()
+                || fmt.to_ascii_lowercase().ends_with(" time"))
                 && has_date_field(&fmt)
                 && s.split_once('.').is_some_and(|(h, m)| {
                     !h.is_empty()
@@ -884,7 +1042,8 @@ fn format_impl(ctx: &RtContext, a: &[Variant]) -> R {
                 Ok(x) => Some(x),
                 Err(_) if s.eq_ignore_ascii_case("true") => Some(-1.0),
                 Err(_) if s.eq_ignore_ascii_case("false") => Some(0.0),
-                Err(_) => dates::parse_date(ctx, s),
+
+                Err(_) => percent_text(ctx, s).or_else(|| dates::parse_date(ctx, s)),
             }
         }
 

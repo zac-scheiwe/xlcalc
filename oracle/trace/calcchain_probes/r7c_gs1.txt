@@ -1,0 +1,14 @@
+addsheet S2 Sheet1
+addsheet S3 S2
+iter 1 3 1
+const A3 3
+setx Sheet1!J1 =UV("a",A1)
+setx Sheet1!J2 =UL("b",J1+1)
+setx S2!F1 =UL("c",Sheet1!J2)
+setx Sheet1!J3 =UL("d",A3)
+setx S2!C3 =S3!C3+1
+setx S3!C3 =S2!C3/2
+calc
+calc
+shcalc S3
+calc

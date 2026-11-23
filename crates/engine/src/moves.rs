@@ -468,7 +468,19 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Cut, |wb| {
             notice::note_cut(wb, src_sheet, src, dst);
-            wb.move_range_run(src_sheet, src, dst)
+            wb.move_range_run(src_sheet, src, dst, true)
+        })
+    }
+
+    pub(crate) fn move_range_for_resize(
+        &mut self,
+        sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+    ) -> Result<RecalcReport, EditError> {
+        self.command(Command::Cut, |wb| {
+            notice::note_cut(wb, sheet, src, dst);
+            wb.move_range_run(sheet, src, dst, false)
         })
     }
 
@@ -477,13 +489,16 @@ impl Workbook {
         src_sheet: SheetId,
         src: Rect,
         dst: CellAddr,
+        notify: bool,
     ) -> Result<RecalcReport, EditError> {
         let r = self.move_range_body(src_sheet, src, dst);
         if r.is_ok() {
             self.cfv_cut(src_sheet, src, dst);
             self.drawing_cut(src_sheet, src, dst);
-            self.notify_list_select(dst.sheet, dst.row, dst.col);
-            self.view_clipboard_op(dst.sheet, dst.row, dst.col);
+            if notify {
+                self.notify_list_select(dst.sheet, dst.row, dst.col);
+                self.view_clipboard_op(dst.sheet, dst.row, dst.col);
+            }
             self.view_touch_row_pub(src_sheet, src.r1);
             self.view_touch_row_pub(dst.sheet, dst.row.saturating_add(src.rows() - 1));
         }
@@ -758,6 +773,15 @@ impl Workbook {
             }
         }
 
+        let moving: Vec<String> = self
+            .tables
+            .iter()
+            .filter(|t| t.sheet == src_sheet && inside(&t.rect, &src))
+            .map(|t| t.name.clone())
+            .collect();
+        for name in &moving {
+            self.table_filter_show_all(src_sheet, name);
+        }
         let mut headers: Vec<CellAddr> = Vec::new();
         for t in self.tables.iter_mut() {
             if t.sheet == src_sheet && inside(&t.rect, &src) {
@@ -817,6 +841,8 @@ impl Workbook {
                 .chain(spills)
                 .collect(),
             moved: always,
+
+            whole: self.settings.mode == crate::workbook::CalcMode::Manual && self.calc.cmd_manual,
             dest: (dst.sheet != src_sheet).then_some(dst.sheet),
             ..crate::structure::DirtyScope::new(src_sheet, snapshot)
         });
@@ -1299,7 +1325,15 @@ impl Workbook {
                 keep_chain: true,
                 ..crate::structure::DirtyScope::new(sheet, snapshot)
             });
+
+            let quiet = self.settings.mode != crate::workbook::CalcMode::Automatic;
+            self.calc.skip_volatile |= quiet;
+            self.calc.skip_host_volatile |= quiet;
             let mut report = self.relink_and_recalc();
+            if quiet {
+                self.calc.skip_volatile = false;
+                self.calc.skip_host_volatile = false;
+            }
 
             if self.settings.mode != crate::workbook::CalcMode::Automatic && !filled.is_empty() {
                 let r = crate::calc::recalc_only(self, &filled);
@@ -1341,6 +1375,37 @@ impl Workbook {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_cut_forces_external_references() {
+        let mut wb = Workbook::new();
+        let p = wb.sheet_at(0).id;
+        let q = wb.add_sheet("Q").unwrap();
+        let r = wb.add_sheet("R").unwrap();
+        for s in [p, q, r] {
+            wb.set_input(CellAddr::new(s, 8, 25), "1").unwrap();
+        }
+        wb.set_input(CellAddr::new(p, 4, 0), "1").unwrap();
+        wb.set_input(CellAddr::new(p, 0, 2), "=Z9").unwrap();
+        wb.set_input(CellAddr::new(p, 1, 2), "=Sheet1!Z9").unwrap();
+        wb.set_input(CellAddr::new(q, 0, 0), "=Z9").unwrap();
+        wb.set_input(CellAddr::new(q, 1, 0), "=Q!Z9").unwrap();
+        wb.set_input(CellAddr::new(r, 0, 0), "=R!Z9").unwrap();
+        wb.set_input(CellAddr::new(r, 1, 0), "=SUM(Sheet1:Q!Z9)")
+            .unwrap();
+
+        let n = wb
+            .move_range(p, Rect::new(4, 0, 4, 0), CellAddr::new(p, 4, 4))
+            .unwrap()
+            .evaluations;
+        assert_eq!(n, 1);
+
+        let n = wb
+            .move_range(p, Rect::new(4, 4, 4, 4), CellAddr::new(q, 6, 4))
+            .unwrap()
+            .evaluations;
+        assert_eq!(n, 3);
+    }
 
     fn col(a: u32, b: u32) -> Rect {
         Rect::new(a, 23, b, 23)

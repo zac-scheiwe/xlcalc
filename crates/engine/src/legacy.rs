@@ -1,5 +1,6 @@
 use crate::address::CellAddr;
 use crate::calc::RecalcReport;
+use crate::eval::ptgclass;
 use crate::functions;
 use crate::input::{self, Entered};
 use crate::parser::ast::{BinOp, Expr, RefKind, SheetSpec, UnaryOp};
@@ -140,12 +141,7 @@ thread_local! {
     static LEGACY_ENTRY: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
     static MULTI_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
 
-    static RANGE_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
-    static COMPUTED_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
-
-    static SCALAR_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
-
-    static ONE_CELL_NAMES: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+    static NAME_DEFS: std::cell::RefCell<Vec<(String, u8, bool)>> = const { std::cell::RefCell::new(Vec::new()) };
 
     static KNOWN_NAMES: std::cell::RefCell<Option<Vec<String>>> = const { std::cell::RefCell::new(None) };
 
@@ -269,7 +265,7 @@ fn is_single_cell(e: &Expr) -> bool {
     match e.unwrap_ws() {
         Expr::StructRef { spec, .. } => matches!(struct_kind(spec), StructKind::Single),
 
-        x @ Expr::Name { .. } => is_scalar_name(x),
+        x @ Expr::Name { .. } => defined_name(x).is_some_and(|(i, _)| i & 3 == 0),
         x => {
             matches!(
                 x,
@@ -289,9 +285,20 @@ fn is_undefined_name(e: &Expr) -> bool {
 fn is_multi_ref(e: &Expr) -> bool {
     match e {
         Expr::StructRef { spec, .. } => !matches!(struct_kind(spec), StructKind::Single),
-        Expr::Name { name, .. } => {
+        Expr::Name { name, sheet } => {
+            if let Some((info, _)) = defined_name(e) {
+                return info & 3 != 0;
+            }
             let up = name.to_uppercase();
-            MULTI_NAMES.with(|m| m.borrow().contains(&up))
+
+            let book = match sheet {
+                Some(SheetSpec::Single(b)) => Some(format!("{}!{up}", b.to_uppercase())),
+                _ => None,
+            };
+            MULTI_NAMES.with(|m| {
+                let m = m.borrow();
+                m.contains(&up) || book.is_some_and(|k| m.contains(&k))
+            })
         }
 
         Expr::Ref { kind, .. } => !matches!(kind, RefKind::Cell { .. }) || is_span3d(e),
@@ -324,49 +331,6 @@ fn is_native_array_call(e: &Expr) -> bool {
     }
 }
 
-fn takes_ref(e: &Expr) -> bool {
-    match e {
-        Expr::Func { name, args } => {
-            let up = name.to_uppercase();
-            let bare = up.strip_prefix("_XLFN.").unwrap_or(&up);
-            matches!(bare, "TAKE" | "DROP")
-                && args.first().is_some_and(|a| match a.unwrap_ws() {
-                    Expr::Func { name, .. } => ref_call(name),
-                    x => is_multi_ref(x) && !is_computed_name(x),
-                })
-        }
-        _ => false,
-    }
-}
-
-fn is_host_call(e: &Expr) -> bool {
-    matches!(e.unwrap_ws(), Expr::Func { name, .. }
-        if crate::functions::lookup(&name.to_uppercase()).is_none())
-}
-
-fn ref_call(name: &str) -> bool {
-    name.eq_ignore_ascii_case("OFFSET") || name.eq_ignore_ascii_case("INDIRECT")
-}
-
-fn index_of_ref(e: &Expr) -> bool {
-    crate::deep(|| match e.unwrap_ws() {
-        Expr::Func { name, args } if name.eq_ignore_ascii_case("INDEX") => {
-            args.first().is_some_and(|a| match a.unwrap_ws() {
-                Expr::Ref { .. } | Expr::Spill(_) => true,
-                Expr::Binary {
-                    op: BinOp::Range, ..
-                } => true,
-                n @ Expr::Name { .. } => {
-                    !is_computed_name(n) && (is_multi_ref(n) || is_scalar_name(n))
-                }
-                Expr::Func { name, .. } if ref_call(name) => true,
-                f => index_of_ref(f),
-            })
-        }
-        _ => false,
-    })
-}
-
 fn walk_ws(before: String, after: String, expr: Expr, ctx: Ctx) -> Expr {
     let typed = matches!(
         expr,
@@ -390,6 +354,163 @@ fn walk_ws(before: String, after: String, expr: Expr, ctx: Ctx) -> Expr {
             expr: Box::new(walked),
         },
     }
+}
+
+fn modelled(bare: &str) -> Option<&'static crate::legacy_ftab::Ftab> {
+    if matches!(bare, "LET" | "LAMBDA") {
+        return None;
+    }
+    if !crate::legacy_classes::is_known(bare) {
+        return None;
+    }
+    crate::legacy_single::ftab(bare)
+}
+
+fn one_dimensional(e: &Expr) -> bool {
+    match e.unwrap_ws() {
+        n @ Expr::Name { .. } => defined_name(n).is_some_and(|(_, d)| d),
+        x => area_1d(x),
+    }
+}
+
+fn lifted_operand(e: &Expr) -> bool {
+    match e.unwrap_ws() {
+        Expr::Array(rows) => rows.len() > 1 || rows.first().is_some_and(|r| r.len() > 1),
+        f @ Expr::Func { name, .. } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+            is_native_array_call(f)
+                && modelled(bare).is_some_and(|ft| ft.flags & 0x40 != 0 && ft.flags & 0x8 == 0)
+                && info_of(f, true) & 1 != 0
+                && can_return_multi(f)
+        }
+        _ => false,
+    }
+}
+
+fn can_return_multi(e: &Expr) -> bool {
+    match e.unwrap_ws() {
+        Expr::Paren(x) => can_return_multi(x),
+        Expr::Func { name, .. } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+            modelled(bare).is_none_or(crate::legacy_single::can_return_multi)
+        }
+        Expr::Unary { .. } | Expr::Percent(_) | Expr::Number(_) => false,
+        Expr::Binary { op, .. } => matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union),
+        _ => true,
+    }
+}
+
+fn value_info(e: &Expr) -> u8 {
+    let i = info_of(e, true);
+    if i & 3 != 0 && can_return_multi(e) {
+        0
+    } else {
+        i
+    }
+}
+
+fn operand_info(e: &Expr, vctx: bool) -> u8 {
+    if vctx {
+        value_info(e)
+    } else {
+        info_of(e, false)
+    }
+}
+
+fn call_info(name: &str, ft: &crate::legacy_ftab::Ftab, args: &[Expr], vctx: bool) -> u8 {
+    let argc = args.len();
+
+    let own = ft.flags & 0x48 != 0 && !PASS_THROUGH.contains(&name);
+    let a: Vec<u8> = args
+        .iter()
+        .enumerate()
+        .map(|(i, x)| {
+            let class = crate::legacy_classes::class_of_n(name, i, argc);
+            let g = crate::legacy_classes::grbit_at(name, i).unwrap_or(0);
+
+            let value = if lifted_operand(x) || is_native_array_call(x.unwrap_ws()) {
+                g & 0x40 == 0
+            } else {
+                class == Some(b'V')
+            } && (vctx || own);
+            if value {
+                value_info(x)
+            } else {
+                info_of(x, false)
+            }
+        })
+        .collect();
+    let one_d = argc > 2 && one_dimensional(&args[1]) && one_dimensional(&args[2]);
+    crate::legacy_single::call_flags(ft, &a, one_d)
+}
+
+fn info_of(e: &Expr, vctx: bool) -> u8 {
+    use crate::legacy_single as ls;
+    crate::deep(|| match e.unwrap_ws() {
+        Expr::Paren(x) => info_of(x, vctx),
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            ..
+        } => 0,
+        Expr::Number(n) => ls::int_flags(*n),
+        Expr::Array(_) => 1,
+        Expr::Unary { expr, .. } | Expr::Percent(expr) => {
+            ls::operator_flags(&[operand_info(expr, vctx)])
+        }
+        Expr::Binary { op, left, right } => match op {
+            BinOp::Range | BinOp::Union => {
+                ls::range_flags(info_of(left, false), info_of(right, false), false)
+            }
+            BinOp::Intersect => ls::range_flags(info_of(left, false), info_of(right, false), true),
+            _ => ls::operator_flags(&[operand_info(left, vctx), operand_info(right, vctx)]),
+        },
+        Expr::Spill(x) => ls::call_flags(
+            ls::ftab("ANCHORARRAY").unwrap(),
+            &[info_of(x, false)],
+            false,
+        ),
+        x @ Expr::Func { name, args } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+            match modelled(bare) {
+                Some(ft) => call_info(bare, ft, args, vctx),
+                None if !matches!(bare, "LET" | "LAMBDA")
+                    && functions::lookup(bare).is_none()
+                    && undefined_name(bare) =>
+                {
+                    3
+                }
+                None => {
+                    if array_capable(x) {
+                        3
+                    } else {
+                        0
+                    }
+                }
+            }
+        }
+        Expr::Call { .. } => 3,
+        x @ Expr::Name { .. } => {
+            if let Some((info, _)) = defined_name(x) {
+                info
+            } else if is_multi_ref(x) {
+                2
+            } else if is_undefined_name(x) {
+                3
+            } else {
+                0
+            }
+        }
+        x @ Expr::Ref { kind, .. } => match kind {
+            RefKind::Cell { .. } if is_span3d(x) => 3,
+            RefKind::Cell { .. } => 0,
+            _ => 2,
+        },
+        x if is_multi_ref(x) => 2,
+        _ => 0,
+    })
 }
 
 fn at(e: Expr) -> Expr {
@@ -418,11 +539,13 @@ fn array_capable(e: &Expr) -> bool {
 }
 
 fn returns_array(name: &str, args: &[Expr]) -> bool {
+    if let Some(ft) = modelled(name) {
+        return call_info(name, ft, args, true) & 3 != 0
+            && crate::legacy_single::can_return_multi(ft);
+    }
     if name == "LET" && args.len() % 2 == 1 {
         return args.last().is_some_and(|r| match r.unwrap_ws() {
-            Expr::Name { name, .. } => {
-                MULTI_NAMES.with(|m| m.borrow().contains(&name.to_uppercase()))
-            }
+            n @ Expr::Name { .. } => is_multi_ref(n),
             Expr::Call { .. } => true,
             Expr::Func { name, .. } if functions::lookup(name).is_none() => true,
             x => array_capable(x),
@@ -435,155 +558,7 @@ fn returns_array(name: &str, args: &[Expr]) -> bool {
     if functions::lookup(name).is_none() && undefined_name(name) {
         return true;
     }
-
-    let zero_or_missing = |e: &Expr| {
-        matches!(
-            e.unwrap_ws(),
-            Expr::Missing | Expr::Number(0.0) | Expr::Name { .. }
-        )
-    };
-
-    fn arrayish(e: &Expr) -> bool {
-        crate::deep(|| match e.unwrap_ws() {
-            Expr::Binary { left, right, .. } => arrayish(left) || arrayish(right),
-
-            Expr::Unary {
-                op: UnaryOp::Implicit,
-                ..
-            } => false,
-            Expr::Unary { expr, .. } => arrayish(expr),
-            x => is_multi_ref(x) || array_capable(x),
-        })
-    }
-    let multi = arrayish;
-    fn has_arr(e: &Expr) -> bool {
-        match e.unwrap_ws() {
-            Expr::Func { args, .. } => args.iter().any(has_arr) || array_capable(e),
-            x => array_capable(x) && !is_multi_ref(x),
-        }
-    }
-    match name {
-        "INDEX" if args.first().is_some_and(is_computed_name) => {
-            let nonzero = args
-                .iter()
-                .skip(1)
-                .filter(|a| matches!(a.unwrap_ws(), Expr::Number(n) if *n != 0.0))
-                .count();
-            let zero = args
-                .get(1)
-                .is_some_and(|a| matches!(a.unwrap_ws(), Expr::Number(n) if *n == 0.0));
-            !(nonzero >= 2 || (zero && is_range_name(&args[0])))
-        }
-
-        "INDEX" if args.first().is_some_and(|a| is_span3d(a.unwrap_ws())) => true,
-
-        "INDEX"
-            if args.first().is_some_and(|a| {
-                is_scalar_name(a)
-                    || matches!(
-                        a.unwrap_ws(),
-                        Expr::Ref {
-                            kind: RefKind::Cell { .. },
-                            ..
-                        }
-                    ) && !is_span3d(a.unwrap_ws())
-            }) && !args[1..].iter().any(has_arr) =>
-        {
-            false
-        }
-
-        "INDEX"
-            if args.first().is_some_and(is_host_call)
-                && args.len() > 1
-                && args[1..]
-                    .iter()
-                    .all(|a| matches!(a.unwrap_ws(), Expr::Number(n) if *n != 0.0)) =>
-        {
-            false
-        }
-        "INDEX" => {
-            let first = args.first().map(|a| a.unwrap_ws());
-            let computed = first.is_some_and(|a| match a {
-                Expr::Func { name, .. } if ref_call(name) || index_of_ref(a) => false,
-                Expr::Func { name, args } => {
-                    array_capable(a)
-                        || (matches!(
-                            name.to_uppercase().as_str(),
-                            "ABS" | "INT" | "ROUND" | "SQRT" | "SIGN"
-                        ) && args
-                            .iter()
-                            .any(|x| is_multi_ref(x.unwrap_ws()) || arrayish(x)))
-                }
-                Expr::Binary { op, .. }
-                    if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) =>
-                {
-                    arrayish(a)
-                }
-                Expr::Unary { op, .. } if *op != UnaryOp::Implicit => arrayish(a),
-                Expr::Call { .. } => true,
-                _ => false,
-            });
-
-            let is_match = |e: &Expr| {
-                matches!(e.unwrap_ws(), Expr::Func { name, .. }
-                    if name.eq_ignore_ascii_case("MATCH"))
-            };
-            let literal = |e: &Expr| match e.unwrap_ws() {
-                Expr::Number(n) => *n != 0.0,
-                _ => is_match(e),
-            };
-            let ranged = first.is_some_and(|f| {
-                is_multi_ref(f)
-                    || matches!(f, Expr::Func { name, .. } if (ref_call(name) || index_of_ref(f)) && array_capable(f))
-            }) && !args[1..].iter().all(literal);
-            computed
-                || ranged
-                || args
-                    .iter()
-                    .skip(1)
-                    .any(|a| zero_or_missing(a) || (!is_match(a) && has_arr(a)))
-        }
-        "OFFSET" => {
-            let one = |a: &Expr| matches!(a.unwrap_ws(), Expr::Number(n) if *n == 1.0);
-
-            let sized = args.len() == 5 && args[3..].iter().all(one);
-            args.iter().skip(1).take(2).any(has_arr)
-                || args.first().is_some_and(is_host_call)
-                || args.iter().skip(3).take(2).any(|a| !one(a))
-                || args
-                    .first()
-                    .is_some_and(|a| is_computed_name(a) || (is_multi_ref(a.unwrap_ws()) && !sized))
-        }
-        "IFERROR" | "IFNA" => args.get(1).is_some_and(array_capable),
-        "ROW" | "COLUMN" | "ISFORMULA" | "FORMULATEXT" => args.first().is_some_and(multi),
-
-        "XLOOKUP" => {
-            let ret = |a: &Expr| match a.unwrap_ws() {
-                n @ Expr::Name { .. } => is_computed_name(n) && !is_one_cell_name(n),
-                Expr::Ref {
-                    kind: RefKind::Area { r0, c0, r1, c1 },
-                    ..
-                } => r0.index != r1.index && c0.index != c1.index,
-                Expr::Ref {
-                    kind: RefKind::Cols { c0, c1 },
-                    ..
-                } => c0.index != c1.index,
-                Expr::Ref {
-                    kind: RefKind::Rows { r0, r1 },
-                    ..
-                } => r0.index != r1.index,
-                Expr::Ref { .. } | Expr::Spill(_) => false,
-                Expr::Binary {
-                    op: BinOp::Range, ..
-                } => false,
-                x => multi(x),
-            };
-            args.get(3).is_some_and(array_capable)
-                || (args.get(2).is_some_and(multi) && !args.get(1).is_some_and(multi))
-                || args.get(2).is_some_and(ret)
-        }
-        _ => ARRAY_RESULT.contains(&name),
-    }
+    ARRAY_RESULT.contains(&name)
 }
 
 fn walk_root(e: Expr) -> Expr {
@@ -602,8 +577,94 @@ fn walk_root(e: Expr) -> Expr {
     walk(e, Ctx::Value)
 }
 
+thread_local! {
+
+    static CW_ANC: std::cell::RefCell<Vec<ptgclass::Anc>> = const { std::cell::RefCell::new(Vec::new()) };
+    static CW_SLOT: std::cell::Cell<Option<u32>> = const { std::cell::Cell::new(None) };
+    static CW_CLS: std::cell::Cell<ptgclass::Class> = const { std::cell::Cell::new(ptgclass::Class::Val) };
+}
+
+struct CwRestore(Option<Vec<ptgclass::Anc>>);
+
+impl Drop for CwRestore {
+    fn drop(&mut self) {
+        if let Some(a) = self.0.take() {
+            CW_ANC.with(|c| *c.borrow_mut() = a);
+        }
+    }
+}
+
+fn slot_arg(name: &str, i: usize) {
+    slot(ptgclass::arg_mask(ptgclass::ftab_of_name(name), i));
+}
+
+fn slot(mask: u32) {
+    CW_SLOT.with(|s| s.set(Some(mask)));
+}
+
+fn cw_kind(e: &Expr) -> ptgclass::Kind {
+    use ptgclass::Kind;
+    match e {
+        Expr::Func { name, .. } => {
+            let upper = name.to_uppercase();
+            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
+
+            Kind::Call(ptgclass::ftab_of_name(bare).or_else(ptgclass::ftab_call))
+        }
+        Expr::Unary {
+            op: UnaryOp::Implicit,
+            ..
+        } => Kind::Call(ptgclass::ftab_of_name("SINGLE")),
+        Expr::Spill(_) => Kind::Call(ptgclass::ftab_of_name("ANCHORARRAY")),
+        Expr::Call { .. } => Kind::Call(ptgclass::ftab_call()),
+        Expr::Name { .. } | Expr::Ref { .. } | Expr::StructRef { .. } => {
+            Kind::RefToken { array_const: false }
+        }
+
+        Expr::Binary {
+            op: BinOp::Range | BinOp::Intersect | BinOp::Union,
+            ..
+        } => Kind::RefToken { array_const: false },
+        Expr::Array(_) => Kind::RefToken { array_const: true },
+        _ => Kind::Other,
+    }
+}
+
+fn cw_on() -> bool {
+    !EVAL_FORM.with(|f| f.get())
+}
+
 fn walk(e: Expr, ctx: Ctx) -> Expr {
-    crate::deep(|| walk_inner(e, ctx))
+    let mask = CW_SLOT
+        .with(|s| s.take())
+        .unwrap_or(ptgclass::MASK_OPERATOR);
+    if matches!(e, Expr::Paren(_) | Expr::Ws { .. }) {
+        slot(mask);
+        return crate::deep(|| walk_inner(e, ctx));
+    }
+    let kind = cw_kind(&e);
+    let cls = CW_ANC.with(|a| ptgclass::classify(kind, mask, &a.borrow(), false));
+
+    let cls = if mask == ptgclass::MASK_RANGE && cls == ptgclass::Class::Val {
+        ptgclass::Class::Ref
+    } else {
+        cls
+    };
+    CW_ANC.with(|a| a.borrow_mut().push(ptgclass::Anc::of(kind, mask)));
+    let saved = CW_CLS.with(|c| c.replace(cls));
+    let ctx = if cw_on() {
+        if cls == ptgclass::Class::Val {
+            Ctx::Value
+        } else {
+            Ctx::Ref
+        }
+    } else {
+        ctx
+    };
+    let out = crate::deep(|| walk_inner(e, ctx));
+    CW_CLS.with(|c| c.set(saved));
+    CW_ANC.with(|a| a.borrow_mut().pop());
+    out
 }
 
 fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
@@ -682,6 +743,30 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
                 right: Box::new(walk(*right, Ctx::Value)),
             }
         }
+
+        Expr::Binary {
+            op: op @ (BinOp::Range | BinOp::Intersect | BinOp::Union),
+            left,
+            right,
+        } if index_with_array_index(&left) || index_with_array_index(&right) => {
+            let fix = |x: Box<Expr>| {
+                if index_with_array_index(&x) {
+                    Box::new(walk(*x, Ctx::Ref))
+                } else {
+                    x
+                }
+            };
+            let e = Expr::Binary {
+                op,
+                left: fix(left),
+                right: fix(right),
+            };
+            if ctx == Ctx::Value {
+                at(e)
+            } else {
+                e
+            }
+        }
         e if is_multi_ref(&e) => {
             if ctx == Ctx::Value {
                 at(e)
@@ -718,6 +803,8 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
         } if matches!(expr.unwrap_ws(), Expr::Binary { op, .. }
                 if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union))
             || matches!(expr.unwrap_ws(), Expr::Unary { op, .. } if *op != UnaryOp::Implicit)
+            || matches!(expr.unwrap_ws(), Expr::Paren(x) if matches!(x.unwrap_ws(), Expr::Binary { op, .. }
+                if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union)))
             || matches!(expr.unwrap_ws(), Expr::Percent(_)) =>
         {
             Expr::Unary {
@@ -736,13 +823,26 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
             }
         }
         Expr::Call { callee, args } => {
+            slot(ptgclass::callee_mask());
             let callee = walk(*callee, Ctx::Ref);
-            let args = args.into_iter().map(|a| walk(a, Ctx::Ref)).collect();
+            let args = args
+                .into_iter()
+                .enumerate()
+                .map(|(i, a)| {
+                    slot(ptgclass::arg_mask(ptgclass::ftab_call(), i));
+                    walk(a, Ctx::Ref)
+                })
+                .collect();
             let call = Expr::Call {
                 callee: Box::new(callee),
                 args,
             };
-            if ctx == Ctx::Value && !in_agg() {
+            let wrap = if cw_on() {
+                CW_CLS.with(|c| c.get()) == ptgclass::Class::Val
+            } else {
+                ctx == Ctx::Value && !in_agg()
+            };
+            if wrap {
                 at(call)
             } else {
                 call
@@ -751,50 +851,104 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
         Expr::Func { name, args } => {
             let upper = name.to_uppercase();
             let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper).to_string();
+            let model = modelled(&bare);
 
+            let lookup = matches!(bare.as_str(), "VLOOKUP" | "HLOOKUP");
+            let own_class = model.is_some_and(|ft| ft.flags & 0x48 != 0)
+                && !PASS_THROUGH.contains(&bare.as_str())
+                && !lookup;
+            let saved_agg = IN_AGG.with(|f| f.get());
+            if own_class {
+                IN_AGG.with(|f| f.set(false));
+            }
+
+            let typed: Vec<bool> = args
+                .iter()
+                .map(|a| {
+                    matches!(
+                        a.unwrap_ws(),
+                        Expr::Unary {
+                            op: UnaryOp::Implicit,
+                            ..
+                        }
+                    )
+                })
+                .collect();
+            let args = func_args(&bare, args);
             let mut args = args;
-            let mut outer_arr = false;
-            let mut inner = Vec::new();
-            let measured = crate::legacy_classes::legacy_array_args(&bare)
-                .or_else(|| crate::legacy_classes::legacy_classes(&bare).map(|_| "0000"));
-            if let Some(t) = measured {
-                let t = t.as_bytes();
+            let agg_here = saved_agg && !own_class && !lookup;
+            IN_AGG.with(|f| f.set(saved_agg));
 
-                let col = if ctx == Ctx::Value && (!in_agg() || bare == "CHOOSE") {
-                    0
-                } else {
-                    2
-                };
+            if model.is_some() {
+                let args_len = args.len();
                 for (i, a) in args.iter_mut().enumerate() {
-                    let multi = matches!(a.unwrap_ws(), Expr::Array(rows)
-                        if rows.len() > 1 || rows.first().is_some_and(|r| r.len() > 1))
-                        || (bare == "AGGREGATE"
-                            && i == 3
-                            && matches!(a.unwrap_ws(), Expr::Array(_)));
+                    let g = crate::legacy_classes::grbit_at(&bare, i).unwrap_or(0);
 
                     let refused = functions::lookup(&bare).is_some_and(|id| {
                         functions::def(id).param_class(i) == functions::ParamClass::Reference
-                    });
+                    }) || (bare == "AGGREGATE" && i >= 4);
+                    if refused || typed.get(i).copied().unwrap_or(false) {
+                        continue;
+                    }
 
-                    let refused = refused || (bare == "AGGREGATE" && i >= 4);
+                    if agg_here {
+                        continue;
+                    }
+                    let inner = match &*a {
+                        Expr::Unary {
+                            op: UnaryOp::Implicit,
+                            expr,
+                        } => expr.as_ref(),
+                        x => x,
+                    };
 
-                    let ref_arg = crate::legacy_classes::legacy_classes(&bare).is_some_and(|p| {
-                        p.as_bytes().get(i.min(p.len().saturating_sub(1))) == Some(&b'R')
-                    });
-                    let native = is_native_array_call(a.unwrap_ws())
-                        && !(ref_arg && takes_ref(a.unwrap_ws()));
-                    if (multi || native) && !refused {
-                        let k = (i * 4).min(t.len() - 4) + col;
+                    let lifted = lifted_operand(inner);
+
+                    if !lifted && g & 0x40 != 0 && is_native_array_call(inner.unwrap_ws()) {
+                        if let Expr::Unary {
+                            op: UnaryOp::Implicit,
+                            ..
+                        } = &*a
+                        {
+                            if let Expr::Unary { expr, .. } =
+                                std::mem::replace(a, Expr::Number(0.0))
+                            {
+                                *a = *expr;
+                            }
+                        }
+                        continue;
+                    }
+                    if lifted {
+                        let x = match std::mem::replace(a, Expr::Number(0.0)) {
+                            Expr::Unary { expr, .. } => *expr,
+                            x => x,
+                        };
+
+                        let value = if cw_on() {
+                            let mask = crate::legacy_classes::mask_n(&bare, i, args_len)
+                                .unwrap_or_else(|| {
+                                    ptgclass::arg_mask(ptgclass::ftab_of_name(&bare), i)
+                                });
+                            CW_ANC.with(|anc| {
+                                ptgclass::classify(
+                                    cw_kind(x.unwrap_ws()),
+                                    mask,
+                                    &anc.borrow(),
+                                    false,
+                                )
+                            }) == ptgclass::Class::Val
+                        } else {
+                            g & 0x40 == 0
+                        };
+                        *a = if value { at(x) } else { x };
+                        continue;
+                    }
+                    let one_elem = (bare == "INDEX" && i >= 1) || (bare == "AGGREGATE" && i == 3);
+                    if one_elem && matches!(a, Expr::Array(_)) {
                         let arr = std::mem::replace(a, Expr::Number(0.0));
-                        let arr = if native { walk(arr, Ctx::Ref) } else { arr };
-                        inner.push((i, arr, t[k] == b'1'));
-                        outer_arr |= t[k + 1] == b'1';
+                        *a = at(arr);
                     }
                 }
-            }
-            let mut args = func_args(&bare, args);
-            for (i, arr, at_it) in inner {
-                args[i] = if at_it { at(arr) } else { arr };
             }
 
             let rowcol = matches!(
@@ -803,6 +957,7 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
             );
 
             let hoisted = bare == "LET"
+                && !cw_on()
                 && ctx == Ctx::Value
                 && args.len() % 2 == 1
                 && args.last_mut().is_some_and(|l| hoist_leftmost(l, true));
@@ -817,14 +972,79 @@ fn walk_inner(e: Expr, ctx: Ctx) -> Expr {
                     bare.as_str(),
                     "INDEX" | "OFFSET" | "INDIRECT" | "CELL" | "FILTERXML"
                 );
-            if outer_arr || ((ctx == Ctx::Value || rowcol) && !native && array_capable(&call)) {
-                at(call)
+
+            let mut lifted_call = false;
+            let cw = cw_on();
+            let needs = match model {
+                Some(ft) if cw => {
+                    let Expr::Func { args, .. } = &call else {
+                        unreachable!()
+                    };
+                    let a: Vec<u8> = args.iter().map(|x| info_of(x, false)).collect();
+                    let one_d =
+                        args.len() > 2 && one_dimensional(&args[1]) && one_dimensional(&args[2]);
+                    let info = crate::legacy_single::call_flags(ft, &a, one_d);
+                    info & 3 != 0 && crate::legacy_single::can_return_multi(ft)
+                }
+                Some(ft) => {
+                    let Expr::Func { args, .. } = &call else {
+                        unreachable!()
+                    };
+                    {
+                        let info = call_info(&bare, ft, args, ctx == Ctx::Value && !agg_here);
+
+                        lifted_call =
+                            info & 1 != 0 && ft.flags & 0x7 != 0 && ft.flags & 0x8 == 0 && !native;
+                        info & 3 != 0 && crate::legacy_single::can_return_multi(ft)
+                    }
+                }
+
+                None if cw && bare == "LET" => {
+                    let Expr::Func { args, .. } = &call else {
+                        unreachable!()
+                    };
+                    args.len() % 2 == 1
+                        && args.last().is_some_and(|l| match l.unwrap_ws() {
+                            Expr::Func { name, .. }
+                                if functions::lookup(name).is_none()
+                                    && !matches!(
+                                        name.to_uppercase().as_str(),
+                                        "LET" | "LAMBDA"
+                                    ) =>
+                            {
+                                true
+                            }
+                            l => info_of(l, false) & 3 != 0,
+                        })
+                }
+                None => array_capable(&call),
+            };
+            let is_val = CW_CLS.with(|c| c.get()) == ptgclass::Class::Val;
+            if if cw && (model.is_some() || bare == "LET") {
+                is_val && needs
+            } else {
+                (ctx == Ctx::Value || rowcol || lifted_call) && !native && needs
+            } {
+                match call {
+                    Expr::Func { name, mut args } if lookup && args.len() > 2 => {
+                        let x = std::mem::replace(&mut args[2], Expr::Number(0.0));
+                        args[2] = at(x);
+                        Expr::Func { name, args }
+                    }
+                    call => at(call),
+                }
             } else {
                 call
             }
         }
         e => e,
     }
+}
+
+fn index_with_array_index(e: &Expr) -> bool {
+    matches!(e.unwrap_ws(), Expr::Func { name, args }
+        if name.eq_ignore_ascii_case("INDEX")
+            && args.iter().skip(1).any(|a| matches!(a.unwrap_ws(), Expr::Array(_))))
 }
 
 fn hoist_leftmost(e: &mut Expr, top: bool) -> bool {
@@ -894,6 +1114,9 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
         let mut args = args;
         let body = args.pop().unwrap();
 
+        let outer = CW_ANC.with(|a| std::mem::take(&mut *a.borrow_mut()));
+        let _restore = CwRestore(Some(outer));
+
         fn bare_param(e: &Expr, own: &[String]) -> bool {
             match e.unwrap_ws() {
                 Expr::Paren(x) => bare_param(x, own),
@@ -923,6 +1146,7 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
                 }
             }
             out.push(var);
+            slot_arg("LET", out.len());
             out.push(walk(val, Ctx::Ref));
             MULTI_NAMES.with(|m| m.borrow_mut().extend(added.drain(..)));
         }
@@ -931,21 +1155,22 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
         out.push(if matches!(last.unwrap_ws(), Expr::Name { .. }) {
             last
         } else if in_agg() && matches!(last.unwrap_ws(), Expr::Func { .. } | Expr::Ref { .. }) {
+            slot_arg("LET", 0);
             walk(last, Ctx::Ref)
         } else {
+            slot_arg("LET", 0);
             walk(last, Ctx::Value)
         });
         return out;
     }
 
-    if let Some(classes) =
-        crate::legacy_classes::legacy_classes(name).filter(|_| !EVAL_FORM.with(|f| f.get()))
-    {
+    if crate::legacy_classes::is_known(name) && !EVAL_FORM.with(|f| f.get()) {
+        let argc = args.len();
         return args
             .into_iter()
             .enumerate()
             .map(|(i, a)| {
-                let c = match crate::legacy_classes::class_at(name, classes, i) {
+                let c = match crate::legacy_classes::class_of_n(name, i, argc).unwrap_or(b'R') {
 
                     b'V' if matches!(name, "HLOOKUP" | "VLOOKUP") && i == 2 && in_agg() => Ctx::Ref,
                     b'V' => Ctx::Value,
@@ -960,6 +1185,11 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
                     _ => Ctx::Ref,
                 };
 
+                if let Some(m) = crate::legacy_classes::mask_n(name, i, argc) {
+                    slot(m);
+                } else {
+                    slot_arg(name, i);
+                }
                 if PASS_THROUGH.contains(&name) {
                     walk(a, c)
                 } else {
@@ -969,14 +1199,24 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
             .collect();
     }
     if ARRAY_ARGS.contains(&name) {
-        return args.into_iter().map(|a| walk_agg(a, Ctx::Array)).collect();
+        return args
+            .into_iter()
+            .enumerate()
+            .map(|(i, a)| {
+                slot_arg(name, i);
+                walk_agg(a, Ctx::Array)
+            })
+            .collect();
     }
 
     if matches!(name, "IF" | "CHOOSE") {
         return args
             .into_iter()
             .enumerate()
-            .map(|(i, a)| walk(a, if i == 0 { Ctx::Value } else { Ctx::Ref }))
+            .map(|(i, a)| {
+                slot_arg(name, i);
+                walk(a, if i == 0 { Ctx::Value } else { Ctx::Ref })
+            })
             .collect();
     }
     let params = match legacy_params(name) {
@@ -987,7 +1227,13 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
                     return args;
                 }
 
-                return args.into_iter().map(|a| walk_agg(a, Ctx::Ref)).collect();
+                return args
+                    .into_iter()
+                    .map(|a| {
+                        slot(ptgclass::MASK_REF_ARRAY);
+                        walk_agg(a, Ctx::Ref)
+                    })
+                    .collect();
             };
             let def = functions::def(id);
             if matches!(def.imp, functions::Imp::Lazy(_)) {
@@ -1006,6 +1252,7 @@ fn func_args(name: &str, args: Vec<Expr>) -> Vec<Expr> {
                 b[i.min(b.len() - 1)]
             };
             let c = if letter == b'V' { Ctx::Value } else { Ctx::Ref };
+            slot_arg(name, i);
             if PASS_THROUGH.contains(&name) {
                 walk(a, c)
             } else {
@@ -1114,7 +1361,18 @@ pub(crate) fn legacy_to_dynamic_in(wb: &Workbook, text: &str) -> String {
         return format!("={text}");
     };
     let e = strip_known_prefixes(e);
-    let mut known: Vec<String> = wb.names.iter().map(|n| n.name.to_uppercase()).collect();
+
+    let mut known: Vec<String> = wb
+        .names
+        .iter()
+        .map(|n| n.name.to_uppercase())
+        .filter(|k| {
+            wb.names.macro_type(k, None).is_none()
+                && wb
+                    .sheets()
+                    .all(|s| wb.names.macro_type(k, Some(s.id)).is_none())
+        })
+        .collect();
     bound_names(&e, &mut known);
     KNOWN_NAMES.with(|k| *k.borrow_mut() = Some(known));
     let out = format!("={}", print(&walk_root(e)));
@@ -1178,7 +1436,7 @@ fn legacy_loses_marks(wb: &Workbook, legacy: &str, shown: &str) -> bool {
     };
     MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
     let da = legacy_to_dynamic_in(wb, &mark_quoted_names(body));
-    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    clear_names();
     let marks = |t: &str| t.matches('@').count();
     marks(&da) < marks(shown)
 }
@@ -1189,8 +1447,12 @@ pub(crate) fn legacy_reads_back(wb: &Workbook, legacy: &str, shown: &str) -> boo
     };
     MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
     let da = legacy_to_dynamic_in(wb, body);
-    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    clear_names();
     da == shown
+}
+
+pub(crate) fn legacy_entry_active() -> bool {
+    LEGACY_ENTRY.with(|l| l.get())
 }
 
 pub(crate) fn legacy_entry_is_scalar(wb: &Workbook, shown: &str, host: CellAddr) -> bool {
@@ -1234,7 +1496,7 @@ impl Workbook {
                 let multi = multi_names(self);
                 MULTI_NAMES.with(|m| *m.borrow_mut() = multi);
                 let da = legacy_to_dynamic_in(self, &text);
-                MULTI_NAMES.with(|m| m.borrow_mut().clear());
+                clear_names();
                 LEGACY_ENTRY.with(|l| l.set(true));
                 let r = self.set_input(addr, &da);
                 LEGACY_ENTRY.with(|l| l.set(false));
@@ -1246,6 +1508,10 @@ impl Workbook {
 
     pub fn legacy_formula_text(&self, addr: CellAddr) -> Option<String> {
         let t = self.formula_text(addr)?;
+
+        if self.array_at(addr).is_some() {
+            return Some(t);
+        }
 
         if t.contains("!#REF!") && !t.contains('@') {
             return Some(t);
@@ -1373,7 +1639,7 @@ fn strip_at_keep_cell(e: Expr) -> Expr {
             }
         ) || matches!(expr.unwrap_ws(), Expr::Unary { op: UnaryOp::Neg | UnaryOp::Plus, expr: x }
                 if matches!(x.unwrap_ws(), Expr::Number(_) | Expr::Unary { op: UnaryOp::Implicit, .. }))
-            || matches!(expr.unwrap_ws(), Expr::Paren(x) if !array_capable(x) && !is_multi_ref(x))
+            || matches!(expr.unwrap_ws(), Expr::Paren(_))
             || matches!(expr.unwrap_ws(), Expr::Func { name, args }
                 if !returns_array(name, args)
                     && functions::lookup(&name.to_uppercase()).is_some()
@@ -1389,13 +1655,12 @@ fn strip_at_keep_cell(e: Expr) -> Expr {
         Expr::Func { name, args } => {
             let upper = name.to_uppercase();
             let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
-            let classes = crate::legacy_classes::legacy_classes(bare).map(str::as_bytes);
+            let argc = args.len();
             let args = args
                 .into_iter()
                 .enumerate()
                 .map(|(i, a)| {
-                    let class =
-                        classes.and_then(|b| b.get(i.min(b.len().saturating_sub(1))).copied());
+                    let class = crate::legacy_classes::class_of_n(bare, i, argc);
 
                     let q = class == Some(b'Q') || matches!(class, Some(b'R' | b'A'));
                     match a {
@@ -1638,6 +1903,13 @@ fn may_array(
                     return *a;
                 }
             }
+            if let Some(crate::parser::ast::SheetSpec::Single(b)) = q {
+                if wb.sheet_by_name(b).is_none() {
+                    if let Some(scalar) = wb.ext_name_scalar(b, name) {
+                        return !scalar;
+                    }
+                }
+            }
             let key = name.to_uppercase();
             let def = match q {
                 Some(crate::parser::ast::SheetSpec::Single(s)) => {
@@ -1804,17 +2076,23 @@ fn is_ref_array_name(e: &Expr, wb: &Workbook, sheet: crate::address::SheetId) ->
 fn uses_name(e: &Expr, wb: &Workbook) -> Option<bool> {
     let mut names = Vec::new();
     collect_names(e, &mut names);
-    if names.iter().any(|n| wb.table_by_name(n).is_some()) {
+    if names.iter().any(|(_, n)| wb.table_by_name(n).is_some()) {
         return None;
     }
 
     let mut vars = Vec::new();
     let_vars(e, &mut vars);
-    let defined = |n: &str| {
+    let defined = |q: &Option<SheetSpec>, n: &str| {
         let k = n.to_uppercase();
+
+        if let Some(SheetSpec::Single(b)) = q {
+            if wb.sheet_by_name(b).is_none() && wb.ext_name_scalar(b, n).is_some() {
+                return true;
+            }
+        }
         wb.names.iter().any(|d| d.name.to_uppercase() == k) || vars.contains(&k)
     };
-    if !names.iter().all(|n| defined(n)) {
+    if !names.iter().all(|(q, n)| defined(q, n)) {
         return None;
     }
     Some(!names.is_empty())
@@ -1846,9 +2124,9 @@ fn let_vars(e: &Expr, out: &mut Vec<String>) {
     })
 }
 
-fn collect_names<'a>(e: &'a Expr, out: &mut Vec<&'a str>) {
+fn collect_names<'a>(e: &'a Expr, out: &mut Vec<(&'a Option<SheetSpec>, &'a str)>) {
     crate::deep(|| match e {
-        Expr::Name { name, .. } => out.push(name),
+        Expr::Name { name, sheet } => out.push((sheet, name)),
         Expr::Ws { expr, .. }
         | Expr::Paren(expr)
         | Expr::Percent(expr)
@@ -1868,142 +2146,115 @@ fn collect_names<'a>(e: &'a Expr, out: &mut Vec<&'a str>) {
     })
 }
 
-fn is_range_name(e: &Expr) -> bool {
-    match e.unwrap_ws() {
-        Expr::Name { name, .. } => RANGE_NAMES.with(|c| c.borrow().contains(&name.to_uppercase())),
-        _ => false,
+fn first_ptg(e: &Expr) -> &Expr {
+    match e {
+        Expr::Ws { expr, .. }
+        | Expr::Paren(expr)
+        | Expr::Percent(expr)
+        | Expr::Spill(expr)
+        | Expr::Unary { expr, .. }
+        | Expr::Field { expr, .. } => first_ptg(expr),
+
+        Expr::Binary {
+            op: BinOp::Range | BinOp::Intersect | BinOp::Union,
+            ..
+        } => e,
+        Expr::Binary { left, .. } => first_ptg(left),
+        Expr::Func { args, .. } => args.first().map_or(e, first_ptg),
+        Expr::Call { callee, .. } => first_ptg(callee),
+        e => e,
     }
 }
 
-fn is_computed_name(e: &Expr) -> bool {
-    match e.unwrap_ws() {
-        Expr::Name { name, .. } => {
-            COMPUTED_NAMES.with(|c| c.borrow().contains(&name.to_uppercase()))
+fn name_def_info(def: &Expr) -> u8 {
+    match def.unwrap_ws() {
+        Expr::Number(n) => crate::legacy_single::int_flags(*n),
+        Expr::Text(_) | Expr::Bool(_) | Expr::Error(_) | Expr::DeadRef(_) => 0,
+        x @ Expr::Ref { kind, .. } => match kind {
+            RefKind::Cell { .. } if is_span3d(x) => 3,
+            RefKind::Cell { .. } => 0,
+            _ => 2,
+        },
+        Expr::Array(_) => 1,
+        _ => 3,
+    }
+}
+
+fn name_def_1d(def: &Expr) -> bool {
+    area_1d(first_ptg(def))
+}
+
+fn area_1d(e: &Expr) -> bool {
+    let same = |a: &crate::parser::ast::Coord, b: &crate::parser::ast::Coord| a.abs == b.abs;
+    match e {
+        Expr::Ref {
+            kind: RefKind::Area { r0, c0, r1, c1 },
+            ..
+        } => {
+            same(r0, r1)
+                && same(c0, c1)
+                && ((c0.index == c1.index && r0.index != r1.index)
+                    || (r0.index == r1.index && c0.index != c1.index))
         }
+        Expr::Ref {
+            kind: RefKind::Cols { c0, c1 },
+            ..
+        } => same(c0, c1) && c0.index == c1.index,
+        Expr::Ref {
+            kind: RefKind::Rows { r0, r1 },
+            ..
+        } => same(r0, r1) && r0.index == r1.index,
         _ => false,
     }
 }
 
-fn computed_name(e: &Expr) -> bool {
-    matches!(
-        e.unwrap_ws(),
-        Expr::Paren(_)
-            | Expr::Array(_)
-            | Expr::Func { .. }
-            | Expr::Unary { .. }
-            | Expr::Percent(_)
-            | Expr::Binary { .. }
-    )
+fn clear_names() {
+    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    NAME_DEFS.with(|c| c.borrow_mut().clear());
 }
 
-fn scalar_name_def(e: &Expr) -> bool {
-    matches!(
-        e.unwrap_ws(),
-        Expr::Number(_)
-            | Expr::Text(_)
-            | Expr::Bool(_)
-            | Expr::Error(_)
-            | Expr::Ref {
-                kind: RefKind::Cell { .. },
-                ..
-            }
-    )
-}
-
-fn one_cell_index(e: &Expr) -> bool {
-    let first_nonzero = |a: &Expr| match a.unwrap_ws() {
-        Expr::Number(n) => *n != 0.0,
-        Expr::Array(rows) => rows
-            .first()
-            .and_then(|r| r.first())
-            .is_some_and(|x| matches!(x, crate::parser::ast::ArrayItem::Number(n) if *n != 0.0)),
-        _ => false,
-    };
+fn defined_name(e: &Expr) -> Option<(u8, bool)> {
     match e.unwrap_ws() {
-        Expr::Func { name, args } if name.eq_ignore_ascii_case("INDEX") && args.len() >= 2 => {
-            matches!(
-                args[0].unwrap_ws(),
-                Expr::Ref { .. }
-                    | Expr::Binary {
-                        op: BinOp::Range,
-                        ..
-                    }
-            ) && args[1..].iter().all(first_nonzero)
+        Expr::Name { name, sheet: None } => {
+            let up = name.to_uppercase();
+            NAME_DEFS.with(|c| {
+                c.borrow()
+                    .iter()
+                    .find(|(n, ..)| *n == up)
+                    .map(|(_, i, d)| (*i, *d))
+            })
         }
-        _ => false,
-    }
-}
-
-fn is_one_cell_name(e: &Expr) -> bool {
-    match e.unwrap_ws() {
-        Expr::Name { name, .. } => {
-            ONE_CELL_NAMES.with(|c| c.borrow().contains(&name.to_uppercase()))
-        }
-        _ => false,
-    }
-}
-
-fn is_scalar_name(e: &Expr) -> bool {
-    match e.unwrap_ws() {
-        Expr::Name { name, .. } => SCALAR_NAMES.with(|c| c.borrow().contains(&name.to_uppercase())),
-        _ => false,
+        _ => None,
     }
 }
 
 fn multi_names(wb: &Workbook) -> Vec<String> {
-    RANGE_NAMES.with(|c| {
-        *c.borrow_mut() = wb
-            .names
-            .iter()
-            .filter(|n| {
-                parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| {
-                    matches!(
-                        e.unwrap_ws(),
-                        Expr::Binary {
-                            op: BinOp::Range,
-                            ..
-                        }
-                    )
-                })
-            })
-            .map(|n| n.name.to_uppercase())
-            .collect()
+    NAME_DEFS.with(|c| {
+        let mut defs: Vec<(String, u8, bool)> = Vec::new();
+        for n in wb.names.iter() {
+            let Ok(def) = parse(n.refers_to.trim_start_matches('=')) else {
+                continue;
+            };
+            let (key, info, d1) = (
+                n.name.to_uppercase(),
+                name_def_info(&def),
+                name_def_1d(&def),
+            );
+            match defs.iter_mut().find(|(k, ..)| *k == key) {
+                Some((_, i, d)) => {
+                    *i |= info;
+                    *d |= d1;
+                }
+                None => defs.push((key, info, d1)),
+            }
+        }
+        *c.borrow_mut() = defs;
     });
-    COMPUTED_NAMES.with(|c| {
-        *c.borrow_mut() = wb
-            .names
-            .iter()
-            .filter(|n| parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| computed_name(&e)))
-            .map(|n| n.name.to_uppercase())
-            .collect()
-    });
-    SCALAR_NAMES.with(|c| {
-        *c.borrow_mut() = wb
-            .names
-            .iter()
-            .filter(|n| {
-                parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| scalar_name_def(&e))
-            })
-            .map(|n| n.name.to_uppercase())
-            .collect()
-    });
-    ONE_CELL_NAMES.with(|c| {
-        *c.borrow_mut() = wb
-            .names
-            .iter()
-            .filter(|n| {
-                parse(n.refers_to.trim_start_matches('=')).is_ok_and(|e| one_cell_index(&e))
-            })
-            .map(|n| n.name.to_uppercase())
-            .collect()
-    });
-    wb.names
+
+    wb.tables()
         .iter()
-        .filter(|n| {
-            parse(n.refers_to.trim_start_matches('='))
-                .is_ok_and(|e| is_multi_ref(&e) || array_capable(&e) || computed_name(&e))
-        })
-        .map(|n| n.name.to_uppercase())
+        .map(|t| t.name.to_uppercase())
+        .chain(wb.ext_multi_names())
         .collect()
 }
 
@@ -2019,10 +2270,14 @@ pub(crate) fn scalar_entry_expr(wb: &Workbook, body: &str, host: CellAddr) -> Op
     let e = parse(body).ok()?;
     UNDEFINED.with(|u| u.set(false));
 
-    if uses_name(&e, wb) != Some(true)
-        || (may_array(&e, wb, host.sheet, &mut Vec::new()) && !legacy)
-        || UNDEFINED.with(|u| u.get())
-    {
+    if uses_name(&e, wb) != Some(true) {
+        return None;
+    }
+    MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
+    let dynamic =
+        (may_array(&e, wb, host.sheet, &mut Vec::new()) && !legacy) || UNDEFINED.with(|u| u.get());
+    clear_names();
+    if dynamic {
         return None;
     }
     legacy_eval_expr(wb, body)
@@ -2034,7 +2289,7 @@ pub(crate) fn legacy_eval_expr(wb: &Workbook, body: &str) -> Option<Expr> {
     EVAL_FORM.with(|f| f.set(true));
     let w = walk(strip_at(shown.clone()), Ctx::Value);
     EVAL_FORM.with(|f| f.set(false));
-    MULTI_NAMES.with(|m| m.borrow_mut().clear());
+    clear_names();
     Some(Expr::Unary {
         op: UnaryOp::ImplicitQuiet,
         expr: Box::new(merge_at(w, &shown)),
@@ -2163,75 +2418,23 @@ impl Workbook {
     }
 }
 
-pub(crate) fn host_may_array(wb: &Workbook, host: CellAddr) -> bool {
-    let Some(fid) = wb.formula_at(host) else {
-        return false;
-    };
-    let root = wb.formula(fid).formula.root.clone();
-    let text = crate::formula_print::print_node(wb, &root, host);
-    let Ok(e) = parse(text.trim_start_matches('=')) else {
-        return false;
-    };
-    value_array(&e, true)
+pub(crate) fn with_info_env<T>(wb: &Workbook, bound: &[String], f: impl FnOnce() -> T) -> T {
+    MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
+    let mut known: Vec<String> = wb.names.iter().map(|n| n.name.to_uppercase()).collect();
+    known.extend(bound.iter().cloned());
+    let saved = KNOWN_NAMES.with(|k| k.replace(Some(known)));
+    let out = f();
+    KNOWN_NAMES.with(|k| *k.borrow_mut() = saved);
+    clear_names();
+    out
 }
 
-fn value_array(e: &Expr, value: bool) -> bool {
-    crate::deep(|| match e {
-        Expr::Ws { expr, .. } | Expr::Paren(expr) | Expr::Percent(expr) => value_array(expr, value),
-        Expr::Unary { op, expr } => {
-            !matches!(op, UnaryOp::Implicit | UnaryOp::ImplicitQuiet) && value_array(expr, true)
-        }
-        Expr::Array(_) | Expr::Spill(_) => value,
-        Expr::Ref { kind, .. } => value && !matches!(kind, RefKind::Cell { .. }),
-        Expr::Binary { op, left, right } => {
-            if matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) {
-                return value;
-            }
-            value_array(left, true) || value_array(right, true)
-        }
-        Expr::Func { name, args } => {
-            let upper = name.to_uppercase();
-            let bare = upper.strip_prefix("_XLFN.").unwrap_or(&upper);
-            if value && bare != "XLOOKUP" && returns_array(bare, args) {
-                return true;
-            }
+pub(crate) fn leaf_info(e: &Expr) -> u8 {
+    info_of(e, false)
+}
 
-            let params = (bare == "XLOOKUP")
-                .then_some("VRV")
-                .or_else(|| legacy_params(bare))
-                .or_else(|| {
-                    let def = functions::def(functions::lookup(bare)?);
-                    Some(if matches!(def.imp, functions::Imp::Lazy(_)) {
-                        "V"
-                    } else {
-                        def.params
-                    })
-                });
-            let b = params.unwrap_or("V").as_bytes();
-            args.iter().enumerate().any(|(i, a)| {
-                let letter = if b.is_empty() {
-                    b'V'
-                } else {
-                    b[i.min(b.len() - 1)]
-                };
-
-                let written_ref = matches!(a.unwrap_ws(), Expr::Ref { .. } | Expr::Name { .. })
-                    || matches!(
-                        a.unwrap_ws(),
-                        Expr::Binary {
-                            op: BinOp::Range | BinOp::Intersect | BinOp::Union,
-                            ..
-                        }
-                    );
-                let v = letter == b'V' || (value && bare == "INDEX" && i == 0 && !written_ref);
-                value_array(a, v)
-            })
-        }
-        Expr::Call { callee, args } => {
-            value_array(callee, false) || args.iter().any(|a| value_array(a, true))
-        }
-        _ => false,
-    })
+pub(crate) fn expr_one_dimensional(e: &Expr) -> bool {
+    one_dimensional(e)
 }
 
 pub(crate) fn text_may_array(wb: &Workbook, body: &str, sheet: crate::address::SheetId) -> bool {
@@ -2239,5 +2442,96 @@ pub(crate) fn text_may_array(wb: &Workbook, body: &str, sheet: crate::address::S
         return false;
     };
     UNDEFINED.with(|u| u.set(false));
-    may_array(&e, wb, sheet, &mut Vec::new()) || UNDEFINED.with(|u| u.get())
+    MULTI_NAMES.with(|m| *m.borrow_mut() = multi_names(wb));
+    let r = may_array(&e, wb, sheet, &mut Vec::new()) || UNDEFINED.with(|u| u.get());
+    clear_names();
+    r
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn dyn_of(t: &str) -> String {
+        legacy_to_dynamic_in(&Workbook::new(), t)
+    }
+
+    fn def(t: &str) -> Expr {
+        parse(t).unwrap()
+    }
+
+    #[test]
+    fn array_class_call_is_not_wrapped() {
+        assert_eq!(
+            dyn_of("TYPE(LEN(MMULT(A1,{1})))"),
+            "=TYPE(LEN(MMULT(A1,{1})))"
+        );
+        assert_eq!(
+            dyn_of("TYPE(TEXT(MMULT(LEN(LAMBDA(p,ROW(p)/0)(A1)),{1}),\"0\"))"),
+            "=TYPE(TEXT(MMULT(LEN(LAMBDA(p,@ROW(p)/0)(A1)),{1}),\"0\"))"
+        );
+        assert_eq!(dyn_of("N({1;2;3})"), "=N(@{1;2;3})");
+    }
+
+    #[test]
+    fn let_result_is_not_an_undefined_name() {
+        assert_eq!(
+            dyn_of("INDEX(LET(x,A1:A3,x*2),2)"),
+            "=INDEX(LET(x,A1:A3,@x*2),2)"
+        );
+    }
+
+    #[test]
+    fn name_ptg_info() {
+        assert_eq!(name_def_info(&def("Sheet1!#REF!")), 0);
+        assert_eq!(name_def_info(&def("5")), 4);
+        assert_eq!(name_def_info(&def("1")), 0xc);
+        assert_eq!(name_def_info(&def("0")), 0);
+        assert_eq!(name_def_info(&def("1.5")), 0);
+        assert_eq!(name_def_info(&def("70000")), 0);
+        assert_eq!(name_def_info(&def("\"a\"")), 0);
+        assert_eq!(name_def_info(&def("Sheet2!$A$2")), 0);
+        assert_eq!(name_def_info(&def("Sheet1:Sheet3!$A$2")), 3);
+        assert_eq!(name_def_info(&def("Sheet2!$A$2:$A$4")), 2);
+        assert_eq!(name_def_info(&def("{5}")), 1);
+
+        assert_eq!(name_def_info(&def("(Sheet2!$A$2)")), 3);
+        assert_eq!(name_def_info(&def("Sheet2!$A$2:$A$4*1")), 3);
+        assert_eq!(name_def_info(&def("NOW()")), 3);
+        assert_eq!(name_def_info(&def("nRng")), 3);
+    }
+
+    #[test]
+    fn name_first_ptg_one_dimensional() {
+        assert!(name_def_1d(&def("Sheet2!$A$2:$A$4")));
+        assert!(name_def_1d(&def("Sheet2!$A$2:$C$2")));
+        assert!(name_def_1d(&def("Sheet2!$A:$A")));
+
+        assert!(name_def_1d(&def("INDEX(Sheet2!$B$2:$B$11,{1;2;3})")));
+        assert!(name_def_1d(&def("Sheet2!$A$2:$A$4*1")));
+        assert!(!name_def_1d(&def("Sheet2!$A$2:$B$4")));
+        assert!(!name_def_1d(&def("Sheet2!$A$2:$A$2")));
+        assert!(!name_def_1d(&def("Sheet2!$A$2")));
+
+        assert!(!name_def_1d(&def("Sheet2!$A2:A$4")));
+
+        assert!(!name_def_1d(&def("(Sheet2!$A$2:$A$4,Sheet2!$B$2:$B$4)")));
+        assert!(!name_def_1d(&def("nRng")));
+    }
+
+    #[test]
+    fn array_constant_in_value_parameter() {
+        assert_eq!(dyn_of("DISC({1,2},A5,A5,A5)"), "=DISC(@{1,2},A5,A5,A5)");
+        assert_eq!(dyn_of("INDEX(A1:B3,1,1,A1:A3)"), "=INDEX(A1:B3,1,1,@A1:A3)");
+        assert_eq!(dyn_of("INDEX(A1:B3,1,1,A:A)"), "=INDEX(A1:B3,1,1,@A:A)");
+        assert_eq!(
+            dyn_of("INDEX(A1:B3,1,1,{1;2;3})"),
+            "=INDEX(A1:B3,1,1,@{1;2;3})"
+        );
+        assert_eq!(
+            dyn_of("INDEX(A1:B3,1,1,OFFSET(A1,0,0,3,1))"),
+            "=INDEX(A1:B3,1,1,@OFFSET(A1,0,0,3,1))"
+        );
+        assert_eq!(dyn_of("INDEX(A1:A3,B1)"), "=@INDEX(A1:A3,B1)");
+    }
 }

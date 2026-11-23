@@ -10,9 +10,77 @@ use xlcalc::SheetId;
 const MANUAL: i32 = -4135;
 const FULL: i32 = 1;
 
+const AUTOMATIC: i32 = -4105;
+
 impl Application<'_> {
-    fn breaks_of(&self, b: BookId, s: SheetId, rows: bool) -> Result<Vec<u32>, OmError> {
-        Ok(self.book(b)?.wb.page_breaks(s, rows))
+    fn breaks_of(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        rows: bool,
+        count: bool,
+    ) -> Result<Vec<u32>, OmError> {
+        let plv = self.book(b)?.window.view_mode == 3;
+        let parts = if plv {
+            vec!["$A$1:$XFD$1048576".to_string()]
+        } else {
+            self.print_area_parts(b, s)
+        };
+        if parts.is_empty() {
+            let wb = &self.book(b)?.wb;
+            let used = wb.merges(s).into_iter().fold(wb.used_range(s), |u, m| {
+                Some(u.map_or(m, |u| u.union_bounds(&m)))
+            });
+            let Some(used) = used else {
+                return Ok(wb.page_breaks(s, rows));
+            };
+            let ps = self.page_setup(b, s);
+            let win = self.break_window(b, s);
+            let ub = crate::pagegeom::used_breaks(
+                wb,
+                s,
+                &ps,
+                (used.r1 + 1, used.c1 + 1),
+                win,
+                ps.slv_cached,
+            );
+            let list = match (count, rows) {
+                (true, true) => ub.fresh.0,
+                (true, false) => ub.fresh.1,
+                (false, true) => ub.cached.0,
+                (false, false) => ub.cached.1,
+            };
+
+            let grown = ps.zoom.is_some_and(|z| z < ps.list_zoom);
+            if count && (!ps.slv_cached || grown) {
+                self.book_mut(b)?
+                    .page_setup
+                    .entry(s)
+                    .or_default()
+                    .slv_cached = true;
+                let win = self.break_window_idle(b, s);
+                self.refresh_break_list_over(b, s, win);
+            }
+            return Ok(list.into_iter().map(|i| i - 1).collect());
+        }
+        let shown = matches!(
+            self.opts.get(&format!("ws{}:DisplayPageBreaks", b.0)),
+            Some(Variant::Bool(true))
+        );
+        let win = self.break_window(b, s);
+        let mut ps = self.page_setup(b, s);
+        if shown && ps.list_win != Some(win) {
+            self.refresh_break_list(b, s);
+            ps = self.page_setup(b, s);
+        }
+        let titles = crate::pagegeom::Titles::parse(
+            &self.print_title_rows(b, s),
+            &self.print_title_columns(b, s),
+        );
+        let (h, v) =
+            crate::pagegeom::cached_breaks(&self.book(b)?.wb, s, &ps, &parts, &titles, win);
+        let list = if rows { h } else { v };
+        Ok(list.into_iter().map(|(i, _)| i - 1).collect())
     }
 
     pub(crate) fn page_breaks_member(
@@ -29,7 +97,7 @@ impl Application<'_> {
                 _ => Err(unsupported("PageBreaks", m)),
             };
         };
-        let list = self.breaks_of(b, s, rows)?;
+        let list = self.breaks_of(b, s, rows, m.name == "Count")?;
         match (m.name, m.kind) {
             ("Count", InvokeKind::Get) => Ok(Variant::I4(list.len() as i32)),
             ("Item" | "_Default", InvokeKind::Get) => {
@@ -83,7 +151,10 @@ impl Application<'_> {
         _a: &Args,
     ) -> Result<Variant, OmError> {
         match (m.name, m.kind) {
-            ("Type", InvokeKind::Get) => Ok(Variant::I4(MANUAL)),
+            ("Type", InvokeKind::Get) => {
+                let manual = self.book(b)?.wb.all_page_breaks(s, rows).contains(&at);
+                Ok(Variant::I4(if manual { MANUAL } else { AUTOMATIC }))
+            }
             ("Extent", InvokeKind::Get) => Ok(Variant::I4(FULL)),
             ("Location", InvokeKind::Get) => {
                 let rect = if rows {

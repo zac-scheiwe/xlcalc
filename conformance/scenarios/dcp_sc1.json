@@ -1,0 +1,181 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "h"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A6",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A7",
+   "input": "6"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A3')",
+   "prop": "Interior.Color",
+   "value": 255
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A5')",
+   "prop": "Interior.Color",
+   "value": 255
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A6')",
+   "prop": "Interior.Color",
+   "value": 65280
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A7')",
+   "prop": "Interior.Color",
+   "value": 255
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Clear"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Add",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A2:A7')"
+    },
+    1,
+    1,
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Sort.SortFields(1).SortOnValue",
+   "prop": "Color",
+   "value": 255
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort",
+   "call": "SetRange",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A1:A7')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Sort",
+   "prop": "Header",
+   "value": 1
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort",
+   "call": "Apply"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A7"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Clear"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Add",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A2:A7')"
+    },
+    1,
+    2,
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Sort.SortFields(1).SortOnValue",
+   "prop": "Color",
+   "value": 65280
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort.SortFields",
+   "call": "Add",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A2:A7')"
+    },
+    0,
+    2
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort",
+   "call": "SetRange",
+   "args": [
+    {
+     "path": "Worksheets('Sheet1').Range('A1:A7')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Sort",
+   "prop": "Header",
+   "value": 1
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('Sheet1').Sort",
+   "call": "Apply"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!A1:A7"
+  }
+ ]
+}

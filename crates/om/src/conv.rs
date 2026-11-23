@@ -4,6 +4,7 @@ use xlcalc_variant::{change_type, HResult, Locale, VarType, Variant};
 use crate::error::OmError;
 use crate::typelib::enumeration;
 
+#[derive(Clone)]
 pub(crate) struct Args {
     pub values: Vec<Option<Variant>>,
 

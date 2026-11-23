@@ -136,14 +136,18 @@ fn format_lcid(first: &[Tok]) -> Option<String> {
 }
 
 pub(crate) fn readback_spelling(fmt: &str) -> String {
-    spell(fmt, true)
+    spell(fmt, true, false)
+}
+
+pub(crate) fn compiled_spelling(fmt: &str) -> String {
+    spell(fmt, false, true)
 }
 
 pub(crate) fn spelled_for_parse(fmt: &str) -> String {
-    spell(fmt, false)
+    spell(fmt, false, false)
 }
 
-fn spell(fmt: &str, for_display: bool) -> String {
+fn spell(fmt: &str, for_display: bool, compiled: bool) -> String {
     let sections = sections_of(fmt);
     let lcid = format_lcid(&sections[0]);
     let mut texts: Vec<String> = sections
@@ -151,8 +155,8 @@ fn spell(fmt: &str, for_display: bool) -> String {
         .enumerate()
         .map(|(i, s)| {
             let text = canon_section(s, i == 0, lcid.as_deref(), for_display);
-            if for_display {
-                super::ampm_elapsed::garble_section(&text).unwrap_or(text)
+            if for_display || compiled {
+                super::ampm_elapsed::garble_section(&text, compiled).unwrap_or(text)
             } else {
                 text
             }
@@ -313,12 +317,98 @@ fn matches_word(toks: &[Tok], i: usize, word: &str) -> bool {
         .all(|(k, w)| matches!(toks.get(i + k), Some(Tok::Ch(c)) if c.to_ascii_lowercase() == w))
 }
 
+#[derive(PartialEq)]
+enum CommaRole {
+    Kept,
+    Group,
+    Scale,
+    Dropped,
+    Literal,
+}
+
+fn comma_role(toks: &[Tok], i: usize) -> CommaRole {
+    let is_ph = |t: Option<&Tok>| t.is_some_and(is_placeholder);
+    let point = |t: Option<&Tok>| matches!(t, Some(Tok::Ch('.')));
+    let comma = |t: &Tok| matches!(t, Tok::Ch(','));
+    if !toks[..i].iter().any(is_placeholder) {
+        return CommaRole::Kept;
+    }
+    let prev = toks[..i].iter().rev().find(|t| !comma(t));
+    if !(is_ph(prev) || point(prev)) {
+        return CommaRole::Literal;
+    }
+    let mut k = i + 1;
+    while toks.get(k).is_some_and(comma) {
+        k += 1;
+    }
+    if is_ph(toks.get(k)) {
+        let in_frac = toks[..i].iter().any(|t| matches!(t, Tok::Ch('.')));
+        return if in_frac {
+            CommaRole::Dropped
+        } else {
+            CommaRole::Group
+        };
+    }
+    if point(toks.get(k)) {
+        k += 1;
+    }
+
+    while toks
+        .get(k)
+        .is_some_and(|t| is_placeholder(t) || comma(t) || point(Some(t)))
+    {
+        k += 1;
+    }
+    if toks[k..]
+        .iter()
+        .any(|t| is_placeholder(t) || matches!(t, Tok::Ch('.')))
+    {
+        CommaRole::Dropped
+    } else {
+        CommaRole::Scale
+    }
+}
+
+fn place_scaling_commas(toks: Vec<Tok>) -> Vec<Tok> {
+    let sci = toks.iter().any(|t| matches!(t, Tok::Ch('E' | 'e')));
+    let fraction = toks.iter().any(|t| matches!(t, Tok::Ch('/')));
+    if fraction {
+        return toks;
+    }
+    let mut out: Vec<Tok> = Vec::with_capacity(toks.len());
+    let mut scale = 0;
+    for (i, t) in toks.iter().enumerate() {
+        if matches!(t, Tok::Ch(',')) {
+            match comma_role(&toks, i) {
+                CommaRole::Scale => scale += 1,
+                CommaRole::Dropped => {}
+                CommaRole::Kept | CommaRole::Group => out.push(copy_tok(t)),
+
+                CommaRole::Literal => {
+                    if i == 0 || !matches!(toks[i - 1], Tok::Ch(',')) {
+                        out.push(copy_tok(t));
+                    }
+                }
+            }
+        } else {
+            out.push(copy_tok(t));
+        }
+    }
+    if scale > 0 && !sci {
+        let at = out.iter().rposition(is_placeholder).map_or(0, |k| k + 1);
+        for k in 0..scale {
+            out.insert(at + k, Tok::Ch(','));
+        }
+    }
+    out
+}
+
 fn regroup_thousands(toks: Vec<Tok>) -> Vec<Tok> {
+    let toks = place_scaling_commas(toks);
     let end = toks
         .iter()
         .position(|t| matches!(t, Tok::Ch('.' | 'E' | 'e')))
         .unwrap_or(toks.len());
-    let point = matches!(toks.get(end), Some(Tok::Ch('.')));
     let run_char = |t: &Tok| matches!(t, Tok::Ch('0' | '#' | '?' | ','));
     let mut out: Vec<Tok> = Vec::with_capacity(toks.len());
     let mut i = 0;
@@ -362,14 +452,7 @@ fn regroup_thousands(toks: Vec<Tok>) -> Vec<Tok> {
             i = j;
             continue;
         }
-        let drop_comma = point
-            && i > end
-            && matches!(toks[i], Tok::Ch(','))
-            && matches!(toks.get(i - 1), Some(t) if is_placeholder(t))
-            && matches!(toks.get(i + 1), Some(t) if is_placeholder(t));
-        if !drop_comma {
-            out.push(copy_tok(&toks[i]));
-        }
+        out.push(copy_tok(&toks[i]));
         i += 1;
     }
     out
@@ -692,6 +775,28 @@ mod tests {
             ("[ss]s", "[ss][s]"),
             ("0;-0;0;General", "0;-0;0"),
             (";@", ";;;@"),
+        ] {
+            assert_eq!(readback_spelling(given), back, "{given}");
+        }
+    }
+
+    #[test]
+    fn scaling_commas_read_back_after_the_digits() {
+        for (given, back) in [
+            ("0,.0", "0.0,"),
+            ("0,,,.00", "0.00,,,"),
+            ("#,##0,.0", "#,##0.0,"),
+            ("0,.0%", "0.0,%"),
+            ("0,.0 \"x\"", "0.0, \"x\""),
+            ("0,.0,", "0.0,,"),
+            ("0,.,0", "0.0,"),
+            ("0.,0", "0.0"),
+            ("0,%.0", "0%.0"),
+            ("0%,.0", "0%,.0"),
+            ("0,\"x\".0", "0\"x\".0"),
+            ("0,.0E+00", "0.0E+00"),
+            ("$0,.0", "$0.0,"),
+            ("0,.0.0", "0.0.0,"),
         ] {
             assert_eq!(readback_spelling(given), back, "{given}");
         }

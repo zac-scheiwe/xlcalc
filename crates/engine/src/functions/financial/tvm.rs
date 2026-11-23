@@ -32,16 +32,28 @@ impl A<'_, '_> {
     }
 }
 
-fn pmt_parts(r: f64, n: f64, pv: f64, fv: f64, t: bool) -> (f64, f64, f64) {
+fn negate_nonzero(x: f64) -> f64 {
+    if x.to_bits() >> 48 == 0 {
+        x
+    } else {
+        -x
+    }
+}
+
+fn pmt_parts(r: f64, n: f64, pv: f64, fv: f64, t: bool) -> R<(f64, f64, f64)> {
     let l = xl_log1p(r);
     let e = xl_expm1(x87::mul(l, x87::sub(0.0, n)));
-    let q = -x87::div(x87::add(pv, fv), e);
+
+    if e.is_infinite() {
+        return Err(XlError::NUM);
+    }
+    let q = negate_nonzero(x87::div(x87::add(pv, fv), e));
     let rho = if t {
         x87::div(1.0, x87::add(x87::div(1.0, r), 1.0))
     } else {
         r
     };
-    (q, l, rho)
+    Ok((q, l, rho))
 }
 
 fn periods_left(per: f64, n: f64) -> f64 {
@@ -79,9 +91,9 @@ fn pmt_check(r: f64, n: f64) -> R<()> {
 pub fn pmt_core(r: f64, n: f64, pv: f64, fv: f64, t: bool) -> R<f64> {
     pmt_check(r, n)?;
     if r == 0.0 {
-        return Ok(-(pv + fv) / n);
+        return finite(x87::div(x87::add(pv, fv), x87::sub(0.0, n)));
     }
-    let (q, _, rho) = pmt_parts(r, n, pv, fv, t);
+    let (q, _, rho) = pmt_parts(r, n, pv, fv, t)?;
     finite(x87::mul(x87::add(-q, fv), rho))
 }
 
@@ -95,14 +107,17 @@ pub fn pmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn fv_core(r: f64, n: f64, pmt: f64, pv: f64, t: bool) -> R<f64> {
     if r == 0.0 {
-        return Ok(-(pv + pmt * n));
+        return Ok(negate_nonzero(x87::add(x87::mul(n, pmt), pv)));
     }
     growth_check(r, n)?;
     let (g, ann) = annuity(r, n, t);
     if g.is_nan() {
         return Err(XlError::NUM);
     }
-    finite(-x87::add(x87::mul(pmt, ann), x87::mul(pv, g)))
+    finite(negate_nonzero(x87::add(
+        x87::mul(pmt, ann),
+        x87::mul(pv, g),
+    )))
 }
 
 pub fn fv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -115,7 +130,7 @@ pub fn fv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
     if r == 0.0 {
-        return Ok(-(fv + pmt * n));
+        return Ok(negate_nonzero(x87::add(x87::mul(n, pmt), fv)));
     }
     growth_check(r, n)?;
     let (g, ann) = annuity(r, n, t);
@@ -125,7 +140,10 @@ pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
     if g == 0.0 {
         return Err(XlError::DIV0);
     }
-    finite(-x87::div(x87::add(x87::mul(pmt, ann), fv), g))
+    finite(negate_nonzero(x87::div(
+        x87::add(x87::mul(pmt, ann), fv),
+        g,
+    )))
 }
 
 pub fn pv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
@@ -144,7 +162,8 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             if pmt == 0.0 {
                 return Err(XlError::DIV0);
             }
-            return Ok(Value::num(-(pv + fv) / pmt));
+
+            return Ok(Value::num(negate_nonzero(x87::div(x87::add(pv, fv), pmt))));
         }
         if r <= -1.0 {
             return Err(XlError::NUM);
@@ -152,21 +171,21 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
         let r1 = x87::add(1.0, r);
         let pt = if t { x87::mul(pmt, r1) } else { pmt };
-        let x = x87::div(x87::sub(pt, x87::mul(fv, r)), x87::add(pt, x87::mul(pv, r)));
-        if x <= 0.0 || !x.is_finite() {
-            return Err(XlError::NUM);
-        }
 
         let l = x87::ln(r1);
+        let x = x87::div(x87::sub(pt, x87::mul(fv, r)), x87::add(pt, x87::mul(pv, r)));
         if l == 0.0 {
             return Err(XlError::DIV0);
+        }
+        if x <= 0.0 || !x.is_finite() {
+            return Err(XlError::NUM);
         }
         finite(x87::div(x87::ln(x), l)).map(Value::num)
     })())
 }
 
 fn per_check(per: f64, n: f64) -> R<()> {
-    if per < 1.0 || per >= n + 1.0 || n <= 0.0 {
+    if per < 1.0 || x87::sub(per, 1.0) >= n || n <= 0.0 {
         return Err(XlError::NUM);
     }
     Ok(())
@@ -177,12 +196,16 @@ pub fn ipmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let (r, per, n, pv, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.n(3)?, a.o(4, 0.0)?, a.t(5)?);
         per_check(per, n)?;
-        pmt_check(r, n)?;
-        if r == 0.0 || (t && per == 1.0) {
+
+        if t && per == 1.0 {
             return Ok(Value::num(0.0));
         }
+        if r == 0.0 {
+            return Ok(Value::num(0.0));
+        }
+        pmt_check(r, n)?;
 
-        let (q, l, rho) = pmt_parts(r, n, pv, fv, t);
+        let (q, l, rho) = pmt_parts(r, n, pv, fv, t)?;
         let em = xl_expm1(x87::mul(l, periods_left(per, n)));
         finite(x87::mul(x87::add(fv, x87::mul(q, em)), rho)).map(Value::num)
     })())
@@ -198,7 +221,7 @@ pub fn ppmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         }
         pmt_check(r, n)?;
 
-        let (q, l, rho) = pmt_parts(r, n, pv, fv, t);
+        let (q, l, rho) = pmt_parts(r, n, pv, fv, t)?;
         let c = x87::exp(x87::mul(l, periods_left(per, n)));
         finite(x87::mul(-x87::mul(q, c), rho)).map(Value::num)
     })())
@@ -217,6 +240,8 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             a.t(4)?,
             a.o(5, 0.1)?,
         );
+
+        let start = super::cash::secant_start(guess)?;
         if n == 0.0 {
             return Err(XlError::NUM);
         }
@@ -228,7 +253,7 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             let (g, ann) = annuity(r, n, t);
             x87::sub(-x87::add(x87::mul(pmt, ann), x87::mul(pv, g)), fv)
         };
-        let r = super::cash::fn_iter(super::cash::fn_iter_start(guess)?, f).ok_or(XlError::NUM)?;
+        let r = super::cash::secant_solve(start, f).ok_or(XlError::NUM)?;
         if r <= -1.0 + RATE_NEAR_M1 {
             return Err(XlError::NUM);
         }
@@ -240,10 +265,13 @@ pub fn ispmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let a = A { ctx, a };
     val((|| {
         let (r, per, n, pv) = (a.n(0)?, a.n(1)?, a.n(2)?, a.n(3)?);
-        if n == 0.0 {
-            return Err(XlError::DIV0);
-        }
-        Ok(Value::num(pv * (per - n) * r / n))
+
+        let mut f = x87::MathFlag::default();
+        let t = f.sub(n, per);
+        let t = f.mul(t, pv);
+        let t = f.mul(t, r);
+        let t = f.div(t, n);
+        f.result(if t == 0.0 { t } else { -t }).map(Value::num)
     })())
 }
 
@@ -315,30 +343,50 @@ fn cum(ctx: &mut EvalCtx, a: &[Arg], principal: bool) -> Value {
         }
 
         pmt_check(r, n)?;
+
+        let bad = std::cell::Cell::new(false);
+        let ck = |v: f64| {
+            if !v.is_finite() {
+                bad.set(true);
+            }
+            v
+        };
         let rho = if t {
-            x87::div(1.0, x87::add(x87::div(1.0, r), 1.0))
+            ck(x87::div(1.0, ck(x87::add(ck(x87::div(1.0, r)), 1.0))))
         } else {
             r
         };
-        let l = xl_log1p(r);
-        let a = x87::div(pv, xl_expm1(x87::mul(l, -n)));
-        let p = x87::mul(-a, rho);
+        let l = ck(xl_log1p(r));
+        let den = ck(xl_expm1(ck(x87::mul(l, -n))));
+        if den == 0.0 || den.abs() < f64::MIN_POSITIVE {
+            return Err(XlError::NUM);
+        }
+        let a = ck(x87::div(pv, den));
+        let p = ck(x87::mul(-a, rho));
         let first = t && s == 1.0;
         let s1 = if first { 2.0 } else { s };
-        let k = x87::sub(s1, x87::add(e, 1.0));
-        let g = xl_expm1(x87::mul(l, k));
-        let c = x87::exp(x87::mul(l, x87::sub(x87::sub(e, n), 1.0)));
-        let mut prin = x87::mul(-a, x87::mul(g, c));
+        let k = ck(x87::sub(s1, ck(x87::add(e, 1.0))));
+        let g = ck(xl_expm1(ck(x87::mul(l, k))));
+        let c = ck(x87::exp(ck(x87::mul(
+            l,
+            ck(x87::sub(ck(x87::sub(e, n)), 1.0)),
+        ))));
+        let mut prin = ck(x87::mul(-a, ck(x87::mul(g, c))));
         if !t {
-            prin = x87::mul(prin, x87::add(1.0, r));
+            prin = ck(x87::mul(prin, ck(x87::add(1.0, r))));
         }
-        if !principal {
-            return finite(x87::sub(x87::mul(p, k), prin));
+        let out = if !principal {
+            ck(x87::sub(ck(x87::mul(p, k)), prin))
+        } else {
+            if first {
+                prin = ck(x87::sub(prin, p));
+            }
+            prin
+        };
+        if bad.get() {
+            return Err(XlError::NUM);
         }
-        if first {
-            prin = x87::sub(prin, p);
-        }
-        finite(prin)
+        Ok(out)
     })())
 }
 
@@ -418,4 +466,29 @@ pub fn fvschedule(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
         finite(acc)
     })())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn helpers_follow_the_routine_branches() {
+        let t = 2f64.powi(-52);
+        assert_eq!(xl_expm1(t), t);
+        assert_eq!(xl_log1p(0.0), 0.0);
+        assert_eq!(xl_log1p(1e-20), 1e-20);
+
+        let e = xl_expm1(1.0);
+        assert!((e - (std::f64::consts::E - 1.0)).abs() < 1e-15);
+    }
+
+    #[test]
+    fn zero_rate_arms_flip_sign_like_the_routines() {
+        assert_eq!(negate_nonzero(0.0).to_bits(), 0);
+        assert_eq!(negate_nonzero(2.0), -2.0);
+        assert_eq!(fv_core(0.0, 3.0, 0.0, 0.0, false).unwrap().to_bits(), 0);
+        assert_eq!(pv_core(0.0, 3.0, 2.0, 1.0, false).unwrap(), -7.0);
+        assert_eq!(pmt_core(0.0, 4.0, 100.0, 0.0, false).unwrap(), -25.0);
+    }
 }

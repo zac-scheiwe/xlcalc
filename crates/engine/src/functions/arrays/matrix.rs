@@ -28,94 +28,41 @@ fn matrix_nums(a: std::sync::Arc<crate::value::Array>) -> R<(usize, usize, Vec<f
     Ok((a.rows as usize, a.cols as usize, out))
 }
 
-pub fn div_x87(a: f64, b: f64) -> f64 {
-    fn parts(x: f64) -> Option<(bool, u128, i32)> {
-        let bits = x.to_bits();
-        let e = ((bits >> 52) & 0x7ff) as i32;
-        if e == 0 || e == 0x7ff {
-            return None;
-        }
-        Some((
-            bits >> 63 == 1,
-            ((bits & ((1u64 << 52) - 1)) | (1u64 << 52)) as u128,
-            e - 1075,
-        ))
-    }
-    let (Some((sa, ma, ea)), Some((sb, mb, eb))) = (parts(a), parts(b)) else {
-        return a / b;
-    };
-    let n = ma << 64;
-    let mut q = n / mb;
-    let r = n % mb;
-    let mut e = ea - eb - 64;
-
-    if q >> 64 != 0 {
-        let dropped = q & 1;
-        q >>= 1;
-        e += 1;
-        if dropped == 1 && (r != 0 || q & 1 == 1) {
-            q += 1;
-        }
-    } else {
-        let twice = r * 2;
-        if twice > mb || (twice == mb && q & 1 == 1) {
-            q += 1;
-        }
-    }
-    if q >> 64 != 0 {
-        q >>= 1;
-        e += 1;
-    }
-
-    let rem = q & 0x7ff;
-    let mut m = q >> 11;
-    e += 11;
-    if rem > 0x400 || (rem == 0x400 && m & 1 == 1) {
-        m += 1;
-        if m >> 53 != 0 {
-            m >>= 1;
-            e += 1;
-        }
-    }
-    let biased = e + 52 + 1023;
-    if !(1..=2046).contains(&biased) {
-        return a / b;
-    }
-    let bits =
-        (((sa != sb) as u64) << 63) | ((biased as u64) << 52) | ((m as u64) & ((1u64 << 52) - 1));
-    f64::from_bits(bits)
+fn nz(x: f64) -> bool {
+    x.to_bits() & 0xffff_0000_0000_0000 != 0
 }
 
-fn lu(n: usize, m: &mut [f64]) -> Option<(Vec<usize>, usize)> {
-    let mut perm: Vec<usize> = (0..n).collect();
-    let mut swaps = 0;
-    for p in 0..n {
+fn eliminate(flag: &mut x87::MathFlag, n: usize, w: usize, m: &mut [f64]) -> bool {
+    let mut odd = false;
+    for p in 0..n.saturating_sub(1) {
         let mut best = p;
         for i in p + 1..n {
-            if m[i * n + p].abs() > m[best * n + p].abs() {
+            let d = x87::sub(m[i * w + p].abs(), m[best * w + p].abs());
+            if nz(d) && d.is_sign_positive() {
                 best = i;
             }
         }
-        if m[best * n + p] == 0.0 {
-            return None;
-        }
         if best != p {
-            for k in 0..n {
-                m.swap(p * n + k, best * n + k);
+            odd = !odd;
+            for k in p..w {
+                m.swap(p * w + k, best * w + k);
             }
-            perm.swap(p, best);
-            swaps += 1;
         }
-        let piv = m[p * n + p];
         for i in p + 1..n {
-            let f = div_x87(m[i * n + p], piv);
-            m[i * n + p] = f;
-            for k in p + 1..n {
-                m[i * n + k] = x87::sub(m[i * n + k], x87::mul(f, m[p * n + k]));
+            if !nz(m[i * w + p]) {
+                continue;
+            }
+            let f = flag.div(m[i * w + p], m[p * w + p]);
+            for k in p + 1..w {
+                let mut t = flag.mul(m[p * w + k], f);
+                if nz(t) {
+                    t = -t;
+                }
+                m[i * w + k] = flag.add(t, m[i * w + k]);
             }
         }
     }
-    Some((perm, swaps))
+    odd
 }
 
 pub fn mdeterm(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -124,54 +71,55 @@ pub fn mdeterm(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         if rows != cols {
             return Err(XlError::VALUE);
         }
+
         let n = rows;
-        let Some((_, swaps)) = lu(n, &mut m) else {
-            return Ok(Value::Number(0.0));
-        };
-        let mut d = 1.0;
-        for i in 0..n {
-            d = x87::mul(d, m[i * n + i]);
+        let mut flag = x87::MathFlag::default();
+        let odd = eliminate(&mut flag, n, n, &mut m);
+        let mut d = m[0];
+        for i in 1..n {
+            d = flag.mul(d, m[i * n + i]);
         }
-        if swaps % 2 == 1 {
+        if odd && nz(d) {
             d = -d;
         }
-        Ok(Value::num(d))
+        Ok(Value::num(flag.result(d).map_err(|_| XlError::NUM)?))
     })())
 }
 
 pub fn minverse(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
-        let (rows, cols, mut m) = matrix_of(ctx, &ops[0])?;
+        let (rows, cols, a) = matrix_of(ctx, &ops[0])?;
         if rows != cols {
             return Err(XlError::VALUE);
         }
+
         let n = rows;
-        let (perm, _) = lu(n, &mut m).ok_or(XlError::NUM)?;
-        let mut out = vec![0.0; n * n];
-        let mut y = vec![0.0; n];
-        for col in 0..n {
-            for i in 0..n {
-                y[i] = if perm[i] == col { 1.0 } else { 0.0 };
-            }
-            for i in 0..n {
-                for j in 0..i {
-                    y[i] = x87::sub(y[i], x87::mul(m[i * n + j], y[j]));
-                }
-            }
-            for i in (0..n).rev() {
+        let w = 2 * n;
+        let mut m = vec![0.0; n * w];
+        for i in 0..n {
+            m[i * w..i * w + n].copy_from_slice(&a[i * n..(i + 1) * n]);
+            m[i * w + n + i] = 1.0;
+        }
+        let mut flag = x87::MathFlag::default();
+        eliminate(&mut flag, n, w, &mut m);
+        for col in n..w {
+            m[(n - 1) * w + col] = flag.div(m[(n - 1) * w + col], m[(n - 1) * w + n - 1]);
+            for i in (0..n - 1).rev() {
+                let mut acc = m[i * w + col];
                 for j in i + 1..n {
-                    y[i] = x87::sub(y[i], x87::mul(m[i * n + j], y[j]));
+                    let mut t = flag.mul(m[i * w + j], m[j * w + col]);
+                    if nz(t) {
+                        t = -t;
+                    }
+                    acc = flag.add(t, acc);
                 }
-                y[i] = div_x87(y[i], m[i * n + i]);
-            }
-            for i in 0..n {
-                out[i * n + col] = y[i];
+                m[i * w + col] = flag.div(acc, m[i * w + i]);
             }
         }
-        if out.iter().any(|x| !x.is_finite()) {
-            return Err(XlError::NUM);
-        }
-        let data = out.into_iter().map(Value::num).collect();
+        flag.result(0.0).map_err(|_| XlError::NUM)?;
+        let data = (0..n * n)
+            .map(|k| Value::num(m[(k / n) * w + n + k % n]))
+            .collect();
         Ok(array_value(n as u32, n as u32, data))
     })())
 }
@@ -197,16 +145,20 @@ pub fn mmult(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             return Err(XlError::VALUE);
         }
         check_result_size(ctx, ar as u64, bc as u64)?;
+
+        let mut flag = x87::MathFlag::default();
         let mut data = Vec::with_capacity(ar * bc);
         for i in 0..ar {
             for j in 0..bc {
                 let mut s = 0.0;
                 for k in 0..ac {
-                    s = x87::add(s, x87::mul(a[i * ac + k], b[k * bc + j]));
+                    let t = flag.mul(a[i * ac + k], b[k * bc + j]);
+                    s = flag.add(t, s);
                 }
                 data.push(Value::num(s));
             }
         }
+        flag.result(0.0).map_err(|_| XlError::NUM)?;
         Ok(array_value(ar as u32, bc as u32, data))
     })())
 }
@@ -233,19 +185,4 @@ pub fn munit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Value::Number(if r == c { 1.0 } else { 0.0 })
         }))
     })())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::div_x87;
-
-    #[test]
-    fn double_rounded_division() {
-        let b = 1.0f64 / 3.0;
-        let u = 2.0 - 4.0 * b;
-        assert_eq!(div_x87(b, u), 0.4999999999999999);
-        assert_eq!(b / u, 0.49999999999999994);
-        assert_eq!(div_x87(1.0, 4.0), 0.25);
-        assert_eq!(div_x87(-6.0, 3.0), -2.0);
-    }
 }

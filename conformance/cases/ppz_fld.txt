@@ -1,0 +1,12 @@
+=Data!A1.x,S!A1.x
+=Data!A1.x,Data!A2.x
+=A1.x,A2.x
+=(A1.x,A2.x)
+=Data!A1,S!A1
+=A1,A2
+=A1.x,A2
+=A1,A2.x
+=Data:S!A1.x
+=Data!A1.x
+=Data!A1.x:S!A1.x
+=Data!A1.x S!A1.x

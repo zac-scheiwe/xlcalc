@@ -1,0 +1,240 @@
+=CODE("straße")-UNICODE("straße")
+=IFERROR(CODE("straße")-UNICODE("straße"),"e")&""
+=RIGHT("-3",2)&LEFT("-3",LEN("-3")-2)=LEFT("-3",LEN("-3")-2)&RIGHT("-3",2)
+=IFERROR(RIGHT("-3",2)&LEFT("-3",LEN("-3")-2)=LEFT("-3",LEN("-3")-2)&RIGHT("-3",2),"e")&""
+=REPLACE("a--b--c",4,3,MID("a--b--c",4,3))="a--b--c"
+=IFERROR(REPLACE("a--b--c",4,3,MID("a--b--c",4,3))="a--b--c","e")&""
+=SUBSTITUTE("one,two;three four",";",";"&";",4)=REPLACE("one,two;three four",IFERROR(FIND("",SUBSTITUTE("one,two;three four",";","",4)),1),0,IFERROR(";",""))
+=IFERROR(SUBSTITUTE("one,two;three four",";",";"&";",4)=REPLACE("one,two;three four",IFERROR(FIND("",SUBSTITUTE("one,two;three four",";","",4)),1),0,IFERROR(";","")),"e")&""
+=MID("A1b2C3",5,0)=MID("A1b2C3",5,3)*0+MID("A1b2C3",5,1)
+=IFERROR(MID("A1b2C3",5,0)=MID("A1b2C3",5,3)*0+MID("A1b2C3",5,1),"e")&""
+=LEN(CLEAN("one,two;three four"&CHAR(7)&"""q"""))-LEN("one,two;three four")-LEN("""q""")
+=IFERROR(LEN(CLEAN("one,two;three four"&CHAR(7)&"""q"""))-LEN("one,two;three four")-LEN("""q"""),"e")&""
+=SORT(TEXTSPLIT("ABC"," "),,-1)
+=IFERROR(SORT(TEXTSPLIT("ABC"," "),,-1),"e")&""
+=LEN(CLEAN("  pad  x "&CHAR(7)&" nb sp"))-LEN("  pad  x ")-LEN(" nb sp")
+=IFERROR(LEN(CLEAN("  pad  x "&CHAR(7)&" nb sp"))-LEN("  pad  x ")-LEN(" nb sp"),"e")&""
+=LEN(REPT("日本語テキスト",0))=LEN("日本語テキスト")*0
+=IFERROR(LEN(REPT("日本語テキスト",0))=LEN("日本語テキスト")*0,"e")&""
+=SUBSTITUTE("ßß","a","a"&"a",4)=REPLACE("ßß",IFERROR(FIND("",SUBSTITUTE("ßß","a","",4)),1),0,IFERROR("a",""))
+=IFERROR(SUBSTITUTE("ßß","a","a"&"a",4)=REPLACE("ßß",IFERROR(FIND("",SUBSTITUTE("ßß","a","",4)),1),0,IFERROR("a","")),"e")&""
+=UNICHAR(UNICODE("straße"))=LEFT("straße",1)
+=IFERROR(UNICHAR(UNICODE("straße"))=LEFT("straße",1),"e")&""
+=LENB("Σίσυφος")-LEN("Σίσυφος")
+=IFERROR(LENB("Σίσυφος")-LEN("Σίσυφος"),"e")&""
+=TEXTJOIN("--",FALSE,TEXTSPLIT("olé olé","--"))="olé olé"
+=IFERROR(TEXTJOIN("--",FALSE,TEXTSPLIT("olé olé","--"))="olé olé","e")&""
+=VALUE(FIXED(-3883.09,3,TRUE))-ROUND(-3883.09,3)
+=IFERROR(VALUE(FIXED(-3883.09,3,TRUE))-ROUND(-3883.09,3),"e")&""
+=LEN(TRIM("  pad  x "))-LEN(SUBSTITUTE(TRIM("  pad  x ")," ",""))-(LEN(TRIM("  pad  x "))-LEN(SUBSTITUTE(TRIM("  pad  x ")," ","")))
+=IFERROR(LEN(TRIM("  pad  x "))-LEN(SUBSTITUTE(TRIM("  pad  x ")," ",""))-(LEN(TRIM("  pad  x "))-LEN(SUBSTITUTE(TRIM("  pad  x ")," ",""))),"e")&""
+=NUMBERVALUE("12,50",","," ")
+=IFERROR(NUMBERVALUE("12,50",","," "),"e")&""
+=CODE("Hello, World")-UNICODE("Hello, World")
+=IFERROR(CODE("Hello, World")-UNICODE("Hello, World"),"e")&""
+=TEXTBEFORE("true","é")&"é"&TEXTAFTER("true","é")="true"
+=IFERROR(TEXTBEFORE("true","é")&"é"&TEXTAFTER("true","é")="true","e")&""
+=TEXTBEFORE("straße",",")&","&TEXTAFTER("straße",",")="straße"
+=IFERROR(TEXTBEFORE("straße",",")&","&TEXTAFTER("straße",",")="straße","e")&""
+=NUMBERVALUE("1 234,5","."," ")
+=IFERROR(NUMBERVALUE("1 234,5","."," "),"e")&""
+=ARRAYTOTEXT(TEXTSPLIT("1e3","é"),0)
+=IFERROR(ARRAYTOTEXT(TEXTSPLIT("1e3","é"),0),"e")&""
+=TRIM(TRIM("a b  c   d"))=TRIM("a b  c   d")
+=IFERROR(TRIM(TRIM("a b  c   d"))=TRIM("a b  c   d"),"e")&""
+=FIND("""q""","x")-IFERROR(SEARCH("~"&"""q""","x"),0)
+=IFERROR(FIND("""q""","x")-IFERROR(SEARCH("~"&"""q""","x"),0),"e")&""
+=FIND("  pad  x ","x")-IFERROR(SEARCH("~"&"  pad  x ","x"),0)
+=IFERROR(FIND("  pad  x ","x")-IFERROR(SEARCH("~"&"  pad  x ","x"),0),"e")&""
+=VALUE(FIXED(2025.8,-2,TRUE))-ROUND(2025.8,-2)
+=IFERROR(VALUE(FIXED(2025.8,-2,TRUE))-ROUND(2025.8,-2),"e")&""
+=SORT(TEXTSPLIT("ßß","a"),,-1)
+=IFERROR(SORT(TEXTSPLIT("ßß","a"),,-1),"e")&""
+=TRIM(TRIM("abcabcabc"))=TRIM("abcabcabc")
+=IFERROR(TRIM(TRIM("abcabcabc"))=TRIM("abcabcabc"),"e")&""
+=VALUE(FIXED(850.1659,4,TRUE))-ROUND(850.1659,4)
+=IFERROR(VALUE(FIXED(850.1659,4,TRUE))-ROUND(850.1659,4),"e")&""
+=SORT(TEXTSPLIT("abc def","--"),,-1)
+=IFERROR(SORT(TEXTSPLIT("abc def","--"),,-1),"e")&""
+=UNICHAR(UNICODE("Hello, World"))=LEFT("Hello, World",1)
+=IFERROR(UNICHAR(UNICODE("Hello, World"))=LEFT("Hello, World",1),"e")&""
+=TEXTBEFORE("olé olé"," ")&" "&TEXTAFTER("olé olé"," ")="olé olé"
+=IFERROR(TEXTBEFORE("olé olé"," ")&" "&TEXTAFTER("olé olé"," ")="olé olé","e")&""
+=TEXTJOIN("é",FALSE,TEXTSPLIT("olé olé","é"))="olé olé"
+=IFERROR(TEXTJOIN("é",FALSE,TEXTSPLIT("olé olé","é"))="olé olé","e")&""
+=VALUETOTEXT("-3",1)&VALUETOTEXT("-3",0)
+=IFERROR(VALUETOTEXT("-3",1)&VALUETOTEXT("-3",0),"e")&""
+=VALUETOTEXT("ABC",1)&VALUETOTEXT("ABC",0)
+=IFERROR(VALUETOTEXT("ABC",1)&VALUETOTEXT("ABC",0),"e")&""
+=REPLACE("true",2,1,MID("true",2,1))="true"
+=IFERROR(REPLACE("true",2,1,MID("true",2,1))="true","e")&""
+=VALUETOTEXT("a b  c   d",1)&VALUETOTEXT("a b  c   d",0)
+=IFERROR(VALUETOTEXT("a b  c   d",1)&VALUETOTEXT("a b  c   d",0),"e")&""
+=VALUE(TEXT(VALUE("12.50"),"0.00########"))
+=IFERROR(VALUE(TEXT(VALUE("12.50"),"0.00########")),"e")&""
+=TEXTJOIN(",",FALSE,TEXTSPLIT("straße",","))="straße"
+=IFERROR(TEXTJOIN(",",FALSE,TEXTSPLIT("straße",","))="straße","e")&""
+=LEN(TRIM("ABC"))-LEN(SUBSTITUTE(TRIM("ABC")," ",""))-(LEN(TRIM("ABC"))-LEN(SUBSTITUTE(TRIM("ABC")," ","")))
+=IFERROR(LEN(TRIM("ABC"))-LEN(SUBSTITUTE(TRIM("ABC")," ",""))-(LEN(TRIM("ABC"))-LEN(SUBSTITUTE(TRIM("ABC")," ",""))),"e")&""
+=PROPER("straße")=PROPER(LOWER("straße"))
+=IFERROR(PROPER("straße")=PROPER(LOWER("straße")),"e")&""
+=NUMBERVALUE("5%",".",".")
+=IFERROR(NUMBERVALUE("5%",".","."),"e")&""
+=TEXTJOIN("é",FALSE,TEXTSPLIT("Σίσυφος","é"))="Σίσυφος"
+=IFERROR(TEXTJOIN("é",FALSE,TEXTSPLIT("Σίσυφος","é"))="Σίσυφος","e")&""
+=CODE("1e3")-UNICODE("1e3")
+=IFERROR(CODE("1e3")-UNICODE("1e3"),"e")&""
+=PROPER("éclair")=PROPER(LOWER("éclair"))
+=IFERROR(PROPER("éclair")=PROPER(LOWER("éclair")),"e")&""
+=FIXED(-3050.856,2)=TEXT(-3050.856,"#,##0"&IF(2>0,"."&REPT("0",2),""))
+=IFERROR(FIXED(-3050.856,2)=TEXT(-3050.856,"#,##0"&IF(2>0,"."&REPT("0",2),"")),"e")&""
+=FIND("ßß","1e3")-IFERROR(SEARCH("~"&"ßß","1e3"),0)
+=IFERROR(FIND("ßß","1e3")-IFERROR(SEARCH("~"&"ßß","1e3"),0),"e")&""
+=LEN(TRIM("x"))-LEN(SUBSTITUTE(TRIM("x")," ",""))-(LEN(TRIM("x"))-LEN(SUBSTITUTE(TRIM("x")," ","")))
+=IFERROR(LEN(TRIM("x"))-LEN(SUBSTITUTE(TRIM("x")," ",""))-(LEN(TRIM("x"))-LEN(SUBSTITUTE(TRIM("x")," ",""))),"e")&""
+=VALUE(TEXT(VALUE("12.50"),"0.00########"))
+=IFERROR(VALUE(TEXT(VALUE("12.50"),"0.00########")),"e")&""
+=RIGHT("éclair",1)&LEFT("éclair",LEN("éclair")-1)=LEFT("éclair",LEN("éclair")-1)&RIGHT("éclair",1)
+=IFERROR(RIGHT("éclair",1)&LEFT("éclair",LEN("éclair")-1)=LEFT("éclair",LEN("éclair")-1)&RIGHT("éclair",1),"e")&""
+=SEARCH(LOWER("  pad  x "),LOWER("İstanbul"))=SEARCH("  pad  x ","İstanbul")
+=IFERROR(SEARCH(LOWER("  pad  x "),LOWER("İstanbul"))=SEARCH("  pad  x ","İstanbul"),"e")&""
+=LEN(TEXTJOIN("",,MID("ABC",SEQUENCE(LEN("ABC")),1)))-LEN("ABC")
+=IFERROR(LEN(TEXTJOIN("",,MID("ABC",SEQUENCE(LEN("ABC")),1)))-LEN("ABC"),"e")&""
+=SEARCH(LOWER("ǅx"),LOWER("éclair"))=SEARCH("ǅx","éclair")
+=IFERROR(SEARCH(LOWER("ǅx"),LOWER("éclair"))=SEARCH("ǅx","éclair"),"e")&""
+=LEN(REPT("ABC",5))=LEN("ABC")*5
+=IFERROR(LEN(REPT("ABC",5))=LEN("ABC")*5,"e")&""
+=SEARCH(LOWER("ﬁne"),LOWER("one,two;three four"))=SEARCH("ﬁne","one,two;three four")
+=IFERROR(SEARCH(LOWER("ﬁne"),LOWER("one,two;three four"))=SEARCH("ﬁne","one,two;three four"),"e")&""
+=LEN(TRIM("12.50"))-LEN(SUBSTITUTE(TRIM("12.50")," ",""))-(LEN(TRIM("12.50"))-LEN(SUBSTITUTE(TRIM("12.50")," ","")))
+=IFERROR(LEN(TRIM("12.50"))-LEN(SUBSTITUTE(TRIM("12.50")," ",""))-(LEN(TRIM("12.50"))-LEN(SUBSTITUTE(TRIM("12.50")," ",""))),"e")&""
+=SORT(TEXTSPLIT("ǅx","--"),,-1)
+=IFERROR(SORT(TEXTSPLIT("ǅx","--"),,-1),"e")&""
+=SEARCH(LOWER("😀 smile"),LOWER(" nb sp"))=SEARCH("😀 smile"," nb sp")
+=IFERROR(SEARCH(LOWER("😀 smile"),LOWER(" nb sp"))=SEARCH("😀 smile"," nb sp"),"e")&""
+=UNICHAR(UNICODE("A1b2C3"))=LEFT("A1b2C3",1)
+=IFERROR(UNICHAR(UNICODE("A1b2C3"))=LEFT("A1b2C3",1),"e")&""
+=TEXTAFTER("straße","--",-1)&"|"&TEXTBEFORE("straße","--",-1)&"|"&TEXTAFTER("straße","--",3,0,1,"na")
+=IFERROR(TEXTAFTER("straße","--",-1)&"|"&TEXTBEFORE("straße","--",-1)&"|"&TEXTAFTER("straße","--",3,0,1,"na"),"e")&""
+=LEN(CLEAN("1e3"&CHAR(7)&"""q"""))-LEN("1e3")-LEN("""q""")
+=IFERROR(LEN(CLEAN("1e3"&CHAR(7)&"""q"""))-LEN("1e3")-LEN("""q"""),"e")&""
+=LEN(TEXTJOIN("",,MID("A1b2C3",SEQUENCE(LEN("A1b2C3")),1)))-LEN("A1b2C3")
+=IFERROR(LEN(TEXTJOIN("",,MID("A1b2C3",SEQUENCE(LEN("A1b2C3")),1)))-LEN("A1b2C3"),"e")&""
+=EXACT("ÀÉÎ",UPPER("ÀÉÎ"))=("ÀÉÎ"=UPPER("ÀÉÎ"))*0+EXACT("ÀÉÎ",UPPER("ÀÉÎ"))
+=IFERROR(EXACT("ÀÉÎ",UPPER("ÀÉÎ"))=("ÀÉÎ"=UPPER("ÀÉÎ"))*0+EXACT("ÀÉÎ",UPPER("ÀÉÎ")),"e")&""
+=FIND("日本語テキスト","""q""")-IFERROR(SEARCH("~"&"日本語テキスト","""q"""),0)
+=IFERROR(FIND("日本語テキスト","""q""")-IFERROR(SEARCH("~"&"日本語テキスト","""q"""),0),"e")&""
+=SEARCH(LOWER("abcabcabc"),LOWER("1e3"))=SEARCH("abcabcabc","1e3")
+=IFERROR(SEARCH(LOWER("abcabcabc"),LOWER("1e3"))=SEARCH("abcabcabc","1e3"),"e")&""
+=VALUETOTEXT("A1b2C3",1)&VALUETOTEXT("A1b2C3",0)
+=IFERROR(VALUETOTEXT("A1b2C3",1)&VALUETOTEXT("A1b2C3",0),"e")&""
+=CONCAT("straße","İstanbul")="straße"&"İstanbul"
+=IFERROR(CONCAT("straße","İstanbul")="straße"&"İstanbul","e")&""
+=LENB("1e3")-LEN("1e3")
+=IFERROR(LENB("1e3")-LEN("1e3"),"e")&""
+=UNICHAR(UNICODE("1e3"))=LEFT("1e3",1)
+=IFERROR(UNICHAR(UNICODE("1e3"))=LEFT("1e3",1),"e")&""
+=VALUE(FIXED(-3687.0,5,TRUE))-ROUND(-3687.0,5)
+=IFERROR(VALUE(FIXED(-3687.0,5,TRUE))-ROUND(-3687.0,5),"e")&""
+=TEXTAFTER("ÀÉÎ",";",-1)&"|"&TEXTBEFORE("ÀÉÎ",";",-1)&"|"&TEXTAFTER("ÀÉÎ",";",1,0,1,"na")
+=IFERROR(TEXTAFTER("ÀÉÎ",";",-1)&"|"&TEXTBEFORE("ÀÉÎ",";",-1)&"|"&TEXTAFTER("ÀÉÎ",";",1,0,1,"na"),"e")&""
+=RIGHT("abcabcabc",3)&LEFT("abcabcabc",LEN("abcabcabc")-3)=LEFT("abcabcabc",LEN("abcabcabc")-3)&RIGHT("abcabcabc",3)
+=IFERROR(RIGHT("abcabcabc",3)&LEFT("abcabcabc",LEN("abcabcabc")-3)=LEFT("abcabcabc",LEN("abcabcabc")-3)&RIGHT("abcabcabc",3),"e")&""
+=RIGHT("12.50",1)&LEFT("12.50",LEN("12.50")-1)=LEFT("12.50",LEN("12.50")-1)&RIGHT("12.50",1)
+=IFERROR(RIGHT("12.50",1)&LEFT("12.50",LEN("12.50")-1)=LEFT("12.50",LEN("12.50")-1)&RIGHT("12.50",1),"e")&""
+=TEXTJOIN(";",FALSE,TEXTSPLIT("-3",";"))="-3"
+=IFERROR(TEXTJOIN(";",FALSE,TEXTSPLIT("-3",";"))="-3","e")&""
+=TRIM(TRIM("ßß"))=TRIM("ßß")
+=IFERROR(TRIM(TRIM("ßß"))=TRIM("ßß"),"e")&""
+=CONCAT("olé olé","a b  c   d")="olé olé"&"a b  c   d"
+=IFERROR(CONCAT("olé olé","a b  c   d")="olé olé"&"a b  c   d","e")&""
+=UPPER(LOWER(UPPER("İstanbul")))=UPPER("İstanbul")
+=IFERROR(UPPER(LOWER(UPPER("İstanbul")))=UPPER("İstanbul"),"e")&""
+=TEXTBEFORE("abcabcabc",",")&","&TEXTAFTER("abcabcabc",",")="abcabcabc"
+=IFERROR(TEXTBEFORE("abcabcabc",",")&","&TEXTAFTER("abcabcabc",",")="abcabcabc","e")&""
+=REPLACE("ßß",6,5,MID("ßß",6,5))="ßß"
+=IFERROR(REPLACE("ßß",6,5,MID("ßß",6,5))="ßß","e")&""
+=LENB("Σίσυφος")-LEN("Σίσυφος")
+=IFERROR(LENB("Σίσυφος")-LEN("Σίσυφος"),"e")&""
+=SEARCH(LOWER("abcabcabc"),LOWER("a--b--c"))=SEARCH("abcabcabc","a--b--c")
+=IFERROR(SEARCH(LOWER("abcabcabc"),LOWER("a--b--c"))=SEARCH("abcabcabc","a--b--c"),"e")&""
+=NUMBERVALUE("(3)",".",",")
+=IFERROR(NUMBERVALUE("(3)",".",","),"e")&""
+=MID("x",4,2)=MID("x",4,0)*0+MID("x",4,1)
+=IFERROR(MID("x",4,2)=MID("x",4,0)*0+MID("x",4,1),"e")&""
+=TEXTAFTER("straße","a",-1)&"|"&TEXTBEFORE("straße","a",-1)&"|"&TEXTAFTER("straße","a",2,0,1,"na")
+=IFERROR(TEXTAFTER("straße","a",-1)&"|"&TEXTBEFORE("straße","a",-1)&"|"&TEXTAFTER("straße","a",2,0,1,"na"),"e")&""
+=LENB("abcabcabc")-LEN("abcabcabc")
+=IFERROR(LENB("abcabcabc")-LEN("abcabcabc"),"e")&""
+=NUMBERVALUE("1.234,5",".",".")
+=IFERROR(NUMBERVALUE("1.234,5",".","."),"e")&""
+=VALUE(FIXED(-4444.35948,2,TRUE))-ROUND(-4444.35948,2)
+=IFERROR(VALUE(FIXED(-4444.35948,2,TRUE))-ROUND(-4444.35948,2),"e")&""
+=LEN(TRIM("straße"))-LEN(SUBSTITUTE(TRIM("straße")," ",""))-(LEN(TRIM("straße"))-LEN(SUBSTITUTE(TRIM("straße")," ","")))
+=IFERROR(LEN(TRIM("straße"))-LEN(SUBSTITUTE(TRIM("straße")," ",""))-(LEN(TRIM("straße"))-LEN(SUBSTITUTE(TRIM("straße")," ",""))),"e")&""
+=CODE("one,two;three four")-UNICODE("one,two;three four")
+=IFERROR(CODE("one,two;three four")-UNICODE("one,two;three four"),"e")&""
+=NUMBERVALUE("5%",".",".")
+=IFERROR(NUMBERVALUE("5%",".","."),"e")&""
+=PROPER("ÀÉÎ")=PROPER(LOWER("ÀÉÎ"))
+=IFERROR(PROPER("ÀÉÎ")=PROPER(LOWER("ÀÉÎ")),"e")&""
+=LEN(TRIM("-3"))-LEN(SUBSTITUTE(TRIM("-3")," ",""))-(LEN(TRIM("-3"))-LEN(SUBSTITUTE(TRIM("-3")," ","")))
+=IFERROR(LEN(TRIM("-3"))-LEN(SUBSTITUTE(TRIM("-3")," ",""))-(LEN(TRIM("-3"))-LEN(SUBSTITUTE(TRIM("-3")," ",""))),"e")&""
+=LENB("12.50")-LEN("12.50")
+=IFERROR(LENB("12.50")-LEN("12.50"),"e")&""
+=LENB("one,two;three four")-LEN("one,two;three four")
+=IFERROR(LENB("one,two;three four")-LEN("one,two;three four"),"e")&""
+=SEARCH(LOWER("x"),LOWER("olé olé"))=SEARCH("x","olé olé")
+=IFERROR(SEARCH(LOWER("x"),LOWER("olé olé"))=SEARCH("x","olé olé"),"e")&""
+=LENB(" nb sp")-LEN(" nb sp")
+=IFERROR(LENB(" nb sp")-LEN(" nb sp"),"e")&""
+=SUBSTITUTE("ÀÉÎ",";",";"&";",5)=REPLACE("ÀÉÎ",IFERROR(FIND("",SUBSTITUTE("ÀÉÎ",";","",5)),1),0,IFERROR(";",""))
+=IFERROR(SUBSTITUTE("ÀÉÎ",";",";"&";",5)=REPLACE("ÀÉÎ",IFERROR(FIND("",SUBSTITUTE("ÀÉÎ",";","",5)),1),0,IFERROR(";","")),"e")&""
+=COLUMNS(TEXTSPLIT("abc def",","))-((LEN("abc def")-LEN(SUBSTITUTE("abc def",",","")))/LEN(",")+1)
+=IFERROR(COLUMNS(TEXTSPLIT("abc def",","))-((LEN("abc def")-LEN(SUBSTITUTE("abc def",",","")))/LEN(",")+1),"e")&""
+=TRIM(TRIM("éclair"))=TRIM("éclair")
+=IFERROR(TRIM(TRIM("éclair"))=TRIM("éclair"),"e")&""
+=REPLACE("12.50",3,2,MID("12.50",3,2))="12.50"
+=IFERROR(REPLACE("12.50",3,2,MID("12.50",3,2))="12.50","e")&""
+=PROPER("ǅx")=PROPER(LOWER("ǅx"))
+=IFERROR(PROPER("ǅx")=PROPER(LOWER("ǅx")),"e")&""
+=MID("éclair",2,1)=MID("éclair",2,0)*0+MID("éclair",2,1)
+=IFERROR(MID("éclair",2,1)=MID("éclair",2,0)*0+MID("éclair",2,1),"e")&""
+=VALUETOTEXT("olé olé",1)&VALUETOTEXT("olé olé",0)
+=IFERROR(VALUETOTEXT("olé olé",1)&VALUETOTEXT("olé olé",0),"e")&""
+=TEXTJOIN(" ",FALSE,TEXTSPLIT("a b  c   d"," "))="a b  c   d"
+=IFERROR(TEXTJOIN(" ",FALSE,TEXTSPLIT("a b  c   d"," "))="a b  c   d","e")&""
+=CODE("ÀÉÎ")-UNICODE("ÀÉÎ")
+=IFERROR(CODE("ÀÉÎ")-UNICODE("ÀÉÎ"),"e")&""
+=FIXED(472.0,2)=TEXT(472.0,"#,##0"&IF(2>0,"."&REPT("0",2),""))
+=IFERROR(FIXED(472.0,2)=TEXT(472.0,"#,##0"&IF(2>0,"."&REPT("0",2),"")),"e")&""
+=NUMBERVALUE("(3)",".",".")
+=IFERROR(NUMBERVALUE("(3)",".","."),"e")&""
+=SORT(TEXTSPLIT("ABC",";"),,-1)
+=IFERROR(SORT(TEXTSPLIT("ABC",";"),,-1),"e")&""
+=TEXTBEFORE("😀 smile","--")&"--"&TEXTAFTER("😀 smile","--")="😀 smile"
+=IFERROR(TEXTBEFORE("😀 smile","--")&"--"&TEXTAFTER("😀 smile","--")="😀 smile","e")&""
+=REPLACE("日本語テキスト",4,3,MID("日本語テキスト",4,3))="日本語テキスト"
+=IFERROR(REPLACE("日本語テキスト",4,3,MID("日本語テキスト",4,3))="日本語テキスト","e")&""
+=LEN(CLEAN("one,two;three four"&CHAR(7)&"ÀÉÎ"))-LEN("one,two;three four")-LEN("ÀÉÎ")
+=IFERROR(LEN(CLEAN("one,two;three four"&CHAR(7)&"ÀÉÎ"))-LEN("one,two;three four")-LEN("ÀÉÎ"),"e")&""
+=RIGHT("straße",0)&LEFT("straße",LEN("straße")-0)=LEFT("straße",LEN("straße")-0)&RIGHT("straße",0)
+=IFERROR(RIGHT("straße",0)&LEFT("straße",LEN("straße")-0)=LEFT("straße",LEN("straße")-0)&RIGHT("straße",0),"e")&""
+=FIND("ABC","one,two;three four")-IFERROR(SEARCH("~"&"ABC","one,two;three four"),0)
+=IFERROR(FIND("ABC","one,two;three four")-IFERROR(SEARCH("~"&"ABC","one,two;three four"),0),"e")&""
+=CONCAT("İstanbul","日本語テキスト")="İstanbul"&"日本語テキスト"
+=IFERROR(CONCAT("İstanbul","日本語テキスト")="İstanbul"&"日本語テキスト","e")&""
+=SORT(TEXTSPLIT("A1b2C3",";"),,-1)
+=IFERROR(SORT(TEXTSPLIT("A1b2C3",";"),,-1),"e")&""
+=ARRAYTOTEXT(TEXTSPLIT("a--b--c","a"),0)
+=IFERROR(ARRAYTOTEXT(TEXTSPLIT("a--b--c","a"),0),"e")&""
+=VALUE(FIXED(3763.06755,5,TRUE))-ROUND(3763.06755,5)
+=IFERROR(VALUE(FIXED(3763.06755,5,TRUE))-ROUND(3763.06755,5),"e")&""
+=LENB("abcabcabc")-LEN("abcabcabc")
+=IFERROR(LENB("abcabcabc")-LEN("abcabcabc"),"e")&""
+=CODE(" nb sp")-UNICODE(" nb sp")
+=IFERROR(CODE(" nb sp")-UNICODE(" nb sp"),"e")&""
+=LEN(REPT("1e3",0))=LEN("1e3")*0
+=IFERROR(LEN(REPT("1e3",0))=LEN("1e3")*0,"e")&""
+=SORT(TEXTSPLIT("true"," "),,-1)
+=IFERROR(SORT(TEXTSPLIT("true"," "),,-1),"e")&""

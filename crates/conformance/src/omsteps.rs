@@ -9,6 +9,7 @@ use super::{Outcome, Tally};
 
 thread_local! {
     static SHEETS_IN_NEW: std::cell::Cell<u32> = const { std::cell::Cell::new(1) };
+    static FRESH_SHEET_BASE: std::cell::Cell<u32> = const { std::cell::Cell::new(2) };
 }
 
 pub struct OmSession {
@@ -85,9 +86,20 @@ fn decode(j: &J, session: &mut OmSession) -> Result<Variant, Fail> {
 
         J::String(s) => Ok(Variant::Bstr(match s.strip_prefix("@repo/") {
             Some(rest) => super::root().join(rest).to_string_lossy().to_string(),
-            None => s.clone(),
+            None => out_backslashes(s),
         })),
-        J::Array(_) => Err(Fail::hr(0x8002_0006)),
+
+        J::Array(items) => {
+            let data = items
+                .iter()
+                .map(|i| decode(i, session))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(Variant::Array(Box::new(SafeArray {
+                elem: VarType::Variant,
+                bounds: vec![(0, data.len() as u32)],
+                data,
+            })))
+        }
         J::Object(o) => {
             if o.get("missing").is_some() {
                 return Ok(Variant::Error(HResult::DISP_E_PARAMNOTFOUND.0));
@@ -125,6 +137,10 @@ fn decode(j: &J, session: &mut OmSession) -> Result<Variant, Fail> {
                 "I2" => Variant::I2(int(v) as i16),
                 "I4" => Variant::I4(int(v) as i32),
                 "UI1" => Variant::Ui1(int(v) as u8),
+
+                "VT_22" => {
+                    Variant::Int(o.get("raw").and_then(J::as_str).and_then(hex).unwrap_or(0) as i32)
+                }
                 "I8" => Variant::I8(int(v)),
                 "R4" => Variant::R4(match bits {
                     Some(b) => f32::from_bits(b as u32),
@@ -320,6 +336,7 @@ fn parse_args(body: &str) -> Option<Vec<Variant>> {
             i += 1;
         }
         match chars.get(i) {
+            Some(',') if chars[i + 1..].iter().all(|&c| c == ' ') => return None,
             Some(',') => i += 1,
             None => {}
             Some(_) => return None,
@@ -331,6 +348,10 @@ fn parse_args(body: &str) -> Option<Vec<Variant>> {
 impl OmSession {
     pub fn set_sheets_in_new(n: u32) {
         SHEETS_IN_NEW.with(|c| c.set(n));
+    }
+
+    pub fn set_fresh_sheet_base(n: u32) {
+        FRESH_SHEET_BASE.with(|c| c.set(n));
     }
 
     pub fn new(wb: &mut Workbook) -> OmSession {
@@ -352,7 +373,7 @@ impl OmSession {
         app.swap_engine(book, wb);
 
         if fresh && sheets >= 2 {
-            app.set_next_sheet_number(book, sheets + 2);
+            app.set_next_sheet_number(book, sheets + FRESH_SHEET_BASE.with(std::cell::Cell::get));
         }
 
         app.set_sheets_in_new_workbook(SHEETS_IN_NEW.with(std::cell::Cell::get));
@@ -480,7 +501,7 @@ pub fn call_args(
     let result = (|| {
         let target = session
             .eval_path(path)
-            .map_err(|f| format!("path {path}: {}", hr_text(f.hr)))?;
+            .map_err(|f| format!("path {path}: {}", error_code_text(f.hr)))?;
         let mut values = Vec::new();
         for a in args {
             values.push(match a {
@@ -489,7 +510,7 @@ pub fn call_args(
                 Arg::Path(p) => session
                     .eval_path(p)
                     .map(|id| Variant::Dispatch(Some(id)))
-                    .map_err(|f| format!("path {p}: {}", hr_text(f.hr)))?,
+                    .map_err(|f| format!("path {p}: {}", error_code_text(f.hr)))?,
             });
         }
         let call = Call {
@@ -525,7 +546,7 @@ pub fn verdict(tally: &mut Tally, op: &str, rec: &J, n: usize, err: Option<Strin
     });
 }
 
-fn hr_text(hr: i32) -> String {
+fn error_code_text(hr: i32) -> String {
     format!("{:08X}", hr as u32)
 }
 
@@ -622,8 +643,8 @@ impl OmSession {
             (Err(e), None) => Err(format!(
                 "Excel returned {}, xlcalc failed {} scode {}",
                 short_json(&rec["result"]),
-                hr_text(e.hr),
-                hr_text(e.scode)
+                error_code_text(e.hr),
+                error_code_text(e.scode)
             )),
             (Err(e), Some(f)) => {
                 let want_hr = hex_i32(&f["hr"]).unwrap_or(0);
@@ -637,11 +658,11 @@ impl OmSession {
                 } else {
                     Err(format!(
                         "Excel failed {} scode {} arg {:?}, xlcalc failed {} scode {} arg {:?}",
-                        hr_text(want_hr),
-                        hr_text(want_scode),
+                        error_code_text(want_hr),
+                        error_code_text(want_scode),
                         want_arg,
-                        hr_text(e.hr),
-                        hr_text(e.scode),
+                        error_code_text(e.hr),
+                        error_code_text(e.scode),
                         e.arg_err
                     ))
                 }
@@ -674,7 +695,7 @@ impl OmSession {
                     rec["fail"]["hr"]
                 ));
             }
-            (Err(e), Some(_)) => return Err(format!("xlcalc failed {}", hr_text(e.hr))),
+            (Err(e), Some(_)) => return Err(format!("xlcalc failed {}", error_code_text(e.hr))),
             (Err(_), None) => return Ok(()),
         };
         let mut result = if items.len() == want.len() {
@@ -988,4 +1009,19 @@ impl OmSession {
         self.app.swap_engine(self.book, wb);
         outcome
     }
+}
+
+fn out_backslashes(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(i) = rest.find("@out/") {
+        out.push_str(&rest[..i]);
+        out.push_str("@out\\");
+        rest = &rest[i + 5..];
+        let end = rest.find(['\'', '"']).unwrap_or(rest.len());
+        out.push_str(&rest[..end].replace('/', "\\"));
+        rest = &rest[end..];
+    }
+    out.push_str(rest);
+    out
 }

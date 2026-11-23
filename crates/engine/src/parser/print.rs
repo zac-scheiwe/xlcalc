@@ -347,7 +347,10 @@ fn sheet_char_plain(c: char, first: bool) -> bool {
 
 pub fn bare_sheet_name_ok(name: &str) -> bool {
     !name.is_empty()
-        && name.chars().all(bare_sheet_char)
+        && name
+            .chars()
+            .enumerate()
+            .all(|(i, c)| bare_sheet_char(c) || (i > 0 && c == '?'))
         && !name.eq_ignore_ascii_case("true")
         && !name.eq_ignore_ascii_case("false")
         && !super::starts_like_r1c1(name)
@@ -389,6 +392,10 @@ pub fn sheet_spec_text(spec: &SheetSpec) -> String {
             } else {
                 format!("'{}'!", combined.replace('\'', "''"))
             }
+        }
+
+        SheetSpec::External { book, sheet: None } if book.bytes().all(|b| b.is_ascii_digit()) => {
+            format!("[{book}]")
         }
         SheetSpec::External { book, sheet } => {
             let s = sheet.as_deref().unwrap_or("");
@@ -486,6 +493,14 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
         Expr::Text(t) => s.push_str(&text_literal(t)),
         Expr::Bool(b) => s.push_str(if *b { "TRUE" } else { "FALSE" }),
         Expr::Error(err) => s.push_str(err.as_str()),
+        Expr::DeadRef(sp) => {
+            s.push_str(&sheet_spec_text(sp));
+            s.push_str("#REF!");
+        }
+        Expr::DeadTable { sheet, text } => {
+            s.push_str(&sheet_spec_text(sheet));
+            s.push_str(text);
+        }
         Expr::Array(rows) => write_items(s, rows),
         Expr::Ref { sheet, kind } => {
             if let Some(sp) = sheet {
@@ -561,6 +576,7 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
         Expr::Binary { op, left, right } => {
             let mark = |s: &mut String, e: &Expr| {
                 if *op == BinOp::Range
+                    && !ends_with_ws(left)
                     && matches!(&**left, Expr::Name { .. })
                     && matches!(e, Expr::Name { sheet: None, name }
                         if crate::address::letters_to_col(name).is_some()
@@ -583,7 +599,7 @@ fn write_expr_inner(s: &mut String, e: &Expr) {
             write_expr(s, x);
             s.push(')');
         }
-        Expr::Missing => {}
+        Expr::Missing | Expr::Unwritten => {}
         Expr::Ws {
             before,
             after,

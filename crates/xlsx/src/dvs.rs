@@ -4,7 +4,7 @@ use xlcalc::cfv::Dv;
 use xlcalc::{Rect, SheetId, Workbook};
 
 const KINDS: [&str; 8] = [
-    "any",
+    "none",
     "whole",
     "decimal",
     "list",
@@ -51,10 +51,10 @@ pub(crate) fn read(sheet: &Node) -> Vec<DvDef> {
     };
     d.children("dataValidation")
         .filter_map(|v| {
-            let kind = KINDS.iter().position(|k| Some(*k) == v.attr("type"))? as i32;
-            if kind == 0 {
-                return None;
-            }
+            let kind = KINDS
+                .iter()
+                .position(|k| *k == v.attr("type").unwrap_or("none"))?
+                as i32;
             let applies: Vec<Rect> = v
                 .attr("sqref")?
                 .split_whitespace()
@@ -130,7 +130,6 @@ pub(crate) fn apply(wb: &mut Workbook, sheet: SheetId, defs: &[DvDef]) {
             input_message: d.input_message.clone(),
             error_title: d.error_title.clone(),
             error_message: d.error_message.clone(),
-            touched: false,
         });
     }
 }
@@ -147,23 +146,24 @@ pub(crate) fn write(wb: &Workbook, sheet: SheetId) -> Option<String> {
     let dvs = &wb.cfv_sheet(sheet)?.dvs;
     let dvs: Vec<&Dv> = dvs
         .iter()
-        .filter(|d| (1..=7).contains(&d.kind) && !d.applies.is_empty())
+        .filter(|d| (0..=7).contains(&d.kind) && !d.applies.is_empty())
         .collect();
     if dvs.is_empty() {
         return None;
     }
     let mut x = format!("<dataValidations count=\"{}\">", dvs.len());
     for d in dvs {
-        x.push_str(&format!(
-            "<dataValidation type=\"{}\"",
-            KINDS[d.kind as usize]
-        ));
+        x.push_str("<dataValidation");
+        if d.kind != 0 {
+            x.push_str(&format!(" type=\"{}\"", KINDS[d.kind as usize]));
+        }
         match d.alert {
             2 => x.push_str(" errorStyle=\"warning\""),
             3 => x.push_str(" errorStyle=\"information\""),
             _ => {}
         }
-        if d.op != 1 && d.kind != 3 && d.kind != 7 {
+
+        if d.op != 1 {
             if let Some(o) = OPS.get((d.op - 1) as usize) {
                 x.push_str(&format!(" operator=\"{o}\""));
             }

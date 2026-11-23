@@ -1,0 +1,316 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "sty9"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    {
+     "missing": true
+    },
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    {
+     "missing": true
+    },
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    null,
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    null,
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "x",
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    true,
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    ""
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "sty9",
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "a",
+    "Normal"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "b",
+    "nonexistent"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "c",
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    1
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    1.5
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    "c d"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    {
+     "missing": true
+    },
+    "Normal"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    {
+     "missing": true
+    },
+    "nonexistent"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    {
+     "missing": true
+    },
+    null
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Styles",
+   "call": "Add",
+   "args": [
+    null,
+    null
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Styles",
+   "prop": "Count"
+  }
+ ]
+}

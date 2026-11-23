@@ -242,10 +242,10 @@ pub fn export_csv(wb: &Workbook, sheet: SheetId, file_format: i32) -> Result<Vec
         return Err(format!("not a CSV format: {file_format}"));
     }
     let mut out = String::new();
-    if let Some(Rect { r1, c1, .. }) = wb.used_range(sheet) {
-        for r in 0..=r1 {
-            for c in 0..=c1 {
-                if c > 0 {
+    if let Some(Rect { r0, c0, r1, c1 }) = wb.used_range(sheet) {
+        for r in r0..=r1 {
+            for c in c0..=c1 {
+                if c > c0 {
                     out.push(',');
                 }
                 let mut t = cell_text(wb, CellAddr::new(sheet, r, c));

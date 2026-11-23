@@ -6,7 +6,9 @@ mod codelen;
 mod dbnum;
 pub(crate) mod decimal;
 mod displayed;
+mod fracden;
 pub(crate) use displayed::EditClass;
+pub(crate) mod fillfmt;
 mod general;
 mod locales;
 mod locales_more;
@@ -14,7 +16,10 @@ mod parse;
 mod readback;
 mod render;
 
-pub use general::{format_general_cell, format_general_width, TEXT_GENERAL_WIDTH};
+pub use general::{
+    format_general_cell, format_general_cell_by, format_general_width, general_best_fit,
+    general_display_flag, TEXT_GENERAL_WIDTH,
+};
 pub(crate) use readback::{
     digits_with_date, format_key, quote_ampm, readback_spelling, spelled_for_parse,
     typed_elapsed_ok,
@@ -92,6 +97,16 @@ impl Cmp {
     }
 }
 
+pub(crate) struct NumberHeader {
+    pub(crate) scientific: bool,
+
+    pub(crate) frac_digits: usize,
+
+    pub(crate) grouping: bool,
+
+    pub(crate) scale: i32,
+}
+
 #[derive(Clone, Debug)]
 pub struct NumberFormat {
     pub(crate) sections: Vec<parse::Section>,
@@ -124,6 +139,24 @@ impl NumberFormat {
         }
     }
 
+    pub(crate) fn number_header(&self) -> Option<NumberHeader> {
+        match &self.sections.first()?.body {
+            parse::Body::Number(l) if l.n_int + l.n_frac > 0 => Some(NumberHeader {
+                scientific: false,
+                frac_digits: l.n_frac,
+                grouping: l.grouping,
+                scale: l.scale,
+            }),
+            parse::Body::Sci(l) if l.n_int + l.n_frac > 0 => Some(NumberHeader {
+                scientific: true,
+                frac_digits: l.n_frac,
+                grouping: l.grouping,
+                scale: 0,
+            }),
+            _ => None,
+        }
+    }
+
     pub fn format_number(&self, x: f64, loc: &Locale, ds: DateSystem) -> Result<Rendered, XlError> {
         render::render_number(self, x, loc, ds)
     }
@@ -139,6 +172,10 @@ impl NumberFormat {
         ds: DateSystem,
     ) -> Result<Rendered, XlError> {
         render::with_cell_marks(|| render::render_number(self, x, loc, ds))
+    }
+
+    pub(crate) fn format_cell_text(&self, s: &str, loc: &Locale) -> Result<Rendered, XlError> {
+        render::with_cell_marks(|| render::render_text(self, s, loc))
     }
 
     pub fn format_vba(&self, x: f64, loc: &Locale) -> Result<Rendered, XlError> {

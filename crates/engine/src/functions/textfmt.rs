@@ -77,19 +77,7 @@ fn text_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         Ok(f) => f,
         Err(e) => return err(e),
     };
-
-    let lower = code.to_ascii_lowercase();
-    let spelled = crate::numfmt::readback_spelling(&code);
-    let f = if lower.contains("am/pm")
-        && lower.contains('[')
-        && !lower.contains("hhh")
-        && spelled != crate::numfmt::spelled_for_parse(&code)
-    {
-        NumberFormat::parse(&spelled).unwrap_or(f)
-    } else {
-        f
-    };
-    match f.format(&v, &ctx.wb.locale, ctx.wb.settings.date_system) {
+    match f.format(&v, ctx.locale, ctx.wb.settings.date_system) {
         Ok(r) => limited(r.text, MAX_FORMATTED, XlError::VALUE),
         Err(e) => err(e),
     }
@@ -122,7 +110,7 @@ fn fixed(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             Some(v) => boolean(v)?,
         };
         let d = d?;
-        let (body, zero) = fixed_text(x, d, !no_commas, &ctx.wb.locale);
+        let (body, zero) = fixed_text(x, d, !no_commas, ctx.locale);
         let s = if x < 0.0 && !zero {
             format!("-{body}")
         } else {
@@ -136,7 +124,7 @@ fn dollar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let d = decimals_arg(ctx, a, 0.0)?;
-        let loc = &ctx.wb.locale;
+        let loc = ctx.locale;
         let (body, zero) = fixed_text(x, d, true, loc);
 
         let negative = x < 0.0 && !(d < 0 && zero);

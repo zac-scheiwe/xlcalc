@@ -1,0 +1,11 @@
+{"sheets":["Sheet1"],"fresh_excel":true,"steps":[{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Name","value":"Calibri"},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Size","value":11},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Bold","value":false},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Italic","value":false},
+{"op":"om_put","path":"ActiveWindow","prop":"Zoom","value":150},
+{"op":"om_put","path":"Worksheets('Sheet1').Range('B28')","prop":"Value2","value":"x"},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Name","value":"Arial"},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Size","value":10},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Bold","value":false},
+{"op":"om_put","path":"ActiveWorkbook.Styles('Normal').Font","prop":"Italic","value":false},
+{"op":"om_get","path":"Worksheets('Sheet1')","prop":"StandardHeight"}]}

@@ -15,6 +15,14 @@ pub fn format_general_width(x: f64, width: usize) -> String {
 }
 
 pub fn format_general_cell(x: f64, chars: usize) -> Option<String> {
+    format_general_cell_by(x, chars, None)
+}
+
+pub fn format_general_cell_by(
+    x: f64,
+    chars: usize,
+    sci_fits: Option<&dyn Fn(&str) -> bool>,
+) -> Option<String> {
     if x == 0.0 || !x.is_finite() {
         return (chars >= 1).then(|| "0".to_string());
     }
@@ -28,7 +36,10 @@ pub fn format_general_cell(x: f64, chars: usize) -> Option<String> {
     let d = Dec::from_f64(x.abs());
     let sci = (w >= 5)
         .then(|| scientific(&d, w))
-        .filter(|s| s.len() as i32 <= w);
+        .filter(|s| match sci_fits {
+            Some(f) => f(&if neg { format!("-{s}") } else { s.clone() }),
+            None => s.len() as i32 <= w,
+        });
     let body = match (fixed(&d, w), sci) {
         (Some((s, exact)), Some(sci)) if !exact && d.exp < 0 => {
             let exp_len = if d.exp.abs() >= 99 { 3 } else { 2 };
@@ -128,9 +139,216 @@ fn general_body(d: &Dec, w: i32) -> String {
     scientific(d, w)
 }
 
+pub const GEN_SCI_FLAG: u32 = 0x8000;
+
+fn general_number_text(dig: &[u8], exp: i32, w: i32, flag: &mut u32) -> String {
+    let mut buf = [0u8; 40];
+    buf[..dig.len()].copy_from_slice(dig);
+    let mut nsig = dig.len() as i32;
+    let mut e = if nsig != 0 { exp } else { 1 };
+
+    let (mut fixed, mut forced) = (false, false);
+    if (-3..=4).contains(&e) && w < 5 {
+        fixed = true;
+        forced = true;
+    } else if e <= w && ((w - 2 + e > 0 && (e > -4 || nsig <= w - 2 + e)) || w < 5) {
+        fixed = true;
+    }
+
+    let mut keep = if fixed {
+        if e == 0 && w == 1 {
+            0
+        } else {
+            let point = if e >= w {
+                0
+            } else if e < 1 {
+                2 - e
+            } else {
+                1
+            };
+            w - point
+        }
+    } else if w < 7 {
+        1
+    } else {
+        w - if (-97..100).contains(&e) { 5 } else { 6 }
+    };
+    let mut fixed_out = true;
+    if keep < nsig {
+        if keep == 0 {
+            if buf[0] < 5 {
+                e = 1;
+                nsig = 0;
+            } else {
+                buf[0] = 1;
+                e += 1;
+                nsig = 1;
+            }
+        } else if keep < 1 {
+            e = 1;
+            nsig = 0;
+        } else {
+            let mut j = keep as usize;
+            let mut carried_out = false;
+            if buf[j] >= 5 {
+                loop {
+                    buf[j - 1] += 1;
+                    if buf[j - 1] != 10 {
+                        break;
+                    }
+                    j -= 1;
+                    if j == 0 {
+                        carried_out = true;
+                        break;
+                    }
+                }
+            }
+            if carried_out {
+                buf[0] = 1;
+                e += 1;
+                nsig = 1;
+            } else {
+                keep = if buf[keep as usize] >= 5 {
+                    j as i32
+                } else {
+                    keep
+                };
+                while keep > 1 && buf[keep as usize - 1] == 0 {
+                    keep -= 1;
+                }
+                nsig = keep;
+            }
+        }
+        fixed_out = e <= w || forced;
+    }
+    if fixed && fixed_out {
+        if nsig <= e {
+            return (0..e.max(1))
+                .map(|i| if i < nsig { buf[i as usize] } else { 0 })
+                .map(|d| (b'0' + d) as char)
+                .collect();
+        }
+        *flag = (nsig - e) as u32;
+        let digits = |r: std::ops::Range<i32>| -> String {
+            r.map(|i| (b'0' + buf[i as usize]) as char).collect()
+        };
+        return if e > 0 {
+            format!("{}.{}", digits(0..e), digits(e..nsig))
+        } else {
+            format!("0.{}{}", "0".repeat((-e) as usize), digits(0..nsig))
+        };
+    }
+
+    *flag = GEN_SCI_FLAG;
+    let mut out = String::new();
+    out.push((b'0' + buf[0]) as char);
+    if nsig > 1 {
+        *flag = (nsig as u32 - 1) | GEN_SCI_FLAG;
+        out.push('.');
+        out.extend((1..nsig as usize).map(|i| (b'0' + buf[i]) as char));
+    }
+    let x = e - 1;
+    out.push('E');
+    out.push(if x < 0 { '-' } else { '+' });
+    out.push_str(&format!("{:02}", x.abs()));
+    out
+}
+
+pub fn general_best_fit(x: f64, start: i32, flag: &mut u32) -> String {
+    general_fgen(x, start.clamp(1, 11), true, flag)
+}
+
+pub fn general_display_flag(x: f64, w: i32, flag: &mut u32) {
+    if w >= 1 && x != 0.0 && x.is_finite() {
+        general_fgen(x, w.min(11), false, flag);
+    }
+}
+
+fn general_fgen(x: f64, start: i32, best_fit: bool, flag: &mut u32) -> String {
+    let d = Dec::from_f64(x);
+    let (dig, exp) = (&d.digits, d.exp + 1);
+    let mut w = start;
+    let mut text;
+    loop {
+        text = general_number_text(dig, exp, w, flag);
+        if !best_fit || *flag & GEN_SCI_FLAG == 0 {
+            break;
+        }
+        w += 1;
+        if w >= 12 {
+            break;
+        }
+    }
+    if (w as usize) < text.len() {
+        text = general_number_text(dig, exp, text.len() as i32, flag);
+    }
+    if x < 0.0 {
+        text.insert(0, '-');
+    }
+    text
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn best_fit_text_and_flag() {
+        let mut flag = 0;
+        assert_eq!(general_best_fit(12345.6789, 1, &mut flag), "12345.7");
+        assert_eq!(general_best_fit(123456.789, 1, &mut flag), "123456.8");
+        assert_eq!(general_best_fit(99999.999, 1, &mut flag), "99999.999");
+        assert_eq!(general_best_fit(5.0, 1, &mut flag), "5");
+        assert_eq!(flag & GEN_SCI_FLAG, 0);
+        let mut sci = GEN_SCI_FLAG;
+        assert!(general_best_fit(-1234.5, 1, &mut sci).starts_with('-'));
+    }
+
+    #[test]
+    fn best_fit_branch_edges() {
+        let mut f = GEN_SCI_FLAG;
+        assert_eq!(general_best_fit(-98.7654321, 3, &mut f), "-98.8");
+        assert_eq!(f, 1);
+        let mut f = 2;
+        assert_eq!(general_best_fit(-98.7654321, 3, &mut f), "-99");
+        assert_eq!(f, 2);
+
+        let mut f = 2;
+        assert_eq!(general_best_fit(0.000123456, 4, &mut f), "0");
+        assert_eq!(f, 2);
+
+        assert_eq!(general_best_fit(0.000123456, 5, &mut f), "0.0001");
+        assert_eq!(f, 4);
+
+        let mut f = 3;
+        assert_eq!(general_best_fit(12345.6789, 4, &mut f), "12345.7");
+        let mut f = 3;
+        assert_eq!(general_best_fit(12345.6789, 5, &mut f), "12346");
+
+        let mut f = 0;
+        assert_eq!(general_best_fit(-1234.5, 3, &mut f), "-1235");
+
+        let mut f = 0;
+        assert_eq!(general_best_fit(1e-10, 4, &mut f), "0");
+        assert_eq!(general_best_fit(1e-10, 5, &mut f), "1E-10");
+        assert_eq!(f, GEN_SCI_FLAG);
+    }
+
+    #[test]
+    fn display_flag() {
+        let mut f = 0;
+        general_display_flag(0.000123456, 5, &mut f);
+        assert_eq!(f, GEN_SCI_FLAG);
+
+        general_display_flag(123456789.0, 9, &mut f);
+        assert_eq!(f, GEN_SCI_FLAG);
+        general_display_flag(-98.7654321, 5, &mut f);
+        assert_eq!(f, 2);
+
+        general_display_flag(0.5, 0, &mut f);
+        general_display_flag(0.0, 5, &mut f);
+        assert_eq!(f, 2);
+    }
 
     #[test]
     fn general_11() {

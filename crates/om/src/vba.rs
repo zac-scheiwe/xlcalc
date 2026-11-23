@@ -123,8 +123,10 @@ impl VbaHost {
         f: impl FnOnce(&Project, &mut Objects) -> Result<T, VbaError>,
         result_object: impl Fn(&T) -> Option<ObjectId>,
     ) -> Result<T, VbaError> {
+        let outer = std::mem::replace(&mut app.in_vba, true);
         let mut objects = Objects::new(app);
         let r = deep(|| f(&self.project, &mut objects));
+        objects.app.in_vba = outer;
         let mut keep = self.project.held_objects();
         if let Some(id) = r.as_ref().ok().and_then(&result_object) {
             keep.push(id);
@@ -231,12 +233,14 @@ impl VbaHost {
             }
         }
         let values: Vec<Variant> = args.iter().map(|a| app.arg_variant(book, a)).collect();
-        let r = deep(|| project.call(name, &values, &mut Objects::new(&mut app)));
+        let r = deep(|| project.call_cell(name, &values, &mut Objects::new(&mut app)));
         if let Some(v) = app.view.as_ref().and_then(|v| v.volatile) {
             cx.set_volatile(v);
         }
         match r {
             Ok(v) => Ok(app.result_value(v, 0)),
+
+            Err(e) if e.number == HResult::DISP_E_OVERFLOW.0 => Ok(Value::Error(XlError::NUM)),
             Err(_) => Err(RuntimeError),
         }
     }
@@ -275,6 +279,11 @@ impl<'v> Application<'v> {
         if module.kind == xlcalc_vba::ModuleKind::Class {
             module.source = strip_class_header(&module.source);
         }
+
+        let ids: Vec<SheetId> = self.book(book)?.wb.sheets().map(|s| s.id).collect();
+        for s in ids {
+            self.ensure_code_name(book, s)?;
+        }
         let b = self.book_mut(book)?;
         let mods = &mut b.vba.modules;
         match mods
@@ -292,7 +301,18 @@ impl<'v> Application<'v> {
         book: BookId,
     ) -> Result<Vec<xlcalc_vba::CompileError>, OmError> {
         let b = self.book_mut(book)?;
-        let (mut host, errors) = VbaHost::compile(&b.vba.modules, &b.name);
+
+        let mut modules = b.vba.modules.clone();
+        for (_, code) in &b.vba.sheet_code_names {
+            if !modules.iter().any(|m| m.name.eq_ignore_ascii_case(code)) {
+                modules.push(SourceModule {
+                    name: code.clone(),
+                    kind: xlcalc_vba::ModuleKind::Document,
+                    source: String::new(),
+                });
+            }
+        }
+        let (mut host, errors) = VbaHost::compile(&modules, &b.name);
         host.is_addin = b.is_addin;
         let host = Arc::new(host);
         b.vba.host = Some(host);
@@ -331,6 +351,8 @@ impl<'v> Application<'v> {
 
             Variant::Null => Value::Number(0.0),
             Variant::Bstr(s) => Value::Text(s.as_str().into()),
+
+            Variant::BstrNull => Value::Text("".into()),
             Variant::Bool(b) => Value::Bool(b),
             Variant::Error(sc) => Value::Error(scode_error(sc).unwrap_or(XlError::VALUE)),
             Variant::Dispatch(Some(id)) if depth == 0 => {
@@ -543,15 +565,48 @@ impl Application<'_> {
         a: &crate::conv::Args,
         raise: bool,
     ) -> Result<Variant, OmError> {
+        let out = self.wsf_result(m, a, raise)?;
+        match scalar_type(m.ret) {
+            Some(to) if raise => change_type(&out, to, Locale::EN_NZ, flags_alpha())
+                .map_err(|_| OmError::type_mismatch()),
+            _ => Ok(out),
+        }
+    }
+
+    fn wsf_result(
+        &mut self,
+        m: &'static crate::typelib::Member,
+        a: &crate::conv::Args,
+        raise: bool,
+    ) -> Result<Variant, OmError> {
         let book = match self.running {
             Some(b) => b,
             None => self.active_book()?.id,
         };
+
+        if raise && a.values.iter().any(|v| matches!(v, Some(Variant::Null))) {
+            let mut e = OmError::app_defined_with("Invalid number of arguments.");
+            e.error_info = true;
+            return Err(e);
+        }
+
+        if raise
+            && a.values
+                .iter()
+                .any(|v| matches!(v, Some(Variant::Array(x)) if x.data.is_empty()))
+        {
+            return Err(OmError::type_mismatch());
+        }
+        let values = if raise {
+            self.typed_wsf_args(m, &a.values)?
+        } else {
+            a.values.clone()
+        };
         let mut args = Vec::new();
-        for v in &a.values {
+        for v in &values {
             args.push(match v {
                 None => Arg::Missing,
-                Some(v) => self.engine_arg(v)?,
+                Some(v) => self.engine_arg(&cell_text(v))?,
             });
         }
         while matches!(args.last(), Some(Arg::Missing)) {
@@ -564,11 +619,31 @@ impl Application<'_> {
         };
         let name = m.name.trim_start_matches('_');
 
+        if matches!(name, "VLookup" | "HLookup") {
+            if let Some(Arg::Ref(areas)) = args.get(2) {
+                if let Some(area) = areas.first() {
+                    let first = CellAddr::new(area.sheet, area.rect.r0, area.rect.c0);
+                    args[2] = Arg::Value(wb.value(first));
+                }
+            }
+        }
+
         if raise && name == "CountIf" && matches!(a.values.first(), Some(Some(Variant::Array(_)))) {
             return Err(OmError::object_required());
         }
+
+        if name == "MMult"
+            && args
+                .iter()
+                .any(|a| matches!(a, Arg::Value(v) if !matches!(v, Value::Array(_))))
+        {
+            return wsf_error(raise, name, XlError::VALUE);
+        }
+
+        let us = xlcalc::Locale::en_us();
         let r = wb
-            .call_function(at, name, &args)
+            .call_function_in(at, name, &args, &us)
+            .or_else(|| wb.call_function_in(at, &name.replace('_', "."), &args, &us))
             .ok_or_else(|| crate::app::unsupported("WorksheetFunction", m))?;
         if raise && matches!(r, Value::Error(_)) {
             return Err(OmError::app_defined_with(&format!(
@@ -576,12 +651,76 @@ impl Application<'_> {
             )));
         }
 
+        if let (true, "Dollar", Value::Text(t)) = (raise, name, &r) {
+            if let Some(rest) = t.strip_prefix('-') {
+                return Ok(Variant::Bstr(format!("({rest})")));
+            }
+        }
+
+        if let ("Index", Some(Some(first))) = (name, values.first()) {
+            let zero = |i: usize| match values.get(i) {
+                None | Some(None) => true,
+                Some(Some(v)) => {
+                    crate::conv::is_missing(v)
+                        || matches!(v, Variant::Empty)
+                        || change_type(v, VarType::R8, Locale::EN_US, 0)
+                            .is_ok_and(|n| matches!(n, Variant::R8(x) if x == 0.0))
+                }
+            };
+            let explicit_col = values
+                .get(2)
+                .is_some_and(|v| v.as_ref().is_some_and(|v| !crate::conv::is_missing(v)));
+            let slice = zero(1) || explicit_col && zero(2);
+            let plain = !matches!(
+                first,
+                Variant::Array(_) | Variant::Error(_) | Variant::Dispatch(_)
+            );
+            let integer = matches!(first, Variant::I2(_) | Variant::I4(_) | Variant::Ui1(_));
+            if plain && !matches!(r, Value::Error(_) | Value::Array(_)) {
+                let elem = if integer {
+                    change_type(first, VarType::I4, Locale::EN_US, 0)
+                        .unwrap_or_else(|_| value_variant(&r))
+                } else {
+                    value_variant(&r)
+                };
+                if !slice {
+                    return Ok(elem);
+                }
+                return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
+                    elem: VarType::Variant,
+                    bounds: vec![(1, 1)],
+                    data: vec![elem],
+                })));
+            }
+        }
+
+        if let ("Transpose", [Arg::Ref(areas)]) = (name, args.as_slice()) {
+            if let [area] = areas.as_slice() {
+                if !area.rect.is_cell() && !matches!(r, Value::Error(_)) {
+                    let rect = area.rect;
+                    let mut data = Vec::new();
+                    for c in rect.c0..=rect.c1 {
+                        for rr in rect.r0..=rect.r1 {
+                            data.push(value_variant(&wb.value(CellAddr::new(area.sheet, rr, c))));
+                        }
+                    }
+
+                    if rect.cols() == 1 && rect.rows() > 1 {
+                        return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
+                            elem: VarType::Variant,
+                            bounds: vec![(1, data.len() as u32)],
+                            data,
+                        })));
+                    }
+                    return Ok(crate::conv::array_variant(rect.cols(), rect.rows(), data));
+                }
+            }
+        }
+
         if let Value::Array(arr) = &r {
             if arr.rows == 1
                 && arr.cols > 1
-                && a.values
-                    .iter()
-                    .any(|v| matches!(v, Some(Variant::Array(_))))
+                && values.iter().any(|v| matches!(v, Some(Variant::Array(_))))
             {
                 let n = arr.data.len();
                 return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
@@ -592,6 +731,36 @@ impl Application<'_> {
             }
         }
         Ok(value_variant(&r))
+    }
+
+    fn typed_wsf_args(
+        &mut self,
+        m: &crate::typelib::Member,
+        values: &[Option<Variant>],
+    ) -> Result<Vec<Option<Variant>>, OmError> {
+        let mut out = Vec::with_capacity(values.len());
+        for (i, v) in values.iter().enumerate() {
+            let to = m.params.get(i).and_then(|p| scalar_type(p.ty));
+            out.push(match (v, to) {
+                (Some(v), Some(to)) if !crate::conv::is_missing(v) => {
+                    let v = match v {
+                        Variant::Dispatch(Some(id)) => self
+                            .invoke_dispid(*id, DISPID_VALUE, Call::GET, &[], &[])
+                            .map_err(|_| OmError::type_mismatch())?,
+                        v => v.clone(),
+                    };
+                    if matches!(v, Variant::Array(_) | Variant::Error(_)) {
+                        return Err(OmError::type_mismatch());
+                    }
+                    Some(
+                        change_type(&v, to, Locale::EN_NZ, flags_alpha())
+                            .map_err(|_| OmError::type_mismatch())?,
+                    )
+                }
+                (v, _) => v.clone(),
+            });
+        }
+        Ok(out)
     }
 
     pub(crate) fn engine_arg(&self, v: &Variant) -> Result<Arg, OmError> {
@@ -611,6 +780,59 @@ impl Application<'_> {
             return Err(OmError::type_mismatch());
         }
         Ok(Arg::Value(variant_value(v)?))
+    }
+}
+
+fn cell_text<'v>(v: &'v Variant) -> std::borrow::Cow<'v, Variant> {
+    let (x, code, loc) = match v {
+        Variant::Cy(c) => (
+            *c as f64 / 10_000.0,
+            "$#,##0.00_);($#,##0.00)".to_string(),
+            xlcalc::Locale::en_us(),
+        ),
+        Variant::Date(d) if *d >= 0.0 => {
+            let secs = ((d - d.trunc()) * 86_400.0).round();
+            let code = match (d.trunc() == 0.0, secs == 0.0 || secs == 86_400.0) {
+                (true, _) => "[$-409]h:mm:ss AM/PM",
+                (false, true) => "[$-409]m/d/yyyy",
+                (false, false) => "[$-409]m/d/yyyy  h:mm:ss AM/PM",
+            };
+            (*d, code.to_string(), xlcalc::Locale::en_us())
+        }
+        v => return std::borrow::Cow::Borrowed(v),
+    };
+    let text = xlcalc::NumberFormat::parse(&code)
+        .ok()
+        .and_then(|f| f.format_number(x, &loc, xlcalc::DateSystem::D1900).ok())
+        .map(|r| r.text);
+    match text {
+        Some(t) => std::borrow::Cow::Owned(Variant::Bstr(t)),
+        None => std::borrow::Cow::Borrowed(v),
+    }
+}
+
+fn flags_alpha() -> u16 {
+    xlcalc_variant::flags::ALPHABOOL
+}
+
+fn wsf_error(raise: bool, name: &str, e: XlError) -> Result<Variant, OmError> {
+    if raise {
+        Err(OmError::app_defined_with(&format!(
+            "Unable to get the {name} property of the WorksheetFunction class"
+        )))
+    } else {
+        Ok(Variant::Error(error_scode(e)))
+    }
+}
+
+fn scalar_type(ty: crate::typelib::Ty) -> Option<VarType> {
+    use crate::typelib::Ty;
+    match ty {
+        Ty::R8 => Some(VarType::R8),
+        Ty::Bstr => Some(VarType::Bstr),
+        Ty::Bool => Some(VarType::Bool),
+        Ty::I4 => Some(VarType::I4),
+        _ => None,
     }
 }
 
@@ -698,12 +920,60 @@ impl<'a, 'v> Objects<'a, 'v> {
     }
 }
 
+const EARLY_BOUND_GENERIC: &[(&str, &str)] = &[
+    ("_Application", "Union"),
+    ("_Application", "Intersect"),
+    ("_Application", "International"),
+    ("_Application", "MaxIterations"),
+    ("_Workbook", "Colors"),
+    ("_Worksheet", "EnableSelection"),
+    ("_Worksheet", "Name"),
+    ("_Worksheet", "Range"),
+];
+
+const EARLY_BOUND_PLAIN: &[(&str, &str)] = &[("Names", "Add")];
+
+fn early_bound_failure(class: &str, member: &str, e: &OmError) -> Option<VbaError> {
+    if e.hresult == DISP_E_EXCEPTION
+        && e.scode == crate::error::SCODE_BAD_INDEX
+        && ((class == "DocumentProperties"
+            && (member.is_empty() || member.eq_ignore_ascii_case("Item")))
+            || (class == "_Workbook" && member.eq_ignore_ascii_case("BuiltinDocumentProperties")))
+    {
+        return Some(VbaError::new(5));
+    }
+
+    let mismatch = e.scode == crate::error::SCODE_TYPE_MISMATCH
+        && class == "_Application"
+        && member.eq_ignore_ascii_case("International");
+    if e.hresult != DISP_E_EXCEPTION || e.error_info || (e.number != 1004 && !mismatch) {
+        return None;
+    }
+    if EARLY_BOUND_PLAIN
+        .iter()
+        .any(|(c, m)| *c == class && m.eq_ignore_ascii_case(member))
+    {
+        return Some(VbaError {
+            number: 1004,
+            description: "Application-defined or object-defined error".to_string(),
+        });
+    }
+    let (_, m) = EARLY_BOUND_GENERIC
+        .iter()
+        .find(|(c, m)| *c == class && m.eq_ignore_ascii_case(member))?;
+    Some(VbaError {
+        number: 1004,
+        description: format!("Method '{m}' of object '{class}' failed"),
+    })
+}
+
 fn vba_error(e: OmError) -> VbaError {
     let number = match e.hresult {
         DISP_E_EXCEPTION => match e.scode as u32 {
             0x8002_0005 => 13,
             0x8002_000B => 9,
             0x8002_000A => 6,
+            0x8007_0057 => 5,
             0x8002_000E => 450,
             0x8002_000F => 449,
             _ => e.number,
@@ -714,13 +984,22 @@ fn vba_error(e: OmError) -> VbaError {
         OBJECT_REQUIRED => 424,
         h if h.0 as u32 == 0x8002_0005 => 13,
         h if h.0 as u32 == 0x8002_000A => 6,
+
+        h if h.0 as u32 == 0x8007_0057 => 5,
         _ => e.number,
     };
     match e.description {
-        Some(d) => VbaError {
-            number,
-            description: d,
-        },
+        Some(d) => {
+            let e2 = VbaError {
+                number,
+                description: d,
+            };
+
+            if e.source.is_some() && !e2.description.starts_with("Method '") {
+                xlcalc_vba::note_error_source(&e2, "Microsoft Excel");
+            }
+            e2
+        }
         None => VbaError::new(number),
     }
 }
@@ -764,6 +1043,40 @@ impl ObjectHost for Objects<'_, '_> {
                 _ => {}
             }
         }
+        if kind == InvokeKind::Get
+            && member.eq_ignore_ascii_case("Evaluate")
+            && matches!(positional.first(), Some(Variant::Null))
+        {
+            return Err(VbaError {
+                number: 1004,
+                description: "The item with the specified name wasn't found.".to_string(),
+            });
+        }
+
+        if kind == InvokeKind::Put
+            && member.eq_ignore_ascii_case("Name")
+            && matches!(positional.last(), Some(Variant::Null))
+            && self.app.type_name(obj) == Some("_Worksheet")
+        {
+            return Err(VbaError::new(94));
+        }
+
+        let rounded: Vec<Variant>;
+        let positional = if kind == InvokeKind::Put
+            && obj == self.app.handle()
+            && member.eq_ignore_ascii_case("MaxIterations")
+        {
+            rounded = positional
+                .iter()
+                .map(|v| match v {
+                    Variant::R8(x) => Variant::R8(x.round_ties_even()),
+                    v => v.clone(),
+                })
+                .collect();
+            &rounded[..]
+        } else {
+            positional
+        };
         let r = if member.is_empty() {
             if !named.is_empty() {
                 return Err(VbaError::new(448));
@@ -773,11 +1086,25 @@ impl ObjectHost for Objects<'_, '_> {
         } else {
             self.app.invoke(obj, member, call, positional, named)
         };
-        let v = r.map_err(vba_error)?;
+        let class = self.app.type_name(obj).unwrap_or("");
+        let v =
+            r.map_err(|e| early_bound_failure(class, member, &e).unwrap_or_else(|| vba_error(e)))?;
+
+        if let (InvokeKind::Get, Variant::R8(x), true) = (
+            kind,
+            &v,
+            member.eq_ignore_ascii_case("MaxIterations") && class == "_Application",
+        ) {
+            return Ok(Variant::I4(*x as i32));
+        }
         if let Variant::Dispatch(Some(id)) | Variant::Unknown(Some(id)) = v {
             self.made.push(id);
         }
         Ok(v)
+    }
+
+    fn expression_call(&mut self, on: bool) {
+        self.app.expr_call = on;
     }
 
     fn debug_print(&mut self, items: &[xlcalc_vba::DebugItem]) {

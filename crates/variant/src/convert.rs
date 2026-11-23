@@ -35,7 +35,7 @@ impl Num {
         Some(match v {
             Variant::Empty => Num::Int(0),
             Variant::I2(x) => Num::Int(i64::from(*x)),
-            Variant::I4(x) => Num::Int(i64::from(*x)),
+            Variant::I4(x) | Variant::Int(x) => Num::Int(i64::from(*x)),
             Variant::Ui1(x) => Num::Int(i64::from(*x)),
             Variant::I8(x) => Num::Int(*x),
             Variant::Bool(b) => Num::Bool(*b),
@@ -62,6 +62,7 @@ fn numeric(src: &Variant, to: VarType) -> Result<Variant, HResult> {
         VarType::Empty | VarType::Null => Ok(empty_or_null(to)),
         VarType::R8 => to_r8(n).map(Variant::R8),
         VarType::I4 => to_i4(n).map(Variant::I4),
+        VarType::Int => to_i4(n).map(Variant::Int),
         VarType::Bool => to_bool(n).map(Variant::Bool),
         VarType::Cy => to_cy(n).map(Variant::Cy),
         VarType::Date => to_date(n).map(Variant::Date),

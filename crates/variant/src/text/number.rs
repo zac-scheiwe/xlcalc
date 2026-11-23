@@ -240,7 +240,7 @@ fn shift_exponent(x: f64, delta: i64) -> f64 {
     f64::from_bits(b & !(0x7FF << 52) | e << 52)
 }
 
-fn mul_power10(hi: f64, lo: f64, n: i64) -> Result<f64, HResult> {
+fn scale_by_power10(hi: f64, lo: f64, n: i64) -> Result<f64, HResult> {
     let m = n.unsigned_abs();
     if lo == 0.0 && m <= 22 {
         return Ok(if n >= 0 {
@@ -293,12 +293,12 @@ pub(super) fn r8(p: &Parsed) -> Result<f64, HResult> {
         return Ok(if neg { -x } else { x });
     }
     let x = if p.digits.len() <= 15 {
-        mul_power10(fold(&p.digits) as f64, 0.0, p.pwr10)?
+        scale_by_power10(fold(&p.digits) as f64, 0.0, p.pwr10)?
     } else {
         let (head, tail) = p.digits.split_at(15);
         let hi = fold(head) as f64;
         let lo = fold(tail) as f64 / POW10[tail.len()];
-        mul_power10(hi, lo, p.pwr10 + tail.len() as i64)?
+        scale_by_power10(hi, lo, p.pwr10 + tail.len() as i64)?
     };
     Ok(if p.neg { -x } else { x })
 }

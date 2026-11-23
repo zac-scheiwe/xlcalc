@@ -1,0 +1,135 @@
+{
+ "sheets": [
+  "Sheet1",
+  "S2",
+  "S3"
+ ],
+ "fresh_excel": true,
+ "sheets_in_new_workbook": 1,
+ "steps": [
+  {
+   "op": "vba_module",
+   "file": "evlog.bas"
+  },
+  {
+   "op": "vba_module",
+   "file": "evapp.cls"
+  },
+  {
+   "op": "vba_module",
+   "file": "r7calc.bas"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "Sheet1",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "S2",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "S3",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "ThisWorkbook",
+   "file": "ev_book.txt"
+  },
+  {
+   "op": "run",
+   "name": "InitApp"
+  },
+  {
+   "op": "om_put",
+   "path": "MultiThreadedCalculation",
+   "prop": "Enabled",
+   "value": false
+  },
+  {
+   "op": "om_put",
+   "path": "",
+   "prop": "CalculateBeforeSave",
+   "value": true
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A1",
+   "value": {
+    "t": "n",
+    "v": 1
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J1",
+   "input": "=UV(\"a\",A1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J2",
+   "input": "=UL(\"b\",J1+1)"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!P20",
+   "value": {
+    "t": "n",
+    "v": 3
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!P21",
+   "input": "=P20*2"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!P23",
+   "value": {
+    "t": "n",
+    "v": 5
+   }
+  },
+  {
+   "op": "data_table",
+   "range": "Sheet1!P22:Q23",
+   "col_input": "Sheet1!P20"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveCopyAs",
+   "args": [
+    "@out/r7.xlsx"
+   ]
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveCopyAs",
+   "args": [
+    "@out/r7.xlsx"
+   ]
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  }
+ ]
+}

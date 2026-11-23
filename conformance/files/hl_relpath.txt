@@ -1,0 +1,116 @@
+xlsx A1 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\same.txt session=same.txt reopened=same.txt sub=<null>
+xlsx A2 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\x.txt session=sub/x.txt reopened=sub/x.txt sub=<null>
+xlsx A3 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\deeper\y.txt session=sub/deeper/y.txt reopened=sub/deeper/y.txt sub=<null>
+xlsx A4 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\up.txt session=../up.txt reopened=../up.txt sub=<null>
+xlsx A5 before=C:\Users\zac\AppData\Local\Temp\hlrel\top.txt session=../../top.txt reopened=../../top.txt sub=<null>
+xlsx A6 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\c\sib.txt session=../c/sib.txt reopened=../c/sib.txt sub=<null>
+xlsx A7 before=C:\Windows\x.txt session=../../../../../../../../Windows/x.txt reopened=../../../../../../../../Windows/x.txt sub=<null>
+xlsx A8 before=C:\x.txt session=../../../../../../../../x.txt reopened=../../../../../../../../x.txt sub=<null>
+xlsx A9 before=c:\users\zac\appdata\local\temp\hlrel\A\B\lower.txt session=../../../../../../../../users/zac/appdata/local/temp/hlrel/A/B/lower.txt reopened=../../../../../../../../users/zac/appdata/local/temp/hlrel/A/B/lower.txt sub=<null>
+xlsx A10 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\with space.txt session=with space.txt reopened=with space.txt sub=<null>
+xlsx A11 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b session=../b reopened=../b sub=<null>
+xlsx A12 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\ session=. reopened=. sub=<null>
+xlsx A13 before=C:\Users\zac\AppData\Local\Temp\hlrel\a session=../../a reopened=../../a sub=<null>
+xlsx A14 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\furl.txt session=furl.txt reopened=furl.txt sub=<null>
+xlsx A15 before=\\server\share\f.txt session=\\server\share\f.txt reopened=\\server\share\f.txt sub=<null>
+xlsx A16 before=\\server\share\g\h.txt session=\\server\share\g\h.txt reopened=\\server\share\g\h.txt sub=<null>
+xlsx A17 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\a\dots.txt session=../a/dots.txt reopened=../a/dots.txt sub=<null>
+xlsx A18 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\cur.txt session=cur.txt reopened=cur.txt sub=<null>
+xlsx A19 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\same.txt session=same.txt reopened=same.txt sub=frag
+xlsx A20 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\Book.xlsx session=Book.xlsx reopened=Book.xlsx sub=<null>
+xlsx A21 before=file://C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\mixed.txt session=sub/mixed.txt reopened=sub/mixed.txt sub=<null>
+xlsx A22 before=file://C:\forward\slash.txt session=../../../../../../../../forward/slash.txt reopened=../../../../../../../../forward/slash.txt sub=<null>
+xlsx A23 before=..\rel.txt session=..\rel.txt reopened=..\rel.txt sub=<null>
+xlsx A24 before=sub\rel2.txt session=sub\rel2.txt reopened=sub\rel2.txt sub=<null>
+xlsx A25 before=x:\nodrive.txt session=x:\nodrive.txt reopened=x:\nodrive.txt sub=<null>
+xlsx A26 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\café.txt session=café.txt reopened=café.txt sub=<null>
+xlsx A27 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\a&b.txt session=a&b.txt reopened=a&b.txt sub=<null>
+xlsx A28 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\a b.txt session=a b.txt reopened=a b.txt sub=<null>
+xlsx B1 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub.txt session=sub.txt reopened=sub.txt sub=Sheet1!A1
+xlsb A1 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\same.txt session=- reopened=same.txt sub=<null>
+xlsb A2 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\x.txt session=- reopened=sub/x.txt sub=<null>
+xlsb A3 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\deeper\y.txt session=- reopened=sub/deeper/y.txt sub=<null>
+xlsb A4 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\up.txt session=- reopened=../up.txt sub=<null>
+xlsb A5 before=C:\Users\zac\AppData\Local\Temp\hlrel\top.txt session=- reopened=../../top.txt sub=<null>
+xlsb A6 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\c\sib.txt session=- reopened=../c/sib.txt sub=<null>
+xlsb A7 before=C:\Windows\x.txt session=- reopened=../../../../../../../../Windows/x.txt sub=<null>
+xlsb A8 before=C:\x.txt session=- reopened=../../../../../../../../x.txt sub=<null>
+xlsb A9 before=c:\users\zac\appdata\local\temp\hlrel\A\B\lower.txt session=- reopened=../../../../../../../../users/zac/appdata/local/temp/hlrel/A/B/lower.txt sub=<null>
+xlsb A10 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\with space.txt session=- reopened=with space.txt sub=<null>
+xlsb A11 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b session=- reopened=../b sub=<null>
+xlsb A12 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\ session=- reopened=. sub=<null>
+xlsb A13 before=C:\Users\zac\AppData\Local\Temp\hlrel\a session=- reopened=../../a sub=<null>
+xlsb A14 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\furl.txt session=- reopened=furl.txt sub=<null>
+xlsb A15 before=\\server\share\f.txt session=- reopened=\\server\share\f.txt sub=<null>
+xlsb A16 before=\\server\share\g\h.txt session=- reopened=\\server\share\g\h.txt sub=<null>
+xlsb A17 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\a\dots.txt session=- reopened=../a/dots.txt sub=<null>
+xlsb A18 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\cur.txt session=- reopened=cur.txt sub=<null>
+xlsb A19 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\same.txt session=- reopened=same.txt sub=frag
+xlsb A20 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\Book.xlsx session=- reopened=Book.xlsx sub=<null>
+xlsb A21 before=file://C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\mixed.txt session=- reopened=sub/mixed.txt sub=<null>
+xlsb A22 before=file://C:\forward\slash.txt session=- reopened=../../../../../../../../forward/slash.txt sub=<null>
+xlsb A23 before=..\rel.txt session=- reopened=..\rel.txt sub=<null>
+xlsb A24 before=sub\rel2.txt session=- reopened=sub\rel2.txt sub=<null>
+xlsb A25 before=x:\nodrive.txt session=- reopened=x:\nodrive.txt sub=<null>
+xlsb A26 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\café.txt session=- reopened=café.txt sub=<null>
+xlsb A27 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\a&b.txt session=- reopened=a&b.txt sub=<null>
+xlsb A28 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\a b.txt session=- reopened=a b.txt sub=<null>
+xlsb B1 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub.txt session=- reopened=sub.txt sub=Sheet1!A1
+xls A1 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\same.txt session=- reopened=same.txt sub=<null>
+xls A2 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\x.txt session=- reopened=sub/x.txt sub=<null>
+xls A3 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\deeper\y.txt session=- reopened=sub/deeper/y.txt sub=<null>
+xls A4 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\up.txt session=- reopened=../up.txt sub=<null>
+xls A5 before=C:\Users\zac\AppData\Local\Temp\hlrel\top.txt session=- reopened=../../top.txt sub=<null>
+xls A6 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\c\sib.txt session=- reopened=../c/sib.txt sub=<null>
+xls A7 before=C:\Windows\x.txt session=- reopened=../../../../../../../../Windows/x.txt sub=<null>
+xls A8 before=C:\x.txt session=- reopened=../../../../../../../../x.txt sub=<null>
+xls A9 before=c:\users\zac\appdata\local\temp\hlrel\A\B\lower.txt session=- reopened=../../../../../../../../users/zac/appdata/local/temp/hlrel/A/B/lower.txt sub=<null>
+xls A10 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\with space.txt session=- reopened=with space.txt sub=<null>
+xls A11 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b session=- reopened=../b sub=<null>
+xls A12 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\ session=- reopened=. sub=<null>
+xls A13 before=C:\Users\zac\AppData\Local\Temp\hlrel\a session=- reopened=../../a sub=<null>
+xls A14 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\furl.txt session=- reopened=furl.txt sub=<null>
+xls A15 before=\\server\share\f.txt session=- reopened=\\server\share\f.txt sub=<null>
+xls A16 before=\\server\share\g\h.txt session=- reopened=\\server\share\g\h.txt sub=<null>
+xls A17 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\a\dots.txt session=- reopened=../a/dots.txt sub=<null>
+xls A18 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\cur.txt session=- reopened=cur.txt sub=<null>
+xls A19 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\same.txt session=- reopened=same.txt sub=frag
+xls A20 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\Book.xlsx session=- reopened=Book.xlsx sub=<null>
+xls A21 before=file://C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub\mixed.txt session=- reopened=sub/mixed.txt sub=<null>
+xls A22 before=file://C:\forward\slash.txt session=- reopened=../../../../../../../../forward/slash.txt sub=<null>
+xls A23 before=..\rel.txt session=- reopened=..\rel.txt sub=<null>
+xls A24 before=sub\rel2.txt session=- reopened=sub\rel2.txt sub=<null>
+xls A25 before=x:\nodrive.txt session=- reopened=x:\nodrive.txt sub=<null>
+xls A26 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\café.txt session=- reopened=café.txt sub=<null>
+xls A27 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\a&b.txt session=- reopened=a&b.txt sub=<null>
+xls A28 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\a b.txt session=- reopened=a b.txt sub=<null>
+xls B1 before=C:\Users\zac\AppData\Local\Temp\hlrel\a\b\sub.txt session=- reopened=sub.txt sub=Sheet1!A1
+target A1 same.txt
+target A2 sub/x.txt
+target A3 sub/deeper/y.txt
+target A4 ../up.txt
+target A5 ../../top.txt
+target A6 ../c/sib.txt
+target A7 ../../../../../../../../Windows/x.txt
+target A8 ../../../../../../../../x.txt
+target A9 ../../../../../../../../users/zac/appdata/local/temp/hlrel/A/B/lower.txt
+target A10 with%20space.txt
+target A11 ../b
+target A12 .
+target A13 ../../a
+target A14 furl.txt
+target A15 file:///\\server\share\f.txt
+target A16 file:///\\server\share\g\h.txt
+target A17 ../a/dots.txt
+target A18 cur.txt
+target A19 same.txt
+target A20 Book.xlsx
+target A21 sub/mixed.txt
+target A22 ../../../../../../../../forward/slash.txt
+target A23 ..\rel.txt
+target A24 sub\rel2.txt
+target A25 file:///x:\nodrive.txt
+target A26 café.txt
+target A27 a&amp;b.txt
+target A28 a%20b.txt
+target B1 sub.txt

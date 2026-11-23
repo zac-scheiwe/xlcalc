@@ -170,6 +170,28 @@ impl Application<'_> {
                 let b = b.ok_or_else(OmError::app_defined)?;
                 self.bar_edit(book, sheet, id, |d| d.show_value = b)
             }),
+            (CfKind::DataBar(d), "PercentMin", Get) => Ok(i4(d.percent_min)),
+            (CfKind::DataBar(d), "PercentMax", Get) => Ok(i4(d.percent_max)),
+
+            (CfKind::DataBar(d), "PercentMin" | "PercentMax", Put) => put().i32(0).and_then(|n| {
+                let max = m.name == "PercentMax";
+                let ok = |n: &i32| {
+                    (0..=100).contains(n)
+                        && if max {
+                            *n >= d.percent_min
+                        } else {
+                            *n <= d.percent_max
+                        }
+                };
+                let n = n.filter(ok).ok_or_else(invalid_arg)?;
+                self.bar_edit(book, sheet, id, |d| {
+                    if max {
+                        d.percent_max = n;
+                    } else {
+                        d.percent_min = n;
+                    }
+                })
+            }),
             (CfKind::DataBar(d), "BarFillType", Get) => Ok(i4(d.fill_type)),
             (CfKind::DataBar(d), "Direction", Get) => Ok(i4(d.direction)),
             (CfKind::DataBar(d), "AxisPosition", Get) => Ok(i4(d.axis_position)),

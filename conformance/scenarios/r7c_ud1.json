@@ -1,0 +1,97 @@
+{
+ "sheets": [
+  "Sheet1",
+  "S2",
+  "S3"
+ ],
+ "fresh_excel": true,
+ "sheets_in_new_workbook": 1,
+ "steps": [
+  {
+   "op": "vba_module",
+   "file": "evlog.bas"
+  },
+  {
+   "op": "vba_module",
+   "file": "evapp.cls"
+  },
+  {
+   "op": "vba_module",
+   "file": "r7calc.bas"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "Sheet1",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "S2",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "S3",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "ThisWorkbook",
+   "file": "ev_book.txt"
+  },
+  {
+   "op": "run",
+   "name": "InitApp"
+  },
+  {
+   "op": "om_put",
+   "path": "MultiThreadedCalculation",
+   "prop": "Enabled",
+   "value": false
+  },
+  {
+   "op": "set",
+   "cell": "S3!A1",
+   "input": "=nm1*2"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!K4",
+   "input": "=UL(\"h\",S3!A1)"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets('S2')",
+   "call": "Copy",
+   "args": [
+    {
+     "missing": true
+    },
+    {
+     "path": "Worksheets('Sheet1')"
+    }
+   ]
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "om",
+   "path": "Application",
+   "call": "CalculateFull"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  }
+ ]
+}

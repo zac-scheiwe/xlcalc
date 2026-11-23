@@ -13,7 +13,10 @@ impl Application<'_> {
         sheet: Option<SheetId>,
         a: &Args,
     ) -> Result<Variant, OmError> {
-        let text = a.string(0)?.ok_or_else(OmError::app_defined)?;
+        let text = match a.get(0) {
+            Some(Variant::Bool(b)) => (if *b { "TRUE" } else { "FALSE" }).to_string(),
+            _ => a.string(0)?.ok_or_else(OmError::app_defined)?,
+        };
         let (book, host) = {
             let b = match book {
                 Some(id) => self.book(id)?,
@@ -43,7 +46,7 @@ impl Application<'_> {
                 self.new_multi(book, first.sheet, &rects, Mode::Cells)
             }
             Evaluated::Value(Value::Array(arr)) => {
-                let cells: Vec<Variant> = arr.data.iter().map(value_variant).collect();
+                let cells: Vec<Variant> = arr.data.iter().map(result_variant).collect();
                 if arr.rows == 1 {
                     Ok(one_row(cells))
                 } else {
@@ -51,10 +54,17 @@ impl Application<'_> {
                 }
             }
             Evaluated::Value(v) if wrap && !matches!(v, Value::Error(_)) => {
-                Ok(one_row(vec![value_variant(&v)]))
+                Ok(one_row(vec![result_variant(&v)]))
             }
-            Evaluated::Value(v) => Ok(value_variant(&v)),
+            Evaluated::Value(v) => Ok(result_variant(&v)),
         }
+    }
+}
+
+fn result_variant(v: &Value) -> Variant {
+    match v {
+        Value::Error(xlcalc::XlError::CALC) => value_variant(&Value::Error(xlcalc::XlError::VALUE)),
+        _ => value_variant(v),
     }
 }
 

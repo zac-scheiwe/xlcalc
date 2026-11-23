@@ -1,41 +1,17 @@
 use crate::address::{CellAddr, SheetId, MAX_COLS, MAX_ROWS};
 use crate::colwidth::char_px;
-use crate::rowheight_data::{EMPTY_FIRST_LINE, FONT_ROWS};
-use crate::style::{BorderLine, Style};
+use crate::gdi_metrics;
+
+static TURN_ADVANCES: &[u8] = include_bytes!("rowheight_adv.bin");
+
+static TURN_EXT: &[u8] = include_bytes!("rowheight_adv_ext.bin");
+use crate::style::{Alignment, BorderLine, HAlign, Style};
 use crate::value::Value;
 use crate::workbook::Workbook;
 
 const WRAP_PAD_PX: u32 = 9;
 
 pub const MAX_H8: u32 = 3276;
-
-fn font_tenths(name: &str, size_twips: u32) -> u32 {
-    let table = FONT_ROWS
-        .iter()
-        .find(|(n, _)| n.eq_ignore_ascii_case(name))
-        .or_else(|| FONT_ROWS.iter().find(|(n, _)| *n == "Arial"))
-        .map(|(_, t)| *t)
-        .unwrap_or(&[]);
-
-    let halves = (size_twips + 5) / 10;
-    let halves = halves.max(2);
-    let idx = if halves <= 144 {
-        (halves - 2) as usize
-    } else {
-        143 + (halves / 2).saturating_sub(73) as usize
-    };
-    match table.get(idx) {
-        Some(&v) => u32::from(v),
-        None => {
-            let n = table.len();
-            if n < 2 {
-                return 145;
-            }
-            let (a, b) = (u32::from(table[n - 2]), u32::from(table[n - 1]));
-            b + (b - a) * (idx + 1 - n) as u32
-        }
-    }
-}
 
 pub fn h8_to_points(h8: u32) -> f64 {
     ((f64::from(h8) * 1.25 - 1e-9).ceil()) / 10.0
@@ -61,8 +37,33 @@ pub struct RowHt {
     pub stale: Option<u32>,
 }
 
+fn turn_params(f: &crate::style::Font) -> (u32, u32, u32) {
+    let ppem = ((f.size_twips + 5) / 10).max(2);
+    let (a, d) = font_ad(f);
+    let digit = gdi_metrics::digit_width(&f.name, f.bold, f.italic, ppem);
+    let c = match gdi_metrics::overhang(&f.name, f.bold, f.italic, ppem) {
+        0 if f.italic => {
+            (gdi_metrics::tm(&f.name, f.bold, f.italic, ppem)
+                .ascent
+                .max(0)
+                / 5) as u32
+        }
+        oh => oh,
+    };
+    (digit.div_ceil(4), a + d, c)
+}
+
+const MAX_ONE_LINE: u32 = 4096;
+
+fn font_ad(f: &crate::style::Font) -> (u32, u32) {
+    let ppem = ((f.size_twips + 5) / 10).max(2);
+    let tm = gdi_metrics::tm(&f.name, f.bold, f.italic, ppem);
+    gdi_metrics::ascent_descent(&tm)
+}
+
 fn font_h(s: &Style) -> u32 {
-    font_tenths(&s.font.name, s.font.size_twips)
+    let (a, d) = font_ad(&s.font);
+    (5 * (a + d)).min(MAX_ONE_LINE)
 }
 
 fn border_extra(top: BorderLine, bottom: BorderLine) -> u32 {
@@ -87,20 +88,30 @@ fn line_px(l: BorderLine) -> u32 {
     }
 }
 
-fn wrap_lines(text: &str, avail: u32, wrap: bool, scale: f64) -> u32 {
+fn indent_px(al: &Alignment) -> u32 {
+    let one = u32::from(al.indent) * 12;
+    match al.horizontal {
+        HAlign::General | HAlign::Left | HAlign::Right => one,
+        HAlign::Distributed => one * 2,
+        _ => 0,
+    }
+}
+
+fn wrap_run_max(limit: u32, g: u32, c: u32) -> u32 {
+    let first = limit.saturating_sub(2 * g + 3);
+    let second = limit.saturating_sub(2 * g) * 44 / 45;
+    first.min(second).saturating_sub(c)
+}
+
+fn wrap_lines(text: &str, avail: u32, wrap: bool, px: &dyn Fn(char) -> u32) -> u32 {
     let mut lines = 0;
     for seg in text.split('\n') {
-        lines += if wrap {
-            seg_lines(seg, avail, scale)
-        } else {
-            1
-        };
+        lines += if wrap { seg_lines(seg, avail, px) } else { 1 };
     }
     lines.max(1)
 }
 
-fn seg_lines(seg: &str, avail: u32, scale: f64) -> u32 {
-    let px = |c: char| (f64::from(char_px(c)) * scale).round() as u32;
+fn seg_lines(seg: &str, avail: u32, px: &dyn Fn(char) -> u32) -> u32 {
     let space = px(' ');
     let mut lines = 1;
     let mut x = 0u32;
@@ -143,34 +154,161 @@ fn mul_div(a: i64, b: i64, c: i64) -> i64 {
     (a * b + c / 2) / c
 }
 
-fn rotated_half_points(text: &str, rotation: u8) -> Option<u32> {
+fn stacked_half_points(text: &str, line: u32) -> u32 {
     let n = text.chars().count() as u32;
-    let sum: u32 = text.chars().map(char_px).sum();
-    let deg = match rotation {
-        1..=90 => u32::from(rotation),
-        91..=180 => u32::from(rotation) - 90,
-        255 => return Some((29 * n + 2).clamp(29, 819)),
-        _ => return None,
-    };
-    let h = if deg == 90 {
-        (sum + 9).max(sum * 45 / 44 + 7)
-    } else {
-        let d = deg as usize;
-        let w = i64::from(sum) * 1024;
-        let a = mul_div(w, SIN15[d], 32767) + mul_div(29 * 1024, SIN15[90 - d], 32767);
-        let pad = match deg {
-            1..=9 => 1,
-            10..=29 => 3,
-            30..=56 => 5,
-            _ => 7,
-        };
-        (mul_div(a, 1, 1024) + pad) as u32
-    };
-    Some(h.clamp(29, 819))
+    (line * n + 2).min(819)
 }
 
-fn turned_extent(px: u32) -> u32 {
-    (px + 9).max(px * 45 / 44 + 7)
+const TURN_FONTS: [&str; 56] = [
+    "Aptos Narrow",
+    "Calibri",
+    "Arial",
+    "Times New Roman",
+    "Courier New",
+    "Segoe UI",
+    "Verdana",
+    "Tahoma",
+    "Consolas",
+    "Cambria",
+    "Georgia",
+    "Aptos",
+    "Arial Narrow",
+    "Arial Black",
+    "Aptos Display",
+    "Comic Sans MS",
+    "Calibri Light",
+    "Trebuchet MS",
+    "Lucida Console",
+    "Microsoft Sans Serif",
+    "Segoe UI Semibold",
+    "MS Gothic",
+    "Bahnschrift",
+    "Book Antiqua",
+    "Candara",
+    "Cascadia Code",
+    "Cascadia Mono",
+    "Century",
+    "Century Gothic",
+    "Constantia",
+    "Corbel",
+    "Dubai",
+    "Ebrima",
+    "Franklin Gothic Medium",
+    "Gabriola",
+    "Gadugi",
+    "Impact",
+    "Ink Free",
+    "JetBrains Mono",
+    "Leelawadee UI",
+    "Lucida Sans Unicode",
+    "Malgun Gothic",
+    "Microsoft YaHei",
+    "MS PGothic",
+    "MS Reference Sans Serif",
+    "Nirmala UI",
+    "Palatino Linotype",
+    "Segoe UI Light",
+    "Segoe Print",
+    "Sitka Text",
+    "Sylfaen",
+    "Ubuntu Mono",
+    "Yu Gothic",
+    "SimSun",
+    "Aptos Serif",
+    "Aptos Mono",
+];
+
+const EXT_FONTS: usize = 13;
+
+const ADV_PPEM: (u32, u32) = (2, 160);
+
+const EXT_PPEM0: u32 = 12;
+
+const EXT_RANGES: [(u32, u32); 5] = [
+    (0xA0, 0x17F),
+    (0x391, 0x3C9),
+    (0x410, 0x44F),
+    (0x621, 0x64A),
+    (0x2013, 0x2014),
+];
+const EXT_PPEM1: u32 = 56;
+
+fn turn_advance(font: usize, face: usize, ppem: u32, c: char) -> Option<i64> {
+    let n = c as u32;
+    let row = font * 4 + face;
+
+    let in_table = (ADV_PPEM.0..=ADV_PPEM.1).contains(&ppem);
+    if (32..=126).contains(&n) {
+        if !in_table {
+            return None;
+        }
+        let at = (row * (ADV_PPEM.1 - ADV_PPEM.0 + 1) as usize + (ppem - ADV_PPEM.0) as usize) * 95;
+        return TURN_ADVANCES
+            .get(at + (n - 32) as usize)
+            .map(|&b| i64::from(b));
+    }
+
+    let bold = i64::from(face & 2 != 0);
+    if matches!(n, 0x3040..=0x30FF | 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xAC00..=0xD7A3 | 0xFF01..=0xFF60)
+    {
+        return Some(i64::from(ppem) + bold);
+    }
+    if (0x1F600..=0x1F64F).contains(&n) {
+        let adv = if ppem == EXT_PPEM0 {
+            15
+        } else {
+            (11 * ppem + 3) / 8
+        };
+        return Some(i64::from(adv) + bold);
+    }
+    if (EXT_PPEM0..=EXT_PPEM1).contains(&ppem) && font < EXT_FONTS {
+        let mut skip = 0;
+        for (lo, hi) in EXT_RANGES {
+            if (lo..=hi).contains(&n) {
+                let chars: u32 = EXT_RANGES.iter().map(|(l, h)| h - l + 1).sum();
+                let at = (row * (EXT_PPEM1 - EXT_PPEM0 + 1) as usize + (ppem - EXT_PPEM0) as usize)
+                    * chars as usize
+                    + (skip + n - lo) as usize;
+                return TURN_EXT.get(at).map(|&b| i64::from(b));
+            }
+            skip += hi - lo + 1;
+        }
+    }
+    None
+}
+
+fn turned_half_points(text: &str, f: &crate::style::Font, deg: u32, number: bool) -> Option<u32> {
+    let font = TURN_FONTS
+        .iter()
+        .position(|n| n.eq_ignore_ascii_case(&f.name))?;
+    if !f.size_twips.is_multiple_of(10) || !(1..=90).contains(&deg) {
+        return None;
+    }
+    let ppem = f.size_twips / 10;
+    if ppem < ADV_PPEM.0 || ppem > ADV_PPEM.1 {
+        return None;
+    }
+    let face = usize::from(f.italic) + 2 * usize::from(f.bold);
+    let (g, h, c) = turn_params(f);
+    let (g, h, c) = (i64::from(g), i64::from(h), i64::from(c));
+    let mut w = c;
+    for ch in text.chars() {
+        w += match turn_advance(font, face, ppem, ch) {
+            Some(a) => a,
+
+            None if font == 0 => i64::from(char_px(ch) * ppem / 22),
+            None => return None,
+        };
+    }
+    let v = if deg == 90 {
+        (w + 2 * g + 3 + c).max(45 * w / 44 + 2 * g + 1 + c)
+    } else {
+        let d = deg as usize;
+        let (s, co) = (SIN15[d], SIN15[90 - d]);
+        mul_div(s * w + co * h, 1, 32767) + 2 * mul_div(g * s, 1, 32767) + 1
+    };
+    let v = v + if number && deg != 90 { 2 } else { 0 };
+    Some((v as u32).min(819))
 }
 
 fn break_lines(text: &str, fits: &dyn Fn(u32) -> bool, unit: &dyn Fn(char) -> u32) -> Vec<u32> {
@@ -202,41 +340,72 @@ fn break_lines(text: &str, fits: &dyn Fn(u32) -> bool, unit: &dyn Fn(char) -> u3
     lines
 }
 
-fn wrapped_rotated_half_points(
-    text: &str,
-    rotation: u8,
-    col_px: u32,
-    stale_lines: Option<u32>,
-) -> Option<u32> {
-    const LINE: u32 = 29;
-    const MAX: u32 = 819;
-    let stacked = match rotation {
-        90 | 180 => false,
-        255 => true,
-        _ => return None,
-    };
-    if stacked && text.chars().count() == 1 {
-        return Some(LINE);
+fn best_fit_allowance(x: u32, grow: bool, d: u32) -> i64 {
+    let (x, d) = (i64::from(x), i64::from(d.max(1)));
+    if grow {
+        (2 * x / d).max(2)
+    } else {
+        -(2 * x / (d + 2)).max(2)
     }
-    let slots = (col_px.saturating_sub(7) / LINE).max(1) as usize;
-    let flat_limit = u64::from(col_px.saturating_sub(6)) * 44;
-    let flat = stale_lines.unwrap_or_else(|| {
-        break_lines(text, &|x| u64::from(x) * 45 <= flat_limit, &char_px).len() as u32
-    });
-    let lines_at = |len: u32| {
-        if stacked {
-            let cap = (len.saturating_sub(2) / LINE).max(1);
-            break_lines(text, &|x| x <= cap, &|_| 1)
-        } else {
-            break_lines(text, &|x| turned_extent(x) <= len, &char_px)
-        }
+}
+
+fn turned_wrapped_half_points(
+    text: &str,
+    col_px: u32,
+    row_hp: u32,
+    (line, g, c): (u32, u32, u32),
+    d: u32,
+    px: &dyn Fn(char) -> u32,
+) -> u32 {
+    const MAX: u32 = 819;
+    const UNLIMITED: u32 = 0x7fff;
+    let across = col_px.saturating_sub(2 * g + 1);
+    let along = row_hp.saturating_sub(2 * g + 1);
+    let w0 = (i64::from(along) + best_fit_allowance(along, false, d)).max(0) as u32;
+
+    let measure = |w: u32| {
+        let avail = w.saturating_sub(c);
+        let lines = break_lines(text, &|x| x <= avail, px);
+        (
+            lines.iter().max().copied().unwrap_or(0) + c,
+            lines.len() as u32 * line,
+        )
     };
-    let mut lines = lines_at((LINE * flat).min(MAX));
+    let (mut w, extent) = measure(w0);
+    if across < extent {
+        let (mut lo, mut hi) = (w, measure(UNLIMITED).0 + 1);
+        while lo + 1 < hi {
+            let mid = (hi + lo) / 2;
+            if measure(mid).1 <= across {
+                w = mid;
+                hi = mid;
+            } else {
+                lo = mid;
+            }
+        }
+    }
+    let h = i64::from(w) + best_fit_allowance(w, true, d) + 1 + i64::from(2 * g + c);
+    (h as u32).clamp(line, MAX)
+}
+
+fn wrapped_stacked_half_points(text: &str, col_px: u32, start: u32, (line, g): (u32, u32)) -> u32 {
+    const MAX: u32 = 819;
+    if text.chars().count() == 1 {
+        return line;
+    }
+
+    let slots = (col_px.saturating_sub(2 * g + 1 + 2) / line).max(1) as usize;
+    let lines_at = |len: u32| {
+        let cap = (len.saturating_sub(2) / line).max(1);
+        break_lines(text, &|x| x <= cap, &|_| 1)
+    };
+    let start = start.min(MAX);
+    let mut lines = lines_at(start);
     if lines.len() > slots {
         if lines_at(MAX).len() > slots {
-            return Some(MAX);
+            return MAX;
         }
-        let (mut lo, mut hi) = ((LINE * flat).min(MAX) + 1, MAX);
+        let (mut lo, mut hi) = (start + 1, MAX);
         while lo < hi {
             let mid = (lo + hi) / 2;
             if lines_at(mid).len() <= slots {
@@ -248,15 +417,91 @@ fn wrapped_rotated_half_points(
         lines = lines_at(lo);
     }
     let longest = lines.into_iter().max().unwrap_or(0);
-    let h = if stacked {
-        LINE * longest + 2
-    } else {
-        turned_extent(longest)
-    };
-    Some(h.clamp(LINE, MAX))
+    (line * longest + 2).clamp(line, MAX)
+}
+
+fn column_header_height(name: &str, bold: bool, italic: bool, size_twips: u32, zoom: u32) -> i64 {
+    let ppem0 = ((size_twips + 5) / 10).max(2);
+    let ppem = (ppem0 * zoom + 50) / 100;
+    let (a, d) = gdi_metrics::ascent_descent(&gdi_metrics::tm(name, bold, italic, ppem.max(2)));
+    i64::from(a + d)
+}
+
+fn window_last_row(header: i64, zoom: u32, avail: i64, hp: &dyn Fn(u32) -> u32) -> u32 {
+    let scale = |h: u32| (i64::from(h) * i64::from(zoom) * 2 + 100) / 200;
+    let mut acc = header;
+    let mut r = 0;
+    while r < MAX_ROWS {
+        let u = scale(hp(r));
+        if acc + u > avail {
+            return r;
+        }
+        acc += u;
+        r += 1;
+        if acc == avail {
+            return r - 1;
+        }
+    }
+    MAX_ROWS - 1
+}
+
+const AVAIL: i64 = 1376;
+
+pub fn window_rows(zoom: f64) -> u32 {
+    let z = zoom.round().clamp(10.0, 400.0) as u32;
+    window_last_row(
+        column_header_height("Aptos Narrow", false, false, 220, z),
+        z,
+        AVAIL,
+        &|_| 29,
+    ) + 1
 }
 
 impl Workbook {
+    pub fn set_normal_style(&mut self, s: Style, zoom: &dyn Fn(SheetId) -> f64) {
+        let ids: Vec<SheetId> = self.sheets().map(|sh| sh.id).collect();
+        let old: Vec<u32> = ids.iter().map(|&id| self.standard_tenths(id)).collect();
+        self.set_base_style(s);
+        for (id, o) in ids.into_iter().zip(old) {
+            let new = self.live_standard_tenths(id);
+            let rows: Vec<u32> = self.populated_lines(id, true).into_iter().collect();
+            let follows = if new == o {
+                true
+            } else if let Some(&last) = rows.last() {
+                let z = zoom(id).round().clamp(10.0, 400.0) as u32;
+                let header = {
+                    let f = &self.base_style().font;
+                    column_header_height(&f.name, f.bold, f.italic, f.size_twips, z)
+                };
+                let mut done = std::collections::BTreeSet::new();
+                let mut ok = true;
+                for &row in rows.iter().chain(std::iter::once(&(last + 1))) {
+                    let hp = |r: u32| -> u32 {
+                        if self.row_hidden(id, r) {
+                            0
+                        } else if let Some(h8) = self.row_custom_h8(id, r) {
+                            h8 / 4
+                        } else if done.contains(&r) {
+                            new / 5
+                        } else {
+                            o / 5
+                        }
+                    };
+                    let shown = window_last_row(header, z, AVAIL, &hp);
+                    if row > shown {
+                        ok = row != last + 1;
+                    } else {
+                        done.insert(row);
+                    }
+                }
+                ok
+            } else {
+                true
+            };
+            self.view_mut(id).std_frozen = if follows { None } else { Some(o) };
+        }
+    }
+
     pub fn row_height(&self, sheet: SheetId, row: u32) -> f64 {
         if self.row_hidden(sheet, row) {
             return 0.0;
@@ -281,25 +526,94 @@ impl Workbook {
             .and_then(|h| h.custom)
     }
 
-    fn normal_tenths(&self) -> u32 {
-        font_h(self.base_style())
-    }
-
     pub fn standard_height(&self, sheet: SheetId) -> f64 {
         f64::from(self.standard_tenths(sheet)) / 10.0
     }
 
     fn standard_tenths(&self, sheet: SheetId) -> u32 {
-        let mut t = self.normal_tenths();
-        for ((s, _), (_, sty)) in &self.cellfmt.cols {
-            if *s == sheet {
-                t = t.max(font_h(sty));
+        if let Some(t) = self.views.get(&sheet).and_then(|v| v.std_frozen) {
+            return t;
+        }
+        self.live_standard_tenths(sheet)
+    }
+
+    fn row_in_table(&self, sheet: SheetId, row: u32) -> bool {
+        if self
+            .views
+            .get(&sheet)
+            .is_none_or(|v| v.std_frozen.is_none())
+        {
+            return false;
+        }
+        self.cellfmt.rows.contains_key(&(sheet, row))
+            || self.sheet(sheet).is_some_and(|sh| {
+                sh.cells
+                    .iter_rect(crate::Rect::new(row, 0, row, MAX_COLS - 1))
+                    .next()
+                    .is_some()
+            })
+            || self.cellfmt.map.keys().any(|k| k.0 == sheet && k.1 == row)
+    }
+
+    fn live_standard_tenths(&self, sheet: SheetId) -> u32 {
+        let (a, d) = self.gap_maxima(sheet, None);
+        (5 * (a + d)).min(MAX_ONE_LINE)
+    }
+
+    fn gap_fonts(&self, sheet: SheetId, row: Option<u32>) -> Vec<(u32, u32)> {
+        let cols = self.line_format_indices(sheet, false);
+        let free = |c: u32| {
+            row.is_none_or(|r| {
+                let a = CellAddr::new(sheet, r, c);
+                self.merge_at(a).is_none()
+                    && self.own_style(a).is_none()
+                    && self.value(a).is_blank()
+            })
+        };
+        let style_at = |c: u32| -> &Style {
+            match row {
+                Some(r) => self.cell_style(CellAddr::new(sheet, r, c)),
+                None => self.line_style(sheet, false, c),
+            }
+        };
+        let mut seen: Vec<*const Style> = Vec::new();
+        let mut out: Vec<(u32, u32)> = Vec::new();
+        let mut take = |sty: &Style| {
+            let p: *const Style = sty;
+            if !seen.contains(&p) {
+                seen.push(p);
+                let ad = font_ad(&sty.font);
+                if !out.contains(&ad) {
+                    out.push(ad);
+                }
+            }
+        };
+        for &c in &cols {
+            if free(c) {
+                take(style_at(c));
             }
         }
-        if let Some((_, sty)) = self.cellfmt.sheets.get(&sheet) {
-            t = t.max(font_h(sty));
+
+        let mut c = 0;
+        while c < MAX_COLS && (cols.binary_search(&c).is_ok() || !free(c)) {
+            c += 1;
         }
-        t
+        if c < MAX_COLS {
+            take(style_at(c));
+        }
+        out
+    }
+
+    fn gap_maxima(&self, sheet: SheetId, row: Option<u32>) -> (u32, u32) {
+        let (a, d) = self
+            .gap_fonts(sheet, row)
+            .into_iter()
+            .fold((0, 0), |(a, d), (x, y)| (a.max(x), d.max(y)));
+        if d == 0 {
+            font_ad(&self.base_style().font)
+        } else {
+            (a, d)
+        }
     }
 
     pub fn row_auto_h8(&self, sheet: SheetId, row: u32) -> u32 {
@@ -343,13 +657,47 @@ impl Workbook {
         }
     }
 
+    pub fn auto_keep(&mut self, sheet: SheetId, fitted: &[(u32, u32)]) {
+        for &(r, t) in fitted {
+            self.view_mut(sheet).row_h.insert(
+                r,
+                RowHt {
+                    custom: None,
+                    frozen: Some(t),
+                    stale: None,
+                },
+            );
+        }
+    }
+
     pub fn auto_refit(&mut self, sheet: SheetId, r0: u32, r1: u32) {
         if let Some(v) = self.views.get_mut(&sheet) {
             for (_, h) in v.row_h.range_mut(r0..=r1) {
-                h.stale = h.frozen;
+                if h.frozen.is_some() {
+                    h.stale = h.frozen;
+                }
                 h.frozen = None;
             }
         }
+    }
+
+    pub fn post_scan_refit(&mut self, sheet: SheetId, r0: u32, r1: u32) {
+        let hidden = self.hidden_rows(sheet);
+        let mut lo = r0;
+        while lo > 0 {
+            lo -= 1;
+            if !hidden.contains(&lo) {
+                break;
+            }
+        }
+        let mut hi = r1;
+        while hi + 1 < MAX_ROWS {
+            hi += 1;
+            if !hidden.contains(&hi) {
+                break;
+            }
+        }
+        self.auto_refit(sheet, lo, hi);
     }
 
     pub fn holds_wrapped_text(&self, sheet: SheetId, rect: crate::Rect) -> bool {
@@ -417,17 +765,41 @@ impl Workbook {
             .any(|r| (rect.c0..=rect.c1).any(|c| f(self, CellAddr::new(sheet, r, c))))
     }
 
-    fn row_fit_tenths(&self, sheet: SheetId, row: u32) -> u32 {
-        let floor = self.standard_tenths(sheet);
-        let mut tenths = floor;
+    pub(crate) fn row_fit_tenths(&self, sheet: SheetId, row: u32) -> u32 {
+        let frozen = self
+            .views
+            .get(&sheet)
+            .is_some_and(|v| v.std_frozen.is_some());
+        let mut tenths = if frozen && !self.row_in_table(sheet, row) {
+            self.standard_tenths(sheet)
+        } else {
+            0
+        };
         if let Some((_, sty)) = self.cellfmt.rows.get(&(sheet, row)) {
             tenths = tenths.max(font_h(sty));
         }
         let mut extra = 0;
-        let mut rest = 0;
-        let mut first = 0;
         let mut single = 0;
+        let mut multi = false;
+
+        let (mut asc, mut desc) = (0, 0);
         let last = self.row_last_col(sheet);
+
+        let across = |r: Option<u32>, bottom: bool| {
+            let mut best = BorderLine::None;
+            if let Some(r) = r.filter(|r| *r < MAX_ROWS) {
+                for c in 0..=last {
+                    let b = &self.cell_style(CellAddr::new(sheet, r, c)).borders;
+                    let l = if bottom { b.bottom.line } else { b.top.line };
+                    if line_px(l) > line_px(best) {
+                        best = l;
+                    }
+                }
+            }
+            best
+        };
+        let above = across(row.checked_sub(1), true);
+        let below = across(row.checked_add(1), false);
         let mut c = 0;
         while c <= last {
             let a = CellAddr::new(sheet, row, c);
@@ -441,22 +813,6 @@ impl Workbook {
                 continue;
             }
             let sty = self.cell_style(a);
-            let above = if a.row > 0 {
-                self.cell_style(CellAddr::new(sheet, a.row - 1, a.col))
-                    .borders
-                    .bottom
-                    .line
-            } else {
-                BorderLine::None
-            };
-            let below = if a.row + 1 < MAX_ROWS {
-                self.cell_style(CellAddr::new(sheet, a.row + 1, a.col))
-                    .borders
-                    .top
-                    .line
-            } else {
-                BorderLine::None
-            };
             let top = if line_px(above) > line_px(sty.borders.top.line) {
                 above
             } else {
@@ -473,60 +829,158 @@ impl Workbook {
             extra = extra.max(border_extra(top, bottom));
             let lines = match &v {
                 Value::Text(t) if sty.alignment.wrap || t.contains('\n') => {
-                    let avail = self.col_px(sheet, a.col).saturating_sub(WRAP_PAD_PX);
+                    let limit = self
+                        .col_px(sheet, a.col)
+                        .saturating_sub(indent_px(&sty.alignment));
                     let scale =
                         f64::from(sty.font.size_twips) / 220.0 * if shifted { 0.75 } else { 1.0 };
-                    wrap_lines(t, avail, sty.alignment.wrap, scale)
+                    let font = TURN_FONTS
+                        .iter()
+                        .position(|f| f.eq_ignore_ascii_case(&sty.font.name));
+                    let face = usize::from(sty.font.italic) + 2 * usize::from(sty.font.bold);
+                    let ppem = sty.font.size_twips / 10;
+
+                    let avail = if shifted {
+                        limit.saturating_sub(WRAP_PAD_PX)
+                    } else {
+                        let (g, _, c) = turn_params(&sty.font);
+                        wrap_run_max(limit, g, c)
+                    };
+                    let px = |c: char| {
+                        let own = match font {
+                            Some(f) if !shifted && sty.font.size_twips.is_multiple_of(10) => {
+                                turn_advance(f, face, ppem, c)
+                            }
+                            _ => None,
+                        };
+                        own.map_or_else(
+                            || (f64::from(char_px(c)) * scale).round() as u32,
+                            |a| a as u32,
+                        )
+                    };
+                    wrap_lines(t, avail, sty.alignment.wrap, &px)
                 }
                 _ => 1,
             };
-            let rotated = match &v {
-                Value::Text(t)
-                    if sty.alignment.rotation != 0
-                        && !t.contains('\n')
-                        && !shifted
-                        && sty.font.size_twips == 220
-                        && sty.font.name.eq_ignore_ascii_case("Aptos Narrow") =>
-                {
-                    if sty.alignment.wrap {
-                        let px = self.col_px(sheet, a.col);
 
-                        let stale = self
-                            .views
-                            .get(&sheet)
-                            .and_then(|v| v.row_h.get(&row))
-                            .and_then(|h| h.stale)
-                            .map(|t| (t.saturating_sub(150) * 2 + 145) / 290 + 1);
-                        wrapped_rotated_half_points(t, sty.alignment.rotation, px, stale)
-                    } else {
-                        rotated_half_points(t, sty.alignment.rotation)
-                    }
+            let shown = match &v {
+                Value::Number(_) | Value::Bool(_) | Value::Error(_)
+                    if sty.alignment.rotation != 0 =>
+                {
+                    Some(self.display_text(a))
                 }
+                Value::Text(t) => Some(t.to_string()),
                 _ => None,
             };
+            let plain_number = matches!(v, Value::Number(_))
+                && !crate::NumberFormat::parse(&sty.number_format).is_ok_and(|n| n.is_date());
+            let turn_deg = match sty.alignment.rotation {
+                r @ 1..=90 => Some(u32::from(r)),
+                r @ 91..=180 => Some(u32::from(r) - 90),
+                _ => None,
+            };
+            let rotated = match &shown {
+                Some(t)
+                    if !sty.alignment.wrap
+                        && !shifted
+                        && !t.contains('\n')
+                        && turn_deg.is_some() =>
+                {
+                    turned_half_points(t, &sty.font, turn_deg.unwrap_or(0), plain_number)
+                }
+                _ => None,
+            }
+            .or(match &shown {
+                Some(t)
+                    if sty.alignment.rotation != 0
+                        && sty.alignment.wrap
+                        && !t.contains('\n')
+                        && !shifted =>
+                {
+                    let px = self.col_px(sheet, a.col);
+
+                    let stale = self
+                        .views
+                        .get(&sheet)
+                        .and_then(|v| v.row_h.get(&row))
+                        .and_then(|h| h.stale)
+                        .map(|t| (t.saturating_sub(150) * 2 + 145) / 290 + 1);
+                    let font = TURN_FONTS
+                        .iter()
+                        .position(|f| f.eq_ignore_ascii_case(&sty.font.name));
+                    let face = usize::from(sty.font.italic) + 2 * usize::from(sty.font.bold);
+                    let ppem = sty.font.size_twips / 10;
+                    match (font, sty.font.size_twips % 10) {
+                        (Some(f), 0) => {
+                            let (g, h, c) = turn_params(&sty.font);
+                            let adv = |ch: char| {
+                                turn_advance(f, face, ppem, ch)
+                                    .map_or_else(|| char_px(ch) * ppem / 22, |a| a as u32)
+                            };
+
+                            let flat = stale.unwrap_or_else(|| {
+                                let lim = wrap_run_max(px, g, c);
+                                break_lines(t, &|x| x <= lim, &adv).len() as u32
+                            });
+                            let first = h.max((sty.font.size_twips / 2 + 35) / 5);
+                            let start = if stale.is_some() {
+                                h * flat
+                            } else {
+                                first + (flat - 1) * h
+                            }
+                            .min(819);
+                            match sty.alignment.rotation {
+                                90 | 180 => Some(turned_wrapped_half_points(
+                                    t,
+                                    px,
+                                    start,
+                                    (h, g, c),
+                                    8 * self.digit_px(),
+                                    &adv,
+                                )),
+                                255 => Some(wrapped_stacked_half_points(t, px, start, (h, g))),
+                                _ => None,
+                            }
+                        }
+                        _ => None,
+                    }
+                }
+                Some(t)
+                    if sty.alignment.rotation == 255
+                        && !sty.alignment.wrap
+                        && !t.contains('\n')
+                        && !shifted =>
+                {
+                    Some(stacked_half_points(t, turn_params(&sty.font).1))
+                }
+                _ => None,
+            });
             if let Some(h2) = rotated {
                 single = single.max(h2 * 5);
-                first = first.max(h2 * 5);
                 continue;
             }
 
+            let (a, d) = font_ad(&sty.font);
+            let (a, d) = (5 * a, 5 * d);
             if lines > 1 {
-                first = first.max(one.max(sty.font.size_twips / 2 + 35));
-                rest = rest.max(one * (lines - 1));
+                multi = true;
+                let total = one * lines;
+                asc = asc.max(a.max(total.saturating_sub(d)));
+                desc = desc.max(d);
             } else {
                 single = single.max(one);
-                first = first.max(if v.is_blank() {
-                    let pt = (sty.font.size_twips / 20).clamp(6, 40) as usize;
-                    u32::from(EMPTY_FIRST_LINE[pt - 6])
-                } else {
-                    one
-                });
+                if !shifted {
+                    asc = asc.max(a);
+                    desc = desc.max(d);
+                }
             }
         }
-        if rest > 0 {
-            return tenths.max(single).max((first + rest).min(4095)) + extra;
-        }
-        tenths = tenths.max(single);
+
+        let (ga, gd) = self.gap_maxima(sheet, Some(row));
+        asc = asc.max(5 * ga);
+        desc = desc.max(5 * gd);
+        let cap = if multi { 4095 } else { MAX_ONE_LINE };
+        tenths = tenths.max(single).max((asc + desc).min(cap));
         tenths + extra
     }
 
@@ -555,6 +1009,7 @@ impl Workbook {
         if (r0..=r1).any(|r| self.row_hidden(sheet, r)) {
             self.set_rows_hidden(sheet, r0, r1 - r0 + 1, false).ok()?;
         }
+        self.mark_rows(sheet, r0, r1, true);
         let v = self.view_mut(sheet);
         for r in r0..=r1 {
             v.row_h.insert(
@@ -578,6 +1033,41 @@ impl Workbook {
             for k in keys {
                 v.row_h.remove(&k);
             }
+        }
+    }
+
+    pub fn populated_lines(&self, sheet: SheetId, rows: bool) -> std::collections::BTreeSet<u32> {
+        let mut set = std::collections::BTreeSet::new();
+        if let Some(sh) = self.sheet(sheet) {
+            set.extend(sh.cells.iter().map(|(r, c, _)| if rows { r } else { c }));
+        }
+        set.extend(
+            self.formatted_cells(sheet)
+                .into_iter()
+                .map(|(r, c)| if rows { r } else { c }),
+        );
+        if rows {
+            set.extend(self.row_custom_heights(sheet).into_iter().map(|h| h.0));
+            if let Some(v) = self.views.get(&sheet) {
+                set.extend(v.table_rows.iter().copied());
+            }
+        }
+        set
+    }
+
+    pub fn note_table_rows(&mut self, sheet: SheetId, rect: crate::Rect) {
+        let rows: Vec<u32> = (rect.r0..=rect.r1.min(rect.r0 + 4096))
+            .filter(|&r| {
+                self.sheet(sheet).is_some_and(|sh| {
+                    sh.cells
+                        .iter_rect(crate::Rect::new(r, 0, r, MAX_COLS - 1))
+                        .next()
+                        .is_some()
+                })
+            })
+            .collect();
+        if !rows.is_empty() {
+            self.view_mut(sheet).table_rows.extend(rows);
         }
     }
 
@@ -610,6 +1100,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn flat_wrap_width_is_the_traced_pchlastfit_avail() {
+        assert_eq!(wrap_run_max(546, 3, 0), 528);
+        assert_eq!(wrap_run_max(557, 3, 0), 538);
+    }
+
+    #[test]
+    fn window_walk_shows_the_traced_rows() {
+        let rows: Vec<u32> = [50.0, 75.0, 100.0, 150.0, 200.0]
+            .iter()
+            .map(|z| window_rows(*z))
+            .collect();
+        assert_eq!(rows, [91, 62, 47, 31, 23]);
+    }
+
+    #[test]
     fn heights_quantise() {
         for (set, read) in [
             (0.1, 0.2),
@@ -628,8 +1133,104 @@ mod tests {
 
     #[test]
     fn font_table() {
-        assert_eq!(font_tenths("Aptos Narrow", 220), 145);
-        assert_eq!(font_tenths("Aptos Narrow", 240), 160);
-        assert_eq!(font_tenths("Arial", 400), 250);
+        let f = |name: &str, twips: u32| crate::style::Font {
+            name: name.into(),
+            size_twips: twips,
+            ..crate::style::Style::default().font
+        };
+        assert_eq!(font_ad(&f("Aptos Narrow", 220)), (22, 7));
+        assert_eq!(
+            font_h(&Style {
+                font: f("Aptos Narrow", 220),
+                ..Style::default()
+            }),
+            145
+        );
+        assert_eq!(
+            font_h(&Style {
+                font: f("Aptos Narrow", 240),
+                ..Style::default()
+            }),
+            160
+        );
+        assert_eq!(
+            font_h(&Style {
+                font: f("Arial", 400),
+                ..Style::default()
+            }),
+            250
+        );
+
+        assert_eq!(
+            font_h(&Style {
+                font: f("Arial", 100),
+                ..Style::default()
+            }),
+            65
+        );
+    }
+
+    #[test]
+    fn one_line_edges() {
+        let h = |name: &str, twips: u32| {
+            font_h(&Style {
+                font: crate::style::Font {
+                    name: name.into(),
+                    size_twips: twips,
+                    ..Style::default().font
+                },
+                ..Style::default()
+            })
+        };
+
+        assert_eq!(h("Arial", 8180), 4096);
+
+        assert!(h("Arial", 110) <= h("Arial", 120));
+
+        assert_eq!(h("No Such Font", 220), h("Arial", 220));
+        assert_eq!(h("No Such Font", 100), h("Arial", 100));
+    }
+
+    #[test]
+    fn turned_wrap_growth_search_follows_the_routines() {
+        let f = crate::style::Font {
+            name: "Palatino Linotype".into(),
+            size_twips: 220,
+            italic: true,
+            ..crate::style::Style::default().font
+        };
+        let (g, h, c) = turn_params(&f);
+        assert_eq!((g, h, c), (3, 31, 4));
+        let font = TURN_FONTS
+            .iter()
+            .position(|n| n.eq_ignore_ascii_case(&f.name))
+            .unwrap();
+        let adv = |ch: char| turn_advance(font, 1, 22, ch).unwrap() as u32;
+        assert_eq!(
+            turned_wrapped_half_points("alpha beta gamma delta", 100, 124, (h, g, c), 88, &adv),
+            108
+        );
+        assert_eq!(best_fit_allowance(95, true, 88), 2);
+        assert_eq!(best_fit_allowance(117, false, 88), -2);
+    }
+
+    #[test]
+    fn turn_parameters_follow_the_font_routine() {
+        let f = |name: &str, twips: u32, italic: bool| crate::style::Font {
+            name: name.into(),
+            size_twips: twips,
+            italic,
+            ..crate::style::Style::default().font
+        };
+
+        assert_eq!(turn_params(&f("Aptos Narrow", 220, false)), (3, 29, 0));
+        assert_eq!(turn_params(&f("Aptos Narrow", 220, true)), (3, 29, 4));
+        assert_eq!(turn_params(&f("Aptos Narrow", 280, false)), (4, 37, 0));
+
+        let (g, h, c) = turn_params(&f("Comic Sans MS", 110, true));
+        assert!(g >= 1 && h > 0 && c > 0);
+
+        assert_eq!(stacked_half_points("Wag", 29), 89);
+        assert_eq!(stacked_half_points(&"a".repeat(100), 29), 819);
     }
 }

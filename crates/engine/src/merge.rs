@@ -62,7 +62,14 @@ impl Workbook {
         rect: Rect,
         across: bool,
     ) -> Result<RecalcReport, EditError> {
-        self.command(Command::Merge, |wb| wb.merge_cells_run(sheet, rect, across))
+        let r = self.command(Command::Merge, |wb| wb.merge_cells_run(sheet, rect, across));
+
+        if r.is_ok() {
+            if let Some(sh) = self.sheet_mut(sheet) {
+                sh.cells.extend_sticky(rect);
+            }
+        }
+        r
     }
 
     fn merge_cells_run(
@@ -226,6 +233,16 @@ impl Workbook {
             }
             self.merges.areas.push((sheet, a));
             calc::rect_changed(self, sheet, a);
+
+            if self.settings.mode != CalcMode::Automatic
+                && a.rows() as u64 * a.cols() as u64 <= 4096
+            {
+                for r in a.r0..=a.r1 {
+                    for c in a.c0..=a.c1 {
+                        calc::block_spill_at(self, CellAddr::new(sheet, r, c));
+                    }
+                }
+            }
         }
         Ok(self.recalc_after_block_edit())
     }
@@ -247,7 +264,8 @@ impl Workbook {
             }
             rect = grown;
         }
-        let gone: Vec<Rect> = self
+
+        let freed: Vec<Rect> = self
             .merges(sheet)
             .into_iter()
             .filter(|m| m.intersects(&rect))
@@ -255,8 +273,15 @@ impl Workbook {
         self.merges
             .areas
             .retain(|(s, m)| !(*s == sheet && m.intersects(&rect)));
-        for m in gone {
-            calc::rect_changed(self, sheet, m);
+
+        let mut anchors = Vec::new();
+        if let Some(sh) = self.sheet(sheet) {
+            for m in &freed {
+                anchors.extend(sh.spills.anchors_wanting_rect(m));
+            }
+        }
+        for a in anchors {
+            calc::mark_dirty(self, a);
         }
         self.recalc_after_block_edit()
     }
@@ -327,22 +352,20 @@ impl Workbook {
         if keep_one {
             return Ok((vec![], vec![]));
         }
+
         let region = if spec.what == PasteWhat::Formats && (dst.rows() > 1 || dst.cols() > 1) {
             dst
         } else {
-            Rect::new(
-                target.r0.min(dst.r0),
-                target.c0.min(dst.c0),
-                target.r1.max(dst.r1),
-                target.c1.max(dst.c1),
-            )
+            target
         };
         let hit: Vec<Rect> = self
             .merges(sheet)
             .into_iter()
             .filter(|m| m.intersects(&region))
             .collect();
-        if hit.iter().any(|m| !inside(m, &region)) {
+
+        let loose = spec.what == PasteWhat::All && spec.op != crate::pastespecial::PasteOp::None;
+        if !loose && hit.iter().any(|m| !inside(m, &region)) {
             return Err(merged_cell());
         }
         Ok(if spec.what == PasteWhat::Formulas {

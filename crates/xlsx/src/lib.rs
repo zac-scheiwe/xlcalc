@@ -4,6 +4,7 @@ mod csv;
 mod ctrlprops;
 mod drawings;
 mod drawings_out;
+mod drawings_text;
 mod dvs;
 mod ext_in;
 mod ext_out;
@@ -14,6 +15,7 @@ mod merges;
 mod notesxml;
 mod package;
 mod pivot;
+mod protect;
 mod rawxml;
 mod richerr;
 mod scenarios;
@@ -46,7 +48,11 @@ pub use ctrlprops::{read_controls, Control, ControlKind};
 pub use ext_in::FileLink;
 pub use extras::extras_summary;
 pub use package::{Package, Rel, SourceSheet};
-pub use write::{save, FileKind, SaveOptions, Saved, VbaWrite};
+pub use protect::{
+    book_protection_xml, legacy_hash, protected_ranges_xml, read_book_protection,
+    read_sheet_protection, sheet_protection_xml, EditRangeDef, PassHash, SheetProtection,
+};
+pub use write::{save, FileKind, Protection, SaveOptions, Saved, VbaWrite};
 pub use xls::xlsx_to_xls;
 pub use xlsb_write::xlsx_to_xlsb;
 
@@ -278,6 +284,8 @@ struct TableDef {
     sheet: usize,
     rect: Rect,
     totals: bool,
+
+    style: Option<(Option<String>, [bool; 4])>,
 
     columns: Vec<String>,
     headers: bool,
@@ -675,9 +683,7 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                 };
 
                 let tname = match (t.attr("displayName"), t.attr("name")) {
-                    (Some(d), Some(n)) if write::is_cell_like(n) && d == write::display_name(n) => {
-                        n.to_string()
-                    }
+                    (Some(d), Some(n)) if d != n && d == write::display_name(n) => n.to_string(),
                     (d, n) => d.or(n).unwrap_or("Table").to_string(),
                 };
                 let columns: Vec<String> = t
@@ -692,7 +698,20 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                 if let Some(i) = t.attr("id").and_then(|i| i.parse().ok()) {
                     table_ids.push((i, tname.clone()));
                 }
+                let flag = |si: &Node, k: &str| matches!(si.attr(k), Some("1") | Some("true"));
+                let style = t.child("tableStyleInfo").map(|si| {
+                    (
+                        si.attr("name").map(str::to_string),
+                        [
+                            flag(si, "showRowStripes"),
+                            flag(si, "showColumnStripes"),
+                            flag(si, "showFirstColumn"),
+                            flag(si, "showLastColumn"),
+                        ],
+                    )
+                });
                 tables.push(TableDef {
+                    style,
                     columns,
                     headers: t.attr("headerRowCount") != Some("0"),
                     name: tname,
@@ -735,6 +754,8 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     }
 
     let mut wb = Workbook::empty();
+
+    wb.set_file_load(true);
     for fl in &ext_links {
         let l = wb.ext_link(&fl.key());
         wb.ext_set_link(l, fl.absolute.as_deref().unwrap_or(&fl.target), false);
@@ -748,12 +769,22 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
 
     let mut aliases: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
     let table_names: Vec<String> = tables.iter().map(|t| t.name.clone()).collect();
-    for sd in &mut sheets {
-        for (_, _, f) in &mut sd.forms {
+    for (si, sd) in sheets.iter_mut().enumerate() {
+        for (row, col, f) in &mut sd.forms {
             match f {
                 Form::Plain(t) | Form::Dynamic(t) | Form::Array(_, t) => {
+                    if let Some(td) = tables.iter().find(|td| {
+                        td.sheet == si
+                            && write::display_name(&td.name) != td.name
+                            && td.rect.contains(*row, *col)
+                    }) {
+                        *t = ftext::unqualify_table(t, &write::display_name(&td.name));
+                    }
                     *t = ftext::file_meaning(
-                        &ftext::prepare(&ftext::ext_index(t, &ext_keys), &mut aliases),
+                        &ftext::dead_refs(
+                            &ftext::prepare(&ftext::ext_index(t, &ext_keys), &mut aliases),
+                            false,
+                        ),
                         &table_names,
                     )
                 }
@@ -839,6 +870,12 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
         if t.totals {
             wb.restore_table_totals(&t.name, t.rect);
         }
+        if let Some((name, flags)) = &t.style {
+            wb.set_table_look(&t.name, |tb| {
+                tb.style = name.clone();
+                tb.stripes = *flags;
+            });
+        }
     }
     if let Some(dn) = wbx.child("definedNames") {
         for d in dn.children("definedName") {
@@ -855,19 +892,27 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
             let refers = format!(
                 "={}",
                 ftext::file_meaning(
-                    &ftext::prepare(&ftext::ext_index(&d.text, &ext_keys), &mut aliases),
+                    &ftext::dead_refs(
+                        &ftext::prepare(&ftext::ext_index(&d.text, &ext_keys), &mut aliases),
+                        true
+                    ),
                     &table_names,
                 )
             );
             if let Err(e) = wb.define_name(name, &refers, scope) {
                 warnings.push(format!("name {name}: {e} ({refers})"));
-            } else if matches!(d.attr("xlm"), Some("1") | Some("true")) {
-                let function = matches!(d.attr("function"), Some("1") | Some("true"));
-                wb.set_name_macro_type(
-                    &name.to_uppercase(),
-                    scope,
-                    Some(if function { 1 } else { 2 }),
-                );
+            } else {
+                if matches!(d.attr("hidden"), Some("1") | Some("true")) {
+                    wb.set_name_visible(&name.to_uppercase(), scope, false);
+                }
+                if matches!(d.attr("xlm"), Some("1") | Some("true")) {
+                    let function = matches!(d.attr("function"), Some("1") | Some("true"));
+                    wb.set_name_macro_type(
+                        &name.to_uppercase(),
+                        scope,
+                        Some(if function { 1 } else { 2 }),
+                    );
+                }
             }
         }
     }
@@ -1088,10 +1133,29 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     if let Some(&tab) = ids.get(tab) {
         package.active = Some((wb.active_sheet(), tab));
     }
-    pivot::adopt(&mut wb, &ids, &pivot_defs, &mut warnings);
+    pivot::adopt(&mut wb, &ids, &pivot_defs, &styles, &mut warnings);
     for s in &package.sheets {
         if let Some(d) = drawings::read_sheet_drawing(&wb, s.id, &package, &s.part) {
+            let links: Vec<_> = d
+                .shapes
+                .iter()
+                .filter_map(|sh| Some((sh.id, sh.props.hlink.clone()?)))
+                .collect();
             wb.set_drawing(s.id, d);
+            for (shape, l) in links {
+                wb.hyperlink_add(
+                    s.id,
+                    xlcalc::hyperlink::Hyperlink {
+                        id: 0,
+                        rect: Rect::cell(0, 0),
+                        address: l.address,
+                        sub_address: l.sub_address,
+                        screen_tip: l.screen_tip,
+                        name: None,
+                        shape: Some(shape),
+                    },
+                );
+            }
         }
     }
     slicers_xml::adopt(
@@ -1109,6 +1173,7 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
         workbook_code_name: wbpr.and_then(|p| p.attr("codeName")).map(str::to_string),
         sheet_code_names: sheet_code_names.clone(),
     });
+    wb.set_file_load(false);
     Ok(Import {
         opened_uncalculated,
         workbook: wb,
@@ -1202,6 +1267,57 @@ mod tests {
             again.shape_rect_emu(s3, &d3.shapes[2].pos),
             (3_000_000, 1_000_000, 900_000, 400_000)
         );
+    }
+
+    #[test]
+    fn text_frame_round_trip() {
+        use xlcalc::drawing::ShapeKind;
+        use xlcalc::drawing_text::FontColor;
+        let mut wb = xlcalc::Workbook::empty();
+        let s = wb.add_sheet("T").unwrap();
+        let a = wb.add_shape(s, ShapeKind::Auto(1), "Rectangle", [10.0, 10.0, 90.0, 40.0]);
+        {
+            let x = wb.drawing_mut(s).get_mut(a).unwrap();
+            x.text = "one two\nthree".into();
+            let tf = &mut x.props.tf;
+            tf.fit(13);
+            for c in &mut tf.chars[..3] {
+                c.bold = true;
+                c.color = FontColor::Rgb(255);
+            }
+            for c in &mut tf.chars[4..7] {
+                c.size = 18.0;
+                c.underline = 3;
+                c.name = Some("Arial".into());
+            }
+            tf.align = 2;
+            tf.anchor = 4;
+            tf.anchor_ctr = true;
+            tf.margins = [0.0, 2.0, 1.25, 20.0];
+            tf.autosize = 2;
+            tf.wrap = false;
+            tf.orient = 5;
+            tf.h_over = 0;
+            tf.v_over = 2;
+            tf.reading = 2;
+        }
+        let want = wb.drawing(s).unwrap().get(a).unwrap().props.tf.clone();
+        let saved = crate::write::save(&wb, None, &crate::write::SaveOptions::default()).unwrap();
+        let back = super::import_bytes(saved.bytes).unwrap().workbook;
+        let s2 = back.sheet_by_name("T").unwrap().id;
+        let d = back.drawing(s2).unwrap();
+        assert_eq!(d.shapes[0].text, "one two\nthree");
+        assert_eq!(d.shapes[0].props.tf, want);
+
+        let mut again = back;
+        let id = again.drawing(s2).unwrap().shapes[0].id;
+        again.drawing_mut(s2).get_mut(id).unwrap().props.tf.chars[5].underline = 1;
+        let saved =
+            crate::write::save(&again, None, &crate::write::SaveOptions::default()).unwrap();
+        let back = super::import_bytes(saved.bytes).unwrap().workbook;
+        let d = back.drawing(s2).unwrap();
+        assert_eq!(d.shapes[0].props.tf.chars[5].underline, 1);
+        assert_eq!(d.shapes[0].props.tf.chars[4].underline, 3);
     }
 
     #[test]
@@ -1319,6 +1435,21 @@ mod tests {
             vec![false, true]
         );
         assert!(imgs.iter().all(|i| i.bytes == png));
+    }
+
+    #[test]
+    fn hidden_name_round_trip() {
+        use xlcalc::Workbook;
+        let mut wb = Workbook::empty();
+        wb.add_sheet("Sheet1").unwrap();
+        wb.define_name("hid", "=Sheet1!$B$2", None).unwrap();
+        wb.set_name_visible("HID", None, false);
+        wb.define_name("shown", "=Sheet1!$B$3", None).unwrap();
+        let opts = crate::write::SaveOptions::default();
+        let saved = crate::write::save(&wb, None, &opts).unwrap();
+        let back = super::import_bytes(saved.bytes).unwrap().workbook;
+        assert!(!back.names().is_visible("HID", None));
+        assert!(back.names().is_visible("SHOWN", None));
     }
 
     #[test]

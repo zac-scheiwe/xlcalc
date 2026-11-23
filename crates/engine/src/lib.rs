@@ -16,9 +16,10 @@ pub(crate) mod calc;
 pub(crate) mod cellfmt;
 pub mod cfv;
 mod cfv_edit;
+mod cfv_hosed;
+pub mod chart_src;
 pub(crate) mod coerce;
 pub(crate) mod colwidth;
-mod colwidth_data;
 pub mod crt;
 pub(crate) mod cse;
 pub(crate) mod datatable;
@@ -27,6 +28,7 @@ pub(crate) mod deadref;
 pub(crate) mod dedup;
 pub mod drawing;
 mod drawing_groups;
+pub mod drawing_text;
 pub(crate) mod editcell;
 pub(crate) mod eval;
 pub mod f80;
@@ -34,9 +36,11 @@ pub(crate) mod fileform;
 pub(crate) mod fillseries;
 pub mod findcells;
 mod fmtmove;
+pub(crate) mod fontwidth;
 pub(crate) mod formula;
 pub(crate) mod formula_print;
 pub(crate) mod functions;
+pub(crate) mod gdi_metrics;
 pub(crate) mod goalseek;
 pub(crate) mod graph;
 pub(crate) mod host;
@@ -44,6 +48,9 @@ pub mod hyperlink;
 pub(crate) mod input;
 pub(crate) mod legacy;
 mod legacy_classes;
+mod legacy_ftab;
+mod legacy_grbit;
+mod legacy_single;
 pub(crate) mod locale;
 pub(crate) mod merge;
 pub(crate) mod moves;
@@ -54,9 +61,9 @@ mod pagebreak;
 pub mod parser;
 pub(crate) mod pastespecial;
 pub mod pivot;
+pub mod refit;
 pub(crate) mod replace;
 pub(crate) mod rowheight;
-mod rowheight_data;
 pub mod scenarios;
 pub(crate) mod share;
 pub mod slicer;
@@ -107,6 +114,34 @@ pub use numfmt::{Color, NumberFormat, Rendered};
 pub use parser::{is_valid_name, ParseError};
 pub use pastespecial::{PasteOp, PasteSpecial, PasteWhat};
 pub use replace::ReplaceSpec;
+pub use rowheight::window_rows;
+
+pub fn window_header_hp(zoom: u32) -> i64 {
+    let z = zoom.clamp(10, 400);
+    let ppem = ((220 + 5) / 10 * z + 50) / 100;
+    let (a, d) =
+        gdi_metrics::ascent_descent(&gdi_metrics::tm("Aptos Narrow", false, false, ppem.max(2)));
+    i64::from(a + d)
+}
+
+pub fn window_rows_with(zoom: f64, hp: &dyn Fn(u32) -> u32) -> u32 {
+    let z = i64::from(zoom.round().clamp(10.0, 400.0) as u32);
+    let avail = 1376_i64;
+    let mut acc = window_header_hp(z as u32);
+    let mut r = 0_u32;
+    while r < 1_048_576 {
+        let u = (i64::from(hp(r)) * z * 2 + 100) / 200;
+        if acc + u > avail {
+            return r + 1;
+        }
+        acc += u;
+        r += 1;
+        if acc == avail {
+            return r;
+        }
+    }
+    1_048_576
+}
 pub use sort::{SortColor, SortKey, SortSpec};
 pub use subtotal::{SubFunc, SubtotalSpec};
 pub use text::{collate_compare, collate_compare_match_case};
@@ -115,7 +150,7 @@ pub use value::{Array, Value, XlError};
 pub mod xlm;
 pub use view::{ColView, FilterSpec, FilterView};
 pub use workbook::ext::{split_path, ExtLink, ExtName, ExtSheetData, OpenBook};
-pub use workbook::tables::Table;
+pub use workbook::tables::{table_display_name, Table};
 pub use workbook::{
     paste_area, CalcMode, Command, EditError, Entry, FormulaCell, FormulaId, NameDef, Names,
     Notice, Outcome, Selection, Settings, Sheet, SheetKind, SheetState, TrackId, Workbook,
@@ -131,8 +166,7 @@ pub struct FunctionInfo {
 }
 
 pub fn argument_class(upper_name: &str, i: usize) -> Option<u8> {
-    let classes = legacy_classes::legacy_classes(upper_name)?;
-    Some(legacy_classes::class_at(upper_name, classes, i))
+    legacy_classes::class_of(upper_name, i)
 }
 
 pub fn function_info(upper_name: &str) -> Option<FunctionInfo> {
@@ -143,6 +177,15 @@ pub fn function_info(upper_name: &str) -> Option<FunctionInfo> {
         volatile: def.volatile,
         params: def.params,
     })
+}
+
+pub fn ifunc_name(ifunc: u16) -> Option<&'static str> {
+    legacy_ftab::FTAB.get(usize::from(ifunc)).map(|f| f.name)
+}
+
+pub fn ifunc_arg_mask(ifunc: u16, arg: usize) -> Option<u32> {
+    let m = legacy_ftab::FTAB.get(usize::from(ifunc))?.masks;
+    m.get(arg).or_else(|| m.last()).copied()
 }
 
 pub fn parse_cell_ref(wb: &Workbook, text: &str, default_sheet: SheetId) -> Option<CellAddr> {

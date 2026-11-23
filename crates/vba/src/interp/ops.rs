@@ -53,6 +53,10 @@ pub fn var_binary(
         }
         BinOp::Like | BinOp::Is => unreachable!("{op:?} is evaluated by the interpreter"),
     };
+
+    if matches!(a, Variant::Int(_)) || matches!(b, Variant::Int(_)) {
+        return Err(VbaError::new(458));
+    }
     var::binary(o, a, b).map_err(hresult_error)
 }
 

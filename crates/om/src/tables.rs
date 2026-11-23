@@ -19,6 +19,19 @@ pub(crate) fn body(t: &Table) -> Option<Rect> {
     (r.r0 <= r.r1 && !t.emptied).then_some(r)
 }
 
+fn lenient_pos(v: &Variant, lcid: u32) -> Result<i64, OmError> {
+    match v {
+        Variant::Null | Variant::Empty => Ok(0),
+        Variant::Bool(b) => Ok(if *b { -1 } else { 0 }),
+        Variant::Bstr(t) => t
+            .trim()
+            .parse::<f64>()
+            .map(|f| f.round_ties_even() as i64)
+            .map_err(|_| OmError::bad_index()),
+        v => Ok(crate::controls::num_arg(v, lcid)?.round_ties_even() as i64),
+    }
+}
+
 impl Application<'_> {
     pub(crate) fn table_of(&self, b: BookId, name: &str) -> Result<Table, OmError> {
         self.book(b)?
@@ -112,6 +125,8 @@ impl Application<'_> {
                 Ok(self.alloc_enumerator(items))
             }
             "Add" | "_Add" => {
+                self.table_guard(b, s, true)?;
+
                 if a.i32(0)?.unwrap_or(1) != 1 {
                     return Err(OmError::unsupported(
                         "ListObjects.Add of a source other than xlSrcRange",
@@ -136,6 +151,7 @@ impl Application<'_> {
                     rect = self.book(b)?.wb.current_region(sheet, rect);
                 }
                 if list.iter().any(|t| t.rect.intersects(&rect)) {
+                    self.book_mut(b)?.wb.table_create_off_sheet(sheet);
                     return Err(OmError::app_defined_with(
                         "A table can't overlap another table. ",
                     ));
@@ -155,6 +171,13 @@ impl Application<'_> {
                             })
                     }
                 };
+
+                if wb.list_add_meets_filter(sheet, rect, headed) {
+                    self.book_mut(b)?.wb.table_create_off_sheet(sheet);
+                    return Err(OmError::app_defined_with(
+                        "This will change a filtered range on your worksheet. To complete this task, please remove AutoFilters.",
+                    ));
+                }
                 let wb = &mut self.book_mut(b)?.wb;
                 let mut emptied = false;
                 if headed {
@@ -232,9 +255,13 @@ impl Application<'_> {
         let t = self.table_of(b, name)?;
         let handle = name.to_string();
         match (m.name, m.kind) {
-            ("Name" | "DisplayName" | "_Default", Get) => Ok(Variant::Bstr(t.name.clone())),
+            ("DisplayName", Get) => Ok(Variant::Bstr(xlcalc::table_display_name(&t.name))),
+            ("Name" | "_Default", Get) => Ok(Variant::Bstr(t.name.clone())),
             ("Name" | "DisplayName", Put) => {
                 let new = self.put_string(a)?;
+                if m.name == "Name" && new.chars().count() > 255 {
+                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+                }
                 if m.name == "DisplayName" {
                     if new.chars().count() > 255 {
                         return Err(OmError::exception(0x8007_0057_u32 as i32, None));
@@ -252,6 +279,7 @@ impl Application<'_> {
             }
             ("ShowTotals", Get) => Ok(Variant::Bool(t.totals)),
             ("ShowTotals", Put) => {
+                self.table_guard(b, t.sheet, false)?;
                 let on = self.put_bool(a)?;
                 self.book_mut(b)?
                     .wb
@@ -284,9 +312,11 @@ impl Application<'_> {
             ("ListColumns", Get) => Ok(self.alloc(Object::ListColumns(b, handle))),
             ("ListRows", Get) => Ok(self.alloc(Object::ListRows(b, handle))),
             ("SourceType", Get) => Ok(Variant::I4(1)),
-            ("Active" | "DisplayRightToLeft", Get) => Ok(Variant::Bool(false)),
+            ("DisplayRightToLeft", Get) => Ok(Variant::Bool(false)),
+
+            ("Active", Get) => Ok(Variant::Bool(t.list_sel)),
             ("InsertRowRange" | "XmlMap", Get) => Ok(Variant::Dispatch(None)),
-            ("TableObject" | "SharePointURL", Get) => Err(OmError::app_defined()),
+            ("TableObject" | "SharePointURL" | "QueryTable", Get) => Err(OmError::app_defined()),
             ("AlternativeText" | "Summary", Get) => {
                 let key = format!("tbl{}:{}:{}", b.0, t.name, m.name);
                 Ok(self.opts.get(&key).cloned().unwrap_or(Variant::BstrNull))
@@ -356,6 +386,7 @@ impl Application<'_> {
 
             ("ShowAutoFilterDropDown", Get) => Ok(Variant::Bool(
                 t.show_filter
+                    && t.headers
                     && !matches!(
                         self.opts.get(&format!("tbl{}:{}:dd", b.0, t.name)),
                         Some(Variant::Bool(false))
@@ -363,14 +394,16 @@ impl Application<'_> {
             )),
             ("ShowAutoFilterDropDown", Put) => {
                 let on = self.put_bool(a)?;
-                if !t.show_filter {
+                if !t.show_filter || !t.headers {
                     return Err(OmError::app_defined());
                 }
                 self.opts
                     .insert(format!("tbl{}:{}:dd", b.0, t.name), Variant::Bool(on));
                 Ok(Variant::Empty)
             }
-            ("AutoFilter" | "ShowAutoFilter", _) => self.table_view_member(b, &t, m, a),
+            ("AutoFilter" | "_AutoFilter" | "ShowAutoFilter", _) => {
+                self.table_view_member(b, &t, m, a)
+            }
             ("Sort", Get) => Ok(self.alloc(Object::Sort(SortOwner::Table(b, handle)))),
             ("Parent", Get) => Ok(self.alloc(Object::Worksheet(b, t.sheet))),
             ("Unlist", Func) => {
@@ -392,6 +425,7 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("Resize", Func) => {
+                self.table_guard(b, t.sheet, false)?;
                 let (_, rect) = self.range_arg(a.get(0))?;
 
                 self.book_mut(b)?
@@ -415,7 +449,11 @@ impl Application<'_> {
         match m.name {
             "Count" => Ok(Variant::I4(t.columns.len() as i32)),
             "Item" | "_Default" => {
-                let i = self.item_index(a.get(0), a.lcid, &t.columns, |c| c.as_str())?;
+                let first = Variant::I4(1);
+                let i =
+                    self.item_index(Some(a.get(0).unwrap_or(&first)), a.lcid, &t.columns, |c| {
+                        c.as_str()
+                    })?;
                 Ok(self.alloc(Object::ListColumn(b, name.to_string(), i)))
             }
             "_NewEnum" => {
@@ -426,8 +464,8 @@ impl Application<'_> {
             }
             "Add" | "_Add" => {
                 let n = t.columns.len();
-                let pos = match a.i32(0)? {
-                    Some(p) => usize::try_from(p - 1)
+                let pos = match a.get(0) {
+                    Some(p) => usize::try_from(lenient_pos(p, a.lcid)? - 1)
                         .ok()
                         .filter(|&p| p <= n)
                         .ok_or_else(OmError::bad_index)?,
@@ -435,6 +473,16 @@ impl Application<'_> {
                 };
                 let wb = &mut self.book_mut(b)?.wb;
                 if pos == n {
+                    let c = t.rect.c1 + 1;
+                    if c > 16_383 {
+                        return Err(OmError::app_defined());
+                    }
+                    let cells = Rect {
+                        c0: c,
+                        c1: c,
+                        ..t.rect
+                    };
+                    wb.insert_cells(t.sheet, cells, false).map_err(edit_error)?;
                     let rect = Rect {
                         c1: t.rect.c1 + 1,
                         ..t.rect
@@ -448,6 +496,14 @@ impl Application<'_> {
                         ..t.rect
                     };
                     wb.insert_cells(t.sheet, cells, false).map_err(edit_error)?;
+
+                    if pos == 0 {
+                        let rect = Rect {
+                            c1: t.rect.c1 + 1,
+                            ..t.rect
+                        };
+                        wb.resize_table(&t.name, rect).map_err(edit_error)?;
+                    }
                 }
                 Ok(self.alloc(Object::ListColumn(b, name.to_string(), pos)))
             }
@@ -483,6 +539,14 @@ impl Application<'_> {
                 if !t.headers {
                     return Err(OmError::app_defined());
                 }
+
+                if t.columns
+                    .iter()
+                    .enumerate()
+                    .any(|(j, c)| j != i && c.eq_ignore_ascii_case(&new))
+                {
+                    return Ok(Variant::Empty);
+                }
                 let addr = xlcalc::CellAddr::new(t.sheet, t.rect.r0, col);
                 self.book_mut(b)?
                     .wb
@@ -491,6 +555,7 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("Index", Get) => Ok(Variant::I4(i as i32 + 1)),
+            ("SharePointFormula", Get) => Ok(Variant::BstrNull),
             ("Range", Get) => self.new_range(b, t.sheet, narrow(t.rect), Mode::Cells),
             ("DataBodyRange", Get) => self.optional_range(b, t.sheet, body(&t).map(narrow)),
             ("Total", Get) => {
@@ -556,10 +621,32 @@ impl Application<'_> {
         &mut self,
         name: &str,
         m: &'static Member,
+        a: &Args,
     ) -> Result<Variant, OmError> {
         match m.name {
             "Name" | "_Default" => Ok(Variant::Bstr(name.to_string())),
-            _ => Err(unsupported("TableStyle", m)),
+
+            "NameLocal" => {
+                let mut out = String::new();
+                let mut prev = ' ';
+                for c in name.chars() {
+                    let split = (c.is_ascii_uppercase() && prev.is_ascii_lowercase())
+                        || (c.is_ascii_digit() && !prev.is_ascii_digit() && prev != ' ');
+                    if split {
+                        out.push(' ');
+                    }
+                    out.push(c);
+                    prev = c;
+                }
+                Ok(Variant::Bstr(out))
+            }
+            _ => {
+                let slot = format!("TableStyle:{name}");
+                match self.bag_member(crate::bag::Store::App, "TableStyle", &slot, m, a) {
+                    Some(res) => res,
+                    None => Err(unsupported("TableStyle", m)),
+                }
+            }
         }
     }
 
@@ -580,8 +667,45 @@ impl Application<'_> {
             "Count" => Ok(Variant::I4(n as i32)),
             "Item" | "_Default" => {
                 let rows: Vec<usize> = (0..n).collect();
-                let i = self.item_index(a.get(0), a.lcid, &rows, |_| "")?;
+                let first = Variant::I4(1);
+                let i = self.item_index(Some(a.get(0).unwrap_or(&first)), a.lcid, &rows, |_| "")?;
                 Ok(self.alloc(Object::ListRow(b, name.to_string(), i)))
+            }
+            "Add" | "_Add" => {
+                let pos = match a.get(0) {
+                    Some(p) => lenient_pos(p, a.lcid)?,
+                    None => n as i64 + 1,
+                };
+                if pos < 1 || pos > n as i64 + 1 {
+                    return Err(OmError::bad_index());
+                }
+
+                if matches!(a.get(1), Some(Variant::Bstr(_))) {
+                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+                }
+                let pos = pos as usize - 1;
+                if n == 0 {
+                    return Err(OmError::app_defined());
+                }
+                let first = body(&t).ok_or_else(OmError::object_required)?;
+                let row = first.r0 + pos as u32;
+                let wb = &mut self.book_mut(b)?.wb;
+                let cells = Rect {
+                    r0: row,
+                    r1: row,
+                    ..t.rect
+                };
+                wb.insert_cells(t.sheet, cells, true).map_err(edit_error)?;
+
+                let grown = wb.table_by_name(&t.name).map(|x| x.rect);
+                if grown == Some(t.rect) {
+                    let rect = Rect {
+                        r1: t.rect.r1 + 1,
+                        ..t.rect
+                    };
+                    wb.resize_table(&t.name, rect).map_err(edit_error)?;
+                }
+                Ok(self.alloc(Object::ListRow(b, name.to_string(), pos)))
             }
             "_NewEnum" => {
                 let items = (0..n)
@@ -615,6 +739,18 @@ impl Application<'_> {
                 },
                 Mode::Cells,
             ),
+            "Delete" => {
+                let cells = Rect {
+                    r0: row,
+                    r1: row,
+                    ..t.rect
+                };
+                self.book_mut(b)?
+                    .wb
+                    .delete_cells(t.sheet, cells, true)
+                    .map_err(edit_error)?;
+                Ok(Variant::Empty)
+            }
             _ => Err(unsupported("ListRow", m)),
         }
     }

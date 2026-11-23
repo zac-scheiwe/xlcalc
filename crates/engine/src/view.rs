@@ -18,11 +18,15 @@ pub struct ColCrit {
     pub c2: Option<String>,
 
     pub op_code: i32,
+
+    pub month_first: bool,
 }
 
 #[derive(Clone, Debug)]
 pub struct Filter {
     pub rect: Rect,
+
+    pub anchor_r1: u32,
     pub table: Option<String>,
 
     pub crit: BTreeMap<u32, ColCrit>,
@@ -38,13 +42,19 @@ pub struct SheetView {
     pub vbreaks: BTreeSet<u32>,
 
     pub row_h: BTreeMap<u32, crate::rowheight::RowHt>,
+
+    pub std_frozen: Option<u32>,
+
+    pub table_rows: BTreeSet<u32>,
     pub hidden_cols: BTreeSet<u32>,
 
     pub col_px: BTreeMap<u32, (u32, bool)>,
 
-    pub std_px: Option<u32>,
+    pub std_cw: Option<f64>,
 
     pub filters: Vec<Filter>,
+
+    pub filter_sorted: bool,
 
     pub levels: BTreeMap<u32, u8>,
 
@@ -57,26 +67,16 @@ pub struct SheetView {
 
     pub used_r1: Option<u32>,
 
-    pub ghost_fm: bool,
+    pub fm: bool,
 
     pub adv: Option<Rect>,
 
     pub fm_last: bool,
 
-    pub table_fm_off: bool,
-
     pub sel_table: Option<String>,
 }
 
 impl Workbook {
-    pub(crate) fn view_clear_range_filter_criteria(&mut self, sheet: SheetId) {
-        if let Some(v) = self.views.get_mut(&sheet) {
-            for f in v.filters.iter_mut().filter(|f| f.table.is_none()) {
-                f.crit.clear();
-            }
-        }
-    }
-
     pub fn row_hidden(&self, sheet: SheetId, row: u32) -> bool {
         self.views
             .get(&sheet)
@@ -115,24 +115,89 @@ impl Workbook {
     }
 
     pub fn filter_mode(&self, sheet: SheetId) -> bool {
-        self.filter_mode_impl(sheet, true)
+        self.views.get(&sheet).is_some_and(|v| v.fm)
+    }
+
+    pub fn autofilter_object_mode(&self, sheet: SheetId, table: Option<&str>) -> bool {
+        let (r, c) = self.sheet_sel(sheet);
+        let at = table.map(str::to_string).or_else(|| {
+            self.table_at(CellAddr::new(sheet, r, c))
+                .filter(|t| t.headers && t.show_filter)
+                .map(|t| t.name.clone())
+        });
+        match at {
+            Some(t) => self.table_filter_has_crit(sheet, &t),
+            None => self.range_filter_has_crit(sheet),
+        }
     }
 
     pub(crate) fn filter_mode_for_subtotal(&self, sheet: SheetId) -> bool {
-        self.filter_mode_impl(sheet, false)
+        self.views.get(&sheet).is_some_and(|v| {
+            v.fm || v.filters.iter().any(|f| {
+                !f.crit.is_empty()
+                    && f.table
+                        .as_ref()
+                        .is_none_or(|t| self.table_by_name(t).is_some())
+            })
+        })
     }
 
-    fn filter_mode_impl(&self, sheet: SheetId, clip_off: bool) -> bool {
+    fn range_filter_has_crit(&self, sheet: SheetId) -> bool {
         self.views.get(&sheet).is_some_and(|v| {
-            v.ghost_fm
-                || v.adv.is_some()
-                || v.filters.iter().any(|f| {
-                    !f.crit.is_empty()
-                        && f.table.as_ref().is_none_or(|t| {
-                            !(clip_off && v.table_fm_off) && self.table_by_name(t).is_some()
-                        })
-                })
+            v.filters
+                .iter()
+                .any(|f| f.table.is_none() && !f.crit.is_empty())
         })
+    }
+
+    fn table_filter_has_crit(&self, sheet: SheetId, name: &str) -> bool {
+        self.views.get(&sheet).is_some_and(|v| {
+            v.filters.iter().any(|f| {
+                f.table
+                    .as_deref()
+                    .is_some_and(|t| t.eq_ignore_ascii_case(name))
+                    && !f.crit.is_empty()
+            })
+        })
+    }
+
+    fn sheet_has_maf(&self, sheet: SheetId) -> bool {
+        self.views
+            .get(&sheet)
+            .is_some_and(|v| !v.filters.is_empty())
+            || self
+                .tables
+                .iter()
+                .any(|t| t.sheet == sheet && t.headers && t.show_filter)
+    }
+
+    pub(crate) fn view_ins_del_ez_filter(&mut self, sheet: SheetId) {
+        if self
+            .views
+            .get(&sheet)
+            .is_some_and(|v| v.filters.iter().any(|f| f.table.is_none()))
+        {
+            let has = self.range_filter_has_crit(sheet);
+            self.set_filter_mode(sheet, has);
+        }
+    }
+
+    pub(crate) fn set_filter_mode(&mut self, sheet: SheetId, on: bool) {
+        if on || self.views.contains_key(&sheet) {
+            self.view_mut(sheet).fm = on;
+        }
+    }
+
+    fn fm_after_apply(&mut self, sheet: SheetId, table: Option<&str>, active_inside: bool) {
+        let has = match table {
+            Some(t) => self.table_filter_has_crit(sheet, t),
+            None => self.range_filter_has_crit(sheet),
+        };
+        if !has {
+            self.set_filter_mode(sheet, false);
+        } else if active_inside {
+            self.set_filter_mode(sheet, true);
+        }
     }
 
     pub fn autofilter_mode(&self, sheet: SheetId) -> bool {
@@ -181,9 +246,54 @@ impl Workbook {
         if t == cur {
             return;
         }
-        let v = self.view_mut(sheet);
-        v.table_fm_off = t.is_none();
-        v.sel_table = t;
+
+        let flipped = t.clone().or(cur);
+        self.view_mut(sheet).sel_table = t.clone();
+        if let Some(name) = flipped {
+            self.fm_update_list(sheet, &name, t.is_some());
+        }
+    }
+
+    fn fm_update_list(&mut self, sheet: SheetId, name: &str, entered: bool) {
+        let trect = self.table_by_name(name).map(|t| t.rect);
+        let adv = self.views.get(&sheet).and_then(|v| v.adv);
+        if let (Some(a), Some(tr)) = (adv, trect) {
+            if a.intersects(&tr) {
+                return;
+            }
+        }
+        let on = if entered {
+            self.table_filter_has_crit(sheet, name)
+        } else {
+            self.sheet_has_maf(sheet) && (self.range_filter_has_crit(sheet) || adv.is_some())
+        };
+        self.set_filter_mode(sheet, on);
+    }
+
+    pub(crate) fn view_leave_tables(&mut self, sheet: SheetId) -> bool {
+        let Some(name) = self.views.get_mut(&sheet).and_then(|v| v.sel_table.take()) else {
+            return false;
+        };
+        self.fm_update_list(sheet, &name, false);
+        true
+    }
+
+    pub(crate) fn view_table_rows_changed(&mut self, sheet: SheetId, name: &str) {
+        let Some(rect) = self.table_by_name(name).map(|t| t.rect) else {
+            return;
+        };
+        let (r, c) = self.sheet_sel(sheet);
+        let inside = rect.contains(r, c);
+        let flag = self
+            .views
+            .get(&sheet)
+            .and_then(|v| v.sel_table.as_deref())
+            .is_some_and(|t| t.eq_ignore_ascii_case(name));
+        if inside == flag {
+            return;
+        }
+        self.view_mut(sheet).sel_table = inside.then(|| name.to_string());
+        self.fm_update_list(sheet, name, inside);
     }
 
     pub(crate) fn sheet_sel(&self, sheet: SheetId) -> (u32, u32) {
@@ -216,9 +326,9 @@ impl Workbook {
             if f.table.is_some() || addr.row <= f.rect.r1 {
                 continue;
             }
-            let reg = self.current_region(addr.sheet, f.rect);
-            if reg.contains(addr.row, addr.col) && reg.r1 > f.rect.r1 {
-                self.view_mut(addr.sheet).filters[i].rect.r1 = reg.r1;
+            let r1 = self.filter_area_r1(addr.sheet, f);
+            if r1 > f.rect.r1 {
+                self.view_mut(addr.sheet).filters[i].rect.r1 = r1;
             }
         }
     }
@@ -243,6 +353,28 @@ impl Workbook {
             (Some(a), Some(b)) => Some(a.max(b)),
             (a, b) => a.or(b),
         }
+    }
+
+    pub(crate) fn mark_area_dependents(&mut self, sheet: SheetId, area: (u32, u32, u32, u32)) {
+        let (r0, c0, r1, c1) = area;
+        if r0 > r1 || c0 > c1 {
+            return;
+        }
+        let area = Rect::new(r0, c0, r1, c1);
+        let mut deps = Vec::new();
+        self.graph.dependents_of_rect(sheet, &area, &mut deps);
+        deps.sort_unstable();
+        deps.dedup();
+        for fid in deps {
+            calc::mark_dirty(self, fid);
+        }
+    }
+
+    pub(crate) fn mark_filter_area(&mut self, sheet: SheetId, filter: Rect) {
+        let Some(used) = self.ever_used(sheet) else {
+            return;
+        };
+        self.mark_area_dependents(sheet, (filter.r0 + 1, used.c0, filter.r1, used.c1));
     }
 
     pub(crate) fn rows_visibility_changed(&mut self, sheet: SheetId, rows: &[u32]) {
@@ -317,6 +449,7 @@ impl Workbook {
         }
         if hide {
             self.view_touch_row(sheet, last);
+            self.mark_rows(sheet, at, last, false);
         }
         let mut changed = Vec::new();
         {
@@ -333,8 +466,23 @@ impl Workbook {
                 }
             }
         }
+
+        self.mark_area_dependents(sheet, (at, 0, last, crate::address::MAX_COLS - 1));
         self.rows_visibility_changed(sheet, &changed);
         Ok(self.view_settle())
+    }
+
+    pub(crate) fn show_rows(&mut self, sheet: SheetId, r0: u32, r1: u32) {
+        let Some(v) = self.views.get_mut(&sheet) else {
+            return;
+        };
+        let shown: Vec<u32> = v.hidden_rows.range(r0..=r1).copied().collect();
+        for r in &shown {
+            v.hidden_rows.remove(r);
+        }
+        if !shown.is_empty() {
+            self.rows_visibility_changed(sheet, &shown);
+        }
     }
 
     pub fn set_cols_hidden(&mut self, sheet: SheetId, at: u32, count: u32, hide: bool) {
@@ -484,15 +632,12 @@ impl Workbook {
 
     pub fn clear_outline(&mut self, sheet: SheetId, rect: Rect) -> RecalcReport {
         self.command(Command::View, |wb| {
-            let mut shown = Vec::new();
             {
                 let v = wb.view_mut(sheet);
                 let rows: Vec<u32> = v.levels.range(rect.r0..=rect.r1).map(|(r, _)| *r).collect();
                 for r in rows {
                     v.levels.remove(&r);
-                    if v.hidden_rows.remove(&r) {
-                        shown.push(r);
-                    }
+                    v.hidden_rows.remove(&r);
                 }
                 let cols: Vec<u32> = v
                     .col_levels
@@ -504,8 +649,7 @@ impl Workbook {
                     v.hidden_cols.remove(&c);
                 }
             }
-            wb.rows_visibility_changed(sheet, &shown);
-            wb.view_settle()
+            RecalcReport::default()
         })
     }
 
@@ -544,6 +688,12 @@ impl Workbook {
                         v.hidden_cols.remove(&c);
                     }
                 }
+            }
+        }
+
+        if level > 0 {
+            if let Some(used) = self.ever_used(sheet) {
+                self.mark_area_dependents(sheet, (0, used.c0, used.r1, used.c1));
             }
         }
         self.rows_visibility_changed(sheet, &changed);
@@ -661,14 +811,18 @@ impl Workbook {
     }
 
     pub fn current_region(&self, sheet: SheetId, rect: Rect) -> Rect {
+        self.current_region_in(sheet, rect, 0, crate::address::MAX_COLS - 1)
+    }
+
+    fn current_region_in(&self, sheet: SheetId, rect: Rect, lo: u32, hi: u32) -> Rect {
         let mut b = rect;
         loop {
             let mut grew = false;
             let (r0, r1, c0, c1) = (
                 b.r0.saturating_sub(1),
                 (b.r1 + 1).min(MAX_ROWS - 1),
-                b.c0.saturating_sub(1),
-                (b.c1 + 1).min(crate::address::MAX_COLS - 1),
+                b.c0.saturating_sub(1).max(lo),
+                (b.c1 + 1).min(hi),
             );
             let any = |rr: (u32, u32), cc: (u32, u32)| {
                 (rr.0..=rr.1).any(|r| (cc.0..=cc.1).any(|c| self.nonblank(sheet, r, c)))
@@ -681,11 +835,11 @@ impl Workbook {
                 b.r1 += 1;
                 grew = true;
             }
-            if b.c0 > 0 && any((r0, r1), (b.c0 - 1, b.c0 - 1)) {
+            if b.c0 > lo && any((r0, r1), (b.c0 - 1, b.c0 - 1)) {
                 b.c0 -= 1;
                 grew = true;
             }
-            if b.c1 + 1 < crate::address::MAX_COLS && any((r0, r1), (b.c1 + 1, b.c1 + 1)) {
+            if b.c1 < hi && any((r0, r1), (b.c1 + 1, b.c1 + 1)) {
                 b.c1 += 1;
                 grew = true;
             }
@@ -798,9 +952,23 @@ impl Workbook {
                     }
                 })
                 .collect();
+
+            let chk = check_r1.map(|c| if c <= rect.r0 { rect.r1 } else { c });
+            let err_rows = || {
+                vals.iter()
+                    .enumerate()
+                    .filter(|(_, v)| matches!(v, Value::Error(_)))
+                    .map(|(i, _)| rect.r0 + 1 + i as u32)
+            };
+            let refused = nums.is_empty() || err_rows().any(|r| chk.is_some_and(|c| r <= c));
             return match code {
+                33 | 34 if check_r1.is_some() && refused => None,
                 33 | 34 => {
-                    let mean = nums.iter().sum::<f64>() / nums.len().max(1) as f64;
+                    let mean = if err_rows().next().is_some() {
+                        0.0
+                    } else {
+                        nums.iter().sum::<f64>() / nums.len().max(1) as f64
+                    };
                     Some(
                         vals.iter()
                             .map(|v| match v {
@@ -845,6 +1013,10 @@ impl Workbook {
         let host = CellAddr::new(sheet, rect.r0, rect.c0);
         let ctx = EvalCtx::new(self, host);
 
+        let us = crate::locale::Locale::en_us();
+        let mut us_ctx = EvalCtx::new(self, host);
+        us_ctx.locale = &us;
+
         let trim = |s: &str| s.trim_matches(' ').to_string();
         let crit = |s: &str, v: &Value, r: u32| -> bool {
             let (op, rest) = ["<=", ">=", "<>", "<", ">", "="]
@@ -870,8 +1042,13 @@ impl Workbook {
                 Value::Text(_) => Value::from(shown.as_str()),
                 v => v.clone(),
             };
-            match Criterion::parse(&ctx, &Value::from(format!("{op}{rest}")), Flavor::Ifs) {
-                Ok(c) => c.matches(&ctx, &v),
+            let ctx = if op == "=" || !cc.month_first {
+                &ctx
+            } else {
+                &us_ctx
+            };
+            match Criterion::parse(ctx, &Value::from(format!("{op}{rest}")), Flavor::Ifs) {
+                Ok(c) => c.matches(ctx, &v),
                 Err(_) => false,
             }
         };
@@ -964,20 +1141,6 @@ impl Workbook {
         changed.dedup();
         if let Some(g) = given {
             changed = (g.r0 + 1..=g.r1).collect();
-
-            if g.r1 > g.r0 {
-                let mut deps = Vec::new();
-                self.graph.dependents_of_rect(
-                    sheet,
-                    &Rect::new(g.r0 + 1, 0, g.r1, crate::address::MAX_COLS - 1),
-                    &mut deps,
-                );
-                deps.sort_unstable();
-                deps.dedup();
-                for fid in deps {
-                    calc::mark_dirty(self, fid);
-                }
-            }
         }
         self.rows_visibility_changed(sheet, &changed);
         Ok(())
@@ -987,7 +1150,9 @@ impl Workbook {
         &mut self,
         sheet: SheetId,
         area: Rect,
+        list: Rect,
         lost: Option<(u32, u32)>,
+        gave_up: Option<(u32, u32)>,
     ) {
         let Some(v) = self.views.get(&sheet) else {
             return;
@@ -997,13 +1162,23 @@ impl Workbook {
         for i in 0..n {
             let f = self.views[&sheet].filters[i].clone();
             if f.table.is_some() {
-                any |= self.filter_rect(&f).is_some_and(|r| r.intersects(&area));
+                let hit = self.filter_rect(&f).is_some_and(|r| r.intersects(&area));
+                if hit && !f.crit.is_empty() {
+                    if let Some((a, b)) = gave_up {
+                        self.view_show_rows(sheet, a, b);
+                    }
+                }
+                any |= hit;
                 continue;
             }
             if !f.rect.intersects(&area) {
                 continue;
             }
             any = true;
+
+            if f.rect != list {
+                continue;
+            }
             let mut r1 = f.rect.r1;
             while r1 > f.rect.r0 && !(f.rect.c0..=f.rect.c1).any(|c| self.nonblank(sheet, r1, c)) {
                 r1 -= 1;
@@ -1034,22 +1209,283 @@ impl Workbook {
             })
     }
 
-    fn range_filter_rect(&self, sheet: SheetId, range: Rect) -> Rect {
-        if range.is_cell() {
-            self.current_region(sheet, range)
-        } else {
-            let head = Rect::new(range.r0, range.c0, range.r0, range.c1);
-            let reg = self.current_region(sheet, head);
-
-            let used = self.view_used_r1(sheet).map_or(0, |r| r.min(range.r1));
-            let mut r1 = reg.r1.max(used).max(range.r0);
-            while r1 >= range.r1
-                && r1 + 1 < MAX_ROWS
-                && (range.c0..=range.c1).any(|c| self.nonblank(sheet, r1 + 1, c))
-            {
-                r1 += 1;
+    fn smart_select(&self, sheet: SheetId, row: u32, col: u32, given: Option<Rect>) -> Rect {
+        let seed = Rect::new(row, col, row, col);
+        let mut b = self.current_region(sheet, seed);
+        if b.is_cell() {
+            return b;
+        }
+        while let Some(t) = self
+            .tables
+            .iter()
+            .find(|t| t.sheet == sheet && t.rect.intersects(&b))
+        {
+            let t = t.rect;
+            let cols_level =
+                (t.c0 <= col && col <= t.c1) || given.is_some_and(|g| g.c0 <= t.c1 && t.c0 <= g.c1);
+            if (row < t.r0 || t.r1 < row) && cols_level {
+                if t.r1 < row {
+                    if t.r1 == MAX_ROWS - 1 {
+                        b = seed;
+                        break;
+                    }
+                    b.r0 = t.r1 + 1;
+                } else {
+                    if t.r0 == 0 {
+                        b = seed;
+                        break;
+                    }
+                    b.r1 = t.r0 - 1;
+                }
+            } else if t.c1 < col {
+                if t.c1 == MAX_COLS - 1 {
+                    b = seed;
+                    break;
+                }
+                b.c0 = t.c1 + 1;
+            } else {
+                if t.c0 == 0 {
+                    b = seed;
+                    break;
+                }
+                b.c1 = t.c0 - 1;
             }
-            Rect::new(range.r0, range.c0, r1, range.c1)
+        }
+        let row_has = |r: u32, b: &Rect| (b.c0..=b.c1).any(|c| self.nonblank(sheet, r, c));
+        let col_has = |c: u32, b: &Rect| (b.r0..=b.r1).any(|r| self.nonblank(sheet, r, c));
+        if let Some(r) = (row + 1..=b.r1).find(|&r| !row_has(r, &b)) {
+            b.r1 = r - 1;
+        }
+        if let Some(r) = (b.r0..row).rev().find(|&r| !row_has(r, &b)) {
+            b.r0 = r + 1;
+        }
+        if let Some(c) = (b.c0..col).rev().find(|&c| !col_has(c, &b)) {
+            b.c0 = c + 1;
+        }
+        if let Some(c) = (col + 1..=b.c1).find(|&c| !col_has(c, &b)) {
+            b.c1 = c - 1;
+        }
+        b
+    }
+
+    fn filter_area_r1(&self, sheet: SheetId, f: &Filter) -> u32 {
+        let stored = Rect {
+            r1: f.anchor_r1,
+            ..f.rect
+        };
+        self.smart_select(sheet, f.anchor_r1, f.rect.c0, Some(stored))
+            .r1
+            .max(f.anchor_r1)
+    }
+
+    pub(crate) fn cell_table_extent(&self, sheet: SheetId) -> Option<Rect> {
+        let mut e = self.ever_used(sheet);
+        if let Some(r1) = self.views.get(&sheet).and_then(|v| v.used_r1) {
+            e = Some(match e {
+                Some(x) => Rect {
+                    r1: x.r1.max(r1),
+                    ..x
+                },
+                None => Rect::new(r1, 0, r1, 0),
+            });
+        }
+        e
+    }
+
+    fn new_filter_ref(&self, sheet: SheetId, range: Rect) -> Option<Rect> {
+        let single = range.is_cell() || self.merge_area_exact(sheet, range);
+        let sel = if single {
+            self.select_for_single_cell(sheet, range)?
+        } else {
+            range
+        };
+        let mut lim = self.lim_ref(sheet, sel)?;
+        if single {
+            lim.r0 = self.filter_title_skip(sheet, lim);
+        }
+        Some(lim)
+    }
+
+    pub(crate) fn select_for_single_cell(&self, sheet: SheetId, range: Rect) -> Option<Rect> {
+        let b = self.smart_select(sheet, range.r0, range.c0, None);
+        if b.is_cell() && !self.nonblank(sheet, b.r0, b.c0) {
+            return None;
+        }
+        let mut sel = b;
+        let (r0, r1, c0, c1) = (b.r0, b.r1, b.c0, b.c1);
+        let row_has = |r: u32| (c0..=c1).any(|c| self.nonblank(sheet, r, c));
+        let col_has = |c: u32| (r0..=r1).any(|r| self.nonblank(sheet, r, c));
+        if !row_has(r1) {
+            sel.r1 = sel.r1.saturating_sub(1);
+        }
+        if !col_has(c0) {
+            sel.c0 += 1;
+        }
+        if !row_has(r0) {
+            sel.r0 += 1;
+        }
+        if !col_has(c1) {
+            sel.c1 = sel.c1.saturating_sub(1);
+        }
+        Some(sel)
+    }
+
+    pub(crate) fn lim_ref(&self, sheet: SheetId, sel: Rect) -> Option<Rect> {
+        let e = self.cell_table_extent(sheet)?;
+        let (r0, c0, r1, c1) = (
+            sel.r0.max(e.r0),
+            sel.c0.max(e.c0),
+            sel.r1.min(e.r1),
+            sel.c1.min(e.c1),
+        );
+        (r0 <= r1 && c0 <= c1).then_some(Rect::new(r0, c0, r1, c1))
+    }
+
+    pub(crate) fn merge_area_exact(&self, sheet: SheetId, rect: Rect) -> bool {
+        self.merge_at(CellAddr::new(sheet, rect.r0, rect.c0))
+            .is_some_and(|m| m == rect)
+    }
+
+    fn new_range_filter(&self, sheet: SheetId, stored: Rect) -> Filter {
+        let mut f = Filter {
+            rect: stored,
+            anchor_r1: stored.r1,
+            table: None,
+            crit: BTreeMap::new(),
+            total_row: false,
+        };
+        f.rect.r1 = self.filter_area_r1(sheet, &f);
+        f.total_row = self.ends_in_subtotal_row(sheet, f.rect);
+        f
+    }
+
+    pub(crate) fn define_filter_name(
+        &mut self,
+        sheet: SheetId,
+        name: &str,
+        target: SheetId,
+        rect: Rect,
+        hidden: bool,
+    ) {
+        let (Some(_), Some(on)) = (self.sheet(sheet), self.sheet(target)) else {
+            return;
+        };
+        let key = name.to_uppercase();
+        let scope = if hidden
+            || self.names.get(&key, Some(sheet)).is_some()
+            || self.names.get(&key, None).is_none()
+        {
+            Some(sheet)
+        } else {
+            None
+        };
+        let corner = |r: u32, c: u32| format!("${}${}", crate::address::col_to_letters(c), r + 1);
+        let area = if rect.is_cell() {
+            corner(rect.r0, rect.c0)
+        } else {
+            format!("{}:{}", corner(rect.r0, rect.c0), corner(rect.r1, rect.c1))
+        };
+        let text = format!("='{}'!{area}", on.name.replace('\'', "''"));
+        let new = self.names.get(&key, scope).is_none();
+        if self.define_name_quiet(name, &text, scope).is_ok() {
+            if hidden && new {
+                self.names.set_visible(&key, scope, false);
+            }
+            calc::name_changed(self, &key);
+        }
+    }
+
+    fn filter_db_ref(&self, sheet: SheetId) -> Option<Rect> {
+        let def = self.names.get("_FILTERDATABASE", Some(sheet))?;
+        let crate::formula::Node::Ref(sr, cref) = &def.formula.root else {
+            return None;
+        };
+        if !matches!(sr, crate::formula::SheetRef::Sheet(s) if *s == sheet) {
+            return None;
+        }
+        let at = |v: i32| u32::try_from(v).ok();
+        match *cref {
+            crate::formula::CRef::Cell { row, col } => Some(Rect::cell(at(row.v)?, at(col.v)?)),
+            crate::formula::CRef::Area { r0, c0, r1, c1 } => {
+                Some(Rect::new(at(r0.v)?, at(c0.v)?, at(r1.v)?, at(c1.v)?))
+            }
+            _ => None,
+        }
+    }
+
+    pub fn list_add_meets_filter(&self, sheet: SheetId, rect: Rect, headed: bool) -> bool {
+        let Some(f) = self
+            .views
+            .get(&sheet)
+            .and_then(|v| v.filters.iter().find(|f| f.table.is_none()))
+            .map(|f| f.rect)
+        else {
+            return false;
+        };
+        f.intersects(&rect)
+            && (!headed || f.r0 != rect.r0 || rect.r1 < f.r1 || f.c0 < rect.c0 || rect.c1 < f.c1)
+    }
+
+    pub(crate) fn create_filters_on_list(&mut self, sheet: SheetId, name: &str, rect: Rect) {
+        let Some(i) = self
+            .views
+            .get(&sheet)
+            .and_then(|v| v.filters.iter().position(|f| f.table.is_none()))
+        else {
+            return;
+        };
+        let Some(db) = self.filter_db_ref(sheet) else {
+            return;
+        };
+        if db == rect {
+            let v = self.view_mut(sheet);
+            let f = &mut v.filters[i];
+            f.table = Some(name.to_string());
+            f.rect = rect;
+            f.anchor_r1 = rect.r1;
+            f.total_row = false;
+            v.fm = false;
+        } else if db.intersects(&rect) {
+            let _ = self.autofilter_off_run(sheet, None);
+        }
+    }
+
+    pub(crate) fn table_filter_show_all(&mut self, sheet: SheetId, name: &str) {
+        let Some(i) = self.views.get(&sheet).and_then(|v| {
+            v.filters
+                .iter()
+                .position(|f| f.table.as_deref() == Some(name) && !f.crit.is_empty())
+        }) else {
+            return;
+        };
+        let f = self.views[&sheet].filters[i].clone();
+        let mut changed = Vec::new();
+        if let Some(rect) = self.filter_rect(&f) {
+            let last = if f.total_row { rect.r1 - 1 } else { rect.r1 };
+            let v = self.view_mut(sheet);
+            changed = (rect.r0 + 1..=last)
+                .filter(|r| v.hidden_rows.remove(r))
+                .collect();
+        }
+        self.view_mut(sheet).filters[i].crit.clear();
+        self.rows_visibility_changed(sheet, &changed);
+    }
+
+    pub(crate) fn drop_filter_name(&mut self, sheet: SheetId, name: &str) {
+        let key = name.to_uppercase();
+        if self.names.remove(&key, Some(sheet)).is_some() {
+            calc::name_changed(self, &key);
+        }
+    }
+
+    fn drop_advanced_filter(&mut self, sheet: SheetId) {
+        if let Some(a) = self.views.get_mut(&sheet).and_then(|v| v.adv.take()) {
+            let v = self.view_mut(sheet);
+            v.fm = false;
+            let shown: Vec<u32> = (a.r0 + 1..=a.r1)
+                .filter(|r| v.hidden_rows.remove(r))
+                .collect();
+            self.rows_visibility_changed(sheet, &shown);
         }
     }
 
@@ -1072,14 +1508,18 @@ impl Workbook {
         if self.autofilter_mode(sheet) {
             return self.autofilter_off(sheet, None);
         }
-        let rect = self.range_filter_rect(sheet, range);
-        let total_row = self.ends_in_subtotal_row(sheet, rect);
-        self.view_mut(sheet).filters.push(Filter {
-            rect,
-            table: None,
-            crit: BTreeMap::new(),
-            total_row,
-        });
+        let had_adv = self.views.get(&sheet).is_some_and(|v| v.adv.is_some());
+        self.drop_advanced_filter(sheet);
+        let stored = self
+            .new_filter_ref(sheet, range)
+            .ok_or_else(|| EditError::Compile("AutoFilter method of Range class failed".into()))?;
+        let f = self.new_range_filter(sheet, stored);
+        self.view_mut(sheet).filters.push(f);
+        self.define_filter_name(sheet, "_FilterDatabase", sheet, stored, true);
+
+        if !had_adv {
+            return Ok(RecalcReport::default());
+        }
         Ok(self.view_settle())
     }
 
@@ -1091,7 +1531,17 @@ impl Workbook {
         spec: FilterSpec<'_>,
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::View, |wb| {
-            wb.autofilter_run(sheet, range, table, spec)
+            let had_adv = wb.views.get(&sheet).is_some_and(|v| v.adv.is_some());
+            let r = wb.autofilter_run(sheet, range, table, spec);
+
+            if r.is_err()
+                && had_adv
+                && wb.views.get(&sheet).is_none_or(|v| v.adv.is_none())
+                && wb.settings.mode == crate::workbook::CalcMode::Automatic
+            {
+                calc::recalc(wb);
+            }
+            r
         })
     }
 
@@ -1129,22 +1579,25 @@ impl Workbook {
             }
         }
 
+        if table.is_none()
+            && self.tables.iter().any(|t| {
+                t.sheet == sheet
+                    && t.rect.intersects(&range)
+                    && !(t.rect.contains(range.r0, range.c0) && t.rect.contains(range.r1, range.c1))
+            })
+        {
+            return Err(bad());
+        }
+
         let in_table: Option<String> = match table {
             Some(_) => None,
-            None => match self.table_at(CellAddr::new(sheet, range.r0, range.c0)) {
-                Some(t)
-                    if !(t.rect.contains(range.r0, range.c0)
-                        && t.rect.contains(range.r1, range.c1)) =>
-                {
-                    return Err(bad());
-                }
-                t => t.filter(|t| t.headers).map(|t| t.name.clone()),
-            },
+            None => self
+                .table_at(CellAddr::new(sheet, range.r0, range.c0))
+                .filter(|t| t.headers)
+                .map(|t| t.name.clone()),
         };
         let table = table.or(in_table.as_deref());
-        if let Some(v) = self.views.get_mut(&sheet) {
-            v.adv = None;
-        }
+        self.drop_advanced_filter(sheet);
         let saved = self.views.get(&sheet).map(|v| v.filters.clone());
         let existing = self.views.get(&sheet).and_then(|v| {
             v.filters.iter().position(|f| match table {
@@ -1152,22 +1605,17 @@ impl Workbook {
                 None => f.table.is_none(),
             })
         });
+        let mut new_ref = None;
         let rect = match (existing, table) {
             (Some(i), _) => {
                 let f = self.views[&sheet].filters[i].clone();
                 let mut r = self.filter_rect(&f).ok_or_else(bad)?;
-
-                if f.table.is_none() && range.r0 == r.r0 && range.c0 == r.c0 {
-                    let g = self.current_region(sheet, Rect::new(r.r0, r.c0, r.r0, r.c1));
-                    if g.c1 == r.c1 && g.r1 > r.r1 {
-                        r.r1 = g.r1;
-                        self.view_mut(sheet).filters[i].rect = r;
-                    }
-                }
-
                 if f.table.is_none() {
+                    r.r1 = self.filter_area_r1(sheet, &f);
                     let total_row = self.ends_in_subtotal_row(sheet, r);
-                    self.view_mut(sheet).filters[i].total_row = total_row;
+                    let g = &mut self.view_mut(sheet).filters[i];
+                    g.rect = r;
+                    g.total_row = total_row;
                 }
                 r
             }
@@ -1183,24 +1631,26 @@ impl Workbook {
                 r
             }
             (None, None) => {
-                let r = self.range_filter_rect(sheet, range);
-                if r.rows() < 2 && r.cols() < 1 {
-                    return Err(bad());
-                }
-                r
+                let stored = self.new_filter_ref(sheet, range).ok_or_else(bad)?;
+                new_ref = Some(stored);
+                self.new_range_filter(sheet, stored).rect
             }
         };
         if field == 0 || field > rect.cols() {
             return Err(bad());
         }
         if existing.is_none() {
-            let total_row = table.is_none() && self.ends_in_subtotal_row(sheet, rect);
-            self.view_mut(sheet).filters.push(Filter {
-                rect,
-                table: table.map(str::to_string),
-                crit: BTreeMap::new(),
-                total_row,
-            });
+            let f = match new_ref {
+                Some(stored) => self.new_range_filter(sheet, stored),
+                None => Filter {
+                    rect,
+                    anchor_r1: rect.r1,
+                    table: table.map(str::to_string),
+                    crit: BTreeMap::new(),
+                    total_row: false,
+                },
+            };
+            self.view_mut(sheet).filters.push(f);
         }
         let i = existing.unwrap_or(self.views[&sheet].filters.len() - 1);
 
@@ -1211,10 +1661,20 @@ impl Workbook {
                 .crit
                 .contains_key(&(field - 1)))
         .then_some((i, field - 1));
+        let mut cleared_last = false;
+        let month_first = self
+            .input_locale
+            .as_ref()
+            .is_some_and(|l| l.date_order == crate::locale::DateOrder::MDY);
+        let stored = |c: Option<&str>| {
+            c.map(|c| match op {
+                None | Some("and" | "or") if month_first => self.us_date_criterion(c),
+                _ => c.to_string(),
+            })
+        };
+        let (c1, c2) = (stored(c1), stored(c2));
+        let (c1, c2) = (c1.as_deref(), c2.as_deref());
         let v = self.view_mut(sheet);
-        if table.is_some() && c1.is_some() {
-            v.table_fm_off = false;
-        }
         match c1 {
             Some(c1) => {
                 v.filters[i].crit.insert(
@@ -1224,11 +1684,13 @@ impl Workbook {
                         op: op.map(str::to_string),
                         c2: c2.map(str::to_string),
                         op_code,
+                        month_first,
                     },
                 );
             }
             None => {
-                v.filters[i].crit.remove(&(field - 1));
+                cleared_last = v.filters[i].crit.remove(&(field - 1)).is_some()
+                    && v.filters[i].crit.is_empty();
             }
         }
 
@@ -1240,12 +1702,15 @@ impl Workbook {
 
         let given = (existing.is_none() && table.is_none() && !range.is_cell()).then_some(range);
         if self
-            .refilter(sheet, Some(check_r1), only_hide, given)
+            .refilter(sheet, (!cleared_last).then_some(check_r1), only_hide, given)
             .is_err()
         {
             self.view_mut(sheet).filters = saved.unwrap_or_default();
             return Err(bad());
         }
+
+        let ftable = self.views[&sheet].filters[i].table.clone();
+        self.fm_after_apply(sheet, ftable.as_deref(), true);
         if given.is_some() {
             let fm = self.filter_mode_for_subtotal(sheet);
             self.view_mut(sheet).fm_last = fm;
@@ -1253,7 +1718,51 @@ impl Workbook {
         if let Some(ti) = table.and_then(|t| self.table_position(t).ok()) {
             self.tables[ti].show_filter = true;
         }
+
+        if table.is_none() {
+            let total = existing.is_some_and(|i| self.views[&sheet].filters[i].total_row);
+            let named = new_ref.unwrap_or(Rect {
+                r1: rect.r1 - u32::from(total && rect.r1 > rect.r0),
+                ..rect
+            });
+            self.define_filter_name(sheet, "_FilterDatabase", sheet, named, true);
+        }
+
+        let marked = match given {
+            Some(g) => Some(g),
+            None => self.filter_rect(&self.views[&sheet].filters[i].clone()),
+        };
+        if let Some(rect) = marked {
+            self.mark_filter_area(sheet, rect);
+        }
         Ok(self.view_settle())
+    }
+
+    fn us_date_criterion(&self, c: &str) -> String {
+        let Some((op, rest)) = ["<=", ">=", "<>", "<", ">"]
+            .iter()
+            .find_map(|p| c.strip_prefix(p).map(|r| (*p, r)))
+        else {
+            return c.to_string();
+        };
+        let us = crate::locale::Locale::en_us();
+        let env = crate::coerce::ParseEnv {
+            locale: &us,
+            date_system: self.settings.date_system,
+            current_year: self.calc.current_year,
+            iso_t: false,
+        };
+        match crate::coerce::parse_number_text(rest, env) {
+            Some(p)
+                if matches!(
+                    p.kind,
+                    crate::coerce::NumberKind::Date | crate::coerce::NumberKind::DateTime
+                ) =>
+            {
+                format!("{op}{}", crate::number::format_general(p.value))
+            }
+            _ => c.to_string(),
+        }
     }
 
     pub fn show_all_data(&mut self, sheet: SheetId) -> Result<RecalcReport, EditError> {
@@ -1263,10 +1772,15 @@ impl Workbook {
     fn show_all_data_run(&mut self, sheet: SheetId) -> Result<RecalcReport, EditError> {
         if let Some(rect) = self.views.get_mut(&sheet).and_then(|v| v.adv.take()) {
             let v = self.view_mut(sheet);
+            v.fm = false;
             let changed: Vec<u32> = (rect.r0 + 1..=rect.r1)
                 .filter(|r| v.hidden_rows.remove(r))
                 .collect();
             self.rows_visibility_changed(sheet, &changed);
+
+            if let Some(used) = self.ever_used(sheet) {
+                self.mark_area_dependents(sheet, (rect.r0, used.c0, rect.r1, used.c1));
+            }
             return Ok(self.view_settle());
         }
 
@@ -1287,8 +1801,13 @@ impl Workbook {
             (Some(a), Some(b)) => crate::text::eq_ordinal_ci(a, b),
             (a, b) => a.is_none() && b.is_none(),
         };
+        let filter_sorted =
+            target.is_none() && self.views.get(&sheet).is_some_and(|v| v.filter_sorted);
+        if filter_sorted {
+            self.view_mut(sheet).filter_sorted = false;
+        }
         if !filters.iter().any(|f| is_target(f) && !f.crit.is_empty()) {
-            if !sorted.is_empty() {
+            if !sorted.is_empty() || filter_sorted {
                 return Ok(RecalcReport::default());
             }
             return Err(EditError::Compile("ShowAllData method failed".into()));
@@ -1308,7 +1827,13 @@ impl Workbook {
                 }
             }
             self.view_mut(sheet).filters[i].crit.clear();
+
+            if let Some(rect) = self.filter_rect(f) {
+                self.mark_filter_area(sheet, rect);
+            }
         }
+
+        self.view_mut(sheet).fm = false;
         changed.sort_unstable();
         changed.dedup();
         self.rows_visibility_changed(sheet, &changed);
@@ -1398,7 +1923,15 @@ impl Workbook {
                         }
                     })
                     .collect();
-                if items.len() <= 2 {
+
+                if let (Some(c2), 1) = (cc.c2.as_deref(), items.len()) {
+                    ColView {
+                        c1: items[0].clone(),
+                        op: 1,
+                        c2: Some(text(c2)),
+                        values: Vec::new(),
+                    }
+                } else if items.len() <= 2 {
                     ColView {
                         c1: items[0].clone(),
                         op: 2,
@@ -1435,14 +1968,10 @@ impl Workbook {
 
     fn reapply_filter_run(&mut self, sheet: SheetId) -> Result<RecalcReport, EditError> {
         let (r, c) = self.sheet_sel(sheet);
-        if self
+        let target = self
             .table_at(CellAddr::new(sheet, r, c))
-            .is_some_and(|t| t.headers && t.show_filter)
-        {
-            if let Some(v) = self.views.get_mut(&sheet) {
-                v.table_fm_off = false;
-            }
-        }
+            .filter(|t| t.headers && t.show_filter)
+            .map(|t| t.name.clone());
 
         let table_af = self
             .tables
@@ -1471,6 +2000,29 @@ impl Workbook {
             self.view_mut(sheet).filters[i].total_row = total_row;
         }
         let _ = self.refilter(sheet, None, None, None);
+        let inside = target.is_some()
+            || self.views.get(&sheet).is_some_and(|v| {
+                v.filters.iter().any(|f| {
+                    f.table.is_none() && self.filter_rect(f).is_some_and(|x| x.contains(r, c))
+                })
+            });
+        let has_range = self
+            .views
+            .get(&sheet)
+            .is_some_and(|v| v.filters.iter().any(|f| f.table.is_none()));
+        if target.is_some() || has_range {
+            self.fm_after_apply(sheet, target.as_deref(), inside);
+        }
+
+        let rects: Vec<Rect> = self.views.get(&sheet).map_or_else(Vec::new, |v| {
+            v.filters
+                .iter()
+                .filter_map(|f| self.filter_rect(f))
+                .collect()
+        });
+        for rect in rects {
+            self.mark_filter_area(sheet, rect);
+        }
         Ok(self.view_settle())
     }
 
@@ -1502,6 +2054,7 @@ impl Workbook {
         let f = self.views[&sheet].filters[i].clone();
         let mut changed = Vec::new();
         if !f.crit.is_empty() {
+            self.view_mut(sheet).fm = false;
             if let Some(rect) = self.filter_rect(&f) {
                 let last = if f.total_row { rect.r1 - 1 } else { rect.r1 };
                 let v = self.view_mut(sheet);
@@ -1512,8 +2065,19 @@ impl Workbook {
                 }
             }
         }
+
+        if !f.crit.is_empty() {
+            if let Some(rect) = self.filter_rect(&f) {
+                self.mark_filter_area(sheet, rect);
+            }
+        }
+        let had_crit = !f.crit.is_empty();
         self.view_mut(sheet).filters.remove(i);
         self.rows_visibility_changed(sheet, &changed);
+
+        if !had_crit {
+            return Ok(RecalcReport::default());
+        }
         Ok(self.view_settle())
     }
 
@@ -1534,6 +2098,40 @@ impl Workbook {
         self.view_mut(sheet).used_r1 = Some(r);
     }
 
+    pub(crate) fn view_predelete_cols(&mut self, sheet: SheetId, at: u32, count: u32) {
+        let Some(v) = self.views.get_mut(&sheet) else {
+            return;
+        };
+        let mut saved = Vec::new();
+        for (k, f) in v.filters.iter_mut().enumerate() {
+            let gone = f.rect.c0 >= at && f.rect.c1 < at + count;
+            if f.table.is_some() || gone {
+                continue;
+            }
+            let keep: BTreeMap<u32, ColCrit> = f
+                .crit
+                .iter()
+                .filter(|(&fd, _)| {
+                    let col = f.rect.c0 + fd;
+                    col < at || col >= at + count
+                })
+                .map(|(&fd, cc)| (fd, cc.clone()))
+                .collect();
+            if keep.len() < f.crit.len() {
+                saved.push((k, std::mem::replace(&mut f.crit, keep)));
+            }
+        }
+        if saved.is_empty() {
+            return;
+        }
+        let _ = self.refilter(sheet, None, None, None);
+        if let Some(v) = self.views.get_mut(&sheet) {
+            for (k, crit) in saved {
+                v.filters[k].crit = crit;
+            }
+        }
+    }
+
     pub(crate) fn view_shift(
         &mut self,
         sheet: SheetId,
@@ -1543,6 +2141,7 @@ impl Workbook {
         insert: bool,
     ) {
         let below = self.insert_format_below;
+        let subtotal_delete = self.op_on(crate::workbook::Op::SubtotalDelete);
         let Some(v) = self.views.get_mut(&sheet) else {
             return;
         };
@@ -1678,14 +2277,33 @@ impl Workbook {
                     continue;
                 }
                 if rows && a >= at && a < e {
-                    drop.push(k);
-                    continue;
+                    if !subtotal_delete {
+                        drop.push(k);
+                        continue;
+                    }
+                    (at, nb)
+                } else {
+                    (na, nb)
                 }
-                (na, nb)
             };
             if rows {
+                let anchor = f.anchor_r1;
+                let shifted = if insert {
+                    if at <= anchor {
+                        anchor + count
+                    } else {
+                        anchor
+                    }
+                } else if at + count <= anchor {
+                    anchor - count
+                } else if at <= anchor {
+                    at.saturating_sub(1)
+                } else {
+                    anchor
+                };
                 f.rect.r0 = na;
                 f.rect.r1 = nb;
+                f.anchor_r1 = shifted.max(na).min(nb.max(na));
             } else {
                 f.rect.c0 = na;
                 f.rect.c1 = nb;
@@ -1709,6 +2327,19 @@ impl Workbook {
                 }
             }
         }
+        let dropped = !drop.is_empty();
+
+        let range = v
+            .filters
+            .iter()
+            .enumerate()
+            .find(|(_, f)| f.table.is_none())
+            .map(|(k, f)| (drop.contains(&k), !f.crit.is_empty()));
+        match range {
+            Some((false, has)) => v.fm = has,
+            Some((true, true)) => v.fm = false,
+            _ => {}
+        }
         for k in drop.into_iter().rev() {
             let f = v.filters.remove(k);
 
@@ -1719,6 +2350,10 @@ impl Workbook {
                     }
                 }
             }
+        }
+
+        if dropped {
+            self.drop_filter_name(sheet, "_FilterDatabase");
         }
     }
 
@@ -1741,6 +2376,13 @@ impl Workbook {
                 {
                     f.table = Some(new.to_string());
                 }
+            }
+
+            if v.sel_table
+                .as_deref()
+                .is_some_and(|t| t.eq_ignore_ascii_case(old))
+            {
+                v.sel_table = Some(new.to_string());
             }
         }
     }
@@ -1767,7 +2409,6 @@ impl Workbook {
                     }
                 }
             }
-            self.view_mut(sheet).ghost_fm = true;
         }
         self.view_mut(sheet).filters.remove(i);
         self.rows_visibility_changed(sheet, &changed);
@@ -1826,6 +2467,18 @@ impl Workbook {
         (!runs.is_empty() && !(runs.len() == 1 && runs[0] == rect)).then_some(runs)
     }
 
+    pub(crate) fn copy_filter_op(&self, ss: SheetId, src: Rect) -> bool {
+        self.filter_mode(ss)
+            && !self
+                .tables
+                .iter()
+                .any(|t| t.sheet == ss && t.rect == src && !t.list_sel)
+    }
+
+    pub fn mark_copy(&mut self, src: Option<(SheetId, Rect)>) {
+        self.session.copy_mark = src.map(|(s, r)| (s, r, self.copy_filter_op(s, r)));
+    }
+
     #[allow(clippy::type_complexity)]
     pub(crate) fn view_copy_plan(
         &self,
@@ -1846,7 +2499,11 @@ impl Workbook {
         } else {
             dr_in
         };
-        let fm_src = self.filter_mode(ss);
+
+        let fm_src = match self.session.copy_mark {
+            Some((s, r, on)) if special && s == ss && r == src => on,
+            _ => self.copy_filter_op(ss, src),
+        };
         let fm_dst = self.filter_mode(ds);
         if !fm_src && !fm_dst {
             return None;
@@ -1907,7 +2564,7 @@ impl Workbook {
             out
         };
 
-        let one_vis = special && hidden_in_src && !all_hidden && h == 1 && w == 1;
+        let one_vis = special && !all_hidden && h == 1 && w == 1;
         let mut areas: Vec<Rect> = Vec::new();
         if fm_dst && !transpose && !dr.is_cell() {
             for r in dr.r0..=dr.r1 {
@@ -1952,7 +2609,7 @@ impl Workbook {
         let mut steps = Vec::new();
         let mut whole: Option<Rect> = None;
         for a in areas {
-            let (nr, nc) = if fm_dst && !(transpose && several && a.rows() > 1 && a.cols() > 1) {
+            let (nr, nc) = if fm_dst && !(transpose && a.rows() > 1 && a.cols() > 1) {
                 (
                     if a.rows() % h == 0 { a.rows() / h } else { 1 },
                     if a.cols() % w == 0 { a.cols() / w } else { 1 },
@@ -2056,4 +2713,103 @@ pub(crate) fn top_threshold(mut nums: Vec<f64>, op: &str, n: f64) -> Option<f64>
     }
     .min(nums.len());
     nums.get(k.checked_sub(1)?).copied()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::address::{CellAddr, Rect};
+    use crate::value::Value;
+    use crate::view::FilterSpec;
+    use crate::workbook::Workbook;
+
+    #[test]
+    fn criterion_dates_read_month_first() {
+        let run = |c: &str, us: bool| {
+            let mut wb = Workbook::new();
+            let s = wb.sheet_at(0).id;
+            wb.set_value(CellAddr::new(s, 0, 0), Value::text("d"));
+
+            for (r, d) in [45663.0, 45809.0, 46357.0].into_iter().enumerate() {
+                wb.set_value(CellAddr::new(s, r as u32 + 1, 0), Value::Number(d));
+            }
+            let spec = FilterSpec {
+                field: 1,
+                criteria1: Some(c),
+                ..FilterSpec::default()
+            };
+            let r = Rect::new(0, 0, 3, 0);
+            if us {
+                let loc = crate::locale::Locale::en_us();
+                wb.with_input_locale(&loc, |wb| wb.autofilter(s, r, None, spec))
+                    .unwrap();
+            } else {
+                wb.autofilter(s, r, None, spec).unwrap();
+            }
+            wb.hidden_rows(s)
+        };
+        assert_eq!(
+            crate::locale::Locale::default().date_order,
+            crate::locale::DateOrder::DMY
+        );
+
+        assert_eq!(run(">=6/1/2025", true), vec![1]);
+        assert_eq!(run("<6/1/2025", true), vec![2, 3]);
+        assert_eq!(run(">=45809", true), vec![1]);
+
+        assert_eq!(run(">=13/1/2025", true), vec![1, 2, 3]);
+
+        assert_eq!(run(">=6/1/2025", false), Vec::<u32>::new());
+        assert_eq!(run(">=13/1/2025", false), vec![1]);
+    }
+
+    fn grid(cells: &[(u32, u32)]) -> (Workbook, crate::address::SheetId) {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        for &(r, c) in cells {
+            wb.set_value(CellAddr::new(s, r, c), Value::Number(1.0));
+        }
+        (wb, s)
+    }
+
+    #[test]
+    fn smart_select_cuts_tables() {
+        let cells: Vec<(u32, u32)> = (0..6).flat_map(|r| [(r, 0), (r, 1)]).collect();
+        let (mut wb, s) = grid(&cells);
+        assert_eq!(wb.smart_select(s, 0, 0, None), Rect::new(0, 0, 5, 1));
+        wb.add_table("T", s, Rect::new(3, 0, 5, 1)).unwrap();
+        assert_eq!(wb.smart_select(s, 0, 0, None), Rect::new(0, 0, 2, 1));
+
+        let mut cells: Vec<(u32, u32)> = (0..3).flat_map(|r| [(r, 0), (r, 1), (r, 2)]).collect();
+        cells.extend((0..3).map(|r| (r, 3)));
+        let (mut wb, s) = grid(&cells);
+        wb.add_table("U", s, Rect::new(0, 3, 2, 3)).unwrap();
+        assert_eq!(wb.smart_select(s, 1, 0, None), Rect::new(0, 0, 2, 2));
+    }
+
+    #[test]
+    fn new_filter_ref_limits_and_trims() {
+        let cells: Vec<(u32, u32)> = (1..5).flat_map(|r| [(r, 1), (r, 2)]).collect();
+        let (wb, s) = grid(&cells);
+        assert_eq!(
+            wb.new_filter_ref(s, Rect::new(1, 0, 20, 5)),
+            Some(Rect::new(1, 1, 4, 2))
+        );
+        assert_eq!(wb.new_filter_ref(s, Rect::new(10, 10, 12, 12)), None);
+        assert_eq!(wb.new_filter_ref(s, Rect::new(8, 8, 8, 8)), None);
+        assert_eq!(
+            wb.new_filter_ref(s, Rect::new(0, 0, 0, 0)),
+            Some(Rect::new(1, 1, 4, 2))
+        );
+    }
+
+    #[test]
+    fn filter_area_follows_bottom_left_region() {
+        let mut cells: Vec<(u32, u32)> = (0..3).flat_map(|r| [(r, 0), (r, 1), (r, 2)]).collect();
+        cells.extend([(3, 2), (4, 2)]);
+        let (wb, s) = grid(&cells);
+        let f = wb.new_range_filter(s, Rect::new(0, 0, 2, 2));
+        assert_eq!(f.rect.r1, 4);
+        let f = wb.new_range_filter(s, Rect::new(0, 0, 2, 0));
+        assert_eq!(f.rect.r1, 4);
+    }
 }

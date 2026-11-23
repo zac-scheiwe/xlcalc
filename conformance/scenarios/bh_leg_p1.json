@@ -1,0 +1,1174 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "cell": "Sheet1!A1",
+   "input": "1",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!A2",
+   "input": "2",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!A3",
+   "input": "3",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!A4",
+   "input": "4",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!A5",
+   "input": "5",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!B1",
+   "input": "10",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!B2",
+   "input": "20",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!B3",
+   "input": "30",
+   "op": "set"
+  },
+  {
+   "cell": "Sheet1!D20",
+   "input": "=IFS(A5=1,1,A5=2,1,A1:A3,1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!E20",
+   "input": "=IFS(A5=1,1,A5=2,1,A:A,1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!F20",
+   "input": "=IFS(A5=1,1,A5=2,1,1:1,1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!G20",
+   "input": "=IFS(A5=1,1,A5=2,1,A1:A3*1,1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!H20",
+   "input": "=IFS(A5=1,1,A5=2,1,{1;2;3},1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!I20",
+   "input": "=IFS(A5=1,1,A5=2,1,INDEX(A1:A3,0),1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!J20",
+   "input": "=IFS(A5=1,1,A5=2,1,OFFSET(A1,0,0,3,1),1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!K20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,A1:A3,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!L20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,A:A,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!M20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1:1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!N20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,A1:A3*1,A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!O20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,{1;2;3},A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!P20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,INDEX(A1:A3,0),A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!Q20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,OFFSET(A1,0,0,3,1),A5=4,1,A5=5,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!R20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A1:A3,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!S20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A:A,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!T20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,1:1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!U20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A1:A3*1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!V20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,{1;2;3},1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!W20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,INDEX(A1:A3,0),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!X20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,OFFSET(A1,0,0,3,1),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!Y20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!Z20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AA20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AB20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AC20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AD20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AE20",
+   "input": "=IFS(A5=1,1,A5=2,1,A5=3,1,A5=4,1,A5=5,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AF20",
+   "input": "=SWITCH(A5,1,1,2,2,A1:A3,3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AG20",
+   "input": "=SWITCH(A5,1,1,2,2,A:A,3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AH20",
+   "input": "=SWITCH(A5,1,1,2,2,1:1,3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AI20",
+   "input": "=SWITCH(A5,1,1,2,2,A1:A3*1,3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AJ20",
+   "input": "=SWITCH(A5,1,1,2,2,{1;2;3},3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AK20",
+   "input": "=SWITCH(A5,1,1,2,2,INDEX(A1:A3,0),3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AL20",
+   "input": "=SWITCH(A5,1,1,2,2,OFFSET(A1,0,0,3,1),3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AM20",
+   "input": "=SWITCH(A5,1,1,2,2,3,A1:A3,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AN20",
+   "input": "=SWITCH(A5,1,1,2,2,3,A:A,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AO20",
+   "input": "=SWITCH(A5,1,1,2,2,3,1:1,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AP20",
+   "input": "=SWITCH(A5,1,1,2,2,3,A1:A3*1,4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AQ20",
+   "input": "=SWITCH(A5,1,1,2,2,3,{1;2;3},4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AR20",
+   "input": "=SWITCH(A5,1,1,2,2,3,INDEX(A1:A3,0),4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AS20",
+   "input": "=SWITCH(A5,1,1,2,2,3,OFFSET(A1,0,0,3,1),4,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AT20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,A1:A3,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AU20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,A:A,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AV20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,1:1,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AW20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,A1:A3*1,4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AX20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,{1;2;3},4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AY20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,INDEX(A1:A3,0),4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!AZ20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,OFFSET(A1,0,0,3,1),4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BA20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BB20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BC20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BD20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BE20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BF20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BG20",
+   "input": "=SWITCH(A5,1,1,2,2,3,3,4,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BH20",
+   "input": "=CHOOSE(1,1,2,3,4,A1:A3,6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BI20",
+   "input": "=CHOOSE(1,1,2,3,4,A:A,6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BJ20",
+   "input": "=CHOOSE(1,1,2,3,4,1:1,6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BK20",
+   "input": "=CHOOSE(1,1,2,3,4,A1:A3*1,6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BL20",
+   "input": "=CHOOSE(1,1,2,3,4,{1;2;3},6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BM20",
+   "input": "=CHOOSE(1,1,2,3,4,INDEX(A1:A3,0),6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BN20",
+   "input": "=CHOOSE(1,1,2,3,4,OFFSET(A1,0,0,3,1),6)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BO20",
+   "input": "=CHOOSE(1,1,2,3,4,5,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BP20",
+   "input": "=CHOOSE(1,1,2,3,4,5,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BQ20",
+   "input": "=CHOOSE(1,1,2,3,4,5,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BR20",
+   "input": "=CHOOSE(1,1,2,3,4,5,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BS20",
+   "input": "=CHOOSE(1,1,2,3,4,5,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BT20",
+   "input": "=CHOOSE(1,1,2,3,4,5,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BU20",
+   "input": "=CHOOSE(1,1,2,3,4,5,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BV20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BW20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A:A,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BX20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,1:1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BY20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3*1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!BZ20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,{1;2;3},1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CA20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,INDEX(A1:A3,0),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CB20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,OFFSET(A1,0,0,3,1),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CC20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CD20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CE20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CF20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CG20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CH20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CI20",
+   "input": "=MAXIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CJ20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CK20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A:A,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CL20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,1:1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CM20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3*1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CN20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,{1;2;3},1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CO20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,INDEX(A1:A3,0),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CP20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,OFFSET(A1,0,0,3,1),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CQ20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CR20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CS20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CT20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CU20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CV20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CW20",
+   "input": "=SUMIFS(A1:A3,A1:A3,1,A1:A3,1,A1:A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CX20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CY20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A:A,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!CZ20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,1:1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DA20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3*1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DB20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,{1;2;3},1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DC20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,INDEX(A1:A3,0),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DD20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,OFFSET(A1,0,0,3,1),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DE20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DF20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DG20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DH20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DI20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DJ20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DK20",
+   "input": "=COUNTIFS(A1:A3,1,A1:A3,1,A1:A3,1,A1:A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DL20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DM20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A:A,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DN20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,1:1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DO20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3*1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DP20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,{1;2;3},1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DQ20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,INDEX(A1:A3,0),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DR20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,OFFSET(A1,0,0,3,1),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DS20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DT20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DU20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DV20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DW20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DX20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DY20",
+   "input": "=SORTBY(A1:A3,A1:A3,1,A1:A3,1,A1:A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!DZ20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EA20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A:A,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EB20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,1:1,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EC20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3*1,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!ED20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,{1;2;3},A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EE20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,INDEX(A1:A3,0),A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EF20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,OFFSET(A1,0,0,3,1),A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EG20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EH20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EI20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EJ20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EK20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EL20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EM20",
+   "input": "=AGGREGATE(1,6,A1:A3,A1:A3,A1:A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EN20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A1:A3,A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EO20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A:A,A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EP20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,1:1,A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EQ20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A1:A3*1,A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!ER20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,{1;2;3},A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!ES20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,INDEX(A1:A3,0),A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!ET20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,OFFSET(A1,0,0,3,1),A4)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EU20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EV20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EW20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EX20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EY20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!EZ20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FA20",
+   "input": "=TEXTJOIN(,,TRUE,A1,A2,A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FB20",
+   "input": "=MIN(1,2,3,4,5,6,7,A1:A3,9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FC20",
+   "input": "=MIN(1,2,3,4,5,6,7,A:A,9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FD20",
+   "input": "=MIN(1,2,3,4,5,6,7,1:1,9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FE20",
+   "input": "=MIN(1,2,3,4,5,6,7,A1:A3*1,9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FF20",
+   "input": "=MIN(1,2,3,4,5,6,7,{1;2;3},9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FG20",
+   "input": "=MIN(1,2,3,4,5,6,7,INDEX(A1:A3,0),9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FH20",
+   "input": "=MIN(1,2,3,4,5,6,7,OFFSET(A1,0,0,3,1),9)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FI20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FJ20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FK20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FL20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FM20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FN20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FO20",
+   "input": "=MIN(1,2,3,4,5,6,7,8,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FP20",
+   "input": "=VLOOKUP(A5,A1:B3,A1:A3,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FQ20",
+   "input": "=VLOOKUP(A5,A1:B3,A:A,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FR20",
+   "input": "=VLOOKUP(A5,A1:B3,1:1,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FS20",
+   "input": "=VLOOKUP(A5,A1:B3,A1:A3*1,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FT20",
+   "input": "=VLOOKUP(A5,A1:B3,{1;2;3},0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FU20",
+   "input": "=VLOOKUP(A5,A1:B3,INDEX(A1:A3,0),0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FV20",
+   "input": "=VLOOKUP(A5,A1:B3,OFFSET(A1,0,0,3,1),0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FW20",
+   "input": "=VLOOKUP(A5,A1:B3,2,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FX20",
+   "input": "=VLOOKUP(A5,A1:B3,2,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FY20",
+   "input": "=VLOOKUP(A5,A1:B3,2,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!FZ20",
+   "input": "=VLOOKUP(A5,A1:B3,2,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GA20",
+   "input": "=VLOOKUP(A5,A1:B3,2,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GB20",
+   "input": "=VLOOKUP(A5,A1:B3,2,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GC20",
+   "input": "=VLOOKUP(A5,A1:B3,2,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GD20",
+   "input": "=HLOOKUP(A5,A1:B3,A1:A3,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GE20",
+   "input": "=HLOOKUP(A5,A1:B3,A:A,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GF20",
+   "input": "=HLOOKUP(A5,A1:B3,1:1,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GG20",
+   "input": "=HLOOKUP(A5,A1:B3,A1:A3*1,0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GH20",
+   "input": "=HLOOKUP(A5,A1:B3,{1;2;3},0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GI20",
+   "input": "=HLOOKUP(A5,A1:B3,INDEX(A1:A3,0),0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GJ20",
+   "input": "=HLOOKUP(A5,A1:B3,OFFSET(A1,0,0,3,1),0)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GK20",
+   "input": "=HLOOKUP(A5,A1:B3,2,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GL20",
+   "input": "=HLOOKUP(A5,A1:B3,2,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GM20",
+   "input": "=HLOOKUP(A5,A1:B3,2,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GN20",
+   "input": "=HLOOKUP(A5,A1:B3,2,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GO20",
+   "input": "=HLOOKUP(A5,A1:B3,2,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GP20",
+   "input": "=HLOOKUP(A5,A1:B3,2,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GQ20",
+   "input": "=HLOOKUP(A5,A1:B3,2,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GR20",
+   "input": "=INDEX(A1:B3,A1:A3,1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GS20",
+   "input": "=INDEX(A1:B3,A:A,1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GT20",
+   "input": "=INDEX(A1:B3,1:1,1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GU20",
+   "input": "=INDEX(A1:B3,A1:A3*1,1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GV20",
+   "input": "=INDEX(A1:B3,{1;2;3},1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GW20",
+   "input": "=INDEX(A1:B3,INDEX(A1:A3,0),1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GX20",
+   "input": "=INDEX(A1:B3,OFFSET(A1,0,0,3,1),1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GY20",
+   "input": "=INDEX(A1:B3,1,A1:A3,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!GZ20",
+   "input": "=INDEX(A1:B3,1,A:A,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HA20",
+   "input": "=INDEX(A1:B3,1,1:1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HB20",
+   "input": "=INDEX(A1:B3,1,A1:A3*1,1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HC20",
+   "input": "=INDEX(A1:B3,1,{1;2;3},1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HD20",
+   "input": "=INDEX(A1:B3,1,INDEX(A1:A3,0),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HE20",
+   "input": "=INDEX(A1:B3,1,OFFSET(A1,0,0,3,1),1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HF20",
+   "input": "=INDEX(A1:B3,1,1,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HG20",
+   "input": "=INDEX(A1:B3,1,1,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HH20",
+   "input": "=INDEX(A1:B3,1,1,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HI20",
+   "input": "=INDEX(A1:B3,1,1,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HJ20",
+   "input": "=INDEX(A1:B3,1,1,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HK20",
+   "input": "=INDEX(A1:B3,1,1,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HL20",
+   "input": "=INDEX(A1:B3,1,1,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HM20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,A1:A3)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HN20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,A:A)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HO20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,1:1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HP20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,A1:A3*1)",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HQ20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,{1;2;3})",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HR20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,INDEX(A1:A3,0))",
+   "op": "setl"
+  },
+  {
+   "cell": "Sheet1!HS20",
+   "input": "=SUMPRODUCT(A1:A3,A1:A3,A1:A3,A1:A3,OFFSET(A1,0,0,3,1))",
+   "op": "setl"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "range": "Sheet1!D20:HS20",
+   "op": "read"
+  }
+ ]
+}

@@ -6,7 +6,6 @@ use crate::calc::{self, RecalcReport};
 use crate::datatable::{is_table_formula, DataTable, PART_ERROR};
 use crate::formula::{CRef, Formula, LambdaDef, Node, Rc, SheetRef};
 use crate::formula_print::{cref_text, print_node};
-use crate::graph::DepGraph;
 use crate::value::Value;
 use crate::workbook::{EditError, Entry, FormulaId, Op, Workbook};
 
@@ -387,6 +386,7 @@ fn edit_refs_at_inner(
         | Node::Name { .. }
         | Node::Local { .. }
         | Node::Missing
+        | Node::Unwritten
         | Node::Unsupported { .. }
         | Node::DeadRef(_)
         | Node::StructRef { .. } => node.clone(),
@@ -417,8 +417,8 @@ impl Shift {
         };
         let push = |i: u32| (i as u64 + self.count as u64).min(self.max() as u64 - 1) as u32;
         let (lo, hi) = if self.insert {
-            let lo = if self.limit.is_none() && lo >= self.at {
-                push(lo)
+            let lo = if self.axis == Axis::Rows && self.limit.is_none() && self.at > 0 {
+                lo.min(self.at - 1)
             } else {
                 lo
             };
@@ -440,13 +440,42 @@ impl Shift {
         self.limit.is_none_or(|(l0, l1)| (l0..=l1).contains(&p))
     }
 
-    fn rect_in_band(&self, r: &Rect) -> bool {
+    pub(crate) fn rect_in_band(&self, r: &Rect) -> bool {
         let (a, b) = if self.axis == Axis::Rows {
             (r.c0, r.c1)
         } else {
             (r.r0, r.r1)
         };
         self.limit.is_none_or(|(l0, l1)| l0 <= a && b <= l1)
+    }
+
+    pub(crate) fn adjust_rect_whole(&self, r: &Rect) -> Option<Rect> {
+        let (lo, hi) = if self.axis == Axis::Rows {
+            (r.r0, r.r1)
+        } else {
+            (r.c0, r.c1)
+        };
+        let (a, b) = self.map_span(lo, hi)?;
+        Some(if self.axis == Axis::Rows {
+            Rect::new(a, r.c0, b, r.c1)
+        } else {
+            Rect::new(r.r0, a, r.r1, b)
+        })
+    }
+
+    pub(crate) fn trims(&self, r: &Rect) -> bool {
+        let Some(x) = self.deleted_rect() else {
+            return false;
+        };
+        if self.insert {
+            return false;
+        }
+        let rows_all = x.r0 <= r.r0 && r.r1 <= x.r1;
+        let cols_all = x.c0 <= r.c0 && r.c1 <= x.c1;
+
+        let rows_hit = x.r0 <= r.r1 && r.r0 <= x.r1;
+        let cols_hit = x.c0 <= r.c1 && r.c0 <= x.c1;
+        (cols_all && rows_hit) || (rows_all && cols_hit)
     }
 
     fn deleted_rect(&self) -> Option<Rect> {
@@ -489,6 +518,46 @@ impl Shift {
     }
 }
 
+fn shift_abs_corner(cref: &CRef, s: &Shift) -> Option<CRef> {
+    let CRef::Area { r0, c0, r1, c1 } = *cref else {
+        return None;
+    };
+    let (a, b) = if s.axis == Axis::Rows {
+        (r0, r1)
+    } else {
+        (c0, c1)
+    };
+    if a.abs == b.abs {
+        return None;
+    }
+    let move_abs = |rc: Rc| -> Option<Rc> {
+        if !rc.abs {
+            return Some(rc);
+        }
+        let j = s.map_index(rc.v as u32)?;
+        Some(Rc {
+            v: j as i32,
+            abs: true,
+        })
+    };
+    let (a, b) = (move_abs(a)?, move_abs(b)?);
+    Some(if s.axis == Axis::Rows {
+        CRef::Area {
+            r0: a,
+            c0,
+            r1: b,
+            c1,
+        }
+    } else {
+        CRef::Area {
+            r0,
+            c0: a,
+            r1,
+            c1: b,
+        }
+    })
+}
+
 fn abs_flags(cref: &CRef) -> (Option<bool>, Option<bool>) {
     match *cref {
         CRef::Cell { row, col } => (Some(row.abs), Some(col.abs)),
@@ -506,6 +575,14 @@ pub(crate) fn targets_sheet(sheet: &SheetRef, host_sheet: SheetId, s: SheetId) -
     }
 }
 impl Workbook {
+    fn shifting<T>(&mut self, f: impl FnOnce(&mut Self) -> T) -> T {
+        let was = std::mem::replace(&mut self.calc.no_empty_call, true);
+        let r = f(self);
+        self.calc.no_empty_call = was;
+        self.calc.moved_now.clear();
+        r
+    }
+
     pub fn insert_rows(
         &mut self,
         sheet: SheetId,
@@ -514,7 +591,7 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Insert, |wb| {
             wb.note_changed(sheet, &[notice::rows_rect(at, count)]);
-            let r = wb.insert_rows_run(sheet, at, count)?;
+            let r = wb.shifting(|wb| wb.insert_rows_run(sheet, at, count))?;
             wb.notify_list_insert(sheet, notice::rows_rect(at, count));
             Ok(r)
         })
@@ -550,7 +627,7 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Delete, |wb| {
             wb.note_changed(sheet, &[notice::rows_rect(at, count)]);
-            let r = wb.delete_rows_run(sheet, at, count)?;
+            let r = wb.shifting(|wb| wb.delete_rows_run(sheet, at, count))?;
             wb.notify_list_area(sheet, notice::rows_rect(at, count));
             Ok(r)
         })
@@ -577,7 +654,7 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Insert, |wb| {
             wb.note_changed(sheet, &[notice::cols_rect(at, count)]);
-            let r = wb.insert_cols_run(sheet, at, count)?;
+            let r = wb.shifting(|wb| wb.insert_cols_run(sheet, at, count))?;
             wb.notify_list_insert(sheet, notice::cols_rect(at, count));
             Ok(r)
         })
@@ -604,7 +681,7 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Delete, |wb| {
             wb.note_changed(sheet, &[notice::cols_rect(at, count)]);
-            let r = wb.delete_cols_run(sheet, at, count)?;
+            let r = wb.shifting(|wb| wb.delete_cols_run(sheet, at, count))?;
             wb.notify_list_area(sheet, notice::cols_rect(at, count));
             Ok(r)
         })
@@ -657,11 +734,26 @@ impl Workbook {
                 t.ins_rows.extend(at..at + count);
             }
         }
+
+        let quiet = !(self.calc.volatile.is_empty() && self.calc.host_volatile.is_empty());
+        let hold = !self.calc.circular.is_empty();
         for (name, sources) in inside {
             if let Some(ti) = self.tables.iter().position(|t| t.name == name) {
                 let sources = self.calc_sources_shifted(ti, sources, &sh);
                 self.insert_row_formats(ti, (at, at + count - 1));
-                self.table_fill_new_rows(ti, (at, at + count - 1), &sources, false);
+                if quiet {
+                    self.calc.skip_host_volatile = true;
+                    self.calc.skip_volatile = true;
+                    self.in_last_pass(|wb| {
+                        wb.with_op(Op::HoldIter, hold || wb.op_on(Op::HoldIter), |wb| {
+                            wb.table_fill_new_rows(ti, (at, at + count - 1), &sources, false)
+                        })
+                    });
+                    self.calc.skip_host_volatile = false;
+                    self.calc.skip_volatile = false;
+                } else {
+                    self.table_fill_new_rows(ti, (at, at + count - 1), &sources, false);
+                }
             }
         }
         Ok(report)
@@ -797,6 +889,9 @@ impl Workbook {
         self.command(Command::Insert, |wb| {
             wb.note_changed(sheet, &[rect]);
             let r = wb.insert_cells_run(sheet, rect, down)?;
+
+            wb.view_ins_del_ez_filter(sheet);
+            wb.view_notify_sel(sheet, rect.r0, rect.c0);
             wb.notify_list_area(sheet, rect);
             Ok(r)
         })
@@ -915,7 +1010,11 @@ impl Workbook {
                 "Can't move cells in a filtered range or table.".into(),
             ));
         }
-        self.shift_cells(sheet, rect, up, false)
+        let r = self.shift_cells(sheet, rect, up, false);
+        if r.is_ok() {
+            self.view_ins_del_ez_filter(sheet);
+        }
+        r
     }
 
     fn shift_cells(
@@ -995,7 +1094,9 @@ impl Workbook {
             };
             let covers_h = bh.0 <= th.0 && th.1 <= bh.1;
             let exact_h = bh == th;
-            let data_h = bh.0 > th.0 && bh.1 <= th.1;
+
+            let first_data = th.0 + u32::from(!rows || t.headers);
+            let data_h = bh.0 >= first_data && bh.1 <= th.1;
             let covers_o = bo.0 <= to.0 && to.1 <= bo.1;
             let within_o = to.0 <= bo.0 && bo.1 <= to.1;
             if rows && t.totals && at == tb && !covers_o {
@@ -1137,11 +1238,34 @@ impl Workbook {
         self.shift_core(s)
     }
 
+    fn apostrophe_shift(&mut self, s: &Shift) {
+        if !self.apostrophe.keys().any(|k| k.sheet == s.sheet) {
+            return;
+        }
+        let old = std::mem::take(&mut self.apostrophe);
+        for (k, t) in old {
+            if k.sheet != s.sheet || !s.in_band(k.row, k.col) {
+                self.apostrophe.insert(k, t);
+                continue;
+            }
+            let moved = match s.axis {
+                Axis::Rows => s.map_index(k.row).map(|r| CellAddr::new(k.sheet, r, k.col)),
+                Axis::Cols => s.map_index(k.col).map(|c| CellAddr::new(k.sheet, k.row, c)),
+            };
+            if let Some(a) = moved {
+                self.apostrophe.insert(a, t);
+            }
+        }
+    }
+
     fn shift_core(&mut self, s: Shift) -> Result<RecalcReport, EditError> {
         if s.count == 0 {
             return Ok(RecalcReport::default());
         }
         let snapshot = (s.limit.is_none() || s.cells).then(|| self.formula_snapshot());
+        if !s.insert && s.axis == Axis::Cols && s.limit.is_none() {
+            self.view_predelete_cols(s.sheet, s.at, s.count);
+        }
         if s.insert && s.axis == Axis::Cols && s.limit.is_none() {
             for ti in 0..self.tables.len() {
                 let t = &self.tables[ti];
@@ -1175,10 +1299,11 @@ impl Workbook {
         };
 
         self.cfv_shift(&s);
-        self.drawing_shift(&s);
+        let resplit = self.drawing_shift(&s);
         self.spark_shift(&s);
         self.hl_shift(&s);
         self.notes_shift(&s);
+        self.apostrophe_shift(&s);
         if self.shift_merges(&s) {
             let _ = self.recalc_point();
         }
@@ -1384,9 +1509,14 @@ impl Workbook {
                         let pos = (s.at - a) as usize;
                         for k in 0..s.count as usize {
                             let left = t.columns[pos - 1].clone();
-                            let name = if let Some(n) =
-                                crate::workbook::tables::next_header_name(&left, &t.columns)
-                            {
+
+                            let next = t
+                                .headers
+                                .then(|| {
+                                    crate::workbook::tables::next_header_name(&left, &t.columns)
+                                })
+                                .flatten();
+                            let name = if let Some(n) = next {
                                 n
                             } else {
                                 let mut n = 1;
@@ -1444,6 +1574,7 @@ impl Workbook {
                 sh.cells.set(r, c, Entry::Const(Value::from(name.as_str())));
             }
         }
+        self.drawing_resplit(&resplit);
 
         for (tn, c) in new_cols {
             if let Some(ti) = self.tables.iter().position(|t| t.name == tn) {
@@ -1528,15 +1659,24 @@ impl Workbook {
                 } else {
                     along != Some(false)
                 };
-                if !(s.limit.is_none() || s.cells)
-                    || !targets_sheet(sheet, host.sheet, s.sheet)
-                    || !fixed
+                if s.insert
+                    && s.limit.is_none()
+                    && !s.cells
+                    && targets_sheet(sheet, host.sheet, s.sheet)
                 {
+                    if let Some(c) = shift_abs_corner(cref, &s) {
+                        return Some(Some(c));
+                    }
+                }
+
+                if !targets_sheet(sheet, host.sheet, s.sheet) || !fixed {
                     None
                 } else if within_limit(cref, host, &s) {
                     Some(shift_cref(cref, host, host, &s).ok())
-                } else {
+                } else if s.limit.is_none() || s.cells {
                     s.straddle(cref, host, host).map(Some)
+                } else {
+                    None
                 }
             });
 
@@ -1661,7 +1801,7 @@ impl Workbook {
         } else {
             Vec::new()
         };
-        self.graph = DepGraph::default();
+        self.graph = self.graph.fresh();
         self.calc.volatile.clear();
         self.calc.circular.clear();
         self.calc.dirty_list.clear();
@@ -1685,14 +1825,20 @@ impl Workbook {
         let mut ids: Vec<FormulaId> = self.formula_ids().collect();
 
         let shifted = std::mem::take(&mut self.calc.shifted);
+        self.calc.moved_now.clone_from(&shifted);
+
+        let mt = self.settings.multi_threaded;
         ids.sort_by_key(|&f| {
             let cell = self.formula(f);
-            (!spilling.contains(&f), !shifted.contains(&f), cell.seq)
+            (
+                !spilling.contains(&f),
+                !(mt && shifted.contains(&f)),
+                cell.seq,
+            )
         });
 
-        let keep_walk = (std::mem::take(&mut self.calc.keep_walk)
-            || scope.as_ref().is_some_and(|s| s.listed))
-            && self.calc.walk.in_use();
+        let keep_walk = self.calc.walk.in_use();
+        self.calc.keep_walk = false;
         self.chain_reset(&ids);
         if keep_walk {
             let keys: rustc_hash::FxHashMap<FormulaId, i64> =
@@ -1990,6 +2136,23 @@ impl Workbook {
             );
             self.late_candidates(dst.sheet, to, false)
         };
+
+        if !fill
+            && src_sheet == dst.sheet
+            && Rect::new(
+                dst.row,
+                dst.col,
+                dst.row + src.rows() - 1,
+                dst.col + src.cols() - 1,
+            )
+            .intersects(&src)
+            && self
+                .merges(src_sheet)
+                .iter()
+                .any(|m| m.intersects(&src) && !crate::cse::inside(m, &src))
+        {
+            return Err(crate::merge::merged_cell());
+        }
         let blocks = self.paste_blocks_plan(src_sheet, src, dst)?;
 
         self.data_tables_overwritten(
@@ -2270,7 +2433,8 @@ impl Workbook {
     ) -> Result<RecalcReport, EditError> {
         self.command(Command::Fill, |wb| {
             wb.note_changed(sheet, &[src.union_bounds(&dst)]);
-            wb.fill_run(sheet, src, dst)
+
+            wb.creating_formulas(|wb| wb.fill_run(sheet, src, dst))
         })
     }
 
@@ -2286,6 +2450,13 @@ impl Workbook {
 
         self.one_pass(|wb| {
             let mut report = RecalcReport::default();
+
+            let held = wb.calc.skip_volatile;
+            let mut first_part = true;
+
+            let parts =
+                (dst.rows().div_ceil(src.rows()) * dst.cols().div_ceil(src.cols())) as usize;
+            let mut done = 0;
             let mut r = dst.r0;
             while r <= dst.r1 {
                 let mut c = dst.c0;
@@ -2293,13 +2464,29 @@ impl Workbook {
                     let h = src.rows().min(dst.r1 - r + 1);
                     let w = src.cols().min(dst.c1 - c + 1);
                     let part = Rect::new(src.r0, src.c0, src.r0 + h - 1, src.c0 + w - 1);
-                    let rep = wb.copy_range_with(sheet, part, CellAddr::new(sheet, r, c), true)?;
+                    done += 1;
+                    let rep =
+                        wb.with_op(Op::HoldIter, done < parts || wb.op_on(Op::HoldIter), |wb| {
+                            wb.copy_range_with(sheet, part, CellAddr::new(sheet, r, c), true)
+                        });
+                    if first_part {
+                        first_part = false;
+                        wb.calc.skip_volatile = true;
+                    }
+                    let rep = match rep {
+                        Ok(rep) => rep,
+                        Err(e) => {
+                            wb.calc.skip_volatile = held;
+                            return Err(e);
+                        }
+                    };
                     report.evaluations += rep.evaluations;
                     report.changed.extend(rep.changed);
                     c += src.cols();
                 }
                 r += src.rows();
             }
+            wb.calc.skip_volatile = held;
             Ok(calc::finish_report(report))
         })
     }
@@ -2310,14 +2497,14 @@ pub(crate) struct DirtyScope {
 
     pub whole: bool,
 
-    pub except: bool,
-
     pub listed: bool,
     pub rects: Vec<(SheetId, Rect)>,
 
     pub dest: Option<SheetId>,
 
     pub moved: rustc_hash::FxHashSet<FormulaId>,
+
+    pub forced: rustc_hash::FxHashSet<FormulaId>,
 
     pub before: Snapshot,
 
@@ -2333,11 +2520,11 @@ impl DirtyScope {
         DirtyScope {
             sheet,
             whole: false,
-            except: false,
             listed: false,
             rects: Vec::new(),
             dest: None,
             moved: Default::default(),
+            forced: Default::default(),
             before,
             spared: Default::default(),
             keep_chain: false,
@@ -2346,6 +2533,9 @@ impl DirtyScope {
 
     fn dirties(&self, wb: &Workbook, fid: FormulaId) -> bool {
         let f = wb.formula(fid);
+        if self.forced.contains(&fid) {
+            return true;
+        }
 
         if self.listed
             && !wb.calc.volatile.contains(&fid)
@@ -2356,12 +2546,6 @@ impl DirtyScope {
         }
         if self.moved.contains(&fid) {
             return true;
-        }
-        if self.except {
-            if f.addr.sheet == self.sheet {
-                return wb.reads_volatile_cell(fid);
-            }
-            return !crate::host::calls_host(wb, &f.formula.root);
         }
         let unchanged = self
             .before
@@ -2382,27 +2566,58 @@ impl DirtyScope {
         if self.listed {
             return false;
         }
-        let other = f.addr.sheet != self.sheet;
-        if self.whole && !other {
+        if self.whole && f.addr.sheet == self.sheet {
             return true;
         }
 
-        let edited =
-            |s: &SheetId| *s != f.addr.sheet && (*s == self.sheet || self.dest == Some(*s));
+        if !self.keep_chain && self.xal_forced(wb, f) {
+            return true;
+        }
         f.precedents.iter().any(|p| match p {
-            crate::graph::Prec::Cell(s, r, c) => {
-                edited(s)
-                    || self
-                        .rects
-                        .iter()
-                        .any(|(rs, x)| rs == s && x.contains(*r, *c))
-            }
+            crate::graph::Prec::Cell(s, r, c) => self
+                .rects
+                .iter()
+                .any(|(rs, x)| rs == s && x.contains(*r, *c)),
             crate::graph::Prec::Range(s, x) => {
-                edited(s) || self.rects.iter().any(|(rs, y)| rs == s && y.intersects(x))
+                self.rects.iter().any(|(rs, y)| rs == s && y.intersects(x))
             }
 
             crate::graph::Prec::Name(k) => wb.names.lookup(k, f.addr.sheet).is_some(),
         })
+    }
+
+    fn xal_forced(&self, wb: &Workbook, f: &crate::workbook::FormulaCell) -> bool {
+        let cross = self.dest;
+        if cross.is_none() && f.addr.sheet == self.sheet {
+            return false;
+        }
+        let pos = |s: SheetId| wb.sheet_position(s);
+        let hits = |s: SheetId| s == self.sheet || cross == Some(s);
+        let spans = |sr: &SheetRef| match sr {
+            SheetRef::Sheet(s) => hits(*s),
+            SheetRef::Span(a, b) => match (pos(*a), pos(*b)) {
+                (Some(a), Some(b)) => [Some(self.sheet), cross]
+                    .into_iter()
+                    .flatten()
+                    .any(|s| pos(s).is_some_and(|p| a.min(b) <= p && p <= a.max(b))),
+                _ => false,
+            },
+            _ => false,
+        };
+        let mut hit = false;
+        crate::formula::walk(&f.formula.root, &mut |n| {
+            hit |= match n {
+                Node::Ref(sr, _) | Node::DeadRef(sr) => spans(sr),
+
+                Node::StructRef { table, .. } => wb
+                    .tables
+                    .iter()
+                    .find(|t| t.name.eq_ignore_ascii_case(table))
+                    .is_some_and(|t| t.sheet != f.addr.sheet && hits(t.sheet)),
+                _ => false,
+            };
+        });
+        hit
     }
 }
 
@@ -2414,5 +2629,62 @@ impl Workbook {
                 (f, (c.text.clone(), c.addr))
             })
             .collect()
+    }
+}
+
+impl Workbook {
+    pub fn ext_source_shift(
+        &mut self,
+        link: usize,
+        sheet: &str,
+        rows: bool,
+        at: u32,
+        count: u32,
+        insert: bool,
+    ) -> Option<RecalcReport> {
+        let ghost = self.ext_ghost(link, sheet)?;
+        let s = Shift {
+            sheet: ghost,
+            axis: if rows { Axis::Rows } else { Axis::Cols },
+            at,
+            count,
+            insert,
+            limit: None,
+            cells: false,
+        };
+        let ids: Vec<FormulaId> = self.formula_ids().collect();
+        let mut any = false;
+        for fid in ids {
+            let (addr, formula) = {
+                let f = self.formula(fid);
+                (f.addr, f.formula.clone())
+            };
+            let mut hit = false;
+            let root = map_refs(&formula.root, &mut |sh, cref| {
+                if *sh != SheetRef::Sheet(ghost) {
+                    return None;
+                }
+                let c = shift_cref(cref, addr, addr, &s).ok();
+                if c.as_ref() != Some(cref) {
+                    hit = true;
+                    Some(c)
+                } else {
+                    None
+                }
+            });
+            if !hit {
+                continue;
+            }
+            any = true;
+            let text = print_node(self, &root, addr);
+            let f = self.formula_mut(fid);
+            f.formula = Arc::new(Formula {
+                root,
+                volatile: formula.volatile,
+            });
+            f.text = text;
+            f.spill = None;
+        }
+        any.then(|| self.relink_and_recalc())
     }
 }

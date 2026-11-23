@@ -11,6 +11,13 @@ impl Workbook {
         })
     }
 
+    pub fn all_page_breaks(&self, sheet: SheetId, rows: bool) -> Vec<u32> {
+        self.views.get(&sheet).map_or_else(Vec::new, |v| {
+            let s = if rows { &v.hbreaks } else { &v.vbreaks };
+            s.iter().copied().collect()
+        })
+    }
+
     pub fn add_page_break(&mut self, sheet: SheetId, rows: bool, at: u32) {
         let v = self.view_mut(sheet);
         if rows {

@@ -6,49 +6,27 @@ use crate::value::{Array, Value, XlError};
 pub fn call_builtin(ctx: &mut EvalCtx, id: FuncId, args: &[Node]) -> Operand {
     let def = functions::def(id);
     let live = ctx.circ_live;
-    let saved = ctx.arr_ctx;
-    match def.name {
-        "ROWS" | "COLUMNS" => {
-            ctx.arr_ctx = if saved == 2 { 2 } else { 1 };
-            ctx.arr_direct = true;
-        }
-        n if ARR_BREAK.contains(&n) => ctx.arr_ctx = 0,
-        _ => {}
-    }
     ctx.fn_depth += 1;
 
     let chain = ctx.vchain;
     if matches!(def.imp, Imp::Lazy(_)) {
         ctx.vchain = false;
     }
+
+    let lo = args.as_ptr() as usize;
+    ctx.frames.push(super::ArgFrame {
+        lo,
+        hi: lo + std::mem::size_of_val(args),
+        ftab: super::ptgclass::ftab_of(id),
+    });
     let out = call_builtin_inner(ctx, def, args);
+    ctx.frames.pop();
     ctx.vchain = chain;
     ctx.fn_depth -= 1;
-    ctx.arr_ctx = saved;
     if ctx.has_placeholders() {
         track_circ(ctx, def, live, &out);
     }
     out
-}
-
-const ARR_BREAK: &[&str] = &[
-    "IF",
-    "IFS",
-    "IFERROR",
-    "IFNA",
-    "CHOOSE",
-    "SWITCH",
-    "VLOOKUP",
-    "HLOOKUP",
-    "OFFSET",
-    "TRANSPOSE",
-];
-
-fn arr_class(ctx: &EvalCtx, name: &str, i: usize) -> u8 {
-    match (name, i) {
-        ("INDEX", 1..) | ("XLOOKUP", 0) => 0,
-        _ => ctx.arr_ctx,
-    }
 }
 
 fn array_slot(name: &str, i: usize) -> bool {
@@ -62,10 +40,7 @@ fn array_slot(name: &str, i: usize) -> bool {
 }
 
 fn excel_value_class(name: &str, i: usize) -> bool {
-    crate::legacy_classes::legacy_classes(name).is_some_and(|c| {
-        let b = c.as_bytes();
-        !b.is_empty() && crate::legacy_classes::class_at(name, c, i) == b'V'
-    })
+    crate::legacy_classes::class_of(name, i) == Some(b'V')
 }
 
 fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
@@ -73,7 +48,7 @@ fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
     let saved = ctx.vchain;
 
     ctx.vchain = saved && (value || name == "N");
-    let v = eval_arg_class(ctx, name, i, a);
+    let v = ctx.eval(a);
     let chain = ctx.vchain;
     ctx.vchain = saved;
 
@@ -107,6 +82,26 @@ fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
         }
     }
 
+    if name == "TYPE" && ctx.xlm_vars.is_some() {
+        match &v {
+            Operand::Ref(r) if r.single().is_some_and(|x| !x.rect.is_cell()) => {
+                return super::refs::implicit_intersection(ctx, v);
+            }
+            Operand::Val(Value::Array(arr)) if matches!(a.unwrap_ws(), Node::Name { .. }) => {
+                return Operand::Val(arr.data.first().cloned().unwrap_or(Value::Blank));
+            }
+            _ => {}
+        }
+    }
+
+    if value && ctx.xlm_vars.is_some() {
+        if let Operand::Ref(r) = &v {
+            if r.single().is_some_and(|x| !x.rect.is_cell()) {
+                return super::refs::implicit_intersection(ctx, v);
+            }
+        }
+    }
+
     if value && name != "TYPE" {
         ctx.cse_value_grid(v, chain)
     } else {
@@ -114,44 +109,8 @@ fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
     }
 }
 
-fn eval_arg_class(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
-    let slot = if excel_array_class(name, i) {
-        true
-    } else if ARR_BREAK.contains(&name) || matches!((name, i), ("INDEX", 1..) | ("XLOOKUP", 0)) {
-        false
-    } else {
-        ctx.arr_slot
-    };
-    let saved = std::mem::replace(&mut ctx.arr_slot, slot);
-    let v = eval_arg_class_inner(ctx, name, i, a);
-    ctx.arr_slot = saved;
-    v
-}
-
 fn excel_array_class(name: &str, i: usize) -> bool {
-    crate::legacy_classes::legacy_classes(name).is_some_and(|c| {
-        let b = c.as_bytes();
-        !b.is_empty() && b[i.min(b.len() - 1)] == b'A'
-    })
-}
-
-fn eval_arg_class_inner(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
-    if ctx.arr_ctx == 0 {
-        if !array_slot(name, i) {
-            return ctx.eval(a);
-        }
-        ctx.arr_ctx = 3;
-        let v = ctx.eval(a);
-        ctx.arr_ctx = 0;
-        return v;
-    }
-    let direct = ctx.arr_direct;
-    let class = arr_class(ctx, name, i);
-    let saved = std::mem::replace(&mut ctx.arr_ctx, class);
-    ctx.arr_direct = direct;
-    let v = ctx.eval(a);
-    ctx.arr_ctx = saved;
-    v
+    crate::legacy_classes::class_of(name, i) == Some(b'A')
 }
 
 const SELECTING: &[&str] = &[
@@ -275,13 +234,21 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
                     && match (def.name, i) {
                         ("INDEX", 0) => reduce || ctx.dyn_reduce,
 
-                        ("OFFSET", 0) => ctx.legacy_form || ctx.fn_depth > 1 || ctx.arr_slot,
+                        ("OFFSET", 0) => {
+                            ctx.legacy_form
+                                || ctx.fn_depth > 1
+                                || (ctx.node_cls == super::ptgclass::Class::Arr)
+                        }
 
                         _ if array_slot(def.name, i) && !ctx.legacy_form => ctx.dyn_reduce,
                         ("TRANSPOSE", 0) if !ctx.legacy_form => false,
 
                         ("SORTBY", _) | ("XLOOKUP", 2) if !ctx.legacy_form => ctx.dyn_reduce,
-                        _ => ctx.legacy_form || ctx.arr_slot || def.param_letter(i) != b'Q',
+                        _ => {
+                            ctx.legacy_form
+                                || (ctx.node_cls == super::ptgclass::Class::Arr)
+                                || def.param_letter(i) != b'Q'
+                        }
                     };
                 ctx.name_keep = named && !ctx.name_first && (def.name, i) == ("XLOOKUP", 2);
                 ctx.cse_lifted = false;
@@ -494,6 +461,9 @@ fn args_tail(
     }
     if let Some(r) = grid_args(ctx, def.name, &mut ops) {
         return r;
+    }
+    if let Some(e) = mode_union_scan(ctx, def.name, &ops) {
+        return Operand::err(e);
     }
     if let Some(e) = union_reject(def.name, &ops) {
         return Operand::err(e);
@@ -806,6 +776,28 @@ fn grid_args(ctx: &mut EvalCtx, name: &str, ops: &mut [Operand]) -> Option<Opera
 
 fn is_union(op: &Operand) -> bool {
     matches!(op, Operand::Ref(r @ Reference::Multi(_)) if r.single().is_none())
+}
+
+fn mode_union_scan(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<XlError> {
+    if !matches!(name, "MODE" | "MODE.SNGL" | "MODE.MULT") || !ops.iter().any(is_union) {
+        return None;
+    }
+    for op in ops {
+        match op {
+            Operand::Val(Value::Error(e)) => return Some(*e),
+            _ if is_union(op) => return Some(XlError::VALUE),
+            Operand::Ref(r) => {
+                if let Some(area) = r.single().filter(|a| a.rect.is_cell()) {
+                    let area = *area;
+                    if let Value::Error(e) = ctx.area_array(&area) {
+                        return Some(e);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    None
 }
 
 fn union_reject(name: &str, ops: &[Operand]) -> Option<XlError> {

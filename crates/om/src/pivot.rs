@@ -49,6 +49,8 @@ pub(crate) enum PivotRef {
     Filter(BookId, String, usize),
 
     Style(BookId, String),
+
+    Layout(BookId, String),
 }
 
 impl PivotRef {
@@ -67,6 +69,7 @@ impl PivotRef {
             PivotRef::CalcItems(..) => "CalculatedItems",
             PivotRef::Filter(..) => "PivotFilter",
             PivotRef::Style(..) => "TableStyle",
+            PivotRef::Layout(..) => "PivotLayout",
         }
     }
 
@@ -84,7 +87,8 @@ impl PivotRef {
             | PivotRef::CalcFields(b, ..)
             | PivotRef::CalcItems(b, ..)
             | PivotRef::Filter(b, ..)
-            | PivotRef::Style(b, _) => *b,
+            | PivotRef::Style(b, _)
+            | PivotRef::Layout(b, _) => *b,
         }
     }
 }
@@ -391,10 +395,7 @@ impl Application<'_> {
                 name = format!("Formula{k}");
             }
             order.insert(at + j, (n + t.fields[f].calc_items.len()) as u32);
-            t.fields[f].calc_items.push(xlcalc::pivot::CalcItem {
-                name,
-                formula: String::new(),
-            });
+            t.push_calc_item(f, name, String::new());
         }
         t.fields[f].sort = Sort::Manual;
         t.fields[f].manual = Some(order);
@@ -432,7 +433,13 @@ impl Application<'_> {
         let addr = xlcalc::CellAddr::new(sheet, rect.r0, rect.c0);
         let wb = &self.book(b).ok()?.wb;
         wb.pivot_meeting(sheet, &rect)?;
-        let Some((ti, f, Some(_))) = wb.pivot_label_at(addr) else {
+        let label = match wb.pivot_label_at(addr) {
+            None if which == "Ungroup" => wb
+                .pivot_label_above(addr)
+                .or_else(|| wb.pivot_header_field(addr).map(|(ti, f)| (ti, f, Some(0)))),
+            l => l,
+        };
+        let Some((ti, f, Some(_))) = label else {
             return Some(Err(OmError::app_defined()));
         };
         let mut t = wb.pivots().tables[ti].clone();
@@ -452,7 +459,21 @@ impl Application<'_> {
                     && matches!(&t.fields[g].group,
                         Some(xlcalc::pivot::Group::Manual { src, .. }) if *src == f)
             });
-            t.remove_group(manual.unwrap_or(f));
+            let target = manual.unwrap_or(f);
+            let dated = match &t.fields[target].group {
+                Some(xlcalc::pivot::Group::Derived { src, .. }) => Some(*src),
+                _ => None,
+            };
+            t.remove_group(target);
+
+            if let Some(src) = dated {
+                let items = &wb.pivots().caches[t.cache].fields[src].items;
+                let mut order: Vec<u32> = (0..items.len() as u32).collect();
+                order.sort_by(|&x, &y| {
+                    xlcalc::pivot::item_cmp(&items[x as usize].value, &items[y as usize].value)
+                });
+                t.fields[src].manual = Some(order);
+            }
         } else {
             if rect.r0 != rect.r1 || rect.c0 != rect.c1 {
                 if matches!(
@@ -552,30 +573,45 @@ impl Application<'_> {
                     "Cannot group that selection.",
                 )));
             }
-            let num = |k: usize| match a.get(k) {
-                Some(Variant::I4(v)) => Some(f64::from(*v)),
-                Some(Variant::I2(v)) => Some(f64::from(*v)),
-                Some(Variant::R8(v)) => Some(*v),
-                _ => None,
-            };
-            let start = num(0);
-            let end = num(1);
-            let lo = start.unwrap_or_else(|| nums.iter().cloned().fold(f64::INFINITY, f64::min));
-            let hi = end.unwrap_or_else(|| nums.iter().cloned().fold(f64::NEG_INFINITY, f64::max));
+            let min = nums.iter().cloned().fold(f64::INFINITY, f64::min);
+            let max = nums.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
 
-            let no_args = (0..3).all(|k| a.get(k).is_none());
-            if no_args && matches!(t.fields[f].group, Some(xlcalc::pivot::Group::Num { .. })) {
-                return Some(Ok(Variant::Bool(true)));
-            }
-            let auto_by = no_args && hi > lo;
-            let Some(by) = (if auto_by {
-                Some(10f64.powf(((hi - lo).log10().ceil() - 1.0).max(0.0)))
-            } else {
-                num(2).filter(|v| *v > 0.0)
-            }) else {
+            let (d_start, d_end, d_by) = match t.fields[f].group {
+                Some(xlcalc::pivot::Group::Num { .. }) if (0..3).all(|k| a.get(k).is_none()) => {
+                    return Some(Ok(Variant::Bool(true)));
+                }
+                Some(xlcalc::pivot::Group::Num { start, end, by }) => (start, end, by),
+
+                _ if min == max => (
+                    None,
+                    Some(max + 1.0),
+                    xlcalc::pivot::default_group_step(min, max + 1.0),
+                ),
+                _ => (None, None, xlcalc::pivot::default_group_step(min, max)),
+            };
+
+            let bound = |k: usize, auto_value: f64, dflt: Option<f64>| match a.get(k) {
+                Some(Variant::Bool(true)) => Ok(None),
+                Some(Variant::Bool(false)) => Ok(Some(auto_value)),
+                Some(Variant::I4(v)) => Ok(Some(f64::from(*v))),
+                Some(Variant::I2(v)) => Ok(Some(f64::from(*v))),
+                Some(Variant::R8(v)) => Ok(Some(*v)),
+                None => Ok(dflt),
+                Some(_) => Err(()),
+            };
+            let (Ok(start), Ok(end)) = (bound(0, min, d_start), bound(1, max, d_end)) else {
                 return Some(Err(OmError::app_defined()));
             };
-            if hi < lo {
+            let by = match a.get(2) {
+                Some(Variant::I4(v)) => f64::from(*v),
+                Some(Variant::I2(v)) => f64::from(*v),
+                Some(Variant::R8(v)) => *v,
+                None => d_by,
+                Some(_) => return Some(Err(OmError::app_defined())),
+            };
+
+            let (lo, hi) = (start.unwrap_or(min), end.unwrap_or(max));
+            if by <= 0.0 || hi < lo {
                 return Some(Err(OmError::app_defined()));
             }
             t.fields[f].group = Some(xlcalc::pivot::Group::Num { start, end, by });
@@ -628,6 +664,10 @@ impl Application<'_> {
             PivotRef::CalcFields(b, n) => self.calc_fields_member(*b, n, m, a),
             PivotRef::CalcItems(b, n, s) => self.calc_items_member(*b, n, *s, m, a),
             PivotRef::Filter(b, n, s) => self.filter_member(*b, n, *s, m, a),
+            PivotRef::Layout(b, n) => match m.name {
+                "PivotTable" => Ok(self.alloc(Object::Pivot(PivotRef::Table(*b, n.clone())))),
+                _ => Err(unsupported("PivotLayout", m)),
+            },
             PivotRef::Style(b, n) => {
                 let t = self.pt(*b, n)?;
                 match m.name {
@@ -1071,7 +1111,8 @@ impl Application<'_> {
                         | PivotRef::CalcFields(ob, nm)
                         | PivotRef::CalcItems(ob, nm, _)
                         | PivotRef::Filter(ob, nm, _)
-                        | PivotRef::Style(ob, nm),
+                        | PivotRef::Style(ob, nm)
+                        | PivotRef::Layout(ob, nm),
                     ) = o
                     {
                         if *ob == b && nm.eq_ignore_ascii_case(&old) {
@@ -1129,7 +1170,10 @@ impl Application<'_> {
                 match a.get(0) {
                     None => Ok(coll),
                     Some(idx) => {
-                        let idx = idx.clone();
+                        let idx = match idx {
+                            Variant::Bool(true) => Variant::I4(1),
+                            v => v.clone(),
+                        };
                         self.fields_item(b, &t, &cache, k, &idx, a.lcid)
                     }
                 }
@@ -1467,9 +1511,66 @@ impl Application<'_> {
                 self.change_cache(b, i, new)?;
                 Ok(Variant::Empty)
             }
+            ("AddFields", _) => {
+                let failed =
+                    || OmError::app_defined_with("AddFields method of PivotTable class failed");
+                let add = match a.get(3) {
+                    None | Some(Variant::Null | Variant::Empty) => false,
+                    Some(Variant::Bool(x)) => *x,
+                    Some(_) => return Err(failed()),
+                };
+                let mut named: Vec<(Orient, usize)> = Vec::new();
+                for (k, o) in [Orient::Row, Orient::Column, Orient::Page]
+                    .into_iter()
+                    .enumerate()
+                {
+                    match a.get(k) {
+                        None | Some(Variant::Null | Variant::Empty) => {}
+                        Some(Variant::Bstr(n)) => {
+                            let f = (0..cache.fields.len())
+                                .find(|&f| t.field_name(&cache, f).eq_ignore_ascii_case(n))
+                                .ok_or_else(failed)?;
+                            if named.iter().any(|(_, g)| *g == f) {
+                                return Err(failed());
+                            }
+                            named.push((o, f));
+                        }
+                        Some(_) => return Err(failed()),
+                    }
+                }
+                if add
+                    && named
+                        .iter()
+                        .any(|(_, f)| t.fields[*f].orient != Orient::Hidden)
+                {
+                    return Err(failed());
+                }
+                if !add {
+                    for f in 0..t.fields.len() {
+                        if matches!(
+                            t.fields[f].orient,
+                            Orient::Row | Orient::Column | Orient::Page
+                        ) {
+                            t.set_orient(f, Orient::Hidden);
+                        }
+                    }
+                }
+                for (o, f) in named {
+                    t.set_orient(f, o);
+                }
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Bool(true))
+            }
             ("GetPivotData", _) => {
                 let Some(dv) = a.get(0) else {
-                    return Err(OmError::app_defined());
+                    if a.get(1).is_some() {
+                        return Err(OmError::app_defined());
+                    }
+
+                    let Some(r) = t.ranges.table1 else {
+                        return Err(OmError::app_defined());
+                    };
+                    return self.new_range(b, t.sheet, Rect::cell(r.r1, r.c1), Mode::Cells);
                 };
                 let data = crate::vba::variant_value(dv)?;
                 let mut pairs = Vec::new();
@@ -1750,6 +1851,11 @@ impl Application<'_> {
                 if new.is_empty() {
                     t.fields[s].caption = None;
                 } else {
+                    if m.name == "Name"
+                        && t.data.iter().any(|d| d.caption.eq_ignore_ascii_case(new))
+                    {
+                        return Err(OmError::app_defined());
+                    }
                     Self::rename_field(&mut t, &c, s, new)?;
                 }
                 self.pt_commit(b, i, t)?;
@@ -1780,6 +1886,12 @@ impl Application<'_> {
                 }
                 t.data[d].caption = new.clone();
                 self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+
+            ("Name" | "Caption", Put, FieldRef::Values)
+                if matches!(a.put, Some(Variant::Bstr(_))) =>
+            {
                 Ok(Variant::Empty)
             }
             ("CalculatedItems", _, FieldRef::Src(s)) => {
@@ -1882,7 +1994,36 @@ impl Application<'_> {
                     return Err(OmError::unable_to_set("Orientation", "PivotField"));
                 }
                 if o == Orient::Data {
-                    return Err(unsupported("PivotField", m));
+                    let func = default_func(&c, s);
+                    let base = func_name_default(&c.fields[s].name, func);
+                    let taken = |n: &str| {
+                        c.fields.iter().any(|f| f.name.eq_ignore_ascii_case(n))
+                            || t.data.iter().any(|d| d.caption.eq_ignore_ascii_case(n))
+                    };
+                    let same = t.data.iter().filter(|d| d.src == s).count();
+                    let mut n = same + 1;
+                    let mut caption = if same == 0 {
+                        base.clone()
+                    } else {
+                        format!("{base}{n}")
+                    };
+                    while taken(&caption) {
+                        n += 1;
+                        caption = format!("{base}{n}");
+                    }
+
+                    if !t.pages.contains(&s) {
+                        t.set_orient(s, Orient::Hidden);
+                    }
+                    t.add_data(DataField {
+                        src: s,
+                        caption,
+                        func,
+                        numfmt: None,
+                        show: Default::default(),
+                    });
+                    self.pt_commit(b, i, t)?;
+                    return Ok(Variant::Empty);
                 }
                 t.set_orient(s, o);
 
@@ -2077,9 +2218,6 @@ impl Application<'_> {
             }
             ("EnableMultiplePageItems", Put, FieldRef::Src(s)) => {
                 t.fields[s].multi_page = self.put_bool(a)?;
-                if t.fields[s].multi_page {
-                    t.fields[s].page_item = None;
-                }
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
             }
@@ -2137,6 +2275,12 @@ impl Application<'_> {
                 Ok(self.alloc(Object::Pivot(PivotRef::Item(b, t.name.clone(), s, it))))
             }
             ("HiddenItemsList", _, _) => Err(OmError::app_defined_with("")),
+            ("ShowAllItems", Get, FieldRef::Src(s)) => Ok(Variant::Bool(t.fields[s].show_all)),
+            ("ShowAllItems", Put, FieldRef::Src(s)) => {
+                t.fields[s].show_all = self.put_bool(a)?;
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
             ("Subtotals", Get | Func, FieldRef::Src(_)) if a.get(0).is_none() => {
                 Err(OmError::app_defined_with(""))
             }
@@ -2240,25 +2384,33 @@ impl Application<'_> {
             ("AutoSort", Func, FieldRef::Src(s)) => {
                 let order = a.i32(0)?.ok_or_else(invalid_arg)?;
                 let key = a.string(1)?.unwrap_or_default();
+                let data_key = if key.is_empty() || key.eq_ignore_ascii_case(&c.fields[s].name) {
+                    None
+                } else {
+                    match t
+                        .data
+                        .iter()
+                        .position(|d| d.caption.eq_ignore_ascii_case(&key))
+                    {
+                        Some(d) => Some(d),
+                        None => return Ok(Variant::Empty),
+                    }
+                };
+                let desc = match order {
+                    -4135 | 1 => false,
+                    2 => true,
+                    _ => return Ok(Variant::Empty),
+                };
+
+                if a.get(2).is_some() && (order == -4135 || data_key.is_none()) {
+                    return Err(invalid_arg());
+                }
                 let frozen = (order == -4135 && t.fields[s].sort != Sort::Manual)
                     .then(|| xlcalc::pivot::shown_order(&t, &c, s));
-                t.fields[s].sort = match order {
-                    -4135 => Sort::Manual,
-                    1 | 2 => {
-                        let desc = order == 2;
-                        if key.eq_ignore_ascii_case(&c.fields[s].name) {
-                            Sort::Name(desc)
-                        } else if let Some(d) = t
-                            .data
-                            .iter()
-                            .position(|d| d.caption.eq_ignore_ascii_case(&key))
-                        {
-                            Sort::Data(desc, d)
-                        } else {
-                            Sort::Name(desc)
-                        }
-                    }
-                    _ => return Err(invalid_arg()),
+                t.fields[s].sort = match (order, data_key) {
+                    (-4135, _) => Sort::Manual,
+                    (_, Some(d)) => Sort::Data(desc, d),
+                    (_, None) => Sort::Name(desc),
                 };
                 if frozen.is_some() {
                     t.fields[s].manual = frozen;
@@ -2278,11 +2430,17 @@ impl Application<'_> {
             ("Calculation", Get, FieldRef::Data(d)) => Ok(Variant::I4(t.data[d].show.kind)),
             ("Calculation", Put, FieldRef::Data(d)) => {
                 let k = self.put_i32(a)?;
+                let old = t.data[d].show.kind;
                 t.data[d].show.kind = if matches!(k, -4143 | 2..=15) {
                     k
                 } else {
                     -4143
                 };
+
+                let pct = |k: i32| matches!(k, 3 | 4 | 6 | 7 | 8 | 10 | 11 | 12 | 13);
+                if pct(t.data[d].show.kind) && !pct(old) {
+                    t.data[d].numfmt = None;
+                }
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
             }
@@ -2331,6 +2489,7 @@ impl Application<'_> {
                 let it = t.data[d]
                     .show
                     .base_item
+                    .filter(|x| *x < u32::MAX - 8)
                     .or_else(|| display_order(&t, &c, f).first().copied())
                     .ok_or_else(|| unable("BaseItem", "PivotField"))?;
                 Ok(self.alloc(Object::Pivot(PivotRef::Item(b, t.name.clone(), f, it))))
@@ -2340,9 +2499,24 @@ impl Application<'_> {
                     return Err(OmError::unable_to_set("BaseItem", "PivotField"));
                 };
                 if let Some(Variant::Bstr(s)) = &a.put {
-                    let it = Self::item_arg(&t, &c, f, &Variant::Bstr(s.clone()));
+                    let it = if s.eq_ignore_ascii_case("(previous)") {
+                        Some(xlcalc::pivot::BASE_PREVIOUS)
+                    } else if s.eq_ignore_ascii_case("(next)") {
+                        Some(xlcalc::pivot::BASE_NEXT)
+                    } else {
+                        Self::item_arg(&t, &c, f, &Variant::Bstr(s.clone()))
+                    };
                     if it.is_some() {
                         t.data[d].show.base_item = it;
+                        self.pt_commit(b, i, t)?;
+                    } else if let Some(cur) = t.data[d]
+                        .show
+                        .base_item
+                        .filter(|x| *x < u32::MAX - 8)
+                        .or_else(|| display_order(&t, &c, f).first().copied())
+                    {
+                        Self::rename_item(&mut t, &c, f, cur, s)?;
+                        t.data[d].show.base_item = Some(cur);
                         self.pt_commit(b, i, t)?;
                     }
                 }
@@ -2356,13 +2530,12 @@ impl Application<'_> {
 
 impl Application<'_> {
     fn base_field(t: &PivotTable, d: usize) -> Option<usize> {
-        t.data[d].show.base_field.or_else(|| {
-            let (rax, cax) = t.axes();
-            rax.iter().chain(cax.iter()).find_map(|x| match x {
-                Ax::Field(f) => Some(*f),
-                Ax::Values => None,
-            })
-        })
+        Some(
+            t.data[d]
+                .show
+                .base_field
+                .unwrap_or(xlcalc::pivot::DEFAULT_BASE),
+        )
     }
 
     fn item_arg(t: &PivotTable, c: &PivotCache, s: usize, v: &Variant) -> Option<u32> {
@@ -2637,9 +2810,11 @@ impl Application<'_> {
     ) -> Result<(), OmError> {
         let n = c.fields[s].items.len();
         let total = n + t.fields[s].calc_items.len();
-        if new.is_empty()
-            || (0..total as u32)
-                .any(|k| k != it && Self::item_label(t, c, s, k).eq_ignore_ascii_case(new))
+        if new.is_empty() {
+            return Err(invalid_arg());
+        }
+        if (0..total as u32)
+            .any(|k| k != it && Self::item_label(t, c, s, k).eq_ignore_ascii_case(new))
         {
             return Err(invalid_arg());
         }
@@ -2745,6 +2920,15 @@ impl Application<'_> {
                 };
                 let total = c.fields[s].items.len() + t.fields[s].calc_items.len();
 
+                if !t.rows.contains(&Ax::Field(s))
+                    && !t.cols.contains(&Ax::Field(s))
+                    && !t.pages.contains(&s)
+                {
+                    return Err(OmError::app_defined_with(
+                        "There's a problem with this formula.",
+                    ));
+                }
+
                 use xlcalc::pivot::Func;
                 if t.data.iter().any(|d| {
                     matches!(
@@ -2759,10 +2943,7 @@ impl Application<'_> {
                 }
                 let body = formula.trim().trim_start_matches('=').to_string();
                 Self::check_item_formula(&t, &c, s, &body, None)?;
-                t.fields[s].calc_items.push(xlcalc::pivot::CalcItem {
-                    name: name.clone(),
-                    formula: body,
-                });
+                t.push_calc_item(s, name.clone(), body);
                 self.pt_commit(b, i, t)?;
                 Ok(self.alloc(Object::Pivot(PivotRef::Item(
                     b,
@@ -2821,6 +3002,15 @@ impl Application<'_> {
                 let Some(Variant::Bstr(new)) = &a.put else {
                     return Err(invalid_arg());
                 };
+
+                let n = c.fields[s].items.len() + t.fields[s].calc_items.len();
+                if m.name == "Caption"
+                    && (0..n as u32).any(|k| {
+                        k != it && Self::item_label(&t, &c, s, k).eq_ignore_ascii_case(new)
+                    })
+                {
+                    return Err(OmError::app_defined());
+                }
                 Self::rename_item(&mut t, &c, s, it, new)?;
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
@@ -2900,6 +3090,21 @@ impl Application<'_> {
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
             }
+            ("ShowDetail", Get) if it < u32::MAX - 1 => {
+                Ok(Variant::Bool(!t.fields[s].collapsed.contains(&it)))
+            }
+            ("ShowDetail", Put) if it < u32::MAX - 1 => {
+                let show = self.put_bool(a)?;
+                let cl = &mut t.fields[s].collapsed;
+                cl.retain(|x| *x != it);
+                if !show {
+                    cl.push(it);
+                }
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+
+            ("Delete", _) if (it as usize) < c.fields[s].items.len() => Err(OmError::app_defined()),
             ("Visible", Get) => Ok(Variant::Bool(!t.fields[s].hidden.contains(&(it as usize)))),
             ("Visible", Put) => {
                 let vis = self.put_bool(a)?;
@@ -2907,6 +3112,12 @@ impl Application<'_> {
                 h.retain(|x| *x != it as usize);
                 if !vis {
                     h.push(it as usize);
+                }
+
+                if !vis && t.fields[s].multi_page && t.fields[s].page_item == Some(it) {
+                    t.fields[s].page_item = display_order(&t, &c, s)
+                        .into_iter()
+                        .find(|&k| !t.fields[s].hidden.contains(&(k as usize)));
                 }
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
@@ -2916,7 +3127,7 @@ impl Application<'_> {
     }
 }
 
-fn default_func(c: &PivotCache, field: usize) -> Func {
+pub(crate) fn default_func(c: &PivotCache, field: usize) -> Func {
     let all_num = c
         .records
         .iter()

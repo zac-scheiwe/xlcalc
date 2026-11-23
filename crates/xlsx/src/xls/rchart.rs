@@ -359,7 +359,7 @@ pub(super) fn to_xml(
         warnings.push(format!("{what}: chart type not converted"));
         return None;
     }
-    let mut x = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<c:chartSpace xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><c:chart>");
+    let mut x = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<c:chartSpace xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><c:style val=\"2\"/><c:chart>");
     if auto_title {
         x.push_str("<c:title><c:overlay val=\"0\"/></c:title><c:autoTitleDeleted val=\"0\"/>");
     } else if let Some(t) = &title {

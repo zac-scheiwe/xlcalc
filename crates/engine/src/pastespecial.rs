@@ -295,6 +295,115 @@ impl Workbook {
         })
     }
 
+    pub fn paste_special_keep_borders(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        spec: &PasteSpecial,
+    ) -> Result<RecalcReport, EditError> {
+        let (lr, lc) = if spec.transpose {
+            (src.cols(), src.rows())
+        } else {
+            (src.rows(), src.cols())
+        };
+        let reach = Rect::new(
+            dst.r0,
+            dst.c0,
+            dst.r1.max(dst.r0 + lr - 1).min(MAX_ROWS - 1),
+            dst.c1.max(dst.c0 + lc - 1).min(MAX_COLS - 1),
+        );
+        let kept: Vec<(u32, u32, crate::style::Borders)> = if reach.cell_count() <= 1 << 20 {
+            (reach.r0..=reach.r1)
+                .flat_map(|r| (reach.c0..=reach.c1).map(move |c| (r, c)))
+                .map(|(r, c)| {
+                    let b = self
+                        .cell_style(CellAddr::new(dst_sheet, r, c))
+                        .borders
+                        .clone();
+                    (r, c, b)
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
+        let report = self.paste_special(src_sheet, src, dst_sheet, dst, spec)?;
+        for (r, c, b) in kept {
+            if self.cell_style(CellAddr::new(dst_sheet, r, c)).borders != b {
+                self.apply_style_with(dst_sheet, Rect::cell(r, c), &|s: &crate::style::Style| {
+                    crate::style::Style {
+                        borders: b.clone(),
+                        ..s.clone()
+                    }
+                });
+            }
+        }
+        Ok(report)
+    }
+
+    pub fn paste_number_formats(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst_sheet: SheetId,
+        dst: Rect,
+        transpose: bool,
+    ) {
+        if self.sheet(src_sheet).is_none() || self.sheet(dst_sheet).is_none() {
+            return;
+        }
+        let (lr, lc) = if transpose {
+            (src.cols(), src.rows())
+        } else {
+            (src.rows(), src.cols())
+        };
+        let ok_r = dst.rows().is_multiple_of(lr) || dst.rows() == 1;
+        let ok_c = dst.cols().is_multiple_of(lc) || dst.cols() == 1;
+        let (reps_r, reps_c) = if ok_r && ok_c {
+            ((dst.rows() / lr).max(1), (dst.cols() / lc).max(1))
+        } else {
+            (1, 1)
+        };
+        let mut jobs: Vec<(CellAddr, Arc<str>, bool, bool)> = Vec::new();
+        for i in 0..src.rows() {
+            for j in 0..src.cols() {
+                let s = self.cell_style(CellAddr::new(src_sheet, src.r0 + i, src.c0 + j));
+                let (fmt, custom, implicit) =
+                    (s.number_format.clone(), s.custom_code, s.implicit_general);
+                let (di, dj) = if transpose { (j, i) } else { (i, j) };
+                for tr in 0..reps_r {
+                    for tc in 0..reps_c {
+                        let (r, c) = (dst.r0 + tr * lr + di, dst.c0 + tc * lc + dj);
+                        if r < MAX_ROWS && c < MAX_COLS {
+                            jobs.push((
+                                CellAddr::new(dst_sheet, r, c),
+                                fmt.clone(),
+                                custom,
+                                implicit,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        self.command(Command::Format, |wb| {
+            for (at, fmt, custom, implicit) in &jobs {
+                wb.apply_style_with(
+                    at.sheet,
+                    Rect::cell(at.row, at.col),
+                    &|s: &crate::style::Style| crate::style::Style {
+                        number_format: fmt.clone(),
+                        custom_code: *custom,
+                        implicit_general: *implicit,
+                        ..s.clone()
+                    },
+                );
+            }
+            RecalcReport::default()
+        });
+    }
+
     fn paste_special_run(
         &mut self,
         src_sheet: SheetId,
@@ -325,7 +434,15 @@ impl Workbook {
             return Ok(RecalcReport::default());
         }
         let pending = self.totals_pending(src_sheet, src) || self.totals_pending(dst_sheet, dst);
-        let r = self.with_paste_block((dst_sheet, dst), |this| {
+
+        let block = if dst.is_cell() {
+            let (h, w) = (src.rows(), src.cols());
+            let (h, w) = if spec.transpose { (w, h) } else { (h, w) };
+            Rect::new(dst.r0, dst.c0, dst.r0 + h - 1, dst.c0 + w - 1)
+        } else {
+            dst
+        };
+        let r = self.with_paste_block((dst_sheet, block), |this| {
             this.paste_special_raw(src_sheet, src, dst_sheet, dst, spec)
         });
         if r.is_ok() && matches!(spec.what, PasteWhat::All | PasteWhat::Formats) && !spec.transpose
@@ -496,22 +613,8 @@ impl Workbook {
             if spec.what == PasteWhat::All && lr == 1 && lc == 1 {
                 keep_merge_one = true;
                 dst = Rect::new(m.r0, m.c0, m.r0, m.c0);
-            } else if spec.what == PasteWhat::Formats {
-                dst = m;
             } else {
-                let dim = |s: u32, l: u32| {
-                    if s < l {
-                        Some(l)
-                    } else if s.is_multiple_of(l) {
-                        Some(s)
-                    } else {
-                        None
-                    }
-                };
-                let (Some(pr), Some(pc)) = (dim(m.rows(), lr), dim(m.cols(), lc)) else {
-                    return Err(crate::merge::merged_cell());
-                };
-                dst = Rect::new(m.r0, m.c0, m.r0 + pr - 1, m.c0 + pc - 1);
+                dst = m;
             }
         }
 
@@ -688,7 +791,12 @@ impl Workbook {
         let mut report = RecalcReport::default();
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
-        for (k, (to, act)) in plan.into_iter().enumerate() {
+
+        let mut order: Vec<(usize, (CellAddr, Act))> = plan.into_iter().enumerate().collect();
+        if live && (dst.r0, dst.c0) > (src.r0, src.c0) {
+            order.reverse();
+        }
+        for (k, (to, act)) in order {
             let act = if live {
                 self.paste_cell(live_from[k], to, spec, src)
             } else {
@@ -737,6 +845,8 @@ impl Workbook {
             for f in over {
                 calc::mark_dirty(self, f);
             }
+
+            self.mark_area_dependents(dst_sheet, (target.r0, target.c0, target.r1, target.c1));
         }
         self.suspend_merges(dst_sheet, &suspend, false);
         self.settings.mode = mode;

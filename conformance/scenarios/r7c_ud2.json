@@ -1,0 +1,203 @@
+{
+ "sheets": [
+  "Sheet1",
+  "S2",
+  "S3"
+ ],
+ "fresh_excel": true,
+ "sheets_in_new_workbook": 1,
+ "steps": [
+  {
+   "op": "vba_module",
+   "file": "evlog.bas"
+  },
+  {
+   "op": "vba_module",
+   "file": "evapp.cls"
+  },
+  {
+   "op": "vba_module",
+   "file": "r7calc.bas"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "Sheet1",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "S2",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "S3",
+   "file": "ev_sheet.txt"
+  },
+  {
+   "op": "vba_doc_module",
+   "module": "ThisWorkbook",
+   "file": "ev_book.txt"
+  },
+  {
+   "op": "run",
+   "name": "InitApp"
+  },
+  {
+   "op": "om_put",
+   "path": "MultiThreadedCalculation",
+   "prop": "Enabled",
+   "value": false
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A1",
+   "value": {
+    "t": "n",
+    "v": 6
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "=A1*2"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A2",
+   "value": {
+    "t": "n",
+    "v": 5
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "=A2*2"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A3",
+   "value": {
+    "t": "n",
+    "v": 4
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "=A3*2"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A4",
+   "value": {
+    "t": "n",
+    "v": 3
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "=A4*2"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A5",
+   "value": {
+    "t": "n",
+    "v": 2
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B5",
+   "input": "=A5*2"
+  },
+  {
+   "op": "setv",
+   "cell": "Sheet1!A6",
+   "value": {
+    "t": "n",
+    "v": 1
+   }
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B6",
+   "input": "=A6*2"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J1",
+   "input": "=UL(\"a\",B1)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J2",
+   "input": "=UL(\"b\",B2)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J3",
+   "input": "=UL(\"c\",B3)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J4",
+   "input": "=UL(\"d\",B4)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J5",
+   "input": "=UL(\"e\",B5)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J6",
+   "input": "=UL(\"f\",B6)"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H5",
+   "input": "=UL(\"h\",B3)"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "mode",
+   "value": "manual"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:B6')",
+   "call": "Sort",
+   "args": [],
+   "named": {
+    "Key1": {
+     "path": "Range('Sheet1!A1')"
+    },
+    "Order1": 1,
+    "Header": 2
+   }
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  },
+  {
+   "op": "mode",
+   "value": "auto"
+  },
+  {
+   "op": "run",
+   "name": "GetLog"
+  }
+ ]
+}

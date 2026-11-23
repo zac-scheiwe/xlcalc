@@ -649,7 +649,7 @@ impl Exec<'_> {
         })
     }
 
-    fn collection_pos(&self, key: u64, index: &Variant, remove: bool) -> Result<usize, VbaError> {
+    fn collection_pos(&self, key: u64, index: &Variant) -> Result<usize, VbaError> {
         let x = &self.st.instances[&key];
         if let Variant::Bstr(s) = index {
             return x
@@ -662,7 +662,7 @@ impl Exec<'_> {
         usize::try_from(n - 1)
             .ok()
             .filter(|&i| i < x.fields.len())
-            .ok_or_else(|| VbaError::new(if remove && x.fields.is_empty() { 5 } else { 9 }))
+            .ok_or_else(|| VbaError::new(if x.fields.is_empty() { 5 } else { 9 }))
     }
 
     fn same_key(&self, a: &str, b: &str) -> bool {
@@ -721,7 +721,7 @@ impl Exec<'_> {
                 let index = args[0]
                     .take()
                     .ok_or_else(|| VbaError::new(if implicit { 450 } else { 449 }))?;
-                let at = self.collection_pos(key, &index, name == "remove")?;
+                let at = self.collection_pos(key, &index)?;
                 if name == "item" {
                     return match &self.st.instances[&key].fields[at] {
                         Cell::Own(s) => Ok(s.val.clone()),
@@ -760,8 +760,8 @@ impl Exec<'_> {
                     {
                         return Err(VbaError::new(5))
                     }
-                    (Some(b), None) => self.collection_pos(key, &b, false)?,
-                    (None, Some(a)) => self.collection_pos(key, &a, false)? + 1,
+                    (Some(b), None) => self.collection_pos(key, &b)?,
+                    (None, Some(a)) => self.collection_pos(key, &a)? + 1,
                     (None, None) => self.st.instances[&key].fields.len(),
                 };
                 let cell = Cell::Own(super::Slot::value(VType::Variant, item));

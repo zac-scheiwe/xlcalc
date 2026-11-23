@@ -1,0 +1,763 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A1')",
+   "prop": "Value",
+   "value": "h"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B1')",
+   "prop": "Value",
+   "value": "k"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A2')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B2')",
+   "prop": "Value",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C2')",
+   "prop": "Value",
+   "value": 20
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A3')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B3')",
+   "prop": "Value",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C3')",
+   "prop": "Value",
+   "value": 30
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A4')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B4')",
+   "prop": "Value",
+   "value": 4
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C4')",
+   "prop": "Value",
+   "value": 40
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A5')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B5')",
+   "prop": "Value",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C5')",
+   "prop": "Value",
+   "value": 50
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!A6')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!B6')",
+   "prop": "Value",
+   "value": 6
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet1!C6')",
+   "prop": "Value",
+   "value": 60
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A1')",
+   "prop": "Value",
+   "value": "h"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B1')",
+   "prop": "Value",
+   "value": "k"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C1')",
+   "prop": "Value",
+   "value": "v"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A2')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B2')",
+   "prop": "Value",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C2')",
+   "prop": "Value",
+   "value": 20
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A3')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B3')",
+   "prop": "Value",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C3')",
+   "prop": "Value",
+   "value": 30
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A4')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B4')",
+   "prop": "Value",
+   "value": 4
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C4')",
+   "prop": "Value",
+   "value": 40
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A5')",
+   "prop": "Value",
+   "value": "x1"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B5')",
+   "prop": "Value",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C5')",
+   "prop": "Value",
+   "value": 50
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!A6')",
+   "prop": "Value",
+   "value": "x0"
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!B6')",
+   "prop": "Value",
+   "value": 6
+  },
+  {
+   "op": "om_put",
+   "path": "Range('Sheet2!C6')",
+   "prop": "Value",
+   "value": 60
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "zz",
+    "=Sheet1!$A$1"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet2!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet2').Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AutoFilter",
+   "named": {
+    "Field": 1,
+    "Criteria1": "x1"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om",
+   "path": "Sheets('Sheet1')",
+   "call": "ShowAllData"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om",
+   "path": "Range('Sheet1!A1:C6')",
+   "call": "AutoFilter"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(1)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(2)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(3)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Name"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Visible"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names.Item(4)",
+   "prop": "Parent.Name"
+  },
+  {
+   "op": "om_get",
+   "path": "Sheets('Sheet1').Names",
+   "prop": "Count"
+  }
+ ]
+}
