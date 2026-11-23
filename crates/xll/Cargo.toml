@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 xlcalc = { workspace = true }
-xlcalc-xlsx = { path = "../xlsx", version = "0.6.0" }
+xlcalc-xlsx = { path = "../xlsx", version = "0.6.1" }
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "=0.62.2", features = [
