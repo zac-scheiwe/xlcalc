@@ -145,10 +145,10 @@ impl Application<'_> {
         let s = c
             .series
             .iter()
-            .find(|s| matches!(s.x, Part::Refs(_)) && !is_xy(s.chart_type))
+            .find(|s| matches!(*wb.resolve_part(&s.x), Part::Refs(_)) && !is_xy(s.chart_type))
             .or_else(|| c.series.iter().find(|s| !is_xy(s.chart_type)))
             .unwrap_or(&c.series[0]);
-        let first = match &s.x {
+        let first = match &*wb.resolve_part(&s.x) {
             Part::Refs(v) => v.first().map(|(sh, rc)| CellAddr::new(*sh, rc.r0, rc.c0)),
             _ => None,
         };

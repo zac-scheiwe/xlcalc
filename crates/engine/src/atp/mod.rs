@@ -1,5 +1,7 @@
 use crate::address::{col_to_letters, CellAddr, Rect, SheetId};
-use crate::drawing::{pt_to_emu, Anchor, Chart, Part, Pos, Series, SeriesFmt, ShapeKind};
+use crate::drawing::{
+    pt_to_emu, Anchor, BagVal, Chart, Part, Pos, Series, SeriesFmt, ShapeKind, TITLE_TYPED,
+};
 use crate::style::{Border, BorderLine, CellColor, Edge, HAlign, Style};
 use crate::value::{Value, XlError};
 use crate::workbook::notice::Command;
@@ -300,6 +302,7 @@ impl Workbook {
         ch.chart_type = c.chart_type;
         ch.has_title = true;
         ch.title = c.title.clone();
+        ch.bag.insert(TITLE_TYPED.into(), BagVal::I(1));
         ch.has_legend = c.legend;
         for (a, t) in ch.axes.iter_mut().zip(&c.axis_titles) {
             a.has_title = true;

@@ -499,7 +499,7 @@ fn compare_scalar(t: &J, v: &Value) -> Outcome {
         }
         ("s", Value::Text(s))
             if t["v"].as_str().map(sheetsteps::norm_book).as_deref()
-                == Some(&sheetsteps::norm_book(s)) =>
+                == Some(&sheetsteps::norm_book(&xlcalc::wide::well_formed(s))) =>
         {
             Outcome::Exact
         }

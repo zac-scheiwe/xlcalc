@@ -145,17 +145,6 @@ fn argb(c: i32) -> String {
     )
 }
 
-fn quote(name: &str) -> String {
-    let plain = !name.is_empty()
-        && name.chars().all(|c| c.is_alphanumeric() || c == '_')
-        && !name.chars().next().is_some_and(|c| c.is_ascii_digit());
-    if plain {
-        name.to_string()
-    } else {
-        format!("'{}'", name.replace('\'', "''"))
-    }
-}
-
 fn a1(r: &Rect, abs: bool) -> String {
     let cell = |row: u32, col: u32| {
         let c = col_to_letters(col);
@@ -248,11 +237,14 @@ pub(crate) fn write(wb: &Workbook, sheet: SheetId) -> Option<String> {
             } else {
                 wb.sheet(l.src_sheet)
             }
-            .map(|s| format!("{}!", quote(&s.name)))
+            .map(|s| format!("{}!", xlcalc::testing::sheet_name_text(&s.name)))
             .unwrap_or_default();
             o.push_str(&format!(
                 "<x14:sparkline><xm:f>{}</xm:f><xm:sqref>{}</xm:sqref></x14:sparkline>",
-                escape_text(&format!("{prefix}{}", a1(&l.src, g.abs))),
+                escape_text(&xlcalc::stored_formula_text(&format!(
+                    "{prefix}{}",
+                    a1(&l.src, g.abs)
+                ))),
                 escape_attr(&a1(&Rect::cell(l.row, l.col), false))
             ));
         }
@@ -276,10 +268,15 @@ pub(crate) fn merge_uris(old: Option<&str>, drop: &[&str], add: Vec<String>) -> 
 
         for uri in drop {
             while let Some(at) = inner.find(&uri.to_lowercase()).or_else(|| inner.find(uri)) {
-                let start = inner[..at].rfind("<ext").unwrap_or(0);
+                let start = inner[..at].rfind('<').unwrap_or(0);
+                let name = inner[start + 1..]
+                    .split(|c: char| c.is_whitespace() || c == '>')
+                    .next()
+                    .unwrap_or("ext");
+                let close = format!("</{name}>");
                 let end = inner[at..]
-                    .find("</ext>")
-                    .map_or(inner.len(), |e| at + e + "</ext>".len());
+                    .find(&close)
+                    .map_or(inner.len(), |e| at + e + close.len());
                 inner.replace_range(start..end, "");
             }
         }

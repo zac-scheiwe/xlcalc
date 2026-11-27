@@ -6,7 +6,7 @@ pub fn cut255(s: &str) -> &str {
     }
     let mut units = 0;
     for (i, ch) in s.char_indices() {
-        units += ch.len_utf16();
+        units += wide::char_units(ch);
         if units > 255 {
             return &s[..i];
         }
@@ -18,7 +18,7 @@ pub fn utf16_len(s: &str) -> usize {
     if s.is_ascii() {
         s.len()
     } else {
-        s.encode_utf16().count()
+        crate::text::wide::units(s).count()
     }
 }
 
@@ -28,13 +28,18 @@ pub fn utf16_slice(s: &str, start: usize, len: usize) -> String {
         let b = start.saturating_add(len).min(s.len());
         return s[a..b].to_string();
     }
-    let units: Vec<u16> = s.encode_utf16().collect();
+    let units: Vec<u16> = crate::text::wide::units(s).collect();
     let a = start.min(units.len());
     let b = start.saturating_add(len).min(units.len());
-    String::from_utf16_lossy(&units[a..b])
+    crate::text::wide::from_units(&units[a..b])
 }
 
 mod collate;
+pub mod wide;
+
+pub(crate) fn equal_ignoring_accents(a: char, b: char) -> bool {
+    collate::equal_ignoring_accents(a, b)
+}
 
 pub fn compare_ci(a: &str, b: &str) -> Ordering {
     if a == b {
@@ -162,8 +167,8 @@ impl Wildcard {
         let mut toks = Vec::new();
         let mut it = pattern.chars().peekable();
         let lit = |toks: &mut Vec<WTok>, c: char| {
-            let mut buf = [0u16; 2];
-            for &u in c.encode_utf16(&mut buf).iter() {
+            let mut buf = [0u8; 4];
+            for u in wide::units(c.encode_utf8(&mut buf)) {
                 toks.push(WTok::Lit(fold_unit(u)));
             }
         };
@@ -230,12 +235,12 @@ impl Wildcard {
     }
 
     pub fn matches(&self, text: &str) -> bool {
-        let units: Vec<u16> = text.encode_utf16().collect();
+        let units: Vec<u16> = crate::text::wide::units(text).collect();
         self.match_at(&units, 0, 0, true)
     }
 
     pub fn find(&self, text: &str, start: usize) -> Option<usize> {
-        let units: Vec<u16> = text.encode_utf16().collect();
+        let units: Vec<u16> = crate::text::wide::units(text).collect();
         (start..=units.len()).find(|&i| self.match_at(&units, i, 0, false))
     }
 }

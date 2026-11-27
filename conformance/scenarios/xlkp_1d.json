@@ -1,0 +1,196 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "10"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "100"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "20"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "200"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "30"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "300"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets(1).ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "Worksheets(1).Range('A1:C4')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(1)",
+   "prop": "Name",
+   "value": "T"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E1",
+   "input": "k"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E2",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E3",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!E4",
+   "input": "9"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets(1).ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "Worksheets(1).Range('E1:E4')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(2)",
+   "prop": "Name",
+   "value": "U"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z5",
+   "input": "=XLOOKUP(2,T[a],T[b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z10",
+   "input": "=XLOOKUP(2,T[a],T[[b]:[c]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z15",
+   "input": "=XLOOKUP(2,T[a],U[k])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z20",
+   "input": "=XLOOKUP(2,T[[#Data],[a]],T[b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z25",
+   "input": "=XLOOKUP(2,T[[a]:[b]],T[b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z30",
+   "input": "=XLOOKUP(2,T[[#All],[a]],T[[#All],[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z35",
+   "input": "=XLOOKUP(2,A2:A4,B2:B4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z40",
+   "input": "=XLOOKUP(2,A2:A4,B2:C4)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z45",
+   "input": "=SUM(XLOOKUP(2,T[a],T[b]))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z50",
+   "input": "=XLOOKUP(TRUE,T[a]>1,T[b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z55",
+   "input": "=XLOOKUP(2,T[a],T[b],T[c])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z60",
+   "input": "=XLOOKUP(2,A2:A4,T[b])"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!Z1:AA64"
+  }
+ ]
+}

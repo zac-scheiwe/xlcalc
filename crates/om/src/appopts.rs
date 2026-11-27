@@ -4,7 +4,7 @@ use crate::app::{Application, BookId, Object};
 use crate::conv::Args;
 use crate::error::OmError;
 use crate::typelib::{InvokeKind, Member};
-use crate::window::palette_bgr;
+use crate::window::bgr_of;
 
 fn international() -> Vec<Variant> {
     use Variant::{Bool, Bstr, R8};
@@ -62,9 +62,7 @@ fn default_of(scope: &str, name: &str) -> Option<Variant> {
         ("wb", "RemovePersonalInformation" | "ShowConflictHistory" | "TemplateRemoveExtData") => {
             Bool(false)
         }
-        ("wb", "VBASigned" | "WriteReserved" | "EnvelopeVisible" | "Excel8CompatibilityMode") => {
-            Bool(false)
-        }
+        ("wb", "VBASigned" | "EnvelopeVisible" | "Excel8CompatibilityMode") => Bool(false),
         ("wb", "HighlightChangesOnScreen" | "AutoSaveOn") => Bool(false),
         ("wb", "DisplayInkComments" | "ShowPivotTableFieldList" | "ChartDataPointTrack") => {
             Bool(true)
@@ -384,8 +382,13 @@ impl Application<'_> {
             (true, "CreateBackup") => Ok(Bool(false)),
             (true, "PivotTables") => Ok(self.alloc(Object::Stub("PivotTables"))),
             (true, "Colors") => {
-                let colors: Vec<Variant> =
-                    (1..=56).map(|i| R8(f64::from(palette_bgr(i)))).collect();
+                let pal = book
+                    .and_then(|b| self.book(b).ok())?
+                    .wb
+                    .style_table()
+                    .theme
+                    .palette;
+                let colors: Vec<Variant> = pal.iter().map(|&c| R8(f64::from(bgr_of(c)))).collect();
                 a.i32(0).and_then(|i| match i {
                     None => Ok(list(colors)),
                     Some(i) => usize::try_from(i - 1)

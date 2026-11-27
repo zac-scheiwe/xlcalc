@@ -108,10 +108,16 @@ pub fn link_part(
     if !names.is_empty() {
         x.push_str("<definedNames>");
         for n in names {
+            let scope = n
+                .scope
+                .as_deref()
+                .and_then(|s| sheets.iter().position(|h| h.name.eq_ignore_ascii_case(s)))
+                .map(|i| format!(" sheetId=\"{i}\""))
+                .unwrap_or_default();
             x.push_str(&format!(
-                "<definedName name=\"{}\" refersTo=\"{}\"/>",
+                "<definedName name=\"{}\"{scope} refersTo=\"{}\"/>",
                 escape_attr(&n.name),
-                escape_attr(&refers_to(n))
+                escape_attr(&xlcalc::stored_formula_text(&refers_to(n)))
             ));
         }
         x.push_str("</definedNames>");

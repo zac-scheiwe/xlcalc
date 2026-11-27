@@ -220,7 +220,7 @@ impl Reader {
                 rd.u32()?;
                 let rgce = rd.take(cce)?;
                 match decode(ctx, rgce, &[], (r0, c0)) {
-                    Ok(Dec::Text(t)) if r0 == r1 && c0 == c1 => {
+                    Ok(Dec::Text(t, _)) if r0 == r1 && c0 == c1 => {
                         let _ = write!(
                             x,
                             "<x14:sparkline><xm:f>{}</xm:f><xm:sqref>{}</xm:sqref></x14:sparkline>",

@@ -105,10 +105,57 @@ pub fn read_link(part: &str, root: &Node, rels: &[(String, String, String)]) -> 
         .child("definedNames")
         .map(|d| {
             d.children("definedName")
-                .filter_map(|n| ExtName::parse(n.attr("name")?, n.attr("refersTo")?))
+                .filter_map(|n| {
+                    let mut name = ExtName::parse(n.attr("name")?, n.attr("refersTo")?)?;
+
+                    name.scope = n
+                        .attr("sheetId")
+                        .and_then(|s| s.parse::<usize>().ok())
+                        .and_then(|i| names.get(i).cloned());
+                    Some(name)
+                })
                 .collect()
         })
         .unwrap_or_default();
     link.sheets = sheets;
     Some(link)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use xlcalc::ExtLink;
+
+    #[test]
+    fn scoped_name_round_trips_through_sheet_id() {
+        let link = ExtLink {
+            path: "src.xlsx".into(),
+            ..Default::default()
+        };
+        let mut local = ExtName::parse("loc", "='A1.x'!$A$1").unwrap();
+        local.scope = Some("A1.x".into());
+        let global = ExtName::parse("gn", "='Data'!$A$2").unwrap();
+        let sheets: Vec<ExtSheetData> = ["Data", "A1.x"]
+            .iter()
+            .map(|n| ExtSheetData {
+                name: n.to_string(),
+                cells: Vec::new(),
+            })
+            .collect();
+        let part = crate::ext_out::link_part(&link, &sheets, &[local.clone(), global.clone()], "");
+        let xml = String::from_utf8(part.xml).unwrap();
+        assert!(
+            xml.contains("<definedName name=\"loc\" sheetId=\"1\""),
+            "{xml}"
+        );
+        assert!(xml.contains("<definedName name=\"gn\" refersTo"), "{xml}");
+        let root = crate::xml::parse(xml.as_bytes()).unwrap();
+        let rels = vec![("rId1".to_string(), String::new(), "src.xlsx".to_string())];
+        let back = read_link("externalLink1.xml", &root, &rels).unwrap();
+        assert_eq!(back.names.len(), 2);
+        assert_eq!(back.names[0].scope.as_deref(), Some("A1.x"));
+        assert_eq!(back.names[0], local);
+        assert_eq!(back.names[1].scope, None);
+        assert_eq!(back.names[1], global);
+    }
 }

@@ -1,6 +1,7 @@
-use xlcalc::{CellAddr, Rect, SheetId, Value, XlError};
+use xlcalc::{CellAddr, ColWidth, Rect, SheetId, Value, Workbook, XlError};
 use xlcalc_variant::Variant;
 
+use crate::addr::{max_cols, max_rows};
 use crate::app::{Application, BookId};
 use crate::conv::Args;
 use crate::error::OmError;
@@ -64,6 +65,36 @@ fn aggregate(f: Agg, xs: &[f64]) -> Value {
     }
 }
 
+fn result_of(f: Agg, counta: bool, values: &[Value]) -> Value {
+    if f == Agg::Count && counta {
+        return Value::Number(values.len() as f64);
+    }
+    if f != Agg::Count {
+        if let Some(e) = values.iter().find(|v| matches!(v, Value::Error(_))) {
+            return e.clone();
+        }
+    }
+    let xs: Vec<f64> = values
+        .iter()
+        .filter_map(|v| match v {
+            Value::Number(x) => Some(*x),
+            _ => None,
+        })
+        .collect();
+    match (f, xs.is_empty()) {
+        (Agg::Count, true) => Value::Number(0.0),
+        _ => aggregate(f, &xs),
+    }
+}
+
+fn takes_part(v: &Value, counta: bool) -> bool {
+    match v {
+        Value::Number(_) | Value::Error(_) => true,
+        Value::Blank => false,
+        _ => counta,
+    }
+}
+
 #[derive(Default)]
 struct Keys {
     labels: Vec<(String, Value)>,
@@ -115,22 +146,104 @@ struct Src {
     row_labels: Vec<(String, Value)>,
 }
 
-type Group = (Option<Value>, Vec<(usize, u32)>);
+struct Item {
+    src: usize,
+    at: CellAddr,
+    value: Value,
+}
 
-struct Merged<'a> {
-    sources: &'a [(SheetId, Rect)],
-    cols: &'a Keys,
-    rows: &'a Keys,
-    srcs: &'a [Src],
+struct Plan {
+    cols: Keys,
+    rows: Keys,
+
+    nr: u32,
+    nc: u32,
+
+    cells: Vec<Vec<Vec<Item>>>,
+    top: bool,
+    left: bool,
+
+    own_label: bool,
+}
+
+impl Plan {
+    fn is_empty(&self) -> bool {
+        self.cells.iter().all(|r| r.iter().all(Vec::is_empty))
+    }
+
+    fn labels(&self, rect: Rect, extra: u32) -> Vec<(u32, u32, Value)> {
+        let (h, w) = (u32::from(self.top), u32::from(self.left));
+        let mut out = Vec::new();
+        if self.own_label {
+            return out;
+        }
+        if self.top {
+            for (j, l) in (0..self.nc).zip(&self.cols.labels) {
+                out.push((rect.r0, rect.c0 + w + extra + j, l.1.clone()));
+            }
+        }
+        if self.left {
+            for (i, l) in (0..self.nr).zip(&self.rows.labels) {
+                out.push((rect.r0 + h + i, rect.c0, l.1.clone()));
+            }
+        }
+        out
+    }
+
+    fn area(&self, rect: Rect, extra: u32) -> Option<Rect> {
+        let (h, w) = (u32::from(self.top), u32::from(self.left));
+        (self.nr > 0 && self.nc > 0).then(|| {
+            Rect::new(
+                rect.r0,
+                rect.c0,
+                rect.r0 + h + self.nr - 1,
+                rect.c0 + w + extra + self.nc - 1,
+            )
+        })
+    }
 }
 
 struct Links {
     func: Agg,
 
     counta: bool,
-    top: bool,
-    left: bool,
 }
+
+struct Group {
+    row: u32,
+    blocks: Vec<(usize, u32)>,
+}
+
+impl Group {
+    fn len(&self) -> u32 {
+        self.blocks.iter().map(|b| b.1).sum()
+    }
+}
+
+fn link_groups(plan: &Plan, sources: usize) -> Vec<Group> {
+    (0u32..)
+        .zip(&plan.cells)
+        .filter_map(|(row, cols)| {
+            let blocks: Vec<(usize, u32)> = (0..sources)
+                .filter_map(|k| {
+                    let n = cols
+                        .iter()
+                        .map(|c| c.iter().filter(|x| x.src == k).count() as u32)
+                        .max()
+                        .unwrap_or(0);
+                    (n > 0).then_some((k, n))
+                })
+                .collect();
+            (!blocks.is_empty()).then_some(Group { row, blocks })
+        })
+        .collect()
+}
+
+const NAME_SPLIT_PX: u32 = 40;
+
+const LABEL_PX: u32 = 20;
+
+const MAX_LEVEL: u8 = 7;
 
 fn fn_name(f: Agg, counta: bool) -> &'static str {
     match f {
@@ -159,6 +272,94 @@ fn quote_sheet(n: &str) -> String {
     }
 }
 
+fn copy_format(wb: &mut Workbook, addr: CellAddr, fmt: &str) {
+    if wb.number_format(addr) != fmt {
+        let cell = Rect::cell(addr.row, addr.col);
+        wb.set_number_format_copy(addr.sheet, cell, fmt);
+    }
+}
+
+fn has_contents(wb: &Workbook, addr: CellAddr) -> bool {
+    wb.formula_text(addr).is_some()
+        || (!matches!(wb.value(addr), Value::Blank) && wb.spill_anchor(addr).is_none())
+}
+
+fn blank_area(
+    wb: &mut Workbook,
+    sheet: SheetId,
+    area: Rect,
+    plan: &Plan,
+    formulas: bool,
+) -> Result<(), OmError> {
+    let keeps_corner = plan.own_label || (plan.top && plan.left);
+    for r in area.r0..=area.r1 {
+        for c in area.c0..=area.c1 {
+            if keeps_corner && (r, c) == (area.r0, area.c0) {
+                continue;
+            }
+            let addr = CellAddr::new(sheet, r, c);
+            if !has_contents(wb, addr) || (!formulas && wb.formula_text(addr).is_some()) {
+                continue;
+            }
+            match wb.array_at(addr) {
+                Some((_, block)) if !block.is_cell() => {
+                    wb.clear_range(sheet, block)
+                        .map_err(crate::objects::edit_error)?;
+                }
+                _ => {
+                    wb.set_value(addr, Value::Blank);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn insertion_refused(
+    wb: &Workbook,
+    sheet: SheetId,
+    area: Rect,
+    plan: &Plan,
+    groups: &[Group],
+) -> bool {
+    let Some(used) = wb.used_range(sheet) else {
+        return false;
+    };
+    let added: u32 = groups.iter().map(Group::len).sum();
+    if used.r1.saturating_add(added) >= max_rows() || (plan.left && used.c1 + 1 >= max_cols()) {
+        return true;
+    }
+    let at_rows: Vec<u32> = groups
+        .iter()
+        .map(|g| area.r0 + u32::from(plan.top) + g.row)
+        .collect();
+    let at_col = plan.left.then(|| area.c0 + 1);
+    let cuts = |b: Rect| {
+        let outside = b.r0 < area.r0 || b.r1 > area.r1 || b.c0 < area.c0 || b.c1 > area.c1;
+        (b.intersects(&area) && outside)
+            || at_rows.iter().any(|&r| b.r0 < r && r <= b.r1)
+            || at_col.is_some_and(|c| b.c0 < c && c <= b.c1)
+    };
+
+    let array_cut = |r: u32, c: u32| {
+        wb.array_at(CellAddr::new(sheet, r, c))
+            .is_some_and(|(_, b)| !b.is_cell() && cuts(b))
+    };
+    let mut edge_rows = at_rows.iter().copied().chain([area.r0, area.r1]);
+    let mut edge_cols = [area.c0, area.c1].into_iter().chain(at_col);
+    edge_rows.any(|r| (used.c0..=used.c1).any(|c| array_cut(r, c)))
+        || edge_cols.any(|c| (used.r0..=used.r1).any(|r| array_cut(r, c)))
+        || wb
+            .pivots()
+            .tables
+            .iter()
+            .any(|t| t.sheet == sheet && t.written.is_some_and(cuts))
+        || wb
+            .tables()
+            .iter()
+            .any(|t| t.sheet == sheet && at_rows.first().is_some_and(|&r| t.rect.r1 >= r))
+}
+
 impl Application<'_> {
     fn consolidate_links(
         &mut self,
@@ -166,156 +367,150 @@ impl Application<'_> {
         sheet: SheetId,
         rect: Rect,
         o: &Links,
-        m: &Merged,
-    ) -> Result<Variant, OmError> {
-        let Merged {
-            sources,
-            cols,
-            rows,
-            srcs,
-        } = m;
-        let (top, left) = (o.top, o.left);
-        let (h, w) = (u32::from(top), u32::from(left));
-        let off = if left { 2 } else { 0 };
-        let wb = &self.book(book)?.wb;
-        let ncols = if top {
-            cols.labels.len()
-        } else {
-            srcs.iter()
-                .map(|s| s.rect.cols().saturating_sub(w) as usize)
-                .max()
-                .unwrap_or(0)
-        };
+        plan: &Plan,
+        sources: usize,
+    ) -> Result<(), OmError> {
+        let (h, w) = (u32::from(plan.top), u32::from(plan.left));
+        let groups = link_groups(plan, sources);
+        let name = self.book(book)?.name.clone();
+        let wb = &mut self.book_mut(book)?.wb;
+        if let Some(area) = plan.area(rect, 0) {
+            if insertion_refused(wb, sheet, area, plan, &groups) {
+                return Ok(());
+            }
+        }
 
-        let mut groups: Vec<Group> = Vec::new();
-        if left {
-            for l in &rows.labels {
-                let key = l.0.to_lowercase();
-                let at: Vec<(usize, u32)> = srcs
-                    .iter()
-                    .enumerate()
-                    .flat_map(|(k, s)| {
-                        let key = &key;
-                        s.row_labels
-                            .iter()
-                            .enumerate()
-                            .filter(move |(_, x)| x.0.to_lowercase() == *key)
-                            .map(move |(i, _)| (k, i as u32))
-                    })
-                    .collect();
-                groups.push((Some(l.1.clone()), at));
-            }
-        } else {
-            let n = srcs
-                .iter()
-                .map(|s| s.rect.rows().saturating_sub(h))
-                .max()
-                .unwrap_or(0);
-            for i in 0..n {
-                let at = srcs
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, s)| i < s.rect.rows().saturating_sub(h))
-                    .map(|(k, _)| (k, i))
-                    .collect();
-                groups.push((None, at));
-            }
-        }
-        let mut cells: Vec<(u32, u32, Result<String, Value>)> = Vec::new();
-        let mut detail: Vec<u32> = Vec::new();
-        let mut row = h;
-        if top {
-            for (j, l) in cols.labels.iter().enumerate() {
-                cells.push((0, off + j as u32, Err(l.1.clone())));
-            }
-        }
-        for (label, at) in &groups {
-            let first = row;
-            let mut linked = vec![false; ncols];
-            for &(k, i) in at {
-                let s = &srcs[k];
-                let name = wb
-                    .sheet(s.sheet)
-                    .map_or(String::new(), |x| x.name.to_string());
-                let mut line = Vec::new();
-                for j in w..s.rect.cols() {
-                    let (sr, sc) = (s.rect.r0 + h + i, s.rect.c0 + j);
-                    if !matches!(wb.value(CellAddr::new(s.sheet, sr, sc)), Value::Number(_)) {
-                        continue;
-                    }
-                    let cj = if top {
-                        match cols.find(&s.col_labels[(j - w) as usize].0) {
-                            Some(c) => c,
-                            None => continue,
-                        }
-                    } else {
-                        (j - w) as usize
-                    };
-                    linked[cj] = true;
-                    line.push((
-                        off + cj as u32,
-                        format!(
-                            "={}!${}${}",
-                            quote_sheet(&name),
-                            xlcalc::col_to_letters(sc),
-                            sr + 1
-                        ),
-                    ));
-                }
-                if !line.is_empty() {
-                    for (c, t) in line {
-                        cells.push((row, c, Ok(t)));
-                    }
-                    detail.push(row);
-                    row += 1;
-                }
-            }
-            let f = fn_name(o.func, o.counta);
-            for (cj, _) in linked.iter().enumerate().filter(|(_, on)| **on) {
-                let c = off + cj as u32;
-                let col = xlcalc::col_to_letters(rect.c0 + c);
-                let range = if row - first <= 1 {
-                    format!("{col}{}", rect.r0 + first + 1)
-                } else {
-                    format!("{col}{}:{col}{}", rect.r0 + first + 1, rect.r0 + row)
-                };
-                cells.push((row, c, Ok(format!("={f}({range})"))));
-            }
-            if let Some(l) = label {
-                cells.push((row, 0, Err(l.clone())));
-            }
-            row += 1;
-        }
-        let bk = self.book_mut(book)?;
-        for (i, j, v) in cells {
-            let addr = CellAddr::new(sheet, rect.r0 + i, rect.c0 + j);
-            match v {
-                Ok(t) => {
-                    bk.wb
-                        .set_formula(addr, &t)
-                        .map_err(crate::objects::edit_error)?;
-                }
-                Err(v) => {
-                    bk.wb.set_value(addr, v);
-                }
-            }
-        }
-        for r in detail {
-            bk.wb
-                .set_subtotal_levels(sheet, rect.r0 + r, rect.r0 + r, Some(1));
-            bk.wb
-                .set_rows_hidden(sheet, rect.r0 + r, 1, true)
+        wb.note_number_format(None);
+
+        let extra = w;
+        if plan.left {
+            wb.insert_cols(sheet, rect.c0 + 1, 1)
                 .map_err(crate::objects::edit_error)?;
         }
-        bk.consolidate.insert(
-            sheet,
-            ConsolidateState {
-                sources: sources.to_vec(),
-                top,
-                left,
-            },
-        );
-        Ok(Variant::Bool(true))
+        if let Some(area) = plan.area(rect, extra) {
+            blank_area(wb, sheet, area, plan, true)?;
+        }
+        for (r, c, v) in plan.labels(rect, extra) {
+            wb.set_value(CellAddr::new(sheet, r, c), v);
+        }
+
+        let level = groups
+            .iter()
+            .map(|g| wb.row_outline_level(sheet, rect.r0 + h + g.row))
+            .max()
+            .map_or(1, |l| u8::try_from(l).unwrap_or(MAX_LEVEL))
+            .clamp(1, MAX_LEVEL);
+        let above = wb.outline_settings(sheet).0;
+
+        let mut placed: Vec<(u32, u32)> = Vec::new();
+        let mut added = 0;
+        for g in &groups {
+            let row = rect.r0 + h + g.row + added;
+            let n = g.len();
+            let first = row + u32::from(above);
+            wb.insert_rows(sheet, first, n)
+                .map_err(crate::objects::edit_error)?;
+            placed.push((first, if above { row } else { row + n }));
+            added += n;
+        }
+        let data_col = rect.c0 + w + extra;
+        let f = fn_name(o.func, o.counta);
+        for (g, &(first, total)) in groups.iter().zip(&placed) {
+            let cols = &plan.cells[g.row as usize];
+            let formats: Vec<Option<String>> = cols
+                .iter()
+                .map(|c| c.first().map(|x| wb.number_format(x.at).to_string()))
+                .collect();
+            let mut row = first;
+            for &(k, n) in &g.blocks {
+                for ((col, items), fmt) in (data_col..).zip(cols).zip(&formats) {
+                    let Some(fmt) = fmt else { continue };
+                    for (i, x) in (0..).zip(items.iter().filter(|x| x.src == k)) {
+                        let source = wb
+                            .sheet(x.at.sheet)
+                            .map_or(String::new(), |s| s.name.to_string());
+                        let text = format!(
+                            "={}!${}${}",
+                            quote_sheet(&source),
+                            xlcalc::col_to_letters(x.at.col),
+                            x.at.row + 1
+                        );
+                        let addr = CellAddr::new(sheet, row + i, col);
+                        wb.set_formula(addr, &text)
+                            .map_err(crate::objects::edit_error)?;
+                        copy_format(wb, addr, fmt);
+                    }
+                }
+                if plan.left {
+                    let addr = CellAddr::new(sheet, row, rect.c0 + 1);
+                    wb.set_value(addr, Value::Text(name.as_str().into()));
+                }
+                row += n;
+            }
+            let end = first + g.len() - 1;
+            wb.set_subtotal_levels(sheet, first, end, Some(level));
+            wb.set_rows_hidden(sheet, first, g.len(), true)
+                .map_err(crate::objects::edit_error)?;
+            for (col, fmt) in (data_col..).zip(&formats) {
+                let Some(fmt) = fmt else { continue };
+                let letters = xlcalc::col_to_letters(col);
+                let range = if first == end {
+                    format!("{letters}{}", first + 1)
+                } else {
+                    format!("{letters}{}:{letters}{}", first + 1, end + 1)
+                };
+                let addr = CellAddr::new(sheet, total, col);
+                wb.set_formula(addr, &format!("={f}({range})"))
+                    .map_err(crate::objects::edit_error)?;
+                copy_format(wb, addr, fmt);
+            }
+        }
+        if plan.left && !wb.col_hidden(sheet, rect.c0) {
+            let px = wb.col_px(sheet, rect.c0);
+            if px > NAME_SPLIT_PX {
+                let set = |px| ColWidth {
+                    px,
+                    user: true,
+                    best: false,
+                };
+                wb.set_column_record(sheet, rect.c0, rect.c0, set(LABEL_PX), false);
+                wb.set_column_record(sheet, rect.c0 + 1, rect.c0 + 1, set(px - LABEL_PX), false);
+            }
+        }
+        Ok(())
+    }
+
+    fn consolidate_values(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        rect: Rect,
+        func: Agg,
+        counta: bool,
+        plan: &Plan,
+    ) -> Result<(), OmError> {
+        let (h, w) = (u32::from(plan.top), u32::from(plan.left));
+        let wb = &mut self.book_mut(book)?.wb;
+        if let Some(area) = plan.area(rect, 0) {
+            blank_area(wb, sheet, area, plan, false)?;
+        }
+        for (r, c, v) in plan.labels(rect, 0) {
+            wb.set_value(CellAddr::new(sheet, r, c), v);
+        }
+        for (i, row) in (0..).zip(&plan.cells) {
+            for (j, items) in (0..).zip(row) {
+                let Some(first) = items.first() else { continue };
+                let addr = CellAddr::new(sheet, rect.r0 + h + i, rect.c0 + w + j);
+                if has_contents(wb, addr) {
+                    continue;
+                }
+                let fmt = wb.number_format(first.at).to_string();
+                let values: Vec<Value> = items.iter().map(|x| x.value.clone()).collect();
+                wb.set_value(addr, result_of(func, counta, &values));
+                copy_format(wb, addr, &fmt);
+            }
+        }
+        Ok(())
     }
 }
 
@@ -400,11 +595,19 @@ impl Application<'_> {
             }
             create_links = true;
         }
+        let counta = a.i32(1)? == Some(-4112);
         let (h, w) = (u32::from(top), u32::from(left));
         let wb = &self.book(book)?.wb;
         let mut cols = Keys::default();
         let mut rows = Keys::default();
         let mut srcs = Vec::new();
+
+        let here = wb.value(CellAddr::new(sheet, rect.r0, rect.c0));
+        let own_label = rect.is_cell() && top != left && !matches!(here, Value::Blank);
+        if own_label {
+            let keys = if top { &mut cols } else { &mut rows };
+            keys.labels.push(label_of(&here));
+        }
         for &(s, r) in &sources {
             let val = |i: u32, j: u32| wb.value(CellAddr::new(s, r.r0 + i, r.c0 + j));
             let col_labels: Vec<(String, Value)> = if top {
@@ -417,8 +620,12 @@ impl Application<'_> {
             } else {
                 Vec::new()
             };
-            cols.merge(&col_labels, !rect.is_cell());
-            rows.merge(&row_labels, !rect.is_cell());
+            if !(own_label && top) {
+                cols.merge(&col_labels, !rect.is_cell());
+            }
+            if !(own_label && left) {
+                rows.merge(&row_labels, !rect.is_cell());
+            }
             srcs.push(Src {
                 sheet: s,
                 rect: r,
@@ -426,32 +633,25 @@ impl Application<'_> {
                 row_labels,
             });
         }
-        if create_links {
-            let counta = a.i32(1)? != Some(-4113);
-            let l = Links {
-                func,
-                counta,
-                top,
-                left,
-            };
-            let m = Merged {
-                sources: &sources,
-                cols: &cols,
-                rows: &rows,
-                srcs: &srcs,
-            };
-            return self.consolidate_links(book, sheet, rect, &l, &m);
-        }
-        let mut groups: Vec<Vec<Vec<f64>>> = Vec::new();
-        let (mut nr, mut nc) = (rows.labels.len(), cols.labels.len());
+        let (mut nr, mut nc) = (rows.labels.len() as u32, cols.labels.len() as u32);
         for src in &srcs {
-            let r = src.rect;
             if !top {
-                nc = nc.max(r.cols().saturating_sub(w) as usize);
+                nc = nc.max(src.rect.cols().saturating_sub(w));
             }
             if !left {
-                nr = nr.max(r.rows().saturating_sub(h) as usize);
+                nr = nr.max(src.rect.rows().saturating_sub(h));
             }
+        }
+
+        if !rect.is_cell() {
+            nr = nr.min(rect.rows().saturating_sub(h));
+            nc = nc.min(rect.cols().saturating_sub(w));
+        }
+        let mut cells: Vec<Vec<Vec<Item>>> = (0..nr)
+            .map(|_| (0..nc).map(|_| Vec::new()).collect())
+            .collect();
+        for (k, src) in srcs.iter().enumerate() {
+            let r = src.rect;
             for i in h..r.rows() {
                 for j in w..r.cols() {
                     let ri = if left {
@@ -467,54 +667,92 @@ impl Application<'_> {
                     let (Some(ri), Some(ci)) = (ri, ci) else {
                         continue;
                     };
-                    if let Value::Number(x) = wb.value(CellAddr::new(src.sheet, r.r0 + i, r.c0 + j))
-                    {
-                        if groups.len() <= ri {
-                            groups.resize(ri + 1, Vec::new());
-                        }
-                        if groups[ri].len() <= ci {
-                            groups[ri].resize(ci + 1, Vec::new());
-                        }
-                        groups[ri][ci].push(x);
+                    let at = CellAddr::new(src.sheet, r.r0 + i, r.c0 + j);
+                    let value = wb.value(at);
+                    if !takes_part(&value, counta) {
+                        continue;
+                    }
+                    if let Some(cell) = cells.get_mut(ri).and_then(|x| x.get_mut(ci)) {
+                        cell.push(Item { src: k, at, value });
                     }
                 }
             }
         }
-        let mut out: Vec<(u32, u32, Value)> = Vec::new();
-        if top {
-            for (j, l) in cols.labels.iter().enumerate() {
-                out.push((0, w + j as u32, l.1.clone()));
-            }
-        }
-        if left {
-            for (i, l) in rows.labels.iter().enumerate() {
-                out.push((h + i as u32, 0, l.1.clone()));
-            }
-        }
-        for i in 0..nr {
-            for j in 0..nc {
-                let xs = groups
-                    .get(i)
-                    .and_then(|g| g.get(j))
-                    .map_or(&[][..], Vec::as_slice);
-                out.push((h + i as u32, w + j as u32, aggregate(func, xs)));
-            }
-        }
-
-        let (lim_r, lim_c) = if rect.is_cell() {
-            (u32::MAX, u32::MAX)
-        } else {
-            (rect.rows(), rect.cols())
+        let plan = Plan {
+            cols,
+            rows,
+            nr,
+            nc,
+            cells,
+            top,
+            left,
+            own_label,
         };
-        let bk = self.book_mut(book)?;
-        for (i, j, v) in out {
-            if i < lim_r && j < lim_c {
-                bk.wb
-                    .set_value(CellAddr::new(sheet, rect.r0 + i, rect.c0 + j), v);
+        if plan.is_empty() {
+            if let Some(area) = plan.area(rect, 0) {
+                blank_area(&mut self.book_mut(book)?.wb, sheet, area, &plan, false)?;
             }
+        } else if create_links {
+            let links = Links { func, counta };
+            self.consolidate_links(book, sheet, rect, &links, &plan, sources.len())?;
+        } else {
+            self.consolidate_values(book, sheet, rect, func, counta, &plan)?;
         }
-        bk.consolidate
+        self.book_mut(book)?
+            .consolidate
             .insert(sheet, ConsolidateState { sources, top, left });
         Ok(Variant::Bool(true))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn errors_and_text_take_part_by_function() {
+        let err = Value::Error(XlError::DIV0);
+        let text = Value::Text("x".into());
+        assert!(takes_part(&err, false));
+        assert!(!takes_part(&text, false));
+        assert!(takes_part(&text, true));
+        assert!(!takes_part(&Value::Blank, true));
+        let with_error = [Value::Number(2.0), err.clone()];
+        let sum = result_of(Agg::Sum, false, &with_error);
+        assert!(matches!(sum, Value::Error(XlError::DIV0)));
+
+        let nums = result_of(Agg::Count, false, &with_error);
+        assert!(matches!(nums, Value::Number(n) if n == 1.0));
+        let all = result_of(Agg::Count, true, &with_error);
+        assert!(matches!(all, Value::Number(n) if n == 2.0));
+        let none = result_of(Agg::Count, false, std::slice::from_ref(&err));
+        assert!(matches!(none, Value::Number(n) if n == 0.0));
+    }
+
+    #[test]
+    fn a_source_gets_as_many_link_rows_as_its_fullest_column() {
+        let item = |src| Item {
+            src,
+            at: CellAddr::new(SheetId(0), 0, 0),
+            value: Value::Number(1.0),
+        };
+        let plan = Plan {
+            cols: Keys::default(),
+            rows: Keys::default(),
+            nr: 2,
+            nc: 2,
+            cells: vec![
+                vec![vec![item(0), item(1), item(1)], vec![item(1)]],
+                vec![Vec::new(), Vec::new()],
+            ],
+            top: true,
+            left: true,
+            own_label: false,
+        };
+        let groups = link_groups(&plan, 2);
+
+        assert_eq!(groups.len(), 1);
+        assert_eq!(groups[0].blocks, [(0, 1), (1, 2)]);
+        assert_eq!(groups[0].len(), 3);
     }
 }

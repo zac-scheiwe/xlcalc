@@ -47,7 +47,17 @@ pub(crate) fn to_biff12(
     let mut ex = Cur::new(extra);
     let mut out: Vec<u8> = Vec::new();
     let mut cb: Vec<u8> = Vec::new();
-    while !c.done() {
+
+    let mut spans: Vec<(usize, usize)> = Vec::new();
+    loop {
+        while let Some(&(_, at)) = spans.last().filter(|s| s.0 <= rgce.len() - c.rest().len()) {
+            let cce = (out.len() - at - 2) as u16;
+            out[at..at + 2].copy_from_slice(&cce.to_le_bytes());
+            spans.pop();
+        }
+        if c.done() {
+            break;
+        }
         let ptg = c.u8()?;
         let b = base_ptg(ptg);
         out.push(ptg);
@@ -85,10 +95,7 @@ pub(crate) fn to_biff12(
             0x20 => {
                 c.take(7)?;
                 out.extend([0u8; 14]);
-                let cols = match ex.u8()? {
-                    0 => 256u32,
-                    n => u32::from(n),
-                };
+                let cols = u32::from(ex.u8()?) + 1;
                 let rows = u32::from(ex.u16()?) + 1;
                 cb.extend(rows.to_le_bytes());
                 cb.extend(cols.to_le_bytes());
@@ -150,7 +157,13 @@ pub(crate) fn to_biff12(
                     cb.extend(u32::from(c1).to_le_bytes());
                 }
             }
-            0x27 | 0x28 => out.extend(c.take(6)?),
+            0x27 => {
+                out.extend(c.take(4)?);
+                let cce = usize::from(c.u16()?);
+                spans.push((rgce.len() - c.rest().len() + cce, out.len()));
+                out.extend((cce as u16).to_le_bytes());
+            }
+            0x28 => out.extend(c.take(6)?),
             0x29 => out.extend(c.take(2)?),
             0x2A => {
                 c.take(4)?;

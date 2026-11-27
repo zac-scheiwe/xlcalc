@@ -23,6 +23,8 @@ pub(crate) enum Op {
     PivotWrite,
 
     SubtotalDelete,
+
+    RangeEntry,
 }
 
 impl Op {
@@ -81,6 +83,10 @@ impl Workbook {
 
     pub(crate) fn ops_idle(&self) -> bool {
         self.op.on == 0 && self.op.paste_block.is_none()
+    }
+
+    pub fn with_range_entry<R>(&mut self, f: impl FnOnce(&mut Workbook) -> R) -> R {
+        self.with_op(Op::RangeEntry, true, f)
     }
 
     pub(crate) fn with_op<R>(&mut self, op: Op, on: bool, f: impl FnOnce(&mut Workbook) -> R) -> R {

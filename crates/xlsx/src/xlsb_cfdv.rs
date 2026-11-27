@@ -1,9 +1,10 @@
 use crate::xlsb::{decode, esc, Ctx, Dec, Rd};
-use crate::xlsb_enc::{Cls, Rgce};
+use crate::xlsb_enc::Rgce;
 use crate::xlsb_rec::{Recs, P};
 use crate::xlsb_styles::{color_bytes, color_xml, AUTO};
 use crate::xml::Node;
 use std::fmt::Write as _;
+use xlcalc::FormulaContext;
 
 const NO_DXF: u32 = 0xFFFF_FFFF;
 
@@ -129,7 +130,7 @@ fn parsed(rd: &mut Rd<'_>, ctx: &Ctx<'_>, base: (u32, u32)) -> Result<Option<Str
         return Ok(None);
     }
     match decode(ctx, rgce, rgcb, base)? {
-        Dec::Text(t) => Ok(Some(t)),
+        Dec::Text(t, _) => Ok(Some(t)),
         Dec::Exp { .. } => Err("shared formula in a rule".into()),
     }
 }
@@ -458,7 +459,7 @@ impl Reader {
     }
 }
 
-pub(crate) type Enc<'a> = dyn FnMut(&str, Cls) -> Result<Rgce, String> + 'a;
+pub(crate) type Enc<'a> = dyn FnMut(&str, FormulaContext) -> Result<Rgce, String> + 'a;
 
 fn parse_sqref(s: &str) -> Vec<xlcalc::Rect> {
     s.split_whitespace().filter_map(crate::parse_rect).collect()
@@ -646,8 +647,13 @@ struct Formula {
     rgcb: Vec<u8>,
 }
 
-fn formula(enc: &mut Enc<'_>, text: &str, cls: Cls, base: (u32, u32)) -> Result<Formula, String> {
-    let mut f = enc(text.trim().trim_start_matches('='), cls)?;
+fn formula(
+    enc: &mut Enc<'_>,
+    text: &str,
+    context: FormulaContext,
+    base: (u32, u32),
+) -> Result<Formula, String> {
+    let mut f = enc(text.trim().trim_start_matches('='), context)?;
     relativize(&mut f.rgce, base);
     Ok(Formula {
         size: (f.rgce.len() + size_extra(&f.rgce)) as u32,
@@ -680,7 +686,7 @@ fn cfvo(
     let mut fml = None;
     let mut num = 0.0;
     if code == 7 {
-        fml = Some(formula(enc, val, Cls::Value, base)?);
+        fml = Some(formula(enc, val, FormulaContext::ConditionalFormat, base)?);
     } else if matches!(code, 1 | 4 | 5) {
         num = val
             .trim()
@@ -788,7 +794,12 @@ fn rule(n: &Node, base: (u32, u32), enc: &mut Enc<'_>) -> Result<Vec<u8>, String
     let mut fs: Vec<Formula> = Vec::new();
     if want_formulas {
         for f in n.children("formula").take(2) {
-            fs.push(formula(enc, &f.text, Cls::Value, base)?);
+            fs.push(formula(
+                enc,
+                &f.text,
+                FormulaContext::ConditionalFormat,
+                base,
+            )?);
         }
     }
     let mut r = Recs::default();
@@ -984,12 +995,12 @@ pub(crate) fn write_dv(
             if lit.is_some() {
                 flags |= 0x80;
             }
-            let cls = if ty == 3 && i == 0 {
-                Cls::Ref
+            let context = if ty == 3 && i == 0 {
+                FormulaContext::Reference
             } else {
-                Cls::Value
+                FormulaContext::Validation
             };
-            match formula(enc, &f, cls, base) {
+            match formula(enc, &f, context, base) {
                 Ok(x) => fs[i] = Some(x),
                 Err(e) => {
                     warnings.push(format!(

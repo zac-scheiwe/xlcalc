@@ -157,6 +157,23 @@ pub fn split_fragment(address: &str) -> (String, Option<String>) {
     }
 }
 
+pub fn add_refused(address: &str, sub: &str, tip: &str, display: &str) -> bool {
+    let units = |s: &str| s.encode_utf16().count();
+    if units(sub) > 0x824 || units(display) > 0x824 || units(tip) > 0xff {
+        return true;
+    }
+    let t = address.trim();
+    let lower = t.to_ascii_lowercase();
+    ["http://", "https://", "ftp://"]
+        .iter()
+        .find(|s| lower.starts_with(**s))
+        .is_some_and(|s| {
+            let rest = &t[s.len()..];
+            let host = &rest[..rest.find(['/', '?', '#']).unwrap_or(rest.len())];
+            host.contains([' ', '<', '>'])
+        })
+}
+
 fn percent_decode(s: &str) -> String {
     let b = s.as_bytes();
     let mut out: Vec<u8> = Vec::with_capacity(b.len());

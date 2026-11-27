@@ -4,6 +4,7 @@ use super::{CellStore, DirtyIndex, Entry, Sheet, SheetKind, SheetState, SpillInd
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
 use crate::calc::{self, RecalcReport};
 use crate::formula::{self, Node, SheetRef};
+use crate::parser::print::{index_prefix_text, sheet_name_text};
 use crate::value::Value;
 use crate::workbook::notice::Command;
 
@@ -157,9 +158,14 @@ pub(crate) fn new_ghost(id: SheetId, name: &str) -> Sheet {
     }
 }
 
-pub(crate) fn plain_part(s: &str) -> bool {
-    s.chars()
-        .all(|c| c.is_alphanumeric() || matches!(c, '_' | '.' | '[' | ']'))
+fn link_prefix(l: &ExtLink, sheets: &str) -> String {
+    let book = l.name();
+    if l.open || l.dir().is_empty() {
+        format!("{}!", sheet_name_text(&format!("[{book}]{sheets}")))
+    } else {
+        let body = format!("{}[{book}]{sheets}", l.dir());
+        format!("'{}'!", body.replace('\'', "''"))
+    }
 }
 
 impl Workbook {
@@ -286,7 +292,7 @@ impl Workbook {
         {
             let mut st = self.ext_lock();
             for (l, n) in st.names.iter_mut() {
-                if *l == link && n.name.eq_ignore_ascii_case(old) {
+                if *l == link && n.scope.is_none() && n.name.eq_ignore_ascii_case(old) {
                     n.name = new.to_string();
                 }
             }
@@ -330,18 +336,7 @@ impl Workbook {
 
     pub(crate) fn ext_prefix(&self, id: SheetId) -> Option<String> {
         let (l, sheet) = self.ext_sheet_info(id)?;
-        let book = l.name();
-        if l.open || l.dir().is_empty() {
-            let body = format!("[{book}]{sheet}");
-            Some(if plain_part(&body) {
-                format!("{body}!")
-            } else {
-                format!("'{}'!", body.replace('\'', "''"))
-            })
-        } else {
-            let body = format!("{}[{book}]{sheet}", l.dir());
-            Some(format!("'{}'!", body.replace('\'', "''")))
-        }
+        Some(link_prefix(&l, &sheet))
     }
 
     pub fn ext_links(&self) -> Vec<ExtLink> {
@@ -817,19 +812,9 @@ impl Workbook {
     pub(crate) fn ext_span_prefix(&self, a: SheetId, b: SheetId) -> Option<String> {
         let ids = self.ext_span(a, b);
         let (first, last) = (*ids.first()?, *ids.last()?);
-        let p = self.ext_prefix(first)?;
+        let (l, first_name) = self.ext_sheet_info(first)?;
         let (_, last_name) = self.ext_sheet_info(last)?;
-        let (head, quoted) = match p.strip_suffix("'!") {
-            Some(h) => (h.to_string(), true),
-            None => (p.strip_suffix('!')?.to_string(), false),
-        };
-        Some(if quoted {
-            format!("{head}:{}'!", last_name.replace('\x27', "''"))
-        } else if !plain_part(&last_name) {
-            format!("'{head}:{}'!", last_name.replace('\x27', "''"))
-        } else {
-            format!("{head}:{last_name}!")
-        })
+        Some(link_prefix(&l, &format!("{first_name}:{last_name}")))
     }
 
     pub(crate) fn ext_link_of(&self, id: SheetId) -> Option<usize> {
@@ -954,8 +939,9 @@ impl Workbook {
 
         for (n, (_, l)) in self.ext_file_links().iter().enumerate() {
             let idx = format!("[{}]!", n + 1);
-            let quoted = format!("'{}'!", l.path.replace('\x27', "''"));
-            out = out.replace(&quoted, &idx);
+            for book in [l.path.as_str(), l.name()] {
+                out = out.replace(&format!("'{}'!", book.replace('\x27', "''")), &idx);
+            }
             let plain = format!("{}!", l.name());
             let mut res = String::with_capacity(out.len());
             let mut rest = out.as_str();
@@ -977,7 +963,10 @@ impl Workbook {
             res.push_str(&rest[..i]);
             let tail = &rest[i + 1..];
             match tail.find("'!") {
-                Some(j) if plain_part(&tail[..j]) && tail[..j].matches('[').count() == 1 => {
+                Some(j)
+                    if tail[..j].matches('[').count() == 1
+                        && index_prefix_text(&tail[..j]) == tail[..j] =>
+                {
                     res.push_str(&tail[..j]);
                     res.push('!');
                     rest = &tail[j + 2..];
@@ -1063,12 +1052,15 @@ pub struct ExtName {
     pub rect: Rect,
 
     pub value: Option<Value>,
+
+    pub scope: Option<String>,
 }
 
 impl PartialEq for ExtName {
     fn eq(&self, o: &ExtName) -> bool {
         self.name == o.name
             && self.sheet == o.sheet
+            && self.scope == o.scope
             && self.rect == o.rect
             && format!("{:?}", self.value) == format!("{:?}", o.value)
     }
@@ -1084,6 +1076,7 @@ impl ExtName {
             sheet: String::new(),
             rect: Rect::new(0, 0, 0, 0),
             value: None,
+            scope: None,
         };
         let constant = if let Some(t) = body.strip_prefix('"').and_then(|t| t.strip_suffix('"')) {
             Some(Value::from(t.replace("\"\"", "\"").as_str()))
@@ -1115,6 +1108,7 @@ impl ExtName {
             sheet,
             rect,
             value: None,
+            scope: None,
         })
     }
 
@@ -1129,12 +1123,7 @@ impl ExtName {
         } else {
             format!("${}${}:${}${}", col(r.c0), r.r0 + 1, col(r.c1), r.r1 + 1)
         };
-        let sheet = if plain_part(&self.sheet) {
-            self.sheet.clone()
-        } else {
-            format!("'{}'", self.sheet.replace('\'', "''"))
-        };
-        format!("={sheet}!{cells}")
+        format!("={}!{cells}", sheet_name_text(&self.sheet))
     }
 }
 
@@ -1142,21 +1131,24 @@ impl Workbook {
     pub fn names_snapshot(&self) -> Vec<ExtName> {
         self.names
             .iter()
-            .filter(|d| d.scope.is_none())
-            .filter_map(|d| ExtName::parse(&d.name, &d.refers_to))
+            .filter_map(|d| {
+                let mut n = ExtName::parse(&d.name, &d.refers_to)?;
+                n.scope = match d.scope {
+                    None => None,
+                    Some(id) => Some(self.sheet(id)?.name.clone()),
+                };
+                Some(n)
+            })
             .collect()
     }
 
-    pub(crate) fn ext_multi_names(&self) -> Vec<String> {
+    pub(crate) fn ext_link_names(&self) -> Vec<String> {
         let st = self.ext_lock();
         let mut out = Vec::new();
-        for (li, n) in &st.names {
+        for (li, n) in st.names.iter().filter(|(_, n)| n.scope.is_none()) {
             let Some(l) = st.links.get(*li) else {
                 continue;
             };
-            if n.value.is_some() || n.sheet.is_empty() || n.rect.is_cell() {
-                continue;
-            }
             let up = n.name.to_uppercase();
             out.push(format!("{}!{up}", l.name().to_uppercase()));
             out.push(format!("{}!{up}", l.path.to_uppercase()));
@@ -1178,21 +1170,6 @@ impl Workbook {
             return false;
         }
 
-        let legacy: Vec<_> = self
-            .formula_ids()
-            .filter(|&fid| {
-                let mut uses = false;
-                formula::walk(&self.formula(fid).formula.root, &mut |n| {
-                    if let Node::Name { sheet: Some(s), .. } = n {
-                        uses |= self.ext_name_link(s) == Some(link);
-                    }
-                });
-                uses
-            })
-            .collect();
-        for fid in legacy {
-            self.refresh_scalar_entry(fid);
-        }
         if self.settings.mode == super::CalcMode::Automatic {
             self.full_recalc();
         }
@@ -1238,7 +1215,7 @@ impl Workbook {
         let st = self.ext_lock();
         st.names
             .iter()
-            .find(|(l, n)| *l == link && n.name.eq_ignore_ascii_case(name))
+            .find(|(l, n)| *l == link && n.scope.is_none() && n.name.eq_ignore_ascii_case(name))
             .map(|(_, n)| n.value.is_some() || n.rect.is_cell())
     }
 
@@ -1268,11 +1245,26 @@ impl Workbook {
         key: &str,
     ) -> Option<Result<(SheetId, Rect), ()>> {
         let link = self.ext_name_link(sh)?;
+        let scope = self.ext_name_sheet(sh);
         let mut st = self.ext_lock();
+
+        let same = |n: &ExtName| n.name.eq_ignore_ascii_case(key);
         let found = st
             .names
             .iter()
-            .find(|(l, n)| *l == link && n.name.eq_ignore_ascii_case(key))
+            .find(|(l, n)| {
+                *l == link
+                    && same(n)
+                    && match (&n.scope, &scope) {
+                        (Some(a), Some(b)) => crate::text::eq_sheet_name(a, b),
+                        _ => false,
+                    }
+            })
+            .or_else(|| {
+                st.names
+                    .iter()
+                    .find(|(l, n)| *l == link && n.scope.is_none() && same(n))
+            })
             .map(|(_, n)| (n.sheet.clone(), n.rect, n.value.is_some()));
         Some(match found {
             Some((sheet, rect, true)) if sheet.is_empty() => {
@@ -1288,17 +1280,34 @@ impl Workbook {
         })
     }
 
+    fn ext_name_sheet(&self, sh: &SheetRef) -> Option<String> {
+        match sh {
+            SheetRef::Sheet(id) if id.0 >= EXT_BASE => self
+                .ext_lock()
+                .sheets
+                .get((id.0 - EXT_BASE) as usize)
+                .map(|(_, n)| n.clone()),
+            _ => None,
+        }
+    }
+
     pub(crate) fn ext_name_prefix(&self, sh: &SheetRef) -> Option<String> {
         let link = self.ext_name_link(sh)?;
         let l = self.ext_lock().links.get(link)?.clone();
-        Some(if l.open || l.dir().is_empty() {
-            if plain_part(l.name()) {
-                format!("{}!", l.name())
-            } else {
-                format!("'{}'!", l.name().replace('\'', "''"))
-            }
+        let book = if l.open || l.dir().is_empty() {
+            l.name().to_string()
         } else {
-            format!("'{}'!", l.path.replace('\'', "''"))
+            l.path.clone()
+        };
+        Some(match self.ext_name_sheet(sh) {
+            Some(s) => {
+                crate::parser::print::sheet_spec_text(&crate::parser::ast::SheetSpec::External {
+                    book,
+                    sheet: Some(s),
+                })
+            }
+            None if l.open || l.dir().is_empty() => format!("{}!", sheet_name_text(l.name())),
+            None => format!("'{}'!", l.path.replace('\'', "''")),
         })
     }
 }
@@ -1315,6 +1324,39 @@ mod tests {
                 .map(|&(r, c, v)| (r, c, Value::Number(v)))
                 .collect(),
         }]
+    }
+
+    #[test]
+    fn sheet_local_names_are_not_workbook_names() {
+        let mut wb = Workbook::new();
+        let l = wb.ext_link("src.xlsx");
+        wb.ext_set_link(l, r"C:\d\src.xlsx", true);
+        let global = ExtName::parse("gn", "[1]Data!$A$1").unwrap();
+        let mut local = ExtName::parse("loc", "[1]Data!$A$2").unwrap();
+        local.scope = Some("Data".into());
+        wb.ext_set_names_quiet(l, vec![global, local]);
+        assert_eq!(wb.ext_name_scalar("src.xlsx", "gn"), Some(true));
+        assert_eq!(wb.ext_name_scalar("src.xlsx", "loc"), None);
+        let names = wb.ext_link_names();
+        assert!(names.iter().any(|n| n.ends_with("!GN")), "{names:?}");
+        assert!(names.iter().all(|n| !n.ends_with("!LOC")), "{names:?}");
+    }
+
+    #[test]
+    fn names_snapshot_keeps_sheet_scope() {
+        let mut wb = Workbook::new();
+        let s = wb.active_sheet();
+        let sheet = wb.sheet(s).unwrap().name.clone();
+        wb.define_name("gn", "=1", None).unwrap();
+        wb.define_name("loc", "=2", Some(s)).unwrap();
+        let snap = wb.names_snapshot();
+        let scope_of = |name: &str| {
+            snap.iter()
+                .find(|n| n.name.eq_ignore_ascii_case(name))
+                .map(|n| n.scope.clone())
+        };
+        assert_eq!(scope_of("gn"), Some(None), "{snap:?}");
+        assert_eq!(scope_of("loc"), Some(Some(sheet)), "{snap:?}");
     }
 
     #[test]
@@ -1359,5 +1401,37 @@ mod tests {
         );
         wb.ext_break(l);
         assert_eq!(wb.formula_text(a(0)), None);
+    }
+
+    #[test]
+    fn link_quoting_as_shown_and_as_stored() {
+        let mut wb = Workbook::new();
+        let s = wb.active_sheet();
+        let sheets = ["Data", "2019", "A1", "R1C1", "TRUE", "a-b", "1a", "x\u{b2}"];
+        wb.ext_set_open_books(vec![OpenBook {
+            path: "src.xlsx".into(),
+            sheets: sheets.map(String::from).to_vec(),
+        }]);
+        let cases = [
+            ("Data", "[src.xlsx]Data", "[1]Data"),
+            ("2019", "'[src.xlsx]2019'", "'[1]2019'"),
+            ("A1", "[src.xlsx]A1", "[1]A1"),
+            ("R1C1", "[src.xlsx]R1C1", "[1]R1C1"),
+            ("TRUE", "[src.xlsx]TRUE", "[1]TRUE"),
+            ("a-b", "'[src.xlsx]a-b'", "'[1]a-b'"),
+            ("1a", "'[src.xlsx]1a'", "'[1]1a'"),
+            ("x\u{b2}", "[src.xlsx]x\u{b2}", "[1]x\u{b2}"),
+        ];
+        for (row, (sheet, shown, stored)) in (0u32..).zip(cases) {
+            let at = CellAddr::new(s, row, 0);
+            wb.set_formula(at, &format!("='[src.xlsx]{sheet}'!A1"))
+                .unwrap();
+            let text = wb.formula_text(at).unwrap();
+            assert_eq!(text, format!("={shown}!A1"));
+            assert_eq!(wb.ext_file_indexes(&text), format!("={stored}!A1"));
+        }
+        assert_eq!(wb.ext_file_indexes("='src.xlsx'!nm"), "=[1]!nm");
+        assert_eq!(index_prefix_text("[1]Data:2019"), "'[1]Data:2019'");
+        assert_eq!(index_prefix_text("[1]Data:Two"), "[1]Data:Two");
     }
 }

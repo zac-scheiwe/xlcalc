@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use xlcalc::{Arg, CallContext, CellAddr, FunctionHost, ParamKind, RuntimeError, Signature};
+use xlcalc::{
+    Arg, CallContext, CellAddr, Evaluated, FunctionHost, ParamKind, RuntimeError, Signature,
+};
 use xlcalc::{SheetId, Value, Workbook, XlError};
 use xlcalc_variant::{change_type, HResult, Locale, ObjectId, VarType, Variant};
 use xlcalc_vba::{ExcelNames, InvokeKind, MacroLookup, ObjectHost, Project, SourceModule};
@@ -16,7 +18,7 @@ const VBA_STACK: usize = 16 * 1024 * 1024;
 const RED_ZONE: usize = 8 * 1024 * 1024;
 
 fn deep<R>(f: impl FnOnce() -> R) -> R {
-    stacker::maybe_grow(RED_ZONE, VBA_STACK, f)
+    xlcalc_stack::maybe_grow(RED_ZONE, VBA_STACK, f)
 }
 
 #[derive(Default)]
@@ -128,6 +130,7 @@ impl VbaHost {
         let r = deep(|| f(&self.project, &mut objects));
         objects.app.in_vba = outer;
         let mut keep = self.project.held_objects();
+        keep.extend(objects.app.dictionary_held());
         if let Some(id) = r.as_ref().ok().and_then(&result_object) {
             keep.push(id);
         }
@@ -514,6 +517,8 @@ impl<'v> Application<'v> {
                 (id, text.clone())
             }
         };
+
+        self.flush_events();
         {
             let wb = &self.book(book)?.wb;
             let key = proc.to_uppercase();
@@ -585,9 +590,7 @@ impl Application<'_> {
         };
 
         if raise && a.values.iter().any(|v| matches!(v, Some(Variant::Null))) {
-            let mut e = OmError::app_defined_with("Invalid number of arguments.");
-            e.error_info = true;
-            return Err(e);
+            return Err(wsf_arguments());
         }
 
         if raise
@@ -612,12 +615,33 @@ impl Application<'_> {
         while matches!(args.last(), Some(Arg::Missing)) {
             args.pop();
         }
-        let wb = &self.book(book)?.wb;
-        let at = match &self.view {
-            Some(v) => v.caller,
-            None => CellAddr::new(wb.active_sheet(), 0, 0),
-        };
+
         let name = m.name.trim_start_matches('_');
+        let upper = name.to_uppercase();
+        if let Some((min, max)) = xlcalc::function_arity(&upper)
+            .or_else(|| xlcalc::function_arity(&upper.replace('_', ".")))
+        {
+            if args.len() < min || args.len() > max {
+                return Err(wsf_arguments());
+            }
+        }
+
+        let home = book;
+        let book = values
+            .iter()
+            .flatten()
+            .find_map(|v| self.range_book(v))
+            .unwrap_or(book);
+        let wb = &self.book(book)?.wb;
+
+        let at = match &self.view {
+            Some(v) if home == book => v.caller,
+            _ => {
+                let sheet = wb.active_sheet();
+                let (row, col) = wb.active_cell_of(sheet);
+                CellAddr::new(sheet, row, col)
+            }
+        };
 
         if matches!(name, "VLookup" | "HLookup") {
             if let Some(Arg::Ref(areas)) = args.get(2) {
@@ -645,6 +669,22 @@ impl Application<'_> {
             .call_function_in(at, name, &args, &us)
             .or_else(|| wb.call_function_in(at, &name.replace('_', "."), &args, &us))
             .ok_or_else(|| crate::app::unsupported("WorksheetFunction", m))?;
+
+        let r = match r {
+            Evaluated::Ref(areas) => {
+                let sheet = areas
+                    .first()
+                    .map(|a| a.sheet)
+                    .ok_or_else(OmError::app_defined)?;
+                let rects: Vec<_> = areas
+                    .iter()
+                    .filter(|a| a.sheet == sheet)
+                    .map(|a| a.rect)
+                    .collect();
+                return self.new_multi(book, sheet, &rects, crate::app::Mode::Cells);
+            }
+            Evaluated::Value(v) => v,
+        };
         if raise && matches!(r, Value::Error(_)) {
             return Err(OmError::app_defined_with(&format!(
                 "Unable to get the {name} property of the WorksheetFunction class"
@@ -694,33 +734,11 @@ impl Application<'_> {
             }
         }
 
-        if let ("Transpose", [Arg::Ref(areas)]) = (name, args.as_slice()) {
-            if let [area] = areas.as_slice() {
-                if !area.rect.is_cell() && !matches!(r, Value::Error(_)) {
-                    let rect = area.rect;
-                    let mut data = Vec::new();
-                    for c in rect.c0..=rect.c1 {
-                        for rr in rect.r0..=rect.r1 {
-                            data.push(value_variant(&wb.value(CellAddr::new(area.sheet, rr, c))));
-                        }
-                    }
-
-                    if rect.cols() == 1 && rect.rows() > 1 {
-                        return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
-                            elem: VarType::Variant,
-                            bounds: vec![(1, data.len() as u32)],
-                            data,
-                        })));
-                    }
-                    return Ok(crate::conv::array_variant(rect.cols(), rect.rows(), data));
-                }
-            }
-        }
-
         if let Value::Array(arr) = &r {
             if arr.rows == 1
                 && arr.cols > 1
-                && values.iter().any(|v| matches!(v, Some(Variant::Array(_))))
+                && (name == "Transpose"
+                    || values.iter().any(|v| matches!(v, Some(Variant::Array(_)))))
             {
                 let n = arr.data.len();
                 return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
@@ -761,6 +779,17 @@ impl Application<'_> {
             });
         }
         Ok(out)
+    }
+
+    fn range_book(&self, v: &Variant) -> Option<BookId> {
+        let Variant::Dispatch(Some(id)) = v else {
+            return None;
+        };
+        match self.arena.get(*id)? {
+            crate::app::Object::Range(r) => Some(r.book),
+            crate::app::Object::Multi(rs) => rs.first().map(|r| r.book),
+            _ => None,
+        }
     }
 
     pub(crate) fn engine_arg(&self, v: &Variant) -> Result<Arg, OmError> {
@@ -809,6 +838,12 @@ fn cell_text<'v>(v: &'v Variant) -> std::borrow::Cow<'v, Variant> {
         Some(t) => std::borrow::Cow::Owned(Variant::Bstr(t)),
         None => std::borrow::Cow::Borrowed(v),
     }
+}
+
+fn wsf_arguments() -> OmError {
+    let mut e = OmError::app_defined_with("Invalid number of arguments.");
+    e.error_info = true;
+    e
 }
 
 fn flags_alpha() -> u16 {
@@ -1153,6 +1188,10 @@ impl ObjectHost for Objects<'_, '_> {
             .type_name(obj)
             .map_or("Object", |n| n.trim_start_matches('_'))
             .to_string()
+    }
+
+    fn same_object(&mut self, a: ObjectId, b: ObjectId) -> bool {
+        self.app.same_object(a, b)
     }
 
     fn document(&mut self, module: &str) -> Result<ObjectId, VbaError> {

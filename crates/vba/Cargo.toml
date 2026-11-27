@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 xlcalc.workspace = true
 xlcalc-variant = { path = "../variant" }
-stacker = "0.1"
+xlcalc-stack.workspace = true
 chrono.workspace = true
 
 [dev-dependencies]

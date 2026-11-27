@@ -2,6 +2,7 @@ use crate::xml::Node;
 use std::collections::HashMap;
 use std::sync::Arc;
 use xlcalc::cfv::Dxf;
+use xlcalc::rich::{Phonetic, RunFont};
 use xlcalc::style::{
     Alignment, Border, BorderLine, Borders, CellColor, Fill, Font, FontScheme, HAlign, NamedStyle,
     Pattern, Style, StyleTable, Underline, VAlign,
@@ -10,6 +11,8 @@ use xlcalc::style::{
 #[derive(Default)]
 pub struct Styles {
     custom: HashMap<u32, String>,
+
+    formats: Vec<String>,
     xf_fmt: Vec<u32>,
 
     xfs: Vec<Style>,
@@ -17,48 +20,13 @@ pub struct Styles {
     quote: Vec<bool>,
     table: StyleTable,
 
+    fonts: Vec<RunFont>,
+
     pub warnings: Vec<String>,
 }
 
-fn builtin(id: u32) -> Option<&'static str> {
-    Some(match id {
-        1 => "0",
-        2 => "0.00",
-        3 => "#,##0",
-        4 => "#,##0.00",
-        9 => "0%",
-        10 => "0.00%",
-        11 => "0.00E+00",
-        12 => "# ?/?",
-        13 => "# ??/??",
-        14 => "d/mm/yyyy",
-        15 => "d-mmm-yy",
-        16 => "d-mmm",
-        17 => "mmm-yy",
-        18 => "h:mm AM/PM",
-        19 => "h:mm:ss AM/PM",
-        20 => "h:mm",
-        21 => "h:mm:ss",
-        22 => "d/mm/yyyy h:mm",
-        5 => r##""$"#,##0;\-"$"#,##0"##,
-        6 => r##""$"#,##0;[Red]\-"$"#,##0"##,
-        7 => r##""$"#,##0.00;\-"$"#,##0.00"##,
-        8 => r##""$"#,##0.00;[Red]\-"$"#,##0.00"##,
-        37 => r##"#,##0;-#,##0"##,
-        38 => r##"#,##0;[Red]-#,##0"##,
-        39 => r##"#,##0.00;-#,##0.00"##,
-        40 => r##"#,##0.00;[Red]-#,##0.00"##,
-        41 => r##"_-* #,##0_-;\-* #,##0_-;_-* "-"_-;_@_-"##,
-        42 => r##"_-"$"* #,##0_-;\-"$"* #,##0_-;_-"$"* "-"_-;_@_-"##,
-        43 => r##"_-* #,##0.00_-;\-* #,##0.00_-;_-* "-"??_-;_@_-"##,
-        44 => r##"_-"$"* #,##0.00_-;\-"$"* #,##0.00_-;_-"$"* "-"??_-;_@_-"##,
-        45 => "mm:ss",
-        46 => "[h]:mm:ss",
-        47 => "mmss.0",
-        48 => "##0.0E+0",
-        49 => "@",
-        _ => return None,
-    })
+fn builtin(id: u32) -> Option<String> {
+    xlcalc::builtin_code_of_file_id(&xlcalc::Locale::default(), id)
 }
 
 impl Styles {
@@ -71,6 +39,7 @@ impl Styles {
                     f.attr("formatCode"),
                 ) {
                     s.custom.insert(id, code.to_string());
+                    s.formats.push(code.to_string());
                 }
             }
         }
@@ -94,6 +63,14 @@ impl Styles {
         let fonts: Vec<Font> = list(n, "fonts", "font")
             .into_iter()
             .map(|f| font(f, &mut w))
+            .collect();
+        self.fonts = list(n, "fonts", "font")
+            .into_iter()
+            .zip(&fonts)
+            .map(|(x, f)| RunFont {
+                font: f.clone(),
+                extra: crate::rst::font_extra(x),
+            })
             .collect();
         let fills: Vec<Fill> = list(n, "fills", "fill")
             .into_iter()
@@ -182,6 +159,20 @@ impl Styles {
             .into_iter()
             .map(|d| Arc::from(to_xml(d)))
             .collect();
+
+        if let Some(ic) = n.child("colors").and_then(|c| c.child("indexedColors")) {
+            for (i, c) in ic.children("rgbColor").enumerate() {
+                let rgb = c
+                    .attr("rgb")
+                    .and_then(|v| u32::from_str_radix(v, 16).ok())
+                    .map(|v| v & 0xFF_FFFF);
+                if let (Some(rgb), Some(slot)) = (rgb, i.checked_sub(8)) {
+                    if let Some(p) = self.table.theme.palette.get_mut(slot) {
+                        *p = rgb;
+                    }
+                }
+            }
+        }
         self.warnings = w;
     }
 
@@ -197,7 +188,7 @@ impl Styles {
         match self.custom.get(&id) {
             Some(c) if c == "General" => None,
             Some(c) => Some(c.clone()),
-            None => builtin(id).map(str::to_string),
+            None => builtin(id),
         }
     }
 
@@ -239,6 +230,17 @@ impl Styles {
         }
     }
 
+    pub(crate) fn phonetic(&self, p: &crate::rst::PhRef) -> Option<Phonetic> {
+        let font = self.fonts.get(p.font_id as usize).or(self.fonts.first())?;
+        Some(Phonetic {
+            runs: p.runs.clone(),
+            font: font.clone(),
+            font_id: p.font_id,
+            kind: p.kind,
+            align: p.align,
+        })
+    }
+
     pub fn style_of(&self, xf: u32) -> Option<&Style> {
         self.xfs.get(xf as usize)
     }
@@ -259,6 +261,10 @@ impl Styles {
         self.code_of(*self.xf_fmt.get(xf as usize)?)
     }
 
+    pub fn defined_formats(&self) -> &[String] {
+        &self.formats
+    }
+
     pub fn code_of(&self, id: u32) -> Option<String> {
         if id == 0 {
             return None;
@@ -266,7 +272,7 @@ impl Styles {
         match self.custom.get(&id) {
             Some(c) if c == "General" => None,
             Some(c) => Some(c.clone()),
-            None => builtin(id).map(str::to_string),
+            None => builtin(id),
         }
     }
 }
@@ -342,7 +348,6 @@ pub(crate) fn dxf_read(x: &Node) -> Dxf {
             n.attr("numFmtId")
                 .and_then(|i| i.parse().ok())
                 .and_then(builtin)
-                .map(str::to_string)
         });
         if let Some(c) = code {
             m.number_format = true;
@@ -453,6 +458,45 @@ fn color(c: Option<&Node>) -> CellColor {
     }
 }
 
+pub(crate) fn run_font(f: &Node) -> RunFont {
+    RunFont {
+        font: font(f, &mut Vec::new()),
+        extra: crate::rst::font_extra(f),
+    }
+}
+
+fn font_xml_with(f: &RunFont) -> String {
+    let mut s = font_xml(&f.font);
+    let mut legacy = String::new();
+    if f.extra.condense {
+        legacy.push_str("<condense/>");
+    }
+    if f.extra.extend {
+        legacy.push_str("<extend/>");
+    }
+
+    let mut at = "<font>".len();
+    for el in ["<b/>", "<i/>", "<strike/>"] {
+        if s[at..].starts_with(el) {
+            at += el.len();
+        }
+    }
+    s.insert_str(at, &legacy);
+    if let Some(c) = f.extra.charset {
+        let tag = format!("<charset val=\"{c}\"/>");
+        let at = s.find("<scheme ").or_else(|| s.find("</font>"));
+        s.insert_str(at.unwrap_or(s.len()), &tag);
+    }
+    s
+}
+
+pub(crate) fn run_properties_xml(f: &RunFont) -> String {
+    font_xml_with(f)
+        .replace("<font>", "<rPr>")
+        .replace("</font>", "</rPr>")
+        .replace("<name val=", "<rFont val=")
+}
+
 fn font(f: &Node, w: &mut Vec<String>) -> Font {
     let val = |k: &str| f.child(k).and_then(|x| x.attr("val"));
     let underline = match f.child("u").map(|u| u.attr("val").unwrap_or("single")) {
@@ -475,7 +519,7 @@ fn font(f: &Node, w: &mut Vec<String>) -> Font {
         .and_then(|s| s.parse::<f64>().ok())
         .unwrap_or(11.0);
     Font {
-        name: Arc::from(val("name").unwrap_or("")),
+        name: Arc::from(val("name").or_else(|| val("rFont")).unwrap_or("")),
         size_twips: (size * 20.0).round() as u32,
         bold: on(f, "b"),
         italic: on(f, "i"),
@@ -785,7 +829,18 @@ fn style_xf(n: &NamedStyle) -> StyleXf {
 pub struct StyleWriter {
     split: crate::rawxml::Split,
 
-    numfmts: Vec<(u32, String)>,
+    formats: xlcalc::NumberFormatTable,
+
+    claimed_dxfs: std::collections::HashSet<usize>,
+
+    dxf_stamps: std::collections::HashMap<usize, u64>,
+
+    used_xfs: std::collections::BTreeSet<u32>,
+    used_fonts: std::collections::BTreeSet<u32>,
+
+    builtin_defs: std::collections::BTreeMap<u32, String>,
+
+    used_formats: std::collections::BTreeSet<u32>,
     fonts: List<Font>,
     fills: List<Fill>,
     borders: List<Borders>,
@@ -794,8 +849,6 @@ pub struct StyleWriter {
     xfs: List<(Style, bool)>,
 
     src_xfs: Vec<(Style, bool)>,
-
-    source: Vec<(Style, bool)>,
     table: StyleTable,
 
     named: HashMap<String, u32>,
@@ -803,6 +856,8 @@ pub struct StyleWriter {
     src_cell_styles: HashMap<String, crate::rawxml::Tag>,
 
     deleted: Vec<NamedStyle>,
+
+    locale: xlcalc::Locale,
 }
 
 fn nodes<'a>(n: &'a Node, name: &str, item: &'a str) -> Vec<&'a Node> {
@@ -817,17 +872,6 @@ impl StyleWriter {
         wb: &xlcalc::Workbook,
         fresh: bool,
     ) -> Result<StyleWriter, String> {
-        let source = match src {
-            Some(b) => {
-                let st = Styles::read(&crate::xml::parse(b)?);
-                st.xfs
-                    .iter()
-                    .zip(&st.quote)
-                    .map(|(s, q)| (s.with_number_format(&norm_code(&s.number_format)), *q))
-                    .collect()
-            }
-            None => Vec::new(),
-        };
         let src = if fresh { None } else { src };
         let bytes = src.unwrap_or(NEW_STYLES.as_bytes());
         let mut split = crate::rawxml::split(bytes)?;
@@ -871,7 +915,7 @@ impl StyleWriter {
             .zip(&src_styles.quote)
             .map(|(s, q)| (s.with_number_format(&norm_code(&s.number_format)), *q))
             .collect();
-        let mut numfmts = Vec::new();
+        let mut src_formats: Vec<(u32, String)> = Vec::new();
         if let Some(k) = split.kid("numFmts") {
             for f in crate::rawxml::split(k.raw.as_bytes())?.kids {
                 let t = crate::rawxml::Tag::parse(&f.raw)?;
@@ -879,7 +923,7 @@ impl StyleWriter {
                     t.get("numFmtId").and_then(|i| i.parse().ok()),
                     t.value("formatCode"),
                 ) {
-                    numfmts.push((id, code));
+                    src_formats.push((id, code));
                 }
             }
         }
@@ -900,14 +944,21 @@ impl StyleWriter {
             style_xfs: List::read(&split, "cellStyleXfs", sxf_v)?,
             xfs: List::read(&split, "cellXfs", src_xfs.clone())?,
             split,
-            numfmts,
+            formats: wb.number_format_table(),
+            used_formats: Default::default(),
+            builtin_defs: Default::default(),
+            claimed_dxfs: Default::default(),
+            dxf_stamps: Default::default(),
+            used_xfs: Default::default(),
+            used_fonts: Default::default(),
             src_xfs,
-            source,
             table: wb.style_table().clone(),
             named: HashMap::new(),
             src_cell_styles,
             deleted: Vec::new(),
+            locale: wb.locale().clone(),
         };
+        sw.renumber_source(&src_formats);
 
         let normal = match sw.table.get("Normal") {
             Some(n) => style_xf(n),
@@ -956,6 +1007,24 @@ impl StyleWriter {
         Ok(sw)
     }
 
+    pub(crate) fn font_id(&mut self, f: &RunFont, hint: u32) -> u32 {
+        let i = self.font_index(f, hint);
+        self.used_fonts.insert(i);
+        i
+    }
+
+    fn font_index(&mut self, f: &RunFont, hint: u32) -> u32 {
+        let is = |x: &String| crate::xml::parse(x.as_bytes()).is_ok_and(|n| run_font(&n) == *f);
+        if self.fonts.items.get(hint as usize).is_some_and(is) {
+            return hint;
+        }
+        if let Some(i) = self.fonts.items.iter().position(is) {
+            return i as u32;
+        }
+        self.fonts.items.push(font_xml_with(f));
+        (self.fonts.items.len() - 1) as u32
+    }
+
     fn add_named(&mut self, n: &NamedStyle) -> u32 {
         let key = n.name.to_lowercase();
         if let Some(&i) = self.named.get(&key) {
@@ -975,30 +1044,95 @@ impl StyleWriter {
     }
 
     pub(crate) fn fmt_id(&mut self, code: &str) -> u32 {
+        let id = self.id_of(code);
+        self.used_formats.insert(id);
+        id
+    }
+
+    fn id_of(&mut self, code: &str) -> u32 {
         let code = norm_code(code);
         if code == "General" {
             return 0;
         }
-        if let Some((id, _)) = self.numfmts.iter().find(|(_, c)| norm_code(c) == code) {
-            return *id;
-        }
-        if let Some(id) = (1..=49).find(|&i| builtin(i).is_some_and(|b| norm_code(b) == code)) {
+        if let Some(id) = xlcalc::builtin_file_id_of_code(&self.locale, &code) {
             return id;
         }
-        let id = self
-            .numfmts
-            .iter()
-            .map(|(i, _)| *i + 1)
-            .max()
-            .unwrap_or(164)
-            .max(164);
-        self.numfmts.push((id, file_code(&code)));
-        id
+        164 + self.formats.slot(&code) as u32
+    }
+
+    fn renumber_source(&mut self, defined: &[(u32, String)]) {
+        let mut ids = HashMap::new();
+        for (id, code) in defined {
+            let new = self.id_of(code);
+            ids.insert(*id, new);
+            if (1..164).contains(&new) {
+                self.builtin_defs.entry(new).or_insert_with(|| code.clone());
+            }
+        }
+        for list in [&mut self.style_xfs.items, &mut self.xfs.items] {
+            for raw in list.iter_mut() {
+                let Some(n) = crate::rawxml::head_len(raw) else {
+                    continue;
+                };
+                let Ok(mut tag) = crate::rawxml::Tag::parse(&raw[..n]) else {
+                    continue;
+                };
+                let Some(old) = tag.get("numFmtId").and_then(|i| i.parse::<u32>().ok()) else {
+                    continue;
+                };
+                let new = ids.get(&old).copied().unwrap_or(old);
+                if new != old {
+                    let empty = raw[..n].ends_with("/>");
+                    tag.set("numFmtId", Some(&new.to_string()));
+                    let head = if empty { tag.empty() } else { tag.open() };
+                    raw.replace_range(..n, &head);
+                }
+            }
+        }
+    }
+
+    fn numfmts_xml(&self) -> Option<String> {
+        const CURRENCY: [u32; 8] = [5, 6, 7, 8, 42, 41, 44, 43];
+        let defined = self.builtin_defs.iter().filter_map(|(&id, code)| {
+            let used = self.used_formats.contains(&id) && !CURRENCY.contains(&id);
+            used.then(|| (id, code.clone()))
+        });
+        let currency = CURRENCY
+            .into_iter()
+            .filter(|id| self.used_formats.contains(id))
+            .filter_map(|id| {
+                let code = match self.builtin_defs.get(&id) {
+                    Some(c) => c.clone(),
+                    None => file_code(&xlcalc::builtin_code_of_file_id(&self.locale, id)?),
+                };
+                Some((id, code))
+            });
+        let custom = self.used_formats.range(164..).filter_map(|&id| {
+            let code = self.formats.codes().get(id as usize - 164)?;
+            Some((id, file_code(code)))
+        });
+        let items: Vec<String> = defined
+            .chain(currency)
+            .chain(custom)
+            .map(|(id, code)| {
+                format!(
+                    "<numFmt numFmtId=\"{id}\" formatCode=\"{}\"/>",
+                    crate::rawxml::escape_attr(&code)
+                )
+            })
+            .collect();
+        (!items.is_empty()).then(|| {
+            format!(
+                "<numFmts count=\"{}\">{}</numFmts>",
+                items.len(),
+                items.concat()
+            )
+        })
     }
 
     fn part_ids(&mut self, s: &Style) -> [u32; 4] {
         [
-            self.fmt_id(&s.number_format),
+            self.id_of(&s.number_format),
             self.fonts.get(s.font.clone(), font_xml),
             self.fills.get(s.fill.clone(), fill_xml),
             self.borders.get(s.borders.clone(), borders_xml),
@@ -1065,6 +1199,12 @@ impl StyleWriter {
     }
 
     pub fn xf(&mut self, s: &Style, quote: bool, src: Option<u32>) -> u32 {
+        let i = self.add_xf(s, quote, src);
+        self.used_xfs.insert(i);
+        i
+    }
+
+    pub(crate) fn add_xf(&mut self, s: &Style, quote: bool, src: Option<u32>) -> u32 {
         let key = (s.clone(), quote);
         if let Some(i) = src {
             if self.src_xfs.get(i as usize) == Some(&key) {
@@ -1078,14 +1218,62 @@ impl StyleWriter {
         self.xfs.push(key, xml)
     }
 
-    pub fn map_source(&mut self, i: u32) -> u32 {
-        match self.source.get(i as usize).cloned() {
-            Some((s, q)) => self.xf(&s, q, Some(i)),
-            None => 0,
+    pub(crate) fn stamp_source_dxfs(&mut self, wb: &xlcalc::Workbook) {
+        let sheets = wb.sheets().filter_map(|s| wb.cfv_sheet(s.id));
+        for r in sheets.flat_map(|s| &s.rules) {
+            if let Some(i) = r.dxf.made.source.filter(|&i| i < self.table.dxfs.len()) {
+                let at = self.dxf_stamps.entry(i).or_default();
+                *at = (*at).max(r.dxf.made.stamp);
+            }
         }
     }
 
     pub fn dxf(&mut self, d: &Dxf) -> Option<usize> {
+        let x = self.dxf_xml(d)?;
+
+        let found = self.table.dxfs.iter().enumerate().position(|(i, e)| {
+            let made = self.dxf_stamps.get(&i).is_none_or(|&s| s == d.made.stamp);
+            **e == *x && made && !self.claimed_dxfs.contains(&i)
+        });
+        let i = found.unwrap_or_else(|| {
+            self.table.dxfs.push(Arc::from(x.as_str()));
+            self.table.dxfs.len() - 1
+        });
+        self.claimed_dxfs.insert(i);
+        self.dxf_stamps.insert(i, d.made.stamp);
+        Some(i)
+    }
+
+    pub(crate) fn dxf_elements(&self) -> Vec<&str> {
+        self.table.dxfs.iter().map(|d| &**d).collect()
+    }
+
+    pub(crate) fn filter_dxf(&mut self, x: &str) -> usize {
+        let found = self.table.dxfs.iter().position(|e| &**e == x);
+        let i = found.unwrap_or_else(|| {
+            self.table.dxfs.push(Arc::from(x));
+            self.table.dxfs.len() - 1
+        });
+        self.claimed_dxfs.insert(i);
+        i
+    }
+
+    pub(crate) fn order_dxfs(&mut self, used: &std::collections::BTreeSet<usize>) -> Vec<usize> {
+        let mut order: Vec<usize> = used
+            .iter()
+            .copied()
+            .filter(|&i| i < self.table.dxfs.len())
+            .collect();
+        order.sort_by_key(|i| std::cmp::Reverse(self.dxf_stamps.get(i).copied()));
+        let mut map = vec![0; self.table.dxfs.len()];
+        for (new, &old) in order.iter().enumerate() {
+            map[old] = new;
+        }
+        self.table.dxfs = order.iter().map(|&i| self.table.dxfs[i].clone()).collect();
+        map
+    }
+
+    fn dxf_xml(&mut self, d: &Dxf) -> Option<String> {
         let (m, s) = (&d.mask, &d.style);
         let mut x = String::from("<dxf>");
         let mut font = String::new();
@@ -1118,13 +1306,11 @@ impl StyleWriter {
             x.push_str(&format!("<font>{font}</font>"));
         }
         if m.number_format {
-            let id = self.fmt_id(&s.number_format);
-            let code = self
-                .numfmts
-                .iter()
-                .find(|(i, _)| *i == id)
-                .map(|(_, c)| c.clone())
-                .unwrap_or_else(|| builtin(id).unwrap_or("General").to_string());
+            let id = self.id_of(&s.number_format);
+            let code = match self.formats.codes().get((id as usize).wrapping_sub(164)) {
+                Some(c) => file_code(c),
+                None => builtin(id).unwrap_or_else(|| "General".into()),
+            };
             x.push_str(&format!(
                 "<numFmt numFmtId=\"{id}\" formatCode=\"{}\"/>",
                 crate::rawxml::escape_attr(&code)
@@ -1176,26 +1362,58 @@ impl StyleWriter {
             return None;
         }
         x.push_str("</dxf>");
-        if let Some(i) = self.table.dxfs.iter().position(|e| **e == *x) {
-            return Some(i);
+        Some(x)
+    }
+
+    pub(crate) fn compact(&mut self, fonts_referred: bool) -> Vec<u32> {
+        let kept: std::collections::BTreeSet<u32> = std::iter::once(0)
+            .chain(self.used_xfs.iter().copied())
+            .collect();
+        let map = keep(&mut self.xfs.items, &kept);
+        self.xfs.index.clear();
+        for (attr, first, list) in [
+            ("fontId", 1, &mut self.fonts.items),
+            ("fillId", 2, &mut self.fills.items),
+            ("borderId", 1, &mut self.borders.items),
+        ] {
+            let font = attr == "fontId";
+            if font && fonts_referred {
+                continue;
+            }
+            let mut kept: std::collections::BTreeSet<u32> = (0..first).collect();
+            if font {
+                kept.extend(&self.used_fonts);
+            }
+            for raw in self.style_xfs.items.iter().chain(&self.xfs.items) {
+                kept.extend(head_id(raw, attr));
+            }
+
+            let top = if font {
+                self.used_fonts.iter().next_back().map_or(0, |&i| i + 1)
+            } else {
+                0
+            };
+            kept.extend(0..top);
+            let ids = keep(list, &kept);
+            for raw in self.style_xfs.items.iter_mut().chain(&mut self.xfs.items) {
+                if let Some(old) = head_id(raw, attr) {
+                    let new = ids.get(old as usize).copied().unwrap_or(old);
+                    if new != old {
+                        set_head(raw, attr, new);
+                    }
+                }
+            }
         }
-        self.table.dxfs.push(Arc::from(x.as_str()));
-        Some(self.table.dxfs.len() - 1)
+        map
     }
 
     pub fn write(mut self) -> Vec<u8> {
-        use crate::rawxml::{escape_attr, Tag};
-        let numfmts = (!self.numfmts.is_empty()).then(|| {
-            let mut s = format!("<numFmts count=\"{}\">", self.numfmts.len());
-            for (id, code) in &self.numfmts {
-                s.push_str(&format!(
-                    "<numFmt numFmtId=\"{id}\" formatCode=\"{}\"/>",
-                    escape_attr(code)
-                ));
-            }
-            s.push_str("</numFmts>");
-            s
-        });
+        use crate::rawxml::Tag;
+        let ids: Vec<u32> = (self.style_xfs.items.iter().chain(&self.xfs.items))
+            .filter_map(|raw| head_id(raw, "numFmtId"))
+            .collect();
+        self.used_formats.extend(ids);
+        let numfmts = self.numfmts_xml();
         let mut cell_styles: Vec<(u32, String)> = Vec::new();
         let mut written = std::collections::HashSet::new();
         let deleted: Vec<String> = self.deleted.iter().map(|d| d.name.to_lowercase()).collect();
@@ -1261,8 +1479,58 @@ impl StyleWriter {
         for (name, raw) in kids {
             self.split.put(name, raw, STYLE_ORDER);
         }
+
+        if self.table.theme.palette != xlcalc::style::PALETTE {
+            let mut o = String::from("<colors><indexedColors>");
+            for c in &xlcalc::style::PALETTE[..8] {
+                o.push_str(&format!("<rgbColor rgb=\"FF{c:06X}\"/>"));
+            }
+            for c in &self.table.theme.palette {
+                o.push_str(&format!("<rgbColor rgb=\"FF{c:06X}\"/>"));
+            }
+            o.push_str("</indexedColors></colors>");
+            self.split.put("colors", Some(o), STYLE_ORDER);
+        } else if self
+            .split
+            .kid("colors")
+            .is_some_and(|k| k.raw.contains("indexedColors"))
+        {
+            self.split.put("colors", None, STYLE_ORDER);
+        }
         self.split.write()
     }
+}
+
+fn head_id(raw: &str, attr: &str) -> Option<u32> {
+    let n = crate::rawxml::head_len(raw)?;
+    let tag = crate::rawxml::Tag::parse(&raw[..n]).ok()?;
+    tag.get(attr)?.parse().ok()
+}
+
+fn set_head(raw: &mut String, attr: &str, value: u32) {
+    let Some(n) = crate::rawxml::head_len(raw) else {
+        return;
+    };
+    let Ok(mut tag) = crate::rawxml::Tag::parse(&raw[..n]) else {
+        return;
+    };
+    let empty = raw[..n].ends_with("/>");
+    tag.set(attr, Some(&value.to_string()));
+    let head = if empty { tag.empty() } else { tag.open() };
+    raw.replace_range(..n, &head);
+}
+
+fn keep(items: &mut Vec<String>, kept: &std::collections::BTreeSet<u32>) -> Vec<u32> {
+    let mut map = vec![0; items.len()];
+    let mut out = Vec::with_capacity(kept.len());
+    for (i, item) in items.drain(..).enumerate() {
+        if kept.contains(&(i as u32)) {
+            map[i] = out.len() as u32;
+            out.push(item);
+        }
+    }
+    *items = out;
+    map
 }
 
 const NS_MAIN: &str = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
@@ -1434,7 +1702,7 @@ fn borders_xml(b: &Borders) -> String {
     s
 }
 
-fn file_code(code: &str) -> String {
+pub(crate) fn file_code(code: &str) -> String {
     let mut out = String::with_capacity(code.len() + 4);
     let mut it = code.chars();
     let (mut quoted, mut bracket) = (false, false);
@@ -1512,9 +1780,6 @@ mod writer_tests {
     }
 }
 
-pub(crate) fn builtin_id(code: &str) -> u32 {
-    let code = norm_code(code);
-    (1..=49)
-        .find(|&i| builtin(i).is_some_and(|b| norm_code(b) == code))
-        .unwrap_or(0)
+pub(crate) fn builtin_id(loc: &xlcalc::Locale, code: &str) -> u32 {
+    xlcalc::builtin_file_id_of_code(loc, &norm_code(code)).unwrap_or(0)
 }

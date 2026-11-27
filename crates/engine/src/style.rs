@@ -486,6 +486,8 @@ pub struct NamedStyle {
 #[derive(Clone, PartialEq, Debug)]
 pub struct Theme {
     pub colors: [u32; 12],
+
+    pub palette: [u32; 56],
     pub major_font: Arc<str>,
     pub minor_font: Arc<str>,
 }
@@ -497,6 +499,7 @@ impl Default for Theme {
                 0xFFFFFF, 0x000000, 0xE8E8E8, 0x0E2841, 0x156082, 0xE97132, 0x196B24, 0x0F9ED5,
                 0xA02B93, 0x4EA72E, 0x467886, 0x96607D,
             ],
+            palette: PALETTE,
             major_font: Arc::from("Aptos Display"),
             minor_font: Arc::from("Aptos Narrow"),
         }
@@ -509,6 +512,14 @@ pub struct StyleTable {
     pub named: Vec<NamedStyle>,
 
     pub dxfs: Vec<Arc<str>>,
+
+    pub hidden: Vec<HiddenStyle>,
+}
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct HiddenStyle {
+    pub before: usize,
+    pub style: NamedStyle,
 }
 
 impl Default for StyleTable {
@@ -517,6 +528,7 @@ impl Default for StyleTable {
             theme: Theme::default(),
             named: Vec::new(),
             dxfs: Vec::new(),
+            hidden: Vec::new(),
         };
         for s in builtin_styles() {
             t.insert(s);
@@ -526,10 +538,150 @@ impl Default for StyleTable {
 }
 
 impl StyleTable {
+    fn slots(&self) -> Vec<(bool, usize)> {
+        let mut out = Vec::with_capacity(self.named.len() + self.hidden.len());
+        let mut h = 0;
+        for v in 0..=self.named.len() {
+            while h < self.hidden.len() && self.hidden[h].before <= v {
+                out.push((true, h));
+                h += 1;
+            }
+            if v < self.named.len() {
+                out.push((false, v));
+            }
+        }
+        out
+    }
+
+    fn slot_name(&self, (hid, i): (bool, usize)) -> &str {
+        if hid {
+            &self.hidden[i].style.name
+        } else {
+            &self.named[i].name
+        }
+    }
+
+    fn slot_cmp(&self, slot: (bool, usize), name: &str, key_hidden: bool) -> std::cmp::Ordering {
+        order(self.slot_name(slot), name).then_with(|| (!slot.0).cmp(&!key_hidden))
+    }
+
+    fn lookup_slot(
+        &self,
+        slots: &[(bool, usize)],
+        name: &str,
+        key_hidden: bool,
+    ) -> Result<usize, usize> {
+        let n = slots.len();
+        if n == 0 || self.slot_cmp(slots[n - 1], name, key_hidden).is_lt() {
+            return Err(n);
+        }
+        let (mut lo, mut hi) = (0, n);
+        while lo != hi {
+            let mid = (hi - lo) / 2 + lo;
+            match self.slot_cmp(slots[mid], name, key_hidden) {
+                std::cmp::Ordering::Equal => return Ok(mid),
+                std::cmp::Ordering::Less => lo = mid + 1,
+                std::cmp::Ordering::Greater => hi = mid,
+            }
+        }
+        Err(lo)
+    }
+
+    pub fn lookup(&self, name: &str) -> Result<usize, usize> {
+        let slots = self.slots();
+        match self.lookup_slot(&slots, name, false) {
+            Ok(at) => Ok(slots[at].1),
+            Err(at) => Err(slots[..at].iter().filter(|s| !s.0).count()),
+        }
+    }
+
+    pub fn lookup_hidden(&self, name: &str) -> Option<usize> {
+        let slots = self.slots();
+        self.lookup_slot(&slots, name, true)
+            .ok()
+            .map(|at| slots[at].1)
+    }
+
+    pub fn unhide(&mut self, h: usize) -> NamedStyle {
+        let hs = self.hidden.remove(h);
+        self.named.insert(hs.before, hs.style.clone());
+        for o in &mut self.hidden[h..] {
+            o.before += 1;
+        }
+        hs.style
+    }
+
+    pub fn insert_missed(&mut self, s: NamedStyle) {
+        let slots = self.slots();
+        match self.lookup_slot(&slots, &s.name, true) {
+            Ok(at) | Err(at) => self.insert_at_slot(&slots, at, s),
+        }
+    }
+
+    fn insert_at_slot(&mut self, slots: &[(bool, usize)], at: usize, s: NamedStyle) {
+        let named_at = slots[..at].iter().filter(|x| !x.0).count();
+        for &(hid, h) in &slots[at..] {
+            if hid {
+                self.hidden[h].before += 1;
+            }
+        }
+        self.named.insert(named_at, s);
+    }
+
     pub fn get(&self, name: &str) -> Option<&NamedStyle> {
-        self.named
-            .iter()
-            .find(|s| s.name.eq_ignore_ascii_case(name))
+        self.lookup(name).ok().map(|i| &self.named[i])
+    }
+
+    pub fn position(&self, name: &str) -> Option<usize> {
+        self.lookup(name)
+            .ok()
+            .or_else(|| self.named.iter().position(|s| order(&s.name, name).is_eq()))
+    }
+
+    pub fn replace(&mut self, s: NamedStyle) {
+        match self.position(&s.name) {
+            Some(i) => self.named[i] = s,
+            None => self.insert(s),
+        }
+    }
+
+    pub fn remove(&mut self, name: &str) {
+        if let Some(i) = self.position(name) {
+            let s = self.named.remove(i);
+
+            let mut at = self.hidden.len();
+            for (k, o) in self.hidden.iter_mut().enumerate() {
+                if o.before > i {
+                    o.before -= 1;
+                    at = at.min(k);
+                }
+            }
+            if s.builtin_id.is_some() {
+                self.hidden.insert(
+                    at,
+                    HiddenStyle {
+                        before: i,
+                        style: s,
+                    },
+                );
+            }
+        }
+    }
+
+    pub fn insert_unnamed(&mut self, mut s: NamedStyle) -> Arc<str> {
+        let slots = self.slots();
+        let at = match self.lookup_slot(&slots, "", false) {
+            Ok(at) | Err(at) => at,
+        };
+        let name: Arc<str> = (1..)
+            .map(|n| format!("Style {n}"))
+            .find(|n| self.lookup(n).is_err())
+            .map(|n| Arc::from(n.as_str()))
+            .unwrap_or_default();
+        s.name = name.clone();
+        s.style.named = name.clone();
+        self.insert_at_slot(&slots, at, s);
+        name
     }
 
     pub fn ensure_hyperlink(&mut self) {
@@ -554,7 +706,7 @@ impl StyleTable {
             .map(|n| (n.builtin_id.is_none(), n.name.clone()))
             .chain(deleted.iter().map(|d| (false, d.clone())))
             .collect();
-        order.sort_by_cached_key(|(_, n)| sort_key(n));
+        order.sort_by(|(_, a), (_, b)| self::order(a, b));
         let mut out = Vec::new();
         for (i, (user, name)) in order.iter().enumerate() {
             let Some(at) = name.find('_') else { continue };
@@ -568,36 +720,16 @@ impl StyleTable {
     }
 
     pub fn insert(&mut self, s: NamedStyle) {
-        if let Some(old) = self
-            .named
-            .iter_mut()
-            .find(|o| o.name.eq_ignore_ascii_case(&s.name))
-        {
-            *old = s;
-            return;
+        let slots = self.slots();
+        match self.lookup_slot(&slots, &s.name, false) {
+            Ok(at) => self.named[slots[at].1] = s,
+            Err(at) => self.insert_at_slot(&slots, at, s),
         }
-        let k = sort_key(&s.name);
-        let at = self.named.partition_point(|o| sort_key(&o.name) < k);
-        self.named.insert(at, s);
     }
 }
 
-fn sort_key(name: &str) -> (String, String) {
-    let base = |c: char| -> char {
-        match c {
-            'à'..='å' => 'a',
-            'ç' => 'c',
-            'è'..='ë' => 'e',
-            'ì'..='ï' => 'i',
-            'ñ' => 'n',
-            'ò'..='ö' | 'ø' => 'o',
-            'ù'..='ü' => 'u',
-            'ý' | 'ÿ' => 'y',
-            c => c,
-        }
-    };
-    let lower = name.to_lowercase();
-    (lower.chars().map(base).collect(), lower)
+fn order(a: &str, b: &str) -> std::cmp::Ordering {
+    crate::text::collate_compare(a, b).then_with(|| a.to_lowercase().cmp(&b.to_lowercase()))
 }
 
 fn builtin(name: &str, id: u32, parts: &str, edit: &dyn Fn(&mut Style)) -> NamedStyle {
@@ -783,20 +915,40 @@ pub const PALETTE: [u32; 56] = [
 ];
 
 pub fn nearest_color_index(rgb: u32) -> u8 {
+    nearest_color_index_in(&PALETTE, rgb)
+}
+
+pub fn nearest_color_index_in(palette: &[u32; 56], rgb: u32) -> u8 {
     let ch = |c: u32, s: u32| i32::try_from((c >> s) & 0xFF).unwrap_or(0);
+    let grey = |c: u32| ch(c, 16) == ch(c, 8) && ch(c, 8) == ch(c, 0);
+    let want_grey = grey(rgb);
     let dist = |p: u32| {
         [16, 8, 0]
             .iter()
             .map(|&s| (ch(rgb, s) - ch(p, s)).abs())
             .sum::<i32>()
     };
-    let mut best = 0;
-    for (i, &p) in PALETTE.iter().enumerate() {
-        if dist(p) < dist(PALETTE[best]) {
-            best = i;
+    let pick = |want_grey: bool| {
+        let mut best: Option<(i32, usize)> = None;
+        for (i, &p) in palette.iter().enumerate() {
+            if want_grey && !grey(p) {
+                continue;
+            }
+            let d = dist(p);
+            if best.is_none_or(|(bd, _)| d < bd) {
+                best = Some((d, i));
+                if d == 0 {
+                    break;
+                }
+            }
         }
-    }
-    best as u8 + 1
+        best
+    };
+
+    let found = if want_grey { pick(true) } else { None };
+    found
+        .or_else(|| pick(false))
+        .map_or(1, |(_, i)| i as u8 + 1)
 }
 
 pub fn indexed_rgb(i: u8) -> Option<u32> {
@@ -945,12 +1097,14 @@ const CV_ICV_TABLE: [(u32, u8); 29] = [
     (0x92D050, 50),
 ];
 
-pub fn cv_color_index(rgb: u32) -> u8 {
-    if let Some(i) = PALETTE.iter().position(|&p| p == rgb) {
+pub fn cv_color_index_in(palette: &[u32; 56], rgb: u32) -> u8 {
+    if let Some(i) = palette.iter().position(|&p| p == rgb) {
         return i as u8 + 1;
     }
-    if let Some(&(_, ci)) = CV_ICV_TABLE.iter().find(|&&(c, _)| c == rgb) {
-        return ci - 7;
+    if palette == &PALETTE {
+        if let Some(&(_, ci)) = CV_ICV_TABLE.iter().find(|&&(c, _)| c == rgb) {
+            return ci - 7;
+        }
     }
     let ch = |c: u32, s: u32| i32::try_from((c >> s) & 0xFF).unwrap_or(0);
     let is_grey = |c: u32| {
@@ -960,7 +1114,7 @@ pub fn cv_color_index(rgb: u32) -> u8 {
     let pick = |grey: bool| {
         let (h, l, s) = cv_hls(rgb);
         let mut best: Option<(i32, usize)> = None;
-        for (i, &p) in PALETTE.iter().enumerate() {
+        for (i, &p) in palette.iter().enumerate() {
             let d = if grey {
                 if !is_grey(p) {
                     continue;
@@ -989,6 +1143,10 @@ pub fn cv_color_index(rgb: u32) -> u8 {
     let found = if is_grey(rgb) { pick(true) } else { None };
     let (_, i) = found.or_else(|| pick(false)).unwrap_or((0, 0));
     i as u8 + 1
+}
+
+pub fn cv_color_index(rgb: u32) -> u8 {
+    cv_color_index_in(&PALETTE, rgb)
 }
 
 pub fn apply_tint_cv(rgb: u32, tint: f64) -> u32 {
@@ -1030,6 +1188,39 @@ pub fn apply_tint_cv(rgb: u32, tint: f64) -> u32 {
 }
 
 impl Theme {
+    pub fn indexed(&self, i: u8) -> Option<u32> {
+        match i {
+            8..=63 => self.palette.get(usize::from(i) - 8).copied(),
+            _ => indexed_rgb(i),
+        }
+    }
+
+    pub fn icv_from_rgb(&self, rgb: u32) -> i32 {
+        let rgb = rgb & 0xFF_FFFF;
+        if let Some(i) = self.palette.iter().position(|&p| p == rgb) {
+            return i as i32 + 8;
+        }
+        PALETTE[..8]
+            .iter()
+            .position(|&p| p == rgb)
+            .map_or(-1, |i| i as i32)
+    }
+
+    pub fn color_index(&self, rgb: u32) -> i32 {
+        match self.icv_from_rgb(rgb) {
+            -1 => i32::from(nearest_color_index(rgb)),
+            icv => icv - 7,
+        }
+    }
+
+    pub fn chart_color_index(&self, rgb: u32) -> u8 {
+        nearest_color_index_in(&self.palette, rgb & 0xFF_FFFF)
+    }
+
+    pub fn pcv_color_index(&self, rgb: u32) -> u8 {
+        cv_color_index_in(&self.palette, rgb & 0xFF_FFFF)
+    }
+
     pub fn rgb_cv(&self, c: CellColor, auto: u32) -> u32 {
         match c {
             CellColor::Theme { index, .. } => {
@@ -1045,9 +1236,9 @@ impl Theme {
             CellColor::Auto | CellColor::AutoTint { .. } => auto,
             CellColor::Rgb(v) => v,
             CellColor::RgbTint { rgb, .. } => apply_tint_cv(rgb, c.tint()),
-            CellColor::Indexed(i) => indexed_rgb(i).unwrap_or(auto),
+            CellColor::Indexed(i) => self.indexed(i).unwrap_or(auto),
             CellColor::IndexedTint { index, .. } => {
-                apply_tint_cv(indexed_rgb(index).unwrap_or(auto), c.tint())
+                apply_tint_cv(self.indexed(index).unwrap_or(auto), c.tint())
             }
             CellColor::Theme { index, .. } => {
                 let base = self.colors.get(usize::from(index)).copied().unwrap_or(auto);
@@ -1060,6 +1251,36 @@ impl Theme {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn color_index_reads_the_workbook_palette() {
+        let mut t = Theme::default();
+        t.palette[2] = 0x0A141E;
+        t.palette[0] = 0x0B1621;
+        assert_eq!(t.color_index(0x0A141E), 3);
+        assert_eq!(t.color_index(0xFF0000), -5);
+        assert_eq!(t.color_index(0x000000), -7);
+        assert_eq!(t.color_index(0x0A141F), 1);
+        assert_eq!(t.color_index(0x646464), 16);
+        assert_eq!(Theme::default().color_index(0xE0E0E0), 2);
+    }
+
+    #[test]
+    fn nearest_readers_follow_the_workbook_palette() {
+        let mut t = Theme::default();
+        t.palette[4] = 0x123456;
+        t.palette[6] = 0x646464;
+        t.palette[19] = 0x40A0C0;
+        for f in [Theme::pcv_color_index, Theme::chart_color_index] {
+            assert_eq!(f(&t, 0x123456), 5);
+            assert_eq!(f(&t, 0x646464), 7);
+            assert_eq!(f(&t, 0x40A0C0), 20);
+            assert_eq!(f(&t, 0x686868), 7);
+        }
+
+        assert_eq!(Theme::default().pcv_color_index(0xFF0000), 3);
+        assert_eq!(cv_color_index(0x808080), 16);
+    }
 
     #[test]
     fn tints_match_excel() {

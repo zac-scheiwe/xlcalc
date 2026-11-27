@@ -241,7 +241,7 @@ impl Ctx<'_> {
         });
 
         let table = table.map(|t| match self.wb.table_by_name(&t) {
-            Some(x) => crate::workbook::tables::table_display_name(&x.name),
+            Some(x) => x.disp.clone(),
             None => t,
         });
         let spec = match spec.strip_prefix('@') {
@@ -375,31 +375,6 @@ impl Ctx<'_> {
             },
             e => e,
         })
-    }
-}
-
-fn excel_adds_at(e: &Expr) -> bool {
-    crate::deep(|| excel_adds_at_inner(e))
-}
-
-fn excel_adds_at_inner(e: &Expr) -> bool {
-    match e {
-        Expr::Func { name, args } => {
-            let bare = crate::formula::strip_prefixes(name).to_uppercase();
-            bare == "XLOOKUP"
-                || !(matches!(bare.as_str(), "LET" | "LAMBDA")
-                    || crate::functions::lookup(&bare).is_some())
-                || args.iter().any(excel_adds_at)
-        }
-        Expr::Call { .. } => true,
-        Expr::Unary { expr, .. }
-        | Expr::Percent(expr)
-        | Expr::Spill(expr)
-        | Expr::Paren(expr)
-        | Expr::Ws { expr, .. }
-        | Expr::Field { expr, .. } => excel_adds_at(expr),
-        Expr::Binary { left, right, .. } => excel_adds_at(left) || excel_adds_at(right),
-        _ => false,
     }
 }
 
@@ -552,7 +527,7 @@ impl Workbook {
         );
 
         let filed = if shown.len() > 1000 {
-            stacker::grow(64 << 20, || to_file(self, &shown, host))
+            xlcalc_stack::grow(64 << 20, || to_file(self, &shown, host))
         } else {
             to_file(self, &shown, host)
         };
@@ -582,16 +557,11 @@ impl Workbook {
         }
         let legacy = self.legacy_formula_text(addr)?;
 
-        let quiet = matches!(
-            f.formula.root,
-            crate::formula::Node::Unary(crate::parser::ast::UnaryOp::ImplicitQuiet, _)
-        );
-        let scalar = quiet == crate::legacy::legacy_entry_is_scalar(self, &shown, addr);
-        let at_risk = parse(shown.trim_start_matches('=')).map_or(true, |e| excel_adds_at(&e));
+        let scalar = !crate::legacy::legacy_entry_is_scalar(self, &shown)
+            || !crate::eval::fdyn::cached(self, addr);
         if f.spill.is_none()
             && scalar
-            && !at_risk
-            && crate::legacy::legacy_reads_back(self, &legacy, &shown)
+            && crate::legacy::legacy_reads_back(self, addr, &legacy, &shown)
         {
             return Some(FileFormula {
                 text: to_file(self, &legacy, Some(addr)),
@@ -628,6 +598,18 @@ mod tests {
     }
 
     #[test]
+    fn legacy_form_follows_range_formula() {
+        let mut wb = Workbook::new();
+        let f = ff(&mut wb, (0, 3), "=XLOOKUP(2,A1:A3,B1:B3)");
+        assert_eq!(f.kind, FileFormulaKind::Plain);
+        let f = ff(&mut wb, (1, 3), "=XLOOKUP(TRUE,A1:A3>1,B1:B3)");
+        assert!(matches!(f.kind, FileFormulaKind::Dynamic { .. }));
+        wb.define_name("Twice", "=LAMBDA(x,x*2)", None).unwrap();
+        let f = ff(&mut wb, (2, 3), "=Twice(2)");
+        assert!(matches!(f.kind, FileFormulaKind::Dynamic { .. }));
+    }
+
+    #[test]
     fn prefixes_and_kinds() {
         let mut wb = Workbook::new();
         let f = ff(&mut wb, (0, 0), "=SUM(B1:B3)");
@@ -648,6 +630,25 @@ mod tests {
         assert_eq!(f.kind, FileFormulaKind::Plain);
         let f = ff(&mut wb, (11, 0), "=B1:B3+1");
         assert_eq!(f.text, "B1:B3+1");
+        assert!(matches!(f.kind, FileFormulaKind::Dynamic { .. }));
+    }
+
+    #[test]
+    fn flipped_and_unflipped_name_formulas_round_trip() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        wb.define_name("Rng", "=Sheet1!$B$1:$B$3", None).unwrap();
+        let a = CellAddr::new(s, 0, 0);
+        let b = CellAddr::new(s, 1, 0);
+
+        wb.set_legacy_input(a, "=Rng+1").unwrap();
+        let f = wb.file_formula(a).unwrap();
+        assert_eq!(f.text, "Rng+1");
+        assert_eq!(f.kind, FileFormulaKind::Plain);
+
+        wb.set_formula(b, "=Rng+1").unwrap();
+        let f = wb.file_formula(b).unwrap();
+        assert_eq!(f.text, "Rng+1");
         assert!(matches!(f.kind, FileFormulaKind::Dynamic { .. }));
     }
 }

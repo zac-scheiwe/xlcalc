@@ -76,7 +76,7 @@ pub(crate) fn text_arg(v: &Variant) -> Result<String, VbaError> {
                 .iter()
                 .map(|c| u16::from_le_bytes(*c))
                 .collect();
-            Ok(String::from_utf16_lossy(&units))
+            Ok(xlcalc::wide::from_units(&units))
         }
         Variant::Null | Variant::Array(_) => Err(type_mismatch()),
         other => match change_type(&other, VarType::Bstr, Locale::EN_US, 0) {
@@ -234,7 +234,7 @@ impl Stream {
 
     fn decode(&self, bytes: &[u8], be: Option<bool>) -> Result<Vec<u16>, VbaError> {
         Ok(match self.codec() {
-            Codec::Utf8 => String::from_utf8_lossy(bytes).encode_utf16().collect(),
+            Codec::Utf8 => xlcalc::wide::units(&String::from_utf8_lossy(bytes)).collect(),
             Codec::Utf16Le | Codec::Utf16Be | Codec::Utf16Feff => bytes
                 .as_chunks::<2>()
                 .0
@@ -360,7 +360,7 @@ impl Stream {
     }
 
     fn units_to_string(units: &[u16]) -> Variant {
-        Variant::Bstr(String::from_utf16_lossy(units))
+        Variant::Bstr(xlcalc::wide::from_units(units))
     }
 
     fn open_call(&mut self, args: &[Variant]) -> Result<Variant, VbaError> {
@@ -507,7 +507,7 @@ impl Stream {
         }
         let text = text_arg(&args[0])?;
         let how = opt(args, 1).map_or(Ok(0), long_arg)?;
-        let mut units: Vec<u16> = text.encode_utf16().collect();
+        let mut units: Vec<u16> = xlcalc::wide::units(&text).collect();
         let mut tail: Vec<u8> = Vec::new();
         match how {
             0 => {}

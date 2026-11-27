@@ -15,12 +15,15 @@ pub(crate) enum Family {
 pub(crate) struct TextFont {
     pub family: Family,
     pub size: f64,
+
+    pub rich: bool,
 }
 
 impl TextFont {
     pub(crate) const DEFAULT: TextFont = TextFont {
         family: Family::AptosNarrow,
         size: 10.0,
+        rich: false,
     };
 
     pub(crate) fn new(name: &str, size: f64) -> TextFont {
@@ -32,7 +35,11 @@ impl TextFont {
             "consolas" => Family::Consolas,
             _ => Family::AptosNarrow,
         };
-        TextFont { family, size }
+        TextFont {
+            family,
+            size,
+            rich: false,
+        }
     }
 }
 
@@ -111,8 +118,19 @@ pub(crate) fn text_emu(f: TextFont, s: &str) -> i64 {
     if s.is_empty() {
         return 0;
     }
-    if s.chars().any(|ch| ch as u32 > 0xFF) {
-        let mut units: i64 = s.chars().map(|ch| glyph_units(f, ch)).sum();
+
+    if f.rich || s.chars().any(|ch| ch as u32 > 0x17F) {
+        let in_arial = table(f.family).is_none()
+            && s.chars().any(|c| matches!(c as u32, 0x1A0 | 0x1A1 | 0x1AF));
+        let mut units: i64 = s
+            .chars()
+            .map(|ch| {
+                in_arial
+                    .then(|| crate::chartparts::arial_glyph_units(ch, f.size))
+                    .flatten()
+                    .unwrap_or_else(|| glyph_units(f, ch))
+            })
+            .sum();
 
         if s.ends_with(' ') {
             units += 1;
@@ -129,7 +147,13 @@ fn win_metrics(f: TextFont) -> (i64, i64) {
     table(f.family).map_or((1923, 577), |t| t.1)
 }
 
-fn emu(units: i64) -> i64 {
+pub(crate) fn asc_desc_units(f: TextFont) -> (i64, i64) {
+    let (asc, desc) = win_metrics(f);
+    let u = |m: i64| rnd(m as f64 * 200.0 * f.size / 2048.0);
+    (u(asc), u(desc))
+}
+
+pub(crate) fn emu(units: i64) -> i64 {
     (127 * units + 1) / 2
 }
 
@@ -152,14 +176,18 @@ pub(crate) fn legend_key_emu(f: TextFont) -> i64 {
     (0.9 * line_emu(f) as f64).floor() as i64
 }
 
+pub(crate) fn label_offset_emu(f: TextFont) -> i64 {
+    asc_desc_emu(f).0 / 3
+}
+
 pub(crate) fn side_gap_emu(f: TextFont) -> i64 {
     let (a, d) = asc_desc_emu(f);
-    ((a + d) >> 1) + a / 3 - 57_150
+    ((a + d) >> 1) + label_offset_emu(f) - 57_150
 }
 
 pub(crate) fn foot_emu(f: TextFont) -> i64 {
     let (a, d) = asc_desc_emu(f);
-    a + d + 2 * (a / 3) - 57_150
+    a + d + 2 * label_offset_emu(f) - 57_150
 }
 
 pub(crate) fn half_tick_emu(f: TextFont) -> i64 {

@@ -453,6 +453,19 @@ pub(crate) fn cache_def_bin(def: &Node, rid: &str, warnings: &mut Vec<String>) -
     r.rec(CACHE_FRT, &[0; 9]);
     r.empty(CACHE_FRT_END);
     r.empty(FRT_END);
+
+    if let Some(id) = crate::slicers_xml::all(def, "pivotCacheDefinition")
+        .first()
+        .and_then(|n| n.attr("pivotCacheId"))
+        .and_then(|v| v.parse::<u32>().ok())
+    {
+        r.rec(FRT_BEGIN, &[0x02, 0x0e, 0, 0]);
+        r.with(1066, |p| {
+            p.u32(0).u8(0).u32(id);
+        });
+        r.empty(1067);
+        r.empty(FRT_END);
+    }
     r.rec(FRT_BEGIN, &[0x54, 0, 2, 0]);
     r.rec(CACHE_CLEAN, &[1]);
     r.empty(FRT_END);

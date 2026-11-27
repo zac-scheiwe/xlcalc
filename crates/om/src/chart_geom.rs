@@ -3,11 +3,11 @@ use xlcalc_variant::Variant;
 
 use crate::app::Application;
 use crate::chart_layout::{
-    auto_layout, cat_overhang, cat_text_h, half_tick, inside_out_room, label_extent,
-    legend_wrap_room, outer_axis_layout, reserves, side_label_step, table_head_at, table_head_pad,
-    table_label_lines, LayoutIn, LegendAt, LegendIn, TITLE_EXTRA,
+    auto_layout, cat_overhang, cat_text_h, half_tick, inner_target_layout, inside_out_room,
+    label_extent, legend_wrap_room, outer_axis_layout, reserves, table_head_at, table_head_pad,
+    table_label_lines, value_box, Layout, LayoutIn, LegendAt, LegendIn, TITLE_EXTRA,
 };
-use crate::chart_lobj::OUTSIDE;
+use crate::chart_lobj::{MIN_HARD, OUTSIDE};
 use crate::chartparts::{
     is_3d_column, is_xy, legend_font_emu, legend_text_emu, series_name_emu, series_name_text,
     val_text_emu, wrap_legend_text, SCALE_LEN,
@@ -51,23 +51,18 @@ const OUTER: &str = "PlotArea.#outer";
 
 const RERUN: &str = "PlotArea.#rerun";
 
-const MIN_INNER: i64 = 10;
-
 const LAID_SIZE: &str = "#lsz";
 
 const PRINT_EARLY: &str = "#poe";
 
-const PRINT_EARLY_WIDTH: i64 = 2_705;
+const PRINT_EARLY_W: &str = "#pow";
 
-const PASS2_SHRINK: i64 = 200_692;
-
-const DEPTH_LABEL_PAD: i64 = 20_352;
-
-fn side_axis_pad(font: crate::chartfont::TextFont) -> i64 {
-    crate::chartfont::line_emu(font) / 2
+fn early_extra(c: &Chart, lay: &Layout) -> i64 {
+    match c.bag.get(PRINT_EARLY_W) {
+        Some(BagVal::I(w)) => i64::from(*w) - lay.inside[2],
+        _ => 0,
+    }
 }
-
-const SIDE_AXIS_H: i64 = 174_054;
 
 fn layout_family(t: i32) -> i32 {
     match t {
@@ -85,9 +80,9 @@ fn layout_family(t: i32) -> i32 {
 
 fn no_less_than_min(mut plot: [i64; 4], mut inside: [i64; 4]) -> ([i64; 4], [i64; 4]) {
     for k in 2..4 {
-        if plot[k] < MIN_INNER {
-            plot[k] = MIN_INNER;
-            inside[k] = MIN_INNER;
+        if plot[k] < MIN_HARD {
+            plot[k] = MIN_HARD;
+            inside[k] = MIN_HARD;
         }
     }
     (plot, inside)
@@ -176,8 +171,9 @@ impl Application<'_> {
         let _fonts = crate::chartfont::font_scope(crate::chartparts::chart_fonts(c));
 
         let t = layout_family(crate::chartparts::axis_type(c));
-        let percent = matches!(c.chart_type, 53 | 59 | 64 | 67 | 77 | 56);
-        if !(matches!(t, 51 | 57 | 4 | 65 | 1 | -4169 | 5 | 15 | -4100)
+
+        let percent = crate::chartparts::stack_kind(c.chart_type) >= 3;
+        if !(matches!(t, 51 | 57 | 4 | 65 | 1 | -4169 | 5 | -4120 | 15 | -4100)
             || crate::chartparts::is_radar(t))
             || c.series.is_empty()
         {
@@ -190,7 +186,8 @@ impl Application<'_> {
         let sh = self.shape_clone(r)?;
         let wb = &self.book(r.book)?.wb;
         let (_, _, w, h) = wb.shape_rect_emu(r.sheet, &sh.pos);
-        let pie = t == 5;
+
+        let pie = matches!(t, 5 | -4120);
 
         let date = if dated && !pie {
             self.date_axis(r, c)?
@@ -258,9 +255,9 @@ impl Application<'_> {
         } else {
             None
         };
-        let title = c.has_title
-            || ((pie || c.series.len() == 1)
-                && !matches!(c.bag.get("#title_off"), Some(BagVal::I(1))));
+
+        let title = c.auto_title_series().is_some()
+            || c.has_title && !c.bag.contains_key(xlcalc::drawing::TITLE_AUTO);
         let mut li = LayoutIn {
             w,
             h,
@@ -522,6 +519,9 @@ impl Application<'_> {
         res[1] += TITLE_EXTRA;
         res[3] += TITLE_EXTRA;
         res[2] = 0;
+        let grown = manual
+            .filter(|_| outer.is_none() && !li.pie && !is_3d_column(c.chart_type))
+            .map(|m| inner_target_layout(&li, m));
         let (plot, inside) = match (outer, manual) {
             (Some(o), _) if !li.pie => {
                 let ins = outer_axis_layout(&li, o);
@@ -533,12 +533,24 @@ impl Application<'_> {
                 ];
                 (o, ins)
             }
+            (_, Some(_)) if grown.is_some() => {
+                let (g, ins) = grown.unwrap_or_default();
+                if li.table.is_none() {
+                    res = [
+                        ins[0] - g[0],
+                        ins[1] - g[1],
+                        g[0] + g[2] - ins[0] - ins[2],
+                        g[1] + g[3] - ins[1] - ins[3],
+                    ];
+                }
+                (g, ins)
+            }
             (_, Some(m)) if !li.pie => {
                 let room = inside_out_room(li.h, m);
                 let (l, r) = cat_overhang(&li, m[2], m[2], room);
                 res[0] = res[0].max(l);
                 res[2] = if early {
-                    (r - PRINT_EARLY_WIDTH).max(0)
+                    (r - early_extra(c, &lay)).max(0)
                 } else {
                     r
                 };
@@ -557,10 +569,12 @@ impl Application<'_> {
                     if lines1 > 1 {
                         let n = li.cat_labels.len() as i64;
                         res[2] = (76_200 + last1 / 2 - m[2] / n / 2).max(0);
-                        let a2 = m[2] + res[2] - PASS2_SHRINK;
+                        let a2 = m[2] + res[2] - value_box(&li);
                         let (lines2, rot, _) = table_label_lines(&li.cat_labels, a2);
                         let r2 = if rot {
                             0
+                        } else if lines2 == 1 {
+                            res[2]
                         } else {
                             cat_overhang(&li, m[2] + res[2], m[2] + res[2], room).1
                         };
@@ -592,22 +606,15 @@ impl Application<'_> {
             }
             _ if early => {
                 let (mut plot, mut inside) = (lay.plot, lay.inside);
-                plot[2] += PRINT_EARLY_WIDTH;
-                inside[2] += PRINT_EARLY_WIDTH;
+                let extra = early_extra(c, &lay);
+                plot[2] += extra;
+                inside[2] += extra;
                 (plot, inside)
             }
-            _ if is_3d_column(c.chart_type) && !matches!(c.chart_type, 60..=62) => {
-                no_less_than_min(lay.plot, self.inside_3d(r, c, &li, lay.plot)?)
+            _ if is_3d_column(c.chart_type) => {
+                no_less_than_min(lay.plot, self.inside_3d(r, c, &li)?)
             }
-            _ => {
-                let mut inside = lay.inside;
-                if let Some(d) = self.bar_3d_shift(r, c, &li, lay.plot)? {
-                    inside[0] += d[0];
-                    inside[2] -= d[0] + d[1];
-                    inside[3] -= d[2];
-                }
-                no_less_than_min(lay.plot, inside)
-            }
+            _ => no_less_than_min(lay.plot, lay.inside),
         };
         Ok(Some(Geom {
             plot,
@@ -620,31 +627,7 @@ impl Application<'_> {
         }))
     }
 
-    fn bar_3d_shift(
-        &self,
-        r: &DrawRef,
-        c: &Chart,
-        li: &LayoutIn,
-        plot: [i64; 4],
-    ) -> Result<Option<[i64; 3]>, OmError> {
-        if !matches!(c.chart_type, 60..=62)
-            || li.far_x
-            || li.far_y
-            || li.side_title
-            || li.crosses_inside
-            || li.cross_frac.is_some()
-            || li.val_rev
-            || !li.val_labels_on
-            || matches!(c.bag.get("Chart.RightAngleAxes"), Some(BagVal::B(true)))
-        {
-            return Ok(None);
-        }
-        let rot = match c.bag.get("Chart.Rotation") {
-            Some(BagVal::I(n)) => n.rem_euclid(360),
-            _ => 20,
-        };
-        let quarter = rot / 90;
-        let at_max = matches!(c.bag.get("Axis1.Crosses"), Some(BagVal::I(2))) != c.axes[0].reverse;
+    fn inside_3d(&self, r: &DrawRef, c: &Chart, li: &LayoutIn) -> Result<[i64; 4], OmError> {
         let wb = &self.book(r.book)?.wb;
         let cats = c
             .series
@@ -653,115 +636,29 @@ impl Application<'_> {
             .max()
             .unwrap_or(1);
         let view = crate::chart_3d::View3d::of(c, c.series.len(), cats);
-        let (_, horizontal) = view.value_axis(plot[2], plot[3], at_max);
-        let [l, t, w, h] = plot;
-        let ins = auto_layout(li).inside;
-        let old = [
-            ins[0] - l,
-            ins[1] - t,
-            l + w - ins[0] - ins[2],
-            t + h - ins[1] - ins[3],
-        ];
-        let widest = li.val_labels.iter().copied().max().unwrap_or(0);
-        let first = li.val_labels.first().copied().unwrap_or(0) / 2;
-        let cat_left = quarter == 0 || quarter == 3;
-        let (left, right, bottom) = if horizontal {
-            (if cat_left { old[0] } else { first }, old[2], old[3])
-        } else {
-            let vw = widest + side_axis_pad(crate::chartfont::fonts().val);
-            match quarter {
-                0 => (old[0].max(vw), 0, 0),
-                1 => (0, vw, 0),
-                2 => (vw, 0, 0),
-                _ => (old[0], vw, 0),
-            }
-        };
-        let d = [left - old[0], right - old[2], bottom - old[3]];
-        Ok((d != [0; 3]).then_some(d))
-    }
-
-    fn inside_3d(
-        &self,
-        r: &DrawRef,
-        c: &Chart,
-        li: &LayoutIn,
-        o: [i64; 4],
-    ) -> Result<[i64; 4], OmError> {
-        let wb = &self.book(r.book)?.wb;
-        let [left, top, _, bottom] = reserves(li);
-        let rot = match c.bag.get("Chart.Rotation") {
-            Some(BagVal::I(n)) => *n,
-            _ => 20,
-        };
-        let flat = matches!(c.bag.get("Chart.Elevation"), Some(BagVal::I(0)));
-        let depth_names = || {
-            c.series
+        let names = crate::chart_layout3d::Names {
+            series_width: c
+                .series
                 .iter()
                 .enumerate()
                 .map(|(k, s)| series_name_emu(wb, k, s))
                 .max()
-                .unwrap_or(0)
-                + DEPTH_LABEL_PAD
+                .unwrap_or(0),
+            series_labels: c
+                .series
+                .iter()
+                .enumerate()
+                .map(|(k, s)| crate::chartparts::series_name_text(wb, k, s))
+                .collect(),
         };
-
-        if (90..270).contains(&rot) {
-            let (right, bottom) = if rot < 180 {
-                let widths: Vec<i64> = li.cat_labels.iter().map(|s| legend_text_emu(s)).collect();
-
-                let n = widths.len() as i64;
-                let view = crate::chart_3d::View3d::of(c, c.series.len(), widths.len());
-                let step = view
-                    .category_axis_rise(o[2], o[3], li.far_y)
-                    .map_or(1, |rise| side_label_step(n, rise, cat_text_h()));
-                let widest = widths
-                    .iter()
-                    .step_by(step as usize)
-                    .copied()
-                    .max()
-                    .unwrap_or(0);
-                let series = if c.chart_type == -4100 && !flat {
-                    SIDE_AXIS_H
-                } else {
-                    0
-                };
-                (
-                    widest + side_axis_pad(crate::chartfont::fonts().cat),
-                    half_tick() + series,
-                )
-            } else if c.chart_type == -4100 && !flat {
-                (depth_names(), bottom)
-            } else {
-                (0, bottom)
-            };
-            return Ok([
-                o[0],
-                o[1] + half_tick(),
-                o[2] - right,
-                o[3] - half_tick() - bottom,
-            ]);
-        }
-        let depth = if c.chart_type == -4100 && (0..45).contains(&rot) && !flat {
-            depth_names()
-        } else {
-            0
-        };
-
-        let (left, right) = if li.far_x {
-            (0, left.max(depth))
-        } else {
-            (left, depth)
-        };
-        let (top, bottom) = if li.far_y {
-            (bottom, top)
-        } else {
-            (top, bottom)
-        };
-        Ok([
-            o[0] + left,
-            o[1] + top,
-            o[2] - left - right,
-            o[3] - top - bottom,
-        ])
+        let titles = [
+            li.side_title.then_some(crate::chart_layout::AXIS_TITLE),
+            li.foot_title.then_some(crate::chart_layout::AXIS_TITLE),
+        ];
+        let soft = crate::chart_layout::plot_frame(li).0;
+        Ok(crate::chart_layout3d::axis_layout_3d(
+            li, &view, soft, titles, &names,
+        ))
     }
 
     pub(crate) fn mark_print_early(&mut self, r: &DrawRef) -> Result<(), OmError> {
@@ -769,9 +666,16 @@ impl Application<'_> {
             kind: crate::shapes::DrawKind::Chart,
             ..*r
         };
+
+        let now = self.chart_of(&cr)?;
+        let width = match self.chart_geom_with(&cr, &now, true)? {
+            Some(g) => g.inside[2],
+            None => 0,
+        };
         self.chart_edit(&cr, |_, c| {
             if !matches!(c.bag.get("Chart.HasDataTable"), Some(BagVal::B(true))) {
                 c.bag.insert(PRINT_EARLY.into(), BagVal::I(1));
+                c.bag.insert(PRINT_EARLY_W.into(), BagVal::I(width as i32));
                 c.bag.insert(LAID.into(), BagVal::I(1));
             }
             Ok(())
@@ -806,14 +710,7 @@ impl Application<'_> {
             c.bag.insert(LAID.into(), BagVal::I(1));
             c.bag.insert(crate::chartparts::SCALED.into(), BagVal::I(1));
 
-            if !c.has_title
-                && c.series.len() == 1
-                && !matches!(c.bag.get("#title_off"), Some(BagVal::I(1)))
-            {
-                c.title = crate::chartparts::auto_title(wb, c);
-                c.title_ref = None;
-                c.has_title = true;
-            }
+            crate::chartparts::ensure_auto_title(wb, c);
             Ok(())
         })
     }
@@ -858,6 +755,9 @@ impl Application<'_> {
             })?;
         }
         let Some(g) = self.chart_geom(r, c)? else {
+            if matches!(part, "PlotArea" | "Legend") {
+                self.layout_title(r)?;
+            }
             return Ok(None);
         };
         let rect = match part {
@@ -1001,7 +901,7 @@ impl Application<'_> {
             _ => {
                 let room = max_y - rb - ins[1];
                 if g.table
-                    && (g.inside[3] == 0 || (g.early && g.inside[3] == MIN_INNER))
+                    && (g.inside[3] == 0 || (g.early && g.inside[3] == MIN_HARD))
                     && whole > room
                 {
                     ins[1] = rt
@@ -1013,7 +913,7 @@ impl Application<'_> {
                     ins[3] = max_y - rb - ins[1];
                     asked = Some(i32::try_from(whole).unwrap_or(i32::MAX));
                 } else if g.early && g.table && whole == 0 {
-                    ins[3] = MIN_INNER;
+                    ins[3] = MIN_HARD;
                 } else {
                     ins[3] = whole.min(room);
                 }

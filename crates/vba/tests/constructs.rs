@@ -445,6 +445,26 @@ End Function"#;
 }
 
 #[test]
+fn enum_member_shared_by_two_enums_is_deterministic() {
+    let src = r#"
+Enum Zed
+    Red = 1
+End Enum
+Enum Abc
+    Red = 2
+End Enum
+Enum Mid
+    Red = 3
+End Enum
+Function F() As String
+    F = Red & Abc.Red & Mid.Red
+End Function"#;
+    for _ in 0..32 {
+        assert_eq!(ok(src, "F", &[]), s("123"));
+    }
+}
+
+#[test]
 fn statics_and_module_state() {
     let src = r#"
 Dim calls As Long

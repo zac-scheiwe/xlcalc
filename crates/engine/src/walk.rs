@@ -199,15 +199,22 @@ pub(crate) fn first_in_areas(
     areas: &[crate::Area],
 ) -> Option<Node> {
     let w = &wb.calc.walk;
-    w.chain.iter().copied().find(|&n| {
+    let mut best: Option<((usize, u32, u32), Node)> = None;
+    for &n in &w.chain {
         if Some(n.fid) == caller || !live(wb, n.fid) || !pullable(w.state(n)) {
-            return false;
+            continue;
         }
         let (sheet, rect) = node_area(wb, n);
-        areas
-            .iter()
-            .any(|a| a.sheet == sheet && a.rect.intersects(&rect))
-    })
+        for (i, a) in areas.iter().enumerate() {
+            if a.sheet == sheet && a.rect.intersects(&rect) {
+                let key = (i, rect.r0, rect.c0);
+                if best.is_none_or(|(k, _)| key > k) {
+                    best = Some((key, n));
+                }
+            }
+        }
+    }
+    best.map(|(_, n)| n)
 }
 
 fn node_area(wb: &Workbook, n: Node) -> (SheetId, Rect) {
@@ -349,6 +356,16 @@ fn sync(wb: &mut Workbook) {
         if live(wb, g) && wb.calc.walk.ident.get(&g) == Some(&ident(wb, g)) {
             apply_dirty(wb, g);
         }
+    }
+
+    for g in std::mem::take(&mut wb.calc.whole_blocks) {
+        if !(live(wb, g) && members(wb, g).is_some() && wb.formula(g).dirty) {
+            continue;
+        }
+        for n in nodes_of(wb, g) {
+            wb.calc.walk.set(n, St::Deferred);
+        }
+        wb.calc.walk.set(Node::head(g), St::Edited);
     }
 
     let w = &mut wb.calc.walk;
@@ -772,13 +789,13 @@ fn store_header(
     read_spill: bool,
     report: &mut RecalcReport,
 ) -> Ev {
-    let Value::Array(new) = crate::cse::fit_circ(value, rows, cols) else {
+    let Value::Array(new) = crate::cse::lift_to_block_circ(value, rows, cols) else {
         return Ev::Fail;
     };
     if new.data.iter().all(is_circ) {
         return Ev::Fail;
     }
-    let old = match crate::cse::fit(wb.formula(fid).value.clone(), rows, cols) {
+    let old = match crate::cse::lift_to_block(wb.formula(fid).value.clone(), rows, cols) {
         Value::Array(a) => a.data.clone(),
         _ => vec![Value::Number(0.0); new.data.len()],
     };
@@ -812,7 +829,7 @@ fn store_member(
     report: &mut RecalcReport,
 ) -> Ev {
     let fid = n.fid;
-    let Value::Array(new) = crate::cse::fit_circ(value, rows, cols) else {
+    let Value::Array(new) = crate::cse::lift_to_block_circ(value, rows, cols) else {
         return Ev::Fail;
     };
     let Some(v) = new.data.get(n.m as usize).cloned() else {
@@ -822,7 +839,7 @@ fn store_member(
         return member_target(wb, fid, n.m / cols, n.m % cols);
     }
     let addr = wb.formula(fid).addr;
-    let mut data = match crate::cse::fit(wb.formula(fid).value.clone(), rows, cols) {
+    let mut data = match crate::cse::lift_to_block(wb.formula(fid).value.clone(), rows, cols) {
         Value::Array(a) => a.data.clone(),
         _ => vec![Value::Number(0.0); (rows * cols) as usize],
     };

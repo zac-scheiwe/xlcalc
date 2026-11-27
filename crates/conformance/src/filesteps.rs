@@ -1,3 +1,4 @@
+use std::collections::BTreeSet;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -567,7 +568,7 @@ fn to_json(v: &Variant) -> J {
         Variant::Ui1(n) => J::from(*n),
         Variant::R4(x) => J::from(f64::from(*x)),
         Variant::R8(x) | Variant::Date(x) => J::from(*x),
-        Variant::Bstr(s) => J::from(s.as_str()),
+        Variant::Bstr(s) => J::from(xlcalc::wide::well_formed(s).as_ref()),
         _ => J::Null,
     }
 }
@@ -575,7 +576,7 @@ fn to_json(v: &Variant) -> J {
 fn scalar(v: &Variant) -> J {
     match v {
         Variant::R8(x) => json!({ "t": "n", "bits": format!("{:016X}", x.to_bits()) }),
-        Variant::Bstr(s) => json!({ "t": "s", "v": s }),
+        Variant::Bstr(s) => json!({ "t": "s", "v": xlcalc::wide::well_formed(s) }),
         Variant::Bool(b) => json!({ "t": "b", "v": b }),
         Variant::Error(code) => {
             let name = xlcalc_om::scode_error(*code)
@@ -798,6 +799,99 @@ fn diff_sheet(want: &J, got: &J, styles: (&J, &J), d: &mut Vec<String>) {
     }
 }
 
+fn stored_formulas(bytes: &[u8]) -> Result<BTreeSet<String>, String> {
+    const ELEMENTS: [&str; 9] = [
+        "f",
+        "formula",
+        "formula1",
+        "formula2",
+        "definedName",
+        "totalsRowFormula",
+        "calculatedColumnFormula",
+        "FmlaLink",
+        "FmlaRange",
+    ];
+    const ATTRS: [&str; 4] = ["fmlaLink", "fmlaRange", "refersTo", "textlink"];
+    let pkg = xlcalc_xlsx::Package::read(bytes)?;
+    let mut found = BTreeSet::new();
+    let mut keep = |text: &str| {
+        let text = unescape(text);
+        if text.contains('!') {
+            found.insert(text.trim().to_string());
+        }
+    };
+    for name in pkg.part_names() {
+        if !(name.ends_with(".xml") || name.ends_with(".vml")) {
+            continue;
+        }
+        let text = String::from_utf8_lossy(pkg.part(name).unwrap_or_default());
+        for piece in text.split('<').skip(1) {
+            let Some((tag, body)) = piece.split_once('>') else {
+                continue;
+            };
+            let element = tag.split_whitespace().next().unwrap_or("");
+            let local = element.rsplit(':').next().unwrap_or("");
+            if ELEMENTS.contains(&local) && !tag.ends_with('/') {
+                keep(body);
+            }
+            let cfvo = (local == "cfvo").then_some("val");
+            for attr in ATTRS.into_iter().chain(cfvo) {
+                if let Some((_, v)) = tag.split_once(&format!(" {attr}=\"")) {
+                    keep(v.split('"').next().unwrap_or(""));
+                }
+            }
+        }
+    }
+    Ok(found)
+}
+
+fn unescape(text: &str) -> String {
+    let mut out = String::new();
+    let mut rest = text;
+    while let Some(i) = rest.find('&') {
+        out.push_str(&rest[..i]);
+        rest = &rest[i..];
+        let Some(end) = rest.find(';') else {
+            break;
+        };
+        let entity = &rest[1..end];
+        let c = match entity {
+            "amp" => Some('&'),
+            "lt" => Some('<'),
+            "gt" => Some('>'),
+            "quot" => Some('"'),
+            "apos" => Some('\''),
+            _ => entity
+                .strip_prefix("#x")
+                .and_then(|h| u32::from_str_radix(h, 16).ok())
+                .or_else(|| entity.strip_prefix('#').and_then(|d| d.parse().ok()))
+                .and_then(char::from_u32),
+        };
+        match c {
+            Some(c) => out.push(c),
+            None => out.push_str(&rest[..=end]),
+        }
+        rest = &rest[end + 1..];
+    }
+    out.push_str(rest);
+    out
+}
+
+fn diff_formulas(want: &[J], got: &BTreeSet<String>) -> Result<(), String> {
+    let want: BTreeSet<String> = want
+        .iter()
+        .filter_map(|v| v.as_str().map(str::to_string))
+        .collect();
+    if want == *got {
+        return Ok(());
+    }
+    let excel: Vec<&String> = want.difference(got).collect();
+    let ours: Vec<&String> = got.difference(&want).collect();
+    Err(format!(
+        "stored formulas differ: only Excel {excel:?}, only xlcalc {ours:?}"
+    ))
+}
+
 impl OmSession {
     pub fn run_file_step(
         &mut self,
@@ -892,6 +986,9 @@ impl OmSession {
         let Some(bytes) = bytes else {
             return Ok(());
         };
+        if let Some(want) = rec["formulas"].as_array() {
+            return diff_formulas(want, &stored_formulas(&bytes)?);
+        }
         if let Some(hex) = rec["bytes_hex"].as_str() {
             let got: String = bytes.iter().map(|b| format!("{b:02X}")).collect();
             if got != hex {

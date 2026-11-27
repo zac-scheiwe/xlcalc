@@ -66,9 +66,9 @@ pub const DEFS: &[FnDef] = &[
     args("PERCENTRANK.EXC", 2, 3, "XVB", |c, o| {
         desc::percentrank(c, o, true)
     }),
-    args("RANK", 2, 3, "VQV", |c, o| desc::rank(c, o, false)),
-    args("RANK.EQ", 2, 3, "VQV", |c, o| desc::rank(c, o, false)),
-    args("RANK.AVG", 2, 3, "VQV", |c, o| desc::rank(c, o, true)),
+    args("RANK", 2, 3, "VRV", |c, o| desc::rank(c, o, false)),
+    args("RANK.EQ", 2, 3, "VRV", |c, o| desc::rank(c, o, false)),
+    args("RANK.AVG", 2, 3, "VRV", |c, o| desc::rank(c, o, true)),
     args("MODE", 1, MANY, "R", |c, o| desc::mode(c, o, false)),
     args("MODE.SNGL", 1, MANY254, "R", |c, o| desc::mode(c, o, false)),
     args("MODE.MULT", 1, MANY254, "R", |c, o| desc::mode(c, o, true)),
@@ -193,7 +193,7 @@ fn flat_values(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<Value>> {
         Operand::Val(Value::Error(e)) => Err(*e),
         Operand::Missing => Ok(vec![Value::Blank]),
         _ => {
-            let g = Grid::from_operand_3d(op)?;
+            let g = Grid::from_operand(op)?;
             let a = g.to_array(ctx);
             Ok(a.data.clone())
         }
@@ -205,7 +205,7 @@ fn grid_values(ctx: &mut EvalCtx, op: &Operand) -> R<(u32, u32, Vec<Value>)> {
         Operand::Val(Value::Error(e)) => Err(*e),
         Operand::Missing => Ok((1, 1, vec![Value::Blank])),
         _ => {
-            let g = Grid::from_operand_3d(op)?;
+            let g = Grid::from_operand(op)?;
             let a = g.to_array(ctx);
             Ok((a.rows, a.cols, a.data.clone()))
         }

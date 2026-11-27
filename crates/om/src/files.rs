@@ -8,7 +8,8 @@ use xlcalc_variant::Variant;
 use xlcalc_xlsx::{FileKind, Package, SaveOptions};
 
 use crate::app::{Application, BookId, Object};
-use crate::conv::Args;
+use crate::cmdargs::{Oper, Operands, Reader, Refused};
+use crate::conv::{command_number, sfix, Args};
 use crate::error::OmError;
 
 pub trait FileSystem: Send {
@@ -152,6 +153,8 @@ enum Writes {
 fn format_of(code: i32) -> Option<(&'static str, Writes)> {
     Some(match code {
         51 => ("xlsx", Writes::Package(FileKind::Xlsx)),
+
+        61 => ("xlsx", Writes::Package(FileKind::Xlsx)),
         52 => ("xlsm", Writes::Package(FileKind::Xlsm)),
         54 => ("xltx", Writes::Package(FileKind::Xltx)),
         6 | 62 => ("csv", Writes::Csv),
@@ -183,6 +186,175 @@ fn cannot_access(path: &str) -> OmError {
              \u{2022} The workbook you are trying to save has the same name as a currently open workbook."
         ))
     }
+}
+
+fn int_in(
+    r: Reader,
+    o: &Operands,
+    i: usize,
+    range: std::ops::RangeInclusive<i32>,
+) -> Result<bool, Refused> {
+    Ok(r.int(o.get(i))?.is_none_or(|n| range.contains(&n)))
+}
+
+fn text_of(o: &Operands, i: usize) -> Option<&str> {
+    match o.get(i) {
+        Oper::Text(s) | Oper::Dated(_, s) => Some(s),
+        _ => None,
+    }
+}
+
+fn text_len(o: &Operands, i: usize) -> Option<usize> {
+    text_of(o, i).map(|s| xlcalc::wide::units(s).count())
+}
+
+struct OpenArgs {
+    file: String,
+    update_links: Option<i32>,
+    read_only: bool,
+    origin: Option<i32>,
+    password: bool,
+    local: bool,
+}
+
+fn open_args(mut o: Operands, r: Reader, no_delimiter: &mut bool) -> Result<OpenArgs, Refused> {
+    if !o.get(16).is_missing() {
+        if !(0..=2).contains(&r.executor_int(o.get(16))?) {
+            return Err(Refused);
+        }
+        o.take(16);
+    }
+
+    let local = r.flag(o.get(15))?.unwrap_or(false);
+    o.take(15);
+    o.coerce(r)?;
+    let file = text_of(&o, 0).ok_or(Refused)?.to_string();
+
+    let update = int_in(r, &o, 1, 0..=3)?;
+    let format = r.int(o.get(3))?;
+    let known = format.is_none_or(|n| (1..=6).contains(&n) && (n != 6 || o.given > 8));
+    if !(update && known) {
+        return Err(Refused);
+    }
+    if let Some(n) = format {
+        *no_delimiter = n == 5;
+    }
+
+    let origin = int_in(r, &o, 7, 1..=3)?;
+    let delimiter = format != Some(6) || text_len(&o, 8) != Some(0);
+
+    let passwords = text_len(&o, 5).is_none_or(|n| n <= 15);
+    if !(origin && delimiter && passwords) {
+        return Err(Refused);
+    }
+    Ok(OpenArgs {
+        file,
+        update_links: r.int(o.get(1))?,
+        read_only: r.flag(o.get(2))?.unwrap_or(false),
+        origin: r.int(o.get(7))?,
+        password: !o.get(4).is_missing() || !o.get(5).is_missing(),
+        local,
+    })
+}
+
+fn known_code_page(cp: u16) -> bool {
+    matches!(
+        cp,
+        0..=3
+            | 37
+            | 437
+            | 500
+            | 708
+            | 720
+            | 737
+            | 775
+            | 850
+            | 852
+            | 855
+            | 857..=866
+            | 869
+            | 870
+            | 874
+            | 875
+            | 932
+            | 936
+            | 949
+            | 950
+            | 1026
+            | 1047
+            | 1140..=1149
+            | 1200
+            | 1201
+            | 1250..=1258
+            | 1361
+            | 10000..=10007
+            | 20127
+            | 20866
+            | 21866
+            | 28591..=28606
+            | 50220..=50222
+            | 51932
+            | 51949
+            | 52936
+            | 54936
+            | 65000
+            | 65001
+    )
+}
+
+fn field_info_ok(r: Reader, o: &Operands) -> bool {
+    let number = |v: &Variant| command_number(Some(v), r.lcid, r.wb).map(|o| o.map(sfix));
+    let pair = |column: &Variant, kind: &Variant| {
+        number(column).is_ok_and(|n| n.is_none_or(|n| (0..=0x7fff).contains(&n)))
+            && number(kind).is_ok_and(|n| n.is_none_or(|n| (1..=9).contains(&n)))
+    };
+    match o.get(12) {
+        Oper::Missing => true,
+        Oper::Array(sa) => match sa.bounds.len() {
+            1 => sa.data.iter().all(|row| match row {
+                Variant::Array(r) => {
+                    r.bounds.len() == 1 && matches!(&r.data[..], [c, k] if pair(c, k))
+                }
+                _ => false,
+            }),
+
+            2 if sa.bounds[1].1 == 2 => {
+                let rows = sa.data.len() / 2;
+                (0..rows).all(|r| pair(&sa.data[r], &sa.data[r + rows]))
+            }
+            _ => false,
+        },
+        _ => false,
+    }
+}
+
+fn open_text_args(mut o: Operands, r: Reader) -> Result<String, Refused> {
+    if !o.get(17).is_missing() && r.flag(o.get(17)).is_ok() {
+        o.take(17);
+    }
+    o.coerce(r)?;
+    let file = text_of(&o, 0).ok_or(Refused)?.to_string();
+
+    let origin = r
+        .int(o.get(1))?
+        .is_none_or(|n| (1..=3).contains(&n) || n >= -0x7fff && known_code_page(n as u16));
+
+    let numbers = int_in(r, &o, 2, 1..=99_999_999)?
+        && int_in(r, &o, 3, 1..=2)?
+        && int_in(r, &o, 4, 1..=3)?
+        && int_in(r, &o, 13, 1..=2)?;
+
+    let separators = [14, 15]
+        .iter()
+        .all(|&i| text_len(&o, i).is_none_or(|n| n == 1));
+    if !(origin && numbers && separators && field_info_ok(r, &o)) {
+        return Err(Refused);
+    }
+    Ok(file)
+}
+
+fn open_failed() -> OmError {
+    OmError::app_defined_with("Open method of Workbooks class failed")
 }
 
 fn not_found(file: &str) -> OmError {
@@ -442,8 +614,21 @@ impl Application<'_> {
         Ok(self.alloc(Object::Workbook(id)))
     }
 
-    pub(crate) fn workbooks_open(&mut self, a: &Args) -> Result<Variant, OmError> {
-        let file = a.string(0)?.ok_or_else(OmError::app_defined)?;
+    pub(crate) fn open_operands(&mut self, a: &Args) -> Result<Operands, OmError> {
+        self.member_operands("Workbooks", 0x783, a)
+            .map_err(|_| open_failed())
+    }
+
+    pub(crate) fn workbooks_open(
+        &mut self,
+        operands: Operands,
+        lcid: u32,
+    ) -> Result<(Variant, Option<i32>), OmError> {
+        let empty = Workbook::empty();
+        let reader = Reader { wb: &empty, lcid };
+        let args =
+            open_args(operands, reader, &mut self.no_delimiter).map_err(|_| open_failed())?;
+        let file = args.file;
         let full = self
             .fs
             .full_path(&file)
@@ -458,53 +643,72 @@ impl Application<'_> {
             if !hidden {
                 self.active = Some(id);
             }
-            return Ok(self.alloc(Object::Workbook(id)));
+            return Ok((self.alloc(Object::Workbook(id)), args.update_links));
         }
-        if a.get(4).is_some() || a.get(5).is_some() {
+        if args.password {
             return Err(OmError::unsupported("Workbooks.Open with a password"));
         }
-        let read_only = a.bool(2)?.unwrap_or(false);
         let active_before = self.active;
-        let local = a.bool(13)?.unwrap_or(false);
         let bytes = self.fs.read(&full).map_err(|_| not_found(&file))?;
         let name = file_name(&full);
         let id = if content_of(&bytes) == Content::Text {
-            let format = a.i32(3)?;
-            let empty_delimiter = matches!(a.get(8), Some(Variant::Bstr(d)) if d.is_empty());
-            if a.get(7).is_some() || (format == Some(6) && empty_delimiter) {
-                return Err(OmError::app_defined_with(
-                    "Open method of Workbooks class failed",
-                ));
-            }
             if extension(&name).is_some_and(|e| WORKBOOK_EXTENSIONS.contains(&e.as_str())) {
                 return Err(format_not_valid(&name));
             }
-            let imp = if format == Some(5) {
-                xlcalc_xlsx::import_csv_unsplit(&bytes, &name, local)
+
+            if matches!(args.origin, Some(1 | 3)) && !bytes.is_ascii() {
+                return Err(OmError::unsupported(
+                    "Workbooks.Open of a non-ASCII text file in another code page",
+                ));
+            }
+
+            let imp = if self.no_delimiter {
+                xlcalc_xlsx::import_csv_unsplit(&bytes, &name, args.local)
             } else {
-                xlcalc_xlsx::import_csv(&bytes, &name, local)
+                xlcalc_xlsx::import_csv(&bytes, &name, args.local)
             };
             let mut wb = imp.workbook;
             if let Some(active) = self.active.and_then(|id| self.engine(id)) {
                 share_settings(active, &mut wb);
             }
             let id = self.push_book(wb, imp.name, full);
+            self.vifmt.set(imp.last_format);
             self.book_mut(id)?.file_format = imp.file_format;
             id
         } else {
             self.open_bytes(bytes, &name, full, name.clone(), true)?
         };
-        let update = a.i32(1)?;
 
         if extension(&name).is_some_and(|e| matches!(e.as_str(), "xlam" | "xla")) {
             self.book_mut(id)?.is_addin = true;
             self.active = active_before;
         }
         let b = self.book_mut(id)?;
-        b.read_only = read_only;
+        b.read_only = args.read_only;
         b.saved = true;
-        self.update_links_on_open(id, update);
-        Ok(self.alloc(Object::Workbook(id)))
+        self.update_links_on_open(id, args.update_links);
+        Ok((self.alloc(Object::Workbook(id)), args.update_links))
+    }
+
+    pub(crate) fn workbooks_open_text(&mut self, a: &Args) -> Result<Variant, OmError> {
+        let failed = || OmError::app_defined_with("OpenText method of Workbooks class failed");
+        let operands = self
+            .member_operands("Workbooks", 0x784, a)
+            .map_err(|_| failed())?;
+        let (_, mut done) = self.each_call(a.lcid, operands, |app, o| {
+            let empty = Workbook::empty();
+            let reader = Reader {
+                wb: &empty,
+                lcid: a.lcid,
+            };
+            let file = open_text_args(o, reader).map_err(|_| failed())?;
+            let exists = app.fs.full_path(&file).is_some_and(|p| app.fs.exists(&p));
+            if !file.is_empty() && exists {
+                return Err(OmError::unsupported("Workbooks.OpenText of a file"));
+            }
+            Err(not_found(&file))
+        })?;
+        Ok(done.pop().unwrap_or(Variant::Empty))
     }
 
     pub(crate) fn open_bytes(
@@ -530,6 +734,8 @@ impl Application<'_> {
         let mut wb = imp.workbook;
         if let Some(active) = self.active.and_then(|id| self.engine(id)) {
             share_settings(active, &mut wb);
+        } else {
+            self.calculate_before_save = wb.settings().calc_on_save;
         }
         let id = self.push_book(wb, name, path);
         let mut warnings = imp.warnings;
@@ -577,6 +783,7 @@ impl Application<'_> {
             (Content::Xls, _) => 56,
             (_, "xltx") => 54,
             (_, "xltm") => 53,
+            _ if !b.wb.date_compat() => 61,
             _ if has_project => 52,
             (_, "xlsm") => 52,
             _ => 51,
@@ -584,7 +791,13 @@ impl Application<'_> {
         for sh in b.wb.sheets().map(|s| s.id).collect::<Vec<_>>() {
             let list = xlcalc_xlsx::read_controls(&imp.package, sh);
             if !list.is_empty() {
-                b.controls.insert(sh, crate::controls::from_file(list));
+                let mut sc = crate::controls::from_file(list);
+                for c in &mut sc.list {
+                    b.wb.legacy_shape_loaded(sh, c.spid);
+                    crate::controls::anchor_loaded(&mut b.wb, sh, c);
+                    crate::controls::bind(&mut b.wb, sh, c);
+                }
+                b.controls.insert(sh, sc);
             }
         }
         b.ro_recommended = imp
@@ -592,6 +805,11 @@ impl Application<'_> {
             .part("xl/workbook.xml")
             .is_some_and(|x| String::from_utf8_lossy(x).contains("readOnlyRecommended=\"1\""));
         b.package = Some(imp.package);
+        self.retrack_book(id);
+        if let Some(package) = self.book_mut(id)?.package.take() {
+            self.load_ui(id, &package);
+            self.book_mut(id)?.package = Some(package);
+        }
         let dir = match folder(&self.book(id)?.path) {
             d if d.is_empty() => d,
             d => format!("{d}\\"),
@@ -640,8 +858,13 @@ impl Application<'_> {
                     _ if self.has_vb_project(b)? => self.vba_write(b)?,
                     _ => None,
                 };
+                if writes == Writes::Xls {
+                    self.titles_for_xls(b)?;
+                }
                 let controls = self.controls_for_save(b);
                 let protection = self.protection_for_save(b);
+                let ui = self.ui_for_save(b);
+                let properties = self.properties_for_save(b);
                 let bk = self.book(b)?;
                 let opts = SaveOptions {
                     kind: Some(kind),
@@ -650,6 +873,9 @@ impl Application<'_> {
                     dir: xlcalc::split_path(file).0.to_string(),
                     read_only_recommended: bk.ro_recommended,
                     protection,
+                    ui,
+                    properties,
+                    compat: bk.compat && matches!(writes, Writes::Package(_)),
                     ..SaveOptions::default()
                 };
                 let saved = xlcalc_xlsx::save(&bk.wb, bk.package.as_ref(), &opts)
@@ -657,8 +883,10 @@ impl Application<'_> {
                 let warnings = saved.warnings;
                 self.book_mut(b)?.warnings.extend(warnings);
                 if writes == Writes::Xls {
-                    let (bytes, more) = xlcalc_xlsx::xlsx_to_xls(&saved.bytes)
-                        .map_err(|e| OmError::app_defined_with(&e))?;
+                    let bk = self.book(b)?;
+                    let (bytes, more) =
+                        xlcalc_xlsx::xlsx_to_xls_of(&saved.bytes, &bk.wb, bk.compat)
+                            .map_err(|e| OmError::app_defined_with(&e))?;
                     self.book_mut(b)?.warnings.extend(more);
                     return Ok(bytes);
                 }
@@ -701,6 +929,8 @@ impl Application<'_> {
             .ok_or_else(|| cannot_access(&filename))?;
         let name = file_name(&full);
 
+        self.retrack_book(b);
+
         let settings = self.book(b)?.wb.settings();
         if self.calculate_before_save
             && (settings.mode != xlcalc::CalcMode::Automatic
@@ -709,6 +939,11 @@ impl Application<'_> {
         {
             self.book_mut(b)?.wb.recalc_before_save();
             self.sync_links();
+        }
+
+        let on = self.calculate_before_save;
+        if self.book(b)?.wb.settings().calc_on_save != on {
+            self.book_mut(b)?.wb.set_calc_on_save(on);
         }
 
         let dir = self.fs.save_folder(&full);
@@ -725,10 +960,26 @@ impl Application<'_> {
         let expand = |a: &str| expanded.get(a).cloned().unwrap_or_else(|| a.to_string());
         self.book_mut(b)?.wb.hyperlinks_save_relative(&dir, &expand);
 
-        let bytes = self.file_bytes(b, format, &name, !copy)?;
-        self.fs
-            .write(&full, &bytes)
-            .map_err(|_| cannot_access(&full))?;
+        let compat_before = self.book(b)?.wb.date_compat();
+        let compat_after = format != 61;
+        let flip = !copy && compat_before != compat_after;
+        if flip {
+            self.book_mut(b)?.wb.set_date_compat(compat_after);
+        }
+
+        let written = match self.file_bytes(b, format, &name, !copy) {
+            Ok(bytes) => self
+                .fs
+                .write(&full, &bytes)
+                .map_err(|_| cannot_access(&full)),
+            Err(e) => Err(e),
+        };
+        if let Err(e) = written {
+            if flip {
+                self.book_mut(b)?.wb.set_date_compat(compat_before);
+            }
+            return Err(e);
+        }
         if copy {
             return Ok(());
         }
@@ -817,9 +1068,9 @@ impl Application<'_> {
 
     pub(crate) fn save_as_member(&mut self, b: BookId, a: &Args) -> Result<Variant, OmError> {
         self.book(b)?;
-        if a.get(2).is_some() || a.get(3).is_some() {
-            return Err(OmError::unsupported("Workbook.SaveAs with a password"));
-        }
+
+        let pw = a.string(2)?.is_some_and(|p| !p.is_empty());
+        let wp = a.string(3)?.is_some_and(|p| !p.is_empty());
         let file = a.string(0)?.unwrap_or_default();
         let format = a.i32(1)?;
 
@@ -827,6 +1078,12 @@ impl Application<'_> {
             self.book_mut(b)?.ro_recommended = ro;
         }
         self.save_book_as(b, &file, format, false)?;
+        if pw {
+            self.book_mut(b)?.props.password = true;
+        }
+        if wp {
+            self.book_mut(b)?.write_reserved = true;
+        }
         Ok(Variant::Bool(true))
     }
 

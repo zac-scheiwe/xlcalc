@@ -14,6 +14,8 @@ pub(crate) struct ShapeClip {
 
     pub size: (i64, i64),
     pub base: &'static str,
+
+    pub slicer: Option<xlcalc::slicer::SlicerClip>,
 }
 
 impl Application<'_> {
@@ -29,11 +31,13 @@ impl Application<'_> {
             return Err(unsupported("Shape", m));
         }
         let base = base_name(&sh.kind);
+        let slicer = self.book(r.book)?.wb.slicer_clip(r.sheet, r.id);
         self.shape_clip = Some(ShapeClip {
             src: (r.book, r.sheet, r.id),
             shape: sh,
             size,
             base,
+            slicer,
         });
 
         self.clip = None;
@@ -72,8 +76,12 @@ impl Application<'_> {
             Some(&at) => at,
             None => (bx, by),
         };
-        self.draw_wb(b)?
-            .paste_shape(ds, &clip.shape, clip.base, (x, y, clip.size.0, clip.size.1));
+        let at = (x, y, clip.size.0, clip.size.1);
+        let id = self.draw_wb(b)?.paste_shape(ds, &clip.shape, clip.base, at);
+
+        if let Some(slicer) = clip.slicer.as_ref().filter(|_| b == clip.src.0) {
+            self.draw_wb(b)?.slicer_paste(slicer, ds, id);
+        }
         self.paste_chain.insert(key, (x, y));
         self.paste_source = Some(clip.src);
         Ok(Variant::Bool(true))

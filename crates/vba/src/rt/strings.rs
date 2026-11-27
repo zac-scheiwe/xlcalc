@@ -489,7 +489,7 @@ pub(super) fn ansi_code(u: u16) -> u16 {
 }
 
 pub fn ansi_bytes(s: &str) -> Vec<u8> {
-    s.encode_utf16().map(|u| ansi_code(u) as u8).collect()
+    xlcalc::wide::units(s).map(|u| ansi_code(u) as u8).collect()
 }
 
 pub(super) fn ascb(ctx: &RtContext, a: &[Variant]) -> R {

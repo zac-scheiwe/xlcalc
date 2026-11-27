@@ -237,6 +237,8 @@ impl Workbook {
         };
         let gone = d.block(id);
         d.shapes.retain(|s| !gone.contains(&s.id));
+        self.slicers_drop_shapes(sheet, &gone);
+        let d = self.drawing_mut(sheet);
         if let Some(p) = parent {
             let empty = match d.get_mut(p) {
                 Some(Shape {

@@ -4,9 +4,11 @@ use xlcalc::{CellAddr, DateSystem, EditError, Notice, Rect, SheetId, Value, Work
 use xlcalc_variant::{change_type, HResult, Locale, VarType, Variant};
 
 use crate::addr::{
-    external_prefix, max_cols, max_rows, parse_areas_text, range_text, AddressStyle,
+    external_prefix, max_cols, max_rows, parse_areas_text, parse_range_text, range_text,
+    AddressStyle,
 };
 use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef};
+use crate::cmdargs::Reader;
 use crate::conv::{
     array_cells, array_variant, cell_variant, currency_overflow, date_overflow, input_locale,
     is_missing, scode_error, variant_locale, Args, Flavour, HOST_LCID,
@@ -422,7 +424,7 @@ impl Application<'_> {
             .flat_map(move |r| (rect.c0..=rect.c1).map(move |c| CellAddr::new(sheet, r, c)))
     }
 
-    fn read_cells(
+    pub(crate) fn read_cells(
         &self,
         book: BookId,
         sheet: SheetId,
@@ -442,7 +444,7 @@ impl Application<'_> {
         Ok(array_variant(rect.rows(), rect.cols(), items))
     }
 
-    fn value_variant(wb: &Workbook, a: CellAddr, flavour: Flavour) -> Variant {
+    pub(crate) fn value_variant(wb: &Workbook, a: CellAddr, flavour: Flavour) -> Variant {
         let d1904 = wb.settings().date_system == DateSystem::D1904;
         cell_variant(&wb.value(a), wb.number_format(a), flavour, d1904)
     }
@@ -477,6 +479,25 @@ impl Application<'_> {
         f: impl Fn(&Workbook, CellAddr) -> Variant,
     ) -> Result<Variant, OmError> {
         self.same_or_null_in(book, &[(sheet, rect)], f)
+    }
+
+    fn same_format_or_null(
+        &self,
+        book: BookId,
+        parts: &[(SheetId, Rect)],
+        f: impl Fn(&Workbook, &Style) -> Variant,
+    ) -> Result<Variant, OmError> {
+        let wb = &self.book(book)?.wb;
+        let mut values = parts
+            .iter()
+            .flat_map(|&(sheet, rect)| wb.range_styles(sheet, rect))
+            .map(|s| f(wb, s));
+        let first = values.next().unwrap_or(Variant::Null);
+        Ok(if values.all(|v| v == first) {
+            first
+        } else {
+            Variant::Null
+        })
     }
 
     fn same_or_null_in(
@@ -581,7 +602,9 @@ impl Application<'_> {
         let (r0, c0) = (i64::from(rect.r0), i64::from(rect.c0));
         let (r1, c1) = (i64::from(rect.r1), i64::from(rect.c1));
         let text_ref = |i: usize| match a.get(i) {
-            Some(Variant::Bstr(t)) => crate::addr::sz_to_ref(t, true),
+            Some(Variant::Bstr(t)) => {
+                crate::addr::sz_to_ref(t, true).and_then(crate::addr::fit_grid)
+            }
             _ => None,
         };
         let whole_rows = |f: &Rect| f.c0 == 0 && i64::from(f.c1) == col_max - 1;
@@ -672,6 +695,68 @@ impl Application<'_> {
         self.sub_range(r, sheet, found, mode)
     }
 
+    fn range_shift(
+        &mut self,
+        book: BookId,
+        at: (SheetId, Rect),
+        insert: bool,
+        shift: Option<i32>,
+        below: bool,
+    ) -> Result<Variant, OmError> {
+        let (sheet, rect) = at;
+        let whole_rows = shift == Some(3) || rect.c0 == 0 && rect.c1 == max_cols() - 1;
+        let whole_cols =
+            !whole_rows && (shift == Some(4) || rect.r0 == 0 && rect.r1 == max_rows() - 1);
+        if !(whole_rows || whole_cols) && shift.is_some_and(|s| !(1..=2).contains(&s)) {
+            return Err(OmError::app_defined());
+        }
+        let wb = &mut self.book_mut(book)?.wb;
+        wb.insert_format_below = below;
+        let band = if whole_rows {
+            Some((true, rect.r0, rect.rows()))
+        } else if whole_cols {
+            Some((false, rect.c0, rect.cols()))
+        } else {
+            None
+        };
+        let done = if whole_rows {
+            let n = rect.rows();
+            if insert {
+                wb.insert_rows(sheet, rect.r0, n)
+            } else {
+                wb.delete_rows(sheet, rect.r0, n)
+            }
+        } else if whole_cols {
+            let n = rect.cols();
+            if insert {
+                wb.insert_cols(sheet, rect.c0, n)
+            } else {
+                wb.delete_cols(sheet, rect.c0, n)
+            }
+        } else {
+            let down = match shift {
+                Some(s) => s == 2,
+                None => match wb.data_beside(sheet, rect, insert) {
+                    (true, false) => false,
+                    (false, true) => true,
+                    (true, true) => rect.cols() >= rect.rows(),
+                    (false, false) => insert,
+                },
+            };
+            if insert {
+                wb.insert_cells(sheet, rect, down)
+            } else {
+                wb.delete_cells(sheet, rect, down)
+            }
+        };
+        wb.insert_format_below = false;
+        done.map_err(edit_error)?;
+        if let Some((rows, at, n)) = band {
+            self.follow_source_shift(book, sheet, rows, at, n, insert);
+        }
+        Ok(Variant::Bool(true))
+    }
+
     pub(crate) fn range_member(
         &mut self,
         r: &RangeRef,
@@ -753,7 +838,6 @@ impl Application<'_> {
         if let Ok(b) = self.book_mut(book) {
             match vifmt_effect(m.name, m.kind) {
                 Vifmt::Exact => b.wb.note_exact_cell_format(top_left),
-                Vifmt::Meets => b.wb.note_cell_format(top_left),
                 Vifmt::Reset => b.wb.note_number_format(None),
                 Vifmt::Leaves => {}
             }
@@ -802,110 +886,66 @@ impl Application<'_> {
             ("Insert", Func) | ("Delete", Func) => {
                 let insert = m.name == "Insert";
 
-                let shift = if matches!(a.get(0), Some(Variant::Bool(true))) {
-                    Some(1)
-                } else {
-                    a.i32(0)?
-                };
-                let shift = {
-                    shift.map(|s| match (s, insert) {
-                        (1, true) => -4161,
-                        (2, true) => -4121,
-                        (1, false) => -4159,
-                        (2, false) => -4162,
-                        _ => s,
-                    })
-                };
-                if matches!(a.get(1), Some(Variant::Bstr(_))) {
-                    a.i32(1)?;
+                if matches!(a.get(0), Some(Variant::Null)) {
+                    return Err(OmError::type_mismatch());
                 }
-                let whole_rows = shift == Some(3) || rect.c0 == 0 && rect.c1 == max_cols() - 1;
-                let whole_cols =
-                    !whole_rows && (shift == Some(4) || rect.r0 == 0 && rect.r1 == max_rows() - 1);
-                let below = insert && (whole_rows || whole_cols) && a.i32(1)? == Some(1);
-                let wb = &mut self.book_mut(book)?.wb;
-                wb.insert_format_below = below;
-                let band = if whole_rows {
-                    Some((true, rect.r0, rect.rows()))
-                } else if whole_cols {
-                    Some((false, rect.c0, rect.cols()))
-                } else {
-                    None
-                };
-                let done = if whole_rows {
-                    let n = rect.rows();
-                    if insert {
-                        wb.insert_rows(sheet, rect.r0, n)
-                    } else {
-                        wb.delete_rows(sheet, rect.r0, n)
-                    }
-                } else if whole_cols {
-                    let n = rect.cols();
-                    if insert {
-                        wb.insert_cols(sheet, rect.c0, n)
-                    } else {
-                        wb.delete_cols(sheet, rect.c0, n)
-                    }
-                } else {
+                let mut operands = self
+                    .range_operands(m.dispid, a)
+                    .map_err(|_| OmError::app_defined())?;
 
-                    let down = match (shift, insert) {
-                        (Some(-4121), true) | (Some(-4162), false) => true,
-                        (Some(-4161), true) | (Some(-4159), false) => false,
-                        (None, _) => match wb.data_beside(sheet, rect, insert) {
-                            (true, false) => false,
-                            (false, true) => true,
-                            (true, true) => rect.cols() >= rect.rows(),
-                            (false, false) => insert,
-                        },
-                        _ => return Err(OmError::app_defined()),
-                    };
-                    if insert {
-                        wb.insert_cells(sheet, rect, down)
-                    } else {
-                        wb.delete_cells(sheet, rect, down)
-                    }
+                let reader = Reader {
+                    wb: &self.book(book)?.wb,
+                    lcid: a.lcid,
                 };
-                wb.insert_format_below = false;
-                done.map_err(edit_error)?;
-                if let Some((rows, at, n)) = band {
-                    self.follow_source_shift(book, sheet, rows, at, n, insert);
-                }
-                Ok(Variant::Bool(true))
+                let origin = reader
+                    .int(operands.get(1))
+                    .map_err(|_| OmError::type_mismatch())?;
+                operands.take(1);
+                let below = insert && origin == Some(1);
+                let refused = OmError::type_mismatch();
+                self.run_command(book, a.lcid, operands, &refused, |app, o| {
+                    let reader = Reader {
+                        wb: &app.book(book)?.wb,
+                        lcid: a.lcid,
+                    };
+                    let shift = reader
+                        .int(o.get(0))
+                        .map_err(|_| OmError::type_mismatch())?;
+                    app.range_shift(book, (sheet, rect), insert, shift, below)
+                })
             }
             ("Cut", Func) | ("Copy", Func) => {
 
-                let Some(Variant::Dispatch(Some(id))) = a.get(0) else {
-
-                    if m.name == "Copy" && a.get(0).is_some() {
+                let dest = match self.paste_destination(book, sheet, m, a) {
+                    Ok(dest) => dest,
+                    Err(e) => {
                         self.clip = None;
                         self.clip_more.0.clear();
-                        return Err(OmError::app_defined_with(
-                            "Copy method of Range class failed",
-                        ));
+                        return Err(e);
                     }
-                    if m.name == "Copy" || a.get(0).is_none() {
-                        self.clip = Some((book, sheet, rect));
-                        self.clip_cut = m.name == "Cut";
-                        self.clip_more.0.clear();
-                        self.book_mut(book)?.wb.mark_copy(Some((sheet, rect)));
-                        return Ok(Variant::Bool(true));
-                    }
-                    return Err(unsupported("Range", m));
                 };
-                let Some(Object::Range(dest)) = self.arena.get(*id) else {
-                    return Err(OmError::app_defined());
+                let Some((ds, dr)) = dest else {
+
+                    self.clip = Some((book, sheet, rect));
+                    self.clip_cut = m.name == "Cut";
+                    self.clip_more.0.clear();
+                    self.book_mut(book)?.wb.mark_copy(Some((sheet, rect)));
+                    return Ok(Variant::Bool(true));
                 };
-                let dest = *dest;
-                let (ds, dr) = self.resolve(&dest)?;
 
                 self.clip = None;
                 self.clip_more.0.clear();
-                self.paste_copy(book, (sheet, rect), (ds, dr), m.name == "Cut")?;
+                self.paste_copy(book, (sheet, rect), (ds, dr), m.name == "Cut", true)?;
                 Ok(Variant::Bool(true))
             }
             ("Dirty", Func) => {
                 self.book_mut(book)?.wb.dirty_range(sheet, rect);
                 Ok(Variant::Empty)
+            }
+            ("FillDown" | "FillUp" | "FillRight" | "FillLeft", Func)
+                if !fill_enabled(m.name, rect) =>
+            {
+                Err(fill_failed(m.name))
             }
 
             ("FillDown" | "FillUp" | "FillRight" | "FillLeft", Func)
@@ -961,6 +1001,9 @@ impl Application<'_> {
                         })
                     })
                     .map_err(edit_error)?;
+                for (src, dst) in jobs {
+                    self.carry_objects(book, (sheet, src), (sheet, dst), false)?;
+                }
                 Ok(Variant::Bool(true))
             }
             ("FillUp" | "FillLeft", Func) => {
@@ -968,12 +1011,6 @@ impl Application<'_> {
                 let (src, dst) = if up {
                     let single = rect.r1 == rect.r0;
                     let s = if single { rect.r1 + 1 } else { rect.r1 };
-                    if s >= max_rows() {
-                        return Err(OmError::app_defined_with(&format!(
-                            "{} method of Range class failed",
-                            m.name
-                        )));
-                    }
                     (
                         Rect::new(s, rect.c0, s, rect.c1),
                         Rect::new(rect.r0, rect.c0, rect.r1.min(s - 1), rect.c1),
@@ -981,12 +1018,6 @@ impl Application<'_> {
                 } else {
                     let single = rect.c1 == rect.c0;
                     let s = if single { rect.c1 + 1 } else { rect.c1 };
-                    if s >= max_cols() {
-                        return Err(OmError::app_defined_with(&format!(
-                            "{} method of Range class failed",
-                            m.name
-                        )));
-                    }
                     (
                         Rect::new(rect.r0, s, rect.r1, s),
                         Rect::new(rect.r0, rect.c0, rect.r1, rect.c1.min(s - 1)),
@@ -999,6 +1030,7 @@ impl Application<'_> {
                         wb.fill(sheet, src, dst)
                     })
                     .map_err(edit_error)?;
+                self.carry_objects(book, (sheet, src), (sheet, dst), false)?;
                 Ok(Variant::Bool(true))
             }
             ("FillDown" | "FillRight", Func)
@@ -1006,15 +1038,9 @@ impl Application<'_> {
                     || (m.name == "FillRight" && rect.c1 == rect.c0) =>
             {
                 let src = if m.name == "FillDown" {
-                    (rect.r0 > 0).then(|| Rect::new(rect.r0 - 1, rect.c0, rect.r0 - 1, rect.c1))
+                    Rect::new(rect.r0 - 1, rect.c0, rect.r0 - 1, rect.c1)
                 } else {
-                    (rect.c0 > 0).then(|| Rect::new(rect.r0, rect.c0 - 1, rect.r1, rect.c0 - 1))
-                };
-                let Some(src) = src else {
-                    return Err(OmError::app_defined_with(&format!(
-                        "{} method of Range class failed",
-                        m.name
-                    )));
+                    Rect::new(rect.r0, rect.c0 - 1, rect.r1, rect.c0 - 1)
                 };
                 self.book_mut(book)?
                     .wb
@@ -1023,6 +1049,7 @@ impl Application<'_> {
                         wb.fill(sheet, src, rect)
                     })
                     .map_err(edit_error)?;
+                self.carry_objects(book, (sheet, src), (sheet, rect), false)?;
                 Ok(Variant::Bool(true))
             }
             ("FillDown" | "FillRight", Func) => {
@@ -1043,6 +1070,7 @@ impl Application<'_> {
                         .wb
                         .fill(sheet, src, dst)
                         .map_err(edit_error)?;
+                    self.carry_objects(book, (sheet, src), (sheet, dst), false)?;
                 }
                 Ok(Variant::Bool(true))
             }
@@ -1254,14 +1282,16 @@ impl Application<'_> {
             ("PrefixCharacter", Get) => self.same_or_null(book, sheet, rect, |wb, x| {
                 Variant::Bstr(if wb.has_apostrophe(x) { "'" } else { "" }.to_string())
             }),
-            ("NumberFormat", Get) => self.same_or_null(book, sheet, rect, |wb, x| {
-                let code = wb.number_format(x);
-                if wb.cell_style(x).custom_code && host_spelled(wb, code) {
-                    Variant::Bstr(code.to_string())
-                } else {
-                    Variant::Bstr(com_format(wb, code, a.lcid))
-                }
-            }),
+            ("NumberFormat", Get) => {
+                self.same_format_or_null(book, &[(sheet, rect)], |wb, s| {
+                    let code = &s.number_format;
+                    if s.custom_code && host_spelled(wb, code) {
+                        Variant::Bstr(code.to_string())
+                    } else {
+                        Variant::Bstr(com_format(wb, code, a.lcid))
+                    }
+                })
+            }
             (
                 "PivotField" | "PivotItem" | "PivotTable" | "PivotCell" | "QueryTable"
                 | "ServerActions" | "Summary" | "LocationInTable",
@@ -1374,17 +1404,12 @@ impl Application<'_> {
             }
             ("UseStandardWidth", Get) => {
                 let wb = &self.book(book)?.wb;
-                let std = wb.sheet_standard_width(sheet);
-                let pop = wb.populated_lines(sheet, false);
-                let mut ws = pop
-                    .range(rect.c0..=rect.c1)
-                    .map(|c| wb.column_width(sheet, *c));
-                let all = wb.column_width(sheet, rect.c0) == std && ws.all(|w| w == std);
 
-                Ok(if all || wb.column_width(sheet, rect.c0) != std {
-                    Variant::Bool(all)
-                } else {
+                let first = wb.col_standard(sheet, rect.c0);
+                Ok(if used_area_differs(wb, sheet, rect, |c| wb.col_standard(sheet, c)) {
                     Variant::Null
+                } else {
+                    Variant::Bool(first)
                 })
             }
             ("UseStandardWidth", Put) => {
@@ -1393,8 +1418,7 @@ impl Application<'_> {
                 }
                 if self.put_bool(a)? {
                     let wb = &mut self.book_mut(book)?.wb;
-                    let std = wb.sheet_standard_width(sheet);
-                    wb.set_column_width(sheet, rect.c0, rect.c1, std);
+                    wb.use_standard_width(sheet, rect.c0, rect.c1);
                 }
                 Ok(Variant::Empty)
             }
@@ -1498,9 +1522,11 @@ impl Application<'_> {
                 }
             }
 
-            ("NumberFormatLocal", Get) => self.same_or_null(book, sheet, rect, |wb, x| {
-                Variant::Bstr(com_format(wb, wb.number_format(x), 0))
-            }),
+            ("NumberFormatLocal", Get) => {
+                self.same_format_or_null(book, &[(sheet, rect)], |wb, s| {
+                    Variant::Bstr(com_format(wb, &s.number_format, 0))
+                })
+            }
             ("Text", Get) => {
                 self.same_or_null(book, sheet, rect, |wb, x| {
                     Variant::Bstr(cell_text_capped(wb, x))
@@ -1593,6 +1619,7 @@ impl Application<'_> {
                     }
                     codes.push(fmt);
                 }
+                let ampm_lcid = if self.command_format_put { 0 } else { lcid };
                 let wb = &mut self.book_mut(book)?.wb;
                 let engine = |wb: &Workbook, code: &str| {
                     if us_names(lcid) {
@@ -1608,7 +1635,7 @@ impl Application<'_> {
                 let host = |wb: &Workbook, code: &str| us_names(lcid) && host_spelled(wb, code);
                 if codes.len() == 1 {
                     let fmt = engine(wb, &codes[0]);
-                    wb.set_number_format(sheet, rect, &fmt);
+                    wb.set_number_format_lcid(sheet, rect, &fmt, ampm_lcid);
                     let h = host(wb, &codes[0]);
                     wb.mark_custom_code(sheet, rect, &fmt, h);
                 } else {
@@ -1616,7 +1643,7 @@ impl Application<'_> {
                         for (j, col) in (rect.c0..=rect.c1).enumerate() {
                             let k = (i % rows as usize) * cols as usize + j % cols as usize;
                             let fmt = engine(wb, &codes[k]);
-                            wb.set_number_format(sheet, Rect::cell(row, col), &fmt);
+                            wb.set_number_format_lcid(sheet, Rect::cell(row, col), &fmt, ampm_lcid);
                             let h = host(wb, &codes[k]);
                             wb.mark_custom_code(sheet, Rect::cell(row, col), &fmt, h);
                         }
@@ -1653,10 +1680,24 @@ impl Application<'_> {
                 self.range_outline_member(r, sheet, rect, m, a)
             }
             ("CreateNames", Func) => {
-                let flag = |i| a.bool(i).ok().flatten().unwrap_or(false);
-                let sides = [flag(0), flag(1), flag(2), flag(3)];
-                self.range_create_names(book, sheet, rect, sides)?;
-                Ok(Variant::Bool(true))
+
+                let operands = self
+                    .range_operands(m.dispid, a)
+                    .map_err(|_| OmError::app_defined())?;
+                let refused = OmError::app_defined();
+                self.run_command(book, a.lcid, operands, &refused, |app, o| {
+                    let reader = Reader {
+                        wb: &app.book(book)?.wb,
+                        lcid: a.lcid,
+                    };
+                    let mut sides = [false; 4];
+                    for (i, side) in sides.iter_mut().enumerate() {
+                        let flag = reader.flag(o.get(i)).map_err(|_| OmError::app_defined())?;
+                        *side = flag.unwrap_or(false);
+                    }
+                    app.range_create_names(book, sheet, rect, sides)?;
+                    Ok(Variant::Bool(true))
+                })
             }
             ("ClearOutline", Func) => {
 
@@ -1686,6 +1727,7 @@ impl Application<'_> {
                 if m.name == "Clear" {
                     wb.hl_clear(sheet, &rect);
                     wb.notes_clear(sheet, &rect);
+                    wb.rich_clear(sheet, &rect);
                     wb.spark_clear(sheet, &rect);
                     wb.clear_range(sheet, rect).map_err(edit_error)?;
 
@@ -2015,11 +2057,34 @@ impl Application<'_> {
         self.new_multi(book, sheet, &found, Mode::Cells)
     }
 
+    pub(crate) fn paste_destination(
+        &self,
+        book: BookId,
+        sheet: SheetId,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Option<(SheetId, Rect)>, OmError> {
+        let refused =
+            || OmError::app_defined_with(&format!("{} method of Range class failed", m.name));
+        match a.get(0) {
+            None | Some(Variant::Null) => Ok(None),
+            Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
+                Some(Object::Range(dest)) => self.resolve(dest).map(Some),
+                _ => Err(OmError::app_defined()),
+            },
+            Some(Variant::Bstr(text)) => text_destination(&self.book(book)?.wb, sheet, text)
+                .map(Some)
+                .ok_or_else(refused),
+            Some(_) => Err(refused()),
+        }
+    }
+
     fn multi_copy(
         &mut self,
         book: BookId,
         sheet: SheetId,
         rects: &[Rect],
+        m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
         let stacked = rects
@@ -2038,13 +2103,15 @@ impl Application<'_> {
         self.clip = Some((book, sheet, rects[0]));
         self.clip_cut = false;
         self.clip_more = (rects[1..].to_vec(), stacked);
-        let Some(Variant::Dispatch(Some(id))) = a.get(0) else {
-            return Ok(Variant::Bool(true));
+        let (ds, dr) = match self.paste_destination(book, sheet, m, a) {
+            Ok(Some(dest)) => dest,
+            Ok(None) => return Ok(Variant::Bool(true)),
+            Err(e) => {
+                self.clip = None;
+                self.clip_more.0.clear();
+                return Err(e);
+            }
         };
-        let Some(Object::Range(dest)) = self.arena.get(*id) else {
-            return Err(OmError::app_defined());
-        };
-        let (ds, dr) = self.resolve(&dest.clone())?;
         let mut off = 0;
         for src in rects {
             let at = if stacked {
@@ -2052,7 +2119,7 @@ impl Application<'_> {
             } else {
                 Rect::new(dr.r0, dr.c0 + off, dr.r0, dr.c0 + off)
             };
-            self.paste_copy(book, (sheet, *src), (ds, at), false)?;
+            self.paste_copy(book, (sheet, *src), (ds, at), false, true)?;
             off += if stacked { src.rows() } else { src.cols() };
         }
         Ok(Variant::Bool(true))
@@ -2097,7 +2164,7 @@ impl Application<'_> {
                 }
                 Ok(Variant::Bool(true))
             }
-            ("Copy", Func) => self.multi_copy(book, sheet, &rects, a),
+            ("Copy", Func) => self.multi_copy(book, sheet, &rects, m, a),
             ("Precedents" | "DirectPrecedents" | "Dependents" | "DirectDependents", Get)
                 if self.view.is_none() =>
             {
@@ -2133,9 +2200,42 @@ impl Application<'_> {
                 "This can't be done on a multiple range selection.\n\nSelect a single range and try again.",
             )),
 
-            ("FillDown" | "FillUp" | "FillLeft" | "FillRight", Func) => {
+            ("RemoveDuplicates", Func) => Err(OmError::app_defined()),
+
+            ("Merge", Func) => {
+                self.merge_across(a)?;
                 for area in &areas {
                     self.range_member(area, m, a)?;
+                }
+                Ok(Variant::Empty)
+            }
+            ("FillDown" | "FillUp" | "FillLeft" | "FillRight", Func) => {
+                if rects.first().is_some_and(|a| !fill_enabled(m.name, *a)) {
+                    return Err(fill_failed(m.name));
+                }
+
+                if self.book(book)?.wb.filter_mode(sheet) {
+                    for area in &areas {
+                        self.range_member(area, m, a)?;
+                    }
+                    return Ok(Variant::Bool(true));
+                }
+                let (sorted, jobs) = multi_fill(m.name, &rects);
+                self.book_mut(book)?
+                    .wb
+                    .command(xlcalc::Command::Fill, |wb| {
+
+                        wb.note_changed(sheet, &sorted);
+                        wb.creating_formulas(|wb| {
+                            for (src, dst) in &jobs {
+                                wb.fill(sheet, *src, *dst)?;
+                            }
+                            Ok(())
+                        })
+                    })
+                    .map_err(edit_error)?;
+                for (src, dst) in jobs {
+                    self.carry_objects(book, (sheet, src), (sheet, dst), false)?;
                 }
                 Ok(Variant::Bool(true))
             }
@@ -2211,6 +2311,8 @@ impl Application<'_> {
                 "Unable to get the Previous property of the Range class",
             )),
             ("SavedAsArray", Get) => Err(OmError::app_defined()),
+
+            ("FormatConditions", Get) => Ok(self.alloc(Object::FormatConditionsMulti(areas))),
 
             ("Validation", Get) => {
                 if self.validation_exists(&first) {
@@ -2313,8 +2415,8 @@ impl Application<'_> {
             ("HasFormula", Get) => self.same_or_null_in(book, &parts, |wb, x| {
                 Variant::Bool(wb.formula_text(x).is_some())
             }),
-            ("NumberFormat", Get) => self.same_or_null_in(book, &parts, |wb, x| {
-                Variant::Bstr(com_format(wb, wb.number_format(x), a.lcid))
+            ("NumberFormat", Get) => self.same_format_or_null(book, &parts, |wb, s| {
+                Variant::Bstr(com_format(wb, &s.number_format, a.lcid))
             }),
             ("Text", Get) => {
                 self.same_or_null_in(book, &parts, |wb, x| Variant::Bstr(cell_text_capped(wb, x)))
@@ -2525,6 +2627,15 @@ impl Application<'_> {
 
         let target = rect;
         let lcid = a.lcid;
+
+        let skipped: std::collections::HashSet<(u32, u32)> = if skip_locked {
+            (target.r0..=target.r1)
+                .flat_map(|row| (target.c0..=target.c1).map(move |col| (row, col)))
+                .filter(|&(row, col)| self.any_locked(r.book, sheet, Rect::new(row, col, row, col)))
+                .collect()
+        } else {
+            std::collections::HashSet::new()
+        };
         let wb = &mut self.book_mut(r.book)?.wb;
         let first_notice = wb.notices().len();
         for (i, row) in (target.r0..=target.r1).enumerate() {
@@ -2538,7 +2649,7 @@ impl Application<'_> {
                         .filter(|_| (ai as u32) < rows && (aj as u32) < cols)
                 };
                 let addr = CellAddr::new(sheet, row, col);
-                if skip_locked && wb.cell_style(addr).locked {
+                if skipped.contains(&(row, col)) {
                     continue;
                 }
                 match item {
@@ -2627,13 +2738,44 @@ impl Application<'_> {
         let &(sheet, _) = parts.first().ok_or_else(OmError::app_defined)?;
         let from = wb.notices().len();
 
-        wb.creating_formulas(|wb| {
-            put_formula_cells(wb, parts, &items, (rows, cols), scalar, entry, lcid)
-        })?;
+        let several = parts.len() > 1 || parts.iter().any(|p| !p.1.is_cell());
+        let put = |wb: &mut Workbook| {
+            wb.creating_formulas(|wb| {
+                put_formula_cells(wb, parts, &items, (rows, cols), scalar, entry, lcid)
+            })
+        };
+        if several {
+            wb.with_range_entry(put)?;
+        } else {
+            put(wb)?;
+        }
         let rects: Vec<Rect> = parts.iter().map(|p| p.1).collect();
         merge_formula_changes(wb, from, sheet, &rects);
         Ok(Variant::Empty)
     }
+}
+
+pub(crate) fn used_area_differs<T: PartialEq>(
+    wb: &Workbook,
+    sheet: SheetId,
+    rect: Rect,
+    value: impl Fn(u32) -> T,
+) -> bool {
+    let used = |rows: bool| {
+        let set = wb.populated_lines(sheet, rows);
+        Some((*set.first()?, *set.last()?))
+    };
+    let ((r0, r1), (c0, c1)) = match (used(true), used(false)) {
+        (Some(rows), Some(cols)) => (rows, cols),
+        _ => return false,
+    };
+    let (cr0, cr1) = (rect.r0.max(r0), rect.r1.min(r1));
+    let (cc0, cc1) = (rect.c0.max(c0), rect.c1.min(c1));
+    if cr0 > cr1 || cc0 > cc1 || (cr0 == cr1 && cc0 == cc1) {
+        return false;
+    }
+    let first = value(rect.c0);
+    (cc0..=cc1).any(|c| value(c) != first)
 }
 
 fn put_formula_cells(
@@ -2834,7 +2976,7 @@ fn builtin_pairs(wb: &Workbook) -> [(String, String); 12] {
     ]
 }
 
-fn host_spelled(wb: &Workbook, code: &str) -> bool {
+pub(crate) fn host_spelled(wb: &Workbook, code: &str) -> bool {
     let code = plain_escapes(code);
     builtin_pairs(wb)
         .iter()
@@ -2885,7 +3027,7 @@ fn plain_escapes(code: &str) -> String {
     out
 }
 
-fn com_format(wb: &Workbook, code: &str, lcid: u32) -> String {
+pub(crate) fn com_format(wb: &Workbook, code: &str, lcid: u32) -> String {
     let short = &wb.locale().short_date_format;
     if !us_names(lcid) {
         host_ampm(code)
@@ -2904,29 +3046,12 @@ fn com_format(wb: &Workbook, code: &str, lcid: u32) -> String {
 }
 
 fn host_ampm(code: &str) -> String {
-    let mut out = String::with_capacity(code.len());
-    let (mut quoted, mut escaped) = (false, false);
-    let mut i = 0;
-    while let Some(c) = code[i..].chars().next() {
-        if escaped {
-            escaped = false;
-        } else if c == '"' {
-            quoted = !quoted;
-        } else if !quoted && c == '\\' {
-            escaped = true;
-        } else if !quoted
-            && code[i..]
-                .get(..5)
-                .is_some_and(|t| t.eq_ignore_ascii_case("am/pm"))
-        {
-            out.push_str("am/pm");
-            i += 5;
-            continue;
-        }
-        out.push(c);
-        i += c.len_utf8();
+    let built_in = ["h:mm AM/PM", "h:mm:ss AM/PM"].contains(&code);
+    if built_in {
+        code.replace("AM/PM", "am/pm")
+    } else {
+        code.to_string()
     }
-    out
 }
 
 fn format_replaced(code: &str, date_day: bool, currency: bool) -> bool {
@@ -2951,14 +3076,14 @@ fn put_cell(
         } else {
             n
         };
-        wb.set_value(addr, Value::Number(n));
+        wb.set_value_entered(addr, Value::Number(n));
     };
     match v {
         Variant::Empty | Variant::Null => {
             wb.clear(addr);
         }
         Variant::Bool(b) => {
-            wb.set_value(addr, Value::Bool(*b));
+            wb.set_value_entered(addr, Value::Bool(*b));
         }
 
         Variant::Bstr(t) if t.starts_with('\'') => {
@@ -3052,11 +3177,13 @@ fn render_us(code: &str, x: f64, ds: DateSystem) -> String {
         )
 }
 
+const TEXT_CAP: usize = 0x201e - 1;
+
 fn cell_text_capped(wb: &xlcalc::Workbook, at: CellAddr) -> String {
     let mut s = wb.shown_text(at);
 
     wb.note_text_read(at);
-    if let Some((i, _)) = s.char_indices().nth(8221) {
+    if let Some((i, _)) = s.char_indices().nth(TEXT_CAP) {
         s.truncate(i);
     }
     s
@@ -3426,7 +3553,7 @@ impl Application<'_> {
             }
             s
         };
-        wb.set_style_with(sheet, rect, &reset);
+        wb.set_style_with_merged(sheet, rect, &reset);
         if let Some((d, down, up)) = plan.diagonal {
             wb.set_style_with(
                 sheet,
@@ -3569,8 +3696,6 @@ impl Application<'_> {
 pub(crate) enum Vifmt {
     Exact,
 
-    Meets,
-
     Reset,
     Leaves,
 }
@@ -3609,18 +3734,6 @@ pub(crate) fn vifmt_effect(name: &str, kind: InvokeKind) -> Vifmt {
             "Replace" | "TextToColumns" | "GoalSeek" | "AutoFilter" | "FormulaArray" | "Insert",
             _,
         ) => Vifmt::Reset,
-        (
-            "Value" | "Value2" | "_Default" | "Formula" | "FormulaLocal" | "Formula2"
-            | "Formula2Local" | "FormulaR1C1" | "FormulaR1C1Local" | "Formula2R1C1"
-            | "Formula2R1C1Local" | "Text",
-            Get | Put,
-        )
-        | (
-            "Clear" | "ClearContents" | "ClearFormats" | "Copy" | "Cut" | "PasteSpecial"
-            | "AutoFill" | "DataSeries" | "FillDown" | "FillUp" | "FillLeft" | "FillRight"
-            | "Merge" | "UnMerge" | "Delete" | "Select" | "Sort" | "RemoveDuplicates",
-            Func,
-        ) => Vifmt::Meets,
         _ => Vifmt::Leaves,
     }
 }
@@ -3641,6 +3754,97 @@ impl Application<'_> {
             }
         }
     }
+}
+
+fn text_destination(wb: &Workbook, sheet: SheetId, text: &str) -> Option<(SheetId, Rect)> {
+    let (row, col) = wb.active_cell_of(sheet);
+    let body = text.strip_prefix('=').unwrap_or(text);
+    let a1 = r1c1_to_a1(&format!("={body}"), row, col)?;
+    parse_range_text(wb, sheet, a1.strip_prefix('=')?)
+}
+
+fn fill_enabled(name: &str, first: Rect) -> bool {
+    let (from, to, edge) = match name {
+        "FillDown" => (first.r0, first.r1, 0),
+        "FillUp" => (first.r0, first.r1, max_rows() - 1),
+        "FillRight" => (first.c0, first.c1, 0),
+        _ => (first.c0, first.c1, max_cols() - 1),
+    };
+    from != edge || to != edge
+}
+
+fn fill_failed(name: &str) -> OmError {
+    OmError::app_defined_with(&format!("{name} method of Range class failed"))
+}
+
+fn multi_fill(name: &str, rects: &[Rect]) -> (Vec<Rect>, Vec<(Rect, Rect)>) {
+    let vertical = matches!(name, "FillDown" | "FillUp");
+    let backwards = matches!(name, "FillUp" | "FillLeft");
+    let mut areas = rects.to_vec();
+    areas.sort_by_key(|a| (a.r0, a.c0));
+
+    let split = |a: Rect| -> Option<(Rect, Rect)> {
+        let (lo, hi) = if vertical { (a.r0, a.r1) } else { (a.c0, a.c1) };
+        if lo == hi {
+            return None;
+        }
+        let (s, from, to) = if backwards {
+            (hi, lo, hi - 1)
+        } else {
+            (lo, lo + 1, hi)
+        };
+        Some(if vertical {
+            (Rect::new(s, a.c0, s, a.c1), Rect::new(from, a.c0, to, a.c1))
+        } else {
+            (Rect::new(a.r0, s, a.r1, s), Rect::new(a.r0, from, a.r1, to))
+        })
+    };
+
+    let first = areas[0];
+    let mut across = 1;
+    while across < areas.len()
+        && areas[across].r0 == first.r0
+        && areas[across].r1 == first.r1
+        && areas[across].c0 > areas[across - 1].c1
+    {
+        across += 1;
+    }
+    let grid = areas.len().is_multiple_of(across)
+        && areas.chunks(across).all(|row| {
+            row.iter().zip(&areas).all(|(a, top)| {
+                (a.c0, a.c1) == (top.c0, top.c1) && (a.r0, a.r1) == (row[0].r0, row[0].r1)
+            })
+        })
+        && areas
+            .chunks(across)
+            .zip(areas.chunks(across).skip(1))
+            .all(|(above, below)| below[0].r0 > above[0].r1);
+    if !grid {
+        let jobs = areas.iter().filter_map(|&a| split(a)).collect();
+        return (areas, jobs);
+    }
+    let lines: Vec<Vec<Rect>> = if vertical {
+        (0..across)
+            .map(|i| areas.iter().skip(i).step_by(across).copied().collect())
+            .collect()
+    } else {
+        areas.chunks(across).map(<[Rect]>::to_vec).collect()
+    };
+    let mut jobs = Vec::new();
+    for mut line in lines {
+        if backwards {
+            line.reverse();
+        }
+        let src = match split(line[0]) {
+            Some((src, rest)) => {
+                jobs.push((src, rest));
+                src
+            }
+            None => line[0],
+        };
+        jobs.extend(line[1..].iter().map(|&a| (src, a)));
+    }
+    (areas, jobs)
 }
 
 #[cfg(test)]
@@ -3667,5 +3871,41 @@ mod tests {
         assert_eq!(joined(&[a, b]), [a, b]);
 
         assert_eq!(joined(&[a, c(0, 0)]), [a]);
+    }
+
+    #[test]
+    fn fill_is_disabled_on_the_edge_it_would_fill_from() {
+        let (last_r, last_c) = (max_rows() - 1, max_cols() - 1);
+        let r = Rect::new;
+        assert!(!fill_enabled("FillDown", r(0, 0, 0, 3)));
+        assert!(fill_enabled("FillDown", r(0, 0, 1, 0)));
+        assert!(fill_enabled("FillDown", r(1, 0, 1, 0)));
+        assert!(!fill_enabled("FillRight", r(0, 0, 3, 0)));
+        assert!(fill_enabled("FillRight", r(0, 0, 0, 1)));
+        assert!(!fill_enabled("FillUp", r(last_r, 0, last_r, 0)));
+        assert!(fill_enabled("FillUp", r(last_r - 1, 0, last_r, 0)));
+        assert!(!fill_enabled("FillLeft", r(0, last_c, 0, last_c)));
+        assert!(fill_enabled("FillLeft", r(0, 0, 0, 0)));
+    }
+
+    #[test]
+    fn fill_of_a_grid_of_areas_runs_from_its_first_area() {
+        let c = Rect::cell;
+        let jobs = |name, areas: &[Rect]| multi_fill(name, areas).1;
+
+        assert_eq!(
+            jobs("FillDown", &[c(4, 0), c(0, 0), c(2, 0)]),
+            [(c(0, 0), c(2, 0)), (c(0, 0), c(4, 0))]
+        );
+        assert_eq!(jobs("FillUp", &[c(0, 0), c(2, 0)]), [(c(2, 0), c(0, 0))]);
+
+        let (a, b) = (Rect::new(0, 0, 1, 0), Rect::new(3, 0, 4, 0));
+        assert_eq!(
+            jobs("FillDown", &[a, b]),
+            [(c(0, 0), c(1, 0)), (c(0, 0), b)]
+        );
+
+        assert_eq!(jobs("FillDown", &[c(1, 0), c(3, 2)]), []);
+        assert_eq!(jobs("FillDown", &[a, c(4, 2)]), [(c(0, 0), c(1, 0))]);
     }
 }

@@ -66,8 +66,19 @@ fn row(font: &FontRows, face: usize, ppem: u32) -> Option<Tm> {
     })
 }
 
+const ALIASES: [(&str, &str); 5] = [
+    ("helvetica", "arial"),
+    ("times", "times new roman"),
+    ("helv", "ms sans serif"),
+    ("tms rmn", "ms serif"),
+    ("ms shell dlg 2", "tahoma"),
+];
+
 pub(crate) fn tm(name: &str, bold: bool, italic: bool, ppem: u32) -> Tm {
-    let n = name.to_lowercase();
+    let mut n = name.to_lowercase();
+    if let Some((_, target)) = ALIASES.iter().find(|(a, _)| *a == n) {
+        n = (*target).to_string();
+    }
     let idx = index();
     let font = idx
         .iter()
@@ -101,7 +112,15 @@ pub(crate) fn overhang(name: &str, bold: bool, italic: bool, ppem: u32) -> u32 {
     slant + u32::from(bold)
 }
 
-const SYMBOL_FONTS: [&str; 3] = ["Symbol", "Wingdings", "Webdings"];
+const SYMBOL_FONTS: [&str; 7] = [
+    "Symbol",
+    "Wingdings",
+    "Webdings",
+    "Wingdings 2",
+    "Wingdings 3",
+    "Bookshelf Symbol 7",
+    "MT Extra",
+];
 
 pub(crate) fn digit_width(name: &str, bold: bool, italic: bool, ppem: u32) -> u32 {
     tm(name, bold, italic, ppem).digit.max(1) as u32
@@ -122,6 +141,25 @@ mod tests {
         }
         assert_eq!(overhang("Symbol", false, true, 8), 0);
         assert_eq!(overhang("Calibri", false, true, 12), 0);
+    }
+
+    #[test]
+    fn aliases_and_unknown_fonts() {
+        for (alias, target) in ALIASES {
+            assert_eq!(
+                tm(alias, false, true, 30),
+                tm(target, false, true, 30),
+                "{alias}"
+            );
+        }
+        assert_ne!(
+            tm("MS Sans Serif", false, false, 30),
+            tm("Arial", false, false, 30)
+        );
+        assert_eq!(
+            tm("Nonexistent Font", true, false, 30),
+            tm("Arial", true, false, 30)
+        );
     }
 
     #[test]

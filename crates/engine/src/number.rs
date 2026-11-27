@@ -57,7 +57,21 @@ pub fn round15(x: f64) -> f64 {
                 .unwrap_or(x);
         }
     }
-    format!("{:.14e}", x).parse().unwrap_or(x)
+    let short = format!("{:.14e}", x);
+    let v: f64 = short.parse().unwrap_or(x);
+    if x.abs() >= f64::MIN_POSITIVE && v.abs() < f64::MIN_POSITIVE {
+        let (mant, exp) = short.split_once('e').unwrap_or((&short, "0"));
+        let digits: u64 = mant
+            .bytes()
+            .filter(u8::is_ascii_digit)
+            .fold(0, |a, b| a * 10 + u64::from(b - b'0'));
+        let k = exp.parse::<i64>().unwrap_or(0) - 14;
+        return match mp_pack_parts(digits, k) {
+            Ok((0, frac)) => f64::from_bits(frac).copysign(x),
+            Ok(_) | Err(_) => 0.0,
+        };
+    }
+    v
 }
 
 pub fn cmp_numbers(a: f64, b: f64) -> Ordering {
@@ -151,9 +165,17 @@ pub(crate) fn tento(n: u32) -> f64 {
     pack_decimal(1, i64::from(n))
 }
 
-fn pack_decimal(d: u64, k: i64) -> f64 {
+pub(crate) fn pack_decimal(d: u64, k: i64) -> f64 {
+    match mp_pack_parts(d, k) {
+        Ok((biased, frac)) if biased >= 1 => f64::from_bits(((biased as u64) << 52) | frac),
+        Ok(_) => 0.0,
+        Err(v) => v,
+    }
+}
+
+fn mp_pack_parts(d: u64, k: i64) -> Result<(i64, u64), f64> {
     if d == 0 {
-        return 0.0;
+        return Err(0.0);
     }
     let lz = d.leading_zeros();
     let (mut m, mut e) = (d << lz, -(lz as i64));
@@ -172,7 +194,7 @@ fn pack_decimal(d: u64, k: i64) -> f64 {
     }
     if a >= 256 {
         if a >= 512 {
-            return if k > 0 { f64::INFINITY } else { 0.0 };
+            return Err(if k > 0 { f64::INFINITY } else { 0.0 });
         }
         pieces.push(mid[15]);
     }
@@ -203,13 +225,10 @@ fn pack_decimal(d: u64, k: i64) -> f64 {
     }
 
     let biased = e + 11 + 52 + 1023;
-    if biased <= 0 {
-        return 0.0;
-    }
     if biased >= 2047 {
-        return f64::INFINITY;
+        return Err(f64::INFINITY);
     }
-    f64::from_bits(((biased as u64) << 52) | (mm & ((1 << 52) - 1)))
+    Ok((biased, mm & ((1 << 52) - 1)))
 }
 
 const POS_LO: [(u64, i32); 15] = [

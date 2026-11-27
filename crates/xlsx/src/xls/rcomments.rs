@@ -13,6 +13,8 @@ pub(super) struct Note {
 #[derive(Default, Clone)]
 pub(super) struct NoteObj {
     pub id: u16,
+
+    pub spid: u32,
     pub anchor: Option<[u16; 8]>,
     pub text: Option<String>,
 }
@@ -33,7 +35,7 @@ pub(super) fn note(d: &[u8]) -> Option<Note> {
             .take(cch)
             .map(|c| u16::from_le_bytes(*c))
             .collect();
-        String::from_utf16_lossy(&u16s)
+        xlcalc::wide::from_units(&u16s)
     } else {
         body.iter().take(cch).map(|&b| char::from(b)).collect()
     };
@@ -76,7 +78,7 @@ pub(super) fn txo_text(r: &Rec<'_>) -> String {
                 .map(|c| u16::from_le_bytes(*c))
                 .collect();
             n += u16s.len();
-            s.push_str(&String::from_utf16_lossy(&u16s));
+            s.push_str(&xlcalc::wide::from_units(&u16s));
         } else {
             let t: String = body.iter().take(cch - n).map(|&b| char::from(b)).collect();
             n += t.chars().count();
@@ -104,10 +106,19 @@ pub(super) fn parts(
     n: u32,
     dims: &super::wdraw::Dims,
 ) -> (String, String) {
+    let ids: Vec<u32> = notes
+        .iter()
+        .enumerate()
+        .map(|(i, (_, o))| match o.spid {
+            0 => n * 1024 + 1 + i as u32,
+            id => id,
+        })
+        .collect();
+    let idmap = crate::notesxml::idmap("", ids.iter().copied());
     let mut authors: Vec<&str> = Vec::new();
     let mut list = String::new();
     let mut vml = format!(
-        "<xml xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"><o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\"{n}\"/></o:shapelayout><v:shapetype id=\"_x0000_t202\" coordsize=\"21600,21600\" o:spt=\"202\" path=\"m,l,21600r21600,l21600,xe\"><v:stroke joinstyle=\"miter\"/><v:path gradientshapeok=\"t\" o:connecttype=\"rect\"/></v:shapetype>"
+        "<xml xmlns:v=\"urn:schemas-microsoft-com:vml\" xmlns:o=\"urn:schemas-microsoft-com:office:office\" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"><o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\"{idmap}\"/></o:shapelayout><v:shapetype id=\"_x0000_t202\" coordsize=\"21600,21600\" o:spt=\"202\" path=\"m,l,21600r21600,l21600,xe\"><v:stroke joinstyle=\"miter\"/><v:path gradientshapeok=\"t\" o:connecttype=\"rect\"/></v:shapetype>"
     );
     for (i, (nt, obj)) in notes.iter().enumerate() {
         let ai = authors
@@ -152,7 +163,7 @@ pub(super) fn parts(
         let _ = write!(
             vml,
             "<v:shape id=\"_x0000_s{}\" type=\"#_x0000_t202\" alt=\"xlanchor:{}\" style=\"position:absolute;margin-left:80pt;margin-top:2pt;width:108pt;height:59pt;z-index:{};visibility:{}\" fillcolor=\"#ffffe1\" o:insetmode=\"auto\"><v:fill color2=\"#ffffe1\"/><v:shadow on=\"t\" color=\"black\" obscured=\"t\"/><v:path o:connecttype=\"none\"/><v:textbox style=\"mso-direction-alt:auto\"><div style=\"text-align:left\"></div></v:textbox><x:ClientData ObjectType=\"Note\"><x:MoveWithCells/><x:SizeWithCells/><x:Anchor>{}, {}, {}, {}, {}, {}, {}, {}</x:Anchor><x:AutoFill>False</x:AutoFill><x:Row>{}</x:Row><x:Column>{}</x:Column>{}</x:ClientData></v:shape>",
-            n * 1024 + 1 + i as u32,
+            ids[i],
             raw.iter().map(u16::to_string).collect::<Vec<_>>().join(","),
             i + 1,
             if nt.visible { "visible" } else { "hidden" },

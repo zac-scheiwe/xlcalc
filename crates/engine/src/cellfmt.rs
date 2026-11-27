@@ -1,22 +1,57 @@
-use crate::workbook::Command;
+use crate::workbook::{Command, LastFormat};
+use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::{self, RecalcReport};
 use crate::formula::{CRef, Node, Rc, SheetRef};
 use crate::functions;
+use crate::ifmt_slots::{builtin_spelling, NumberFormatTable};
+use crate::locale::Locale;
+use crate::numfmt::fillfmt::Fm;
+use crate::numfmt::LimPrec;
 use crate::numfmt::{
-    digits_with_date, format_key, quote_ampm, readback_spelling, spelled_for_parse,
-    typed_elapsed_ok, NumberFormat,
+    compile_for_compare, designators, digits_with_date, quote_ampm, readback_spelling,
+    spelled_for_parse, typed_elapsed_ok, Compiled, Designators, NumberFormat,
 };
 use crate::parser::ast::{BinOp, UnaryOp};
-use crate::style::Style;
+use crate::style::{Fill, Pattern, Style};
 use crate::value::{Array, Value};
 use crate::workbook::{CalcMode, Entry, Workbook};
 
 pub(crate) type Sty = Arc<Style>;
+
+struct Line<'a> {
+    seq: u64,
+    style: &'a Sty,
+
+    owned: u64,
+}
+
+impl<'a> Line<'a> {
+    fn showing(
+        m: &'a FxHashMap<(SheetId, u32), (u64, Sty)>,
+        sheet: SheetId,
+        span: std::ops::RangeInclusive<u32>,
+        floor: Option<u64>,
+    ) -> FxHashMap<u32, Line<'a>> {
+        m.iter()
+            .filter(|((s, i), (seq, _))| {
+                *s == sheet && span.contains(i) && floor.is_none_or(|f| *seq > f)
+            })
+            .map(|(&(_, i), (seq, style))| {
+                let line = Line {
+                    seq: *seq,
+                    style,
+                    owned: 0,
+                };
+                (i, line)
+            })
+            .collect()
+    }
+}
 
 #[derive(Default)]
 pub struct CellFormats {
@@ -32,10 +67,15 @@ pub struct CellFormats {
     seq: u64,
     compiled: FxHashMap<Arc<str>, Option<Arc<NumberFormat>>>,
 
-    registry: FxHashMap<String, String>,
+    registry: FxHashMap<Compiled, String>,
 
-    ampm_upper: bool,
+    format_order: Vec<Arc<str>>,
+    format_seen: rustc_hash::FxHashSet<Arc<str>>,
+
+    typed_of: FxHashMap<String, String>,
     pub(crate) precision: bool,
+
+    protected: FxHashSet<SheetId>,
 
     late: FxHashMap<usize, (std::sync::Weak<Style>, Option<Arc<str>>)>,
 
@@ -43,6 +83,8 @@ pub struct CellFormats {
     interned: rustc_hash::FxHashSet<Sty>,
 
     xf_order: Vec<Sty>,
+
+    dxf_clock: u64,
 }
 
 fn key_of(s: &Sty) -> usize {
@@ -98,32 +140,71 @@ impl CellFormats {
         }
     }
 
-    pub(crate) fn inherited(&mut self, before: Sty, after: Option<&Sty>, rows: bool) -> Sty {
+    pub(crate) fn inherited(&mut self, source: Sty, other: Option<&Sty>) -> Sty {
         let mut b = crate::style::Borders::default();
-        if let Some(a) = after {
-            let (s, t) = (&before.borders, &a.borders);
-            if rows {
-                if s.left == t.left {
-                    b.left = s.left;
-                }
-                if s.right == t.right {
-                    b.right = s.right;
-                }
-            } else {
-                if s.top == t.top {
-                    b.top = s.top;
-                }
-                if s.bottom == t.bottom {
-                    b.bottom = s.bottom;
-                }
-            }
+        let (s, t) = (
+            &source.borders,
+            other.map_or(&self.base.borders, |o| &o.borders),
+        );
+        if s.left == t.left {
+            b.left = s.left;
         }
-        if before.borders == b {
-            return before;
+        if s.right == t.right {
+            b.right = s.right;
         }
-        let mut n = (*before).clone();
+        if s.top == t.top {
+            b.top = s.top;
+        }
+        if s.bottom == t.bottom {
+            b.bottom = s.bottom;
+        }
+        if (s.diagonal, s.diagonal_down, s.diagonal_up)
+            == (t.diagonal, t.diagonal_down, t.diagonal_up)
+        {
+            b.diagonal = s.diagonal;
+            b.diagonal_down = s.diagonal_down;
+            b.diagonal_up = s.diagonal_up;
+        }
+        if source.borders == b {
+            return source;
+        }
+        let mut n = (*source).clone();
         n.borders = b;
         self.intern(n)
+    }
+
+    fn replace_number_format(&mut self, held: &dyn Fn(&str) -> bool, to: &str) {
+        let mut moved: FxHashMap<usize, Sty> = FxHashMap::default();
+        for i in 0..self.xf_order.len() {
+            let old = self.xf_order[i].clone();
+            if !held(&old.number_format) {
+                continue;
+            }
+            self.interned.remove(&old);
+            let new = old.with_number_format(to);
+            let new = match self.interned.get(&new) {
+                Some(x) => x.clone(),
+                None => {
+                    let x = Arc::new(new);
+                    self.interned.insert(x.clone());
+                    self.xf_order[i] = x.clone();
+                    x
+                }
+            };
+            moved.insert(key_of(&old), new);
+        }
+        self.xf_order.retain(|s| !moved.contains_key(&key_of(s)));
+        let swap = |s: &mut Sty| {
+            if let Some(x) = moved.get(&key_of(s)) {
+                *s = x.clone();
+            }
+        };
+        self.map.values_mut().for_each(swap);
+        self.rows.values_mut().for_each(|v| swap(&mut v.1));
+        self.cols.values_mut().for_each(|v| swap(&mut v.1));
+        self.sheets.values_mut().for_each(|v| swap(&mut v.1));
+        swap(&mut self.base);
+        self.compiled.clear();
     }
 
     pub(crate) fn intern(&mut self, s: Style) -> Sty {
@@ -133,6 +214,7 @@ impl CellFormats {
         let x = Arc::new(s);
         self.interned.insert(x.clone());
         self.xf_order.push(x.clone());
+        self.note_format(&x.number_format);
         x
     }
 
@@ -142,6 +224,22 @@ impl CellFormats {
 
     pub(crate) fn set_base(&mut self, s: Style) {
         self.base = self.intern(s);
+    }
+
+    fn note_format(&mut self, code: &str) {
+        if code != "General" && !self.format_seen.contains(code) {
+            let code: Arc<str> = Arc::from(code);
+            self.format_seen.insert(code.clone());
+            self.format_order.push(code);
+        }
+    }
+
+    pub(crate) fn row_record(&self, sheet: SheetId, row: u32) -> Option<&Sty> {
+        let own = self.rows.get(&(sheet, row))?;
+        let all = self.sheets.get(&sheet);
+        let (_, style) = all.filter(|s| s.0 > own.0).unwrap_or(own);
+        let over_columns = || all.is_some() || self.cols.keys().any(|k| k.0 == sheet);
+        (*style != self.base || over_columns()).then_some(style)
     }
 
     pub(crate) fn line(&self, a: CellAddr) -> Option<&Sty> {
@@ -165,6 +263,53 @@ impl CellFormats {
         self.get(a).unwrap_or(&self.base)
     }
 
+    fn stored_styles(&self, sheet: SheetId, rect: Rect) -> Vec<&Sty> {
+        let sheet_style = self.sheets.get(&sheet);
+        let floor = sheet_style.map(|(seq, _)| *seq);
+        let mut rows = Line::showing(&self.rows, sheet, rect.r0..=rect.r1, floor);
+        let mut cols = Line::showing(&self.cols, sheet, rect.c0..=rect.c1, floor);
+        let mut out = Vec::new();
+        let mut owned_plain = 0u64;
+        for (&(s, r, c), style) in &self.map {
+            if s != sheet || !rect.contains(r, c) {
+                continue;
+            }
+            out.push(style);
+            match (rows.get_mut(&r), cols.get_mut(&c)) {
+                (Some(row), Some(col)) if row.seq > col.seq => row.owned += 1,
+                (_, Some(col)) => col.owned += 1,
+                (Some(row), None) => row.owned += 1,
+                (None, None) => owned_plain += 1,
+            }
+        }
+        let sorted = |m: &FxHashMap<u32, Line>| {
+            let mut v: Vec<u64> = m.values().map(|l| l.seq).collect();
+            v.sort_unstable();
+            v
+        };
+        let (row_seqs, col_seqs) = (sorted(&rows), sorted(&cols));
+        let (height, width) = (u64::from(rect.rows()), u64::from(rect.cols()));
+
+        let plain_rows = height - rows.len() as u64;
+        let plain_cols = width - cols.len() as u64;
+        for row in rows.values() {
+            let older = col_seqs.partition_point(|&q| q < row.seq) as u64;
+            if plain_cols + older > row.owned {
+                out.push(row.style);
+            }
+        }
+        for col in cols.values() {
+            let older = row_seqs.partition_point(|&q| q <= col.seq) as u64;
+            if plain_rows + older > col.owned {
+                out.push(col.style);
+            }
+        }
+        if plain_rows * plain_cols > owned_plain {
+            out.push(sheet_style.map_or(&self.base, |(_, s)| s));
+        }
+        out
+    }
+
     pub(crate) fn fmt(&self, a: CellAddr) -> Option<&Arc<str>> {
         self.get(a).map(|s| &s.number_format)
     }
@@ -182,45 +327,46 @@ impl CellFormats {
     }
 
     fn register_stored(&mut self, code: &str) {
-        if code.contains("AM/PM") {
-            self.ampm_upper = true;
-        }
+        self.note_format(code);
         if code != "General" {
             self.registry
-                .entry(format_key(code).to_ascii_lowercase())
+                .entry(compile_for_compare(code))
                 .or_insert_with(|| code.to_string());
         }
     }
 
-    fn registered(&mut self, typed: &str, spelled: String) -> String {
-        let lower = format_key(&spelled).to_ascii_lowercase();
-
-        let untagged = lower.strip_prefix("[$-f400]").unwrap_or(&lower);
-        let built_in_ampm = matches!(untagged, "h:mm am/pm" | "h:mm:ss am/pm");
-        let spelled = if self.ampm_upper || built_in_ampm {
-            spelled.replace("am/pm", "AM/PM")
-        } else {
-            spelled
-        };
+    fn registered(&mut self, loc: &Locale, typed: &str, spelled: String) -> String {
         if spelled == "General" {
             return spelled;
         }
-        let mut key = registry_key(&spelled);
-        key.push_str(&escaped_letters(typed));
-        if let Some(b) = BUILT_IN_PAIRS
-            .iter()
-            .find(|b| format_key(b).to_ascii_lowercase() == key)
-        {
-            return (*b).to_string();
+
+        if let Some(b) = builtin_spelling(loc, &spelled) {
+            return b;
         }
-        self.registry.entry(key).or_insert(spelled).clone()
+        let key = compile_for_compare(&spelled);
+        let read_back = self.registry.entry(key).or_insert(spelled).clone();
+        self.note_format(&read_back);
+        if read_back != typed && has_elapsed_bracket(typed) {
+            self.typed_of
+                .entry(read_back.clone())
+                .or_insert_with(|| typed.to_string());
+        }
+        read_back
+    }
+
+    pub(crate) fn parse_stored(&self, code: &str) -> Result<NumberFormat, crate::XlError> {
+        match self.typed_of.get(code) {
+            Some(typed) => NumberFormat::parse(typed),
+            None => NumberFormat::parse_stored(code),
+        }
     }
 
     fn compile(&mut self, f: &Arc<str>) -> Option<Arc<NumberFormat>> {
         if let Some(c) = self.compiled.get(f) {
             return c.clone();
         }
-        let c = NumberFormat::parse(f)
+        let c = self
+            .parse_stored(f)
             .or_else(|e| {
                 if ampm_literal_allowed(f) {
                     NumberFormat::parse(&quote_ampm(f))
@@ -235,63 +381,14 @@ impl CellFormats {
     }
 }
 
-fn escaped_letters(typed: &str) -> String {
-    let mut out = String::new();
-    let mut it = typed.chars();
-    while let Some(c) = it.next() {
-        if c == '\\' {
-            out.extend(it.next().filter(char::is_ascii_alphabetic));
-        }
-    }
-    out
-}
-
-fn registry_key(spelled: &str) -> String {
-    let key = format_key(spelled);
-    let mut out = String::with_capacity(key.len());
-    let mut escaped = false;
-    for c in key.chars() {
-        out.push(if escaped { c } else { c.to_ascii_lowercase() });
-        escaped = !escaped && c == '\\';
-    }
-    out
-}
-
-const BUILT_IN_PAIRS: [&str; 4] = [
-    "#,##0;-#,##0",
-    "#,##0;[Red]-#,##0",
-    "#,##0.00;-#,##0.00",
-    "#,##0.00;[Red]-#,##0.00",
-];
-
-const YIELDING: [&str; 16] = [
-    "0%",
-    "0.00%",
-    "0.00E+00",
-    "# ?/?",
-    "# ??/??",
-    "d-mmm-yy",
-    "d-mmm",
-    "mmm-yy",
-    "h:mm AM/PM",
-    "h:mm:ss AM/PM",
-    "h:mm",
-    "h:mm:ss",
-    "mm:ss",
-    "[h]:mm:ss",
-    "mm:ss.0",
-    "##0.0E+0",
-];
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum FormatClass {
-    Percent,
-    Scientific,
-    Fraction,
-    Currency,
-    Date,
-    Time,
-    Other,
+fn has_elapsed_bracket(code: &str) -> bool {
+    code.split('[').skip(1).any(|b| {
+        b.split(']').next().is_some_and(|i| {
+            !i.is_empty()
+                && i.chars()
+                    .all(|c| matches!(c, 'h' | 'H' | 'm' | 'M' | 's' | 'S'))
+        })
+    })
 }
 
 fn pos(x: Rc, host: u32) -> i64 {
@@ -336,6 +433,43 @@ impl Workbook {
         out
     }
 
+    pub fn cell_formats_in_table_order(&self) -> Vec<(&Style, bool)> {
+        let mut used: FxHashMap<usize, [bool; 2]> = FxHashMap::default();
+        for (&(sheet, r, c), s) in &self.cellfmt.map {
+            if self.sheet(sheet).is_some() {
+                let quote = self.has_apostrophe(CellAddr::new(sheet, r, c));
+                used.entry(key_of(s)).or_default()[usize::from(quote)] = true;
+            }
+        }
+        let mut out = Vec::new();
+        for s in &self.cellfmt.xf_order {
+            if let Some(&[plain, quoted]) = used.get(&key_of(s)) {
+                out.extend(plain.then_some((&**s, false)));
+                out.extend(quoted.then_some((&**s, true)));
+            }
+        }
+        out
+    }
+
+    pub fn range_styles(&self, sheet: SheetId, rect: Rect) -> Vec<&Style> {
+        let f = &self.cellfmt;
+        let stored = f.map.len() + f.rows.len() + f.cols.len();
+        let styles = if rect.cell_count() <= stored as u64 + 1 {
+            (rect.r0..=rect.r1)
+                .flat_map(|r| (rect.c0..=rect.c1).map(move |c| CellAddr::new(sheet, r, c)))
+                .map(|a| f.style(a))
+                .collect()
+        } else {
+            f.stored_styles(sheet, rect)
+        };
+        let mut seen = rustc_hash::FxHashSet::default();
+        styles
+            .into_iter()
+            .filter(|s| seen.insert(Arc::as_ptr(s)))
+            .map(|s| &**s)
+            .collect()
+    }
+
     pub fn formatted_cells(&self, sheet: SheetId) -> Vec<(u32, u32)> {
         let mut v: Vec<(u32, u32)> = self
             .cellfmt
@@ -348,11 +482,53 @@ impl Workbook {
         v
     }
 
-    pub fn has_line_formats(&self, sheet: SheetId) -> bool {
-        let f = &self.cellfmt;
-        f.sheets.contains_key(&sheet)
-            || f.rows.keys().any(|k| k.0 == sheet)
-            || f.cols.keys().any(|k| k.0 == sheet)
+    pub fn row_formats(&self, sheet: SheetId) -> BTreeMap<u32, Style> {
+        let cf = &self.cellfmt;
+        cf.rows
+            .keys()
+            .filter(|k| k.0 == sheet)
+            .filter_map(|&(_, r)| cf.row_record(sheet, r).map(|s| (r, (**s).clone())))
+            .collect()
+    }
+
+    pub fn row_column_crossings(&self, sheet: SheetId) -> Vec<(u32, u32)> {
+        let cf = &self.cellfmt;
+        let rows: Vec<(u32, u64, &Sty)> = cf
+            .rows
+            .iter()
+            .filter(|(k, _)| k.0 == sheet)
+            .filter_map(|(&(_, r), (seq, _))| cf.row_record(sheet, r).map(|s| (r, *seq, s)))
+            .collect();
+        let Some(oldest) = rows.iter().map(|r| r.1).min() else {
+            return Vec::new();
+        };
+        let newer: Vec<u32> = cf
+            .cols
+            .iter()
+            .filter(|(k, (seq, _))| k.0 == sheet && *seq > oldest)
+            .map(|(k, _)| k.1)
+            .collect();
+        let mut out = Vec::new();
+        for &(r, _, written) in &rows {
+            for &c in &newer {
+                let a = CellAddr::new(sheet, r, c);
+                if !cf.map.contains_key(&(sheet, r, c)) && **cf.style(a) != **written {
+                    out.push((r, c));
+                }
+            }
+        }
+        out
+    }
+
+    pub fn load_row_style(&mut self, sheet: SheetId, row: u32, style: &Style) {
+        let fmt = stored_format(&style.number_format);
+        self.cellfmt.register_stored(&fmt);
+        let style = style.with_number_format(&fmt);
+        let cf = &mut self.cellfmt;
+        cf.seq += 1;
+        let (seq, style) = (cf.seq, cf.intern(style));
+        cf.rows.insert((sheet, row), (seq, style));
+        self.mark_rows(sheet, row, row, true);
     }
 
     pub fn debug_format(&self, addr: CellAddr) -> String {
@@ -374,19 +550,30 @@ impl Workbook {
     }
 
     pub fn note_number_format(&mut self, fmt: Option<&str>) {
-        self.session.last_format = fmt.map(str::to_string);
+        self.session.last_format.set(fmt.map(str::to_string));
     }
 
     pub fn note_cell_format(&mut self, addr: CellAddr) {
         let f = self.number_format(addr);
         if !f.eq_ignore_ascii_case("general") {
-            self.session.last_format = Some(f.to_string());
+            self.session.last_format.set(Some(f.to_string()));
         }
     }
 
     pub fn note_exact_cell_format(&mut self, addr: CellAddr) {
         let f = self.number_format(addr).to_string();
-        self.session.last_format = Some(f);
+        self.session.last_format.set(Some(f));
+    }
+
+    pub fn share_last_format(&mut self, shared: &LastFormat) {
+        self.session.last_format = shared.clone();
+    }
+
+    pub fn adopt_last_format(&mut self, shared: &LastFormat) {
+        if !self.session.last_format.is(shared) {
+            shared.set(self.session.last_format.get());
+            self.share_last_format(shared);
+        }
     }
 
     pub(crate) fn subtotal_label_format(&mut self, addr: CellAddr) {
@@ -394,88 +581,25 @@ impl Workbook {
             return;
         };
         let cur = self.number_format(addr);
-        if !cur.eq_ignore_ascii_case(&f)
-            && (cur.eq_ignore_ascii_case("general") || self.auto_replaces(cur, &f))
-        {
+        if self.should_install_format(cur, &f) {
             self.store_format(addr, &f);
         }
     }
 
-    pub(crate) fn auto_replaces(&self, cur: &str, new: &str) -> bool {
-        let short = self
-            .input_env()
-            .locale
-            .short_date_format
-            .to_ascii_lowercase();
-        let cur_sym = self.input_env().locale.currency.to_ascii_lowercase();
-        let kind = |f: &str| -> Option<u8> {
-            let f = f.to_ascii_lowercase();
-            let f = f.as_str();
-            let c = cur_sym.as_str();
-            if f == format!("{c}#,##0;-{c}#,##0")
-                || f == format!("{c}#,##0;[red]-{c}#,##0")
-                || f == format!("{c}#,##0.00;-{c}#,##0.00")
-                || f == format!("{c}#,##0.00;[red]-{c}#,##0.00")
-            {
-                Some(6)
-            } else if f == "0%" || f == "0.00%" {
-                Some(1)
-            } else if f == "0.00e+00" || f == "##0.0e+0" {
-                Some(2)
-            } else if f == "# ?/?" || f == "# ??/??" {
-                Some(3)
-            } else if f == short
-                || f == "d-mmm-yy"
-                || f == "d-mmm"
-                || f == "mmm-yy"
-                || f == format!("{short} h:mm")
-            {
-                Some(4)
-            } else if matches!(
-                f,
-                "h:mm am/pm"
-                    | "h:mm:ss am/pm"
-                    | "h:mm"
-                    | "h:mm:ss"
-                    | "mm:ss"
-                    | "[h]:mm:ss"
-                    | "mm:ss.0"
-            ) {
-                Some(5)
-            } else {
-                None
-            }
-        };
-        match kind(cur) {
-            None => cur.eq_ignore_ascii_case("general"),
-            Some(k) => {
-                let mut plain = String::new();
-                let mut quoted = false;
-                for ch in new.to_ascii_lowercase().chars() {
-                    match ch {
-                        '"' => quoted = !quoted,
-                        _ if !quoted => plain.push(ch),
-                        _ => {}
-                    }
-                }
-                let loose = if plain.contains(cur_sym.as_str()) {
-                    6
-                } else if plain.contains('%') {
-                    1
-                } else if plain.contains("e+") {
-                    2
-                } else if plain.contains("?/") {
-                    3
-                } else if plain.contains('y') || plain.contains('d') {
-                    4
-                } else if plain.contains('h') || plain.contains("ss") {
-                    5
-                } else {
-                    0
-                };
-                loose != 0 && loose != k
-            }
+    pub(crate) fn should_install_format(&self, cur: &str, new: &str) -> bool {
+        if cur.eq_ignore_ascii_case(new) || !self.is_builtin_format(cur) {
+            return false;
         }
+        if cur.eq_ignore_ascii_case("general") {
+            return true;
+        }
+        let ty = |f: &str| Fm::of(f, !self.is_builtin_format(f)).ty;
+        let t_cur = ty(cur);
+        if t_cur == 1 {
+            return false;
+        }
+        let t_new = ty(new);
+        t_new != 1 && t_new != t_cur
     }
 
     pub(crate) fn is_text_format(&self, addr: CellAddr) -> bool {
@@ -484,35 +608,14 @@ impl Workbook {
             .is_some_and(|f| is_text_format_code(f))
     }
 
-    pub(crate) fn yielding_format(&self, cur: &str) -> bool {
-        if YIELDING.iter().any(|y| y.eq_ignore_ascii_case(cur)) {
-            return true;
-        }
-        let loc = self.input_env().locale;
-        let (short, c) = (&loc.short_date_format, &loc.currency);
-        [
-            short.clone(),
-            format!("{short} h:mm"),
-            format!("{c}#,##0;[Red]-{c}#,##0"),
-            format!("{c}#,##0.00;[Red]-{c}#,##0.00"),
-            format!("{c}#,##0;-{c}#,##0"),
-            format!("{c}#,##0.00;-{c}#,##0.00"),
-        ]
-        .iter()
-        .any(|y| y.eq_ignore_ascii_case(cur))
-    }
-
     pub(crate) fn fraction_first(&mut self, addr: CellAddr) -> bool {
         let Some(f) = self.cellfmt.fmt(addr).cloned() else {
             return false;
         };
-        if f.split(';')
-            .all(|p| p.trim().eq_ignore_ascii_case("general"))
-            || &*f == "@"
-        {
-            return false;
-        }
-        self.cellfmt.compile(&f).is_some_and(|c| !c.is_date())
+        matches!(
+            Fm::of(&f, !self.is_builtin_format(&f)).ty,
+            1 | 2 | 5 | 6 | 7 | 10
+        )
     }
 
     pub(crate) fn date_or_text_format(&mut self, addr: CellAddr, or_text: bool) -> bool {
@@ -635,7 +738,8 @@ impl Workbook {
             s == **base
         };
         for (k, v) in self.cellfmt.map.iter().filter(|(k, _)| k.0 == id) {
-            if bare(v) {
+            let line = self.cellfmt.line(CellAddr::new(id, k.1, k.2));
+            if bare(v) && line.is_none_or(|l| bare(l)) {
                 continue;
             }
             let cell = Rect::new(k.1, k.2, k.1, k.2);
@@ -643,10 +747,12 @@ impl Workbook {
         }
         if let Some(marks) = self.cellfmt.row_marks.get(&id) {
             let custom: Vec<u32> = self.row_custom_heights(id).iter().map(|h| h.0).collect();
-            let mut hard = marks
-                .keys()
-                .copied()
-                .filter(|r| custom.contains(r) || self.row_hidden(id, *r));
+
+            let mut hard = marks.keys().copied().filter(|r| {
+                custom.contains(r)
+                    || self.row_hidden(id, *r)
+                    || self.cellfmt.row_record(id, *r).is_some()
+            });
             let lo = hard.next();
             let hi = hard.last().or(lo);
             if let (Some(lo), Some(hi)) = (lo, hi) {
@@ -690,6 +796,16 @@ impl Workbook {
         rect: Rect,
         f: &dyn Fn(&Style) -> Style,
     ) {
+        self.apply_style_with_opt(sheet, rect, f, false);
+    }
+
+    fn apply_style_with_opt(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        f: &dyn Fn(&Style) -> Style,
+        keep_merged: bool,
+    ) {
         if rect.is_full_columns() || rect.is_full_rows() {
             let whole = rect.is_full_columns() && rect.is_full_rows();
             let inside =
@@ -709,6 +825,23 @@ impl Workbook {
             if rect.is_full_rows() && !whole {
                 self.mark_rows(sheet, rect.r0, rect.r1, true);
             }
+
+            let pinned: Vec<_> = if whole || !keep_merged {
+                Vec::new()
+            } else {
+                self.merges(sheet)
+                    .into_iter()
+                    .filter(|m| !(rect.contains(m.r0, m.c0) && rect.contains(m.r1, m.c1)))
+                    .filter_map(|m| m.intersection(&rect))
+                    .filter(|x| x.rows() as u64 * x.cols() as u64 <= 1 << 16)
+                    .flat_map(|x| {
+                        (x.r0..=x.r1).flat_map(move |r| {
+                            (x.c0..=x.c1).map(move |c| CellAddr::new(sheet, r, c))
+                        })
+                    })
+                    .map(|a| (a, (*self.cellfmt.style(a)).clone()))
+                    .collect()
+            };
             let cf = &mut self.cellfmt;
             let base = cf.base.clone();
             let cols = rect.is_full_columns();
@@ -771,6 +904,9 @@ impl Workbook {
                 let s = f(&v);
                 self.store_style(CellAddr::new(k.0, k.1, k.2), s);
             }
+            for (a, s) in pinned {
+                self.store_style(a, (*s).clone());
+            }
             return;
         }
         if rect.rows() as u64 * rect.cols() as u64 > 1 << 20 {
@@ -785,15 +921,146 @@ impl Workbook {
         }
     }
 
-    fn apply_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) {
-        let spelled = norm_format(fmt);
+    fn apply_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str, ampm: Designators) -> String {
+        let spelled = norm_format(fmt, ampm);
 
         let implicit = !fmt.contains(';') && spelled.ends_with(";General");
-        let fmt = self.cellfmt.registered(fmt, spelled);
+        let loc = self.input_env().locale.clone();
+        let fmt = self.cellfmt.registered(&loc, fmt, spelled);
         self.apply_style_with(sheet, rect, &|s: &Style| Style {
             implicit_general: implicit,
             ..s.with_number_format(&fmt)
         });
+        fmt
+    }
+
+    pub fn register_number_format(&mut self, code: &str) {
+        let fmt = stored_format(code);
+        self.cellfmt.register_stored(&fmt);
+    }
+
+    fn custom_slot(&self, code: &str) -> Option<usize> {
+        (code != "General" && !self.is_builtin_format(code))
+            .then(|| self.number_format_table().slot(code))
+    }
+
+    pub fn cfv_format_made(&mut self, sheet: SheetId, id: u32) {
+        self.cellfmt.dxf_clock += 1;
+        let stamp = self.cellfmt.dxf_clock;
+        let sh = self.cfv_sheet_mut(sheet);
+        if let Some(i) = sh.index_of(id) {
+            sh.rules[i].dxf.made.stamp = stamp;
+            sh.rules[i].dxf.made.source = None;
+        }
+    }
+
+    pub fn cfv_formats_loaded<'a>(&mut self, dxfs: impl Iterator<Item = &'a mut crate::cfv::Dxf>) {
+        let mut formatted = Vec::new();
+        for d in dxfs {
+            self.cellfmt.dxf_clock += 1;
+            d.made.stamp = self.cellfmt.dxf_clock;
+            if d.mask.number_format {
+                self.register_number_format(&d.style.number_format);
+                formatted.push(d);
+            }
+        }
+        if formatted.is_empty() {
+            return;
+        }
+        let mut table = self.number_format_table();
+        for d in formatted {
+            let code = stored_format(&d.style.number_format);
+            d.made.slot =
+                (code != "General" && !self.is_builtin_format(&code)).then(|| table.slot(&code));
+        }
+    }
+
+    pub fn cfv_put_number_format(&mut self, sheet: SheetId, id: u32, code: &str) {
+        let spelled = norm_format(code, designators(0));
+        let loc = self.input_env().locale.clone();
+        let fmt = self.cellfmt.registered(&loc, code, spelled);
+        let slot = self.custom_slot(&fmt);
+        let sh = self.cfv_sheet_mut(sheet);
+        if let Some(i) = sh.index_of(id) {
+            let d = &mut sh.rules[i].dxf;
+            d.mask.number_format = true;
+            d.style.number_format = fmt.as_str().into();
+            d.made.slot = slot;
+        }
+
+        if let Some(b) = sh.block_of(id) {
+            sh.reenter(b);
+        }
+        self.cfv_format_made(sheet, id);
+    }
+
+    pub fn cfv_number_format(&self, d: &crate::cfv::Dxf) -> CfNumberFormat {
+        if !d.mask.number_format {
+            return CfNumberFormat::Unset;
+        }
+        match d.made.slot {
+            Some(s) => match self.number_format_table().codes().get(s) {
+                Some(c) => CfNumberFormat::Code(c.clone()),
+                None => CfNumberFormat::Gone,
+            },
+            None => CfNumberFormat::Code(d.style.number_format.to_string()),
+        }
+    }
+
+    pub fn delete_number_format(&mut self, code: &str) -> bool {
+        let spelled = norm_format(code, None);
+        if spelled == "General" || self.is_builtin_format(&spelled) {
+            self.note_number_format(Some(&spelled));
+            return false;
+        }
+        let key = compile_for_compare(&spelled);
+        let held = |f: &str| f != "General" && compile_for_compare(f) == key;
+        let Some(slot) = self
+            .number_format_table()
+            .codes()
+            .iter()
+            .position(|f| held(f))
+        else {
+            self.note_number_format(None);
+            return true;
+        };
+        let cf = &mut self.cellfmt;
+        cf.format_order.retain(|f| !held(f));
+        cf.format_seen.retain(|f| !held(f));
+        cf.registry.remove(&key);
+        let normal = cf.base.number_format.clone();
+        let to = if held(&normal) {
+            Arc::from("General")
+        } else {
+            normal
+        };
+        cf.replace_number_format(&held, &to);
+        for n in &mut self.style_table_mut().named {
+            if held(&n.style.number_format) {
+                n.style = n.style.with_number_format(&to);
+            }
+        }
+        for sh in self.cfv.values_mut() {
+            for r in &mut sh.rules {
+                if r.dxf.mask.number_format && held(&r.dxf.style.number_format) {
+                    r.dxf.style.number_format = to.clone();
+                }
+            }
+        }
+
+        let next = self.number_format_table().codes().get(slot).cloned();
+        self.note_number_format(next.as_deref());
+        true
+    }
+
+    pub fn number_format_table(&self) -> NumberFormatTable {
+        let mut t = NumberFormatTable::default();
+        for code in &self.cellfmt.format_order {
+            if !self.is_builtin_format(code) {
+                t.slot(code);
+            }
+        }
+        t
     }
 
     pub fn set_number_format_stored(&mut self, sheet: SheetId, rect: Rect, code: &str) {
@@ -832,16 +1099,35 @@ impl Workbook {
     }
 
     pub fn set_style_with(&mut self, sheet: SheetId, rect: Rect, f: &dyn Fn(&Style) -> Style) {
-        self.command(Command::Format, |wb| wb.set_style_with_run(sheet, rect, f))
+        self.command(Command::Format, |wb| {
+            wb.set_style_with_run(sheet, rect, f, true)
+        })
     }
 
-    fn set_style_with_run(&mut self, sheet: SheetId, rect: Rect, f: &dyn Fn(&Style) -> Style) {
+    pub fn set_style_with_merged(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        f: &dyn Fn(&Style) -> Style,
+    ) {
+        self.command(Command::Format, |wb| {
+            wb.set_style_with_run(sheet, rect, f, false)
+        })
+    }
+
+    fn set_style_with_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        f: &dyn Fn(&Style) -> Style,
+        keep_merged: bool,
+    ) {
         if self.sheet(sheet).is_none() {
             return;
         }
 
         let late = self.late_cells(sheet, rect);
-        self.apply_style_with(sheet, rect, f);
+        self.apply_style_with_opt(sheet, rect, f, keep_merged);
         self.note_late_formats(sheet, late);
     }
 
@@ -946,7 +1232,7 @@ impl Workbook {
             number_format: s.number_format.clone(),
             ..rest.clone()
         });
-        self.set_number_format_body(sheet, rect, &fmt)
+        self.set_number_format_body(sheet, rect, &fmt, None)
     }
 
     pub fn shown_border(&self, addr: CellAddr, edge: crate::style::Edge) -> crate::style::Border {
@@ -978,6 +1264,42 @@ impl Workbook {
         m.get(&(sheet, idx))
             .or_else(|| cf.sheets.get(&sheet))
             .map_or(&cf.base, |(_, s)| s)
+    }
+
+    pub fn column_formats(&self, sheet: SheetId) -> Vec<(u32, Style)> {
+        let cf = &self.cellfmt;
+        let all = cf.sheets.get(&sheet);
+        let mut v: Vec<(u32, &Sty)> = cf
+            .cols
+            .iter()
+            .filter(|((s, _), _)| *s == sheet)
+            .map(|((_, i), (_, st))| (*i, st))
+            .collect();
+        if let Some((_, st)) = all {
+            let own: std::collections::HashSet<u32> = v.iter().map(|x| x.0).collect();
+            v.extend(
+                (0..crate::address::MAX_COLS)
+                    .filter(|i| !own.contains(i))
+                    .map(|i| (i, st)),
+            );
+        }
+        v.sort_unstable_by_key(|x| x.0);
+        v.into_iter()
+            .filter(|(_, st)| ***st != *cf.base)
+            .map(|(i, st)| (i, (**st).clone()))
+            .collect()
+    }
+
+    pub fn line_formatted(&self, a: CellAddr) -> bool {
+        let cf = &self.cellfmt;
+        let column = cf
+            .cols
+            .get(&(a.sheet, a.col))
+            .or_else(|| cf.sheets.get(&a.sheet));
+        column.is_some_and(|(_, st)| **st != *cf.base)
+            || cf
+                .row_record(a.sheet, a.row)
+                .is_some_and(|st| **st != *cf.base)
     }
 
     pub fn line_format_indices(&self, sheet: SheetId, row: bool) -> Vec<u32> {
@@ -1039,19 +1361,46 @@ impl Workbook {
             return;
         }
         let before = self.late_candidates(sheet, rect, false);
-        self.apply_format(sheet, rect, fmt);
+        let stored = self.apply_format(sheet, rect, fmt, None);
         self.note_late_formats(sheet, before);
-        self.note_table_col_formats(sheet, rect, fmt);
+        self.note_table_col_formats(sheet, rect, &stored);
     }
 
     pub fn set_number_format(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
+        self.set_number_format_lcid(sheet, rect, fmt, 0)
+    }
+
+    pub fn set_number_format_lcid(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        fmt: &str,
+        lcid: u32,
+    ) -> RecalcReport {
         self.command(Command::Format, |wb| {
-            wb.set_number_format_run(sheet, rect, fmt)
+            wb.set_number_format_run(sheet, rect, fmt, designators(lcid))
         })
     }
 
-    fn set_number_format_run(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
-        let r = self.set_number_format_body(sheet, rect, fmt);
+    pub fn set_number_format_copy(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        code: &str,
+    ) -> RecalcReport {
+        self.command(Command::Format, |wb| {
+            wb.set_number_format_run(sheet, rect, code, None)
+        })
+    }
+
+    fn set_number_format_run(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        fmt: &str,
+        ampm: Designators,
+    ) -> RecalcReport {
+        let r = self.set_number_format_body(sheet, rect, fmt, ampm);
         if self.sheet(sheet).is_some() && !(rect.r0 == 0 && rect.r1 + 1 >= crate::address::MAX_ROWS)
         {
             self.view_touch_row_pub(sheet, rect.r1);
@@ -1073,18 +1422,86 @@ impl Workbook {
         }
     }
 
-    fn set_number_format_body(&mut self, sheet: SheetId, rect: Rect, fmt: &str) -> RecalcReport {
+    fn set_number_format_body(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        fmt: &str,
+        ampm: Designators,
+    ) -> RecalcReport {
         if self.sheet(sheet).is_none() || format_refused(fmt) {
             return RecalcReport::default();
         }
         let before = self.late_candidates(sheet, rect, true);
-        self.apply_format(sheet, rect, fmt);
+        let formats = self.number_formats_of_constants(sheet, rect);
+        let stored = self.apply_format(sheet, rect, fmt, ampm);
         self.note_late_formats(sheet, before);
-        self.note_table_col_formats(sheet, rect, fmt);
+        self.note_table_col_formats(sheet, rect, &stored);
+        self.round_reformatted(sheet, rect, formats)
+    }
+
+    pub fn number_formats_of_constants(
+        &self,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Vec<(CellAddr, Arc<str>)> {
+        let Some(sh) = self.sheet(sheet).filter(|_| self.cellfmt.precision) else {
+            return Vec::new();
+        };
+        sh.cells
+            .iter_rect(rect)
+            .filter(|(_, _, e)| matches!(e, Entry::Const(Value::Number(_))))
+            .map(|(r, c, _)| {
+                let a = CellAddr::new(sheet, r, c);
+                (a, self.cellfmt.style(a).number_format.clone())
+            })
+            .collect()
+    }
+
+    pub fn round_reformatted(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        before: Vec<(CellAddr, Arc<str>)>,
+    ) -> RecalcReport {
         if !self.cellfmt.precision {
             return RecalcReport::default();
         }
-        self.round_range(sheet, rect)
+        let changed = before
+            .into_iter()
+            .filter(|(a, was)| self.cellfmt.style(*a).number_format != *was)
+            .map(|(a, _)| a)
+            .collect();
+        self.round_range(sheet, rect, changed)
+    }
+
+    fn round_stored(&mut self, addr: CellAddr) {
+        let entry = self
+            .sheet(addr.sheet)
+            .and_then(|s| s.cells.get(addr.row, addr.col));
+        let Some(Entry::Const(Value::Number(n))) = entry else {
+            return;
+        };
+        let n = *n;
+        if self.locked_on_protected(addr) {
+            return;
+        }
+        let v = self.precision_value(addr, n, LimPrec::Cell);
+        if v.to_bits() != n.to_bits() {
+            self.set_value_exact(addr, Value::Number(v));
+        }
+    }
+
+    fn locked_on_protected(&self, addr: CellAddr) -> bool {
+        self.cellfmt.protected.contains(&addr.sheet) && self.cellfmt.style(addr).locked
+    }
+
+    pub fn set_contents_protected(&mut self, sheet: SheetId, on: bool) {
+        if on {
+            self.cellfmt.protected.insert(sheet);
+        } else {
+            self.cellfmt.protected.remove(&sheet);
+        }
     }
 
     pub(crate) fn late_candidates(
@@ -1147,15 +1564,12 @@ impl Workbook {
         }
     }
 
-    fn round_range(&mut self, sheet: SheetId, rect: Rect) -> RecalcReport {
+    fn round_range(&mut self, sheet: SheetId, rect: Rect, changed: Vec<CellAddr>) -> RecalcReport {
         let sh = self.sheet(sheet).unwrap();
-        let mut consts = Vec::new();
         let mut formulas = Vec::new();
-        for (r, c, e) in sh.cells.iter_rect(rect) {
-            match e {
-                Entry::Const(Value::Number(n)) => consts.push((CellAddr::new(sheet, r, c), *n)),
-                Entry::Formula(fid) => formulas.push(*fid),
-                _ => {}
+        for (_, _, e) in sh.cells.iter_rect(rect) {
+            if let Entry::Formula(fid) = e {
+                formulas.push(*fid);
             }
         }
         for (fid, _) in sh.spills.intersecting(&rect) {
@@ -1163,11 +1577,8 @@ impl Workbook {
         }
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
-        for (a, n) in consts {
-            let v = self.precision_value(a, n);
-            if v != n {
-                self.set_value(a, Value::Number(v));
-            }
+        for a in changed {
+            self.round_stored(a);
         }
         for fid in formulas {
             calc::mark_dirty(self, fid);
@@ -1192,26 +1603,25 @@ impl Workbook {
         for s in ids.into_iter().filter(|_| on) {
             let sh = self.sheet(s).unwrap();
             for (r, c, e) in sh.cells.iter() {
-                if let Entry::Const(Value::Number(n)) = e {
-                    consts.push((CellAddr::new(s, r, c), *n));
+                if let Entry::Const(Value::Number(_)) = e {
+                    consts.push(CellAddr::new(s, r, c));
                 }
             }
         }
         let mode = self.settings.mode;
         self.settings.mode = CalcMode::Manual;
-        for (a, n) in consts {
-            let v = self.precision_value(a, n);
-            if v != n {
-                self.set_value(a, Value::Number(v));
-            }
+        for a in consts {
+            self.round_stored(a);
         }
         let fids: Vec<_> = self.formula_ids().collect();
         for fid in fids {
             if on {
                 if let Value::Number(n) = self.formula(fid).value {
                     let a = self.formula(fid).addr;
-                    let v = self.precision_value(a, n);
-                    self.formula_mut(fid).value = Value::Number(v);
+                    if !self.locked_on_protected(a) {
+                        let v = self.precision_value(a, n, LimPrec::Cell);
+                        self.formula_mut(fid).value = Value::Number(v);
+                    }
                 }
             }
             calc::mark_dirty(self, fid);
@@ -1225,9 +1635,9 @@ impl Workbook {
         self.cellfmt.compile(&f)
     }
 
-    pub(crate) fn precision_value(&mut self, addr: CellAddr, n: f64) -> f64 {
+    pub(crate) fn precision_value(&mut self, addr: CellAddr, n: f64, routine: LimPrec) -> f64 {
         match self.compiled_format(addr) {
-            Some(f) => f.displayed_value(n),
+            Some(f) => f.displayed_value(n, routine),
             None => n,
         }
     }
@@ -1242,7 +1652,7 @@ impl Workbook {
     pub(crate) fn precision_const(&mut self, addr: CellAddr, v: Value) -> Value {
         match v {
             Value::Number(n) if self.cellfmt.precision => {
-                Value::Number(self.precision_value(addr, n))
+                Value::Number(self.precision_value(addr, n, LimPrec::Store))
             }
             v => v,
         }
@@ -1250,14 +1660,14 @@ impl Workbook {
 
     pub(crate) fn precision_result(&mut self, addr: CellAddr, v: Value) -> Value {
         match v {
-            Value::Number(n) => Value::Number(self.precision_value(addr, n)),
+            Value::Number(n) => Value::Number(self.precision_value(addr, n, LimPrec::Store)),
             Value::Array(a) => {
                 let mut data = a.data.clone();
                 for (i, x) in data.iter_mut().enumerate() {
                     if let Value::Number(n) = x {
                         let (r, c) = (i as u32 / a.cols, i as u32 % a.cols);
                         let at = CellAddr::new(addr.sheet, addr.row + r, addr.col + c);
-                        *n = self.precision_value(at, *n);
+                        *n = self.precision_value(at, *n, LimPrec::Store);
                     }
                 }
                 Value::Array(Arc::new(Array::new(a.rows, a.cols, data)))
@@ -1275,11 +1685,7 @@ impl Workbook {
             && self.number_format(addr).eq_ignore_ascii_case("@");
         if self.cellfmt_has(addr) && !text_ttc {
             let cur = self.number_format(addr).to_string();
-            let yields = self.yielding_format(&cur);
-
-            let general = typed.eq_ignore_ascii_case("General");
-            let (a, b) = (self.format_class(&cur), self.format_class(&typed));
-            if !yields || (!general && (a == b || b == FormatClass::Other)) {
+            if !self.should_install_format(&cur, &typed) {
                 return;
             }
         }
@@ -1297,26 +1703,6 @@ impl Workbook {
             s.alignment.wrap = true;
             s
         });
-    }
-
-    fn format_class(&mut self, f: &str) -> FormatClass {
-        if f.contains("E+") || f.contains("E-") {
-            return FormatClass::Scientific;
-        }
-        if f.ends_with('%') {
-            return FormatClass::Percent;
-        }
-        if f.contains('$') {
-            return FormatClass::Currency;
-        }
-        if f.contains('?') && f.contains('/') {
-            return FormatClass::Fraction;
-        }
-        match self.cellfmt.compile(&Arc::from(f)) {
-            Some(c) if c.has_calendar_date() => FormatClass::Date,
-            Some(c) if c.is_date() => FormatClass::Time,
-            _ => FormatClass::Other,
-        }
     }
 
     fn ref_format(&self, sr: &SheetRef, cref: &CRef, host: CellAddr) -> Option<Arc<str>> {
@@ -1343,80 +1729,64 @@ impl Workbook {
             .fmt(CellAddr::new(sheet, r as u32, c as u32))
             .cloned()?;
 
-        if sheet != host.sheet && !self.is_builtin_format(&f) {
+        if f.eq_ignore_ascii_case("general") || (sheet != host.sheet && !self.is_builtin_format(&f))
+        {
             return None;
         }
         Some(f)
     }
 
     pub(crate) fn is_builtin_format(&self, f: &str) -> bool {
-        const FIXED: [&str; 16] = [
-            "General",
-            "0",
-            "0.00",
-            "#,##0",
-            "#,##0.00",
-            "0%",
-            "0.00%",
-            "0.00E+00",
-            "# ?/?",
-            "# ??/??",
-            "d-mmm-yy",
-            "d-mmm",
-            "mmm-yy",
-            "h:mm AM/PM",
-            "h:mm:ss AM/PM",
-            "h:mm",
-        ];
-        const MORE: [&str; 8] = [
-            "h:mm:ss",
-            "mm:ss",
-            "[h]:mm:ss",
-            "mm:ss.0",
-            "##0.0E+0",
-            "@",
-            "#,##0 ;(#,##0)",
-            "#,##0 ;[Red](#,##0)",
-        ];
-        if FIXED
-            .iter()
-            .chain(MORE.iter())
-            .any(|y| y.eq_ignore_ascii_case(f))
-        {
-            return true;
-        }
-        let loc = self.input_env().locale;
-        let (short, c) = (&loc.short_date_format, &loc.currency);
-        [
-            short.clone(),
-            format!("{short} h:mm"),
-            format!("{c}#,##0;[Red]-{c}#,##0"),
-            format!("{c}#,##0.00;[Red]-{c}#,##0.00"),
-            format!("{c}#,##0;-{c}#,##0"),
-            format!("{c}#,##0.00;-{c}#,##0.00"),
-            "#,##0 ;(#,##0)".into(),
-            "#,##0.00;(#,##0.00)".into(),
-            "#,##0.00;[Red](#,##0.00)".into(),
-            "#,##0;-#,##0".into(),
-            "#,##0.00;-#,##0.00".into(),
-            "#,##0;[Red]-#,##0".into(),
-            "#,##0.00;[Red]-#,##0.00".into(),
-        ]
-        .iter()
-        .any(|y| y.eq_ignore_ascii_case(f))
+        crate::ifmt_slots::is_builtin(self.input_env().locale, f)
+    }
+
+    pub fn format_in_table(&self, f: &str) -> bool {
+        self.is_builtin_format(f)
+            || self
+                .style_table()
+                .named
+                .iter()
+                .any(|s| *s.style.number_format == *f)
+    }
+
+    pub fn fill_in_table(&self, f: &Fill) -> bool {
+        let same = |a: &Fill| {
+            a.pattern == f.pattern
+                && a.color == f.color
+                && a.pattern_color == f.pattern_color
+                && a.raw == f.raw
+        };
+        let t = self.style_table();
+        let plain = f.raw.is_none() && f.color == Fill::default().color;
+        (plain && matches!(f.pattern, Pattern::None | Pattern::Gray125))
+            || t.named.iter().any(|n| same(&n.style.fill))
+            || t.hidden.iter().any(|n| same(&n.style.style.fill))
+            || self.cellfmt.xf_order.iter().any(|s| same(&s.fill))
+            || same(&self.cellfmt.base.fill)
     }
 
     pub(crate) fn infer_format(&mut self, n: &Node, host: CellAddr) -> Option<Arc<str>> {
-        let mut reg = Reg::Unset;
-        SUM_SEEN.with(|c| c.set(false));
-        FN_DEPTH.with(|d| d.set(0));
-        self.infer_walk(n, host, &mut reg);
-        match reg {
-            Reg::Fmt(f) if f.eq_ignore_ascii_case("h:mm:ss") && SUM_SEEN.with(|c| c.get()) => {
+        let mut st = AutoFmt {
+            need: true,
+            auto: None,
+            date: None,
+        };
+        self.infer_walk(n, host, &mut st);
+
+        self.opr_push(&mut st, true);
+
+        let f = match (st.date, st.auto) {
+            (None, a) => a,
+            (d, None) => d,
+            (Some(_), Some(_)) => None,
+        };
+
+        let sum_last = last_closed_function(n).is_some_and(crate::ifmt_auto::is_sum);
+        match f {
+            Some(f) if f.eq_ignore_ascii_case("h:mm:ss") && sum_last => {
                 Some(Arc::from("[h]:mm:ss"))
             }
-            Reg::Fmt(f) => Some(f),
-            _ => None,
+            f => f,
         }
     }
 
@@ -1428,121 +1798,121 @@ impl Workbook {
         })
     }
 
-    fn date_check(&mut self, l: &Option<Arc<str>>, r: &Option<Arc<str>>, reg: &mut Reg) {
-        if let Reg::Fmt(cur) = reg {
-            let cur = Some(cur.clone());
-            if self.is_date_format(&cur) && self.is_date_format(l) && self.is_date_format(r) {
-                *reg = Reg::Date;
-            }
+    fn opr_push(&mut self, st: &mut AutoFmt, keeps: bool) {
+        if !st.need {
+            return;
         }
+        if keeps {
+            if self.is_date_format(&st.auto) {
+                if st.date.is_some() {
+                    return;
+                }
+                st.date = st.auto.clone();
+            } else if st.date.is_none() {
+                return;
+            }
+        } else {
+            st.date = None;
+            st.need = false;
+        }
+        st.auto = None;
     }
 
-    fn infer_walk(&mut self, n: &Node, host: CellAddr, reg: &mut Reg) -> Option<Arc<str>> {
-        crate::deep(|| self.infer_walk_inner(n, host, reg))
+    fn infer_walk(&mut self, n: &Node, host: CellAddr, st: &mut AutoFmt) {
+        crate::deep(|| self.infer_walk_inner(n, host, st))
     }
 
-    fn infer_walk_inner(&mut self, n: &Node, host: CellAddr, reg: &mut Reg) -> Option<Arc<str>> {
+    fn infer_walk_inner(&mut self, n: &Node, host: CellAddr, st: &mut AutoFmt) {
         match n {
             Node::Ref(sr, cref) => {
-                let f = self.ref_format(sr, cref, host);
-                if let (Some(f), Reg::Unset) = (&f, &*reg) {
-                    *reg = Reg::Fmt(f.clone());
+                if st.need && st.auto.is_none() {
+                    st.auto = self.ref_format(sr, cref, host);
                 }
-                f
             }
-            Node::Paren(x) | Node::Unary(UnaryOp::Neg | UnaryOp::Plus, x) => {
-                self.infer_walk(x, host, reg)
+            Node::Paren(x) => self.infer_walk(x, host, st),
+
+            Node::Unary(UnaryOp::Implicit, x) => {
+                self.opr_push(st, false);
+                self.infer_walk(x, host, st);
             }
-            Node::Ws { node, .. } => self.infer_walk(node, host, reg),
-            Node::Binary(BinOp::Add | BinOp::Sub, a, b) => {
-                let l = self.infer_walk(a, host, reg);
-                let r = self.infer_walk(b, host, reg);
-                self.date_check(&l, &r, reg);
-                l.or(r)
+            Node::Ws { node, .. } => self.infer_walk(node, host, st),
+            Node::Unary(UnaryOp::Neg | UnaryOp::Plus, x) => {
+                self.opr_push(st, true);
+                self.infer_walk(x, host, st);
             }
-            Node::Binary(
-                BinOp::Mul
-                | BinOp::Div
-                | BinOp::Pow
-                | BinOp::Concat
-                | BinOp::Eq
-                | BinOp::Ne
-                | BinOp::Lt
-                | BinOp::Le
-                | BinOp::Gt
-                | BinOp::Ge,
-                a,
-                b,
-            ) => {
-                self.infer_walk(a, host, reg);
-                self.infer_walk(b, host, reg);
-                *reg = Reg::Hard;
-                None
+            Node::Binary(op, a, b) => {
+                self.infer_walk(a, host, st);
+                self.opr_push(st, matches!(op, BinOp::Add | BinOp::Sub));
+                self.infer_walk(b, host, st);
             }
             Node::Percent(x) => {
-                self.infer_walk(x, host, reg);
-                *reg = Reg::Hard;
-                None
+                self.infer_walk(x, host, st);
+                self.opr_push(st, false);
             }
             Node::Func { id, args } => {
-                let own = |_: &Workbook, s: String| Some(Arc::from(s.as_str()));
-                let env = self.input_env();
-                let own_fmt: Option<Arc<str>> = match functions::def(*id).name {
-                    "DATE" | "TODAY" => own(self, env.locale.short_date_format.clone()),
-                    "NOW" => own(self, format!("{} h:mm", env.locale.short_date_format)),
-                    "TIME" => own(self, "h:mm am/pm".into()),
-                    "PMT" | "FV" | "PV" | "NPV" | "IPMT" | "PPMT" | "SLN" | "SYD" | "DB"
-                    | "DDB" | "VDB" => {
-                        let c = &env.locale.currency;
-                        own(self, format!("{c}#,##0.00;[Red]-{c}#,##0.00"))
+                let saved = st.need;
+                if st.need && st.auto.is_none() {
+                    let name = functions::def(*id).name;
+                    match crate::ifmt_auto::auto_ifmt(name) {
+                        Some(ifmt) => {
+                            st.auto = Some(self.auto_ifmt_format(ifmt));
+                            st.need = false;
+                        }
+                        None => st.need = crate::ifmt_auto::passes_through(name),
                     }
-                    "IRR" | "MIRR" | "RATE" => own(self, "0%".into()),
-                    "SUM" | "MIN" | "MAX" | "AVERAGE" | "MEDIAN" | "MOD" | "ROUND" | "ROUNDUP"
-                    | "ROUNDDOWN" | "TRUNC" | "INT" => {
-                        let mut lead: Option<Arc<str>> = None;
-
-                        let outer = FN_DEPTH.with(|d| d.get()) == 0;
-                        if outer && functions::def(*id).name == "SUM" {
-                            SUM_SEEN.with(|c| c.set(true));
-                        }
-                        FN_DEPTH.with(|d| d.set(d.get() + 1));
-                        for a in args {
-                            let f = self.infer_walk(a, host, reg);
-                            if lead.is_some() {
-                                self.date_check(&lead, &f, reg);
-                            }
-                            lead = lead.or(f);
-                        }
-                        if matches!(reg, Reg::Hard) {
-                            *reg = Reg::Unset;
-                        }
-                        FN_DEPTH.with(|d| d.set(d.get() - 1));
-                        return lead;
-                    }
-                    _ => return None,
-                };
-                if let (Some(f), Reg::Unset) = (&own_fmt, &*reg) {
-                    *reg = Reg::Fmt(f.clone());
                 }
-                own_fmt
+                for (i, a) in args.iter().enumerate() {
+                    if i > 0 {
+                        self.opr_push(st, true);
+                    }
+                    self.infer_walk(a, host, st);
+                }
+                st.need = saved;
             }
-            _ => None,
+            _ => {}
         }
+    }
+
+    fn auto_ifmt_format(&self, ifmt: u8) -> Arc<str> {
+        use crate::ifmt_auto::{IFMT_CURRENCY, IFMT_DATE, IFMT_DATETIME, IFMT_PERCENT, IFMT_TIME};
+        let env = self.input_env();
+        let c = &env.locale.currency;
+        let f = match ifmt {
+            IFMT_CURRENCY => format!("{c}#,##0.00;[Red]-{c}#,##0.00"),
+            IFMT_PERCENT => "0%".to_string(),
+            IFMT_DATE => env.locale.short_date_format.clone(),
+            IFMT_TIME => "h:mm am/pm".to_string(),
+            IFMT_DATETIME => format!("{} h:mm", env.locale.short_date_format),
+            _ => String::new(),
+        };
+        Arc::from(f.as_str())
     }
 }
 
-thread_local! {
-    static FN_DEPTH: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
-    static SUM_SEEN: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+fn last_closed_function(n: &Node) -> Option<&'static str> {
+    crate::deep(|| match n {
+        Node::Unary(_, x) | Node::Percent(x) | Node::Spill(x) | Node::Paren(x) => {
+            last_closed_function(x)
+        }
+        Node::Ws { node, .. } => last_closed_function(node),
+        Node::Binary(_, a, b) => last_closed_function(b).or_else(|| last_closed_function(a)),
+        Node::Func { id, .. } => Some(functions::def(*id).name),
+        Node::NamedCall { args, .. } => args.iter().rev().find_map(last_closed_function),
+        Node::Call { callee, args } => args
+            .iter()
+            .rev()
+            .find_map(last_closed_function)
+            .or_else(|| last_closed_function(callee)),
+        Node::Let { values, body, .. } => last_closed_function(body)
+            .or_else(|| values.iter().rev().find_map(last_closed_function)),
+        _ => None,
+    })
 }
 
-enum Reg {
-    Unset,
-    Fmt(Arc<str>),
-
-    Hard,
-
-    Date,
+struct AutoFmt {
+    need: bool,
+    auto: Option<Arc<str>>,
+    date: Option<Arc<str>>,
 }
 
 pub(crate) fn is_text_format_code(f: &str) -> bool {
@@ -1699,11 +2069,22 @@ pub fn format_code_as_read(fmt: &str) -> String {
     unquote_dollar(fmt).into_owned()
 }
 
-fn norm_format(fmt: &str) -> String {
+pub enum CfNumberFormat {
+    Unset,
+    Code(String),
+
+    Gone,
+}
+
+pub fn format_code_normalized(fmt: &str) -> String {
+    norm_format(fmt, designators(0))
+}
+
+fn norm_format(fmt: &str, ampm: Designators) -> String {
     if fmt.is_empty() || fmt.eq_ignore_ascii_case("general") {
         "General".into()
     } else {
-        readback_spelling(&unquote_dollar(fmt))
+        readback_spelling(&unquote_dollar(fmt), ampm)
     }
 }
 
@@ -1778,5 +2159,103 @@ fn merge_borders(
         other
     } else {
         own
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn stored_styles_match_a_walk() {
+        let mut seed = 0x2545_f491_4f6c_dd1du64;
+        let mut next = move |n: u32| {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            (seed % u64::from(n)) as u32
+        };
+        let (last_row, last_col) = (crate::address::MAX_ROWS - 1, crate::address::MAX_COLS - 1);
+        for _ in 0..300 {
+            let mut wb = Workbook::new();
+            let sheet = wb.sheet_at(0).id;
+            for _ in 0..next(14) {
+                let (r, c) = (next(5), next(5));
+                let rect = match next(8) {
+                    0 => Rect::new(r, 0, r + next(2), last_col),
+                    1 => Rect::new(0, c, last_row, c + next(2)),
+                    2 if next(3) == 0 => Rect::new(0, 0, last_row, last_col),
+                    _ => Rect::new(r, c, r + next(3), c + next(3)),
+                };
+                let size = 100 + i32::try_from(next(5)).unwrap() * 20;
+                wb.set_style_with(sheet, rect, &|s: &Style| {
+                    let mut s = s.clone();
+                    s.font.size_twips = size.try_into().unwrap();
+                    s
+                });
+            }
+            for _ in 0..6 {
+                let (r, c) = (next(6), next(6));
+                let rect = Rect::new(r, c, r + next(6), c + next(6));
+                let sizes = |v: Vec<&Sty>| {
+                    let mut v: Vec<_> = v.into_iter().map(|s| s.font.size_twips).collect();
+                    v.sort_unstable();
+                    v.dedup();
+                    v
+                };
+                let walked = (rect.r0..=rect.r1)
+                    .flat_map(|r| (rect.c0..=rect.c1).map(move |c| CellAddr::new(sheet, r, c)))
+                    .map(|a| wb.cellfmt.style(a))
+                    .collect();
+                assert_eq!(
+                    sizes(wb.cellfmt.stored_styles(sheet, rect)),
+                    sizes(walked),
+                    "{rect:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn a_formula_takes_a_date_unless_a_second_date_cancels_it() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let at = |r: u32, c: u32| CellAddr::new(s, r, c);
+        wb.set_input(at(0, 0), "1/02/2024").unwrap();
+        wb.set_input(at(1, 0), "3/04/2024").unwrap();
+        wb.set_input(at(2, 0), "5").unwrap();
+        wb.set_number_format(s, Rect::new(2, 0, 2, 0), "0.00");
+        let date = wb.number_format(at(0, 0)).to_string();
+        let formats: Vec<String> = ["=A1+A3", "=A3+A1", "=A1-A2", "=A1+A3*1"]
+            .iter()
+            .zip(0..)
+            .map(|(f, r)| {
+                wb.set_input(at(r, 1), f).unwrap();
+                wb.number_format(at(r, 1)).to_string()
+            })
+            .collect();
+
+        assert_eq!(formats, [date.as_str(), "0.00", "General", "General"]);
+    }
+
+    #[test]
+    fn deleting_a_format_leaves_its_number_in_vifmt() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let shared = LastFormat::default();
+        wb.adopt_last_format(&shared);
+        for (c, f) in [(0, "0.000\" a\""), (1, "0.000\" b\"")] {
+            wb.set_number_format(s, Rect::cell(0, c), f);
+        }
+        assert!(wb.delete_number_format("0.000\" a\""));
+        assert_eq!(shared.get().as_deref(), Some("0.000\" b\""));
+        assert!(wb.delete_number_format("0.000\" b\""));
+        assert_eq!(shared.get(), None);
+
+        shared.set(Some("0%".into()));
+        assert!(wb.delete_number_format("0.000\" z\""));
+        assert_eq!(shared.get(), None);
+        assert!(!wb.delete_number_format("0%"));
+        assert_eq!(shared.get().as_deref(), Some("0%"));
     }
 }

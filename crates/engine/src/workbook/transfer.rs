@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::sheetops::{remap_sheet, DEAD};
-use super::{ext, Command, EditError, Entry, NameDef, Sheet, SheetState, Workbook};
+use super::{ext, Command, EditError, Entry, NameDef, Sheet, Workbook};
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::calc::RecalcReport;
 use crate::formula::{self, Formula, Node, SheetRef};
@@ -45,7 +45,6 @@ impl Workbook {
         let kind = from.kind;
         let new = SheetId(self.next_sheet);
         self.next_sheet += 1;
-        self.session.active = new;
         if let Some(sel) = src.session.selection.get(&sid).cloned() {
             self.session.selection.insert(new, sel);
         }
@@ -54,13 +53,15 @@ impl Workbook {
             Sheet {
                 id: new,
                 name,
-                state: SheetState::Visible,
+
+                state: from.state,
                 kind,
                 cells: Default::default(),
                 spills: Default::default(),
                 dirty: Default::default(),
             },
         );
+        self.session.active = self.shown_sheet(new);
 
         let this = &*self;
         let mut redirect = |sr: &SheetRef| match sr {
@@ -89,7 +90,9 @@ impl Workbook {
             };
             table_names.push((t.name.clone(), nn.clone()));
             let mut copy = t.clone();
+            copy.id = super::tables::TableId::fresh();
             copy.rename_in_snapshots(&t.name, &nn);
+            copy.disp = self.unique_display_name(&nn, None);
             copy.name = nn;
             copy.sheet = new;
             tables.push(copy);
@@ -238,7 +241,15 @@ impl Workbook {
             }
             if let Some((root, volatile, cached, array)) = f {
                 let text = print_node(self, &root, addr);
-                let nf = self.alloc_formula(addr, Arc::new(Formula { root, volatile }), text);
+                let nf = self.alloc_formula(
+                    addr,
+                    Arc::new(Formula {
+                        root,
+                        volatile,
+                        dynamic: Default::default(),
+                    }),
+                    text,
+                );
                 self.note_hidden_names(nf);
                 self.formula_mut(nf).value = cached;
                 self.formula_mut(nf).array = array;
@@ -254,12 +265,14 @@ impl Workbook {
             let host = CellAddr::new(new, 0, 0);
             self.note_hidden_in(&root, None);
             self.names.insert(NameDef {
+                def_info: None,
                 name: d.name.clone(),
                 scope: Some(new),
                 refers_to: print_node(self, &root, host),
                 formula: Arc::new(Formula {
                     root,
                     volatile: d.formula.volatile,
+                    dynamic: d.formula.dynamic.clone(),
                 }),
             });
         }
@@ -267,12 +280,14 @@ impl Workbook {
             let scope = here.then_some(new);
             self.note_hidden_in(&root, None);
             self.names.insert(NameDef {
+                def_info: None,
                 name: d.name.clone(),
                 scope,
                 refers_to: text,
                 formula: Arc::new(Formula {
                     root,
                     volatile: d.formula.volatile,
+                    dynamic: d.formula.dynamic.clone(),
                 }),
             });
         }
@@ -284,7 +299,9 @@ impl Workbook {
         if let Some(v) = src.views.get(&sid).cloned() {
             self.views.insert(new, v);
         }
-        if let Some(c) = src.cfv.get(&sid).cloned() {
+        if let Some(mut c) = src.cfv.get(&sid).cloned() {
+            c.retired.clear();
+            c.reindex();
             self.cfv.insert(new, c);
         }
         for (k, t) in src.apostrophe.iter().filter(|(k, _)| k.sheet == sid) {

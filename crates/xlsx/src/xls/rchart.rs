@@ -25,6 +25,8 @@ struct Ser {
     lns: u16,
     we: i16,
     labels: u16,
+
+    points: Vec<(u16, Option<String>, String)>,
 }
 
 struct Group {
@@ -46,6 +48,7 @@ struct Ax {
     grid_major: bool,
     grid_minor: bool,
     title: Option<String>,
+    title_link: Option<String>,
 
     cross_max: bool,
 
@@ -80,9 +83,9 @@ fn legend_pos(d: &[u8]) -> u8 {
     }
 }
 
-fn formula(fx: &mut Fx, rgce: &[u8], cp: u16, idx: u32) -> Option<String> {
-    match fx.text(rgce, &[], (0, 0), Some(idx), cp).ok()? {
-        Dec::Text(t) => Some(t.trim_start_matches('=').to_string()),
+fn formula(fx: &mut Fx, rgce: &[u8], cp: u16) -> Option<String> {
+    match fx.text(rgce, &[], (0, 0), None, cp).ok()? {
+        Dec::Text(t, _) => Some(t.trim_start_matches('=').to_string()),
         Dec::Exp { .. } => None,
     }
 }
@@ -100,7 +103,7 @@ fn series_text(d: &[u8]) -> String {
             .take(usize::from(cch))
             .map(|c| u16::from_le_bytes(*c))
             .collect();
-        String::from_utf16_lossy(&u)
+        xlcalc::wide::from_units(&u)
     } else {
         body.iter()
             .take(usize::from(cch))
@@ -128,11 +131,28 @@ fn ref_xml(kind: &str, f: &str) -> String {
     format!("<c:{kind}><c:f>{}</c:f></c:{kind}>", esc(f))
 }
 
+fn str_ref(f: &str, text: &str) -> String {
+    let cache = match text {
+        "" => String::new(),
+        t => format!(
+            "<c:strCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>{}</c:v></c:pt></c:strCache>",
+            esc(t)
+        ),
+    };
+    format!("<c:strRef><c:f>{}</c:f>{cache}</c:strRef>", esc(f))
+}
+
+fn text_xml(link: Option<&str>, text: &str) -> String {
+    match link {
+        Some(f) => format!("<c:tx>{}</c:tx>", str_ref(f, text)),
+        None => rich(text),
+    }
+}
+
 pub(super) fn to_xml(
     recs: &ChartRecs,
     fx: &mut Fx,
     cp: u16,
-    idx: u32,
     what: &str,
     warnings: &mut Vec<String>,
 ) -> Option<String> {
@@ -144,7 +164,10 @@ pub(super) fn to_xml(
     let mut text_depth = -1i32;
     let mut text_flags = 0u16;
     let mut auto_title = false;
+    let mut title_deleted = false;
     let mut last_text = String::new();
+    let mut last_link: Option<String> = None;
+    let mut title_link: Option<String> = None;
     let mut legend: Option<u8> = None;
     let mut groups: Vec<Group> = Vec::new();
     let mut data_ix: Option<usize> = None;
@@ -191,6 +214,7 @@ pub(super) fn to_xml(
                     lns: 0,
                     we: 2,
                     labels: 0,
+                    points: Vec::new(),
                 });
             }
             0x1051 if in_ser && d.len() >= 8 => {
@@ -198,7 +222,7 @@ pub(super) fn to_xml(
                 let f = (d[1] == 2)
                     .then(|| d.get(8..8 + n))
                     .flatten()
-                    .and_then(|r| formula(fx, r, cp, idx));
+                    .and_then(|r| formula(fx, r, cp));
                 if let Some(s) = sers.last_mut() {
                     match d[0] {
                         0 => s.name_ref = f,
@@ -215,24 +239,44 @@ pub(super) fn to_xml(
                 }
             }
             0x100D if depth == text_depth + 1 => last_text = series_text(d),
+            0x1051 if depth == text_depth + 1 && d.len() >= 8 && d[1] == 2 => {
+                let n = usize::from(u16::from_le_bytes([d[6], d[7]]));
+                last_link = d.get(8..8 + n).and_then(|r| formula(fx, r, cp));
+            }
             0x1025 => {
                 text_depth = depth;
                 last_text.clear();
+                last_link = None;
                 text_flags = d
                     .get(24..26)
                     .map_or(0, |b| u16::from_le_bytes([b[0], b[1]]));
             }
             0x1027 if depth == text_depth + 1 && d.len() >= 2 => {
                 let link = u16::from_le_bytes([d[0], d[1]]);
-                if text_flags & 0x40 == 0 {
+                if text_flags & 0x40 != 0 {
+                    title_deleted |= link == 1 && ag_cur.is_none();
+                } else if text_flags & 0x20 == 0 || link != 1 {
                     match (link, ag_cur) {
                         (1, None) => {
-                            auto_title = text_flags & 0x10 != 0;
+                            title_link = last_link.take();
+                            auto_title = text_flags & 0x10 != 0 && title_link.is_none();
                             title = Some(std::mem::take(&mut last_text));
                         }
-                        (2 | 3, Some(ag)) if !last_text.is_empty() => {
-                            axes[ag][usize::from(link == 2)].title =
-                                Some(std::mem::take(&mut last_text));
+                        (2 | 3, Some(ag)) if !last_text.is_empty() || last_link.is_some() => {
+                            let a = &mut axes[ag][usize::from(link == 2)];
+                            a.title = Some(std::mem::take(&mut last_text));
+                            a.title_link = last_link.take();
+                        }
+
+                        (4, _)
+                            if d.len() >= 6 && (!last_text.is_empty() || last_link.is_some()) =>
+                        {
+                            let series = usize::from(u16::from_le_bytes([d[2], d[3]]));
+                            let point = u16::from_le_bytes([d[4], d[5]]);
+                            if let (Some(s), true) = (sers.get_mut(series), point != 0xFFFF) {
+                                let text = std::mem::take(&mut last_text);
+                                s.points.push((point, last_link.take(), text));
+                            }
                         }
                         _ => {}
                     }
@@ -361,16 +405,16 @@ pub(super) fn to_xml(
     }
     let mut x = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<c:chartSpace xmlns:c=\"http://schemas.openxmlformats.org/drawingml/2006/chart\" xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><c:style val=\"2\"/><c:chart>");
     if auto_title {
-        x.push_str("<c:title><c:overlay val=\"0\"/></c:title><c:autoTitleDeleted val=\"0\"/>");
+        x.push_str("<c:title><c:overlay val=\"0\"/></c:title>");
     } else if let Some(t) = &title {
-        let _ = write!(
-            x,
-            "<c:title>{}<c:overlay val=\"0\"/></c:title><c:autoTitleDeleted val=\"0\"/>",
-            rich(t)
-        );
-    } else {
-        x.push_str("<c:autoTitleDeleted val=\"1\"/>");
+        let tx = text_xml(title_link.as_deref(), t);
+        let _ = write!(x, "<c:title>{tx}<c:overlay val=\"0\"/></c:title>");
     }
+    let _ = write!(
+        x,
+        "<c:autoTitleDeleted val=\"{}\"/>",
+        u8::from(title_deleted && title.is_none() && !auto_title)
+    );
     x.push_str("<c:plotArea><c:layout/>");
     let first_scatter = groups[0].kid == 0x101B;
     let mut used_ag = [false; 2];
@@ -449,7 +493,7 @@ pub(super) fn to_xml(
             }
             let _ = write!(x, "<c:ser><c:idx val=\"{i}\"/><c:order val=\"{i}\"/>");
             if let Some(f) = &s.name_ref {
-                let _ = write!(x, "<c:tx>{}</c:tx>", ref_xml("strRef", f));
+                let _ = write!(x, "<c:tx>{}</c:tx>", str_ref(f, &s.name));
             } else if s.named || !s.name.is_empty() {
                 let _ = write!(x, "<c:tx><c:v>{}</c:v></c:tx>", esc(&s.name));
             }
@@ -474,18 +518,7 @@ pub(super) fn to_xml(
                     }
                 }
             }
-            if s.labels != 0 {
-                let b = |bit: u16| u8::from(s.labels & bit != 0);
-                let _ = write!(
-                    x,
-                    "<c:dLbls><c:showLegendKey val=\"0\"/><c:showVal val=\"{}\"/><c:showCatName val=\"{}\"/><c:showSerName val=\"{}\"/><c:showPercent val=\"{}\"/><c:showBubbleSize val=\"{}\"/></c:dLbls>",
-                    b(1),
-                    b(0x10),
-                    b(0x40),
-                    b(2),
-                    b(0x20)
-                );
-            }
+            x.push_str(&labels_xml(s));
             if let Some(f) = &s.cat_ref {
                 let k = if s.cat_text && !scatter {
                     "strRef"
@@ -591,7 +624,8 @@ fn axis_xml(
         o.push_str("<c:minorGridlines/>");
     }
     if let Some(t) = &a.title {
-        let _ = write!(o, "<c:title>{}<c:overlay val=\"0\"/></c:title>", rich(t));
+        let tx = text_xml(a.title_link.as_deref(), t);
+        let _ = write!(o, "<c:title>{tx}<c:overlay val=\"0\"/></c:title>");
     }
     let _ = write!(o, "<c:crossAx val=\"{cross}\"/>");
     if crosses_max {
@@ -605,6 +639,34 @@ fn axis_xml(
     }
     let _ = write!(o, "</c:{tag}>");
     o
+}
+
+fn labels_xml(s: &Ser) -> String {
+    if s.labels == 0 && s.points.is_empty() {
+        return String::new();
+    }
+    let show = |flags: u16| {
+        let b = |bit: u16| u8::from(flags & bit != 0);
+        format!(
+            "<c:showLegendKey val=\"0\"/><c:showVal val=\"{}\"/><c:showCatName val=\"{}\"/><c:showSerName val=\"{}\"/><c:showPercent val=\"{}\"/><c:showBubbleSize val=\"{}\"/>",
+            b(1),
+            b(0x10),
+            b(0x40),
+            b(2),
+            b(0x20)
+        )
+    };
+    let mut x = String::from("<c:dLbls>");
+    for (point, link, text) in &s.points {
+        let tx = text_xml(link.as_deref(), text);
+        let _ = write!(
+            x,
+            "<c:dLbl><c:idx val=\"{point}\"/>{tx}{}</c:dLbl>",
+            show(1)
+        );
+    }
+    let _ = write!(x, "{}</c:dLbls>", show(s.labels));
+    x
 }
 
 fn rich(t: &str) -> String {

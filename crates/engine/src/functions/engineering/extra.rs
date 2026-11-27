@@ -1,7 +1,7 @@
 use super::atp::{self, R};
 use super::TRIG_LIMIT;
 use crate::eval::{EvalCtx, Operand};
-use crate::functions::args::{check_array_args, num, val, Grid};
+use crate::functions::args::{check_array_args, is_long_text, num, val, Grid};
 use crate::value::{Value, XlError};
 use crate::x87;
 
@@ -92,7 +92,8 @@ pub fn seriessum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             let mut cs: Vec<R<f64>> = Vec::new();
             for v in &vals {
                 cs.push(match v {
-                    Value::Blank => Ok(0.0),
+                    Value::Blank if vals.len() == 1 => Ok(0.0),
+                    Value::Blank => continue,
                     Value::Bool(_) => Err(XlError::VALUE),
                     Value::Text(_) if multi => Err(XlError::VALUE),
                     other => ctx.to_number(other),
@@ -158,6 +159,10 @@ pub fn sumx(ctx: &mut EvalCtx, ops: &[Operand], kind: SumKind) -> Operand {
             if let Value::Error(e) = x {
                 return Err(elem_err(*e));
             }
+
+            if is_long_text(x) || is_long_text(y) {
+                deferred.get_or_insert(XlError::NUM);
+            }
             if let Value::Error(e) = y {
                 deferred.get_or_insert(elem_err(*e));
                 continue;
@@ -196,37 +201,41 @@ const INT_LIMIT: f64 = 2_147_483_647.0;
 
 pub fn combina(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let n = num(ctx, &a[0])?.trunc();
+        let n = num(ctx, &a[0])?.trunc() + 0.0;
         let k_raw = num(ctx, &a[1])?;
-        let k = k_raw.trunc();
-
-        if n < 0.0 || k_raw < 0.0 {
+        let k = k_raw.trunc() + 0.0;
+        if n == 0.0 {
+            return if k == 0.0 {
+                Ok(Value::Number(1.0))
+            } else {
+                Err(XlError::NUM)
+            };
+        }
+        let x = n - 1.0;
+        if !(0.0..INT_LIMIT).contains(&x) || k_raw < 0.0 {
+            return Err(XlError::NUM);
+        }
+        let nn = x + k;
+        if !(0.0..INT_LIMIT).contains(&nn) {
             return Err(XlError::NUM);
         }
         if k == 0.0 {
             return Ok(Value::Number(1.0));
         }
-        if n == 0.0 {
-            return Err(XlError::NUM);
-        }
-        if n >= INT_LIMIT || k >= INT_LIMIT {
-            return Err(XlError::NUM);
-        }
-        let nn = n + k - 1.0;
-
         Ok(Value::num(crate::functions::math::xl_combin(nn, k)))
     })())
 }
 
 pub fn permutationa(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let n = num(ctx, &a[0])?.trunc();
-        let k = num(ctx, &a[1])?.trunc();
-        if n < 0.0 || k < 0.0 {
+        let n_raw = num(ctx, &a[0])?;
+        let k = num(ctx, &a[1])?.trunc() + 0.0;
+        if n_raw < 0.0 || k < 0.0 || n_raw >= INT_LIMIT || k >= INT_LIMIT {
             return Err(XlError::NUM);
         }
-        if n >= INT_LIMIT || k >= INT_LIMIT {
-            return Err(XlError::NUM);
+        let n = n_raw.trunc();
+        if n == 0.0 && k == 0.0 {
+            return Ok(Value::Number(1.0));
         }
         Ok(Value::num(crate::xmath::pow(n, k)))
     })())

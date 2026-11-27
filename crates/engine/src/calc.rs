@@ -164,7 +164,6 @@ pub(crate) fn name_changed_sparing(
     let mut deps = Vec::new();
     wb.graph.dependents_of_name(key, &mut deps);
     for fid in deps {
-        wb.refresh_scalar_entry(fid);
         wb.unlink_formula(fid);
         wb.link_formula(fid);
         if spared.contains(&fid) {
@@ -198,7 +197,6 @@ fn name_changed_scoped(
     wb.graph.dependents_of_name(key, &mut deps);
 
     for fid in deps {
-        wb.refresh_scalar_entry(fid);
         wb.unlink_formula(fid);
         wb.link_formula(fid);
         let a = wb.formula(fid).addr;
@@ -373,6 +371,8 @@ pub fn recalc_with(wb: &mut Workbook, tables: bool) -> RecalcReport {
 
 fn recalc_with_inner(wb: &mut Workbook, tables: bool) -> RecalcReport {
     wb.calc.sheet_calc_pending = false;
+
+    wb.calc.load_pending = None;
     wb.one_pass(|wb| {
         let mut report = recalc_cells(wb);
         if std::mem::take(&mut wb.calc.spill_resized) && !wb.bookkeeping() {
@@ -496,6 +496,9 @@ pub(crate) fn recalc_cells(wb: &mut Workbook) -> RecalcReport {
         }
     }
     for fid in volatile {
+        if wb.calc.skip_position_volatile && volatile_by_position_only(wb, fid) {
+            continue;
+        }
         mark_dirty(wb, fid);
     }
 
@@ -1218,8 +1221,8 @@ fn store_partial(
         return false;
     };
     let pass = wb.calc.pass;
-    let new = crate::cse::fit_circ(value, rows, cols);
-    let old = crate::cse::fit(wb.formula(fid).value.clone(), rows, cols);
+    let new = crate::cse::lift_to_block_circ(value, rows, cols);
+    let old = crate::cse::lift_to_block(wb.formula(fid).value.clone(), rows, cols);
     let (Value::Array(new), Value::Array(old)) = (new, old) else {
         return false;
     };
@@ -1548,8 +1551,10 @@ pub(crate) fn store_result(
         v if block.is_some() => {
             let b = block.unwrap();
             new_spill = (!b.is_cell()).then_some(b);
-            crate::cse::fit(v, b.rows(), b.cols())
+            crate::cse::lift_to_block(v, b.rows(), b.cols())
         }
+
+        Value::Array(a) if wb.formula(fid).legacy_entry => a.data[0].clone(),
         Value::Array(a) if a.rows > 1 || a.cols > 1 => {
             let r1 = addr.row as u64 + a.rows as u64 - 1;
             let c1 = addr.col as u64 + a.cols as u64 - 1;
@@ -1725,4 +1730,18 @@ pub(crate) fn note_circular(wb: &mut Workbook, fid: FormulaId) {
     if !wb.calc.circular_ref.iter().any(|c| c.sheet == addr.sheet) {
         wb.calc.circular_ref.push(addr);
     }
+}
+
+fn volatile_by_position_only(wb: &Workbook, fid: FormulaId) -> bool {
+    let position = ["SHEET", "SHEETS"].map(crate::functions::lookup);
+    let mut other = false;
+    crate::formula::walk(&wb.formula(fid).formula.root, &mut |n| {
+        if let crate::formula::Node::Func { id, .. } = n {
+            other |= !position.contains(&Some(*id)) && crate::functions::def(*id).volatile();
+        }
+        if matches!(n, crate::formula::Node::Name { .. }) {
+            other = true;
+        }
+    });
+    !other
 }

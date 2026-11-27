@@ -84,3 +84,45 @@ fn mode_scalar_error_against_union() {
         ));
     }
 }
+
+#[test]
+fn corpus_branch_edges() {
+    use crate::XlError;
+
+    assert_eq!(super::special::gamma_xl(f64::EPSILON), 4503599627370495.5);
+
+    let y = std::f64::consts::FRAC_1_SQRT_2;
+    assert!(y * y > 0.5);
+    assert!(super::invnorm::inverse_erf(y).is_finite());
+
+    assert!(matches!(
+        eval("=HYPGEOM.DIST(-0.5,5,4,10,FALSE)"),
+        Value::Error(XlError::NUM)
+    ));
+    assert!(matches!(
+        eval("=HYPGEOMDIST(1,5,-0.5,10)"),
+        Value::Error(XlError::NUM)
+    ));
+}
+
+#[test]
+fn raw_sign_and_rank_edges() {
+    use crate::XlError;
+    for f in [
+        "=POISSON.DIST(-0.5,2,TRUE)",
+        "=NEGBINOM.DIST(-0.5,3,0.5,FALSE)",
+        "=NEGBINOMDIST(-0.5,3,0.5)",
+        "=BINOM.DIST.RANGE(-0.5,0.5,0)",
+        "=CRITBINOM(-0.5,0.5,0.5)",
+    ] {
+        assert!(matches!(eval(f), Value::Error(XlError::NUM)), "{f}");
+    }
+
+    assert!((num("=NEGBINOM.DIST(0,3,0.5,TRUE)") - 0.125).abs() < 1e-15);
+    assert!((num("=PERCENTRANK.INC({1,2,3,4},2.5)") - 0.5).abs() < 1e-15);
+    assert!((num("=PERCENTRANK.EXC({1,2,3,4},2.5)") - 0.5).abs() < 1e-15);
+    assert!(matches!(
+        eval("=PERCENTRANK.INC({1,2,3,4},5)"),
+        Value::Error(XlError::NA)
+    ));
+}

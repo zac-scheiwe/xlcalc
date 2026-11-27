@@ -1,5 +1,5 @@
 use super::args::*;
-use super::{args, scalar, volatile, FnDef};
+use super::{args, scalar, FnDef};
 use crate::datetime::{self as dt, DateSystem};
 use crate::eval::{EvalCtx, Operand};
 use crate::value::{Value, XlError};
@@ -19,10 +19,8 @@ pub const DEFS: &[FnDef] = &[
     args("EDATE", 2, 2, "R", |c, o| edate_call(c, o, false)),
     args("EOMONTH", 2, 2, "R", |c, o| edate_call(c, o, true)),
     scalar("DAYS", 2, 2, days),
-    volatile(scalar("TODAY", 0, 0, |c, _| {
-        Value::Number(c.wb.calc.now.floor())
-    })),
-    volatile(scalar("NOW", 0, 0, |c, _| Value::Number(c.wb.calc.now))),
+    scalar("TODAY", 0, 0, |c, _| Value::Number(c.wb.calc.now.floor())),
+    scalar("NOW", 0, 0, |c, _| Value::Number(c.wb.calc.now)),
 ];
 
 fn sys(ctx: &EvalCtx) -> DateSystem {
@@ -138,8 +136,8 @@ fn timevalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn edate_call(ctx: &mut EvalCtx, ops: &[Operand], end_of_month: bool) -> Operand {
     super::engineering::atp::call(ctx, ops, "bb", |ctx, a, _| {
         val((|| {
-            let s = super::engineering::atp::req_num(ctx, a, 0)?;
             let shift = a[0].as_ref().map_or(0.0, |v| ctx.atp_text_shift(v));
+            let s = super::engineering::atp::req_num(ctx, a, 0)? - shift;
 
             if s + shift < 0.0 || s + shift >= sys(ctx).max_serial() + 1.0 {
                 return Err(XlError::NUM);
@@ -166,7 +164,13 @@ fn edate(ctx: &mut EvalCtx, s: f64, shift: f64, months: f64, end_of_month: bool)
         let (y, m, d) = dt::ymd_from_serial(csys, s);
         let total = y * 12 + (m as i64 - 1) + months;
         let (ny, nm) = (total.div_euclid(12), (total.rem_euclid(12) + 1) as u32);
-        if !(1900..=9999).contains(&ny) {
+
+        let first_year = if csys == DateSystem::D1900Gregorian {
+            1899
+        } else {
+            1900
+        };
+        if !(first_year..=9999).contains(&ny) {
             return Err(XlError::NUM);
         }
         let dim = dt::days_in_month(ny, nm);
@@ -177,7 +181,7 @@ fn edate(ctx: &mut EvalCtx, s: f64, shift: f64, months: f64, end_of_month: bool)
             r = 60;
         }
 
-        if r < 0 && sys(ctx) == DateSystem::D1900 {
+        if r < 0 && matches!(sys(ctx), DateSystem::D1900 | DateSystem::D1900Gregorian) {
             return Err(XlError::NUM);
         }
         Ok(Value::Number(r as f64 - shift))

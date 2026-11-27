@@ -15,6 +15,17 @@ pub(crate) fn ftab(name: &str) -> Option<&'static Ftab> {
     m.get(name).map(|&i| &FTAB[i])
 }
 
+pub(crate) fn argc_ok(f: &Ftab, n: usize) -> bool {
+    let min = (f.arity & 0xff) as usize;
+    if n < min || n >= usize::from(f.argc_max) {
+        return false;
+    }
+    let group = ((f.arity >> 8) & 0xf) as usize;
+    let unbound = ((f.arity >> 12) & 0xf) as usize + min;
+    let trailing = ((f.arity >> 18) & 0xf) as usize;
+    group < 2 || n <= unbound || (n - unbound) % group <= trailing
+}
+
 pub(crate) fn can_return_multi(f: &Ftab) -> bool {
     f.ifunc != 0x261 && (f.flags & 0x60648 != 0 || matches!(f.ifunc, 0x24c | 0x24d))
 }
@@ -174,6 +185,32 @@ mod tests {
 
     fn call(name: &str, a: &[u8]) -> u8 {
         call_flags(ftab(name).unwrap(), a, false)
+    }
+
+    #[test]
+    fn argc_rule() {
+        let ok = |n: &str, c: usize| argc_ok(ftab(n).unwrap(), c);
+        assert!(ok("COUNTIFS", 4) && !ok("COUNTIFS", 3) && !ok("COUNTIFS", 1));
+        assert!(ok("SUMIFS", 3) && !ok("SUMIFS", 4) && ok("SUMIFS", 5));
+        assert!(ok("IFS", 2) && !ok("IFS", 3) && !ok("IFS", 255));
+        assert!(ok("SWITCH", 4) && ok("SWITCH", 5) && !ok("SWITCH", 255));
+        assert!(ok("SORTBY", 3) && !ok("SORTBY", 4) && ok("SORTBY", 5));
+        assert!(ok("SUM", 255) && !ok("SUM", 0) && !ok("CONCAT", 255) && ok("CONCAT", 254));
+    }
+
+    #[test]
+    fn defs_match_table() {
+        for n in crate::functions::names() {
+            let d = crate::functions::def(crate::functions::lookup(n).unwrap());
+            let Some(f) = ftab(&n.to_uppercase()) else {
+                continue;
+            };
+            if n.eq_ignore_ascii_case("IF") {
+                continue;
+            }
+            let (min, max) = ((f.arity & 0xff) as u8, (f.argc_max - 1).min(255) as u8);
+            assert_eq!((d.min_args, d.max_args), (min, max), "{n}");
+        }
     }
 
     #[test]

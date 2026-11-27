@@ -12,15 +12,11 @@ pub(crate) fn part_of_array() -> EditError {
     EditError::Compile(PART_OF_ARRAY.into())
 }
 
-pub fn fit(value: Value, rows: u32, cols: u32) -> Value {
+pub fn lift_to_block(value: Value, rows: u32, cols: u32) -> Value {
     let a = match value {
         Value::Array(a) => a,
-        v => {
-            if rows == 1 && cols == 1 {
-                return v;
-            }
-            return Array::filled(rows, cols, v).into_value();
-        }
+        v if rows == 1 && cols == 1 => return v,
+        v => Arc::new(Array::new(1, 1, vec![v])),
     };
     if rows == 1 && cols == 1 {
         return a.data[0].clone();
@@ -28,7 +24,20 @@ pub fn fit(value: Value, rows: u32, cols: u32) -> Value {
     if a.rows == rows && a.cols == cols {
         return Value::Array(a);
     }
-    Array::from_fn(rows, cols, |r, c| a.broadcast_get(r, c)).into_value()
+    let na = Value::Error(crate::value::XlError::NA);
+
+    let mut data = Vec::with_capacity(rows as usize * cols as usize);
+    for r in 0..rows {
+        let row_src = (a.rows < 2).then_some(0).or((r < a.rows).then_some(r));
+        for c in 0..cols {
+            let col_src = (a.cols < 2).then_some(0).or((c < a.cols).then_some(c));
+            data.push(match (row_src, col_src) {
+                (Some(rr), Some(cc)) => a.get(rr, cc).clone(),
+                _ => na.clone(),
+            });
+        }
+    }
+    Array::new(rows, cols, data).into_value()
 }
 
 impl Workbook {
@@ -65,6 +74,7 @@ impl Workbook {
         Arc::new(crate::formula::Formula {
             root,
             volatile: f.volatile,
+            dynamic: f.dynamic.clone(),
         })
     }
 
@@ -204,9 +214,11 @@ impl Workbook {
         self.set_compiled_formula(anchor, formula, body);
         let fid = self.formula_at(anchor).unwrap();
         self.formula_mut(fid).array = Some((rect.rows(), rect.cols()));
+
+        self.formula(fid).formula.dynamic.set(false);
         self.arrays_seen |= !rect.is_cell();
 
-        self.formula_mut(fid).value = fit(Value::Number(0.0), rect.rows(), rect.cols());
+        self.formula_mut(fid).value = lift_to_block(Value::Number(0.0), rect.rows(), rect.cols());
         if !rect.is_cell() {
             self.sheet_mut(sheet).unwrap().spills.set_active(fid, rect);
             self.formula_mut(fid).spill = Some(rect);
@@ -232,8 +244,11 @@ impl Workbook {
             calc::recalc_only(self, &[anchor])
         };
         report.changed.insert(0, anchor);
-        if table_edit {
-            self.table_calc_fill(anchor);
+
+        if table_edit && self.table_calc_fill(anchor) {
+            if let Some(fid) = self.formula_at(anchor) {
+                self.formula_mut(fid).array = None;
+            }
         }
         Ok(calc::finish_report(report))
     }
@@ -252,7 +267,7 @@ impl Workbook {
                 let f = self.formula_mut(fid);
                 f.spill = Some(b);
                 if !matches!(f.value, Value::Array(_)) {
-                    f.value = fit(f.value.clone(), b.rows(), b.cols());
+                    f.value = lift_to_block(f.value.clone(), b.rows(), b.cols());
                 }
             }
         }
@@ -522,8 +537,9 @@ impl Workbook {
             self.set_compiled_formula(at, formula.clone(), text);
             let nf = self.formula_at(at).unwrap();
             self.formula_mut(nf).array = Some((rows, cols));
+            self.formula(nf).formula.dynamic.set(false);
             self.arrays_seen |= rows * cols > 1;
-            self.formula_mut(nf).value = fit(Value::Number(0.0), rows, cols);
+            self.formula_mut(nf).value = lift_to_block(Value::Number(0.0), rows, cols);
             if rows * cols > 1 {
                 let block = Rect::new(at.row, at.col, at.row + rows - 1, at.col + cols - 1);
                 self.sheet_mut(at.sheet)
@@ -602,7 +618,7 @@ impl Workbook {
     }
 }
 
-pub(crate) fn fit_circ(value: Value, rows: u32, cols: u32) -> Value {
+pub(crate) fn lift_to_block_circ(value: Value, rows: u32, cols: u32) -> Value {
     let (vr, vc) = match &value {
         Value::Array(a) => (a.rows, a.cols),
         _ => (1, 1),
@@ -614,7 +630,7 @@ pub(crate) fn fit_circ(value: Value, rows: u32, cols: u32) -> Value {
             .all(|v| matches!(v, Value::Error(crate::value::XlError::CIRC))),
         v => matches!(v, Value::Error(crate::value::XlError::CIRC)),
     };
-    let fitted = fit(value, rows, cols);
+    let fitted = lift_to_block(value, rows, cols);
     match fitted {
         Value::Array(a) if all_circ => {
             let data = a
@@ -650,7 +666,7 @@ pub(crate) fn settle_array(
         (f.value.clone(), f.spill)
     };
     let block = wb.array_block(fid);
-    let mut prev = fit(Value::Error(crate::value::XlError::CIRC), rows, cols);
+    let mut prev = lift_to_block(Value::Error(crate::value::XlError::CIRC), rows, cols);
     let mut out = None;
     for _ in 0..rows * cols + 1 {
         {
@@ -676,7 +692,7 @@ pub(crate) fn settle_array(
         if interrupt.is_some() {
             break;
         }
-        let next = fit_circ(v, rows, cols);
+        let next = lift_to_block_circ(v, rows, cols);
         if next.same_as(&prev) {
             out = Some((next, sources, host_volatile));
             break;
@@ -744,4 +760,83 @@ pub(crate) fn reads_own_cell(wb: &Workbook, fid: FormulaId) -> bool {
         }
     });
     hit
+}
+
+#[cfg(test)]
+mod lift_tests {
+    use super::*;
+    use crate::value::XlError;
+
+    fn arr(rows: u32, cols: u32) -> Value {
+        Array::new(
+            rows,
+            cols,
+            (0..rows * cols)
+                .map(|i| Value::Number(i as f64 + 1.0))
+                .collect(),
+        )
+        .into_value()
+    }
+
+    fn cells(v: &Value) -> Vec<Value> {
+        match v {
+            Value::Array(a) => a.data.to_vec(),
+            v => vec![v.clone()],
+        }
+    }
+
+    fn same(got: &Value, want: Vec<Value>) {
+        let got = cells(got);
+        assert_eq!(got.len(), want.len());
+        for (g, w) in got.iter().zip(&want) {
+            assert!(g.same_as(w), "{g:?} != {w:?}");
+        }
+    }
+
+    fn n(x: f64) -> Value {
+        Value::Number(x)
+    }
+
+    #[test]
+    fn scalar_repeats_and_one_cell_block_takes_first_element() {
+        same(&lift_to_block(n(7.0), 2, 2), vec![n(7.0); 4]);
+        same(&lift_to_block(n(7.0), 1, 1), vec![n(7.0)]);
+        same(&lift_to_block(arr(2, 2), 1, 1), vec![n(1.0)]);
+    }
+
+    #[test]
+    fn one_wide_dimensions_repeat_the_rest_is_na() {
+        let na = Value::Error(XlError::NA);
+        let v = lift_to_block(arr(1, 2), 2, 3);
+        same(
+            &v,
+            vec![n(1.0), n(2.0), na.clone(), n(1.0), n(2.0), na.clone()],
+        );
+        let v = lift_to_block(arr(2, 1), 3, 2);
+        same(
+            &v,
+            vec![n(1.0), n(1.0), n(2.0), n(2.0), na.clone(), na.clone()],
+        );
+        let v = lift_to_block(arr(2, 2), 3, 3);
+        same(
+            &v,
+            vec![
+                n(1.0),
+                n(2.0),
+                na.clone(),
+                n(3.0),
+                n(4.0),
+                na.clone(),
+                na.clone(),
+                na.clone(),
+                na,
+            ],
+        );
+    }
+
+    #[test]
+    fn extra_elements_are_dropped() {
+        let v = lift_to_block(arr(3, 3), 2, 2);
+        same(&v, vec![n(1.0), n(2.0), n(4.0), n(5.0)]);
+    }
 }

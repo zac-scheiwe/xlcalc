@@ -1,9 +1,9 @@
 use std::cmp::Ordering;
 
 use super::args::*;
-use super::{args, lazy, volatile, FnDef, MANY};
+use super::{args, lazy, FnDef, MANY};
 use crate::address::{col_to_letters, parse_a1_rect, Rect, MAX_COLS, MAX_ROWS};
-use crate::eval::call::call_lifted;
+use crate::eval::call::{call_lifted, lifted_branch};
 use crate::eval::ops::compare;
 use crate::eval::{Area, EvalCtx, Operand, Reference};
 use crate::formula::Node;
@@ -11,11 +11,11 @@ use crate::text::Wildcard;
 use crate::value::{Array, Value, XlError};
 
 pub const DEFS: &[FnDef] = &[
-    args("ROW", 0, 1, "Q", |c, o| row_col(c, o, true)),
-    args("COLUMN", 0, 1, "Q", |c, o| row_col(c, o, false)),
+    args("ROW", 0, 1, "R", |c, o| row_col(c, o, true)),
+    args("COLUMN", 0, 1, "R", |c, o| row_col(c, o, false)),
     args("ROWS", 1, 1, "R", |c, o| rows_cols(c, o, true)),
     args("COLUMNS", 1, 1, "R", |c, o| rows_cols(c, o, false)),
-    args("AREAS", 1, 1, "Q", |_, o| match &o[0] {
+    args("AREAS", 1, 1, "R", |_, o| match &o[0] {
         Operand::Ref(r) => Operand::Val(Value::Number(r.areas().len() as f64)),
         Operand::Val(Value::Error(e)) => Operand::err(*e),
         _ => Operand::err(XlError::VALUE),
@@ -25,8 +25,8 @@ pub const DEFS: &[FnDef] = &[
     args("VLOOKUP", 3, 4, "RRRR", |c, o| vhlookup_outer(c, o, true)),
     args("HLOOKUP", 3, 4, "RRRR", |c, o| vhlookup_outer(c, o, false)),
     lazy("CHOOSE", 2, MANY, choose),
-    volatile(args("OFFSET", 3, 5, "QRRRR", offset)),
-    volatile(args("INDIRECT", 1, 2, "RR", indirect)),
+    args("OFFSET", 3, 5, "RRRRR", offset),
+    args("INDIRECT", 1, 2, "RR", indirect),
     args("ADDRESS", 2, 5, "VVVVV", address),
     args("TRANSPOSE", 1, 1, "R", transpose),
 ];
@@ -53,7 +53,7 @@ fn row_col(ctx: &mut EvalCtx, ops: &[Operand], row: bool) -> Operand {
     if n == 1
         && (ctx.node_cls == crate::eval::ptgclass::Class::Val
             || ctx.in_lambda
-            || crate::eval::fdyn::cached(ctx.wb, ctx.host))
+            || ctx.dynamic_host())
     {
         return Operand::Val(Value::Number(start as f64 + 1.0));
     }
@@ -117,8 +117,6 @@ fn index(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         return Operand::err(XlError::VALUE);
     }
     match &ops[0] {
-        Operand::Ref(r) if r.is_span() => Operand::err(XlError::VALUE),
-
         Operand::Ref(Reference::Grid(g)) => match pick(g.rows, g.cols, row, col, explicit_col) {
             Ok((r0, r1, c0, c1)) if r0 == r1 && c0 == c1 && (explicit_col || g.rows == 1) => {
                 g.broadcast_get(r0, c0)
@@ -384,39 +382,78 @@ fn approx_find(ctx: &mut EvalCtx, line: &Line, target: &Value, descending: bool)
         }
         return best;
     }
-    let mat = values.len() as i64;
-    let (mut lo, mut hi) = (0i64, line.len as i64 - 1);
-    let mut best: Option<u32> = None;
-    while lo <= hi {
-        let mid = (lo + hi) / 2;
-        let mut i = mid;
-        while i <= hi && i < mat && !same_kind(target, &values[i as usize]) {
-            i += 1;
+    let sign = |i: i64| -> i32 {
+        match values.get(i as usize) {
+            Some(v) if same_kind(target, v) => match approx_cmp(v, target) {
+                Ordering::Less => -1,
+                Ordering::Equal => 0,
+                Ordering::Greater => 1,
+            },
+            _ => 2,
         }
-        if i > hi || i >= mat {
-            hi = mid - 1;
+    };
+    u32::try_from(rwcol_binary_search(line.len as i64, sign)).ok()
+}
+
+pub(crate) fn rwcol_binary_search(len: i64, mut sign: impl FnMut(i64) -> i32) -> i64 {
+    let (first, last) = (0i64, len - 1);
+    let (mut lo, mut hi) = (first, last);
+    let mut mid = (first + last) / 2;
+    let mut in_equal_run = false;
+    loop {
+        let mut s = sign(mid);
+        if s == 2 {
+            let mut probe = mid;
+            if mid < hi {
+                probe = mid + 1;
+                while probe <= hi {
+                    s = sign(probe);
+                    if s != 2 {
+                        break;
+                    }
+                    probe += 1;
+                }
+            }
+            if s == 2 {
+                s = 1;
+                mid = (lo + hi) / 2;
+            } else {
+                mid = probe;
+            }
+        }
+        if s == 0 {
+            if last <= mid {
+                return mid;
+            }
+            mid += 1;
+            in_equal_run = true;
+            lo = mid;
+            hi = mid;
             continue;
         }
-        let ord = approx_cmp(&values[i as usize], target);
-        match ord {
-            Ordering::Equal => {
-                let mut j = i;
-                while j + 1 < mat
-                    && same_kind(target, &values[j as usize + 1])
-                    && approx_cmp(&values[j as usize + 1], target) == Ordering::Equal
-                {
-                    j += 1;
-                }
-                return Some(j as u32);
+        let before = mid - 1;
+        if s == -1 {
+            lo = mid + 1;
+        } else {
+            hi = before;
+        }
+        if hi < lo {
+            if in_equal_run {
+                return before;
             }
-            Ordering::Less => {
-                best = Some(i as u32);
-                lo = i + 1;
+            if s != 1 {
+                return mid;
             }
-            Ordering::Greater => hi = i - 1,
+            mid = before;
+            hi = before;
+            lo = before;
+            if before < first {
+                return before;
+            }
+        } else {
+            mid = (lo + hi) / 2;
         }
     }
-    best
 }
 
 const LIFT_MATCH: FnDef = args("MATCH", 2, 3, "VRV", |_, _| Operand::Missing);
@@ -727,12 +764,15 @@ fn choose(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
                     Node::Missing => Operand::Val(Value::Number(0.0)),
                     node => ctx.eval(node),
                 };
-                let v = ctx.deref(x);
+                let v = lifted_branch(ctx, x);
                 if let Value::Array(b) = &v {
                     rows = rows.max(b.rows);
                     cols = cols.max(b.cols);
                 }
                 choices.push(v);
+            }
+            if ctx.shape_too_big(rows, cols) {
+                return Operand::err(XlError::NUM);
             }
             let mut out = Vec::with_capacity(rows as usize * cols as usize);
             for r in 0..rows {
@@ -785,6 +825,9 @@ fn offset(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let Some((rows, cols)) = shape else {
         return offset_one(ctx, &args);
     };
+    if ctx.shape_too_big(rows, cols) {
+        return Operand::err(XlError::NUM);
+    }
     let mut items = Vec::with_capacity(rows as usize * cols as usize);
     let mut elem = args.clone();
     for r in 0..rows {
@@ -1051,18 +1094,9 @@ fn indirect_at(ctx: &mut EvalCtx, a1: bool, sheet: crate::SheetId, body: &str) -
                     Operand::Ref(Reference::Area(Area { sheet, rect: r })),
                 );
 
-                let plain = match (
-                    &out,
-                    ctx.wb.formula_at(crate::CellAddr::new(sheet, r.r0, r.c0)),
-                ) {
-                    (Operand::Ref(_), Some(fid)) => {
-                        let f = ctx.wb.formula(fid);
-                        f.spill.is_none()
-                            && !yields_array(&f.formula.root)
-                            && !matches!(f.value, Value::Error(_) | Value::Array(_))
-                    }
-                    _ => false,
-                };
+                let at = crate::CellAddr::new(sheet, r.r0, r.c0);
+                let plain =
+                    matches!(out, Operand::Ref(_)) && !crate::eval::fdyn::cached(ctx.wb, at);
                 if plain {
                     Operand::err(XlError::REF)
                 } else {
@@ -1202,22 +1236,37 @@ fn address(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             Some(Operand::Val(v)) => Some(text(v)?),
             Some(_) => return Err(XlError::VALUE),
         };
-        Ok(Value::from(match sheet {
-            Some(s)
-                if s.len() > 2
-                    && s.starts_with('[')
-                    && s.ends_with(']')
-                    && !s[1..s.len() - 1].contains(['[', ']']) =>
-            {
-                format!("{s}!{body}")
-            }
-            Some(s) if !s.is_empty() => {
-                format!("{}!{}", crate::parser::print::sheet_name_text(&s), body)
-            }
-            Some(_) => format!("!{body}"),
-            None => body,
-        }))
+
+        let Some(s) = sheet else {
+            return Ok(Value::from(body));
+        };
+        if s.encode_utf16().count() > 255 {
+            return Err(XlError::VALUE);
+        }
+        let name = crate::parser::print::sheet_name_text(&s);
+        let used = name.encode_utf16().count();
+        if used > ADDRESS_BUFFER {
+            return Err(XlError::VALUE);
+        }
+        let room = ADDRESS_BUFFER.saturating_sub(used + 1);
+        Ok(Value::from(format!("{name}!{}", clip_ref(&body, room))))
     })())
+}
+
+const ADDRESS_BUFFER: usize = 0x102;
+
+fn clip_ref(body: &str, room: usize) -> String {
+    let mut out = String::new();
+    let mut rest = body;
+    while let Some(c) = rest.chars().next() {
+        let digits = rest.len() - rest.trim_start_matches(|c: char| c.is_ascii_digit()).len();
+        let n = digits.max(c.len_utf8());
+        if out.len() + n <= room {
+            out.push_str(&rest[..n]);
+        }
+        rest = &rest[n..];
+    }
+    out
 }
 
 fn transpose(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -1230,7 +1279,7 @@ fn transpose(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             crate::eval::RefGrid::new(rows, cols, items),
         )));
     }
-    let grid = match Grid::from_operand_3d(&ops[0]) {
+    let grid = match Grid::from_operand(&ops[0]) {
         Ok(g) => g,
         Err(e) => return Operand::err(e),
     };
@@ -1264,54 +1313,29 @@ fn scalar_table_error(ctx: &EvalCtx, op: &Operand) -> Option<XlError> {
     }
 }
 
-fn yields_array(n: &crate::formula::Node) -> bool {
-    crate::deep(|| {
-        use crate::formula::Node;
-        match n {
-            Node::Lit(Value::Array(_))
-            | Node::Spill(_)
-            | Node::Ref(_, crate::formula::CRef::Area { .. }) => true,
-            Node::Let { body, .. } => yields_array(body),
-            Node::Ws { node, .. } => yields_array(node),
-            Node::Paren(x) | Node::Unary(_, x) | Node::Percent(x) => yields_array(x),
-            Node::Binary(crate::parser::ast::BinOp::Range, ..) => true,
-            Node::Binary(_, a, b) => yields_array(a) || yields_array(b),
-            Node::Func { id, args } => {
-                const ARR: &[&str] = &[
-                    "TRANSPOSE",
-                    "UNIQUE",
-                    "SORT",
-                    "SORTBY",
-                    "SEQUENCE",
-                    "FILTER",
-                    "TAKE",
-                    "DROP",
-                    "VSTACK",
-                    "HSTACK",
-                    "MAP",
-                    "SCAN",
-                    "BYROW",
-                    "BYCOL",
-                    "TOCOL",
-                    "TOROW",
-                    "CHOOSECOLS",
-                    "CHOOSEROWS",
-                    "WRAPROWS",
-                    "WRAPCOLS",
-                    "EXPAND",
-                    "RANDARRAY",
-                    "MAKEARRAY",
-                    "INDIRECT",
-                    "TEXTSPLIT",
-                    "MMULT",
-                    "MUNIT",
-                    "MINVERSE",
-                ];
-                let name = crate::functions::def(*id).name;
-                ARR.contains(&name)
-                    || (matches!(name, "IF" | "CHOOSE") && args.iter().skip(1).any(yields_array))
-            }
-            _ => false,
-        }
-    })
+#[cfg(test)]
+mod binary_search_tests {
+    use super::rwcol_binary_search;
+
+    fn find(signs: &[i32], len: i64) -> i64 {
+        rwcol_binary_search(len, |i| signs.get(i as usize).copied().unwrap_or(2))
+    }
+
+    #[test]
+    fn branch_edges_of_the_binary_search() {
+        assert_eq!(find(&[-1, -1, 1, 1], 4), 1);
+        assert_eq!(find(&[1, 1], 2), -1);
+        assert_eq!(find(&[-1, -1, -1], 3), 2);
+
+        assert_eq!(find(&[-1, 0, 0, 0, 1], 5), 3);
+        assert_eq!(find(&[0, 0, 2, 0], 4), 1);
+
+        assert_eq!(find(&[-1, 2, 2, 1], 4), 0);
+
+        assert_eq!(find(&[2, 2, 2], 3), -1);
+
+        assert_eq!(find(&[-1, -1, 2, 2], 4), 1);
+
+        assert_eq!(find(&[1, -1, 1, 1], 4), 1);
+    }
 }

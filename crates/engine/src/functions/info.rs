@@ -1,9 +1,10 @@
 use super::args::*;
 use super::cellformat::{cell_format_code, cell_format_info};
-use super::{args, lazy, scalar, scalar_p, volatile, FnDef};
+use super::{args, lazy, scalar, scalar_p, FnDef};
 use crate::eval::{EvalCtx, Operand};
 use crate::value::{Value, XlError};
 use crate::workbook::Entry;
+use crate::x87;
 
 pub const FIELD_FN: &str = "\u{1}FIELD";
 
@@ -39,7 +40,7 @@ pub const DEFS: &[FnDef] = &[
             Operand::Ref(ref r) if !matches!(r, crate::eval::Reference::Grid(_))
         )))
     }),
-    args("ISFORMULA", 1, 1, "Q", isformula),
+    args("ISFORMULA", 1, 1, "R", isformula),
     args(FIELD_FN, 2, 3, "RRR", |_, o| {
         if o.len() == 3 {
             return Operand::err(XlError::NAME);
@@ -76,8 +77,8 @@ pub const DEFS: &[FnDef] = &[
     args("TYPE", 1, 1, "R", type_fn),
     args("SHEET", 0, 1, "R", sheet_fn),
     args("SHEETS", 0, 1, "R", sheets_fn),
-    volatile(args("CELL", 1, 2, "VQ", cell_fn)),
-    volatile(scalar("INFO", 1, 1, info_fn)),
+    args("CELL", 1, 2, "VR", cell_fn),
+    scalar("INFO", 1, 1, info_fn),
     scalar("SINGLE", 1, 1, |_, a| a[0].clone()),
     scalar("WEBSERVICE", 1, 1, |_, a| fixed_err(a, XlError::VALUE)),
     scalar_p("CUBEVALUE", 1, super::MANY, "VR", |_, a| {
@@ -96,12 +97,12 @@ pub const DEFS: &[FnDef] = &[
     scalar("CUBERANKEDMEMBER", 3, 4, |c, a| cube_numeric(c, a, 2)),
     scalar_p("CUBESET", 2, 5, "VRV", |c, a| cube_numeric(c, a, 3)),
     scalar("CUBESETCOUNT", 1, 1, |_, a| fixed_err(a, XlError::NA)),
-    volatile(scalar("RTD", 3, super::MANY, rtd)),
+    scalar("RTD", 3, super::MANY, rtd),
     scalar("FIELDVALUE", 2, 2, |_, a| match a[1] {
         Value::Error(e) => Value::Error(e),
         _ => err(XlError::FIELD),
     }),
-    scalar("STOCKHISTORY", 2, 8, |_, a| {
+    scalar("STOCKHISTORY", 2, super::MANY254, |_, a| {
         let kind = if matches!(&a[0], Value::Text(t) if !t.is_empty()) {
             XlError::BLOCKED
         } else {
@@ -121,14 +122,11 @@ pub const DEFS: &[FnDef] = &[
             .unwrap_or_else(|| err(XlError::VALUE))
     }),
     super::checked(
-        super::volatile(args("GETPIVOTDATA", 2, super::MANY, "R", |ctx, o| {
+        args("GETPIVOTDATA", 2, super::MANY, "R", |ctx, o| {
             for (i, op) in o.iter().enumerate() {
                 let name_slot = i < 2 || i % 2 == 0;
                 let multi =
                     matches!(op, Operand::Ref(r) if r.single().is_none_or(|a| !a.rect.is_cell()));
-                if multi && i >= 2 && name_slot && ctx.legacy_form {
-                    return Operand::err(XlError::VALUE);
-                }
 
                 if multi && i >= 2 && name_slot {
                     if let Operand::Ref(r) = op {
@@ -145,6 +143,25 @@ pub const DEFS: &[FnDef] = &[
                 if name_slot && !multi {
                     if let Operand::Val(Value::Error(e)) = op {
                         return Operand::err(*e);
+                    }
+                }
+            }
+
+            if let Operand::Ref(r0) = &o[0] {
+                if let Some(a0) = r0.single() {
+                    if let Some(ti) = ctx.wb.pivot_meeting(a0.sheet, &a0.rect) {
+                        if o.len() != 2 {
+                            return Operand::err(XlError::REF);
+                        }
+                        let text = match ctx.deref(o[1].clone()) {
+                            Value::Text(s) => s.to_string(),
+                            Value::Blank => String::new(),
+                            v @ (Value::Number(_) | Value::Bool(_)) => crate::coerce::to_text(&v)
+                                .map(|t| t.to_string())
+                                .unwrap_or_default(),
+                            _ => return Operand::err(XlError::REF),
+                        };
+                        return Operand::Val(ctx.wb.get_pivot_data_name(ti, &text));
                     }
                 }
             }
@@ -165,8 +182,11 @@ pub const DEFS: &[FnDef] = &[
                 let i = ctx.deref(ch[1].clone());
                 pairs.push((f, i));
             }
-            Operand::Val(ctx.wb.get_pivot_data(&data, anchor, &pairs))
-        })),
+            Operand::Val(
+                ctx.wb
+                    .get_pivot_data(&data, anchor, a.rect.is_cell(), &pairs),
+            )
+        }),
         |a| {
             if a.len() < 5 || a.len() % 2 == 0 {
                 Ok(())
@@ -175,7 +195,7 @@ pub const DEFS: &[FnDef] = &[
             }
         },
     ),
-    args("PHONETIC", 1, 1, "Q", |_, o| {
+    args("PHONETIC", 1, 1, "R", |_, o| {
         Operand::err(match &o[0] {
             Operand::Val(Value::Error(XlError::NAME)) => XlError::NAME,
             Operand::Val(Value::Error(XlError::REF)) => XlError::REF,
@@ -381,13 +401,9 @@ fn parity(ctx: &EvalCtx, v: &Value, even: bool) -> Value {
     }
     match ctx.to_number(v) {
         Ok(n) => {
-            let r = n.round();
-            let n = if (n - r).abs() < 1.1642e-10 {
-                r
-            } else {
-                n.trunc()
-            };
-            Value::Bool((n % 2.0 == 0.0) == even)
+            let a = x87::add(n.abs(), 1e-10).floor();
+            let h = x87::div(a, 2.0);
+            Value::Bool((h == h.floor()) == even)
         }
         Err(e) => err(e),
     }

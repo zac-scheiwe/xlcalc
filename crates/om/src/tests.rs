@@ -749,3 +749,247 @@ fn sz_to_ref_reads_one_block_and_allows_leading_spaces_only() {
     assert_eq!(sz_to_ref("A1", false), Some(Rect::cell(0, 0)));
     assert_eq!(sz_to_ref("A1", true), Some(Rect::cell(0, 0)));
 }
+
+#[test]
+fn sheet_visible_put_floors_and_reads_the_number_as_very_hidden() {
+    let mut a = app();
+    let root = a.handle();
+    let name = Variant::Bstr("Sheet2".into());
+    let sheet = obj(get(&mut a, root, "Worksheets", &[name]));
+    for (value, state) in [(-0.5, -1), (0.4, 2), (0.0, 0), (1.9, -1), (2.5, 2)] {
+        put(&mut a, sheet, "Visible", Variant::R8(value));
+        let now = get(&mut a, sheet, "Visible", &[]);
+        assert_eq!(now, Variant::I4(state), "{value}");
+    }
+    for value in [-1.5, 3.0] {
+        let refused = a.invoke(sheet, "Visible", Call::PUT, &[Variant::R8(value)], &[]);
+        assert!(refused.is_err(), "{value}");
+    }
+}
+
+#[test]
+fn sheets_add_floors_the_type_and_translates_whole_constants() {
+    let mut a = app();
+    let root = a.handle();
+    let sheets = obj(get(&mut a, root, "Sheets", &[]));
+    let mut add = |ty: Variant| {
+        a.invoke(sheets, "Add", Call::VB, &[], &[("Type", ty)])
+            .is_ok()
+    };
+    assert!(add(Variant::R8(1.9)));
+    assert!(add(Variant::I4(-4167)));
+    assert!(add(Variant::Bstr("Worksheet".into())));
+    assert!(!add(Variant::R8(-4167.9)));
+    assert!(!add(Variant::I4(5)));
+    assert!(!add(Variant::R8(0.9)));
+}
+
+#[test]
+fn a_move_out_of_the_workbook_counts_the_visible_sheets() {
+    let mut a = app();
+    let root = a.handle();
+    let sheets = obj(get(&mut a, root, "Sheets", &[]));
+    let second = obj(get(&mut a, root, "Sheets", &[Variant::I4(2)]));
+    put(&mut a, second, "Visible", Variant::I4(0));
+
+    for i in [1, 2] {
+        let sheet = obj(get(&mut a, root, "Sheets", &[Variant::I4(i)]));
+        let refused = a.invoke(sheet, "Move", Call::VB, &[], &[]);
+        assert!(refused.is_err(), "{i}");
+    }
+
+    assert!(a.invoke(sheets, "Move", Call::VB, &[], &[]).is_ok());
+
+    let moved = obj(get(&mut a, root, "Sheets", &[Variant::I4(2)]));
+    assert_eq!(get(&mut a, moved, "Visible", &[]), Variant::I4(0));
+}
+
+#[test]
+fn add_takes_a_title_in_either_case_and_each_collection_its_own_kind() {
+    let mut a = app();
+    let root = a.handle();
+    let sheets = obj(get(&mut a, root, "Sheets", &[]));
+    let mut add = |ty: &str| {
+        let ty = Variant::Bstr(ty.into());
+        a.invoke(sheets, "Add", Call::VB, &[], &[("Type", ty)])
+            .is_ok()
+    };
+    assert!(add("cHaRt"));
+    assert!(add("ms excel 5.0 dialog"));
+    assert!(!add("Dialog"));
+    for collection in ["Modules", "DialogSheets"] {
+        let c = obj(get(&mut a, root, collection, &[]));
+        let before = get(&mut a, c, "Count", &[]);
+        obj(get(&mut a, c, "Add", &[]));
+        assert_ne!(get(&mut a, c, "Count", &[]), before, "{collection}");
+    }
+}
+
+#[test]
+fn open_arguments_are_checked_before_the_file_is_sought() {
+    let mut a = app();
+    let root = a.handle();
+    let books = obj(get(&mut a, root, "Workbooks", &[]));
+    let mut sought = |method: &str, named: (&str, Variant)| {
+        let file = Variant::Bstr(r"C:\none.txt".into());
+        let e = a
+            .invoke(books, method, Call::VB, &[file], &[named])
+            .unwrap_err();
+        format!("{e:?}").contains("find")
+    };
+    let text = |n: usize| Variant::Bstr("x".repeat(n));
+    assert!(sought("Open", ("UpdateLinks", Variant::R8(3.9))));
+    assert!(!sought("Open", ("UpdateLinks", Variant::I4(4))));
+    assert!(sought("Open", ("Password", text(255))));
+    assert!(!sought("Open", ("Password", text(256))));
+    assert!(sought("Open", ("WriteResPassword", text(15))));
+    assert!(!sought("Open", ("WriteResPassword", text(16))));
+    assert!(!sought("Open", ("Format", Variant::I4(6))));
+    assert!(sought("OpenText", ("Origin", Variant::I4(65001))));
+    assert!(!sought("OpenText", ("Origin", Variant::I4(5))));
+    assert!(!sought("OpenText", ("StartRow", Variant::I4(0))));
+    assert!(sought("OpenText", ("DecimalSeparator", text(1))));
+    assert!(!sought("OpenText", ("DecimalSeparator", text(2))));
+}
+
+#[test]
+fn an_object_put_to_a_format_property_gives_its_default_property() {
+    let mut a = app();
+    let source = range(&mut a, "Sheet1!H1");
+    let cell = range(&mut a, "Sheet1!B2");
+    let font = obj(get(&mut a, cell, "Font", &[]));
+    let object = Variant::Dispatch(Some(source));
+    put(&mut a, source, "Value2", Variant::R8(12.0));
+    put(&mut a, font, "Color", object.clone());
+    assert_eq!(get(&mut a, font, "Color", &[]), Variant::R8(12.0));
+
+    put(&mut a, source, "Value2", Variant::Bool(true));
+    assert!(a
+        .invoke(font, "Color", Call::PUT, &[Variant::Bool(true)], &[])
+        .is_err());
+    put(&mut a, font, "Color", object.clone());
+    assert_eq!(get(&mut a, font, "Color", &[]), Variant::R8(0.0));
+    put(&mut a, font, "Bold", object);
+    assert_eq!(get(&mut a, font, "Bold", &[]), Variant::Bool(true));
+
+    let several = range(&mut a, "Sheet1!H1:H3");
+    let root = a.handle();
+    let sheet = obj(get(&mut a, root, "Worksheets", &[Variant::I4(1)]));
+    for (member, id) in [
+        ("Color", several),
+        ("Color", sheet),
+        ("TintAndShade", several),
+    ] {
+        let value = [Variant::Dispatch(Some(id))];
+        assert!(a.invoke(font, member, Call::PUT, &value, &[]).is_err());
+    }
+}
+
+#[test]
+fn characters_count_without_a_length_needs_the_editor() {
+    let mut a = app();
+    let number = range(&mut a, "Sheet1!A1");
+    put(&mut a, number, "Value2", Variant::R8(12.0));
+    let blank = range(&mut a, "Sheet1!A2");
+    let mut count = |cell, span: &[i32]| {
+        let span: Vec<Variant> = span.iter().map(|n| Variant::I4(*n)).collect();
+        let part = obj(get(&mut a, cell, "Characters", &span));
+        a.invoke(part, "Count", Call::VB, &[], &[]).ok()
+    };
+    assert_eq!(count(number, &[]), None);
+    assert_eq!(count(number, &[2]), None);
+    assert_eq!(count(number, &[2, 0]), None);
+    assert_eq!(count(number, &[2, 1]), Some(Variant::I4(2)));
+    assert_eq!(count(blank, &[]), Some(Variant::I4(0)));
+    assert_eq!(count(blank, &[2, 0]), Some(Variant::I4(0)));
+}
+
+#[test]
+fn rich_runs_count_in_the_common_font() {
+    let mut a = app();
+    let pair = range(&mut a, "Sheet1!A1:B1");
+    let first = range(&mut a, "Sheet1!A1");
+    put(&mut a, first, "Value2", Variant::Bstr("abcdef".into()));
+    let span = [Variant::I4(1), Variant::I4(3)];
+    let part = obj(get(&mut a, first, "Characters", &span));
+    let part_font = obj(get(&mut a, part, "Font", &[]));
+    put(&mut a, part_font, "Bold", Variant::Bool(true));
+    let both = obj(get(&mut a, pair, "Font", &[]));
+    assert_eq!(get(&mut a, both, "Bold", &[]), Variant::Null);
+    assert_eq!(get(&mut a, both, "Italic", &[]), Variant::Bool(false));
+    put(&mut a, both, "Bold", Variant::Bool(false));
+    assert_eq!(get(&mut a, both, "Bold", &[]), Variant::Bool(false));
+}
+
+#[test]
+fn notes_and_controls_share_a_name_counter_and_notes_end_the_shapes() {
+    let mut a = app();
+    let r = range(&mut a, "Sheet1!B2");
+    get(&mut a, r, "AddComment", &[Variant::Bstr("n".into())]);
+    let root = a.handle();
+    let ws = obj(get(&mut a, root, "Worksheets", &[Variant::I4(1)]));
+    let boxes = obj(get(&mut a, ws, "CheckBoxes", &[]));
+    let add = [10.0, 10.0, 60.0, 20.0].map(Variant::R8);
+    let cb = obj(get(&mut a, boxes, "Add", &add));
+    assert_eq!(
+        get(&mut a, cb, "Name", &[]),
+        Variant::Bstr("Check Box 2".into())
+    );
+    let shapes = obj(get(&mut a, ws, "Shapes", &[]));
+    assert_eq!(get(&mut a, shapes, "Count", &[]), Variant::I4(2));
+    let last = obj(get(&mut a, shapes, "Item", &[Variant::I4(2)]));
+    assert_eq!(
+        get(&mut a, last, "Name", &[]),
+        Variant::Bstr("Comment 1".into())
+    );
+}
+
+#[test]
+fn add_takes_another_books_sheet_by_position() {
+    let mut a = Application::new();
+    let root = a.handle();
+    let books = obj(get(&mut a, root, "Workbooks", &[]));
+    let source = obj(get(&mut a, books, "Add", &[]));
+    let source_sheets = obj(get(&mut a, source, "Worksheets", &[]));
+    get(&mut a, source_sheets, "Add", &[]);
+    get(&mut a, source_sheets, "Add", &[]);
+    get(&mut a, source_sheets, "Add", &[]);
+    let target = obj(get(&mut a, books, "Add", &[]));
+    let sheets = obj(get(&mut a, target, "Sheets", &[]));
+    let Variant::I4(n) = get(&mut a, sheets, "Count", &[]) else {
+        panic!("no count");
+    };
+    let peer = |a: &mut Application, p: i32| get(a, source_sheets, "Item", &[Variant::I4(p)]);
+    let missing = Variant::Error(HResult::DISP_E_PARAMNOTFOUND.0);
+    let before = peer(&mut a, n);
+    let made = obj(get(&mut a, sheets, "Add", &[before]));
+    assert_eq!(get(&mut a, made, "Index", &[]), Variant::I4(n));
+
+    let past = peer(&mut a, n + 2);
+    assert!(a.invoke(sheets, "Add", Call::VB, &[past], &[]).is_err());
+    let past = peer(&mut a, n + 2);
+    assert!(a
+        .invoke(sheets, "Add", Call::VB, &[missing.clone(), past], &[])
+        .is_err());
+    let last = peer(&mut a, n + 1);
+    let made = obj(get(&mut a, sheets, "Add", &[missing, last]));
+    assert_eq!(get(&mut a, made, "Index", &[]), Variant::I4(n + 2));
+}
+
+#[test]
+fn table_style_local_names() {
+    use crate::tables::style_local_name;
+    assert_eq!(
+        style_local_name("tablestylemedium2"),
+        "Table Style Medium 2"
+    );
+    assert_eq!(
+        style_local_name("SlicerStyleOther1"),
+        "Slicer Style Other 1"
+    );
+    assert_eq!(
+        style_local_name("TimeSlicerStyleDark6"),
+        "Timeline Style Dark 6"
+    );
+    assert_eq!(style_local_name("MyStyle1"), "MyStyle1");
+}

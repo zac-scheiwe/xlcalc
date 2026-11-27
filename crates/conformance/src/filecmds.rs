@@ -490,23 +490,6 @@ fn cells(items: &J) -> BTreeMap<String, J> {
     m
 }
 
-fn fresh_open(src: &J) -> J {
-    let calc = cells(&src["calc"]);
-    let mut open = src["open"].clone();
-    for it in open.as_array_mut().into_iter().flatten() {
-        let sheet = it["sheet"].as_str().unwrap_or("").to_string();
-        for c in it["cells"].as_array_mut().into_iter().flatten() {
-            let k = format!("{sheet}!{}", c["cell"].as_str().unwrap_or(""));
-            if let Some(f) = calc.get(&k) {
-                if c.get("formula").is_some() && f["value"] != c["value"] {
-                    *c = f.clone();
-                }
-            }
-        }
-    }
-    open
-}
-
 fn diff_cells(what: &str, a: &J, b: &J, values_only: bool, out: &mut Vec<String>) {
     let (ca, mut cb) = (cells(a), cells(b));
     if values_only {
@@ -654,19 +637,13 @@ fn compare(inp: &Input, src: &J, saved: &J) -> Vec<String> {
     diff_styles(&src["styles"], &saved["styles"], &mut d);
     let new = inp.new.is_some();
 
-    let iterative = src["book"]["iteration"].as_bool() == Some(true);
-    let saved_after = if iterative { "open" } else { "calc" };
-    if iterative {
-        diff_cells("open/calc", &src["calc"], &saved["open"], new, &mut d);
-    } else {
-        diff_cells("open", &fresh_open(src), &saved["open"], new, &mut d);
-        diff_cells("calc", &src["calc"], &saved["calc"], new, &mut d);
-    }
+    diff_cells("open", &src["open"], &saved["open"], new, &mut d);
+    diff_cells("calc", &src["calc"], &saved["calc"], new, &mut d);
 
     if let Some(g) = &inp.golden {
         let golden = crate::golden::load_golden(g);
         let want = cells(&golden["items"]);
-        let got = cells(&saved[saved_after]);
+        let got = cells(&saved["calc"]);
         for (k, w) in &want {
             let v = got.get(k).map(|c| &c["value"]);
             if v != Some(&w["value"]) {

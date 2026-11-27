@@ -22,7 +22,7 @@ pub(crate) struct MatchSet {
 
 impl MatchSet {
     fn text(&self, from: usize, to: usize) -> Variant {
-        Variant::Bstr(String::from_utf16_lossy(&self.input[from..to]))
+        Variant::Bstr(xlcalc::wide::from_units(&self.input[from..to]))
     }
 }
 
@@ -74,12 +74,12 @@ fn arg_count(args: &[Variant], n: usize) -> Result<(), VbaError> {
 
 impl RegExp {
     fn compile(&self) -> Result<Regex, VbaError> {
-        let pat: Vec<u16> = self.pattern.encode_utf16().collect();
+        let pat: Vec<u16> = xlcalc::wide::units(&self.pattern).collect();
         Regex::new(&pat, self.ignore_case, self.multi_line).map_err(|e| VbaError::new(e.number()))
     }
 
     fn matches(&self, subject: &Variant) -> Result<MatchSet, VbaError> {
-        let input: Vec<u16> = text_arg(subject)?.encode_utf16().collect();
+        let input: Vec<u16> = xlcalc::wide::units(&text_arg(subject)?).collect();
         let re = self.compile()?;
         let matches = re.exec(&input, self.global);
         Ok(MatchSet { input, matches })
@@ -116,7 +116,7 @@ impl crate::Application<'_> {
             "multiline" => arg_count(args, 0).map(|()| Variant::Bool(re.multi_line)),
             "test" => {
                 arg_count(args, 1)?;
-                let input: Vec<u16> = text_arg(&args[0])?.encode_utf16().collect();
+                let input: Vec<u16> = xlcalc::wide::units(&text_arg(&args[0])?).collect();
                 Ok(Variant::Bool(re.compile()?.find_at(&input, 0).is_some()))
             }
             "execute" => {
@@ -126,10 +126,10 @@ impl crate::Application<'_> {
             }
             "replace" => {
                 arg_count(args, 2)?;
-                let input: Vec<u16> = text_arg(&args[0])?.encode_utf16().collect();
-                let repl: Vec<u16> = text_arg(&args[1])?.encode_utf16().collect();
+                let input: Vec<u16> = xlcalc::wide::units(&text_arg(&args[0])?).collect();
+                let repl: Vec<u16> = xlcalc::wide::units(&text_arg(&args[1])?).collect();
                 let out = re.compile()?.replace(&input, &repl, re.global);
-                Ok(Variant::Bstr(String::from_utf16_lossy(&out)))
+                Ok(Variant::Bstr(xlcalc::wide::from_units(&out)))
             }
             _ => Err(VbaError::new(438)),
         }
@@ -226,7 +226,7 @@ mod tests {
         } else if s == "#u" {
             Variant::Empty
         } else {
-            Variant::Bstr(String::from_utf16_lossy(&dec(s)))
+            Variant::Bstr(xlcalc::wide::from_units(&dec(s)))
         }
     }
 
@@ -241,7 +241,7 @@ mod tests {
             },
             Ok(Variant::Bool(b)) => if b { "True" } else { "False" }.to_string(),
             Ok(Variant::Bstr(s)) => {
-                let u: Vec<u16> = s.encode_utf16().collect();
+                let u: Vec<u16> = xlcalc::wide::units(&s).collect();
                 format!("'{}'", enc(&u))
             }
             Ok(Variant::Empty) => "<null>".to_string(),

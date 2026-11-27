@@ -3,11 +3,13 @@ mod calendars;
 mod calendars_cn;
 mod calendars_he;
 mod codelen;
+mod compare;
+pub(crate) use compare::{compile_for_compare, Compiled};
 mod dbnum;
 pub(crate) mod decimal;
 mod displayed;
 mod fracden;
-pub(crate) use displayed::EditClass;
+pub(crate) use displayed::{EditClass, LimPrec};
 pub(crate) mod fillfmt;
 mod general;
 mod locales;
@@ -21,8 +23,8 @@ pub use general::{
     general_display_flag, TEXT_GENERAL_WIDTH,
 };
 pub(crate) use readback::{
-    digits_with_date, format_key, quote_ampm, readback_spelling, spelled_for_parse,
-    typed_elapsed_ok,
+    designators, digits_with_date, quote_ampm, readback_spelling, spelled_for_parse,
+    typed_elapsed_ok, Designators,
 };
 pub(crate) use render::{FILL_MARK, GENERAL_MARK, SPACE_MARK};
 
@@ -107,6 +109,20 @@ pub(crate) struct NumberHeader {
     pub(crate) scale: i32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ElapsedUnit {
+    Hours,
+    Minutes,
+    Seconds,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StrictDate {
+    Plain,
+
+    Elapsed(ElapsedUnit),
+}
+
 #[derive(Clone, Debug)]
 pub struct NumberFormat {
     pub(crate) sections: Vec<parse::Section>,
@@ -121,6 +137,10 @@ pub struct NumberFormat {
 impl NumberFormat {
     pub fn parse(code: &str) -> Result<NumberFormat, XlError> {
         parse::parse_format(code).ok_or(XlError::VALUE)
+    }
+
+    pub fn parse_stored(code: &str) -> Result<NumberFormat, XlError> {
+        parse::parse_stored(code).ok_or(XlError::VALUE)
     }
 
     pub fn general() -> NumberFormat {
@@ -157,6 +177,47 @@ impl NumberFormat {
         }
     }
 
+    pub(crate) fn date_op_classes(&self) -> Option<Vec<u8>> {
+        use parse::DateTok as D;
+        let section = self.sections.iter().find(|s| match &s.body {
+            parse::Body::Literal(items) => !items.is_empty(),
+            _ => true,
+        })?;
+        let parse::Body::Date(layout) = &section.body else {
+            return None;
+        };
+        let marks_at = |k: usize| layout.day_marks.iter().filter(move |&&m| m == k);
+        let mut classes = Vec::new();
+        for k in 0..=layout.items.len() {
+            classes.extend(marks_at(k).map(|_| 13));
+            let class = match layout.items.get(k) {
+                Some(parse::Item::Date(d)) => match d {
+                    D::Day(_) => 13,
+                    D::Month(_) => 17,
+                    D::Hour(_) | D::Hour12(_) => 21,
+                    D::Minute(_) => 23,
+                    D::Second(_) => 25,
+                    D::Year(_) | D::Buddhist(_) => 27,
+                    D::AmPm(_) => 34,
+                    D::EYear(_) | D::Era(_) => 53,
+                    D::SubSec(_)
+                    | D::ElapsedH(_)
+                    | D::ElapsedM(_)
+                    | D::ElapsedS(_)
+                    | D::LeftH(_)
+                    | D::LeftM(_)
+                    | D::LeftS(_)
+                    | D::General(_)
+                    | D::AmPmCjk => continue,
+                },
+                _ => continue,
+            };
+            classes.push(class);
+        }
+        classes.truncate(8);
+        Some(classes)
+    }
+
     pub fn format_number(&self, x: f64, loc: &Locale, ds: DateSystem) -> Result<Rendered, XlError> {
         render::render_number(self, x, loc, ds)
     }
@@ -190,6 +251,31 @@ impl NumberFormat {
         self.sections
             .first()
             .is_some_and(|s| matches!(s.body, parse::Body::Date(_)))
+    }
+
+    pub fn strict_date(&self) -> Option<StrictDate> {
+        let mut any = false;
+        for s in &self.sections {
+            let parse::Body::Date(d) = &s.body else {
+                continue;
+            };
+            any = true;
+            for it in &d.items {
+                match it {
+                    parse::Item::Date(parse::DateTok::ElapsedH(_)) => {
+                        return Some(StrictDate::Elapsed(ElapsedUnit::Hours))
+                    }
+                    parse::Item::Date(parse::DateTok::ElapsedM(_)) => {
+                        return Some(StrictDate::Elapsed(ElapsedUnit::Minutes))
+                    }
+                    parse::Item::Date(parse::DateTok::ElapsedS(_)) => {
+                        return Some(StrictDate::Elapsed(ElapsedUnit::Seconds))
+                    }
+                    _ => {}
+                }
+            }
+        }
+        any.then_some(StrictDate::Plain)
     }
 }
 

@@ -1,4 +1,4 @@
-use super::{args, lazy, volatile, FnDef};
+use super::{args, lazy, FnDef};
 use crate::address::{col_to_letters, CellAddr, Rect};
 use crate::eval::{Area, EvalCtx, Operand, Reference};
 use crate::formula::Node;
@@ -9,8 +9,8 @@ pub const SHADOWING: &[&str] = &["SORT", "FILTER"];
 pub const NAME_ONLY: &[&str] = &["GET.CELL", "EVALUATE"];
 
 pub const DEFS: &[FnDef] = &[
-    volatile(lazy("GET.CELL", 1, 2, get_cell)),
-    volatile(lazy("EVALUATE", 1, 1, evaluate)),
+    lazy("GET.CELL", 1, 2, get_cell),
+    lazy("EVALUATE", 1, 1, evaluate),
 ];
 
 fn get_cell(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
@@ -141,11 +141,14 @@ fn appearance(wb: &crate::workbook::Workbook, at: CellAddr, t: i64) -> Option<Va
     let s = wb.cell_style(at);
     let theme = &wb.style_table().theme;
 
-    let index = |c: CellColor| {
-        if c.is_auto() {
-            0.0
-        } else {
-            f64::from(crate::style::nearest_color_index(theme.rgb(c, 0)))
+    let index = |c: CellColor, font: bool| {
+        let from_rgb = || f64::from(theme.pcv_color_index(theme.rgb(c, 0)));
+        match c {
+            _ if c.is_auto() => 0.0,
+            CellColor::Indexed(i) if font => f64::from(i) - 7.0,
+            CellColor::Indexed(i) if (8..64).contains(&i) => f64::from(i) - 7.0,
+            CellColor::Indexed(_) => 0.0,
+            _ => from_rgb(),
         }
     };
     let num = |n: f64| Some(Value::Number(n));
@@ -168,7 +171,7 @@ fn appearance(wb: &crate::workbook::Workbook, at: CellAddr, t: i64) -> Option<Va
         21 => Some(Value::Bool(font.italic)),
         22 => Some(Value::Bool(font.underline == Underline::Single)),
         23 => Some(Value::Bool(font.strikethrough)),
-        24 => num(index(font.color)),
+        24 => num(index(font.color, true)),
 
         25 | 26 => Some(Value::Bool(false)),
 
@@ -181,12 +184,19 @@ fn appearance(wb: &crate::workbook::Workbook, at: CellAddr, t: i64) -> Option<Va
         31 => Some(Value::Bool(false)),
         33 => Some(Value::Bool(s.alignment.wrap)),
         34..=37 => num(0.0),
-        38 => num(index(if solid {
-            s.fill.color
+        38 => num(index(
+            if solid {
+                s.fill.color
+            } else {
+                s.fill.pattern_color
+            },
+            false,
+        )),
+        39 => num(if solid {
+            0.0
         } else {
-            s.fill.pattern_color
-        })),
-        39 => num(if solid { 0.0 } else { index(s.fill.color) }),
+            index(s.fill.color, false)
+        }),
         40 => Some(Value::from(s.named.to_string())),
         50 => num(f64::from(s.alignment.vertical as u8) + 1.0),
         51 => num(match s.alignment.rotation {
@@ -209,8 +219,8 @@ fn appearance(wb: &crate::workbook::Workbook, at: CellAddr, t: i64) -> Option<Va
         59 => num(f64::from(font.underline as u8) + 1.0),
         60 => Some(Value::Bool(font.subscript)),
         63 if s.fill.pattern == Pattern::None => num(0.0),
-        63 => num(index(s.fill.color)),
-        64 => num(index(s.fill.pattern_color)),
+        63 => num(index(s.fill.color, false)),
+        64 => num(index(s.fill.pattern_color, false)),
         _ => None,
     }
 }
@@ -707,8 +717,8 @@ pub const REF_DEFS: &[FnDef] = &[
     args("ABSREF", 2, 2, "VQ", absref),
     args("RELREF", 2, 2, "Q", relref),
     args("DEREF", 1, 1, "Q", deref_fn),
-    volatile(args("SELECTION", 0, 0, "V", selection)),
-    volatile(args("ACTIVE.CELL", 0, 0, "V", active_cell)),
+    args("SELECTION", 0, 0, "V", selection),
+    args("ACTIVE.CELL", 0, 0, "V", active_cell),
 ];
 
 fn flag(ctx: &mut EvalCtx, op: Option<&Operand>) -> Result<bool, XlError> {

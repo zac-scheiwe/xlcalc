@@ -175,7 +175,7 @@ fn xf_record(p: &mut P, x: &Node, parent: u16, style_xf: bool) {
     p.u8(trot).u8(indent).u8(a).u8(b).u16(atr);
 }
 
-pub(crate) fn to_bin(xml_bytes: &[u8]) -> Result<Vec<u8>, String> {
+pub(crate) fn to_bin_with(xml_bytes: &[u8], extra: &[Node]) -> Result<(Vec<u8>, Vec<u16>), String> {
     let root = xml::parse(xml_bytes)?;
     let mut r = Recs::default();
     r.empty(278);
@@ -197,9 +197,24 @@ pub(crate) fn to_bin(xml_bytes: &[u8]) -> Result<Vec<u8>, String> {
         .child("fonts")
         .map(|n| n.children("font").collect())
         .unwrap_or_default();
-    count_rec(&mut r, 611, fonts.len());
-    for f in fonts {
-        r.with(43, |p| font_record(p, f));
+    let record = |f: &Node| {
+        let mut one = Recs::default();
+        one.with(43, |p| font_record(p, f));
+        one.bytes
+    };
+    let mut records: Vec<Vec<u8>> = fonts.into_iter().map(record).collect();
+    let mut ids = Vec::with_capacity(extra.len());
+    for f in extra {
+        let rec = record(f);
+        let at = records.iter().position(|x| *x == rec).unwrap_or_else(|| {
+            records.push(rec);
+            records.len() - 1
+        });
+        ids.push(at as u16);
+    }
+    count_rec(&mut r, 611, records.len());
+    for rec in &records {
+        r.bytes.extend_from_slice(rec);
     }
     r.empty(612);
 
@@ -309,8 +324,22 @@ pub(crate) fn to_bin(xml_bytes: &[u8]) -> Result<Vec<u8>, String> {
             );
     });
     r.empty(509);
+
+    if let Some(ic) = root.child("colors").and_then(|c| c.child("indexedColors")) {
+        r.empty(0x1d9);
+        r.empty(0x235);
+        for c in ic.children("rgbColor") {
+            let v = c
+                .attr("rgb")
+                .and_then(|v| u32::from_str_radix(v, 16).ok())
+                .unwrap_or(0);
+            r.rec(0x1db, &[(v >> 16) as u8, (v >> 8) as u8, v as u8, 0]);
+        }
+        r.empty(0x236);
+        r.empty(0x1da);
+    }
     r.empty(279);
-    Ok(r.bytes)
+    Ok((r.bytes, ids))
 }
 
 fn font_record(p: &mut P, f: &Node) {
@@ -328,8 +357,16 @@ fn font_record(p: &mut P, f: &Node) {
     if on("i") {
         grbit |= 2;
     }
-    if on("strike") {
-        grbit |= 8;
+    for (element, bit) in [
+        ("strike", 8),
+        ("outline", 0x10),
+        ("shadow", 0x20),
+        ("condense", 0x40),
+        ("extend", 0x80),
+    ] {
+        if on(element) {
+            grbit |= bit;
+        }
     }
     let uls: u8 = match f.child("u") {
         None => 0,
@@ -406,7 +443,7 @@ impl Rd<'_> {
             .iter()
             .map(|c| u16::from_le_bytes(*c))
             .collect();
-        Ok(String::from_utf16_lossy(&units))
+        Ok(xlcalc::wide::from_units(&units))
     }
     fn color(&mut self) -> Result<[u8; 8], String> {
         let mut c = [0u8; 8];
@@ -442,6 +479,22 @@ pub(crate) fn color_xml(tag: &str, c: [u8; 8]) -> String {
     s
 }
 
+pub(crate) fn run_fonts(records: impl Iterator<Item = (u32, Vec<u8>)>) -> Vec<String> {
+    records
+        .filter(|(id, _)| *id == 43)
+        .map(|(_, d)| {
+            font_xml(&d).map_or_else(
+                |_| String::new(),
+                |f| {
+                    f.replace("<font>", "<rPr>")
+                        .replace("</font>", "</rPr>")
+                        .replace("<name val=", "<rFont val=")
+                },
+            )
+        })
+        .collect()
+}
+
 fn font_xml(d: &[u8]) -> Result<String, String> {
     let mut rd = Rd { b: d, p: 0 };
     let dy = rd.u16()?;
@@ -462,8 +515,16 @@ fn font_xml(d: &[u8]) -> Result<String, String> {
     if grbit & 2 != 0 {
         s.push_str("<i/>");
     }
-    if grbit & 8 != 0 {
-        s.push_str("<strike/>");
+    for (bit, element) in [
+        (8, "<strike/>"),
+        (0x40, "<condense/>"),
+        (0x80, "<extend/>"),
+        (0x10, "<outline/>"),
+        (0x20, "<shadow/>"),
+    ] {
+        if grbit & bit != 0 {
+            s.push_str(element);
+        }
     }
     match uls {
         0 => {}
@@ -645,8 +706,16 @@ pub(crate) fn to_xml(records: impl Iterator<Item = (u32, Vec<u8>)>) -> Result<St
     let (mut style_xfs, mut cell_xfs, mut styles) = (String::new(), String::new(), String::new());
     let mut in_cell_xfs = false;
     let mut dxfs = String::new();
+    let mut palette = String::new();
     for (id, d) in records {
         match id {
+            0x1db if d.len() >= 3 => {
+                let _ = write!(
+                    palette,
+                    "<rgbColor rgb=\"FF{:02X}{:02X}{:02X}\"/>",
+                    d[0], d[1], d[2]
+                );
+            }
             44 => {
                 let mut rd = Rd { b: &d, p: 0 };
                 let n = rd.u16()?;
@@ -681,14 +750,23 @@ pub(crate) fn to_xml(records: impl Iterator<Item = (u32, Vec<u8>)>) -> Result<St
             _ => {}
         }
     }
+    let colors = if palette.is_empty() {
+        String::new()
+    } else {
+        format!("<colors><indexedColors>{palette}</indexedColors></colors>")
+    };
     Ok(format!(
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts>{fmts}</numFmts><fonts>{fonts}</fonts><fills>{fills}</fills><borders>{borders}</borders><cellStyleXfs>{style_xfs}</cellStyleXfs><cellXfs>{cell_xfs}</cellXfs><cellStyles>{styles}</cellStyles><dxfs>{dxfs}</dxfs></styleSheet>"
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\"><numFmts>{fmts}</numFmts><fonts>{fonts}</fonts><fills>{fills}</fills><borders>{borders}</borders><cellStyleXfs>{style_xfs}</cellStyleXfs><cellXfs>{cell_xfs}</cellXfs><cellStyles>{styles}</cellStyles><dxfs>{dxfs}</dxfs>{colors}</styleSheet>"
     ))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn to_bin(xml_bytes: &[u8]) -> Result<Vec<u8>, String> {
+        to_bin_with(xml_bytes, &[]).map(|x| x.0)
+    }
 
     fn recs(b: &[u8]) -> Vec<(u32, Vec<u8>)> {
         let mut out = Vec::new();
@@ -735,6 +813,27 @@ mod tests {
         ] {
             assert!(xml.contains(want), "{want} missing in {xml}");
         }
+    }
+
+    #[test]
+    fn a_palette_survives_the_binary_form() {
+        let mut o = String::from("<styleSheet><colors><indexedColors>");
+        for i in 0..64u32 {
+            o.push_str(&format!("<rgbColor rgb=\"FF{:06X}\"/>", i * 0x040302));
+        }
+        o.push_str("</indexedColors></colors></styleSheet>");
+        let bin = to_bin(o.as_bytes()).unwrap();
+        let r = recs(&bin);
+        assert_eq!(r.iter().filter(|(i, _)| *i == 0x1db).count(), 64);
+        let first = r.iter().position(|(i, _)| *i == 0x1d9).unwrap();
+        assert_eq!(r[first + 1].0, 0x235);
+        assert_eq!(r[first + 3].1, [4, 3, 2, 0]);
+        let xml = to_xml(r.into_iter()).unwrap();
+        assert!(xml.contains("<rgbColor rgb=\"FF040302\"/>"), "{xml}");
+        assert_eq!(xml.matches("<rgbColor").count(), 64);
+
+        let plain = recs(&to_bin(b"<styleSheet/>").unwrap());
+        assert!(!plain.iter().any(|(i, _)| *i == 0x1db));
     }
 
     #[test]

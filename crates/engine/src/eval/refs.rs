@@ -149,13 +149,42 @@ pub fn eval_name(ctx: &mut EvalCtx, key: &str, sheet: Option<&SheetRef>) -> Oper
     let outer_key = ctx
         .name_key
         .replace(crate::value::Text::from(crate::text::name_key(&def.name)));
+    ctx.enter_name_table(&formula);
+    let saved_root = ctx
+        .frame_root
+        .replace((first_token(&formula.root), ctx.node_cls));
     let out = ctx.eval(&formula.root);
+    ctx.frame_root = saved_root;
     ctx.name_key = outer_key;
     ctx.name_scope = outer;
     ctx.depth -= 1;
     ctx.wrap = wrap;
     ctx.env = env;
     out
+}
+
+fn first_token(root: &crate::formula::Node) -> usize {
+    use crate::formula::Node;
+    let mut first = None;
+    crate::formula::walk(root, &mut |n| {
+        let leaf = match n {
+            Node::Func { args, .. } | Node::NamedCall { args, .. } => args.is_empty(),
+            Node::Unary(..)
+            | Node::Percent(_)
+            | Node::Spill(_)
+            | Node::Paren(_)
+            | Node::Ws { .. }
+            | Node::Binary(..)
+            | Node::Call { .. }
+            | Node::Let { .. }
+            | Node::Lambda(_) => false,
+            _ => true,
+        };
+        if leaf && first.is_none() {
+            first = Some(n as *const Node as usize);
+        }
+    });
+    first.unwrap_or(0)
 }
 
 pub fn struct_rect(
@@ -311,15 +340,20 @@ pub fn ref_op(_ctx: &mut EvalCtx, op: BinOp, l: Operand, r: Operand) -> Operand 
     }
 }
 
-const MATERIALISE_MAX: usize = 2_097_152;
+pub(crate) const MATERIALISE_MAX: usize = 2_097_152;
+
+pub(crate) const GHOST_SHEET: SheetId = SheetId(u32::MAX);
 
 pub(crate) fn moper_alloc_fails(rect: &Rect) -> bool {
     let (rows, cols) = (rect.rows() as u64, rect.cols() as u64);
     if rows > 0x100000 || cols > 0x100000 {
         return true;
     }
-    let n = rows * cols;
-    n >= 1 << 32 || (n - 1) * 0x28 + 0x2c >= 1 << 32
+    value_block_fails(rows * cols)
+}
+
+pub(crate) fn value_block_fails(n: u64) -> bool {
+    n >= 1 << 32 || n.saturating_sub(1) * 0x28 + 0x2c >= 1 << 32
 }
 
 pub(crate) fn is_huge_missing_root(

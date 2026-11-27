@@ -1,9 +1,10 @@
-use super::ptg_out::{from_biff12, put_chars};
+use super::ptg_out::{from_biff12_facts, put_chars, Facts};
 use super::wsheet::{self, SheetIn};
 use super::wstyles::{self, StyleOut};
 use crate::package::{dir_of, resolve, Package};
-use crate::xlsb_enc::{self as enc, Cls, NameEnt, State, TableArea, TableEnt};
+use crate::xlsb_enc::{self as enc, NameEnt, State, TableArea, TableEnt};
 use crate::xml::{self, Node};
+use xlcalc::FormulaContext;
 use xlcalc_vbaproject::cfb::{Cfb, CfbBuilder};
 
 pub(super) const MAX_RECORD: usize = 8224;
@@ -62,26 +63,47 @@ pub(super) fn bof(o: &mut Out, dt: u16) {
 }
 
 fn short_name(d: &mut Vec<u8>, s: &str) {
-    d.push(s.encode_utf16().count().min(255) as u8);
+    d.push(xlcalc::wide::units(s).count().min(255) as u8);
     put_chars(d, s);
 }
 
-fn sst_records(o: &mut Out, strings: &[String], total_refs: u32) {
+fn sst_records(o: &mut Out, strings: &[String], rich: &[SstRich], total_refs: u32) {
+    let start = o.b.len() as u32;
+    let bucket = (strings.len() / 128 + 1).max(8);
+    let mut marks: Vec<(usize, usize)> = Vec::new();
     let mut recs: Vec<Vec<u8>> = Vec::new();
     let mut cur: Vec<u8> = Vec::new();
     cur.extend(total_refs.to_le_bytes());
     cur.extend((strings.len() as u32).to_le_bytes());
-    for s in strings {
-        let u: Vec<u16> = s.encode_utf16().collect();
+    for (k, s) in strings.iter().enumerate() {
+        let u: Vec<u16> = xlcalc::wide::units(s).collect();
         let u = &u[..u.len().min(32767)];
         let wide = u.iter().any(|&x| x >= 0x100);
         let w = if wide { 2 } else { 1 };
-
-        if cur.len() + 3 + w > MAX_RECORD {
+        let none = SstRich::default();
+        let SstRich { runs, ext } = rich.get(k).unwrap_or(&none);
+        let runs = &runs[..runs.len().min(0x7FFF)];
+        if MAX_RECORD - cur.len() <= 11 {
             recs.push(std::mem::take(&mut cur));
         }
+        if k % bucket == 0 && marks.len() < 0x80 {
+            marks.push((recs.len(), cur.len() + 4));
+        }
         cur.extend((u.len() as u16).to_le_bytes());
-        cur.push(u8::from(wide));
+        let mut flags = u8::from(wide);
+        if !ext.is_empty() {
+            flags |= 4;
+        }
+        if !runs.is_empty() {
+            flags |= 8;
+        }
+        cur.push(flags);
+        if !runs.is_empty() {
+            cur.extend((runs.len() as u16).to_le_bytes());
+        }
+        if !ext.is_empty() {
+            cur.extend((ext.len() as u32).to_le_bytes());
+        }
         let mut i = 0;
         while i < u.len() {
             let room = (MAX_RECORD - cur.len()) / w;
@@ -104,16 +126,91 @@ fn sst_records(o: &mut Out, strings: &[String], total_refs: u32) {
                 cur.push(u8::from(wide));
             }
         }
+        let mut left = runs;
+        while !left.is_empty() {
+            if cur.len() >= MAX_RECORD - 4 {
+                recs.push(std::mem::take(&mut cur));
+            }
+            let (now, later) = left.split_at(left.len().min((MAX_RECORD - cur.len()) / 4));
+            for &(at, font) in now {
+                cur.extend(at.to_le_bytes());
+                cur.extend(font.to_le_bytes());
+            }
+            left = later;
+        }
+        if !ext.is_empty() {
+            if cur.len() + 4 >= MAX_RECORD {
+                recs.push(std::mem::take(&mut cur));
+            }
+            let (head, mut rest) = ext.split_at(ext.len().min(4));
+            cur.extend_from_slice(head);
+            if cur.len() + 12 >= MAX_RECORD {
+                recs.push(std::mem::take(&mut cur));
+            }
+            while !rest.is_empty() {
+                if cur.len() >= MAX_RECORD {
+                    recs.push(std::mem::take(&mut cur));
+                }
+                let (now, later) = rest.split_at(rest.len().min(MAX_RECORD - cur.len()));
+                cur.extend_from_slice(now);
+                rest = later;
+            }
+        }
     }
     recs.push(cur);
-    let mut first = true;
-    for r in recs {
-        let id: u16 = if first { 0xFC } else { 0x3C };
-        first = false;
+    let mut at = Vec::with_capacity(recs.len());
+    let mut pos = start;
+    for (i, r) in recs.iter().enumerate() {
+        at.push(pos);
+        pos += r.len() as u32 + 4;
+        let id: u16 = if i == 0 { 0xFC } else { 0x3C };
         o.b.extend(id.to_le_bytes());
         o.b.extend((r.len() as u16).to_le_bytes());
-        o.b.extend(r);
+        o.b.extend_from_slice(r);
     }
+    let mut ext = (bucket as u16).to_le_bytes().to_vec();
+    for (rec, off) in marks {
+        ext.extend((at[rec] + off as u32).to_le_bytes());
+        ext.extend((off as u16).to_le_bytes());
+        ext.extend([0u8; 2]);
+    }
+    o.rec(0xFF, &ext);
+}
+
+#[derive(Default)]
+struct SstRich {
+    runs: Vec<(u16, u16)>,
+    ext: Vec<u8>,
+}
+
+fn sst_rich(si: &Node, st: &mut StyleOut, theme: Option<&Node>) -> SstRich {
+    let runs = crate::rst::binary_runs(si)
+        .into_iter()
+        .map(|(at, rpr)| {
+            let font = rpr.map_or(0, |r| st.run_font(&crate::rst::as_font(r), theme));
+            (at, font)
+        })
+        .collect();
+    let mut ext = Vec::new();
+    if let Some(ph) = crate::rst::phonetic_of(si) {
+        let (text, readings, flags) = ph.binary(xlcalc::wide::units(&crate::si_text(si)).count());
+        let cb = (10 + 2 * text.len() + 6 * readings.len()).min(0xFFFF);
+        let words = [
+            1,
+            cb as u16,
+            wstyles::font_number(ph.font_id as usize),
+            flags,
+            readings.len() as u16,
+            text.len() as u16,
+            text.len() as u16,
+        ];
+        let all = words
+            .into_iter()
+            .chain(text)
+            .chain(readings.into_iter().flatten());
+        ext = all.flat_map(u16::to_le_bytes).collect();
+    }
+    SstRich { runs, ext }
 }
 
 fn builtin_code(name: &str) -> Option<u8> {
@@ -125,6 +222,49 @@ fn builtin_code(name: &str) -> Option<u8> {
 }
 
 pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
+    let formats = wstyles::format_table(&xlcalc::Locale::default(), &[]);
+    convert(bytes, &formats, false, &[])
+}
+
+pub fn xlsx_to_xls_of(
+    bytes: &[u8],
+    wb: &xlcalc::Workbook,
+    compat: bool,
+) -> Result<(Vec<u8>, Vec<String>), String> {
+    let slots = wb.number_format_table();
+    let formats = wstyles::format_table(wb.locale(), slots.codes());
+    convert(bytes, &formats, compat, &wb.cfv_retired_names())
+}
+
+const ENGINE_BUILD: u32 = 0x000E_EA35;
+
+const RECALCULATE_BUILD: u32 = 1;
+
+fn recalc_build(compat: bool, names: &[(bool, Facts)], uses: &Facts, local: &[bool]) -> u32 {
+    let used = |i: u32| {
+        std::iter::once(uses)
+            .chain(names.iter().map(|n| &n.1))
+            .any(|f| {
+                f.names.contains(&i)
+                    || f.extern_names
+                        .iter()
+                        .any(|&(x, n)| n == i && local.get(usize::from(x)) == Some(&true))
+            })
+    };
+    let changed_in_use = (1..).zip(names).any(|(i, n)| n.0 && used(i));
+    if !compat && changed_in_use {
+        RECALCULATE_BUILD
+    } else {
+        ENGINE_BUILD
+    }
+}
+
+fn convert(
+    bytes: &[u8],
+    formats: &[(u16, String)],
+    compat: bool,
+    retired: &[(String, String)],
+) -> Result<(Vec<u8>, Vec<String>), String> {
     let pkg = Package::read(bytes)?;
     let mut warnings: Vec<String> = Vec::new();
     let book_part = "xl/workbook.xml";
@@ -149,13 +289,15 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
     };
     let theme_node = part_of_kind("theme").and_then(|p| rd_xml(&pkg, &p).ok());
     let theme_rgb = wstyles::theme_colors(theme_node.as_ref());
-    let st_out: StyleOut = wstyles::convert(&styles_node, theme_node.as_ref());
+    let mut st_out: StyleOut = wstyles::convert(&styles_node, theme_node.as_ref(), formats);
 
     let mut sst: Vec<String> = Vec::new();
+    let mut rich: Vec<SstRich> = Vec::new();
     if let Some(p) = part_of_kind("sharedStrings") {
         let n = rd_xml(&pkg, &p)?;
         for si in n.children("si") {
             sst.push(crate::si_text(si));
+            rich.push(sst_rich(si, &mut st_out, theme_node.as_ref()));
         }
     }
 
@@ -173,7 +315,7 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
         let part = target_of(rid).ok_or_else(|| format!("sheet {rid}: no part"))?;
         let node = rd_xml(&pkg, &part)?;
         let name = s.attr("name").unwrap_or("").to_string();
-        if name.encode_utf16().count() > 31 {
+        if xlcalc::wide::units(&name).count() > 31 {
             warnings.push(format!("sheet name {name} is longer than 31 characters"));
         }
         let mut links = std::collections::HashMap::new();
@@ -301,7 +443,7 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
     let mut seed: Option<(Vec<NameEnt>, Vec<usize>)> = None;
     let mut dg: Vec<(u32, u32)> = Vec::new();
     let mut blips: Vec<super::wdraw::BlipOut> = Vec::new();
-    let (state, sheet_streams) = loop {
+    let (state, sheet_streams, mut uses) = loop {
         let warned = warnings.len();
         dg.clear();
         blips.clear();
@@ -337,7 +479,14 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
         }
         for (i, text) in name_src {
             let scope = state.names[i].scope;
-            match enc::encode(&sheet_names, &tables, &mut state, scope, &text, Cls::Ref) {
+            match enc::encode(
+                &sheet_names,
+                &tables,
+                &mut state,
+                scope,
+                &text,
+                FormulaContext::Name,
+            ) {
                 Ok(f) => {
                     state.names[i].rgce = f.rgce;
                     state.names[i].rgcb = f.rgcb;
@@ -359,9 +508,15 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
             .child("dxfs")
             .map(|d| d.children("dxf").cloned().collect())
             .unwrap_or_default();
+        let mut uses = Facts::default();
         let sheet_streams: Vec<wsheet::SheetOut> = {
             let mut v = Vec::new();
             let mut cx = wsheet::Cx {
+                dates: (
+                    book.child("workbookPr")
+                        .is_some_and(|w| flag(w, "date1904")),
+                    book.attr("conformance") != Some("strict"),
+                ),
                 names: &sheet_names,
                 tables: &tables,
                 st: &mut state,
@@ -373,6 +528,7 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
                 dxfs: &dxfs,
                 calc: book.child("calcPr"),
                 caches: &pivot_caches,
+                facts: &mut uses,
             };
             for (i, sh) in sheets.iter().enumerate() {
                 v.push(wsheet::write_sheet(&mut cx, sh, i as u32)?);
@@ -415,7 +571,7 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
             warnings.truncate(warned);
             continue;
         }
-        break (state, sheet_streams);
+        break (state, sheet_streams, uses);
     };
     let sst_refs: u32 = sheets
         .iter()
@@ -574,14 +730,25 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
             o.rec(0x17, &d);
         }
     }
+
+    let mut converted: Vec<(bool, Facts)> = Vec::with_capacity(state.names.len());
     for n in &state.names {
-        let (rgce, extra) = match from_biff12(&n.rgce, &n.rgcb) {
+        let mut facts = Facts::default();
+        let (rgce, extra) = match from_biff12_facts(&n.rgce, &n.rgcb, None, &mut facts) {
             Ok(x) => x,
             Err(e) => {
                 warnings.push(format!("name {}: {e}", n.name));
                 (vec![0x1C, 0x1D], Vec::new())
             }
         };
+
+        let future = facts.names.iter().any(|&i| {
+            (i as usize)
+                .checked_sub(1)
+                .and_then(|i| state.names.get(i))
+                .is_some_and(|n| n.name.starts_with("_xlfn."))
+        });
+        converted.push((facts.lossy || future || n.flags & 0x10 != 0, facts));
         let code = builtin_code(&n.name);
         let mut flags = (n.flags & 0xFFFF) as u16;
         if code.is_some() {
@@ -598,7 +765,7 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
                 nm.push(c);
             }
             None => {
-                d.push(n.name.encode_utf16().count().min(255) as u8);
+                d.push(xlcalc::wide::units(&n.name).count().min(255) as u8);
                 put_chars(&mut nm, &n.name);
             }
         }
@@ -612,11 +779,25 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
         o.rec(0x18, &d);
     }
 
-    o.rec(0x1C1, &[0xC1, 0x01, 0, 0, 0x35, 0xEA, 0x0E, 0]);
+    let local: Vec<bool> = state.xti.iter().map(|x| x.0 == 0).collect();
+
+    let kept = retired.iter().filter_map(|(sheet, key)| {
+        let on = sheet_names.iter().position(|s| s == sheet)?;
+        let named = |scope| {
+            let hit = |n: &NameEnt| n.scope == scope && n.name.to_uppercase() == *key;
+            state.names.iter().position(hit)
+        };
+        let i = named(u32::try_from(on).ok()).or_else(|| named(None))?;
+        u32::try_from(i + 1).ok()
+    });
+    uses.names.extend(kept);
+    let mut d = vec![0xC1, 0x01, 0, 0];
+    d.extend(recalc_build(compat, &converted, &uses, &local).to_le_bytes());
+    o.rec(0x1C1, &d);
     if !dg.is_empty() {
         o.rec(0xEB, &super::wcomments::group_record(&dg, &blips));
     }
-    sst_records(&mut o, &sst, sst_refs);
+    sst_records(&mut o, &sst, &rich, sst_refs);
     o.rec(0x0A, &[]);
 
     let mut stream = o.b;
@@ -660,4 +841,85 @@ pub fn xlsx_to_xls(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
     }
     let out = cfb.finish().map_err(|e| e.to_string())?;
     Ok((out, warnings))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn lengths(filler: usize, rich: SstRich) -> Vec<usize> {
+        let mut o = Out { b: Vec::new() };
+        let strings = ["a".repeat(filler), "wxyz".to_string()];
+        sst_records(&mut o, &strings, &[SstRich::default(), rich], 2);
+        let mut b = &o.b[..];
+        let mut out = Vec::new();
+        while b.len() >= 4 {
+            let id = u16::from_le_bytes([b[0], b[1]]);
+            let n = usize::from(u16::from_le_bytes([b[2], b[3]]));
+            if id == 0xFC || id == 0x3C {
+                out.push(n);
+            }
+            b = &b[4 + n..];
+        }
+        out
+    }
+
+    #[test]
+    fn rich_items_break_where_excel_breaks_them() {
+        let runs = |d: usize| {
+            let rich = SstRich {
+                runs: vec![(1, 5), (2, 6), (3, 5)],
+                ext: Vec::new(),
+            };
+            lengths(8204 - d, rich)
+        };
+        assert_eq!(runs(3), [8221, 12]);
+        assert_eq!(runs(4), [8220, 12]);
+        assert_eq!(runs(5), [8223, 8]);
+        assert_eq!(runs(8), [8224, 4]);
+        assert_eq!(runs(9), [8223, 4]);
+
+        let ext = |d: usize| {
+            let rich = SstRich {
+                runs: Vec::new(),
+                ext: vec![0; 36],
+            };
+            lengths(8202 - d, rich)
+        };
+        assert_eq!(ext(4), [8220, 36]);
+        assert_eq!(ext(5), [8223, 32]);
+        assert_eq!(ext(16), [8212, 32]);
+        assert_eq!(ext(17), [8224, 19]);
+    }
+
+    #[test]
+    fn recalculation_mark_needs_a_changed_name_in_use() {
+        let uses = |names: &[u32]| Facts {
+            names: names.to_vec(),
+            ..Facts::default()
+        };
+        let name = |changed: bool, of: &[u32]| (changed, uses(of));
+        let build = |compat, names: &[(bool, Facts)], cells: &Facts| {
+            recalc_build(compat, names, cells, &[true, false])
+        };
+
+        let cells = Facts {
+            lossy: true,
+            ..uses(&[2])
+        };
+        let names = [name(true, &[]), name(false, &[])];
+        assert_eq!(build(false, &names, &cells), ENGINE_BUILD);
+
+        assert_eq!(build(false, &names, &uses(&[1])), RECALCULATE_BUILD);
+        assert_eq!(build(true, &names, &uses(&[1])), ENGINE_BUILD);
+        let by_name = [name(true, &[]), name(false, &[1])];
+        assert_eq!(build(false, &by_name, &Facts::default()), RECALCULATE_BUILD);
+
+        let by_x = |x| Facts {
+            extern_names: vec![(x, 1)],
+            ..Facts::default()
+        };
+        assert_eq!(build(false, &names, &by_x(0)), RECALCULATE_BUILD);
+        assert_eq!(build(false, &names, &by_x(1)), ENGINE_BUILD);
+    }
 }

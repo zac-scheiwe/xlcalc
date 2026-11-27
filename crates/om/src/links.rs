@@ -564,7 +564,8 @@ impl Application<'_> {
             put: None,
             lcid: 0x0409,
         };
-        let v = self.workbooks_open(&a)?;
+        let operands = self.open_operands(&a)?;
+        let (v, _) = self.workbooks_open(operands, a.lcid)?;
         if let Variant::Dispatch(Some(id)) = v {
             self.release(id);
         }

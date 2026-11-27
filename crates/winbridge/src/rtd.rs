@@ -106,7 +106,7 @@ impl RtdServer {
         })?;
         let known = |id: ObjectId| (id.0 == 1).then(|| unknown.clone());
         invoke(
-            &server.0,
+            server.dispatch(),
             "ServerStart",
             Access::Get,
             &[Variant::Dispatch(Some(ObjectId(1)))],
@@ -124,7 +124,7 @@ impl RtdServer {
         self.next_topic += 1;
         let no_objects = |_: ObjectId| None;
         let out = invoke(
-            &self.server.0,
+            self.server.dispatch(),
             "ConnectData",
             Access::Get,
             &[Variant::I4(id), bstrs(topics), Variant::Bool(true)],
@@ -137,7 +137,7 @@ impl RtdServer {
     pub fn refresh(&mut self) -> Result<Vec<(i32, Variant)>, BridgeError> {
         let no_objects = |_: ObjectId| None;
         let out = invoke(
-            &self.server.0,
+            self.server.dispatch(),
             "RefreshData",
             Access::Get,
             &[Variant::I4(0)],
@@ -161,7 +161,7 @@ impl RtdServer {
     pub fn disconnect(&mut self, topic: i32) {
         let no_objects = |_: ObjectId| None;
         let _ = invoke(
-            &self.server.0,
+            self.server.dispatch(),
             "DisconnectData",
             Access::Get,
             &[Variant::I4(topic)],
@@ -173,7 +173,7 @@ impl RtdServer {
     pub fn terminate(&mut self) {
         let no_objects = |_: ObjectId| None;
         let _ = invoke(
-            &self.server.0,
+            self.server.dispatch(),
             "ServerTerminate",
             Access::Get,
             &[],

@@ -11,7 +11,7 @@ xlcalc.workspace = true
 xlcalc-variant = { path = "../variant" }
 xlcalc-xlsx = { path = "../xlsx" }
 xlcalc-vba = { path = "../vba" }
-stacker = "0.1"
+xlcalc-stack.workspace = true
 xlcalc-vbaproject = { path = "../vbaproject" }
 
 [target.'cfg(windows)'.dependencies]

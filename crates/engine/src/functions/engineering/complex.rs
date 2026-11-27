@@ -36,13 +36,20 @@ impl C {
     pub fn div(self, o: C) -> C {
         use crate::x87::{add, div, mul, sub};
         let (a, b, c, d) = (self.re, self.im, o.re, o.im);
-        if c.abs() >= d.abs() {
+        let by_c = c.abs() >= d.abs();
+        let (r, den) = if by_c {
             let r = div(d, c);
-            let den = add(c, mul(d, r));
-            C::new(div(add(a, mul(b, r)), den), div(sub(b, mul(a, r)), den))
+            (r, add(c, mul(d, r)))
         } else {
             let r = div(c, d);
-            let den = add(mul(c, r), d);
+            (r, add(mul(c, r), d))
+        };
+        if !den.is_finite() {
+            return C::new(f64::INFINITY, f64::INFINITY);
+        }
+        if by_c {
+            C::new(div(add(a, mul(b, r)), den), div(sub(b, mul(a, r)), den))
+        } else {
             C::new(div(add(mul(a, r), b), den), div(sub(mul(b, r), a), den))
         }
     }
@@ -63,21 +70,25 @@ impl C {
         sqrt(add(mul(self.re, self.re), mul(self.im, self.im)))
     }
 
-    pub fn arg(self) -> f64 {
+    pub fn arg(self) -> Option<f64> {
         use crate::x87::{add, atan, div, sub};
         use std::f64::consts::{FRAC_PI_2, PI};
         let (y, x) = (self.im, self.re);
         if x == 0.0 {
-            return if y < 0.0 { -FRAC_PI_2 } else { FRAC_PI_2 };
+            return Some(if y < 0.0 { -FRAC_PI_2 } else { FRAC_PI_2 });
         }
-        let t = atan(div(y, x));
-        if x > 0.0 {
+        let q = div(y, x);
+        if !q.is_finite() {
+            return None;
+        }
+        let t = atan(q);
+        Some(if x > 0.0 {
             t + 0.0
         } else if y < 0.0 {
             sub(t, PI)
         } else {
             add(t, PI)
-        }
+        })
     }
 }
 
@@ -95,35 +106,7 @@ fn digits15(x: f64) -> (String, i32) {
 }
 
 pub fn fmt_part(x: f64) -> String {
-    if x == 0.0 {
-        return "0".into();
-    }
-    let (d, exp) = digits15(x);
-    let n = d.len() as i32;
-    let fixed = if exp >= 0 {
-        if exp + 1 >= n {
-            format!("{}{}", d, "0".repeat((exp + 1 - n) as usize))
-        } else {
-            format!("{}.{}", &d[..(exp + 1) as usize], &d[(exp + 1) as usize..])
-        }
-    } else {
-        format!("0.{}{}", "0".repeat((-exp - 1) as usize), d)
-    };
-    let body = if fixed.len() <= 21 {
-        fixed
-    } else {
-        let mut s = d[..1].to_string();
-        if d.len() > 1 {
-            s.push('.');
-            s.push_str(&d[1..]);
-        }
-        format!("{}E{}{:02}", s, if exp < 0 { '-' } else { '+' }, exp.abs())
-    };
-    if x < 0.0 {
-        format!("-{body}")
-    } else {
-        body
-    }
+    crate::number::format_literal(crate::number::round15(x))
 }
 
 pub fn format(z: C, suffix: Suffix) -> R<String> {
@@ -282,7 +265,8 @@ pub fn imargument(z: C) -> R<f64> {
     if z.is_zero() {
         return Err(XlError::DIV0);
     }
-    Ok(z.arg())
+
+    z.arg().ok_or(XlError::DIV0)
 }
 
 pub fn imsub(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -292,9 +276,16 @@ pub fn imsub(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             let (y, sy) = req(ctx, a, 1)?;
             let s = join(sx, sy, XlError::NUM)?;
 
-            let fin = |v: f64| if v.is_finite() { v } else { 0.0 };
+            let part = |a: f64, b: f64| {
+                let v = crate::x87::sub(a, b);
+                if v.is_finite() {
+                    v
+                } else {
+                    0.0
+                }
+            };
             Ok(Value::from(format(
-                C::new(fin(x.re - y.re), fin(x.im - y.im)),
+                C::new(part(x.re, y.re), part(x.im, y.im)),
                 s,
             )?))
         })())
@@ -334,26 +325,37 @@ pub fn power(z: C, n: f64) -> R<C> {
         };
     }
 
-    if !(z.im == 0.0 && z.re > 0.0) {
-        let sq = z.re * z.re + z.im * z.im;
+    if z.im == 0.0 && z.re > 0.0 {
+        let r = crate::xmath::pow(z.re, n);
+        if !r.is_finite() {
+            return Err(XlError::NUM);
+        }
+        return Ok(C::new(r, 0.0));
+    }
+    let m = if z.re == 0.0 {
+        z.im.abs()
+    } else {
+        let sq = crate::x87::add(crate::x87::mul(z.re, z.re), crate::x87::mul(z.im, z.im));
         if !sq.is_finite() {
             return Err(XlError::NUM);
         }
-        if sq == 0.0 {
-            return if n > 0.0 {
-                Ok(C::new(0.0, 0.0))
-            } else {
-                Err(XlError::NUM)
-            };
-        }
+        crate::x87::sqrt(sq)
+    };
+    if m == 0.0 {
+        return if n > 0.0 {
+            Ok(C::new(0.0, 0.0))
+        } else {
+            Err(XlError::NUM)
+        };
     }
-    let m = if z.im == 0.0 { z.re.abs() } else { z.modulus() };
-
     let r = crate::xmath::pow(m, n);
-
-    let t = crate::x87::mul(n, z.arg());
-    let mul = crate::x87::mul;
-    Ok(C::new(mul(trig_cos(t)?, r), mul(trig_sin(t)?, r)))
+    let t = crate::x87::mul(n, z.arg().ok_or(XlError::NUM)?);
+    let re = crate::x87::mul(clamped_trig(t, crate::x87::cos), r);
+    let im = crate::x87::mul(clamped_trig(t, crate::x87::sin), r);
+    if !re.is_finite() || !im.is_finite() {
+        return Err(XlError::NUM);
+    }
+    Ok(C::new(re, im))
 }
 
 pub fn fold(ctx: &mut EvalCtx, ops: &[Operand], product: bool) -> Operand {
@@ -413,14 +415,22 @@ pub fn imsqrt(z: C) -> R<C> {
 
     use crate::x87::{div, mul, sqrt};
     let r = sqrt(z.modulus());
-    let t = div(z.arg(), 2.0);
+    let t = div(z.arg().unwrap_or(0.0), 2.0);
     Ok(C::new(mul(trig_cos(t)?, r), mul(trig_sin(t)?, r)))
+}
+
+fn clamped_trig(t: f64, f: fn(f64) -> f64) -> f64 {
+    if t.abs() > 134_217_727.0 {
+        f64::MAX
+    } else {
+        f(t)
+    }
 }
 
 fn exp_clamped(x: f64) -> f64 {
     if x > 709.7 {
         f64::MAX
-    } else if x < -709.0 {
+    } else if x <= -709.0 {
         0.0
     } else {
         let e = crate::x87::exp(x);
@@ -434,7 +444,14 @@ fn exp_clamped(x: f64) -> f64 {
 
 pub fn imexp(z: C) -> R<C> {
     let e = exp_clamped(z.re);
-    Ok(C::new(scale(trig_cos(z.im)?, e), scale(trig_sin(z.im)?, e)))
+
+    if e == 0.0 {
+        return Ok(C::new(0.0, 0.0));
+    }
+    Ok(C::new(
+        scale(clamped_trig(z.im, crate::x87::cos), e),
+        scale(clamped_trig(z.im, crate::x87::sin), e),
+    ))
 }
 
 pub fn imln(z: C) -> R<C> {
@@ -449,7 +466,7 @@ pub fn imln(z: C) -> R<C> {
     } else {
         z.modulus()
     };
-    Ok(C::new(crate::x87::ln(m), z.arg()))
+    Ok(C::new(crate::x87::ln(m), z.arg().ok_or(XlError::NUM)?))
 }
 
 fn imlog_k(z: C, k: f64) -> R<C> {
@@ -466,8 +483,13 @@ pub fn imlog2(z: C) -> R<C> {
 }
 
 fn sin_cos_e(z: C) -> R<(f64, f64, f64, f64)> {
-    let (s, c) = (trig_sin(z.re)?, trig_cos(z.re)?);
-    let e = crate::x87::exp(z.im);
+    let s = clamped_trig(z.re, crate::x87::sin);
+    let c = clamped_trig(z.re, crate::x87::cos);
+
+    let e = exp_clamped(z.im);
+    if e < f64::MIN_POSITIVE || e >= f64::MAX {
+        return Err(XlError::NUM);
+    }
     let ie = crate::x87::div(1.0, e);
     Ok((s, c, crate::x87::add(ie, e), crate::x87::sub(e, ie)))
 }
@@ -627,7 +649,7 @@ fn cosh2(f: &mut MathFlag, t: f64) -> f64 {
 }
 
 fn hyp_band(v: f64) -> u8 {
-    if v <= 354.5 && v > -354.0 {
+    if (-354.0..=354.5).contains(&v) {
         0
     } else if (-708.0..=709.0).contains(&v) {
         1
@@ -702,7 +724,7 @@ pub fn imcot(z: C) -> R<C> {
         match tan_cot(z, true) {
             Some(Ok(w)) if w.finite() => return Ok(w),
 
-            None if z.re == 0.0 => return Err(XlError::NUM),
+            None => return Err(XlError::NUM),
             _ => {}
         }
     }
@@ -773,6 +795,21 @@ pub fn imcsch(z: C) -> R<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn argument_and_division_overflow() {
+        let z = C::new(1e-300, 1e100);
+        assert_eq!(z.arg(), None);
+        assert_eq!(imargument(z), Err(XlError::DIV0));
+        assert_eq!(imln(z), Err(XlError::NUM));
+        assert_eq!(power(z, 2.0), Err(XlError::NUM));
+        assert_eq!(imsqrt(z).unwrap().im, 0.0);
+        assert!(!C::new(1.0, 0.0).div(C::new(1e308, 1e308)).finite());
+        assert!(!imsin(C::new(134_217_727.5, 0.0)).unwrap().finite());
+        assert!(imsin(C::new(134_217_727.0, 0.0)).unwrap().finite());
+
+        assert_eq!(fmt_part(1_125_899_906_842_625.0), "1125899906842630");
+    }
 
     #[test]
     fn formatting() {

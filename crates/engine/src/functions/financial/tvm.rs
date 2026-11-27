@@ -28,8 +28,16 @@ impl A<'_, '_> {
     }
 
     fn t(&self, i: usize) -> R<bool> {
-        Ok(self.o(i, 0.0)? != 0.0)
+        Ok(self.o(i, 0.0)?.to_bits() != 0)
     }
+
+    fn t_mp(&self, i: usize) -> R<bool> {
+        Ok(!is_small_zero(self.o(i, 0.0)?))
+    }
+}
+
+fn is_small_zero(x: f64) -> bool {
+    x.to_bits() >> 48 == 0
 }
 
 fn negate_nonzero(x: f64) -> f64 {
@@ -90,7 +98,8 @@ fn pmt_check(r: f64, n: f64) -> R<()> {
 
 pub fn pmt_core(r: f64, n: f64, pv: f64, fv: f64, t: bool) -> R<f64> {
     pmt_check(r, n)?;
-    if r == 0.0 {
+
+    if r.to_bits() == 0 {
         return finite(x87::div(x87::add(pv, fv), x87::sub(0.0, n)));
     }
     let (q, _, rho) = pmt_parts(r, n, pv, fv, t)?;
@@ -106,7 +115,7 @@ pub fn pmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 }
 
 pub fn fv_core(r: f64, n: f64, pmt: f64, pv: f64, t: bool) -> R<f64> {
-    if r == 0.0 {
+    if is_small_zero(r) {
         return Ok(negate_nonzero(x87::add(x87::mul(n, pmt), pv)));
     }
     growth_check(r, n)?;
@@ -123,13 +132,13 @@ pub fn fv_core(r: f64, n: f64, pmt: f64, pv: f64, t: bool) -> R<f64> {
 pub fn fv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let a = A { ctx, a };
     val((|| {
-        let (r, n, pmt, pv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t(4)?);
+        let (r, n, pmt, pv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t_mp(4)?);
         fv_core(r, n, pmt, pv, t).map(Value::num)
     })())
 }
 
 pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
-    if r == 0.0 {
+    if is_small_zero(r) {
         return Ok(negate_nonzero(x87::add(x87::mul(n, pmt), fv)));
     }
     growth_check(r, n)?;
@@ -149,7 +158,7 @@ pub fn pv_core(r: f64, n: f64, pmt: f64, fv: f64, t: bool) -> R<f64> {
 pub fn pv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let a = A { ctx, a };
     val((|| {
-        let (r, n, pmt, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t(4)?);
+        let (r, n, pmt, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t_mp(4)?);
         pv_core(r, n, pmt, fv, t).map(Value::num)
     })())
 }
@@ -157,13 +166,11 @@ pub fn pv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let a = A { ctx, a };
     val((|| {
-        let (r, pmt, pv, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t(4)?);
-        if r == 0.0 {
-            if pmt == 0.0 {
-                return Err(XlError::DIV0);
-            }
-
-            return Ok(Value::num(negate_nonzero(x87::div(x87::add(pv, fv), pmt))));
+        let (r, pmt, pv, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.o(3, 0.0)?, a.t_mp(4)?);
+        if is_small_zero(r) {
+            let mut f = x87::MathFlag::default();
+            let q = f.div(x87::add(pv, fv), pmt);
+            return f.result(negate_nonzero(q)).map(Value::num);
         }
         if r <= -1.0 {
             return Err(XlError::NUM);
@@ -173,7 +180,11 @@ pub fn nper(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let pt = if t { x87::mul(pmt, r1) } else { pmt };
 
         let l = x87::ln(r1);
-        let x = x87::div(x87::sub(pt, x87::mul(fv, r)), x87::add(pt, x87::mul(pv, r)));
+
+        let x = x87::div(
+            x87::add(pt, negate_nonzero(x87::mul(fv, r))),
+            x87::add(pt, x87::mul(pv, r)),
+        );
         if l == 0.0 {
             return Err(XlError::DIV0);
         }
@@ -200,7 +211,7 @@ pub fn ipmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if t && per == 1.0 {
             return Ok(Value::num(0.0));
         }
-        if r == 0.0 {
+        if r.to_bits() == 0 {
             return Ok(Value::num(0.0));
         }
         pmt_check(r, n)?;
@@ -216,7 +227,7 @@ pub fn ppmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let (r, per, n, pv, fv, t) = (a.n(0)?, a.n(1)?, a.n(2)?, a.n(3)?, a.o(4, 0.0)?, a.t(5)?);
         per_check(per, n)?;
-        if r == 0.0 || (t && per == 1.0) {
+        if r.to_bits() == 0 || (t && per == 1.0) {
             return pmt_core(r, n, pv, fv, t).map(Value::num);
         }
         pmt_check(r, n)?;
@@ -227,8 +238,6 @@ pub fn ppmt(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
-const RATE_NEAR_M1: f64 = 5e-8;
-
 pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     let a = A { ctx, a };
     val((|| {
@@ -237,7 +246,7 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             a.n(1)?,
             a.n(2)?,
             a.o(3, 0.0)?,
-            a.t(4)?,
+            a.t_mp(4)?,
             a.o(5, 0.1)?,
         );
 
@@ -247,14 +256,18 @@ pub fn rate(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         }
 
         let f = |r: f64| {
-            if r == 0.0 {
-                return -(pv + pmt * n + fv);
+            if is_small_zero(r) {
+                return x87::sub(negate_nonzero(x87::add(x87::mul(n, pmt), pv)), fv);
             }
             let (g, ann) = annuity(r, n, t);
-            x87::sub(-x87::add(x87::mul(pmt, ann), x87::mul(pv, g)), fv)
+            x87::sub(
+                negate_nonzero(x87::add(x87::mul(pmt, ann), x87::mul(pv, g))),
+                fv,
+            )
         };
-        let r = super::cash::secant_solve(start, f).ok_or(XlError::NUM)?;
-        if r <= -1.0 + RATE_NEAR_M1 {
+        let (r, tol) = super::cash::secant_solve(start, f).ok_or(XlError::NUM)?;
+
+        if !super::cash::fn_iter_above_m1(r, tol) {
             return Err(XlError::NUM);
         }
         Ok(Value::num(r))
@@ -317,6 +330,16 @@ pub fn rri(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
+fn msign(x: f64) -> i32 {
+    if is_small_zero(x) {
+        0
+    } else if x < 0.0 {
+        -1
+    } else {
+        1
+    }
+}
+
 fn cum(ctx: &mut EvalCtx, a: &[Arg], principal: bool) -> Value {
     atp::out((|| {
         let r = atp::req(ctx, a, 0)?;
@@ -325,23 +348,17 @@ fn cum(ctx: &mut EvalCtx, a: &[Arg], principal: bool) -> Value {
         let start = atp::req(ctx, a, 3)?;
         let end = atp::req(ctx, a, 4)?;
         let ty = atp::req(ctx, a, 5)?;
-        if r <= 0.0 || n <= 0.0 || pv <= 0.0 {
+        if msign(r) != 1 || msign(n) != 1 || start < 1.0 || end < 1.0 || start > end || end > n {
             return Err(XlError::NUM);
         }
-        if start < 1.0 || end < start || end > n {
-            return Err(XlError::NUM);
-        }
-        if ty != 0.0 && ty != 1.0 {
+        if msign(pv) != 1 || (msign(ty) != 0 && ty != 1.0) {
             return Err(XlError::NUM);
         }
         let t = ty == 1.0;
-
-        let s = start.ceil();
         let e = end.trunc();
-        if e < s {
-            return Ok(0.0);
-        }
+        let s = start.ceil();
 
+        let first = t && s == 1.0;
         pmt_check(r, n)?;
 
         let bad = std::cell::Cell::new(false);
@@ -357,30 +374,32 @@ fn cum(ctx: &mut EvalCtx, a: &[Arg], principal: bool) -> Value {
             r
         };
         let l = ck(xl_log1p(r));
-        let den = ck(xl_expm1(ck(x87::mul(l, -n))));
+        let den = ck(xl_expm1(ck(x87::mul(l, x87::sub(0.0, n)))));
         if den == 0.0 || den.abs() < f64::MIN_POSITIVE {
             return Err(XlError::NUM);
         }
-        let a = ck(x87::div(pv, den));
-        let p = ck(x87::mul(-a, rho));
-        let first = t && s == 1.0;
-        let s1 = if first { 2.0 } else { s };
-        let k = ck(x87::sub(s1, ck(x87::add(e, 1.0))));
+
+        let q = ck(negate_nonzero(ck(x87::div(x87::add(pv, 0.0), den))));
+        let p = ck(x87::mul(q, rho));
+
+        let mut k = ck(x87::sub(s, e));
+        if !first {
+            k = ck(x87::sub(k, 1.0));
+        }
         let g = ck(xl_expm1(ck(x87::mul(l, k))));
         let c = ck(x87::exp(ck(x87::mul(
             l,
             ck(x87::sub(ck(x87::sub(e, n)), 1.0)),
         ))));
-        let mut prin = ck(x87::mul(-a, ck(x87::mul(g, c))));
+        let mut prin = ck(x87::mul(ck(x87::mul(g, c)), q));
         if !t {
             prin = ck(x87::mul(prin, ck(x87::add(1.0, r))));
         }
         let out = if !principal {
             ck(x87::sub(ck(x87::mul(p, k)), prin))
+        } else if first {
+            ck(x87::sub(prin, p))
         } else {
-            if first {
-                prin = ck(x87::sub(prin, p));
-            }
             prin
         };
         if bad.get() {
@@ -407,20 +426,7 @@ pub fn effect(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         }
 
         let base = x87::add(x87::div(nominal, p), 1.0);
-        if p >= 4_294_967_295.0 {
-            return finite(x87::sub(crate::xmath::pow(base, p), 1.0));
-        }
-        let (mut r, mut a, mut n) = (1.0, base, p as u64);
-        while n != 0 {
-            if n & 1 == 1 {
-                r = x87::mul(r, a);
-            }
-            n >>= 1;
-            if n != 0 {
-                a = x87::mul(a, a);
-            }
-        }
-        finite(x87::sub(r, 1.0))
+        finite(x87::sub(xmath::pow(base, p), 1.0))
     })())
 }
 
@@ -490,5 +496,12 @@ mod tests {
         assert_eq!(fv_core(0.0, 3.0, 0.0, 0.0, false).unwrap().to_bits(), 0);
         assert_eq!(pv_core(0.0, 3.0, 2.0, 1.0, false).unwrap(), -7.0);
         assert_eq!(pmt_core(0.0, 4.0, 100.0, 0.0, false).unwrap(), -25.0);
+    }
+
+    #[test]
+    fn type_and_rate_zero_tests_differ_by_routine() {
+        assert!(is_small_zero(0.0) && !is_small_zero(-0.0));
+        assert!(is_small_zero(f64::from_bits(1)));
+        assert!(!is_small_zero(1e-300));
     }
 }

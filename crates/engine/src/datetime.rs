@@ -9,13 +9,15 @@ pub enum DateSystem {
 
     D1904,
 
+    D1900Gregorian,
+
     Vba,
 }
 
 impl DateSystem {
     pub fn max_serial(self) -> f64 {
         match self {
-            DateSystem::D1900 | DateSystem::Vba => MAX_SERIAL_1900,
+            DateSystem::D1900 | DateSystem::D1900Gregorian | DateSystem::Vba => MAX_SERIAL_1900,
             DateSystem::D1904 => MAX_SERIAL_1904,
         }
     }
@@ -51,7 +53,7 @@ pub fn serial_from_ymd(sys: DateSystem, y: i64, m: i64, d: i64) -> i64 {
     let days = days_from_civil(y, m, d);
     match sys {
         DateSystem::D1904 => days - DAYS_1904_01_01,
-        DateSystem::Vba => days - DAYS_1899_12_30,
+        DateSystem::Vba | DateSystem::D1900Gregorian => days - DAYS_1899_12_30,
         DateSystem::D1900 => {
             let s = days - DAYS_1899_12_30;
             if s <= 60 {
@@ -66,7 +68,7 @@ pub fn serial_from_ymd(sys: DateSystem, y: i64, m: i64, d: i64) -> i64 {
 pub fn ymd_from_serial(sys: DateSystem, serial: i64) -> (i64, u32, u32) {
     match sys {
         DateSystem::D1904 => civil_from_days(serial + DAYS_1904_01_01),
-        DateSystem::Vba => civil_from_days(serial + DAYS_1899_12_30),
+        DateSystem::Vba | DateSystem::D1900Gregorian => civil_from_days(serial + DAYS_1899_12_30),
         DateSystem::D1900 => match serial {
             0 => (1900, 1, 0),
             60 => (1900, 2, 29),
@@ -78,10 +80,28 @@ pub fn ymd_from_serial(sys: DateSystem, serial: i64) -> (i64, u32, u32) {
 
 pub fn weekday_from_serial(sys: DateSystem, serial: i64) -> u32 {
     let base = match sys {
-        DateSystem::D1900 | DateSystem::Vba => 6,
+        DateSystem::D1900 | DateSystem::D1900Gregorian | DateSystem::Vba => 6,
         DateSystem::D1904 => 5,
     };
     (serial + base).rem_euclid(7) as u32
+}
+
+pub fn mon_from_yr(y: i64, compat: bool) -> usize {
+    let mut u = (y & 3) as usize;
+    if u == 0 && y % 100 == 0 && y % 400 != 0 && (!compat || y > 0x833) {
+        u = 1;
+    }
+    u * 12
+}
+
+pub fn table_month_days(i: usize) -> i64 {
+    let i = i % 48;
+    match i % 12 {
+        0 | 2 | 4 | 6 | 7 | 9 | 11 => 31,
+        1 if i < 12 => 29,
+        1 => 28,
+        _ => 30,
+    }
 }
 
 pub fn is_leap_year(y: i64) -> bool {
@@ -124,12 +144,18 @@ pub fn date_serial(sys: DateSystem, year: f64, month: f64, day: f64) -> Option<f
         return None;
     }
 
-    if y < 1900 {
+    let gregorian = sys == DateSystem::D1900Gregorian;
+    let keeps_1899 = gregorian && y == 1899 && m == 12 && !(0..30).contains(&d);
+    if y < 1900 && !keeps_1899 {
         y += 1900;
     }
     let total_months = y * 12 + (m - 1);
     let (yy, mm) = (total_months.div_euclid(12), total_months.rem_euclid(12) + 1);
-    if !(1900..10_000).contains(&yy) || (sys == DateSystem::D1904 && yy < 1904) {
+    if gregorian {
+        if !(-9999..10_000).contains(&yy) || d == 0 || (yy == 1900 && mm == 2 && d == 29) {
+            return None;
+        }
+    } else if !(1900..10_000).contains(&yy) || (sys == DateSystem::D1904 && yy < 1904) {
         return None;
     }
 
@@ -190,26 +216,46 @@ pub fn hijri_from_serial(serial: i64) -> Option<(i64, u32, u32)> {
     Some((y, m, n as u32 + 1))
 }
 
+pub(crate) const HALF_SEC: [u64; 4] = [
+    0x3ED8_45C8_A0CE_5129,
+    0x3EA3_6B06_E70B_7421,
+    0x3E6F_11A4_A4DF_2035,
+    0x3E38_DAEA_1D7F_4DF6,
+];
+
 pub fn split_serial(serial: f64) -> (i64, u32, u32, u32, u32) {
-    let y = serial + 0.5 / 86_400.0;
+    use crate::x87::{add, mul, sub};
+    let y = add(serial, f64::from_bits(HALF_SEC[0]));
     let days = y.floor();
-    let h = (y - days) * 24.0;
+    let h = mul(sub(y, days), 24.0);
     let hi = h.floor();
-    let m = (h - hi) * 60.0;
+    let m = mul(sub(h, hi), 60.0);
     let mi = m.floor();
-    let s = ((m - mi) * 60.0).floor();
-    (
-        days as i64,
-        (hi as u32).min(23),
-        (mi as u32).min(59),
-        (s as u32).min(59),
-        0,
-    )
+    let s = mul(sub(m, mi), 60.0).floor();
+    (days as i64, hi as u32, mi as u32, s as u32, 0)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn month_table() {
+        assert_eq!(table_month_days(mon_from_yr(1900, true) + 1), 29);
+        assert_eq!(table_month_days(mon_from_yr(1900, false) + 1), 28);
+        assert_eq!(table_month_days(mon_from_yr(2100, true) + 1), 28);
+        assert_eq!(table_month_days(mon_from_yr(2000, false) + 1), 29);
+        assert_eq!(table_month_days(mon_from_yr(-4, false) + 1), 29);
+    }
+
+    #[test]
+    fn gregorian_mode() {
+        let s = DateSystem::D1900Gregorian;
+        assert_eq!(date_serial(s, 1899.0, 12.0, 30.0), Some(0.0));
+        assert_eq!(date_serial(s, 1900.0, 2.0, 29.0), None);
+        assert_eq!(date_serial(s, 1900.0, 3.0, 1.0), Some(61.0));
+        assert_eq!(ymd_from_serial(s, 0), (1899, 12, 30));
+    }
 
     #[test]
     fn serials_1900() {

@@ -115,7 +115,10 @@ impl AppEnv<'_, '_> {
             _ => return VALUE,
         };
         let id = self.selection()?;
-        self.call(id, "NumberFormat", Call::PUT, &[Variant::Bstr(fmt)])?;
+        self.app.command_format_put = true;
+        let put = self.call(id, "NumberFormat", Call::PUT, &[Variant::Bstr(fmt)]);
+        self.app.command_format_put = false;
+        put?;
         TRUE
     }
 

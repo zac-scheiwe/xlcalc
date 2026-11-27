@@ -151,7 +151,7 @@ fn dxf_record(dxf: &Node, pal: &Palette) -> Vec<u8> {
 }
 
 fn name_chars(d: &mut Vec<u8>, s: &str) {
-    for u in s.encode_utf16() {
+    for u in xlcalc::wide::units(s) {
         d.extend(u.to_le_bytes());
     }
 }
@@ -203,7 +203,7 @@ pub(super) fn convert(styles: &Node, pal: &Palette) -> (Vec<Rec>, Vec<Rec>) {
         let mut d = frt(0x88F);
         d.extend(flags.to_le_bytes());
         d.extend((elems.len() as u32).to_le_bytes());
-        d.extend((name.encode_utf16().count().min(255) as u16).to_le_bytes());
+        d.extend((xlcalc::wide::units(name).count().min(255) as u16).to_le_bytes());
         name_chars(&mut d, &name.chars().take(255).collect::<String>());
         body.push((0x88F, d));
         for (ty, size, idx) in elems {
@@ -223,8 +223,8 @@ pub(super) fn convert(styles: &Node, pal: &Palette) -> (Vec<Rec>, Vec<Rec>) {
         .unwrap_or("PivotStyleLight16");
     let mut d = frt(0x88E);
     d.extend((BUILTIN_STYLES + custom).to_le_bytes());
-    d.extend((def_t.encode_utf16().count() as u16).to_le_bytes());
-    d.extend((def_p.encode_utf16().count() as u16).to_le_bytes());
+    d.extend((xlcalc::wide::units(def_t).count() as u16).to_le_bytes());
+    d.extend((xlcalc::wide::units(def_p).count() as u16).to_le_bytes());
     name_chars(&mut d, def_t);
     name_chars(&mut d, def_p);
     out.push((0x88E, d));

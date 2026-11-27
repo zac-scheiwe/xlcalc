@@ -173,7 +173,8 @@ pub fn munit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             return Err(XlError::VALUE);
         }
 
-        if n * n + n > crate::workbook::ABANDON_CELLS as f64 {
+        let ni = n.min(1e18) as u64;
+        if crate::workbook::ABANDON_CELLS / ni <= ni {
             ctx.observed.abandoned = true;
             return Err(XlError::NUM);
         }

@@ -21,6 +21,8 @@ pub struct Locale {
 
     pub currency: String,
 
+    pub list_sep: char,
+
     pub short_date_format: String,
 }
 
@@ -54,6 +56,7 @@ impl Locale {
         Locale {
             decimal_sep: '.',
             thousands_sep: ',',
+            list_sep: ',',
             date_sep: '/',
             time_sep: ':',
             date_order: DateOrder::DMY,

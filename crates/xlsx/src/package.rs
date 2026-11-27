@@ -40,6 +40,10 @@ pub struct Package {
     structural: Vec<SheetId>,
 
     pub(crate) active: Option<(SheetId, SheetId)>,
+
+    strict: bool,
+
+    pub(crate) from_xls: bool,
 }
 
 pub fn rels_name(p: &str) -> String {
@@ -152,6 +156,19 @@ impl Package {
             }
         }
 
+        if pkg
+            .part("_rels/.rels")
+            .is_some_and(crate::strict::is_strict_root_rels)
+        {
+            pkg.strict = true;
+            for i in 0..pkg.parts.len() {
+                let ty = pkg.content_type(&pkg.parts[i].0).map(str::to_string);
+                let b =
+                    crate::strict::to_transitional(&pkg.parts[i].0, ty.as_deref(), &pkg.parts[i].1);
+                pkg.parts[i].1 = b;
+            }
+        }
+
         for i in 0..pkg.parts.len() {
             let ns = match pkg.content_type(&pkg.parts[i].0) {
                 Some(t) if t.ends_with("extended-properties+xml") => rawxml::APP_NS,
@@ -178,6 +195,22 @@ impl Package {
             }
         }
         Ok(pkg)
+    }
+
+    pub(crate) fn was_strict(&self) -> bool {
+        self.strict
+    }
+
+    pub(crate) fn to_zip(&self) -> Result<Vec<u8>, String> {
+        use std::io::Write;
+        let mut zw = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        let o = zip::write::SimpleFileOptions::default()
+            .compression_method(zip::CompressionMethod::Deflated);
+        for (name, bytes) in &self.parts {
+            zw.start_file(name.as_str(), o).map_err(|e| e.to_string())?;
+            zw.write_all(bytes).map_err(|e| e.to_string())?;
+        }
+        Ok(zw.finish().map_err(|e| e.to_string())?.into_inner())
     }
 
     pub fn part(&self, name: &str) -> Option<&[u8]> {

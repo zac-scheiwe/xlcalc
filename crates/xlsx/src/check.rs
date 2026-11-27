@@ -58,7 +58,11 @@ pub fn check_package(bytes: &[u8]) -> Vec<String> {
             if !ids.insert(r.id.clone()) {
                 errs.push(format!("{n}: duplicate id {}", r.id));
             }
-            if !r.external && pkg.part(&resolve(dir_of(&owner), &r.target)).is_none() {
+
+            if !r.external
+                && !r.target.starts_with('#')
+                && pkg.part(&resolve(dir_of(&owner), &r.target)).is_none()
+            {
                 errs.push(format!("{n}: {} points at missing {}", r.id, r.target));
             }
         }

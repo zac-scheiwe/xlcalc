@@ -47,7 +47,25 @@ pub(crate) struct Inner {
     pub funcs: Mutex<Vec<Func>>,
 
     pub events: Mutex<Vec<(i32, usize)>>,
+
+    pub binary_names: Mutex<HashMap<usize, Vec<(String, usize)>>>,
     next_id: AtomicU32,
+}
+
+impl Drop for Inner {
+    fn drop(&mut self) {
+        let names = self
+            .binary_names
+            .get_mut()
+            .unwrap_or_else(|e| e.into_inner());
+        for (_, h) in names.drain().flat_map(|(_, list)| list) {
+            unsafe {
+                let _ = windows::Win32::Foundation::GlobalFree(Some(
+                    windows::Win32::Foundation::HGLOBAL(h as *mut _),
+                ));
+            }
+        }
+    }
 }
 
 static NEXT_HANDLE: AtomicU32 = AtomicU32::new(0);
@@ -185,14 +203,16 @@ impl XllHost {
     pub fn load(path: &str) -> Result<XllHost, XllError> {
         ensure_xlcall32();
 
-        let module =
-            unsafe { LoadLibraryExW(&HSTRING::from(path), None, LOAD_WITH_ALTERED_SEARCH_PATH) }
-                .map_err(|e| XllError::Load(e.code().0 as u32 & 0xFFFF))?;
+        let module = xlcalc_stack::on_thread_stack(|| unsafe {
+            LoadLibraryExW(&HSTRING::from(path), None, LOAD_WITH_ALTERED_SEARCH_PATH)
+        })
+        .map_err(|e| XllError::Load(e.code().0 as u32 & 0xFFFF))?;
         let inner = Arc::new(Inner {
             path: path.to_string(),
             module: Mutex::new(Some(module.0 as usize)),
             funcs: Mutex::new(Vec::new()),
             events: Mutex::new(Vec::new()),
+            binary_names: Mutex::new(HashMap::new()),
             next_id: AtomicU32::new(0),
         });
         let host = XllHost { inner };

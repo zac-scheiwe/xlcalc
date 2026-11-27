@@ -97,7 +97,7 @@ fn side_legend_room(chart_w: i64) -> i64 {
 pub(crate) fn legend_wrap_room(chart_w: i64, key: i64) -> i64 {
     side_legend_room(chart_w) - key - legend_pad()
 }
-const AXIS_TITLE: i64 = 193_104;
+pub(crate) const AXIS_TITLE: i64 = 193_104;
 
 pub(crate) const TITLE_EXTRA: i64 = 76_200;
 
@@ -120,7 +120,10 @@ pub(crate) fn half_tick() -> i64 {
     crate::chartfont::half_tick_emu(crate::chartfont::fonts().val)
 }
 
-const TABLE_BASE: i64 = 118_555;
+fn table_base() -> i64 {
+    let (_, fy) = crate::chart_lobj::border();
+    cat_text_h() + crate::chartfont::label_offset_emu(crate::chartfont::fonts().cat) - fy
+}
 
 fn table_row() -> i64 {
     let (bx, by) = crate::chart_lobj::border();
@@ -218,16 +221,21 @@ pub(crate) struct LabelPlan {
 }
 
 pub(crate) fn label_plan(labels: &[String], w: i64, room: i64, pad: bool) -> LabelPlan {
-    let n = labels.len() as i64;
+    let named = labels.iter().filter(|s| !s.is_empty()).count();
+    let n = if named > 0 { named } else { labels.len() } as i64;
     let plain = LabelPlan { angle: 0, step: 1 };
     if n < 2 {
         return plain;
     }
     let grow = |x: i64| if pad { (x as f64 * 1.2) as i64 } else { x };
+    let sampled = || {
+        let every = if n > 100 { n as usize / 101 + 1 } else { 1 };
+        labels.iter().step_by(every)
+    };
 
-    let widest = labels
-        .iter()
-        .map(|s| word_lines(s, -1).map_or_else(|| legend_text_emu(s), |l| l.1))
+    let widest = sampled()
+        .flat_map(|s| s.split(char::is_whitespace))
+        .map(legend_text_emu)
         .max()
         .unwrap_or(0);
     let widest = grow(widest).max(1);
@@ -237,13 +245,9 @@ pub(crate) fn label_plan(labels: &[String], w: i64, room: i64, pad: bool) -> Lab
         return plain;
     }
     let limit = if pad { i64::MAX } else { limit_45(w, room) };
-    let sin45 = (0.25 * std::f64::consts::PI).sin();
+    let sin45 = sin45();
 
-    let first = labels
-        .iter()
-        .map(|t| first_line(t, limit))
-        .max()
-        .unwrap_or(0);
+    let first = sampled().map(|t| first_line(t, limit)).max().unwrap_or(0);
     let ext_raw = if pad {
         grow(((first + cat_text_h()) as f64 * sin45) as i64) as f64
     } else {
@@ -357,42 +361,14 @@ fn limit_45(w: i64, room: i64) -> i64 {
     max_rotated_box(-45.0, w, room, cat_text_h()).0
 }
 
-fn word_lines(text: &str, limit: i64) -> Option<(i64, i64)> {
-    let space = legend_text_emu(" ");
-    let (mut lines, mut widest, mut cur) = (1, 0, -1);
-    for word in text.split(' ') {
-        let w = legend_text_emu(word);
-        if limit < 1 {
-            if cur >= 0 {
-                lines += 1;
-            }
-            cur = w;
-            widest = widest.max(w);
-            continue;
-        }
-        if w > limit {
-            return None;
-        }
-        let next = if cur < 0 { w } else { cur + space + w };
-        if cur >= 0 && next > limit {
-            widest = widest.max(cur);
-            lines += 1;
-            cur = w;
-        } else {
-            cur = next;
-        }
-    }
-    Some((lines, widest.max(cur)))
-}
-
 fn flat_limit(n: i64, w: i64, step: i64) -> i64 {
     w / ((n - 1) / step.max(1) + 1)
 }
 
-fn flat_layouts(labels: &[String], which: &[usize], limit: i64, room: i64) -> Vec<Vec<i64>> {
-    let lay = |w: i64| -> (Vec<Vec<i64>>, bool) {
+fn flat_layouts(labels: &[String], which: &[usize], limit: i64, room: i64) -> Vec<Lines> {
+    let lay = |w: i64| -> (Vec<Lines>, bool) {
         let w = if w < 1 { i64::from(i32::MAX) } else { w };
-        let all: Vec<(Vec<i64>, bool)> = which
+        let all: Vec<(Lines, bool)> = which
             .iter()
             .map(|&k| art_layout(&labels[k], w, room))
             .collect();
@@ -405,6 +381,14 @@ fn flat_layouts(labels: &[String], which: &[usize], limit: i64, room: i64) -> Ve
     } else {
         lines
     }
+}
+
+fn sin45() -> f64 {
+    (0.25 * f64::from(std::f32::consts::PI)).sin()
+}
+
+fn cos45() -> f64 {
+    (0.25 * f64::from(std::f32::consts::PI)).cos()
 }
 
 pub(crate) fn side_label_step(n: i64, len: i64, size: i64) -> i64 {
@@ -427,7 +411,13 @@ fn wrapped_line_widths(text: &str, limit: i64) -> Vec<i64> {
         .max()
         .unwrap_or(0);
     if widest_char > limit {
-        return vec![limit, limit, limit];
+        let mut w: Vec<i64> = text
+            .chars()
+            .take(3)
+            .map(|c| legend_text_emu(c.encode_utf8(&mut [0; 4])))
+            .collect();
+        w.resize(3, 0);
+        return w;
     }
     let space = legend_text_emu(" ");
     let mut done: Vec<i64> = Vec::new();
@@ -481,10 +471,11 @@ pub(crate) fn table_label_lines(labels: &[String], avail: i64) -> (i64, bool, i6
     if avail >= n * widest {
         return (1, false, last_full);
     }
-    let limit = cat_text_h().max(avail / 3);
+    let limit = cat_text_h().max(avail / n);
     let wrapped: Vec<(i64, i64)> = labels.iter().map(|s| wrapped_lines(s, limit)).collect();
     let line = wrapped.iter().map(|w| w.1).max().unwrap_or(1).max(1);
-    if avail / line >= n - 1 {
+    let fit = |w: i64| (avail / w.max(1)).min(n).max(1);
+    if fit(line) > fit(widest) {
         let lines = wrapped.iter().map(|w| w.0).max().unwrap_or(1);
         return (lines, true, wrapped.last().map_or(0, |w| w.1));
     }
@@ -500,41 +491,50 @@ pub(crate) fn inside_out_room(chart_h: i64, inner: Rect) -> i64 {
 }
 
 fn first_line(text: &str, limit: i64) -> i64 {
-    art_lines(text, limit, cat_text_h())
-        .first()
-        .copied()
-        .unwrap_or(0)
+    first_line_size(text, limit).0
+}
+
+fn first_line_size(text: &str, limit: i64) -> (i64, i64) {
+    let lay = art_layout(text, limit, cat_text_h()).0;
+    (
+        lay.widths.first().copied().unwrap_or(0),
+        lay.heights.first().copied().unwrap_or(cat_text_h()),
+    )
 }
 
 pub(crate) fn label_extent(i: &LayoutIn, w: i64, room: i64) -> i64 {
-    let n = i.cat_labels.len();
+    labels_extent(&i.cat_labels, i.cat_pad, w, room)
+}
+
+pub(crate) fn labels_extent(labels: &[String], cat_pad: bool, w: i64, room: i64) -> i64 {
+    let n = labels.len();
     if n < 2 {
         return cat_text_h();
     }
-    let plan = label_plan(&i.cat_labels, w, room, i.cat_pad);
-    let sin45 = (0.25 * std::f64::consts::PI).sin();
+    let plan = label_plan(labels, w, room, cat_pad);
+    let sin45 = sin45();
     let limit = match plan.angle {
-        0 if i.cat_pad => return cat_text_h(),
+        0 if cat_pad => return cat_text_h(),
         0 => {
             let limit = flat_limit(n as i64, w, plan.step);
             let which: Vec<usize> = (0..n).step_by(plan.step as usize).collect();
-            let lines = flat_layouts(&i.cat_labels, &which, limit, room)
+            let lay = flat_layouts(labels, &which, limit, room);
+            return lay
                 .iter()
-                .map(|l| l.len() as i64)
+                .map(|l| l.heights.iter().sum::<i64>())
                 .max()
-                .unwrap_or(1);
-            return lines * cat_text_h();
+                .unwrap_or(cat_text_h());
         }
-        _ if i.cat_pad => i64::MAX,
+        _ if cat_pad => i64::MAX,
         45 => limit_45(w, room),
         _ => room,
     };
     (0..n)
         .step_by(plan.step as usize)
         .map(|k| {
-            let fw = first_line(&i.cat_labels[k], limit);
+            let (fw, pitch) = first_line_size(&labels[k], limit);
             if plan.angle == 45 {
-                ((fw + cat_text_h()) as f64 * sin45) as i64
+                ((fw + pitch) as f64 * sin45) as i64
             } else {
                 fw
             }
@@ -562,7 +562,7 @@ pub(crate) fn cat_overhang(i: &LayoutIn, w: i64, plan_w: i64, room: i64) -> (i64
         }
         let limit = flat_limit(n, plan_w, plan.step);
         let lay = flat_layouts(&i.cat_labels, &[k], limit, room);
-        lay[0].iter().copied().max().unwrap_or(0)
+        lay[0].widths.iter().copied().max().unwrap_or(0)
     };
     let half_width = |k: usize| flat_width(k) / 2;
     let pad = |e: i64| (76_200 + e - slot / 2).max(0);
@@ -571,7 +571,7 @@ pub(crate) fn cat_overhang(i: &LayoutIn, w: i64, plan_w: i64, room: i64) -> (i64
         0 => (pad(half_width(0)), pad(half_width(last))),
         90 => (0, pad(0)),
         _ => {
-            let sin45 = (0.25 * std::f64::consts::PI).sin();
+            let sin45 = sin45();
             let limit = (plan_w.min(room) as f64 / sin45 - cat_text_h() as f64) as i64;
             let fw = first_line(&i.cat_labels[0], limit);
             (
@@ -626,7 +626,7 @@ pub(crate) fn reserves(i: &LayoutIn) -> [i64; 4] {
     let left = left + if i.side_title { TITLE_EXTRA } else { 0 };
     let top = if i.val_labels_on { half_tick() } else { 0 };
     let bottom = if let Some((_, rows)) = i.table {
-        TABLE_BASE + table_row() * rows
+        table_base() + table_row() * rows
     } else if i.cat_labels_on && !i.crosses_inside {
         cat_foot()
     } else if i.val_labels_on {
@@ -740,6 +740,45 @@ pub(crate) fn outer_axis_layout(i: &LayoutIn, outer: Rect) -> Rect {
     lay_axes(i, &mut o, outer)
 }
 
+fn inner_axis_layout(i: &LayoutIn, inner: Rect) -> Rect {
+    let mut o = LObj::new(inner);
+    o.grow = true;
+    lay_axes(i, &mut o, inner)
+}
+
+pub(crate) fn inner_target_layout(i: &LayoutIn, inner: Rect) -> (Rect, Rect) {
+    let g = inner_axis_layout(i, inner);
+    let (x, y, w, h) = (g[0] + OUTSIDE, g[1] + OUTSIDE, g[2], g[3]);
+    let (mut nx, mut nw) = (x.max(0), w);
+    let mut flag = x < 0;
+    if i.w < nx + nw {
+        nx = i.w - nw;
+        flag = true;
+    }
+    if nx < 0 {
+        nw = i.w;
+        flag = true;
+        nx = 0;
+    }
+    let ny = y.max(0);
+    let mut redo = y < 0 || flag;
+    let mut nh = h;
+    if i.h < ny + nh {
+        redo = true;
+    }
+    let mut ty = if ny + nh <= i.h { ny } else { i.h - nh };
+    if ty < 0 {
+        nh = i.h;
+        redo = true;
+        ty = 0;
+    }
+    if !redo {
+        return (g, inner);
+    }
+    let held = [nx - OUTSIDE, ty - OUTSIDE, nw, nh];
+    (held, outer_axis_layout(i, held))
+}
+
 fn lay_axes(i: &LayoutIn, o: &mut LObj, s: Rect) -> Rect {
     let vdock = if i.far_x { Dock::Right } else { Dock::Left };
     let hdock = if i.far_y { Dock::Top } else { Dock::Bottom };
@@ -751,19 +790,33 @@ fn lay_axes(i: &LayoutIn, o: &mut LObj, s: Rect) -> Rect {
     o.hard
 }
 
+pub(crate) fn value_box(i: &LayoutIn) -> i64 {
+    if !i.val_labels_on {
+        return 0;
+    }
+    let (fx, _) = crate::chart_lobj::border();
+    i.val_labels.iter().copied().max().unwrap_or(0) + label_gap() + fx
+}
+
 fn column_axes(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock, hdock: Dock) {
-    let (fx, fy) = crate::chart_lobj::border();
+    if o.grow {
+        column_cat(i, o, s, hdock);
+        column_values(i, o, s, vdock);
+    } else {
+        column_values(i, o, s, vdock);
+        column_cat(i, o, s, hdock);
+    }
+}
+
+fn column_values(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock) {
+    let (fx, _) = crate::chart_lobj::border();
 
     let vpad = if i.val_labels_on {
         cat_line_of(crate::chartfont::fonts().val) / 2
     } else {
         0
     };
-    let vbox = if i.val_labels_on {
-        i.val_labels.iter().copied().max().unwrap_or(0) + label_gap() + fx
-    } else {
-        0
-    };
+    let vbox = value_box(i);
     match i.val_cross {
         Some(frac) => {
             let w = value_cross_width(vbox, frac, s[2]);
@@ -783,14 +836,25 @@ fn column_axes(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock, hdock: Dock) {
             true,
         );
     }
+}
+
+fn column_cat(i: &LayoutIn, o: &mut LObj, s: Rect, hdock: Dock) {
+    let (_, fy) = crate::chart_lobj::border();
 
     let plan_w = o.hard[2];
 
-    let room = o.hard[3] / 2;
+    let room = if o.grow {
+        inside_out_room(i.h, s)
+    } else {
+        o.hard[3] / 2
+    };
     let (pl, pr) = cat_pads(i, plan_w, s[2], room);
     if let Some((_, rows)) = i.table {
-        let h = TABLE_BASE + table_row() * rows + fy;
-        o.dock([-1, h], hdock, 1, [pl, pr, 0, 0], false, true);
+        let lines = table_label_lines(&i.cat_labels, plan_w - pl).0.max(1);
+        let h = table_base() + table_row() * rows + fy + (lines - 1) * cat_text_h();
+
+        let dock_h = if o.grow { h.min(o.hard[3]) } else { h };
+        o.dock([-1, dock_h], hdock, 1, [pl, pr, 0, 0], false, true);
         return;
     }
     let h = if i.cat_labels_on {
@@ -817,6 +881,16 @@ fn column_axes(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock, hdock: Dock) {
 }
 
 fn bar_axes(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock, hdock: Dock) {
+    if o.grow {
+        bar_cat(i, o, s, vdock);
+        bar_values(i, o, hdock);
+    } else {
+        bar_values(i, o, hdock);
+        bar_cat(i, o, s, vdock);
+    }
+}
+
+fn bar_values(i: &LayoutIn, o: &mut LObj, hdock: Dock) {
     let (fx, fy) = crate::chart_lobj::border();
 
     let first = i.val_labels.first().copied().unwrap_or(0);
@@ -833,6 +907,10 @@ fn bar_axes(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock, hdock: Dock) {
     };
     let hbox = if i.val_labels_on { val_foot() + fy } else { 0 };
     o.dock([-1, hbox], hdock, 1, [pl, pr, 0, 0], false, true);
+}
+
+fn bar_cat(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock) {
+    let (fx, fy) = crate::chart_lobj::border();
     if !i.cat_labels_on {
         return;
     }
@@ -856,7 +934,7 @@ fn bar_axes(i: &LayoutIn, o: &mut LObj, s: Rect, vdock: Dock, hdock: Dock) {
     o.dock([grown.max(0), -1], vdock, 0, pads, false, true);
 }
 
-fn cat_pads(i: &LayoutIn, plan_w: i64, len: i64, room: i64) -> (i64, i64) {
+pub(crate) fn cat_pads(i: &LayoutIn, plan_w: i64, len: i64, room: i64) -> (i64, i64) {
     let (fx, _) = crate::chart_lobj::border();
     if let Some((head, _)) = i.table {
         let Some(last) = i.cat_labels.last() else {
@@ -864,7 +942,10 @@ fn cat_pads(i: &LayoutIn, plan_w: i64, len: i64, room: i64) -> (i64, i64) {
         };
         let n = i.cat_labels.len() as i64;
         let adj = if i.between { len / n / 2 } else { 0 };
-        return (fx + head, (fx + legend_text_emu(last) / 2 - adj).max(0));
+
+        let (_, _, held) = table_label_lines(&i.cat_labels, plan_w - head - fx);
+        let _ = last;
+        return (fx + head, (fx + held / 2 - adj).max(0));
     }
     if !i.cat_labels_on {
         return (0, 0);
@@ -875,7 +956,6 @@ fn cat_pads(i: &LayoutIn, plan_w: i64, len: i64, room: i64) -> (i64, i64) {
     let n = i.cat_labels.len() as i64;
     let plan = label_plan(&i.cat_labels, plan_w, room, i.cat_pad);
     let last = ((n - 1) / plan.step * plan.step) as usize;
-    let sin45 = (0.25 * std::f64::consts::PI).sin();
     let (el, er) = match plan.angle {
         0 => {
             let limit = flat_limit(n, plan_w, plan.step);
@@ -889,7 +969,7 @@ fn cat_pads(i: &LayoutIn, plan_w: i64, len: i64, room: i64) -> (i64, i64) {
                 let lay = flat_layouts(&i.cat_labels, &which, limit, room);
                 let widest = |k: usize| {
                     let at = which.iter().position(|&x| x == k).unwrap_or(0);
-                    lay[at].iter().copied().max().unwrap_or(0)
+                    lay[at].widths.iter().copied().max().unwrap_or(0)
                 };
                 (widest(0) / 2, widest(last) / 2)
             }
@@ -903,8 +983,8 @@ fn cat_pads(i: &LayoutIn, plan_w: i64, len: i64, room: i64) -> (i64, i64) {
             };
             let fw = first_line(&i.cat_labels[0], limit);
             (
-                (sin45 * fw as f64) as i64,
-                (sin45 * cat_text_h() as f64) as i64,
+                (cos45() * fw as f64) as i64,
+                (cos45() * cat_text_h() as f64) as i64,
             )
         }
     };
@@ -925,14 +1005,22 @@ fn cat_line_of(f: crate::chartfont::TextFont) -> i64 {
     crate::chartfont::line_emu(f)
 }
 
+fn square([x, y, w, h]: Rect) -> Rect {
+    let side = w.min(h).max(0);
+    [
+        x + ((w >> 1) - (side >> 1)),
+        y + ((h >> 1) - (side >> 1)),
+        side,
+        side,
+    ]
+}
+
 pub(crate) fn radar_layout(soft: Rect, labels: (i64, i64)) -> (Rect, Rect) {
     let b = TITLE_EXTRA;
     let r0 = soft;
     let (dx, dy) = ((labels.0 - b).max(0), (labels.1 - b).max(0));
     let (w, h) = (r0[2] - 2 * dx, r0[3] - 2 * dy);
-    let side = w.min(h).max(0);
-    let x = r0[0] + dx + ((w >> 1) - (side >> 1));
-    let y = r0[1] + dy + ((h >> 1) - (side >> 1));
+    let [x, y, side, _] = square([r0[0] + dx, r0[1] + dy, w, h]);
     let outer = r0[2].min(r0[3]);
     ([x, y, outer, outer], [x, y, side, side])
 }
@@ -942,7 +1030,9 @@ pub(crate) fn radar_label_box(labels: &[String], hard: (i64, i64)) -> (i64, i64)
         return (0, 0);
     }
     let fh = cat_text_h();
-    let line_box = fh + 49_276;
+    let pad_and_spacer = 2 * crate::chartfont::label_offset_emu(crate::chartfont::fonts().cat)
+        + crate::chart_lobj::border().1 / 4;
+    let line_box = fh + pad_and_spacer / 2;
     let limit = hard.0 / 4;
 
     let left = hard.1 - 2 * (line_box - TITLE_EXTRA).max(0);
@@ -956,31 +1046,158 @@ pub(crate) fn radar_label_box(labels: &[String], hard: (i64, i64)) -> (i64, i64)
 }
 
 pub(crate) fn art_lines(text: &str, w: i64, h: i64) -> Vec<i64> {
-    art_layout(text, w, h).0
+    art_layout(text, w, h).0.widths
 }
 
-fn art_layout(text: &str, w: i64, h: i64) -> (Vec<i64>, bool) {
-    let line_h = cat_text_h();
+fn symbol_face(cp: u32) -> Option<u8> {
+    let t = crate::chart_symbol_faces::SYMBOL_FACES;
+    match t.get(t.partition_point(|r| r.1 < cp)) {
+        Some(&(first, _, f)) if first <= cp => Some(f),
+        _ => None,
+    }
+}
 
-    let fe = text.chars().any(|c| {
-        matches!(c as u32, 0x1100..=0x11FF | 0x2E80..=0x9FFF | 0xAC00..=0xD7AF | 0xF900..=0xFAFF | 0xFF00..=0xFFEF)
-    });
-    let pitch = if fe {
-        line_h + 2 * ((line_h * 15 + 50) / 100)
-    } else {
-        line_h
+fn script_rule(cp: u32) -> Option<u8> {
+    let t = crate::chart_script_faces::SCRIPT_FACES;
+    match t.get(t.partition_point(|r| r.1 < cp)) {
+        Some(&(first, _, r)) if first <= cp => Some(r),
+        _ => None,
+    }
+}
+
+fn text_pitch(text: &str) -> i64 {
+    let cat = crate::chartfont::fonts().cat;
+
+    type Face = (i64, i64, i64, i64, bool);
+    const YU: Face = (2017, 619, 0, 2048, true);
+    const MALGUN: Face = (2229, 495, 0, 2048, true);
+    const JHENGHEI: Face = (2203, 521, 0, 2048, true);
+    const YAHEI: Face = (2167, 536, 0, 2048, true);
+    const MS_GOTHIC: Face = (220, 36, 0, 256, true);
+    const ARIAL: Face = (1854, 434, 67, 2048, false);
+    const TAHOMA: Face = (2049, 423, 0, 2048, false);
+
+    const CAMBRIA_MATH: Face = (1946, 455, 0, 2048, false);
+    const SEGOE_SYMBOL: Face = (2210, 514, 0, 2048, false);
+
+    const MANGAL: Face = (2542, 898, 0, 2048, false);
+    const NIRMALA: Face = (2210, 514, 0, 2048, false);
+    const SYLFAEN: Face = (2062, 635, 0, 2048, false);
+    const EBRIMA: Face = (2210, 514, 57, 2048, false);
+    const CALIBRI: Face = (1950, 550, 0, 2048, false);
+    const MONGOLIAN_BAITI: Face = (1729, 449, 184, 2048, false);
+    type Rule = (&'static [Face], bool);
+    const RULES: [Rule; 9] = [
+        (&[MANGAL], false),
+        (&[NIRMALA], false),
+        (&[SYLFAEN], true),
+        (&[ARIAL], false),
+        (&[EBRIMA, CALIBRI], false),
+        (&[SEGOE_SYMBOL], true),
+        (&[MONGOLIAN_BAITI], false),
+        (&[MS_GOTHIC], false),
+        (&[CALIBRI], true),
+    ];
+    let units = |face: Face| {
+        let (asc, desc, gap, upm, fe) = face;
+        let u = |m: i64| (m as f64 * 200.0 * cat.size / upm as f64 + 0.5).floor() as i64;
+        let (a, d) = (u(asc), u(desc));
+        if fe {
+            let m = (15 * (a + d) + 50) / 100;
+            (a + m, d + m)
+        } else {
+            (a + u(gap), d)
+        }
     };
+    let (mut latin, mut other, mut asc, mut desc) = (false, false, 0i64, 0i64);
+    for c in text.chars() {
+        let cp = c as u32;
+        let face = match cp {
+            _ if script_rule(cp).is_some() => {
+                let (faces, joins) = RULES[usize::from(script_rule(cp).unwrap_or(0))];
+                for &f in faces {
+                    let (a, d) = units(f);
+                    asc = asc.max(a);
+                    desc = desc.max(d);
+                }
+                latin |= joins;
+                other = true;
+                continue;
+            }
+            0x0590..=0x08FF | 0xFB1D..=0xFDFF | 0xFE70..=0xFEFF => ARIAL,
+            0x0E00..=0x0E7F => TAHOMA,
+            0xFF01..=0xFF5E => MS_GOTHIC,
+            0x1100..=0x11FF
+            | 0x2E80..=0x2FDF
+            | 0x3000..=0x30FF
+            | 0x3130..=0x318F
+            | 0x31F0..=0x33FF
+            | 0x3400..=0x4DBF
+            | 0x4E00..=0x9FFF
+            | 0xAC00..=0xD7AF
+            | 0xF900..=0xFAFF
+            | 0xFE30..=0xFE4F
+            | 0xFF00..=0xFFEF => {
+                let table = crate::chart_ea_faces::EA_FALLBACK;
+                match table.get(table.partition_point(|r| r.1 < cp)) {
+                    Some(&(first, _, f)) if first <= cp => {
+                        [YU, MALGUN, JHENGHEI, YAHEI][f as usize]
+                    }
+                    _ => YU,
+                }
+            }
+            _ if symbol_face(cp).is_some() => {
+                let face = [CAMBRIA_MATH, SEGOE_SYMBOL][usize::from(symbol_face(cp).unwrap_or(0))];
+                let (a, d) = units(face);
+                asc = asc.max(a);
+                desc = desc.max(d);
+                latin = true;
+                other = true;
+                continue;
+            }
+
+            _ if c.is_whitespace() || c == '\u{200b}' || (cp < 0x80 && !c.is_alphanumeric()) => {
+                continue
+            }
+            _ => {
+                latin = true;
+                continue;
+            }
+        };
+        let (a, d) = units(face);
+        asc = asc.max(a);
+        desc = desc.max(d);
+        other = true;
+    }
+    if !other {
+        return cat_text_h();
+    }
+    if latin {
+        let (a, d) = crate::chartfont::asc_desc_units(cat);
+        asc = asc.max(a);
+        desc = desc.max(d);
+    }
+    crate::chartfont::emu(asc + desc)
+}
+
+struct Lines {
+    widths: Vec<i64>,
+    heights: Vec<i64>,
+}
+
+fn art_layout(text: &str, w: i64, h: i64) -> (Lines, bool) {
     let chars: Vec<char> = text.chars().collect();
     let wid: Vec<i64> = chars
         .iter()
         .map(|c| legend_text_emu(c.encode_utf8(&mut [0; 4])))
         .collect();
+    let sum_rounded = chars.iter().any(|&c| c as u32 > 0x17F);
     let n = chars.len() + 1;
     let adv = |i: usize| wid.get(i).copied().unwrap_or(0);
     let is_nl = |i: usize| i < chars.len() && (chars[i] == '\r' || chars[i] == '\n');
     let is_ws = |i: usize| i < chars.len() && chars[i].is_whitespace();
     let ell = legend_text_emu("\u{2026}");
-    let (mut lines, mut bottom, mut cut) = (Vec::new(), line_h, false);
+    let (mut lines, mut heights, mut used, mut cut) = (Vec::new(), Vec::new(), 0, false);
     let (mut start, mut i, mut width, mut cap, mut ellipsis) = (0usize, 0usize, 0i64, w, 0i64);
     while i < n {
         let mut next = i + 1;
@@ -1003,6 +1220,7 @@ fn art_layout(text: &str, w: i64, h: i64) -> (Vec<i64>, bool) {
                 next += 1;
             }
             if next == start {
+                cut = true;
                 while next < n && width <= cap {
                     width += adv(next);
                     next += 1;
@@ -1013,7 +1231,11 @@ fn art_layout(text: &str, w: i64, h: i64) -> (Vec<i64>, bool) {
                 }
             }
         }
-        if ellipsis == 0 && pitch + bottom > h && next + 1 < n {
+
+        let pitch = |a: usize, b: usize| text_pitch(&chars[a.min(b)..b].iter().collect::<String>());
+        let own = pitch(start, next.min(chars.len()));
+        let after = pitch(next.min(chars.len()), chars.len());
+        if ellipsis == 0 && used + own + after > h && next + 1 < n {
             ellipsis = ell;
             cap = (cap - ell).max(0);
             width = 0;
@@ -1025,9 +1247,16 @@ fn art_layout(text: &str, w: i64, h: i64) -> (Vec<i64>, bool) {
             width -= adv(shown - 1);
             shown -= 1;
         }
+
+        let end = shown.min(chars.len());
+        if sum_rounded && start < end {
+            let line: String = chars[start..end].iter().collect();
+            width = legend_text_emu(&line);
+        }
         lines.push(width);
-        bottom += pitch;
-        if bottom > h {
+        heights.push(own);
+        used += own;
+        if used + after > h {
             cut = ellipsis != 0 || next < n;
             break;
         }
@@ -1037,7 +1266,13 @@ fn art_layout(text: &str, w: i64, h: i64) -> (Vec<i64>, bool) {
     }
 
     let cut = cut || (lines.len() > 1 && lines.last() == Some(&0));
-    (lines, cut)
+    (
+        Lines {
+            widths: lines,
+            heights,
+        },
+        cut,
+    )
 }
 
 fn finish(
@@ -1056,9 +1291,7 @@ fn finish(
         };
     }
     if i.pie {
-        let side = h.min(w);
-        let x = l + (w - side + 1) / 2;
-        let p = [x, t, side, side];
+        let p = square([l, t, w, h]);
         return Layout {
             plot: p,
             inside: p,
@@ -1085,13 +1318,26 @@ mod tests {
 
     #[test]
     fn art_layout_cut_flag_and_remeasure() {
-        assert_eq!(art_layout("Qa", 12_700, 2_000_000).0.len(), 3);
+        assert_eq!(art_layout("Qa", 12_700, 2_000_000).0.widths.len(), 3);
         assert!(art_layout("Qa", 12_700, 2_000_000).1);
         assert!(art_layout("Qa", 12_700, 400_000).1);
-        assert_eq!(art_layout("Qa", 63_500, 400_000).0.len(), 2);
+        assert_eq!(art_layout("Qa", 63_500, 400_000).0.widths.len(), 2);
         let labels = vec!["Qa".to_string()];
         let lay = flat_layouts(&labels, &[0], 12_700, 400_000);
-        assert_eq!(lay[0].len(), 2);
+        assert_eq!(lay[0].widths.len(), 2);
+    }
+
+    #[test]
+    fn square_centres_either_way() {
+        assert_eq!(
+            square([88_900, 88_900, 2_260_600, 4_800_600]),
+            [88_900, 1_358_900, 2_260_600, 2_260_600]
+        );
+        assert_eq!(
+            square([88_900, 482_219, 2_260_600, 4_407_281])[1],
+            1_555_559
+        );
+        assert_eq!(square([0, 0, 7, 4]), [1, 0, 4, 4]);
     }
 
     #[test]
@@ -1127,12 +1373,12 @@ mod tests {
         assert_eq!((p.angle, p.step), (0, 1));
         let limit = flat_limit(6, 4_611_719, 1);
         assert_eq!(limit, 768_619);
-        let widest = labels
-            .iter()
-            .map(|t| word_lines(t, limit).unwrap())
-            .fold((0, 0), |a, l| (a.0.max(l.0), a.1.max(l.1)));
-        assert_eq!(widest, (2, 762_828));
-        assert_eq!(word_lines("Overseas region", -1), Some((2, 474_347)));
+        let all: Vec<usize> = (0..labels.len()).collect();
+        let lay = flat_layouts(&labels, &all, limit, 1_446_498);
+        let lines = lay.iter().map(|l| l.widths.len()).max();
+        let widest = lay.iter().flat_map(|l| l.widths.iter().copied()).max();
+        assert_eq!((lines, widest), (Some(2), Some(762_828)));
+        assert_eq!(legend_text_emu("Overseas"), 474_347);
     }
 
     #[test]
@@ -1150,6 +1396,27 @@ mod tests {
         .collect();
         let p = label_plan(&labels, 3_341_719, 932_338, false);
         assert_eq!((p.angle, p.step), (45, 1));
+    }
+
+    #[test]
+    fn label_plan_counts_named_labels_and_samples_many() {
+        let mut labels = vec![String::new(); 10];
+        for k in [0, 2, 4, 6] {
+            labels[k] = "Southern".to_string();
+        }
+        let wide = legend_text_emu("Southern");
+        let p = label_plan(&labels, 4 * wide, 1_000_000, false);
+        assert_eq!((p.angle, p.step), (0, 1));
+        let p = label_plan(&labels, 4 * wide - 1, 1_000_000, false);
+        assert_ne!((p.angle, p.step), (0, 1));
+
+        for (n, skipped) in [(100, false), (101, true)] {
+            let mut labels = vec!["a".to_string(); n];
+            labels[3] = "Wwwwwwwwwwwwwwwwwwww".to_string();
+            let w = n as i64 * legend_text_emu("a");
+            let p = label_plan(&labels, w, 1_500_000, false);
+            assert_eq!((p.angle, p.step) == (0, 1), skipped, "{n}");
+        }
     }
 
     #[test]

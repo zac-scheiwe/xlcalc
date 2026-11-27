@@ -3,9 +3,10 @@ use std::fmt::Write as _;
 
 #[derive(Default)]
 pub(crate) struct SheetXml {
+    filter_mode: bool,
     ws_prop: Option<u16>,
     tab_color: Option<[u8; 8]>,
-    view: Option<(u16, u16)>,
+    view: Option<View>,
     pane: Option<([f64; 2], u32, u32, u32, u8)>,
     sels: Vec<String>,
     merges: Vec<String>,
@@ -14,6 +15,16 @@ pub(crate) struct SheetXml {
     brk_row: Option<Vec<(u32, u32)>>,
     brk_col: Option<Vec<(u32, u32)>>,
     brk_is_row: bool,
+}
+
+#[derive(Clone, Copy)]
+struct View {
+    flags: u16,
+
+    mode: u32,
+    top: (u32, u32),
+
+    zoom: [u16; 4],
 }
 
 fn u16_at(d: &[u8], at: usize) -> Option<u16> {
@@ -33,6 +44,8 @@ const PANES: [&str; 4] = ["bottomRight", "topRight", "bottomLeft", "topLeft"];
 impl SheetXml {
     pub(crate) fn ws_prop(&mut self, d: &[u8]) {
         self.ws_prop = u16_at(d, 0);
+
+        self.filter_mode = d.get(2).is_some_and(|b| b & 1 != 0);
 
         self.tab_color = d
             .get(3..11)
@@ -59,7 +72,10 @@ impl SheetXml {
         if let Some(c) = self.tab_color {
             inner.insert_str(0, &crate::xlsb_styles::color_xml("tabColor", c));
         }
-        let code = code_name.map_or(String::new(), |c| format!(" codeName=\"{}\"", esc(c)));
+        let mut code = code_name.map_or(String::new(), |c| format!(" codeName=\"{}\"", esc(c)));
+        if self.filter_mode {
+            code.push_str(" filterMode=\"1\"");
+        }
         if inner.is_empty() && code.is_empty() {
             String::new()
         } else if inner.is_empty() {
@@ -70,9 +86,18 @@ impl SheetXml {
     }
 
     pub(crate) fn view(&mut self, d: &[u8]) {
-        if let (Some(f), Some(z)) = (u16_at(d, 0), u16_at(d, 22)) {
-            self.view = Some((f, z));
-        }
+        let (Some(flags), Some(mode), Some(row), Some(col)) =
+            (u16_at(d, 0), u32_at(d, 2), u32_at(d, 6), u32_at(d, 10))
+        else {
+            return;
+        };
+        let zoom = [18, 20, 22, 24].map(|at| u16_at(d, at).unwrap_or(0));
+        self.view = Some(View {
+            flags,
+            mode,
+            top: (row, col),
+            zoom,
+        });
     }
 
     pub(crate) fn pane(&mut self, d: &[u8]) {
@@ -91,22 +116,60 @@ impl SheetXml {
         let (Some(pnn), Some(r), Some(c)) = (u32_at(d, 0), u32_at(d, 4), u32_at(d, 8)) else {
             return;
         };
-        let rng = match (u32_at(d, 20), u32_at(d, 24), u32_at(d, 28), u32_at(d, 32)) {
-            (Some(r0), Some(r1), Some(c0), Some(c1)) => rect_name(r0, c0, r1, c1),
-            _ => cell_name(r, c),
+        let count = u32_at(d, 16).unwrap_or(0) as usize;
+        let areas: Vec<String> = d
+            .get(20..)
+            .unwrap_or_default()
+            .as_chunks::<16>()
+            .0
+            .iter()
+            .take(count)
+            .filter_map(|a| {
+                let (r0, r1) = (u32_at(a, 0)?, u32_at(a, 4)?);
+                let (c0, c1) = (u32_at(a, 8)?, u32_at(a, 12)?);
+
+                Some(if (r0, c0) == (r1, c1) {
+                    cell_name(r0, c0)
+                } else {
+                    rect_name(r0, c0, r1, c1)
+                })
+            })
+            .collect();
+        let rng = if areas.is_empty() {
+            cell_name(r, c)
+        } else {
+            areas.join(" ")
         };
         let pane = PANES.get(pnn as usize).copied().unwrap_or("topLeft");
         let mut s = String::from("<selection");
         if pnn != 3 {
             let _ = write!(s, " pane=\"{pane}\"");
         }
-        let _ = write!(s, " activeCell=\"{}\" sqref=\"{rng}\"/>", cell_name(r, c));
+        let _ = write!(s, " activeCell=\"{}\"", cell_name(r, c));
+        if let Some(id) = u32_at(d, 12).filter(|&id| id > 0) {
+            let _ = write!(s, " activeCellId=\"{id}\"");
+        }
+        let _ = write!(s, " sqref=\"{rng}\"/>");
         self.sels.push(s);
     }
 
     pub(crate) fn views(&self) -> String {
-        let (f, zoom) = self.view.unwrap_or((0x039C, 100));
+        let view = self.view.unwrap_or(View {
+            flags: 0x039C,
+            mode: 0,
+            top: (0, 0),
+            zoom: [100, 0, 0, 0],
+        });
+        let f = view.flags;
         let mut a = String::new();
+        match view.mode {
+            1 => a.push_str(" view=\"pageBreakPreview\""),
+            2 => a.push_str(" view=\"pageLayout\""),
+            _ => {}
+        }
+        if view.top != (0, 0) {
+            let _ = write!(a, " topLeftCell=\"{}\"", cell_name(view.top.0, view.top.1));
+        }
         if f & 0x02 != 0 {
             a.push_str(" showFormulas=\"1\"");
         }
@@ -125,8 +188,18 @@ impl SheetXml {
         if f & 0x40 != 0 {
             a.push_str(" tabSelected=\"1\"");
         }
-        if zoom != 100 && zoom != 0 {
-            let _ = write!(a, " zoomScale=\"{zoom}\" zoomScaleNormal=\"{zoom}\"");
+        for (name, zoom) in [
+            "zoomScale",
+            "zoomScaleNormal",
+            "zoomScaleSheetLayoutView",
+            "zoomScalePageLayoutView",
+        ]
+        .into_iter()
+        .zip(view.zoom)
+        {
+            if zoom != 0 && (zoom != 100 || name != "zoomScale" && name != "zoomScaleNormal") {
+                let _ = write!(a, " {name}=\"{zoom}\"");
+            }
         }
         let mut inner = String::new();
         if let Some(([x, y], r, c, p, fl)) = self.pane {
@@ -311,7 +384,7 @@ impl SheetXml {
                 .iter()
                 .map(|c| u16::from_le_bytes(*c))
                 .collect();
-            texts.push(String::from_utf16_lossy(&u));
+            texts.push(xlcalc::wide::from_units(&u));
             at = end;
         }
         let mut a = String::new();

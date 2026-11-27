@@ -54,7 +54,7 @@ impl<'a> Cur<'a> {
                 .iter()
                 .map(|c| u16::from_le_bytes(*c))
                 .collect();
-            Ok(String::from_utf16_lossy(&u))
+            Ok(xlcalc::wide::from_units(&u))
         } else {
             let t = self.take(n)?;
             let _ = cp;

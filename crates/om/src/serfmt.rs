@@ -1,9 +1,12 @@
-use xlcalc::drawing::{Chart, DataLabels, ErrorBars, Series, SeriesFmt, Trendline};
-use xlcalc::style::{nearest_color_index, PALETTE as XL_PALETTE};
+use xlcalc::drawing::{
+    Chart, DataLabels, ErrorBars, Part, PointText, Series, SeriesFmt, Trendline,
+};
+use xlcalc::style::{Theme, PALETTE as XL_PALETTE};
 use xlcalc_variant::Variant;
 
 use crate::app::{unsupported, Application};
-use crate::chartparts::{put_bool, put_num, range_err, Sub};
+use crate::chart_text::{link_formula, link_text, parse_link};
+use crate::chartparts::{put_bool, put_num, put_text, range_err, Sub};
 use crate::charts::part_values;
 use crate::conv::Args;
 use crate::error::OmError;
@@ -20,6 +23,13 @@ enum Cls {
     Radar,
 
     Scatter,
+}
+
+fn own_text(ser: &Series, sub: Sub) -> Option<&PointText> {
+    let Sub::SerLabel(_, n) = sub else {
+        return None;
+    };
+    ser.fmt.label_texts.iter().find(|t| t.point == n)
 }
 
 fn cls(t: i32) -> Cls {
@@ -104,13 +114,13 @@ fn color_of_index(n: i32) -> i32 {
     }
 }
 
-fn index_of_color(c: i32) -> i32 {
+fn index_of_color(theme: &Theme, c: i32) -> i32 {
     match c {
         -1 => 2,
         -2 => -4142,
         c => {
             let rgb = ((c & 0xFF) << 16) | (c & 0xFF00) | ((c >> 16) & 0xFF);
-            i32::from(nearest_color_index(rgb as u32))
+            i32::from(theme.chart_color_index(rgb as u32))
         }
     }
 }
@@ -177,6 +187,7 @@ impl Application<'_> {
         a: &Args,
     ) -> Option<Result<Variant, OmError>> {
         let put = m.kind == InvokeKind::Put || m.kind == InvokeKind::PutRef;
+        let theme = self.book(r.book).ok()?.wb.style_table().theme.clone();
         let ser = c.series.get(k)?;
         let t = ser.chart_type;
         let cl = cls(t);
@@ -268,7 +279,7 @@ impl Application<'_> {
                     } else {
                         -1
                     };
-                    Ok(i4(index_of_color(v.unwrap_or(dflt))))
+                    Ok(i4(index_of_color(&theme, v.unwrap_or(dflt))))
                 }
             },
             ("MarkerBackgroundColorIndex" | "MarkerForegroundColorIndex", true) => (|| {
@@ -309,6 +320,8 @@ impl Application<'_> {
                     s.fmt.labels = if v {
                         Some(s.fmt.labels.take().unwrap_or_default())
                     } else {
+                        s.fmt.label_texts.clear();
+                        s.fmt.held_labels.clear();
                         None
                     };
                     Ok(())
@@ -329,7 +342,13 @@ impl Application<'_> {
             ("Points", false) => match a.get(0) {
                 Some(i) => (|| {
                     let n = crate::controls::num_arg(i, a.lcid)? as u16;
-                    let count = part_values(&self.book(r.book)?.wb, &ser.values).len();
+                    let wb = &self.book(r.book)?.wb;
+
+                    let count = if matches!(*wb.resolve_part(&ser.values), Part::Dead) {
+                        1
+                    } else {
+                        part_values(wb, &ser.values).len()
+                    };
                     if n < 1 || n as usize > count {
                         return Err(crate::shapes::out_of_bounds());
                     }
@@ -425,6 +444,7 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         let put = m.kind == InvokeKind::Put || m.kind == InvokeKind::PutRef;
+        let theme = self.book(r.book)?.wb.style_table().theme.clone();
         let c = self.chart_of(r)?;
         let ku = sub.series().unwrap_or(0) as usize;
         let ser = c
@@ -582,7 +602,7 @@ impl Application<'_> {
                     ("ColorIndex", false) => Ok(i4(if auto && !hidden {
                         -4105
                     } else {
-                        index_of_color(color)
+                        index_of_color(&theme, color)
                     })),
                     ("ColorIndex", true) => match color_for_index_put(num(a)? as i32)? {
                         -1 => edit(self, &|x| {
@@ -647,7 +667,7 @@ impl Application<'_> {
                         -4142
                     } else {
                         match f.border_rgb {
-                            Some(c) => index_of_color(c),
+                            Some(c) => index_of_color(&theme, c),
                             None => -4105,
                         }
                     }))
@@ -758,6 +778,8 @@ impl Application<'_> {
                         x.point_labels.retain(|p| *p != n);
                         if v {
                             x.point_labels.push(n);
+                        } else {
+                            x.label_texts.retain(|t| t.point != n);
                         }
                     })
                 }
@@ -799,6 +821,10 @@ impl Application<'_> {
         self.chart_edit(r, |_, c| {
             for s in &mut c.series {
                 s.fmt.labels = (ty != -4142).then(DataLabels::default);
+                if ty == -4142 {
+                    s.fmt.label_texts.clear();
+                    s.fmt.held_labels.clear();
+                }
             }
             Ok(Variant::Empty)
         })
@@ -968,7 +994,37 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
 
-            ("Text" | "Caption", false) => {
+            (
+                "Text" | "Caption" | "Formula" | "FormulaLocal" | "FormulaR1C1"
+                | "FormulaR1C1Local",
+                true,
+            ) if matches!(sub, Sub::SerLabel(..)) => {
+                let Sub::SerLabel(_, n) = sub else {
+                    return Err(unsupported(sub.interface_name(), m));
+                };
+                self.put_label_text(r, ku, n, put_text(a)?)
+            }
+            ("AutoText", false) if matches!(sub, Sub::SerLabel(..)) => {
+                Ok(Variant::Bool(own_text(&ser, sub).is_none_or(|t| t.auto)))
+            }
+
+            ("AutoText", true) if own_text(&ser, sub).is_some() || put_bool(a)? => {
+                let Sub::SerLabel(_, n) = sub else {
+                    return Err(unsupported(sub.interface_name(), m));
+                };
+                let v = put_bool(a)?;
+                self.series_edit(r, ku, |s, _| {
+                    for t in s.fmt.label_texts.iter_mut().filter(|t| t.point == n) {
+                        t.auto = v;
+                    }
+                    Ok(())
+                })
+            }
+            (
+                "Text" | "Caption" | "Formula" | "FormulaLocal" | "FormulaR1C1"
+                | "FormulaR1C1Local",
+                false,
+            ) => {
                 if !shows(&l) {
                     return Err(OmError::exception(
                         0x8007_0057_u32 as i32,
@@ -980,6 +1036,20 @@ impl Application<'_> {
                 };
                 let wb = &self.book(r.book)?.wb;
 
+                if let Some(t) = own_text(&ser, sub) {
+                    let formula = m.name.starts_with("Formula");
+                    match &t.link {
+                        Some(p) if formula => {
+                            return link_formula(wb, p, m.name.contains("R1C1"))
+                                .map(Variant::Bstr)
+                                .ok_or_else(|| OmError::exception(0x8000_4005_u32 as i32, None));
+                        }
+                        Some(p) if !t.auto => return Ok(Variant::Bstr(link_text(wb, p))),
+                        None if !t.auto => return Ok(Variant::Bstr(t.text.clone())),
+                        _ => {}
+                    }
+                }
+
                 let hv = crate::charts::HideView::new(wb, c);
                 let vals = crate::charts::part_values_vis(&hv, &ser.values, c.visible_only);
                 let i = n.max(1) as usize - 1;
@@ -988,7 +1058,7 @@ impl Application<'_> {
                     return Ok(Variant::Bstr(String::new()));
                 }
 
-                let cats: Vec<Variant> = match &ser.x {
+                let cats: Vec<Variant> = match &*wb.resolve_part(&ser.x) {
                     xlcalc::drawing::Part::Refs(v) => {
                         let mut out = Vec::new();
                         for (s, rc) in v {
@@ -1040,6 +1110,35 @@ impl Application<'_> {
             }
             _ => Err(unsupported(sub.interface_name(), m)),
         }
+    }
+
+    fn put_label_text(
+        &mut self,
+        r: &DrawRef,
+        k: usize,
+        point: u16,
+        text: String,
+    ) -> Result<Variant, OmError> {
+        if text.encode_utf16().count() >= 0x8000 {
+            return Err(OmError::exception(0x8000_4005_u32 as i32, None));
+        }
+        let book = self.book(r.book)?;
+        let link = match text.strip_prefix('=') {
+            Some(f) => Some(parse_link(&book.wb, r.sheet, f).ok_or_else(OmError::app_defined)?),
+            None => None,
+        };
+        let own = PointText {
+            point,
+            text: if link.is_some() { String::new() } else { text },
+            link,
+            auto: false,
+        };
+        self.series_edit(r, k, |s, _| {
+            s.fmt.label_texts.retain(|t| t.point != point);
+            s.fmt.label_texts.push(own);
+            s.fmt.label_texts.sort_by_key(|t| t.point);
+            Ok(())
+        })
     }
 
     fn trend_coll_member(
@@ -1134,6 +1233,9 @@ impl Application<'_> {
         let sname = match &ser.name {
             xlcalc::drawing::Part::None => format!("Series{}", ser.number(ku)),
             xlcalc::drawing::Part::Text(t) => t.clone(),
+            xlcalc::drawing::Part::Name(_) => {
+                crate::chartparts::series_name_text(&self.book(r.book)?.wb, ku, ser)
+            }
             p => match part_values(&self.book(r.book)?.wb, p).first() {
                 Some(Variant::Bstr(s)) => s.clone(),
                 Some(Variant::R8(n)) => xlcalc::format_general(*n),

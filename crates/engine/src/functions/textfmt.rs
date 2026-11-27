@@ -1,10 +1,10 @@
 use super::args::*;
-use super::text::{left_right, map_case, mid, replace};
+use super::text::{find, left_right, map_case, mid, replace};
 use super::{args, scalar, FnDef};
 use crate::eval::{EvalCtx, Operand};
 use crate::number::format_general;
 use crate::numfmt::{decimal::Dec, fixed_text, typed_elapsed_ok, NumberFormat};
-use crate::text::{utf16_len, Wildcard};
+use crate::text::utf16_len;
 use crate::value::{Array, Value, XlError, MAX_TEXT_LEN};
 
 pub const DEFS: &[FnDef] = &[
@@ -187,7 +187,7 @@ fn arraytotext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         },
         Some(_) => return Operand::err(XlError::VALUE),
     };
-    let grid = match Grid::from_operand_3d(&ops[0]) {
+    let grid = match Grid::from_operand(&ops[0]) {
         Ok(g) => g,
         Err(e) => return Operand::err(e),
     };
@@ -258,7 +258,7 @@ fn scalar_error(ctx: &mut EvalCtx, op: &Operand) -> Option<XlError> {
 }
 
 fn delimiters(ctx: &mut EvalCtx, op: &Operand, forbid_empty: bool) -> R<Vec<Vec<char>>> {
-    let grid = Grid::from_operand_3d(op)?;
+    let grid = Grid::from_operand(op)?;
     let mut out = Vec::new();
     for r in 0..grid.rows() {
         for c in 0..grid.cols() {
@@ -367,12 +367,20 @@ fn before_after(ctx: &mut EvalCtx, ops: &[Operand], before: bool) -> Operand {
         let len = t.len();
 
         if delims.iter().any(|d| d.is_empty()) {
-            let one_char = t.iter().map(|c| c.len_utf16()).sum::<usize>() == 1;
+            let one_char = t
+                .iter()
+                .map(|&c| crate::text::wide::char_units(c))
+                .sum::<usize>()
+                == 1;
             let at = if n > 0.0 && !one_char { 0 } else { len };
             return Ok(if before { slice(0, at) } else { slice(at, len) });
         }
 
-        let u16len = |s: &[char]| s.iter().map(|c| c.len_utf16()).sum::<usize>();
+        let u16len = |s: &[char]| {
+            s.iter()
+                .map(|&c| crate::text::wide::char_units(c))
+                .sum::<usize>()
+        };
         let min_len = delims.iter().map(|d| u16len(d)).min().unwrap_or(0) as f64;
         let max_instance = u16len(&t) as f64 - min_len + 1.0;
         if explicit && n.abs() > max_instance {
@@ -457,7 +465,6 @@ fn textsplit(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let pad = match ops.get(5) {
             None => Value::Error(XlError::NA),
             Some(Operand::Missing) => Value::Blank,
-            Some(Operand::Ref(r)) if r.is_span() => Value::Error(XlError::REF),
             Some(Operand::Ref(r)) if r.single().is_none() => Value::Error(XlError::VALUE),
             Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
             Some(op) => match Grid::from_operand(op)? {
@@ -631,40 +638,4 @@ fn midb(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         Ok(()) => mid(ctx, a),
         Err(e) => err(e),
     }
-}
-
-fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
-    val((|| {
-        let needle = text(&a[0])?;
-        let hay = text(&a[1])?;
-        let start = ifuzz(opt_num(ctx, a, 2, 1.0)?);
-        let len = hay.chars().count();
-
-        if start < 1.0
-            || start as usize > len + 1
-            || (start as usize > len && (search || !needle.is_empty()))
-        {
-            return Err(XlError::VALUE);
-        }
-        let start = start as usize - 1;
-        if needle.is_empty() {
-            return Ok(Value::Number(start as f64 + 1.0));
-        }
-        if search {
-            let unit_start: usize = hay.chars().take(start).map(char::len_utf16).sum();
-            let pos = Wildcard::new(&needle)
-                .find(&hay, unit_start)
-                .ok_or(XlError::VALUE)?;
-            return Ok(Value::Number(pos as f64 + 1.0));
-        }
-        let pos = {
-            let byte_start = hay.char_indices().nth(start).map_or(hay.len(), |(i, _)| i);
-            hay[byte_start..]
-                .find(&*needle)
-                .map(|b| start + hay[byte_start..byte_start + b].chars().count())
-        };
-        let pos = pos.ok_or(XlError::VALUE)?;
-        let units: usize = hay.chars().take(pos).map(char::len_utf16).sum();
-        Ok(Value::Number(units as f64 + 1.0))
-    })())
 }

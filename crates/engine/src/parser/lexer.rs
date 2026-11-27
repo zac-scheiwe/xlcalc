@@ -92,62 +92,6 @@ pub struct Lexer<'a> {
     typed: bool,
 }
 
-const DIGIT_LIKE: [(u32, u32); 48] = [
-    (0xB2, 0xB3),
-    (0xB9, 0xB9),
-    (0x7C0, 0x7C9),
-    (0x9F4, 0x9F9),
-    (0xB72, 0xB77),
-    (0xBF0, 0xBF2),
-    (0xC78, 0xC7E),
-    (0xD58, 0xD5E),
-    (0xD70, 0xD78),
-    (0xDE6, 0xDEF),
-    (0xF2A, 0xF33),
-    (0x1090, 0x1099),
-    (0x1369, 0x137C),
-    (0x17F0, 0x17F9),
-    (0x1946, 0x194F),
-    (0x19D0, 0x19DA),
-    (0x1A80, 0x1A89),
-    (0x1A90, 0x1A99),
-    (0x1B50, 0x1B59),
-    (0x1BB0, 0x1BB9),
-    (0x1C40, 0x1C49),
-    (0x1C50, 0x1C59),
-    (0x2070, 0x2070),
-    (0x2075, 0x2079),
-    (0x2080, 0x2080),
-    (0x2085, 0x2089),
-    (0x2150, 0x2152),
-    (0x2155, 0x215A),
-    (0x215F, 0x215F),
-    (0x2189, 0x2189),
-    (0x24EA, 0x24FF),
-    (0x2776, 0x2793),
-    (0x2CFD, 0x2CFD),
-    (0x3192, 0x3195),
-    (0x3248, 0x324F),
-    (0x3251, 0x325F),
-    (0x3280, 0x3289),
-    (0x32B1, 0x32BF),
-    (0xA620, 0xA629),
-    (0xA6E6, 0xA6EF),
-    (0xA830, 0xA835),
-    (0xA8D0, 0xA8D9),
-    (0xA900, 0xA909),
-    (0xA9D0, 0xA9D9),
-    (0xA9F0, 0xA9F9),
-    (0xAA50, 0xAA59),
-    (0xABF0, 0xABF9),
-    (0xFF10, 0xFF19),
-];
-
-fn digit_like(c: char) -> bool {
-    let u = c as u32;
-    DIGIT_LIKE.iter().any(|&(a, b)| (a..=b).contains(&u))
-}
-
 fn ascii_digits(src: &str) -> Vec<char> {
     if src.is_ascii() {
         return src.chars().collect();
@@ -199,7 +143,10 @@ impl<'a> Lexer<'a> {
         (digit || ((self.sheet_exists)(a) && (self.sheet_exists)(b)))
             && !self.after_colon
             && self.parens.last() != Some(&false)
-            && (self.ref_follows(after) || self.chars.get(after) == Some(&' '))
+            && (self.ref_follows(after)
+                || self.chars.get(after) == Some(&' ')
+                || self.chars[after.min(self.chars.len())..]
+                    .starts_with(&['#', 'R', 'E', 'F', '!']))
     }
 
     fn ref_follows(&self, at: usize) -> bool {
@@ -296,6 +243,7 @@ impl<'a> Lexer<'a> {
                         | Tok::Op(")")
                         | Tok::Op("}")
                         | Tok::Op("#")
+                        | Tok::Op("%")
                 )
             });
             let tok = if c == '.' && after_operand && self.field_ahead() {
@@ -363,7 +311,9 @@ impl<'a> Lexer<'a> {
                                 out.last().map(|t| &t.tok),
                                 Some(Tok::Number { .. } | Tok::Op("%"))
                             )
-                            && self.peek(1).is_some_and(digit_like)
+                            && self
+                                .peek(1)
+                                .is_some_and(|d| !d.is_ascii() && super::namech::is_digit(d))
                         {
                             return Err(self.err("a sign cannot be followed by this digit"));
                         }
@@ -471,7 +421,7 @@ impl<'a> Lexer<'a> {
     fn field_ahead(&self) -> bool {
         match self.peek(1) {
             Some('[') => true,
-            Some(c) => c.is_alphabetic(),
+            Some(c) => c.is_alphanumeric(),
             None => false,
         }
     }

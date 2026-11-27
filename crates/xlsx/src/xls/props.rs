@@ -104,7 +104,7 @@ fn sections(b: &[u8]) -> Vec<Section> {
                             .map(|c| u16::from_le_bytes(*c))
                             .take_while(|&c| c != 0)
                             .collect();
-                        s.names.insert(pid, String::from_utf16_lossy(&u));
+                        s.names.insert(pid, xlcalc::wide::from_units(&u));
                         q += (len * 2).div_ceil(4) * 4;
                     } else {
                         let Some(raw) = b.get(q..q + len) else { break };
@@ -143,7 +143,7 @@ fn sections(b: &[u8]) -> Vec<Section> {
                             .map(|c| u16::from_le_bytes(*c))
                             .take_while(|&c| c != 0)
                             .collect();
-                        Val::Str(String::from_utf16_lossy(&u))
+                        Val::Str(xlcalc::wide::from_units(&u))
                     })
                 }
                 _ => None,
@@ -305,7 +305,7 @@ fn put_val(v: &mut Vec<u8>, val: &Val, unicode: bool) {
         Val::Str(s) => {
             if unicode {
                 v.extend(0x1Fu32.to_le_bytes());
-                let u: Vec<u16> = s.encode_utf16().chain([0]).collect();
+                let u: Vec<u16> = xlcalc::wide::units(s).chain([0]).collect();
                 v.extend((u.len() as u32).to_le_bytes());
                 for c in u {
                     v.extend(c.to_le_bytes());
@@ -349,7 +349,7 @@ fn section(props: &[(u32, Val)], dict: &[(u32, String)], unicode: bool) -> Vec<u
         for (id, name) in dict {
             d.extend(id.to_le_bytes());
             if unicode {
-                let u: Vec<u16> = name.encode_utf16().chain([0]).collect();
+                let u: Vec<u16> = xlcalc::wide::units(name).chain([0]).collect();
                 d.extend((u.len() as u32).to_le_bytes());
                 for c in u {
                     d.extend(c.to_le_bytes());

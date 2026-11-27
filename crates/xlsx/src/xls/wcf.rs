@@ -3,8 +3,8 @@ use super::wextras::{rect8, rgce};
 use super::write::Out;
 use super::wsheet::Cx;
 use crate::parse_rect;
-use crate::xlsb_enc::Cls;
 use crate::xml::Node;
+use xlcalc::FormulaContext;
 use xlcalc::Rect;
 
 const FONT: u32 = 0x0400_0000;
@@ -212,6 +212,14 @@ fn format_of(dxf: &Node, cx: &Cx<'_>) -> Format {
     }
 }
 
+pub(super) fn dxfn_list(dxf: &Node, cx: &Cx<'_>) -> Vec<u8> {
+    let f = format_of(dxf, cx);
+    let mut d = f.flags.to_le_bytes().to_vec();
+    d.extend((f.ignore | 4).to_le_bytes());
+    d.extend(f.blocks);
+    d
+}
+
 struct Classic {
     ct: u8,
     cp: u8,
@@ -413,7 +421,7 @@ pub(super) fn write(o: &mut Out, cx: &mut Cx<'_>, root: &Node, idx: u32, ordinal
                 if text.is_empty() {
                     return Ok(Vec::new());
                 }
-                rgce(cx, idx, text, base, Cls::Value)
+                rgce(cx, idx, text, base, FormulaContext::ConditionalFormat)
             };
             let (t1, t2) = match (tokens(&cl.f1), tokens(&cl.f2)) {
                 (Ok(a), Ok(b)) => (a, b),

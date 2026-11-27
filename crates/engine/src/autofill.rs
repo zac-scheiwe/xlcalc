@@ -212,52 +212,107 @@ fn styled(name: &str, st: Style) -> String {
 struct TextNum {
     prefix: String,
     num: u64,
+
     width: usize,
+
     suffix: String,
+
     ordinal: bool,
+
+    leading: bool,
 }
 
 fn text_num(s: &str) -> Option<TextNum> {
     let s = s.trim_end_matches(' ');
-    let b = s.as_bytes();
-    let lead = b.iter().take_while(|c| c.is_ascii_digit()).count();
-    let mk = |a: usize, z: usize, ordinal: bool| -> Option<TextNum> {
-        let digits = &s[a..z];
-        if digits.len() > 15 {
-            return None;
-        }
-        Some(TextNum {
-            prefix: s[..a].to_string(),
-            num: digits.parse().ok()?,
-            width: digits.len(),
-            suffix: if ordinal {
-                String::new()
-            } else {
-                s[z..].to_string()
-            },
-            ordinal,
-        })
-    };
-    if lead > 0 {
-        let rest = &s[lead..];
-        if rest.is_empty() {
-            return mk(0, lead, false);
-        }
-        let first = rest.chars().next().unwrap();
-        if first.is_alphabetic() {
-            let lower = rest.to_ascii_lowercase();
-            if matches!(lower.as_str(), "st" | "nd" | "rd" | "th") {
-                return mk(0, lead, true);
+    let core = s.trim_start_matches(' ');
+    let lead_sp = s.len() - core.len();
+    let chars: Vec<char> = core.chars().collect();
+    let len = chars.len();
+    if len == 0 {
+        return None;
+    }
+    let digit = |c: char| c.is_ascii_digit();
+    if digit(chars[0]) {
+        let limit = len.min(6);
+        let run = chars.iter().take(limit).take_while(|&&c| digit(c)).count();
+        if run < limit {
+            let digits: String = chars[..run].iter().collect();
+            if let Some(v) = digits.parse::<u64>().ok().filter(|&v| v <= 65535) {
+                let end = chars[run..]
+                    .iter()
+                    .position(|&c| c == ' ')
+                    .map_or(len, |p| run + p);
+                let word: String = chars[run..end].iter().collect();
+                let ordinal = !word.is_empty();
+                if !ordinal || word.eq_ignore_ascii_case(ordinal_suffix(v)) {
+                    return Some(TextNum {
+                        prefix: s[..lead_sp].to_string(),
+                        num: v,
+                        width: 0,
+                        suffix: chars[end..].iter().collect(),
+                        ordinal,
+                        leading: true,
+                    });
+                }
             }
-        } else if first == ' ' {
-            return mk(0, lead, false);
         }
     }
-    let tail = b.iter().rev().take_while(|c| c.is_ascii_digit()).count();
-    if tail > 0 {
-        return mk(s.len() - tail, s.len(), false);
+    if !digit(chars[len - 1]) {
+        return None;
     }
-    None
+    let cnt = chars
+        .iter()
+        .rev()
+        .take(16)
+        .take_while(|&&c| digit(c))
+        .count();
+    if cnt == 16 {
+        return None;
+    }
+    let at = len - cnt;
+    let digits: String = chars[at..].iter().collect();
+    let num: u64 = digits.parse().ok().filter(|&n| n <= u64::from(u32::MAX))?;
+    Some(TextNum {
+        prefix: s[..lead_sp].to_string() + &chars[..at].iter().collect::<String>(),
+        num,
+        width: if digits.starts_with('0') { cnt } else { 0 },
+        suffix: String::new(),
+        ordinal: false,
+        leading: false,
+    })
+}
+
+pub(crate) fn smart_fill_next(prev: &str) -> Option<String> {
+    if let Some(l) = list_item(prev) {
+        let (fam, idx, mask) = *l.cands.first()?;
+        let list = FAMILIES[fam].lists[(0..8).find(|b| mask & (1 << b) != 0)?];
+        let name = styled(list[(idx + 1) % list.len()], l.style);
+        return Some(format!("{}{}", l.lead, name));
+    }
+    text_num(prev).map(|t| t.render(1))
+}
+
+impl TextNum {
+    fn render(&self, delta: i128) -> String {
+        let n = if self.leading {
+            let v = i32::from(self.num as u16 as i16);
+            let mut r = v + i32::from(delta as i16);
+            if r < 0 && delta < 0 && v >= 0 {
+                r = -r;
+            }
+            u64::from(r as u32 & 0xffff)
+        } else {
+            let v = self.num as u32 as i32;
+            let mut r = v.wrapping_add(delta as i32);
+            if r < 0 && delta < 0 && v >= 0 {
+                r = r.wrapping_neg();
+            }
+            u64::from(r as u32)
+        };
+        let digits = format!("{:0w$}", n, w = self.width);
+        let ord = if self.ordinal { ordinal_suffix(n) } else { "" };
+        format!("{}{}{}{}", self.prefix, digits, ord, self.suffix)
+    }
 }
 
 fn ordinal_suffix(n: u64) -> &'static str {
@@ -268,11 +323,6 @@ fn ordinal_suffix(n: u64) -> &'static str {
         (_, 3) => "rd",
         _ => "th",
     }
-}
-
-fn is_month_fmt(fmt: &str) -> bool {
-    let f = fmt.to_ascii_lowercase();
-    f == "mmm-yy" || f == "mmm-yyyy"
 }
 
 #[derive(Clone, Debug)]
@@ -308,7 +358,10 @@ fn same_group(a: &Kind, b: &Kind) -> bool {
         | (Kind::Date { .. }, Kind::Date { .. })
         | (Kind::Time(..), Kind::Time(..)) => true,
         (Kind::Text(x), Kind::Text(y)) => {
-            x.prefix == y.prefix && x.suffix == y.suffix && x.ordinal == y.ordinal
+            x.prefix == y.prefix
+                && x.suffix == y.suffix
+                && x.ordinal == y.ordinal
+                && x.leading == y.leading
         }
         (Kind::List(x), Kind::List(y)) => {
             x.cands.iter().any(|a| y.cands.iter().any(|b| a.0 == b.0))
@@ -505,7 +558,7 @@ fn roll_back_weekend(sys: crate::datetime::DateSystem, d: i64) -> i64 {
     }
 }
 
-fn dim(sys: crate::datetime::DateSystem, y: i64, m: u32) -> u32 {
+pub(crate) fn dim(sys: crate::datetime::DateSystem, y: i64, m: u32) -> u32 {
     if sys == crate::datetime::DateSystem::D1900 && y == 1900 && m == 2 {
         29
     } else {
@@ -521,6 +574,26 @@ fn is_eom(sys: crate::datetime::DateSystem, d: i64) -> bool {
 fn month_index(sys: crate::datetime::DateSystem, d: i64) -> i64 {
     let (y, m, _) = ymd_from_serial(sys, d);
     y * 12 + m as i64 - 1
+}
+
+fn gregorian_day_field_fails(
+    sys: crate::datetime::DateSystem,
+    seed: (i64, u32, u32),
+    offset: i64,
+) -> bool {
+    let f = seed.2 as i64 + offset;
+    sys == crate::datetime::DateSystem::D1900Gregorian
+        && (f == 0 || (seed.0 == 1900 && seed.1 == 2 && f == 29))
+}
+
+fn gregorian_month_end_fails(
+    sys: crate::datetime::DateSystem,
+    mi: i64,
+    dom: u32,
+    eom: bool,
+) -> bool {
+    sys == crate::datetime::DateSystem::D1900Gregorian
+        && (eom || dom > dim(sys, mi.div_euclid(12), mi.rem_euclid(12) as u32 + 1))
 }
 
 pub(crate) fn date_in_month(sys: crate::datetime::DateSystem, mi: i64, dom: u32, eom: bool) -> i64 {
@@ -735,18 +808,7 @@ fn text_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
         }
         nums[0] + off / dx
     };
-    let n = new.unsigned_abs();
-    if n > 999_999_999_999_999 {
-        return None;
-    }
-    let t = tn[0];
-    let digits = format!("{:0w$}", n, w = t.width);
-    let suffix = if t.ordinal {
-        ordinal_suffix(n as u64).to_string()
-    } else {
-        t.suffix.clone()
-    };
-    Some(Value::text(format!("{}{}{}", t.prefix, digits, suffix)))
+    Some(Value::text(tn[0].render(new - nums[0])))
 }
 
 fn cand(l: &ListItem, fam: usize) -> Option<(usize, usize, u8)> {
@@ -1114,10 +1176,16 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
             if v >= sys.max_serial() + 1.0 {
                 return None;
             }
+            if gregorian_day_field_fails(sys, ymd[0], v.floor() as i64 - ints[0]) {
+                return None;
+            }
             v
         }
         DMode::Months { slope, eom, dom } => {
             let target = mi[0] + slope * (if m == 1 { p } else { x_new as i64 });
+            if gregorian_month_end_fails(sys, target, dom, eom) {
+                return None;
+            }
             let d = date_in_month(sys, target, dom, eom);
             if ty == FillType::Weekdays {
                 roll_back_weekend(sys, d) as f64
@@ -1145,9 +1213,17 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
                 }
             }
         }
-        DMode::ShiftDays(n) => roll_back_weekend(sys, ints[k] + n * p) as f64,
+        DMode::ShiftDays(n) => {
+            if gregorian_day_field_fails(sys, ymd[k], n * p) {
+                return None;
+            }
+            roll_back_weekend(sys, ints[k] + n * p) as f64
+        }
         DMode::YearShift { eom, dom } => {
             let target = mi[k] + 12 * ctx.sign * p;
+            if gregorian_month_end_fails(sys, target, dom, eom) {
+                return None;
+            }
             date_in_month(sys, target, dom, eom) as f64
         }
         DMode::ShiftMonths(n) => {
@@ -1157,7 +1233,13 @@ fn date_value(ctx: &Ctx, items: &[Kind], slots: &[usize], k: usize, p: i64) -> O
             let to_end = day_field == dim(sys, y0, m0) as i64;
             let t = mi[b] + n * p;
             let (y, m) = (t.div_euclid(12), t.rem_euclid(12) + 1);
-            let d = if to_end || ((day_field == 29 || day_field == 30) && m == 2) {
+            let month_end = to_end || ((day_field == 29 || day_field == 30) && m == 2);
+            if sys == crate::datetime::DateSystem::D1900Gregorian
+                && (month_end || day_field == 0 || (y == 1900 && m == 2 && day_field == 29))
+            {
+                return None;
+            }
+            let d = if month_end {
                 date_in_month(sys, t, d0, true)
             } else {
                 serial_from_ymd(sys, y, m, day_field)
@@ -1339,7 +1421,10 @@ impl Workbook {
                             Kind::Date {
                                 v: *n,
                                 time: fm.has_time,
-                                months: is_month_fmt(fmt),
+                                months: crate::ifmt_slots::is_month_year_format(
+                                    self.input_env().locale,
+                                    fmt,
+                                ),
                                 fm,
                             }
                         }
@@ -1677,7 +1762,7 @@ impl Workbook {
                             }
                             if let Some((f, style)) = old_fmt {
                                 this.store_style(to, style);
-                                this.set_number_format(sheet, Rect::cell(to.row, to.col), &f);
+                                this.set_number_format_copy(sheet, Rect::cell(to.row, to.col), &f);
                             }
                         }
                     }
@@ -2002,7 +2087,7 @@ impl Workbook {
                             }
                             if let Some((f, style)) = old_fmt {
                                 this.store_style(to, style);
-                                this.set_number_format(sheet, Rect::cell(dr, dc), &f);
+                                this.set_number_format_copy(sheet, Rect::cell(dr, dc), &f);
                             }
                         }
                     }

@@ -102,6 +102,11 @@ impl Application<'_> {
         }
         let key = (b, s, id);
         let st = self.comment_shapes.get(&key).cloned().unwrap_or_default();
+        if m.name == "Delete" {
+            self.book_mut(b)?.wb.note_remove(s, id);
+            self.comment_shapes.remove(&key);
+            return Ok(Variant::Empty);
+        }
         if m.kind != Get {
             return self.comment_shape_put(key, st, m, a);
         }
@@ -121,9 +126,12 @@ impl Application<'_> {
                 .xy_anchor(s, (x * EMU_PT) as i64, (y * EMU_PT) as i64);
             this.new_range(b, s, Rect::cell(an.row, an.col), Mode::Cells)
         };
-        let shape_id = 1024 + i32::try_from(note.id).unwrap_or(0);
+        let shape_id = i32::try_from(note.spid).unwrap_or(0);
         match m.name {
-            "Name" => Ok(Variant::Bstr(format!("Comment {}", shape_id - 1024))),
+            "Name" => {
+                let n = self.book(b)?.wb.legacy_shape_number(s, note.spid);
+                Ok(Variant::Bstr(format!("Comment {n}")))
+            }
             "Left" => Ok(Variant::R4(left as f32)),
             "Top" => Ok(Variant::R4(top as f32)),
             "Width" => Ok(Variant::R4(BOX_W as f32)),
@@ -134,15 +142,7 @@ impl Application<'_> {
             "AutoShapeType" => Ok(Variant::I4(st.auto_shape)),
             "BlackWhiteMode" => Ok(Variant::I4(st.black_white)),
             "LockAspectRatio" => Ok(Variant::I4(st.lock_aspect)),
-            "ZOrderPosition" => {
-                let below = self
-                    .book(b)?
-                    .wb
-                    .notes(s)
-                    .filter(|(_, n)| n.id < note.id)
-                    .count();
-                Ok(Variant::I4(below as i32 + 1))
-            }
+            "ZOrderPosition" => self.note_z(b, s, note.spid),
             "Script" => Ok(Variant::Dispatch(None)),
 
             "DrawingObject" => stub(self, "TextBox"),

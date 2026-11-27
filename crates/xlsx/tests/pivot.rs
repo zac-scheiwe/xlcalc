@@ -251,3 +251,19 @@ fn grouping_round_trip() {
         assert_eq!(format!("{r:?}"), format!("{r2:?}"), "{kind}");
     }
 }
+
+#[test]
+fn blank_headers_are_named_after_the_named_ones() {
+    let mut wb = Workbook::new();
+    let s = wb.active_sheet();
+    for (c, h) in ["", "B", "", "Field1", "B"].iter().enumerate() {
+        if !h.is_empty() {
+            wb.set_value(CellAddr::new(s, 0, c as u32), Value::text(*h));
+        }
+        wb.set_value(CellAddr::new(s, 1, c as u32), Value::Number(1.0));
+    }
+    let rect = xlcalc::Rect::new(0, 0, 1, 4);
+    let cache = PivotCache::read(&wb, "Sheet1!R1C1:R2C5", s, rect).unwrap();
+    let names: Vec<&str> = cache.fields.iter().map(|f| f.name.as_str()).collect();
+    assert_eq!(names, ["Field12", "B", "Field3", "Field1", "B2"]);
+}

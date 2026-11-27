@@ -51,13 +51,13 @@ impl Application<'_> {
                 (false, false) => ub.cached.1,
             };
 
-            let grown = ps.zoom.is_some_and(|z| z < ps.list_zoom);
-            if count && (!ps.slv_cached || grown) {
-                self.book_mut(b)?
-                    .page_setup
-                    .entry(s)
-                    .or_default()
-                    .slv_cached = true;
+            let changed = ps.zoom.is_some_and(|z| z != ps.list_zoom);
+            let first = !ps.slv_cached;
+            let zoomed = changed && !ps.slv_zoomed;
+            if count && (first || zoomed) {
+                let pg = self.book_mut(b)?.page_setup.entry(s).or_default();
+                pg.slv_cached = true;
+                pg.slv_zoomed |= changed;
                 let win = self.break_window_idle(b, s);
                 self.refresh_break_list_over(b, s, win);
             }
@@ -116,23 +116,30 @@ impl Application<'_> {
                 Ok(self.alloc_enumerator(items))
             }
             ("Add", InvokeKind::Func) => {
-                let before = match a.get(0) {
-                    Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
-                        Some(Object::Range(r)) => self.resolve(&r.clone())?,
-                        _ => return Err(OmError::app_defined()),
-                    },
+                if a.values.len() != 1 {
+                    return Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT));
+                }
+                let before = match a.values.first() {
+                    Some(Some(v)) if !crate::conv::is_missing(v) => v,
+                    _ => return Err(OmError::hresult(crate::error::DISP_E_PARAMNOTOPTIONAL)),
+                };
+                let Variant::Dispatch(id) = before else {
+                    return Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0));
+                };
+                let first = match id.and_then(|id| self.arena.get(id)) {
+                    Some(Object::Range(r)) => *r,
+                    Some(Object::Multi(rs)) if !rs.is_empty() => rs[0],
                     _ => return Err(OmError::app_defined()),
                 };
-                if before.0 != s {
-                    return Err(OmError::app_defined());
-                }
-                let at = if rows { before.1.r0 } else { before.1.c0 };
+                let (bs, rect) = self.resolve(&first)?;
+                let at = if rows { rect.r0 } else { rect.c0 };
 
                 if at == 0 {
                     return Err(OmError::app_defined());
                 }
-                self.book_mut(b)?.wb.add_page_break(s, rows, at);
-                Ok(self.alloc(Object::PageBreak(rows, b, s, at)))
+                let bk = first.book;
+                self.book_mut(bk)?.wb.add_page_break(bs, rows, at);
+                Ok(self.alloc(Object::PageBreak(rows, bk, bs, at)))
             }
             ("Application", InvokeKind::Get) => Ok(Variant::Dispatch(Some(self.handle()))),
             ("Parent", InvokeKind::Get) => Ok(self.sheet_object(b, s)),
@@ -168,6 +175,8 @@ impl Application<'_> {
                 self.book_mut(b)?.wb.delete_page_break(s, rows, at);
                 Ok(Variant::Empty)
             }
+
+            ("DragOff", InvokeKind::Func) => Err(OmError::app_defined()),
             ("Application", InvokeKind::Get) => Ok(Variant::Dispatch(Some(self.handle()))),
             ("Parent", InvokeKind::Get) => Ok(self.sheet_object(b, s)),
             ("Creator", InvokeKind::Get) => Ok(Variant::I4(0x5843_454C_u32 as i32)),

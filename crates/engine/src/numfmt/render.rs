@@ -99,6 +99,15 @@ pub(super) fn choose(f: &NumberFormat, x: f64) -> Result<(Option<usize>, bool), 
     }
 }
 
+fn calendar_serial(ds: DateSystem, day: i64) -> Result<i64, XlError> {
+    match ds {
+        DateSystem::D1904 => Ok(day + 1462),
+        DateSystem::D1900Gregorian if day < 2 => Err(XlError::VALUE),
+        DateSystem::D1900Gregorian if day <= 60 => Ok(day - 1),
+        _ => Ok(day),
+    }
+}
+
 fn digit_system(nn: u8) -> Option<[char; 10]> {
     let (zero, has_zero) = match nn {
         2 => (0x0660, true),
@@ -336,27 +345,33 @@ fn render_body(
 ) -> Result<(String, bool), XlError> {
     let digits = |(s, z): (String, bool)| (db.map_or(s.clone(), |d| d.positional(&s)), z);
 
-    let has_ampm = |items: &[Item]| items.contains(&Item::Date(DateTok::AmPm));
-    if match body {
-        Body::Number(l) => has_ampm(&l.items),
-        Body::Literal(items) => has_ampm(items),
-        _ => false,
+    let ampm_of = |items: &[Item]| {
+        items.iter().find_map(|it| match it {
+            Item::Date(DateTok::AmPm(m)) => Some(*m),
+            _ => None,
+        })
+    };
+    if let Some(m) = match body {
+        Body::Number(l) => ampm_of(&l.items),
+        Body::Literal(items) => ampm_of(items),
+        _ => None,
     } {
         let probe = DateLayout {
-            items: vec![Item::Date(DateTok::AmPm)],
+            items: vec![Item::Date(DateTok::AmPm(m))],
             subsec: 0,
             elapsed: false,
             needs_date: false,
             signed: false,
             lcid: None,
             hijri: false,
+            day_marks: Vec::new(),
         };
         let (mark, _) = render_date(&probe, a, ds, loc, db)?;
         let swap = |items: &[Item]| -> Vec<Item> {
             items
                 .iter()
                 .map(|it| match it {
-                    Item::Date(DateTok::AmPm) => Item::Lit(mark.clone()),
+                    Item::Date(DateTok::AmPm(_)) => Item::Lit(mark.clone()),
                     other => other.clone(),
                 })
                 .collect()
@@ -396,7 +411,8 @@ fn render_body(
         Body::Sci(l) => digits((render_sci(l, a, loc), a == 0.0)),
         Body::Frac(l) => digits(render_frac(l, a, loc)?),
         Body::Date(l) => {
-            if negative && !l.signed && ds == DateSystem::D1900 {
+            if negative && !l.signed && matches!(ds, DateSystem::D1900 | DateSystem::D1900Gregorian)
+            {
                 return Err(XlError::VALUE);
             }
 
@@ -530,6 +546,9 @@ fn render_sci(l: &SciLayout, a: f64, loc: &Locale) -> String {
     let d = Dec::from_f64(a);
     let (mant, exp) = if d.is_zero() {
         (Dec::zero(), 0)
+    } else if l.n_int + l.n_frac == 0 {
+        let e = if d.digits[0] >= 5 { d.exp + 2 } else { 1 };
+        (Dec::zero(), e)
     } else {
         let off = i32::from(l.n_int == 0);
         let mut e = d.exp.div_euclid(g) * g + off;
@@ -855,7 +874,7 @@ struct Cascade {
 }
 
 fn half_unit(k: u8) -> f64 {
-    0.5 / 86_400.0 / 10f64.powi(k as i32)
+    f64::from_bits(crate::datetime::HALF_SEC[usize::from(k.min(3))])
 }
 
 fn set_num_cascade(x: f64, k: u8) -> Cascade {
@@ -1011,20 +1030,12 @@ fn render_date(
     };
     let mut hebrew_leap = false;
     let (y, mo, dd) = if l.needs_date && calendars::converts(cal) {
-        let serial = if ds == DateSystem::D1904 {
-            day + 1462
-        } else {
-            day
-        };
+        let serial = calendar_serial(ds, day)?;
         let (y, m, d, leap) = calendars::convert(cal, serial)?;
         hebrew_leap = leap;
         (y, m, d)
     } else if l.needs_date && l.hijri {
-        let serial = if ds == DateSystem::D1904 {
-            day + 1462
-        } else {
-            day
-        };
+        let serial = calendar_serial(ds, day)?;
         datetime::hijri_from_serial(serial).ok_or(XlError::VALUE)?
     } else if l.needs_date {
         let (y, m, d) = datetime::ymd_from_serial(ds, day);
@@ -1157,7 +1168,12 @@ fn render_date(
                     |d| d.words(v),
                 ));
             }
-            DateTok::AmPm => out.push_str(if h24 < 12 { names.am } else { names.pm }),
+
+            DateTok::AmPm(mark) => out.push_str(match mark {
+                Some(m) if l.lcid.is_none() => m.text(h24 >= 12),
+                _ if h24 < 12 => names.am,
+                _ => names.pm,
+            }),
             DateTok::AmPmCjk => out.push_str(if h24 < 12 { "上午" } else { "下午" }),
             DateTok::EYear(n) => {
                 if japanese {

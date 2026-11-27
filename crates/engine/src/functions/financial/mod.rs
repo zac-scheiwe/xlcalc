@@ -23,15 +23,6 @@ macro_rules! atp_fn {
     }};
 }
 
-macro_rules! atp_fa {
-    ($name:literal, $min:expr, $max:expr, $f:path) => {{
-        fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-            atp::call(ctx, ops, &[], false, $f)
-        }
-        args($name, $min, $max, "R", wrapper)
-    }};
-}
-
 macro_rules! atp_late {
     ($name:literal, $min:expr, $max:expr, $quirk:expr, $f:path) => {{
         fn wrapper(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -90,9 +81,9 @@ pub const DEFS: &[FnDef] = &[
     atp_fn!("YIELDDISC", 4, 5, bonds::yielddisc),
     atp_fn!("PRICEMAT", 5, 6, bonds::pricemat),
     atp_fn!("YIELDMAT", 5, 6, bonds::yieldmat),
-    atp_fa!("TBILLEQ", 3, 3, bonds::tbilleq),
-    atp_fa!("TBILLPRICE", 3, 3, bonds::tbillprice),
-    atp_fa!("TBILLYIELD", 3, 3, bonds::tbillyield),
+    atp_late!("TBILLEQ", 3, 3, false, bonds::tbilleq),
+    atp_late!("TBILLPRICE", 3, 3, false, bonds::tbillprice),
+    atp_late!("TBILLYIELD", 3, 3, false, bonds::tbillyield),
     atp_fn!("PRICE", 6, 7, bonds::price),
     atp_fn!("YIELD", 6, 7, bonds::yield_),
     atp_late!("DURATION", 5, 6, true, bonds::duration),

@@ -57,7 +57,14 @@ pub fn var_binary(
     if matches!(a, Variant::Int(_)) || matches!(b, Variant::Int(_)) {
         return Err(VbaError::new(458));
     }
-    var::binary(o, a, b).map_err(hresult_error)
+    var::binary(o, a, b).map(joined).map_err(hresult_error)
+}
+
+fn joined(v: Variant) -> Variant {
+    match v {
+        Variant::Bstr(s) => Variant::Bstr(crate::rt::normalize(s)),
+        v => v,
+    }
 }
 
 pub fn var_cmp(
@@ -67,7 +74,7 @@ pub fn var_cmp(
     locale: Locale,
 ) -> Result<Option<Ordering>, VbaError> {
     if let (Variant::Bstr(x), Variant::Bstr(y), false) = (a, b, text) {
-        return Ok(Some(x.encode_utf16().cmp(y.encode_utf16())));
+        return Ok(Some(xlcalc::wide::units(x).cmp(xlcalc::wide::units(y))));
     }
     let flags = if text { var::NORM_IGNORECASE } else { 0 };
     Ok(
@@ -125,5 +132,5 @@ fn cat(a: &Variant, b: &Variant, locale: Locale) -> Result<Variant, VbaError> {
             return Ok(Variant::Bstr(crate::rt::from_bytes(&bytes)));
         }
     }
-    var::cat(a, b, locale).map_err(hresult_error)
+    var::cat(a, b, locale).map(joined).map_err(hresult_error)
 }

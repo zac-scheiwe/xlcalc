@@ -126,7 +126,7 @@ fn visit_kind(k: &mut Node, pre: &mut Text, o: &mut String) {
         }
         Node::Unary(op, x) => {
             visit(x, o);
-            if !matches!(op, UnaryOp::ImplicitQuiet | UnaryOp::ArrayZero) {
+            if !matches!(op, UnaryOp::ArrayZero) {
                 land(pre, o);
             }
         }
@@ -143,6 +143,7 @@ fn visit_kind(k: &mut Node, pre: &mut Text, o: &mut String) {
                 land_after(a, o);
             }
         }
+        Node::MemErr(_, x) => visit(x, o),
         Node::Paren(x) => {
             visit(x, o);
             if !o.is_empty() {

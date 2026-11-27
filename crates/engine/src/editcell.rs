@@ -35,7 +35,7 @@ fn short_date(loc: &Locale, y: i64, m: u32, d: u32) -> String {
 
 impl Workbook {
     pub(crate) fn number_edit_text(&self, fmt: &str, x: f64) -> String {
-        let class = NumberFormat::parse(fmt).map_or(EditClass::Plain, |f| f.edit_class());
+        let class = NumberFormat::parse_stored(fmt).map_or(EditClass::Plain, |f| f.edit_class());
         match class {
             EditClass::Plain => format_literal(x),
             EditClass::Percent => format!("{}%", format_literal(x * 100.0)),

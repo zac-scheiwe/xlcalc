@@ -1,6 +1,7 @@
 use crate::{CellAddr, RecalcReport, Rect, SheetId, Value, Workbook};
 
 pub const VALUES_SEP: char = crate::view::VALUES_SEP;
+pub const VALUES_NONE: &str = crate::view::VALUES_NONE;
 
 pub fn recalc(wb: &mut Workbook) -> RecalcReport {
     wb.command(crate::Command::Calculate, crate::calc::recalc)

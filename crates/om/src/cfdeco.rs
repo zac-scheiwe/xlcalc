@@ -1,9 +1,10 @@
 use xlcalc::cfv::{BarColor, CfKind, CfRule, CondValue, DataBarSpec, IconSetSpec};
-use xlcalc::style::{cv_color_index, indexed_rgb, stored_tint};
+use xlcalc::style::stored_tint;
 use xlcalc::SheetId;
 use xlcalc_variant::{HResult, Variant};
 
 use crate::app::{unsupported, Application, BookId, Object};
+use crate::cfv::CfValue;
 use crate::conv::Args;
 use crate::error::OmError;
 use crate::typelib::{InvokeKind, Member};
@@ -79,6 +80,19 @@ fn color_of(d: &DataBarSpec, part: CfPart) -> BarColor {
         CfPart::NegColor => d.neg,
         CfPart::NegBorderColor if d.neg_border_type == 1 => d.border,
         _ => d.neg_border,
+    }
+}
+
+fn neg_put_refused(d: &DataBarSpec, part: CfPart) -> Result<(), OmError> {
+    let same = match part {
+        CfPart::NegColor => d.neg_color_type == 1,
+        CfPart::NegBorderColor => d.neg_border_type == 1,
+        _ => false,
+    };
+    if same {
+        Err(OmError::app_defined())
+    } else {
+        Ok(())
     }
 }
 
@@ -291,14 +305,22 @@ impl Application<'_> {
                         let ty = a.i32(0)?.ok_or_else(OmError::app_defined)?;
 
                         let banned = if max { [1, 6] } else { [2, 7] };
-                        if !(0..=7).contains(&ty) || banned.contains(&ty) {
+                        if ty > 7 {
+                            return Err(invalid_arg());
+                        }
+                        if banned.contains(&ty) {
                             return Err(OmError::app_defined());
                         }
                         let (mut value, mut formula) = (None, None);
                         match a.get(1) {
                             Some(v) if !crate::conv::is_missing(v) => {
                                 if ty == 4 {
-                                    formula = a.string(1)?;
+                                    let t = a.string(1)?.unwrap_or_default();
+                                    formula = Some(if t.starts_with('=') {
+                                        t
+                                    } else {
+                                        format!("={t}")
+                                    });
                                 } else {
                                     value = Some(a.f64(1)?.ok_or_else(OmError::app_defined)?);
                                 }
@@ -312,13 +334,18 @@ impl Application<'_> {
                         }
                         self.bar_edit(book, sheet, id, |d| {
                             let c = if max { &mut d.max } else { &mut d.min };
-                            c.ty = ty;
+                            if ty >= 0 {
+                                c.ty = ty;
+                            }
                             c.value = value.unwrap_or(if matches!(ty, 1 | 2 | 6 | 7) {
                                 0.0
                             } else {
                                 c.value
                             });
-                            c.formula = formula;
+
+                            if formula.is_some() {
+                                c.formula = formula;
+                            }
                         })
                     }
                     _ => Err(unsupported("ConditionValue", m)),
@@ -331,32 +358,39 @@ impl Application<'_> {
             | CfPart::NegBorderColor => {
                 let d = bar_of(&rule)?;
                 let c = color_of(d, part);
+                let theme = self.book(book)?.wb.style_table().theme.clone();
                 match (m.name, m.kind) {
                     ("Color", Get) => Ok(i4(swap_rb(c.shown()) as i32)),
                     ("Color", Put) => {
                         let n = put().i32(0)?.ok_or_else(OmError::app_defined)?;
+                        neg_put_refused(d, part)?;
                         self.bar_edit(book, sheet, id, |d| {
                             *color_mut(d, part) = BarColor::new(swap_rb(n as u32 & 0xFF_FFFF));
                         })
                     }
-                    ("ColorIndex", Get) => Ok(i4(i32::from(cv_color_index(c.shown())))),
+
+                    ("ColorIndex", Get) => Ok(i4(i32::from(theme.pcv_color_index(c.rgb)))),
                     ("ColorIndex", Put) => {
                         let n = put().i32(0)?.ok_or_else(OmError::app_defined)?;
+
                         let rgb = u8::try_from(n + 7)
                             .ok()
                             .filter(|_| (1..=56).contains(&n))
-                            .and_then(indexed_rgb)
-                            .ok_or_else(OmError::app_defined)?;
+                            .and_then(|i| theme.indexed(i))
+                            .ok_or_else(OmError::bad_index)?;
+                        neg_put_refused(d, part)?;
                         self.bar_edit(book, sheet, id, |d| {
                             *color_mut(d, part) = BarColor::new(rgb);
                         })
                     }
                     ("TintAndShade", Get) => Ok(Variant::R8(c.tint)),
                     ("TintAndShade", Put) => {
-                        let t = put().f64(0)?.ok_or_else(OmError::app_defined)?;
+                        let t = put().f64(0).map_err(|_| invalid_arg())?;
+                        let t = t.ok_or_else(OmError::app_defined)?;
                         if !(-1.0..=1.0).contains(&t) {
                             return Err(invalid_arg());
                         }
+                        neg_put_refused(d, part)?;
                         self.bar_edit(book, sheet, id, |d| {
                             color_mut(d, part).tint = stored_tint(t);
                         })
@@ -447,37 +481,60 @@ impl Application<'_> {
                 match (m.name, m.kind) {
                     ("Index", Get) => Ok(i4(k as i32 + 1)),
                     ("Type", Get) => Ok(i4(c.ty)),
-                    ("Value", Get) => Ok(Variant::R8(c.value)),
+                    ("Value", Get) => Ok(match s.formulas.get(k) {
+                        Some(Some(f)) => Variant::Bstr(f.clone()),
+                        _ => Variant::R8(c.value),
+                    }),
                     ("Operator", Get) => Ok(i4(c.op)),
                     ("Icon", Get) => Ok(i4(c.icon)),
                     ("Type", Put) => {
                         let t = put().i32(0)?.ok_or_else(OmError::app_defined)?;
 
-                        if k == 0 || !(0..=5).contains(&t) {
+                        if k == 0 || !(0..=5).contains(&t) || matches!(t, 1 | 2) {
                             return Err(OmError::app_defined());
                         }
-                        edit(
-                            self,
-                            Box::new(move |c, _| {
+
+                        let n = s.crits.len();
+                        self.icons_edit(book, sheet, id, |s| {
+                            if let Some(c) = s.crits.get_mut(k) {
                                 c.ty = t;
-                                c.value = 0.0;
-                            }),
-                        )
+                                match t {
+                                    0 => c.value = 0.0,
+                                    3 | 5 => c.value = IconSetSpec::default_value(n, k),
+                                    _ => {}
+                                }
+                            }
+                            if let Some(f) = s.formulas.get_mut(k) {
+                                *f = None;
+                            }
+                        })
                     }
                     ("Value", Put) => {
-                        let v = put().f64(0)?.ok_or_else(OmError::app_defined)?;
-                        edit(self, Box::new(move |c, _| c.value = v))
+                        if k == 0 {
+                            return Err(OmError::app_defined());
+                        }
+
+                        let anchor = self.cf_rule_anchor(book, sheet, id);
+                        match self.cf_threshold_value(book, anchor, a)? {
+                            CfValue::Num(v) => edit(self, Box::new(move |c, _| c.value = v)),
+                            CfValue::Formula(t) => self.icons_edit(book, sheet, id, |s| {
+                                if let Some(f) = s.formulas.get_mut(k) {
+                                    *f = Some(t);
+                                }
+                            }),
+                        }
                     }
                     ("Operator", Put) => {
                         let o = put().i32(0)?.ok_or_else(OmError::app_defined)?;
                         if !matches!(o, 5 | 7) {
-                            return Err(OmError::app_defined());
+                            return Err(invalid_arg());
                         }
                         edit(self, Box::new(move |c, _| c.op = o))
                     }
                     ("Icon", Put) => {
                         let i = put().i32(0)?.ok_or_else(OmError::app_defined)?;
-                        if !(-1..=52).contains(&i) {
+
+                        if i != -1 && !(1..=52).contains(&i) {
                             return Err(OmError::app_defined());
                         }
                         self.icons_edit(book, sheet, id, |s| {
@@ -503,7 +560,8 @@ impl Application<'_> {
         match (m.name, m.kind) {
             ("Count", Get) => Ok(i4(20)),
             ("Item" | "_Default", _) => {
-                let i = a.i32(0)?.ok_or_else(OmError::app_defined)?;
+                let i = a.i32(0).map_err(|_| OmError::bad_index())?;
+                let i = i.ok_or_else(OmError::app_defined)?;
                 if !(1..=20).contains(&i) {
                     return Err(OmError::bad_index());
                 }

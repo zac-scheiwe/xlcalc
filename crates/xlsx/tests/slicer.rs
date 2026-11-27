@@ -1,6 +1,6 @@
 use xlcalc::pivot::{DataField, Form, Func, Orient, PivotCache, PivotTable};
 use xlcalc::{CellAddr, Rect, Value, Workbook};
-use xlcalc_xlsx::{check_package, import_bytes, save, SaveOptions};
+use xlcalc_xlsx::{check_package, import_bytes, save, xlsx_to_xlsb, SaveOptions};
 
 fn build() -> Workbook {
     let mut wb = Workbook::new();
@@ -18,11 +18,15 @@ fn build() -> Workbook {
             },
         );
     }
-    wb.add_table("T1", s, Rect::new(0, 0, 5, 1)).unwrap();
-    let c = wb.slicer_cache_add("T1", "k", false).unwrap();
+    wb.add_table("Data", s, Rect::new(0, 0, 5, 1)).unwrap();
+    let c = wb.slicer_cache_add("Data", "k", false).unwrap();
     let i = wb.slicer_add(c, s, Some("S1"), Some("Cap"), [10.0, 300.0, 100.0, 150.0]);
     assert_eq!(i, Ok(0));
-    wb.slicer_cache_mut(c).unwrap().slicers[0].columns = 2;
+    let first = &mut wb.slicer_cache_mut(c).unwrap().slicers[0];
+    first.columns = 2;
+    first.position_locked = true;
+    let shape = first.shape;
+    wb.drawing_mut(s).get_mut(shape).unwrap().locked = false;
     wb.slicer_select(c, "b", false).unwrap();
 
     let s2 = wb.add_sheet("Sheet2").unwrap();
@@ -113,17 +117,58 @@ fn round_trip() {
             );
             assert_eq!(p.style, q.style);
             assert_eq!(p.tv, q.tv);
-            assert!((p.row_h - q.row_h).abs() < 1e-3);
+            assert_eq!((p.row_h, p.position_locked), (q.row_h, q.position_locked));
         }
     }
 
     let s = back.workbook.sheets().next().unwrap().id;
     let sh = back.workbook.drawing(s).unwrap();
-    assert!(sh.shapes.iter().any(|x| x.name == "S1"));
+    assert!(sh.shapes.iter().any(|x| x.name == "S1" && !x.locked));
     let d = back.workbook.sheets().nth(2).unwrap().id;
     let sh = back.workbook.drawing(d).unwrap();
     assert!(sh
         .shapes
         .iter()
         .any(|x| x.name == "TL1" && x.kind == xlcalc::drawing::ShapeKind::Timeline));
+}
+
+#[test]
+fn round_trip_xlsb() {
+    let mut wb = build();
+    let c = wb.slicer_caches().iter().position(|c| !c.pivot).unwrap();
+    let cache = wb.slicer_cache_mut(c).unwrap();
+    (cache.sort, cache.cross, cache.custom_lists) = (3, 3, false);
+    let first = &mut cache.slicers[0];
+    first.header = false;
+    first.style = "SlicerStyleDark2".into();
+    let saved = save(&wb, None, &SaveOptions::default()).unwrap();
+    let (bytes, _) = xlsx_to_xlsb(&saved.bytes).unwrap();
+    if let Ok(p) = std::env::var("SLICER_XLSB_OUT") {
+        std::fs::write(p, &bytes).unwrap();
+    }
+    let back = import_bytes(bytes).unwrap();
+    let a = wb.slicer_caches();
+    let b = back.workbook.slicer_caches();
+    assert_eq!(a.len(), 3);
+    assert_eq!(b.len(), 3, "{:?}", back.warnings);
+    for x in a {
+        let y = b.iter().find(|y| y.name == x.name).unwrap();
+        assert_eq!(
+            (&x.table, x.pivot, &x.field, &x.off, &x.pivots),
+            (&y.table, y.pivot, &y.field, &y.off, &y.pivots)
+        );
+        assert_eq!(
+            (x.sort, x.cross, x.custom_lists),
+            (y.sort, y.cross, y.custom_lists)
+        );
+        assert_eq!(x.timeline, y.timeline);
+        assert_eq!(x.slicers.len(), y.slicers.len());
+        for (p, q) in x.slicers.iter().zip(&y.slicers) {
+            assert_eq!(
+                (&p.name, &p.caption, p.columns, &p.style, p.header, &p.tv),
+                (&q.name, &q.caption, q.columns, &q.style, q.header, &q.tv)
+            );
+            assert_eq!((p.row_h, p.position_locked), (q.row_h, q.position_locked));
+        }
+    }
 }

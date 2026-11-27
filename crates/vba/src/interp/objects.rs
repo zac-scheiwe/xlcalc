@@ -98,6 +98,20 @@ pub(crate) struct Connection {
 }
 
 impl Exec<'_> {
+    pub(crate) fn is_same(&mut self, a: &Variant, b: &Variant) -> Result<bool, VbaError> {
+        let (x, y) = (identity(a)?, identity(b)?);
+        match (a, b) {
+            (
+                Variant::Dispatch(Some(a)) | Variant::Unknown(Some(a)),
+                Variant::Dispatch(Some(b)) | Variant::Unknown(Some(b)),
+            ) if !is_instance(*a) && !is_instance(*b) => {
+                let (a, b) = (*a, *b);
+                self.lend(|h| Ok(h.same_object(a, b)))
+            }
+            _ => Ok(x == y),
+        }
+    }
+
     pub(super) fn class_of_type(&self, ty: &VType) -> Option<usize> {
         match ty {
             VType::Object(Some(c)) => self

@@ -4,6 +4,9 @@ use std::sync::atomic::{AtomicU32, AtomicUsize, Ordering};
 
 #[link(name = "kernel32", kind = "raw-dylib")]
 extern "system" {
+    fn GlobalLock(h: isize) -> *mut u8;
+    fn GlobalUnlock(h: isize) -> i32;
+    fn GlobalSize(h: isize) -> usize;
     fn GetModuleHandleW(name: *const u16) -> isize;
     fn GetProcAddress(module: isize, name: *const u8) -> usize;
 }
@@ -46,6 +49,9 @@ const XL_FREE: i32 = 0x4000;
 const XL_COERCE: i32 = 0x4002;
 const XL_SHEET_ID: i32 = 0x4004;
 const XL_GET_NAME: i32 = 0x4009;
+const XL_DEFINE_BINARY_NAME: i32 = 0x400c;
+const XL_GET_BINARY_NAME: i32 = 0x400d;
+const BIGDATA: u32 = 0x802;
 const XL_ASYNC_RETURN: i32 = 0x4010;
 const XL_EVENT_REGISTER: i32 = 0x4011;
 
@@ -521,6 +527,50 @@ unsafe extern "system" fn XlcCall(f: *const X, arg: *mut X) -> *mut X {
 }
 
 #[no_mangle]
+unsafe extern "system" fn XlcBin(mode: *mut X, name: *mut X, text: *mut X) -> *mut X {
+    let m = counted((*mode).val[0] as *const u16);
+    let bytes = if (*text).t & 0xFFF == STR {
+        counted((*text).val[0] as *const u16).into_bytes()
+    } else {
+        Vec::new()
+    };
+    let mut big = X::raw(BIGDATA);
+    big.val[0] = bytes.as_ptr() as u64;
+    big.val[1] = bytes.len() as u64;
+    let mut num = X::num(1.0);
+    let (code, mut res) = match m.as_str() {
+        "def" => call(XL_DEFINE_BINARY_NAME, &mut [name, &mut big]),
+        "defn" => call(XL_DEFINE_BINARY_NAME, &mut [name, &mut num]),
+        "del" => call(XL_DEFINE_BINARY_NAME, &mut [name]),
+        "get2" => call(XL_GET_BINARY_NAME, &mut [name, name]),
+        _ => call(XL_GET_BINARY_NAME, &mut [name]),
+    };
+    let body = if res.t & 0xFFF == BIGDATA {
+        let h = res.val[0] as isize;
+        let size = res.val[1] as u32 as usize;
+        let p = GlobalLock(h);
+        let data = if p.is_null() {
+            String::from("unlocked")
+        } else {
+            let n = size.min(GlobalSize(h)).min(64);
+            let t = String::from_utf8_lossy(std::slice::from_raw_parts(p, n)).into_owned();
+            GlobalUnlock(h);
+            t
+        };
+
+        format!("big:t={:#x};size={size};data={data}", res.t)
+    } else {
+        describe(&res)
+    };
+    let s = format!("ret={code};{body}");
+
+    if res.t & 0xFFF != BIGDATA {
+        release(&mut res);
+    }
+    give_text(&s)
+}
+
+#[no_mangle]
 unsafe extern "system" fn XlcCallN(
     f: *const X,
     a: *mut X,
@@ -916,6 +966,7 @@ unsafe extern "system" fn xlAutoOpen() -> i32 {
         ("XlcCall", "QQQ", "XlcCall"),
         ("XlcCallM", "QQQ#", "XlcCallMacro"),
         ("XlcCallN", "QQQQQQ", "XlcCallN"),
+        ("XlcBin", "QQQQ", "XlcBin"),
         ("XlcCallNM", "QQQQQQ#", "XlcCallNM"),
         ("XlcSheetId", "QQ", "XlcSheetId"),
         ("XlcRefTo", "UQQ", "XlcRefTo"),

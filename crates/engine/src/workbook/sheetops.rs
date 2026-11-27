@@ -7,7 +7,8 @@ use crate::formula::{self, Formula, Node, SheetRef};
 use crate::formula_print::print_node;
 use crate::text;
 use crate::workbook::{
-    tables::Table, EditError, Entry, FormulaId, NameDef, Sheet, SheetState, Workbook,
+    tables::Table, tables::TableId, EditError, Entry, FormulaId, NameDef, Sheet, SheetState,
+    Workbook,
 };
 
 pub(crate) const DEAD: SheetId = SheetId(0);
@@ -91,14 +92,17 @@ impl Workbook {
                 def.formula.root.clone()
             };
             let mut copy = NameDef {
+                def_info: None,
                 scope,
                 formula: Arc::new(Formula {
                     root,
                     volatile: def.formula.volatile,
+                    dynamic: def.formula.dynamic.clone(),
                 }),
                 ..def
             };
             copy.refers_to = print_node(self, &copy.formula.root, copy.host());
+            copy.refresh_info();
             self.names.insert(copy);
             crate::calc::name_changed(self, &key);
         }
@@ -167,6 +171,7 @@ impl Workbook {
         for mut def in defs {
             let host = def.host();
             def.refers_to = print_node(self, &def.formula.root, host);
+            def.refresh_info();
             self.names.insert(def);
         }
     }
@@ -205,16 +210,24 @@ impl Workbook {
         for (fid, root, volatile) in plan.formulas {
             let host = self.formula(fid).addr;
             let text = print_node(self, &root, host);
+            crate::eval::fdyn::cached(self, host);
             let c = self.formula_mut(fid);
-            c.formula = Arc::new(Formula { root, volatile });
+            let dynamic = c.formula.dynamic.clone();
+            c.formula = Arc::new(Formula {
+                root,
+                volatile,
+                dynamic,
+            });
             c.text = text;
         }
         for (mut def, root) in plan.names {
             let host = def.host();
             def.refers_to = print_node(self, &root, host);
+            def.refresh_info();
             def.formula = Arc::new(Formula {
                 root,
                 volatile: def.formula.volatile,
+                dynamic: def.formula.dynamic.clone(),
             });
             self.names.insert(def);
         }
@@ -238,6 +251,7 @@ impl Workbook {
             Formula {
                 root,
                 volatile: f.volatile,
+                dynamic: f.dynamic.clone(),
             }
         } else {
             f
@@ -278,7 +292,10 @@ impl Workbook {
                 crate::calc::mark_dirty(self, f);
             }
         }
-        Ok(self.after_edit(vec![]))
+        self.calc.skip_position_volatile = true;
+        let report = self.after_edit(vec![]);
+        self.calc.skip_position_volatile = false;
+        Ok(report)
     }
 
     pub(crate) fn dirty_all(&mut self, ids: &[FormulaId]) {
@@ -355,8 +372,9 @@ impl Workbook {
         let removed_tables: Vec<String> = self
             .tables
             .iter()
-            .filter(|t| t.sheet == id)
-            .map(|t| t.name.clone())
+            .enumerate()
+            .filter(|(ti, t)| t.sheet == id && !self.table_name_shadowed(*ti))
+            .map(|(_, t)| t.name.clone())
             .collect();
         let mut give_up = |sr: &SheetRef| match (sr, moved_to) {
             (SheetRef::Sheet(s), Some(to)) if *s == id => Some(SheetRef::Sheet(to)),
@@ -408,6 +426,7 @@ impl Workbook {
             crate::formula::map_node(root, &mut |n| remap_sheet(n, &mut give_up))
         });
         self.drawing_drop_sheet(id);
+        self.object_formulas_drop_sheet(id, &mut give_up);
         self.spark_drop_sheet(id);
         self.hl_drop_sheet(id);
         self.notes_drop_sheet(id);
@@ -436,7 +455,10 @@ impl Workbook {
         before: Option<SheetId>,
     ) -> Result<RecalcReport, EditError> {
         let from = self.sheet_position(id).ok_or(EditError::NoSuchSheet)?;
-        self.session.active = id;
+
+        if self.sheets[from].state == SheetState::Visible {
+            self.session.active = id;
+        }
 
         let next = self.sheets.get(from + 1).map(|s| s.id);
 
@@ -634,8 +656,6 @@ impl Workbook {
             }
             spanning.extend(more);
         }
-
-        let by_position = ["SHEET", "SHEETS"].map(crate::functions::lookup);
         self.formula_ids()
             .filter(|&f| {
                 let c = self.formula(f);
@@ -644,9 +664,6 @@ impl Workbook {
                 }
                 let mut hit = false;
                 crate::formula::walk(&c.formula.root, &mut |n| {
-                    if let Node::Func { id, .. } = n {
-                        hit |= by_position.contains(&Some(*id));
-                    }
                     if let Node::Name { key, sheet, .. } = n {
                         hit |= name_def(key, Some(c.addr.sheet), sheet)
                             .is_some_and(|k| spanning.contains(&k));
@@ -690,7 +707,11 @@ impl Workbook {
         let name = self.copy_name(&self.sheets[src_pos].name.clone())?;
         let new = SheetId(self.next_sheet);
         self.next_sheet += 1;
-        self.session.active = new;
+
+        let state = self.sheets[src_pos].state;
+        if state == SheetState::Visible {
+            self.session.active = new;
+        }
         if let Some(sel) = self.session.selection.get(&src).cloned() {
             self.session.selection.insert(new, sel);
         }
@@ -707,7 +728,9 @@ impl Workbook {
             let nn = self.copy_table_name(&t.name);
             table_names.push((t.name.clone(), nn.clone()));
             let mut copy = t.clone();
+            copy.id = TableId::fresh();
             copy.rename_in_snapshots(&t.name, &nn);
+            copy.disp = self.unique_display_name(&nn, None);
             copy.name = nn;
             copy.sheet = new;
             self.tables_made += 1;
@@ -716,7 +739,8 @@ impl Workbook {
 
         self.copy_sheet_data_tables(src, new);
         self.copy_sheet_scenarios(src, new);
-        if let Some(c) = self.cfv.get(&src).cloned() {
+        if let Some(mut c) = self.cfv.get(&src).cloned() {
+            c.retired.clear();
             self.cfv.insert(new, c);
         }
         self.drawing_copy_sheet(src, new);
@@ -749,7 +773,7 @@ impl Workbook {
             Sheet {
                 id: new,
                 name,
-                state: SheetState::Visible,
+                state,
                 kind: self_kind,
                 cells: Default::default(),
                 spills: Default::default(),
@@ -780,8 +804,9 @@ impl Workbook {
                         .set(r, c, Entry::Const(v));
                 }
                 Entry::Formula(fid) => {
-                    let (root, volatile, cached, array) = {
+                    let (root, volatile, cached, array, dynamic) = {
                         let f = self.formula(fid);
+                        crate::eval::fdyn::cached(self, f.addr);
                         let mut broken = false;
                         formula::walk(&f.formula.root, &mut |n| {
                             if let Node::Ref(SheetRef::Span(a, b), _) = n {
@@ -803,17 +828,7 @@ impl Workbook {
                             }
                         });
 
-                        let keep_names = src_local
-                            && !matches!(
-                                f.formula.root,
-                                Node::Unary(crate::parser::ast::UnaryOp::ImplicitQuiet, _)
-                            )
-                            && {
-                                let text = print_node(self, &f.formula.root, f.addr);
-                                let body = text.trim_start_matches('=');
-                                let special = ["@", "[", "#REF!"].iter().any(|s| body.contains(s));
-                                !special || crate::legacy::text_may_array(self, body, src)
-                            };
+                        let keep_names = src_local && crate::eval::fdyn::cached(self, f.addr);
                         (
                             formula::map_node(&f.formula.root, &mut |n: &Node| match n {
                                 Node::Name {
@@ -831,10 +846,19 @@ impl Workbook {
                             f.formula.volatile,
                             f.value.clone(),
                             f.array,
+                            f.formula.dynamic.clone(),
                         )
                     };
                     let text = print_node(self, &root, addr);
-                    let nf = self.alloc_formula(addr, Arc::new(Formula { root, volatile }), text);
+                    let nf = self.alloc_formula(
+                        addr,
+                        Arc::new(Formula {
+                            root,
+                            volatile,
+                            dynamic,
+                        }),
+                        text,
+                    );
 
                     self.formula_mut(nf).value = cached;
                     self.formula_mut(nf).array = array;
@@ -1034,12 +1058,14 @@ impl Workbook {
             };
             let host = CellAddr::new(new, 0, 0);
             self.names.insert(NameDef {
+                def_info: None,
                 name: def.name.clone(),
                 scope: Some(new),
                 refers_to: print_node(self, &root, host),
                 formula: Arc::new(Formula {
                     root,
                     volatile: def.formula.volatile,
+                    dynamic: def.formula.dynamic.clone(),
                 }),
             });
 
@@ -1088,6 +1114,7 @@ impl Workbook {
                 c.formula = Arc::new(Formula {
                     root,
                     volatile: formula.volatile,
+                    dynamic: formula.dynamic.clone(),
                 });
                 c.text = text;
             }

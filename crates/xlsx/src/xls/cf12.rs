@@ -3,9 +3,9 @@ use super::read::Fx;
 use super::wextras::rgce;
 use super::wsheet::Cx;
 use crate::xlsb::{esc, Dec};
-use crate::xlsb_enc::Cls;
 use crate::xml::Node;
 use std::fmt::Write as _;
+use xlcalc::FormulaContext;
 
 const COLOR_SCALE: u8 = 3;
 const DATA_BAR: u8 = 4;
@@ -57,7 +57,7 @@ fn formula(
     sheet: &str,
 ) -> Result<String, String> {
     match fx.text(b, &[], base, Some(idx), cp)? {
-        Dec::Text(t) => Ok(t
+        Dec::Text(t, _) => Ok(t
             .replace(&format!("'{}'!", sheet.replace('\'', "''")), "")
             .replace(&format!("{sheet}!"), "")),
         Dec::Exp { .. } => Err("shared formula in a conditional format".into()),
@@ -260,7 +260,7 @@ fn put_cfvo(
     out.push(kind);
     let mut nominal = 3;
     if kind == 7 {
-        let f = rgce(cx, idx, val, base, Cls::Value)?;
+        let f = rgce(cx, idx, val, base, FormulaContext::ConditionalFormat)?;
         out.extend((f.len() as u16).to_le_bytes());
         nominal += f.len();
         out.extend(f);

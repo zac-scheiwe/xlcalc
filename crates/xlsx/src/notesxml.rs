@@ -8,6 +8,8 @@ pub(crate) struct NoteDef {
     pub author: String,
     pub text: String,
     pub visible: bool,
+
+    pub spid: u32,
 }
 
 fn cell_of(r: &str) -> Option<(u32, u32)> {
@@ -21,6 +23,7 @@ pub(crate) fn parse(comments: &Node, vml: Option<&str>) -> Vec<NoteDef> {
         .map(|a| a.children("author").map(|x| x.text.clone()).collect())
         .unwrap_or_default();
     let shown = vml.map(shown_cells).unwrap_or_default();
+    let ids = vml.map(shape_ids).unwrap_or_default();
     let mut out = Vec::new();
     if let Some(list) = comments.child("commentList") {
         for n in list.children("comment") {
@@ -39,6 +42,7 @@ pub(crate) fn parse(comments: &Node, vml: Option<&str>) -> Vec<NoteDef> {
                 author,
                 text: n.child("text").map(crate::si_text).unwrap_or_default(),
                 visible: shown.contains(&(row, col)),
+                spid: ids.iter().find(|i| i.0 == (row, col)).map_or(0, |i| i.1),
             });
         }
     }
@@ -69,11 +73,38 @@ fn shown_cells(vml: &str) -> Vec<(u32, u32)> {
     out
 }
 
+fn shape_ids(vml: &str) -> Vec<((u32, u32), u32)> {
+    let mut out = Vec::new();
+    for part in vml.split("<v:shape ").skip(1) {
+        let body = part.split("</v:shape>").next().unwrap_or("");
+        if !body.contains("ObjectType=\"Note\"") {
+            continue;
+        }
+        let head = body.split('>').next().unwrap_or("");
+        let id = ["spid=\"_x0000_s", "id=\"_x0000_s"].iter().find_map(|key| {
+            head.split(key)
+                .nth(1)
+                .and_then(|r| r.split('"').next())
+                .and_then(|n| n.parse().ok())
+        });
+        let get = |tag: &str| -> Option<u32> {
+            let open = format!("<x:{tag}>");
+            let at = body.find(&open)? + open.len();
+            body[at..].split('<').next()?.trim().parse().ok()
+        };
+        if let (Some(id), Some(r), Some(c)) = (id, get("Row"), get("Column")) {
+            out.push(((r, c), id));
+        }
+    }
+    out
+}
+
 pub(crate) fn from_model(wb: &Workbook, sheet: SheetId) -> Vec<NoteDef> {
     wb.notes(sheet)
         .map(|((row, col), n)| NoteDef {
             row,
             col,
+            spid: n.spid,
             author: n.author.clone(),
             text: n.text.clone(),
             visible: n.visible,
@@ -83,11 +114,12 @@ pub(crate) fn from_model(wb: &Workbook, sheet: SheetId) -> Vec<NoteDef> {
 
 pub(crate) fn apply(wb: &mut Workbook, sheet: SheetId, defs: &[NoteDef]) {
     for d in defs {
-        wb.note_add(
+        wb.note_load(
             CellAddr::new(sheet, d.row, d.col),
             &d.text,
             &d.author,
             d.visible,
+            d.spid,
         );
     }
 }
@@ -140,7 +172,11 @@ fn shapes_xml(notes: &[NoteDef], map: u32) -> String {
         let (c0, r0) = (n.col + 1, n.row.saturating_sub(1));
         vml.push_str(&format!(
             "<v:shape id=\"_x0000_s{}\" type=\"#_x0000_t202\" style=\"position:absolute;margin-left:80pt;margin-top:2pt;width:108pt;height:59pt;z-index:{};visibility:{}\" fillcolor=\"#ffffe1\" o:insetmode=\"auto\"><v:fill color2=\"#ffffe1\"/><v:shadow on=\"t\" color=\"black\" obscured=\"t\"/><v:path o:connecttype=\"none\"/><v:textbox style=\"mso-direction-alt:auto\"><div style=\"text-align:left\"></div></v:textbox><x:ClientData ObjectType=\"Note\"><x:MoveWithCells/><x:SizeWithCells/><x:Anchor>{}, 15, {}, 10, {}, 15, {}, 16</x:Anchor><x:AutoFill>False</x:AutoFill><x:Row>{}</x:Row><x:Column>{}</x:Column>{}</x:ClientData></v:shape>",
-            map * 1024 + 1 + i as u32,
+            if n.spid == 0 {
+                map * 1024 + 1 + i as u32
+            } else {
+                n.spid
+            },
             i + 1,
             if n.visible { "visible" } else { "hidden" },
             c0,
@@ -155,9 +191,25 @@ fn shapes_xml(notes: &[NoteDef], map: u32) -> String {
     vml
 }
 
+pub(crate) fn idmap(listed: &str, ids: impl IntoIterator<Item = u32>) -> String {
+    let mut v: Vec<u32> = listed
+        .split(',')
+        .filter_map(|x| x.trim().parse().ok())
+        .collect();
+    v.extend(xlcalc::spid::clusters(ids));
+    v.sort_unstable();
+    v.dedup();
+    let v: Vec<String> = v.iter().map(u32::to_string).collect();
+    v.join(",")
+}
+
 pub(crate) fn vml_xml(notes: &[NoteDef], map: u32) -> String {
+    let mut data = idmap("", notes.iter().map(|n| n.spid).filter(|i| *i != 0));
+    if data.is_empty() {
+        data = map.to_string();
+    }
     format!(
-        "{VML_HEAD}<o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\"{map}\"/></o:shapelayout>{VML_TYPE}{}</xml>",
+        "{VML_HEAD}<o:shapelayout v:ext=\"edit\"><o:idmap v:ext=\"edit\" data=\"{data}\"/></o:shapelayout>{VML_TYPE}{}</xml>",
         shapes_xml(notes, map)
     )
 }
@@ -183,27 +235,25 @@ pub(crate) fn merge_vml(existing: Option<&str>, notes: &[NoteDef], map: u32) -> 
     if notes.is_empty() {
         return kept.contains("<v:shape ").then_some(kept);
     }
-
     let listed: Option<String> = kept
         .split("<o:idmap")
         .nth(1)
         .and_then(|t| t.split("data=\"").nth(1))
         .and_then(|t| t.split('"').next())
         .map(str::to_string);
-    let blocks: Vec<u32> = listed
+
+    let free = listed
         .iter()
-        .flat_map(|d| d.split(',').filter_map(|x| x.trim().parse().ok()))
-        .collect();
-    let map = (blocks.iter().copied().max().unwrap_or(0) + 1).max(map);
-    let shapes = shapes_xml(notes, map);
+        .flat_map(|d| d.split(',').filter_map(|x| x.trim().parse::<u32>().ok()))
+        .max()
+        .map_or(map, |m| (m + 1).max(map));
+    let shapes = shapes_xml(notes, free);
     let at = kept.rfind("</xml>")?;
     kept.insert_str(at, &shapes);
     if let Some(old) = listed {
-        kept = kept.replacen(
-            &format!("data=\"{old}\""),
-            &format!("data=\"{old},{map}\""),
-            1,
-        );
+        let own = notes.iter().map(|n| n.spid).filter(|i| *i != 0);
+        let new = idmap(&old, own);
+        kept = kept.replacen(&format!("data=\"{old}\""), &format!("data=\"{new}\""), 1);
     }
     Some(kept)
 }

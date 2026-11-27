@@ -17,6 +17,8 @@ pub struct AdvancedFilterSpec {
     pub unique: bool,
 }
 
+pub type Filtered = (RecalcReport, Vec<(CellAddr, CellAddr)>);
+
 fn header_name(v: &Value) -> Option<String> {
     match v {
         Value::Text(t) if !t.is_empty() => Some(t.to_string()),
@@ -47,7 +49,7 @@ impl Workbook {
             .collect();
         let mut changed = Vec::new();
         for f in &old {
-            if let Some(rect) = self.filter_rect(f) {
+            if let Some(rect) = self.filter_rect(sheet, f) {
                 let last = if f.total_row { rect.r1 - 1 } else { rect.r1 };
                 let v = self.view_mut(sheet);
                 for r in rect.r0 + 1..=last {
@@ -66,16 +68,18 @@ impl Workbook {
         changed
     }
 
-    pub fn advanced_filter(
-        &mut self,
-        spec: &AdvancedFilterSpec,
-    ) -> Result<RecalcReport, EditError> {
-        self.command(Command::View, |wb| wb.advanced_filter_run(spec))
+    pub fn advanced_filter(&mut self, spec: &AdvancedFilterSpec) -> Result<Filtered, EditError> {
+        self.command(Command::View, |wb| {
+            let mut copied = Vec::new();
+            let report = wb.advanced_filter_run(spec, &mut copied)?;
+            Ok((report, copied))
+        })
     }
 
     fn advanced_filter_run(
         &mut self,
         spec: &AdvancedFilterSpec,
+        copied: &mut Vec<(CellAddr, CellAddr)>,
     ) -> Result<RecalcReport, EditError> {
         let bad = || EditError::Compile("AdvancedFilter method of Range class failed".into());
         let (sheet, list) = spec.list;
@@ -283,6 +287,15 @@ impl Workbook {
                     return Err(bad());
                 }
                 self.fmt_move_pairs(&pairs);
+                if own_headers {
+                    copied.extend((0..list.cols()).map(|k| {
+                        (
+                            CellAddr::new(sheet, list.r0, list.c0 + k),
+                            CellAddr::new(ds, drect.r0, drect.c0 + k),
+                        )
+                    }));
+                }
+                copied.append(&mut pairs);
                 for (to, v) in writes {
                     report.changed.push(to);
                     self.set_value_raw(to, v);

@@ -1,0 +1,1256 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A2')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B1')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B2')",
+   "prop": "Value2",
+   "value": 4
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('H1')",
+   "prop": "Value2",
+   "value": "item"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I1')",
+   "prop": "Value2",
+   "value": "qty"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J1')",
+   "prop": "Value2",
+   "value": "twice"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('H2')",
+   "prop": "Value2",
+   "value": "a"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I2')",
+   "prop": "Value2",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('H3')",
+   "prop": "Value2",
+   "value": "b"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I3')",
+   "prop": "Value2",
+   "value": 7
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet1').Range('H1:J3')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').ListObjects(1)",
+   "prop": "Name",
+   "value": "Tbl"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J2')",
+   "prop": "Formula",
+   "value": "=[@qty]*2"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').ListObjects(1)",
+   "prop": "ShowTotals",
+   "value": true
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I4')",
+   "prop": "Formula",
+   "value": "=SUBTOTAL(109,Tbl[qty])*2"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J4')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[#Data])+MAX([twice])"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "farName",
+    "=Sheet1!$A$70000"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "farArea",
+    "=Sheet1!$A$1:$IW$70000"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "tblData",
+    "=Tbl[#Data]"
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C1')",
+   "prop": "Formula",
+   "value": "=A70000"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C2')",
+   "prop": "Formula",
+   "value": "=IW1"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C3')",
+   "prop": "Formula",
+   "value": "=SUM(A1:A70000)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C4')",
+   "prop": "Formula",
+   "value": "=SUM(A65536:A65537)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C5')",
+   "prop": "Formula",
+   "value": "=SUM(IV1:IW1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C6')",
+   "prop": "Formula",
+   "value": "=Sheet2!A70000"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "prop": "Formula",
+   "value": "=SUM(Sheet2!A1:IW2)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "prop": "Formula",
+   "value": "=SUM(70000:70001)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C9')",
+   "prop": "Formula",
+   "value": "=SUM(65000:70001)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C10')",
+   "prop": "Formula",
+   "value": "=SUM(IW:IX)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C11')",
+   "prop": "Formula",
+   "value": "=SUM(A:IW)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C12')",
+   "prop": "Formula",
+   "value": "=SUM($A$70000,1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C13')",
+   "prop": "Formula",
+   "value": "=SUM(A:A)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C14')",
+   "prop": "Formula",
+   "value": "=SUM(1:1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C15')",
+   "prop": "Formula",
+   "value": "=SUM(A1:A1048576)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C16')",
+   "prop": "Formula",
+   "value": "=SUM(A2:A1048576)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C17')",
+   "prop": "Formula",
+   "value": "=SUM(A1:XFD1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C18')",
+   "prop": "Formula",
+   "value": "=SUM(B1:XFD1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C19')",
+   "prop": "Formula",
+   "value": "=A1048576"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C20')",
+   "prop": "Formula",
+   "value": "=SUM(A70000:B70001 A1:B2)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C21')",
+   "prop": "Formula",
+   "value": "=SUM((A1,IW1))"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C22')",
+   "prop": "Formula",
+   "value": "=SUM(A1:IW1:B2)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C23')",
+   "prop": "Formula",
+   "value": "=SUM(Sheet1:Sheet2!A70000)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C24')",
+   "prop": "Formula",
+   "value": "=ROW(XFD1048576)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C25')",
+   "prop": "Formula",
+   "value": "=farName+1"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C26')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[#Data])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C27')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C28')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C29')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[[#Data],[qty]])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C30')",
+   "prop": "Formula",
+   "value": "=ROWS(Tbl[#All])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C31')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[[#Data],[#Totals],[qty]])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C32')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[[qty]:[twice]])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C33')",
+   "prop": "Formula",
+   "value": "=COUNTA(Tbl[#Headers])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C34')",
+   "prop": "Formula",
+   "value": "=SUM(Tbl[#Totals])"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "FormulaArray",
+   "value": "=SUM(A69999:A70000)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "FormulaArray",
+   "value": "=SUM(Tbl[#Data])"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook",
+   "prop": "CheckCompatibility",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/beyond.xlsb",
+    50
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/beyond.xlsb",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/beyond.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/beyond.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/beyond.xlsb"
+   ]
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C5')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C5')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C6')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C9')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C9')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C10')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C10')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C11')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C11')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C12')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C12')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C13')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C13')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C14')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C14')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C15')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C15')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C16')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C16')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C17')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C17')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C18')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C18')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C19')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C19')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C20')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C20')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C21')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C21')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C22')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C22')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C23')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C23')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C24')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C24')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C25')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C25')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C26')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C26')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C27')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C27')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C28')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C28')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C29')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C29')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C30')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C30')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C31')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C31')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C32')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C32')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C33')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C33')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C34')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C34')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names('farName')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names('farArea')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names('tblData')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/beyond.xls"
+   ]
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C5')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C5')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C6')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C9')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C9')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C10')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C10')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C11')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C11')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C12')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C12')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C13')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C13')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C14')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C14')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C15')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C15')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C16')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C16')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C17')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C17')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C18')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C18')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C19')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C19')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C20')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C20')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C21')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C21')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C22')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C22')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C23')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C23')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C24')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C24')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C25')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C25')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C26')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C26')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C27')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C27')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C28')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C28')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C29')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C29')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C30')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C30')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C31')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C31')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C32')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C32')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C33')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C33')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C34')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C34')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('I4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('J2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names('farName')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names('farArea')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Names('tblData')",
+   "prop": "RefersTo"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  }
+ ],
+ "fresh_excel": true
+}

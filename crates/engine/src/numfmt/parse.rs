@@ -54,7 +54,7 @@ pub(crate) enum Tok {
     Colon,
     At,
     General,
-    AmPm,
+    AmPm(Option<AmPmMark>),
     AmPmCjk,
 
     Compiled,
@@ -71,6 +71,33 @@ pub(crate) enum Tok {
     DbNum(u8),
 
     Calendar(u8),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct AmPmMark {
+    short: bool,
+    upper: [bool; 2],
+}
+
+impl AmPmMark {
+    fn of(cs: &[char]) -> AmPmMark {
+        let short = cs.get(1) == Some(&'/');
+        let second = if short { 2 } else { 3 };
+        AmPmMark {
+            short,
+            upper: [0, second].map(|k| cs.get(k).is_some_and(char::is_ascii_uppercase)),
+        }
+    }
+
+    pub(crate) fn text(self, pm: bool) -> &'static str {
+        let k = usize::from(pm);
+        let table = if self.short {
+            [["a", "A"], ["p", "P"]]
+        } else {
+            [["am", "AM"], ["pm", "PM"]]
+        };
+        table[k][usize::from(self.upper[k])]
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -93,7 +120,8 @@ pub(crate) enum DateTok {
     LeftS(u8),
 
     General(bool),
-    AmPm,
+
+    AmPm(Option<AmPmMark>),
     AmPmCjk,
     EYear(u8),
     Era(u8),
@@ -138,6 +166,8 @@ pub(crate) struct SciLayout {
     pub n_frac: usize,
     pub n_exp: usize,
     pub grouping: bool,
+
+    pub precision_scale: i32,
 }
 
 #[derive(Clone, Debug)]
@@ -168,6 +198,8 @@ pub(crate) struct DateLayout {
     pub lcid: Option<u32>,
 
     pub hijri: bool,
+
+    pub day_marks: Vec<usize>,
 }
 
 #[derive(Clone, Debug)]
@@ -274,7 +306,7 @@ pub(super) fn excel_hex(t: &str) -> Option<u32> {
     Some(acc as u32)
 }
 
-fn parse_bracket(s: &str) -> Option<Tok> {
+pub(super) fn parse_bracket(s: &str) -> Option<Tok> {
     if s.is_empty() {
         return Some(Tok::Elapsed(Unit::M, 0));
     }
@@ -370,7 +402,7 @@ fn starts_with_ci(cs: &[char], i: usize, pat: &str) -> bool {
             .all(|(a, b)| a.to_lowercase().eq(b.to_lowercase()))
 }
 
-fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
+fn tokenize(code: &str, stored: bool) -> Option<Vec<Vec<Tok>>> {
     let cs: Vec<char> = code.chars().collect();
     let mut sections: Vec<Vec<Tok>> = vec![Vec::new()];
     let mut i = 0;
@@ -484,8 +516,12 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
                 }
             }
             'A' | 'a' if starts_with_ci(&cs, i, "am/pm") => {
-                cur.push(Tok::AmPm);
+                cur.push(Tok::AmPm(stored.then(|| AmPmMark::of(&cs[i..]))));
                 i += 5;
+            }
+            'A' | 'a' if stored && starts_with_ci(&cs, i, "a/p") => {
+                cur.push(Tok::AmPm(Some(AmPmMark::of(&cs[i..]))));
+                i += 3;
             }
 
             'A' | 'a' if run('a') >= 3 => {
@@ -547,17 +583,16 @@ fn tokenize(code: &str) -> Option<Vec<Vec<Tok>>> {
 }
 
 fn code_lookalike(c: char) -> bool {
-    matches!(u32::from(c),
-        0xC8..=0xCB | 0xD0 | 0xD1 | 0xDD | 0xE8..=0xEB | 0xF0 | 0xF1 | 0xFD | 0xFF
-        | 0x10E..=0x127 | 0x143..=0x149 | 0x15A..=0x161 | 0x176..=0x178
-        | 0x180..=0x185 | 0x18A..=0x18F | 0x193 | 0x194 | 0x19C..=0x19E
-        | 0x1E02..=0x1E07 | 0x1E0A..=0x1E1D | 0x1E20)
+    !c.is_ascii()
+        && "ymdhsegbn"
+            .chars()
+            .any(|l| crate::text::equal_ignoring_accents(c, l))
 }
 
 fn is_date_tok(t: &Tok) -> bool {
     matches!(
         t,
-        Tok::Date(..) | Tok::Elapsed(..) | Tok::AmPm | Tok::AmPmCjk
+        Tok::Date(..) | Tok::Elapsed(..) | Tok::AmPm(_) | Tok::AmPmCjk
     )
 }
 
@@ -568,7 +603,7 @@ fn literal_item(t: &Tok) -> Option<Item> {
         Tok::LitDigit(c) => Item::Lit(c.to_string()),
         Tok::Space(c) => Item::Space(*c),
         Tok::Fill(c) => Item::Fill(*c),
-        Tok::AmPm => Item::Date(DateTok::AmPm),
+        Tok::AmPm(m) => Item::Date(DateTok::AmPm(*m)),
         _ => return None,
     })
 }
@@ -648,6 +683,7 @@ fn compile_number(toks: &[Tok]) -> Option<Body> {
 fn compile_sci(toks: &[Tok]) -> Option<Body> {
     let mut items = Vec::new();
     let (mut n_int, mut n_frac, mut n_exp, mut grouping) = (0usize, 0usize, 0usize, false);
+    let mut precision_scale = 0i32;
 
     let mut phase = 0;
     for (i, t) in toks.iter().enumerate() {
@@ -707,15 +743,35 @@ fn compile_sci(toks: &[Tok]) -> Option<Body> {
                     {
                         grouping = true;
                     }
+                    let before_exp = matches!(next, Some(Tok::Exp(_)));
+                    let after_exp = phase >= 2
+                        && !toks[i + 1..]
+                            .iter()
+                            .any(|x| matches!(x, Tok::Ph(_) | Tok::Point));
+                    if before_exp || after_exp {
+                        precision_scale -= 3;
+                    }
                 } else if i == 0 || !matches!(toks[i - 1], Tok::Comma) {
                     items.push(Item::Lit(",".into()));
                 }
             }
-            Tok::Percent => items.push(Item::Lit("%".into())),
+            Tok::Percent => {
+                precision_scale += 2;
+                items.push(Item::Lit("%".into()));
+            }
             _ => items.push(literal_item(t)?),
         }
     }
-    if n_int + n_frac == 0 || n_frac > 127 {
+
+    if n_int + n_frac == 0 {
+        let at = toks.iter().position(|t| matches!(t, Tok::Exp(_)))?;
+        if !toks[..at].iter().any(|t| matches!(t, Tok::LitDigit(_)))
+            || toks[at..].iter().any(|t| matches!(t, Tok::Comma))
+        {
+            return None;
+        }
+    }
+    if n_frac > 127 {
         return None;
     }
     Some(Body::Sci(SciLayout {
@@ -724,6 +780,7 @@ fn compile_sci(toks: &[Tok]) -> Option<Body> {
         n_frac,
         n_exp,
         grouping,
+        precision_scale,
     }))
 }
 
@@ -1012,11 +1069,16 @@ fn compile_date(
     hijri: bool,
     cal_prefix: bool,
     compiled: bool,
+    marks: &[usize],
 ) -> Option<Body> {
     let mut items = Vec::new();
     let (mut subsec, mut ampm, mut elapsed) = (0u8, false, 0);
+    let mut day_marks = Vec::with_capacity(marks.len());
     let mut i = 0;
     while i < toks.len() {
+        while marks.get(day_marks.len()).is_some_and(|&m| m <= i) {
+            day_marks.push(items.len());
+        }
         let t = &toks[i];
         match t {
             Tok::Date(f, n) => items.push(Item::Date(match f {
@@ -1038,9 +1100,9 @@ fn compile_date(
                     Unit::S => DateTok::ElapsedS(*n),
                 }));
             }
-            Tok::AmPm => {
+            Tok::AmPm(m) => {
                 ampm = true;
-                items.push(Item::Date(DateTok::AmPm));
+                items.push(Item::Date(DateTok::AmPm(*m)));
             }
             Tok::AmPmCjk => {
                 ampm = true;
@@ -1084,6 +1146,7 @@ fn compile_date(
         }
         i += 1;
     }
+    day_marks.resize(marks.len(), items.len());
 
     if items
         .iter()
@@ -1108,7 +1171,7 @@ fn compile_date(
             .collect();
         let mut twelve: Vec<usize> = hours.last().copied().into_iter().collect();
         for (a, it) in items.iter().enumerate() {
-            if matches!(it, Item::Date(DateTok::AmPm | DateTok::AmPmCjk)) {
+            if matches!(it, Item::Date(DateTok::AmPm(_) | DateTok::AmPmCjk)) {
                 twelve.extend(hours.iter().copied().filter(|&h| h < a).max());
             }
         }
@@ -1127,6 +1190,7 @@ fn compile_date(
         signed,
         lcid,
         hijri,
+        day_marks,
     }))
 }
 
@@ -1211,6 +1275,8 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
             .iter()
             .all(|t| matches!(t, Tok::Color(_) | Tok::Cond(..) | Tok::DbNum(_)));
     let mut toks = Vec::with_capacity(raw.len());
+
+    let mut marks = Vec::new();
     for t in raw {
         match t {
             Tok::Compiled => compiled = true,
@@ -1235,6 +1301,7 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
                     return None;
                 }
                 seen_locale = true;
+                marks.push(toks.len());
                 if l.is_some() {
                     lcid = l;
                 }
@@ -1259,6 +1326,9 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
                     return None;
                 }
                 calendar = Some(c);
+                if c == 1 {
+                    marks.push(toks.len());
+                }
             }
             t => toks.push(t),
         }
@@ -1285,7 +1355,8 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
                 return None;
             }
         }
-        toks = tokenize(code)?.pop()?;
+        toks = tokenize(code, false)?.pop()?;
+        marks.clear();
         lcid = names;
     }
 
@@ -1296,7 +1367,7 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
             let tail = &toks[p + 1..];
             (1..=3).contains(&tail.len())
                 && tail.iter().all(|t| matches!(t, Tok::Ph(Ph::Zero)))
-                && toks[..p].iter().any(|t| matches!(t, Tok::AmPm))
+                && toks[..p].iter().any(|t| matches!(t, Tok::AmPm(_)))
                 && !toks[..p]
                     .iter()
                     .any(|t| matches!(t, Tok::Ph(_) | Tok::Percent))
@@ -1306,7 +1377,7 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
             .iter()
             .any(|t| matches!(t, Tok::Date(..) | Tok::Elapsed(..) | Tok::AmPmCjk))
     {
-        if let Some(first) = toks.iter().position(|t| matches!(t, Tok::AmPm)) {
+        if let Some(first) = toks.iter().position(|t| matches!(t, Tok::AmPm(_))) {
             for t in &mut toks[first..] {
                 match t {
                     Tok::Point => *t = Tok::Lit(".".into()),
@@ -1320,12 +1391,12 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
     let has_at = has(&|t| matches!(t, Tok::At));
 
     let ampm_number = !ampm_subsec
-        && has(&|t| matches!(t, Tok::AmPm))
+        && has(&|t| matches!(t, Tok::AmPm(_)))
         && !has(&|t| matches!(t, Tok::Date(..) | Tok::Elapsed(..) | Tok::AmPmCjk))
         && has(&|t| matches!(t, Tok::Percent | Tok::Point | Tok::Ph(_)))
         && !has(&|t| matches!(t, Tok::At | Tok::General | Tok::Slash | Tok::Exp(_)));
     if ampm_number {
-        let first = toks.iter().position(|t| matches!(t, Tok::AmPm))?;
+        let first = toks.iter().position(|t| matches!(t, Tok::AmPm(_)))?;
         if toks[first..].iter().any(|t| matches!(t, Tok::Ph(_))) {
             return None;
         }
@@ -1396,7 +1467,7 @@ fn compile_section(raw: Vec<Tok>) -> Option<Section> {
                 }
             }
         }
-        compile_date(&toks, lcid, hijri, calendar.is_some(), compiled)?
+        compile_date(&toks, lcid, hijri, calendar.is_some(), compiled, &marks)?
     } else if has_general {
         if toks.iter().filter(|t| matches!(t, Tok::General)).count() > 1 {
             return None;
@@ -1483,13 +1554,22 @@ fn inherit_first_locale(raw: &mut [Vec<Tok>]) {
 }
 
 pub(crate) fn parse_format(code: &str) -> Option<NumberFormat> {
-    let plain = parse_code(code, code)?;
+    compile_code(code, false)
+}
+
+fn compile_code(code: &str, stored: bool) -> Option<NumberFormat> {
+    let plain = parse_code(code, code, stored)?;
 
     let lower = code.to_ascii_lowercase();
     if lower.contains("am/pm") && lower.contains('[') {
-        let compiled = super::readback::compiled_spelling(code);
+        let ampm = if stored {
+            None
+        } else {
+            super::readback::designators(0)
+        };
+        let compiled = super::readback::compiled_spelling(code, ampm);
         if compiled != code {
-            if let Some(f) = parse_code(&compiled, code) {
+            if let Some(f) = parse_code(&compiled, code, stored) {
                 return Some(f);
             }
         }
@@ -1497,11 +1577,41 @@ pub(crate) fn parse_format(code: &str) -> Option<NumberFormat> {
     Some(plain)
 }
 
-fn parse_code(code: &str, typed: &str) -> Option<NumberFormat> {
+pub(crate) fn parse_stored(code: &str) -> Option<NumberFormat> {
+    let stored = !["h:mm am/pm", "h:mm:ss am/pm"]
+        .iter()
+        .any(|b| code.eq_ignore_ascii_case(b));
+    compile_code(code, stored).or_else(|| {
+        if !code.contains('[') {
+            return None;
+        }
+        let mut marked = String::from("\u{e000}");
+        let (mut quoted, mut escaped, mut bracket) = (false, false, false);
+        for c in code.chars() {
+            marked.push(c);
+            if escaped {
+                escaped = false;
+            } else if c == '\\' {
+                escaped = true;
+            } else if c == '"' {
+                quoted = !quoted;
+            } else if !quoted && c == '[' {
+                bracket = true;
+            } else if !quoted && c == ']' {
+                bracket = false;
+            } else if !quoted && !bracket && c == ';' {
+                marked.push('\u{e000}');
+            }
+        }
+        parse_code(&marked, code, stored)
+    })
+}
+
+fn parse_code(code: &str, typed: &str, stored: bool) -> Option<NumberFormat> {
     if typed.encode_utf16().count() > 255 {
         return None;
     }
-    let mut raw = tokenize(code)?;
+    let mut raw = tokenize(code, stored)?;
     inherit_first_locale(&mut raw);
     let mut sections: Vec<Section> = raw
         .into_iter()

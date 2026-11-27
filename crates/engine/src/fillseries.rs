@@ -135,6 +135,13 @@ impl Workbook {
                 CellAddr::new(sheet, range.r0 + k, range.c0 + l)
             }
         };
+
+        let unused = spec.trend || ty == SeriesType::AutoFill;
+        let spec = &SeriesSpec {
+            step: spec.step.filter(|_| !unused),
+            stop: spec.stop.filter(|_| !unused).map(round15),
+            ..*spec
+        };
         let step_given = spec.step;
         let step = step_given.unwrap_or(1.0);
 
@@ -438,13 +445,16 @@ impl Workbook {
                     for k in 0..len {
                         let x = (k + 1) as f64;
                         let v = if growth {
-                            x87::mul(c, crate::autofill::powi87(r, x))
+                            Some(x87::mul(c, crate::autofill::powi87(r, x)))
                         } else if ty == SeriesType::Date && unit != DateUnit::Day {
                             date_unit_add(self.settings.date_system, b, unit, x87::mul(m, x))
                         } else {
-                            x87::add(x87::mul(m, x), b)
+                            Some(x87::add(x87::mul(m, x), b))
                         };
-                        out.push((at(l, k), Value::num(v)));
+                        out.push((
+                            at(l, k),
+                            v.map_or(Value::Error(crate::value::XlError::NUM), Value::num),
+                        ));
                     }
                 }
                 return out;
@@ -485,10 +495,15 @@ impl Workbook {
         for k in 1..len {
             let kf = k as f64;
             let v = match ty {
-                SeriesType::Linear => seed + kf * step,
+                SeriesType::Linear => Some(seed + kf * step),
 
-                SeriesType::Growth => x87::mul(seed, crate::autofill::powi87(step, kf)),
+                SeriesType::Growth => Some(x87::mul(seed, crate::autofill::powi87(step, kf))),
                 _ => date_unit_add(sys, seed, unit, kf * step),
+            };
+
+            let Some(v) = v else {
+                out.push((at(l, k), Value::Error(crate::value::XlError::NUM)));
+                continue;
             };
             if past(v) {
                 break;
@@ -499,24 +514,31 @@ impl Workbook {
     }
 }
 
-fn date_unit_add(sys: crate::datetime::DateSystem, seed: f64, unit: DateUnit, nf: f64) -> f64 {
+fn date_unit_add(
+    sys: crate::datetime::DateSystem,
+    seed: f64,
+    unit: DateUnit,
+    nf: f64,
+) -> Option<f64> {
     let base = seed.floor() as i64;
     let frac = seed - seed.floor();
     match unit {
-        DateUnit::Day => seed + nf,
+        DateUnit::Day => Some(seed + nf),
         DateUnit::Weekday => {
             let n = nf.trunc() as i64;
             if n == 0 {
                 let wd = crate::datetime::weekday_from_serial(sys, base);
-                (base
-                    + match wd {
-                        6 => 2,
-                        0 => 1,
-                        _ => 0,
-                    }) as f64
-                    + frac
+                Some(
+                    (base
+                        + match wd {
+                            6 => 2,
+                            0 => 1,
+                            _ => 0,
+                        }) as f64
+                        + frac,
+                )
             } else {
-                add_weekdays_fast(sys, base, n) as f64 + frac
+                Some(add_weekdays_fast(sys, base, n) as f64 + frac)
             }
         }
         DateUnit::Month | DateUnit::Year => {
@@ -528,7 +550,14 @@ fn date_unit_add(sys: crate::datetime::DateSystem, seed: f64, unit: DateUnit, nf
             let mi0 = y0 * 12 + m0 as i64 - 1;
             let n = nf.trunc() as i64;
             let n = if unit == DateUnit::Year { n * 12 } else { n };
-            date_in_month(sys, mi0 + n, d0, false) as f64 + frac
+            let t = mi0 + n;
+            if sys == crate::datetime::DateSystem::D1900Gregorian
+                && d0 > crate::autofill::dim(sys, t.div_euclid(12), t.rem_euclid(12) as u32 + 1)
+            {
+                return None;
+            }
+            let d = date_in_month(sys, t, d0, false);
+            (d >= 0).then_some(d as f64 + frac)
         }
     }
 }

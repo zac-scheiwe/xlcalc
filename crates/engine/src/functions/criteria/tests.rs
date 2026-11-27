@@ -250,7 +250,7 @@ fn numeric_criteria_use_fifteen_digit_equality() {
 }
 
 #[test]
-fn only_classic_error_literals_are_criteria() {
+fn only_classic_error_literals_match_cells() {
     let mut b = Book::new(&[
         ("A1", E(XlError::SPILL)),
         ("A2", N(1.0)),
@@ -811,4 +811,31 @@ fn database_rows_stop_at_the_used_range() {
         ("=DSUM(P!A1:B5,\"Val\",P!A1:A3)", 3.0),
         ("=DSUM(P!A1:B5,\"Val\",P!A1:A2)", 1.0),
     ]);
+}
+
+#[test]
+fn database_long_text() {
+    let long = "a".repeat(300);
+    let eq_long = format!("={long}");
+    let mut b = Book::new(&[
+        ("A1", S("name")),
+        ("B1", S("val")),
+        ("C1", S(&long)),
+        ("A2", S("p")),
+        ("A3", S(&long)),
+        ("B2", N(1.0)),
+        ("B3", N(3.0)),
+        ("E1", S("name")),
+        ("E2", S(&long)),
+        ("G1", S("name")),
+        ("G2", S(&eq_long)),
+        ("I1", S(&long)),
+        ("I2", N(10.0)),
+    ]);
+    b.check(&[
+        ("=DSUM(P!A1:C3,\"val\",P!E1:E2)", 3.0),
+        ("=DSUM(P!A1:C3,\"val\",P!G1:G2)", 0.0),
+        ("=DSUM(P!A1:C3,\"val\",P!I1:I2)", 4.0),
+    ]);
+    b.check_err(&[("=DSUM(P!A1:C3,P!C1,P!E1:E2)", XlError::VALUE)]);
 }

@@ -28,6 +28,25 @@ fn splice(text: &str, new: &str, start: usize, len: Option<usize>) -> String {
     out
 }
 
+const NOTE_TEXT_MAX: usize = 0x7fff;
+
+fn set_note_text(old: &str, new: &str, start: usize, overwrite: Option<usize>) -> String {
+    let new: Vec<char> = new.chars().take(NOTE_TEXT_MAX).collect();
+    let mut cur = old.to_string();
+    let mut at = start;
+    let mut count = overwrite;
+    for piece in new.chunks(255) {
+        let piece_text: String = piece.iter().collect();
+        let cand = splice(&cur, &piece_text, at, count);
+        if cand.chars().count() <= NOTE_TEXT_MAX {
+            cur = cand;
+        }
+        at += piece.len();
+        count = Some(0);
+    }
+    cur
+}
+
 pub(crate) struct Thread {
     resolved: bool,
     date: f64,
@@ -190,27 +209,51 @@ impl Application<'_> {
             return Err(invalid_arg());
         }
 
-        let key = (sheet, rect.r0, rect.c0);
+        let cell = CellAddr::new(sheet, rect.r0, rect.c0);
+        let anchor = self
+            .book(book)?
+            .wb
+            .merge_at(cell)
+            .map_or((rect.r0, rect.c0), |m| (m.r0, m.c0));
+        let key = (sheet, anchor.0, anchor.1);
         if self.book(book)?.threads.iter().any(|(k, _)| *k == key) {
             return Err(OmError::app_defined());
         }
         let author = user_name();
         let text = match a.get(0) {
-            None | Some(Variant::Empty) => String::new(),
+            None => String::new(),
 
-            Some(Variant::Null) => return Err(OmError::app_defined()),
+            Some(Variant::Empty | Variant::Null) => return Err(OmError::app_defined()),
             Some(v) if !matches!(v, Variant::Bstr(_) | Variant::Error(_)) => {
                 return Err(OmError::app_defined())
             }
             Some(_) => a.string(0)?.unwrap_or_default(),
         };
 
+        let existing = self
+            .book(book)?
+            .wb
+            .note_at(sheet, anchor.0, anchor.1)
+            .map(|n| (n.id, n.text.clone()));
+        if let Some((id, old)) = existing {
+            if anchor == (rect.r0, rect.c0) {
+                return Err(OmError::app_defined());
+            }
+            if !text.is_empty() {
+                let new = set_note_text(&old, &text, 1, None);
+                self.book_mut(book)?
+                    .wb
+                    .note_edit(sheet, id, |n| n.text = new.clone());
+            }
+            return Ok(self.alloc(Object::Comment(book, sheet, id)));
+        }
+
         let text = if text.is_empty() && self.running.is_none() {
             format!("{author}:\n")
         } else {
-            text
+            set_note_text("", &text, 1, None)
         };
-        let at = CellAddr::new(sheet, rect.r0, rect.c0);
+        let at = CellAddr::new(sheet, anchor.0, anchor.1);
         let id = self
             .book_mut(book)?
             .wb
@@ -379,46 +422,36 @@ impl Application<'_> {
                 })
             }
             ("Text", Func) => {
-                let overwrite = a.get(2).filter(|v| !matches!(v, Variant::Empty));
-                let empty_given = overwrite.is_none()
-                    && a.get(1).is_some_and(|v| !matches!(v, Variant::Empty))
-                    && a.values
-                        .get(2)
-                        .is_some_and(|v| matches!(v, Some(Variant::Empty)));
-                let count = match overwrite {
-                    None if empty_given => Some(0),
+                let count = match a.get(2) {
                     None => None,
                     Some(Variant::Bool(true)) => return Err(invalid_arg()),
 
-                    Some(Variant::Bool(false) | Variant::Null) => Some(0),
-                    Some(_) => a.i32(2)?,
+                    Some(Variant::Bool(false) | Variant::Null | Variant::Empty) => Some(0),
+
+                    Some(_) => match a.i32(2) {
+                        Ok(Some(c)) if (0..i32::MAX).contains(&c) => Some(c),
+                        _ => return Err(invalid_arg()),
+                    },
                 };
-                if count.is_some_and(|c| c < 0) {
-                    return Err(invalid_arg());
-                }
-                let new = match a.get(0).filter(|v| !matches!(v, Variant::Empty)) {
-                    None if a.get(1).is_some_and(|v| !matches!(v, Variant::Empty))
-                        || overwrite.is_some() =>
-                    {
-                        return Err(OmError::app_defined());
-                    }
+                let new = match a.get(0) {
                     None => return Ok(Variant::Bstr(note.text)),
 
                     Some(Variant::Bstr(s)) if s.is_empty() => return Ok(Variant::Bstr(note.text)),
                     Some(Variant::Bstr(s)) => s.clone(),
                     Some(_) => return Err(OmError::app_defined()),
                 };
-                let start = a.i32(1)?;
-                if start.is_some_and(|s| s < 1) {
-                    return Err(invalid_arg());
-                }
-                let text = match (start, count) {
-                    (None, None) => new,
-                    (s, Some(c)) => {
-                        splice(&note.text, &new, s.unwrap_or(1) as usize, Some(c as usize))
-                    }
-                    (Some(s), None) => splice(&note.text, &new, s as usize, None),
+
+                let start = match a.i32(1) {
+                    Ok(Some(s)) if !(1..i32::MAX).contains(&s) => return Err(invalid_arg()),
+                    Ok(s) => s,
+                    Err(_) => return Err(invalid_arg()),
                 };
+                let text = set_note_text(
+                    &note.text,
+                    &new,
+                    start.map_or(1, |s| s as usize),
+                    count.map(|c| c as usize),
+                );
                 self.book_mut(book)?
                     .wb
                     .note_edit(sheet, id, |n| n.text = text.clone());

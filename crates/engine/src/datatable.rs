@@ -15,6 +15,13 @@ pub const PART_ERROR: &str = "Can't change part of a data table.";
 
 pub const INPUT_ERROR: &str = "Input cell reference is not valid.";
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TableInput {
+    Cell(CellAddr),
+
+    Deleted,
+}
+
 #[derive(Clone, Debug)]
 pub struct DataTable {
     pub sheet: SheetId,
@@ -142,6 +149,17 @@ impl Workbook {
         row_input: Option<CellAddr>,
         col_input: Option<CellAddr>,
     ) -> Result<RecalcReport, EditError> {
+        let cell = |a: Option<CellAddr>| a.map(TableInput::Cell);
+        self.load_data_table(sheet, rect, cell(row_input), cell(col_input))
+    }
+
+    pub fn load_data_table(
+        &mut self,
+        sheet: SheetId,
+        rect: Rect,
+        row_input: Option<TableInput>,
+        col_input: Option<TableInput>,
+    ) -> Result<RecalcReport, EditError> {
         self.command(Command::DataTable, |wb| {
             wb.note_changed(sheet, &[rect]);
             wb.add_data_table_run(sheet, rect, row_input, col_input)
@@ -152,8 +170,8 @@ impl Workbook {
         &mut self,
         sheet: SheetId,
         rect: Rect,
-        row_input: Option<CellAddr>,
-        col_input: Option<CellAddr>,
+        row_input: Option<TableInput>,
+        col_input: Option<TableInput>,
     ) -> Result<RecalcReport, EditError> {
         if self.sheet(sheet).is_none() {
             return Err(EditError::NoSuchSheet);
@@ -169,7 +187,10 @@ impl Workbook {
         if row_input.is_none() && col_input.is_none() {
             return Err(EditError::Compile(INPUT_ERROR.into()));
         }
-        for a in [row_input, col_input].into_iter().flatten() {
+        for input in [row_input, col_input].into_iter().flatten() {
+            let TableInput::Cell(a) = input else {
+                continue;
+            };
             let corner = a.row == rect.r0 && a.col == rect.c0;
             if a.sheet != sheet || (rect.contains(a.row, a.col) && (both || !corner)) {
                 return Err(EditError::Compile(INPUT_ERROR.into()));
@@ -220,7 +241,11 @@ impl Workbook {
             for c in int.c0..=int.c1 {
                 let host = CellAddr::new(sheet, r, c);
                 let at = |r, c| CellAddr::new(sheet, r, c);
-                let input = |a: Option<CellAddr>| a.map_or(Node::Missing, |a| rel(a, host));
+                let input = |a: Option<TableInput>| match a {
+                    Some(TableInput::Cell(a)) => rel(a, host),
+                    Some(TableInput::Deleted) => Node::DeadRef(SheetRef::Current),
+                    None => Node::Missing,
+                };
                 let (model, h1, h2) = if both {
                     (at(rect.r0, rect.c0), at(rect.r0, c), Some(at(r, rect.c0)))
                 } else if col_input.is_some() {
@@ -244,6 +269,7 @@ impl Workbook {
                     Arc::new(Formula {
                         root,
                         volatile: false,
+                        dynamic: Default::default(),
                     }),
                     text,
                 );

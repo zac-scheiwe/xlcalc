@@ -61,7 +61,7 @@ impl P {
     }
 
     pub fn wstr(&mut self, s: &str) -> &mut Self {
-        let units: Vec<u16> = s.encode_utf16().collect();
+        let units: Vec<u16> = xlcalc::wide::units(s).collect();
         self.u32(units.len() as u32);
         for u in units {
             self.u16(u);

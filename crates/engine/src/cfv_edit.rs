@@ -1,4 +1,5 @@
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
+use crate::cfblock::{minimized, Placed};
 use crate::cfv::{CfKind, CfRule, Dv, Dxf};
 use crate::cfv_hosed::{minimize, split_hosed, End, Tok, R4};
 use crate::formula::{CRef, Node, Rc, SheetRef};
@@ -251,20 +252,9 @@ fn split_line_insert(s: &Shift, raw: Vec<Piece>) -> Vec<Piece> {
     out
 }
 
-fn minimize_rects(v: Vec<Rect>) -> Vec<Rect> {
-    let mut r4: Vec<R4> = v
-        .iter()
-        .map(|r| [r.r0.into(), r.r1.into(), r.c0.into(), r.c1.into()])
-        .collect();
-    minimize(&mut r4);
-    r4.iter()
-        .map(|x| Rect::new(x[0] as u32, x[2] as u32, x[1] as u32, x[3] as u32))
-        .collect()
-}
-
 fn join_areas(into: &mut Vec<Rect>, more: Vec<Rect>) {
     into.extend(more);
-    *into = minimize_rects(std::mem::take(into));
+    *into = minimized(into);
 }
 
 fn delete_regions(s: &Shift) -> Option<(Rect, Rect, Rect)> {
@@ -554,7 +544,7 @@ impl Workbook {
                         b.rects.iter().partition(|x| {
                             !hosed.contains(&x.0) && core.applies.get(x.0) == Some(&x.1)
                         });
-                    minimize_rects(kept.iter().chain(&moved).map(|x| x.1).collect())
+                    minimized(&kept.iter().chain(&moved).map(|x| x.1).collect::<Vec<_>>())
                 } else {
                     let mut by: Vec<usize> = b.rects.iter().map(|x| x.0).collect();
                     by.dedup();
@@ -575,7 +565,7 @@ impl Workbook {
                         classed.push((
                             class,
                             if grown.contains(&a) {
-                                minimize_rects(rects)
+                                minimized(&rects)
                             } else {
                                 coalesce(rects)
                             },
@@ -583,7 +573,7 @@ impl Workbook {
                     }
                     if deleting && classed.iter().any(|c| c.0 > 0) {
                         classed.sort_by_key(|c| c.0);
-                        all = minimize_rects(classed.into_iter().flat_map(|c| c.1).collect());
+                        all = minimized(&classed.into_iter().flat_map(|c| c.1).collect::<Vec<_>>());
                     } else {
                         all.extend(classed.into_iter().flat_map(|c| c.1));
                     }
@@ -944,7 +934,7 @@ impl Workbook {
         Some(out)
     }
 
-    fn cf_area_hidden(&self, sheet: SheetId, rule: &CfRule, how: Rewrite) -> bool {
+    fn cf_area_hidden(&self, sheet: SheetId, rule: &Placed, how: Rewrite) -> bool {
         let Rewrite::Shift(s) = how else {
             return false;
         };
@@ -953,10 +943,10 @@ impl Workbook {
         }
         let size = |r: &Rect| (r.r1 - r.r0, r.c1 - r.c0);
         matches!(
-            rule.kind,
+            rule.rule.kind,
             CfKind::AboveAverage { .. } | CfKind::Top10 { .. }
         ) && rule
-            .applies
+            .areas
             .iter()
             .any(|r| s.adjust_rect(r).is_none_or(|x| size(&x) != size(r)))
     }
@@ -994,11 +984,12 @@ impl Workbook {
         hit
     }
 
-    fn cf_same_rule(&self, sheet: SheetId, a: &CfRule, b: &CfRule) -> bool {
-        if a.kind != b.kind || a.stop != b.stop || a.dxf != b.dxf {
+    pub(crate) fn cf_same_rule(&self, sheet: SheetId, a: &Placed, b: &Placed) -> bool {
+        let (x, y) = (&a.rule, &b.rule);
+        if x.kind != y.kind || x.stop != y.stop || x.dxf != y.dxf {
             return false;
         }
-        let at = |r: &CfRule| {
+        let at = |r: &Placed| {
             let (row, col) = r.anchor();
             CellAddr::new(sheet, row, col)
         };
@@ -1008,7 +999,7 @@ impl Workbook {
             let (f, _) = self.compile_normalized(f, host).ok()?;
             Some(print_node_r1c1(self, &f.root, host))
         };
-        [(&a.f1, &b.f1), (&a.f2, &b.f2)]
+        [(&x.f1, &y.f1), (&x.f2, &y.f2)]
             .into_iter()
             .all(|(x, y)| match (x, y) {
                 (Some(x), Some(y)) => match (read(x, ha), read(y, hb)) {
@@ -1029,45 +1020,51 @@ impl Workbook {
         let Some(sh) = self.cfv.get(&sheet) else {
             return;
         };
-        let rules = sh.rules.clone();
+        let mut rules = sh.placed();
+
+        for i in 0..rules.len() {
+            let b = rules[i].block;
+            let first = rules.iter().filter(|r| r.block == b).map(|r| r.seq).min();
+            rules[i].seq = first.unwrap_or(0);
+        }
         let dvs = sh.dvs.clone();
         let mut next_seq = rules.iter().map(|r| r.seq).max().unwrap_or(0) + 1;
         let mut grown_dvs: Vec<Dv> = Vec::new();
-        let mut out_rules: Vec<CfRule> = Vec::new();
-        let mut extra: Vec<(SheetId, CfRule)> = Vec::new();
-        let mut placed: Vec<(CfRule, i32)> = Vec::new();
+        let mut out_rules: Vec<Placed> = Vec::new();
+        let mut extra: Vec<(SheetId, Placed)> = Vec::new();
+        let mut placed: Vec<(Placed, i32)> = Vec::new();
 
         let mut wholes: Vec<(i32, i32, i32)> = Vec::new();
-        let core_of = |r: &CfRule| Core {
-            applies: r.applies.clone(),
-            f: [r.f1.clone(), r.f2.clone()],
+        let core_of = |r: &Placed| Core {
+            applies: r.areas.clone(),
+            f: [r.rule.f1.clone(), r.rule.f2.clone()],
         };
 
-        let mut blocks: Vec<Vec<usize>> = Vec::new();
+        let mut blocks: Vec<Vec<usize>> = vec![Vec::new(); sh.blocks.len()];
         for (i, r) in rules.iter().enumerate() {
-            match blocks.iter_mut().find(|b| rules[b[0]].applies == r.applies) {
-                Some(b) => b.push(i),
-                None => blocks.push(vec![i]),
+            if let Some(b) = blocks.get_mut(r.block) {
+                b.push(i);
             }
         }
-        for b in &mut blocks {
-            b.sort_by_key(|&i| rules[i].prio);
-        }
-        blocks.sort_by_key(|b| b.iter().map(|&i| rules[i].seq).min());
-        let mut top = rules.iter().map(|r| r.prio).max().unwrap_or(0);
+        blocks.retain(|b| !b.is_empty());
+        let mut top = rules.iter().map(|r| r.rule.prio).max().unwrap_or(0);
 
         let mut done: Vec<Outcome> = (0..rules.len()).map(|_| None).collect();
         for b in &blocks {
             let cores: Vec<Core> = b.iter().map(|&i| core_of(&rules[i])).collect();
 
+            let leaves = (cores[0].applies.iter().enumerate())
+                .flat_map(|(i, r)| pieces_of(&cores[0], i, *r))
+                .any(|p| p.sheet.is_some_and(|s| s != sheet));
+
             let mut raw: Vec<Piece> = Vec::new();
             let mut units = 0;
             for (i, r) in cores[0].applies.iter().enumerate() {
                 let emu = match how {
-                    Rewrite::Shift(_) | Rewrite::Cut(..) => {
+                    Rewrite::Shift(_) | Rewrite::Cut(..) if !leaves => {
                         self.cf_hosed(sheet, &cores, how, (i, *r), units)
                     }
-                    Rewrite::Copy => None,
+                    _ => None,
                 };
                 match emu {
                     Some(ps) => {
@@ -1088,12 +1085,6 @@ impl Workbook {
                 Rewrite::Shift(s) if hosed => split_line_insert(&s, raw),
                 _ => raw,
             };
-            if matches!(how, Rewrite::Copy) {
-                for &i in b {
-                    done[i] = Some((self.cfv_groups(sheet, &cores[0], &raw, how), None));
-                }
-                continue;
-            }
             let subs: Vec<Vec<(Piece, Vec<u8>)>> = if hosed {
                 raw.iter().map(|p| vec![(*p, Vec::new())]).collect()
             } else {
@@ -1255,13 +1246,13 @@ impl Workbook {
                 let mut r = rule.clone();
 
                 let line = matches!(how, Rewrite::Shift(s) if s.limit.is_none());
-                if !line && grew(&rule.applies, &g.applies) {
+                if !line && grew(&rule.areas, &g.applies) {
                     r.seq = next_seq;
                     next_seq += 1;
                 }
-                r.applies = g.applies;
-                r.f1 = g.f[0].clone();
-                r.f2 = g.f[1].clone();
+                r.areas = g.applies;
+                r.rule.f1 = g.f[0].clone();
+                r.rule.f2 = g.f[1].clone();
                 match &prio {
                     Some(_) if g.orig => {
                         out_rules.push(r);
@@ -1283,7 +1274,7 @@ impl Workbook {
                 let mut v: Vec<usize> = (0..out_block.len())
                     .filter(|&k| keep[k] && out_block[k].0 == b)
                     .collect();
-                v.sort_by_key(|&k| out_rules[k].prio);
+                v.sort_by_key(|&k| out_rules[k].rule.prio);
                 v
             };
             let mine = of(bi, &keep);
@@ -1299,14 +1290,19 @@ impl Workbook {
             });
             if let Some(theirs) = into {
                 for (&t, &m) in theirs.iter().zip(&mine) {
-                    let more = std::mem::take(&mut out_rules[m].applies);
-                    join_areas(&mut out_rules[t].applies, more);
+                    let more = std::mem::take(&mut out_rules[m].areas);
+                    self.cf_join(sheet, &mut out_rules[t], more);
                     keep[m] = false;
                 }
             }
         }
         let mut k = 0;
         out_rules.retain(|_| {
+            k += 1;
+            keep[k - 1]
+        });
+        let mut k = 0;
+        out_block.retain(|_| {
             k += 1;
             keep[k - 1]
         });
@@ -1319,13 +1315,13 @@ impl Workbook {
                 .map(|w| w.0 + (p - w.0) / w.2 * w.2)
         };
         let mut units: Vec<(i32, Vec<usize>)> = Vec::new();
-        let mut merged: Vec<(CfRule, i32)> = Vec::new();
-        let mut copies: Vec<(i32, Vec<(CfRule, i32)>)> = Vec::new();
+        let mut merged: Vec<(Placed, i32)> = Vec::new();
+        let mut copies: Vec<(i32, Vec<(Placed, i32)>)> = Vec::new();
         for (r, p) in placed {
             match unit_of(p) {
                 Some(u) => match copies.iter_mut().find(|c| c.0 == u) {
                     Some(c) => match c.1.iter_mut().find(|m| self.cf_same_rule(sheet, &m.0, &r)) {
-                        Some(m) => join_areas(&mut m.0.applies, r.applies),
+                        Some(m) => self.cf_join(sheet, &mut m.0, r.areas),
                         None => c.1.push((r, p)),
                     },
                     None => copies.push((u, vec![(r, p)])),
@@ -1333,7 +1329,7 @@ impl Workbook {
                 None => match merged.iter_mut().enumerate().find(|(k, m)| {
                     !units.iter().any(|u| u.1.contains(k)) && self.cf_same_rule(sheet, &m.0, &r)
                 }) {
-                    Some((_, m)) => join_areas(&mut m.0.applies, r.applies),
+                    Some((_, m)) => self.cf_join(sheet, &mut m.0, r.areas),
                     None => merged.push((r, p)),
                 },
             }
@@ -1349,7 +1345,7 @@ impl Workbook {
             match into {
                 Some(x) => {
                     for (&k, (r, _)) in x.1.clone().iter().zip(copy) {
-                        join_areas(&mut merged[k].0.applies, r.applies);
+                        self.cf_join(sheet, &mut merged[k].0, r.areas);
                     }
                 }
                 None => {
@@ -1359,8 +1355,44 @@ impl Workbook {
                 }
             }
         }
-        merged.sort_by_key(|x| x.1);
-        let placed = merged;
+
+        let hidden = |r: &Placed| {
+            matches!(
+                r.rule.kind,
+                CfKind::AboveAverage { .. } | CfKind::Top10 { .. }
+            )
+        };
+        let mut gone = vec![false; merged.len()];
+        let singles = (0..merged.len())
+            .filter(|k| !units.iter().any(|u| u.1.contains(k)))
+            .map(|k| vec![k]);
+        let copies: Vec<Vec<usize>> = units.iter().map(|u| u.1.clone()).chain(singles).collect();
+        for copy in copies {
+            if copy.iter().any(|&k| hidden(&merged[k].0)) {
+                continue;
+            }
+            let into = (0..blocks.len()).find_map(|b| {
+                let mut theirs: Vec<usize> = (0..out_block.len())
+                    .filter(|&k| out_block[k].0 == b)
+                    .collect();
+                theirs.sort_by_key(|&k| out_rules[k].rule.prio);
+                let same = theirs.len() == copy.len()
+                    && (theirs.iter().zip(&copy))
+                        .all(|(&t, &c)| self.cf_same_rule(sheet, &out_rules[t], &merged[c].0));
+                same.then_some(theirs)
+            });
+            if let Some(theirs) = into {
+                for (&t, &c) in theirs.iter().zip(&copy) {
+                    let more = std::mem::take(&mut merged[c].0.areas);
+                    self.cf_join(sheet, &mut out_rules[t], more);
+                    gone[c] = true;
+                }
+            }
+        }
+        let mut placed: Vec<(Placed, i32)> = (merged.into_iter().zip(gone))
+            .filter_map(|(m, gone)| (!gone).then_some(m))
+            .collect();
+        placed.sort_by_key(|x| x.1);
         let mut out_dvs: Vec<Dv> = Vec::new();
         let mut extra_dv: Vec<(SheetId, Dv)> = Vec::new();
         for dv in dvs {
@@ -1412,19 +1444,63 @@ impl Workbook {
             }
         }
         let sh = self.cfv_sheet_mut(sheet);
-        sh.rules = out_rules;
+
+        for (mut r, p) in placed {
+            (r.rule.id, r.rule.prio, r.seq) = (sh.fresh_id(), p, next_seq);
+            next_seq += 1;
+            out_rules.push(r);
+        }
+        out_rules.sort_by_key(|r| r.rule.prio);
+        sh.set_placed(out_rules);
         out_dvs.extend(grown_dvs);
         sh.dvs = out_dvs;
-        for (r, p) in placed {
-            sh.add_rule_at(r, p);
+        let (away, here): (Vec<_>, Vec<_>) = extra.into_iter().partition(|x| x.0 != sheet);
+        for (_, r) in here {
+            self.cfv_sheet_mut(sheet)
+                .add_rule_skipping(r.rule, 2, r.areas);
         }
-        sh.rules.sort_by_key(|r| r.prio);
-        for (to, r) in extra {
-            self.cfv_sheet_mut(to).add_rule_skipping(r, 2);
+        if let Some(&(to, _)) = away.first() {
+            self.cfv_put_top(to, away.into_iter().map(|x| x.1).collect());
         }
         for (to, d) in extra_dv {
             self.cfv_sheet_mut(to).dvs.push(d);
         }
+    }
+
+    fn cf_join(&self, sheet: SheetId, into: &mut Placed, more: Vec<Rect>) {
+        let at = |p: &Placed| {
+            let (row, col) = p.anchor();
+            CellAddr::new(sheet, row, col)
+        };
+        let from = at(into);
+        join_areas(&mut into.areas, more);
+        let to = at(into);
+        if from != to {
+            for f in [&mut into.rule.f1, &mut into.rule.f2] {
+                if let Some(t) = f.as_deref().filter(|t| t.starts_with('=')) {
+                    if let Some(x) = self.cfv_retarget(t, from, to) {
+                        *f = Some(x);
+                    }
+                }
+            }
+        }
+    }
+
+    fn cfv_put_top(&mut self, sheet: SheetId, mut new: Vec<Placed>) {
+        let sh = self.cfv_sheet_mut(sheet);
+        let mut held = sh.placed();
+        let n = new.len() as i32;
+        for r in &mut held {
+            r.rule.prio += n;
+        }
+        let first = sh.blocks.len();
+        let last = held.iter().map(|r| r.seq).max().unwrap_or(0);
+        for (k, r) in (1..).zip(&mut new) {
+            (r.rule.id, r.rule.prio) = (sh.fresh_id(), k);
+            (r.block, r.seq) = (first + r.block, last + r.seq);
+        }
+        new.extend(held);
+        sh.append_placed(new, first);
     }
 
     pub(crate) fn cfv_shift_all(&mut self, s: &Shift) {
@@ -1453,37 +1529,42 @@ impl Workbook {
         }
         let sh = s.sheet;
         if let Some(c) = self.cfv.get_mut(&sh) {
-            c.rules.retain(|r| !r.applies.is_empty());
             c.dvs.retain(|d| !d.applies.is_empty());
         }
     }
 
     pub fn cfv_clear(&mut self, sheet: SheetId, hole: Rect, with_dv: bool) {
-        let Some(sh) = self.cfv.get(&sheet) else {
+        if !self.cfv.contains_key(&sheet) {
             return;
-        };
-        let kept = (!with_dv).then(|| sh.dvs.clone());
-        self.cfv_rewrite_sheet(
-            sheet,
-            |_, area, r| {
-                r.subtract(&hole)
-                    .into_iter()
-                    .map(|p| Piece {
-                        old: p,
-                        new: p,
-                        sheet: None,
-                        area,
-                        fresh: false,
-                        read: None,
-                        unit: None,
-                    })
-                    .collect()
-            },
-            Rewrite::Copy,
-        );
-        let sh = self.cfv_sheet_mut(sheet);
-        if let Some(d) = kept {
-            sh.dvs = d;
+        }
+        self.cfv_clear_range(sheet, &[hole]);
+        if with_dv {
+            let sh = self.cfv_sheet_mut(sheet);
+            let (blocks, rules) = (
+                std::mem::take(&mut sh.blocks),
+                std::mem::take(&mut sh.rules),
+            );
+            let tree = std::mem::take(&mut sh.tree);
+            self.cfv_rewrite_sheet(
+                sheet,
+                |_, area, r| {
+                    r.subtract(&hole)
+                        .into_iter()
+                        .map(|p| Piece {
+                            old: p,
+                            new: p,
+                            sheet: None,
+                            area,
+                            fresh: false,
+                            read: None,
+                            unit: None,
+                        })
+                        .collect()
+                },
+                Rewrite::Copy,
+            );
+            let sh = self.cfv_sheet_mut(sheet);
+            (sh.blocks, sh.rules, sh.tree) = (blocks, rules, tree);
         }
     }
 
@@ -1499,23 +1580,29 @@ impl Workbook {
             dst.col.saturating_add(src.cols() - 1),
         );
 
-        if let Some(sh) = self.cfv.get_mut(&dst.sheet) {
-            for r in &mut sh.rules {
-                r.applies = r
-                    .applies
-                    .iter()
-                    .flat_map(|a| a.subtract(&dst_rect))
-                    .collect();
+        if dst.sheet != src_sheet {
+            if self.cfv.contains_key(&dst.sheet) {
+                self.cfv_clear_range(dst.sheet, &[dst_rect]);
+                for v in &mut self.cfv_sheet_mut(dst.sheet).dvs {
+                    v.applies = subtract_all_of(&v.applies, &[dst_rect]);
+                }
             }
+        } else if let Some(sh) = self.cfv.get_mut(&src_sheet) {
+            let landed: Vec<Rect> = (sh.dvs.iter().flat_map(|v| &v.applies))
+                .filter_map(|a| a.intersection(&src))
+                .flat_map(|x| {
+                    let to = move_pieces(src, d.0, d.1, dst.sheet, x, 0);
+                    to.into_iter().map(|p| p.new)
+                })
+                .flat_map(|x| x.subtract(&src))
+                .collect();
             for v in &mut sh.dvs {
-                v.applies = v
-                    .applies
-                    .iter()
-                    .flat_map(|a| a.subtract(&dst_rect))
-                    .collect();
+                v.applies = subtract_all_of(&v.applies, &landed);
             }
         }
-        let others: Vec<SheetId> = self.cfv.keys().copied().collect();
+        let mut others: Vec<SheetId> = self.cfv.keys().copied().collect();
+
+        others.sort_by_key(|&s| (s == src_sheet, s.0));
 
         for sheet in others {
             if sheet == src_sheet {
@@ -1543,7 +1630,6 @@ impl Workbook {
             }
         }
         for sh in self.cfv.values_mut() {
-            sh.rules.retain(|r| !r.applies.is_empty());
             sh.dvs.retain(|d| !d.applies.is_empty());
         }
     }
@@ -1560,7 +1646,7 @@ impl Workbook {
         let Some(sh) = self.cfv.get(&src_sheet) else {
             return;
         };
-        let rules = sh.rules.clone();
+        let rules = sh.placed();
         let dvs = if with_dv { sh.dvs.clone() } else { Vec::new() };
 
         let mut tiles: Vec<(Rect, Rect)> = Vec::new();
@@ -1604,21 +1690,42 @@ impl Workbook {
             }
             wb.cfv_groups(src_sheet, &core, &pieces, Rewrite::Copy)
         };
-        let mut new_rules: Vec<CfRule> = Vec::new();
+        let mut new_rules: Vec<Placed> = Vec::new();
         let mut fills: Vec<(usize, Vec<Rect>)> = Vec::new();
         for (i, rule) in rules.iter().enumerate() {
-            let groups = make(self, &rule.applies, [rule.f1.clone(), rule.f2.clone()]);
-            for g in groups {
-                if fill && src_sheet == dst_sheet {
-                    fills.push((i, g.applies));
-                } else {
-                    let mut n = rule.clone();
-                    n.applies = g.applies;
-                    n.f1 = g.f[0].clone();
-                    n.f2 = g.f[1].clone();
-                    new_rules.push(n);
-                }
+            let areas = paste_areas(&rule.areas, src, dst_rect);
+            if areas.is_empty() {
+                continue;
             }
+            if fill && src_sheet == dst_sheet {
+                fills.push((i, areas));
+                continue;
+            }
+            let mut n = rule.clone();
+
+            let (r, c) = bbox_tl(&areas);
+            let (or, oc) = rule.anchor();
+            let at = Piece {
+                old: Rect::new(or, oc, or, oc),
+                new: Rect::new(r, c, r, c),
+                sheet: Some(dst_sheet),
+                area: 0,
+                fresh: false,
+                read: None,
+                unit: None,
+            };
+            let core = Core {
+                applies: rule.areas.clone(),
+                f: [rule.rule.f1.clone(), rule.rule.f2.clone()],
+            };
+            if let Some(g) = self
+                .cfv_groups(src_sheet, &core, &[at], Rewrite::Copy)
+                .pop()
+            {
+                [n.rule.f1, n.rule.f2] = g.f;
+            }
+            n.areas = areas;
+            new_rules.push(n);
         }
         let mut new_dvs: Vec<Dv> = Vec::new();
         let mut dv_fills: Vec<(usize, Vec<Rect>)> = Vec::new();
@@ -1637,24 +1744,15 @@ impl Workbook {
             }
         }
         if fill && src_sheet == dst_sheet {
-            let sh = self.cfv_sheet_mut(dst_sheet);
-
+            self.cfv_clear_range(dst_sheet, &[dst_rect]);
+            let mut grown: Vec<usize> = Vec::new();
             for (i, rects) in fills {
-                let id = rules[i].id;
-                for r in &mut sh.rules {
-                    if r.id != id {
-                        r.applies = r
-                            .applies
-                            .iter()
-                            .flat_map(|a| subtract_all(a, &rects))
-                            .collect();
-                    }
-                }
-                if let Some(r) = sh.rules.iter_mut().find(|r| r.id == id) {
-                    r.applies.extend(rects);
-                    r.applies = coalesce(std::mem::take(&mut r.applies));
+                if !grown.contains(&rules[i].block) {
+                    grown.push(rules[i].block);
+                    self.cfv_grow_block(dst_sheet, rules[i].rule.id, &rects);
                 }
             }
+            let sh = self.cfv_sheet_mut(dst_sheet);
             for (i, rects) in dv_fills {
                 let key = dvs[i].applies.clone();
                 for d in &mut sh.dvs {
@@ -1671,19 +1769,11 @@ impl Workbook {
                     d.applies = coalesce(std::mem::take(&mut d.applies));
                 }
             }
-            sh.rules.retain(|r| !r.applies.is_empty());
             sh.dvs.retain(|d| !d.applies.is_empty());
             return;
         }
+        self.cfv_clear_range(dst_sheet, &[dst_rect]);
         let sh = self.cfv_sheet_mut(dst_sheet);
-        for r in &mut sh.rules {
-            r.applies = r
-                .applies
-                .iter()
-                .flat_map(|a| a.subtract(&dst_rect))
-                .collect();
-        }
-        sh.rules.retain(|r| !r.applies.is_empty());
         for d in &mut sh.dvs {
             d.applies = d
                 .applies
@@ -1692,17 +1782,7 @@ impl Workbook {
                 .collect();
         }
         sh.dvs.retain(|d| !d.applies.is_empty());
-
-        let n = new_rules.len() as i32;
-        for r in &mut sh.rules {
-            r.prio += n;
-        }
-        for (k, r) in (1..).zip(new_rules) {
-            let id = sh.add_rule_at(r, k);
-            let pos = sh.index_of(id).unwrap_or(0);
-            let rule = sh.rules.remove(pos);
-            sh.rules.insert(k as usize - 1, rule);
-        }
+        self.cfv_put_top(dst_sheet, new_rules);
 
         for n in new_dvs {
             let into = self
@@ -1760,6 +1840,27 @@ impl Workbook {
     }
 }
 
+fn subtract_all_of(areas: &[Rect], holes: &[Rect]) -> Vec<Rect> {
+    areas.iter().flat_map(|a| subtract_all(a, holes)).collect()
+}
+
+fn paste_areas(areas: &[Rect], src: Rect, dst: Rect) -> Vec<Rect> {
+    let mut out = Vec::new();
+    for x in areas.iter().filter_map(|a| a.intersection(&src)) {
+        if x == src {
+            return vec![dst];
+        }
+        for c in (dst.c0..=dst.c1).step_by(src.cols() as usize) {
+            for r in (dst.r0..=dst.r1).step_by(src.rows() as usize) {
+                let (top, left) = (r + (x.r0 - src.r0), c + (x.c0 - src.c0));
+                let tile = Rect::new(top, left, top + (x.r1 - x.r0), left + (x.c1 - x.c0));
+                out.extend(tile.intersection(&dst));
+            }
+        }
+    }
+    minimized(&out)
+}
+
 fn subtract_all(a: &Rect, holes: &[Rect]) -> Vec<Rect> {
     let mut cur = vec![*a];
     for h in holes {
@@ -1808,20 +1909,16 @@ impl Workbook {
             found.extend(coalesce(mine));
         };
         match ty {
-            -4172 => {
-                let mut rules: Vec<&CfRule> = sh.rules.iter().collect();
-                rules.sort_by_key(|r| r.seq);
-                for r in rules {
-                    take(&r.applies, true);
-                }
-            }
-            -4174 => {
+            -4172 | -4174 => {
+                let lists: Vec<&[Rect]> = if ty == -4172 {
+                    sh.blocks.iter().map(|b| b.areas.as_slice()).collect()
+                } else {
+                    sh.dvs.iter().map(|d| d.applies.as_slice()).collect()
+                };
                 let mut all: Vec<R4> = Vec::new();
-                for d in &sh.dvs {
-                    for a in &d.applies {
-                        for p in within(a) {
-                            all.push([p.r0.into(), p.r1.into(), p.c0.into(), p.c1.into()]);
-                        }
+                for a in lists.into_iter().flatten() {
+                    for p in within(a) {
+                        all.push([p.r0.into(), p.r1.into(), p.c0.into(), p.c1.into()]);
                     }
                 }
                 minimize(&mut all);
@@ -1834,11 +1931,11 @@ impl Workbook {
                 let hits: Vec<&CfRule> = sh
                     .rules
                     .iter()
-                    .filter(|r| r.applies.iter().any(|a| a.contains(ref_r, ref_c)))
+                    .filter(|r| sh.covers(r.id, ref_r, ref_c))
                     .collect();
                 if let [one] = hits[..] {
                     if one.dxf == Dxf::default() {
-                        take(&one.applies, false);
+                        take(sh.areas(one.id), false);
                     }
                 }
             }
@@ -1909,7 +2006,7 @@ impl Workbook {
                 }
             };
             for (i, r) in sh.rules.iter().enumerate() {
-                add(false, i, &r.applies, [&r.f1, &r.f2]);
+                add(false, i, sh.areas(r.id), [&r.f1, &r.f2]);
             }
             for (i, d) in sh.dvs.iter().enumerate() {
                 add(true, i, &d.applies, [&d.f1, &d.f2]);
@@ -1944,7 +2041,10 @@ impl Workbook {
         dst_sheet: SheetId,
         dst: Rect,
     ) {
-        let rules = self.cfv.get(&dst_sheet).map(|s| s.rules.clone());
+        let formats = self
+            .cfv
+            .get(&dst_sheet)
+            .map(|s| (s.rules.clone(), s.blocks.clone(), s.tree.clone()));
         let to = Rect::new(
             dst.r0,
             dst.c0,
@@ -1962,8 +2062,8 @@ impl Workbook {
             sh.dvs.retain(|d| !d.applies.is_empty());
         }
         self.cfv_copy(src_sheet, src, dst_sheet, to, false, true);
-        if let (Some(rules), Some(sh)) = (rules, self.cfv.get_mut(&dst_sheet)) {
-            sh.rules = rules;
+        if let (Some((rules, blocks, tree)), Some(sh)) = (formats, self.cfv.get_mut(&dst_sheet)) {
+            (sh.rules, sh.blocks, sh.tree) = (rules, blocks, tree);
         }
     }
 }

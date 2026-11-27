@@ -1,23 +1,70 @@
 use std::collections::HashMap;
 
-use xlcalc::{CellAddr, Command, SheetId, Value, Workbook, XlError};
+use xlcalc::objfmla::ObjFmla;
+use xlcalc::{CellAddr, Command, Rect, SheetId, Value, Workbook, XlError};
 use xlcalc_variant::{change_type, VarType, Variant};
 use xlcalc_xlsx::{Control, ControlKind};
 
 use crate::addr::parse_range_text;
-use crate::app::{Application, BookId, Object};
+use crate::app::{Application, BookId, Mode, Object};
 use crate::conv::Args;
 use crate::error::OmError;
 use crate::typelib::{InvokeKind, Member};
 
 pub(crate) type BookControls = HashMap<SheetId, SheetControls>;
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(crate) struct SheetControls {
     pub list: Vec<Ctl>,
 
-    pub counter: u32,
+    pub husks: usize,
     next_uid: u32,
+}
+
+fn settle(wb: &Workbook, sheet: SheetId, list: &mut Vec<Ctl>) {
+    list.retain_mut(|c| {
+        let Some(pos) = wb.control_anchor(sheet, c.spid) else {
+            return false;
+        };
+        let rect = [c.c.left, c.c.top, c.c.width, c.c.height];
+        let [left, top, width, height] = wb.control_rect(sheet, &pos, rect);
+        (c.c.left, c.c.top, c.c.width, c.c.height) = (left, top, width, height);
+        read_formulas(wb, sheet, c);
+        true
+    });
+}
+
+fn read_formulas(wb: &Workbook, sheet: SheetId, c: &mut Ctl) {
+    for (which, text) in [
+        (ObjFmla::Link, &mut c.c.fmla_link),
+        (ObjFmla::Fill, &mut c.c.fmla_range),
+    ] {
+        if let Some(now) = wb.object_formula((sheet, c.spid), which) {
+            *text = now;
+        }
+    }
+}
+
+pub(crate) fn bind(wb: &mut Workbook, sheet: SheetId, c: &mut Ctl) {
+    wb.object_formula_set((sheet, c.spid), ObjFmla::Link, &c.c.fmla_link);
+    wb.object_formula_set((sheet, c.spid), ObjFmla::Fill, &c.c.fmla_range);
+    read_formulas(wb, sheet, c);
+}
+
+pub(crate) fn anchor(wb: &mut Workbook, sheet: SheetId, c: &Ctl) {
+    let rect = [c.c.left, c.c.top, c.c.width, c.c.height];
+    wb.control_anchor_set(sheet, c.spid, c.c.placement, rect);
+}
+
+pub(crate) fn anchor_loaded(wb: &mut Workbook, sheet: SheetId, c: &mut Ctl) {
+    let Some(corners) = c.c.anchor else {
+        return anchor(wb, sheet, c);
+    };
+    let pos = wb.pos_between(sheet, c.c.placement, corners);
+    wb.control_anchor_put(sheet, c.spid, pos);
+    let rect = [c.c.left, c.c.top, c.c.width, c.c.height];
+    let [left, top, width, height] = wb.control_rect(sheet, &pos, rect);
+    (c.c.left, c.c.top, c.c.width, c.c.height) = (left, top, width, height);
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -41,14 +88,19 @@ impl Seen {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct Ctl {
     pub uid: u32,
+
+    pub spid: u32,
     pub c: Control,
 
     pub seen: Option<Seen>,
     pub visible: bool,
 
     pub multi: i32,
+
+    pub under: Vec<u32>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -64,6 +116,8 @@ pub(crate) struct CtlRef {
     pub uid: u32,
     pub kind: ControlKind,
     pub shape: bool,
+
+    pub ranged: bool,
 }
 
 impl Coll {
@@ -175,17 +229,64 @@ fn snap(v: f64) -> f64 {
     (v * 2.0).round() / 2.0
 }
 
-fn normalise_link(wb: &Workbook, sheet: SheetId, text: &str) -> Option<String> {
-    let t = text.trim();
-    let (sid, _) = parse_range_text(wb, sheet, t)?;
-    match t.rfind('!') {
-        Some(i) if sid != sheet => {
-            let name = wb.sheet(sid)?.name.replace('\'', "''");
-            Some(format!("'{name}'!{}", t[i + 1..].to_uppercase()))
+const LINE_PX: i64 = 21;
+const SCROLL_PX: i64 = 26;
+
+fn whole_lines(h: i64) -> i64 {
+    (h - h % LINE_PX).max(2 * LINE_PX) + 4
+}
+
+fn added_rect(kind: ControlKind, [left, top, width, height]: [f64; 4]) -> [f64; 4] {
+    let edge = |v: f64| (v * 2.0).trunc() as i64;
+    let span = |from: f64, size: f64| {
+        let low = from.min(from + size).max(0.0);
+        let x = edge(low);
+        (x, edge(low + size.abs()) - x)
+    };
+    let (x, mut w) = span(left, width);
+    let (y, mut h) = span(top, height);
+    match kind {
+        ControlKind::CheckBox | ControlKind::Radio | ControlKind::GBox => {
+            w = w.max(31);
+            h = h.max(LINE_PX * 3 / 2 + 3);
         }
-        Some(_) => Some(t.to_string()),
-        None => Some(t.to_uppercase()),
+        ControlKind::List => {
+            if w < SCROLL_PX {
+                w = SCROLL_PX - 1;
+            }
+            if w <= SCROLL_PX {
+                w += SCROLL_PX;
+            }
+            h = whole_lines(h + 7);
+        }
+        _ => {}
     }
+    [x, y, w, h].map(|v| v as f64 / 2.0)
+}
+
+fn resized(kind: ControlKind, size: [f64; 2]) -> [f64; 2] {
+    let [w, h] = size.map(|v| (v * 2.0).round() as i64);
+    let (w, h) = match kind {
+        ControlKind::CheckBox | ControlKind::Radio => (w.max(32), h.max(LINE_PX * 3 / 2 + 4)),
+        ControlKind::GBox => (w.max(32), h.max(2 * LINE_PX)),
+        ControlKind::List => (w.max(2 * SCROLL_PX), whole_lines(h + 6)),
+        ControlKind::Drop => {
+            let line = LINE_PX + 2 + ((LINE_PX / 2 + 1) & !1);
+            (w.max(2 * SCROLL_PX), h.max(line))
+        }
+
+        ControlKind::Scroll => {
+            let (a, b) = (w.max(SCROLL_PX), h.max(SCROLL_PX));
+            if h < w {
+                (a.max(3 * b), b)
+            } else {
+                (a, b.max(3 * a))
+            }
+        }
+        ControlKind::Spin => (w, h + h % 2),
+        _ => (w, h),
+    };
+    [w as f64 / 2.0, h as f64 / 2.0]
 }
 
 fn link_addr(wb: &Workbook, sheet: SheetId, text: &str) -> Option<CellAddr> {
@@ -437,22 +538,43 @@ impl Application<'_> {
         if wb.sheet(r.sheet).is_none() {
             return Err(OmError::object_required());
         }
+        settle(wb, r.sheet, &mut sc.list);
         sync(wb, r.sheet, &mut sc.list);
         let idx = sc
             .list
             .iter()
             .position(|c| c.uid == r.uid)
             .ok_or_else(OmError::object_required)?;
-        f(wb, &mut sc.list, idx)
+        let place = |c: &Ctl| {
+            let at = [c.c.left, c.c.top, c.c.width, c.c.height];
+            (c.uid, c.c.placement, at)
+        };
+        let before = place(&sc.list[idx]);
+        let out = f(wb, &mut sc.list, idx)?;
+
+        if let Some(c) = sc.list.iter().find(|c| c.uid == r.uid) {
+            if place(c) != before {
+                anchor(wb, r.sheet, c);
+            }
+        }
+        Ok(out)
     }
 
-    fn ctl_ref(&self, b: BookId, s: SheetId, uid: u32, kind: ControlKind, shape: bool) -> Object {
+    pub(crate) fn ctl_ref(
+        &self,
+        b: BookId,
+        s: SheetId,
+        uid: u32,
+        kind: ControlKind,
+        shape: bool,
+    ) -> Object {
         Object::Control(CtlRef {
             book: b,
             sheet: s,
             uid,
             kind,
             shape,
+            ranged: false,
         })
     }
 
@@ -468,25 +590,41 @@ impl Application<'_> {
         if bk.wb.sheet(s).is_none() {
             return Err(OmError::object_required());
         }
+
+        let spid = bk.wb.legacy_shape_new(s);
+        let no = bk.wb.legacy_shape_number(s, spid);
         let sc = bk.controls.entry(s).or_default();
-        sc.counter += 1;
         sc.next_uid += 1;
         let uid = sc.next_uid;
-        let name = format!("{} {}", base_name(kind), sc.counter);
-        let rect = rect.map(snap);
+        let name = format!("{} {no}", base_name(kind));
+        let rect = added_rect(kind, rect);
+        let under = bk
+            .wb
+            .drawing(s)
+            .map(|d| d.shapes.iter().map(|x| x.id).collect())
+            .unwrap_or_default();
         let mut c = Control::new(kind, &name, rect);
+        c.shape_id = spid;
 
         sc.list.push(Ctl {
             uid,
+            spid,
             c: c.clone(),
             seen: None,
             visible: true,
             multi: -4142,
+            under,
         });
         if kind == ControlKind::Radio {
             let idx = sc.list.len() - 1;
             c.fmla_link = effective_link(&sc.list, idx);
             sc.list[idx].c.fmla_link = c.fmla_link;
+        }
+        if let Some(last) = sc.list.last_mut() {
+            bind(&mut bk.wb, s, last);
+        }
+        if let Some(c) = sc.list.last() {
+            anchor(&mut bk.wb, s, c);
         }
         Ok(self.alloc(self.ctl_ref(b, s, uid, kind, shape)))
     }
@@ -526,6 +664,7 @@ impl Application<'_> {
             return Err(OmError::object_required());
         }
         let sc = bk.controls.entry(s).or_default();
+        settle(&bk.wb, s, &mut sc.list);
         Ok(sc
             .list
             .iter()
@@ -591,12 +730,14 @@ impl Application<'_> {
             ("AddFormControl", _) => {
                 let kind = kind_of_form_control(a.i32(0)?.unwrap_or(-1))
                     .ok_or_else(OmError::app_defined)?;
+
                 let rect = [
                     arg_num(a, 1)?,
                     arg_num(a, 2)?,
                     arg_num(a, 3)?,
                     arg_num(a, 4)?,
-                ];
+                ]
+                .map(f64::round_ties_even);
                 self.add_control(b, s, kind, rect, true)
             }
             ("_NewEnum", _) => {
@@ -618,9 +759,32 @@ impl Application<'_> {
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
+        if !r.shape && m.name == "ShapeRange" {
+            self.with_control(r, |_, _, _| Ok(()))?;
+            return Ok(self.control_shape_range(r));
+        }
+        if m.kind == InvokeKind::Get && matches!(m.name, "TopLeftCell" | "BottomRightCell") {
+            return self.control_cell(r, m.name == "BottomRightCell");
+        }
         if r.shape {
             match m.name {
                 "Type" => return self.with_control(r, |_, _, _| Ok(Variant::I4(8))),
+
+                "ID" | "Id" if m.kind == InvokeKind::Get => {
+                    return self.with_control(r, |_, l, i| {
+                        Ok(Variant::I4(i32::try_from(l[i].spid).unwrap_or(0)))
+                    })
+                }
+                "ZOrderPosition" if m.kind == InvokeKind::Get => {
+                    return self.control_z(r);
+                }
+                "Delete" => {
+                    self.with_control(r, |_, l, i| {
+                        l.remove(i);
+                        Ok(())
+                    })?;
+                    return Ok(Variant::Empty);
+                }
                 "FormControlType" => {
                     return self
                         .with_control(r, |_, _, _| Ok(Variant::I4(form_control_type(r.kind))))
@@ -633,6 +797,17 @@ impl Application<'_> {
             }
         }
         self.control_prop(r, m, a)
+    }
+
+    fn control_cell(&mut self, r: &CtlRef, bottom_right: bool) -> Result<Variant, OmError> {
+        let (top_left, br) = self.with_control(r, |wb, l, i| {
+            let pos = wb
+                .control_anchor(r.sheet, l[i].spid)
+                .ok_or_else(OmError::object_required)?;
+            Ok(wb.shape_cells(r.sheet, &pos))
+        })?;
+        let (row, col) = if bottom_right { br } else { top_left };
+        self.new_range(r.book, r.sheet, Rect::cell(row, col), Mode::Cells)
     }
 
     pub(crate) fn control_prop(
@@ -657,6 +832,10 @@ impl Application<'_> {
         let list_kind = matches!(kind, ControlKind::Drop | ControlKind::List);
         let sheet = r.sheet;
         match (m.name, put) {
+            ("Delete", false) => self.with_control(r, |_, l, i| {
+                l.remove(i);
+                Ok(Variant::Null)
+            }),
             ("Name", false) => {
                 self.with_control(r, |_, l, i| Ok(Variant::Bstr(l[i].c.name.clone())))
             }
@@ -700,8 +879,12 @@ impl Application<'_> {
                 })
             }
             ("Left" | "Top" | "Width" | "Height", true) => {
-                let v = snap(put_num(a)?);
-                let name = m.name;
+                let mut v = snap(put_num(a)?);
+                let (name, shape) = (m.name, r.shape);
+
+                if !shape || matches!(name, "Left" | "Top") {
+                    v = v.max(0.0);
+                }
                 self.with_control(r, |_, l, i| {
                     let c = &mut l[i].c;
                     match name {
@@ -709,6 +892,9 @@ impl Application<'_> {
                         "Top" => c.top = v,
                         "Width" => c.width = v,
                         _ => c.height = v,
+                    }
+                    if shape && !r.ranged && matches!(name, "Width" | "Height") {
+                        [c.width, c.height] = resized(kind, [c.width, c.height]);
                     }
                     Ok(Variant::Empty)
                 })
@@ -722,7 +908,19 @@ impl Application<'_> {
                     if !(1..=3).contains(&v) {
                         return Err(OmError::unable_to_set("Placement", class));
                     }
-                    l[i].c.placement = v;
+
+                    let fixed_size = matches!(
+                        kind,
+                        ControlKind::CheckBox
+                            | ControlKind::Radio
+                            | ControlKind::Drop
+                            | ControlKind::List
+                            | ControlKind::GBox
+                            | ControlKind::Scroll
+                    );
+                    if !(fixed_size && v == 1) {
+                        l[i].c.placement = v;
+                    }
                     Ok(Variant::Empty)
                 })
             }
@@ -774,12 +972,14 @@ impl Application<'_> {
             ("LinkedCell", true) => {
                 let text = put_text(a)?;
                 self.with_control(r, |wb, l, i| {
-                    let norm = normalise_link(wb, sheet, &text);
+                    let addr = link_addr(wb, sheet, &text);
                     for k in linked_group(l, i) {
-                        l[k].c.fmla_link = norm.clone().unwrap_or_default();
+                        let link = addr.map_or_else(String::new, |_| text.trim().to_string());
+                        l[k].c.fmla_link = link;
                         l[k].seen = None;
+                        bind(wb, sheet, &mut l[k]);
                     }
-                    if let Some(addr) = norm.and_then(|n| link_addr(wb, sheet, &n)) {
+                    if let Some(addr) = addr {
                         let blank = matches!(wb.value(addr), Value::Blank);
                         if blank {
                             let seen = Seen::of(&Value::Blank);
@@ -919,6 +1119,7 @@ impl Application<'_> {
                 let text = put_text(a)?;
                 self.with_control(r, |wb, l, i| {
                     l[i].c.fmla_range = text;
+                    bind(wb, sheet, &mut l[i]);
 
                     let count = list_count(wb, sheet, &l[i].c.fmla_range);
                     let from_cell = link_addr(wb, sheet, &effective_link(l, i))
@@ -937,7 +1138,7 @@ impl Application<'_> {
                 self.with_control(r, |_, l, i| Ok(Variant::I4(l[i].c.sel)))
             }
             ("ListCount", false) if list_kind => self.with_control(r, |wb, l, i| {
-                Ok(Variant::I4(list_count(wb, sheet, &l[i].c.fmla_range)))
+                Ok(r8(list_count(wb, sheet, &l[i].c.fmla_range) as f64))
             }),
             ("DropDownLines", false) if kind == ControlKind::Drop => {
                 self.with_control(r, |_, l, i| Ok(r8(l[i].c.drop_lines as f64)))
@@ -1000,6 +1201,7 @@ impl Application<'_> {
         let bk = self.book_mut(book)?;
         let sc = bk.controls.entry(sheet).or_default();
         let wb: &mut Workbook = &mut bk.wb;
+        settle(wb, sheet, &mut sc.list);
         sync(wb, sheet, &mut sc.list);
         let l = &mut sc.list;
         let i = l
@@ -1039,10 +1241,114 @@ impl Application<'_> {
             if wb.sheet(*sheet).is_none() {
                 continue;
             }
+            settle(wb, *sheet, &mut sc.list);
             sync(wb, *sheet, &mut sc.list);
-            out.push((*sheet, sc.list.iter().map(|c| c.c.clone()).collect()));
+            let list = sc
+                .list
+                .iter()
+                .map(|c| {
+                    let pos = wb.control_anchor(*sheet, c.spid);
+                    Control {
+                        anchor: pos.map(|p| wb.shape_corners(*sheet, &p)),
+                        ..c.c.clone()
+                    }
+                })
+                .collect();
+            out.push((*sheet, list));
         }
         out
+    }
+}
+
+impl Application<'_> {
+    pub(crate) fn copy_controls(
+        &mut self,
+        b: BookId,
+        src: SheetId,
+        new: SheetId,
+    ) -> Result<(), OmError> {
+        self.collection_items(b, src, Coll::Shapes)?;
+        let bk = self.book_mut(b)?;
+        let Some(mut sc) = bk
+            .controls
+            .get(&src)
+            .filter(|c| !c.list.is_empty())
+            .cloned()
+        else {
+            return Ok(());
+        };
+
+        let default = |wb: &Workbook, sheet, c: &Ctl| {
+            let n = wb.legacy_shape_number(sheet, c.spid);
+            c.c.name == format!("{} {n}", base_name(c.c.kind))
+        };
+        let defaults: Vec<bool> = sc.list.iter().map(|c| default(&bk.wb, src, c)).collect();
+        let ids = bk.wb.legacy_number_copy(new, sc.list.len());
+        let anchors: Vec<_> = sc
+            .list
+            .iter()
+            .map(|c| bk.wb.control_anchor(src, c.spid))
+            .collect();
+        for (&spid, pos) in ids.iter().zip(anchors) {
+            if let Some(pos) = pos {
+                bk.wb.control_anchor_put(new, spid, pos);
+            }
+        }
+        for ((c, spid), is_default) in sc.list.iter_mut().zip(ids).zip(defaults) {
+            bk.wb.object_formula_copy((src, c.spid), (new, spid), true);
+            if is_default {
+                let n = bk.wb.legacy_shape_number(new, spid);
+                c.c.name = format!("{} {n}", base_name(c.c.kind));
+            }
+            c.spid = spid;
+            c.c.shape_id = spid;
+        }
+        bk.controls.insert(new, sc);
+        Ok(())
+    }
+}
+
+impl Application<'_> {
+    pub(crate) fn duplicate_control(
+        &mut self,
+        b: BookId,
+        (from, uid): (SheetId, u32),
+        to: SheetId,
+        by: (i64, i64),
+    ) -> Result<(), OmError> {
+        let bk = self.book_mut(b)?;
+        let Some(mut c) = bk
+            .controls
+            .get(&from)
+            .and_then(|sc| sc.list.iter().find(|c| c.uid == uid))
+            .cloned()
+        else {
+            return Ok(());
+        };
+        let Some(pos) = bk.wb.control_anchor(from, c.spid) else {
+            return Ok(());
+        };
+        let base = base_name(c.c.kind);
+        let default = c.c.name == format!("{base} {}", bk.wb.legacy_shape_number(from, c.spid));
+        let was = c.spid;
+        c.spid = bk.wb.legacy_shape_new(to);
+        bk.wb.object_formula_copy((from, was), (to, c.spid), false);
+        c.c.shape_id = c.spid;
+        if default {
+            c.c.name = format!("{base} {}", bk.wb.legacy_shape_number(to, c.spid));
+        }
+        c.under = bk
+            .wb
+            .drawing(to)
+            .map(|d| d.shapes.iter().map(|x| x.id).collect())
+            .unwrap_or_default();
+        bk.wb
+            .control_anchor_put(to, c.spid, pos.shifted(by.0, by.1));
+        let sc = bk.controls.entry(to).or_default();
+        sc.next_uid += 1;
+        c.uid = sc.next_uid;
+        sc.list.push(c);
+        Ok(())
     }
 }
 
@@ -1050,19 +1356,14 @@ pub(crate) fn from_file(list: Vec<Control>) -> SheetControls {
     let mut sc = SheetControls::default();
     for c in list {
         sc.next_uid += 1;
-        let tail = c
-            .name
-            .rsplit(' ')
-            .next()
-            .and_then(|n| n.parse::<u32>().ok())
-            .unwrap_or(0);
-        sc.counter = sc.counter.max(tail);
         sc.list.push(Ctl {
             uid: sc.next_uid,
+            spid: c.shape_id,
             c,
             seen: None,
             visible: true,
             multi: -4142,
+            under: Vec::new(),
         });
     }
     sc

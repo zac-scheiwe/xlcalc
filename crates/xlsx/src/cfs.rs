@@ -2,7 +2,7 @@ use crate::rawxml::{escape_attr, escape_text};
 use crate::styles::{dxf_read, StyleWriter};
 use crate::xml::Node;
 use xlcalc::cfv::{
-    BarColor, CfKind, CfRule, CondValue, DataBarSpec, IconCrit, IconSetSpec, ScaleCrit,
+    BarColor, CfKind, CfRule, CondValue, DataBarSpec, IconCrit, IconSetSpec, Placed, ScaleCrit,
 };
 use xlcalc::{CellAddr, Rect, SheetId, Workbook};
 
@@ -115,9 +115,9 @@ fn value_of(v: &Node) -> (i32, f64, Option<String>) {
     (ty, val.trim().parse().unwrap_or(0.0), None)
 }
 
-fn convert(wb: &Workbook, sheet: SheetId, defs: &[CfDef]) -> Vec<CfRule> {
+fn convert(wb: &Workbook, sheet: SheetId, defs: &[CfDef]) -> Vec<Placed> {
     let dxfs = &wb.style_table().dxfs;
-    let mut out: Vec<CfRule> = Vec::new();
+    let mut out: Vec<Placed> = Vec::new();
     for d in defs {
         let n = &d.rule;
         let anchor = CellAddr::new(
@@ -270,54 +270,70 @@ fn convert(wb: &Workbook, sheet: SheetId, defs: &[CfDef]) -> Vec<CfRule> {
             }
             _ => continue,
         };
-        let dxf = num("dxfId")
-            .and_then(|i| dxfs.get(i as usize))
+        let source = num("dxfId").map(|i| i as usize);
+        let mut dxf = source
+            .and_then(|i| dxfs.get(i))
             .and_then(|x| crate::xml::parse(x.as_bytes()).ok())
             .map(|x| dxf_read(&x))
             .unwrap_or_default();
-        out.push(CfRule {
-            id: 0,
-            kind,
-            applies: d.applies.clone(),
-            stop: flag(n, "stopIfTrue", false),
-            prio: num("priority").unwrap_or(1) as i32,
+
+        dxf.made.stamp = out.len() as u64;
+        dxf.made.source = source;
+        out.push(Placed {
+            block: 0,
+            rule: CfRule {
+                id: 0,
+                kind,
+                stop: flag(n, "stopIfTrue", false),
+                prio: num("priority").unwrap_or(1) as i32,
+                f1,
+                f2,
+                dxf,
+            },
+            areas: d.applies.clone(),
             seq: 0,
-            f1,
-            f2,
-            dxf,
         });
     }
 
     let mut seen = std::collections::HashSet::new();
     let mut top = 0;
-    for r in &mut out {
-        if !seen.insert(r.prio) {
-            r.prio = top + 1;
-            seen.insert(r.prio);
+    for p in &mut out {
+        if !seen.insert(p.rule.prio) {
+            p.rule.prio = top + 1;
+            seen.insert(p.rule.prio);
         }
-        top = top.max(r.prio);
+        top = top.max(p.rule.prio);
     }
-    out.sort_by_key(|r| r.prio);
+    out.sort_by_key(|p| p.rule.prio);
     xlcalc::cfv::load_order(&mut out);
     out
 }
 
 pub(crate) fn apply(wb: &mut Workbook, sheet: SheetId, defs: &[CfDef]) {
-    let rules = convert(wb, sheet, defs);
+    let mut rules = convert(wb, sheet, defs);
+
+    let mut made: Vec<_> = rules.iter_mut().map(|p| &mut p.rule.dxf).collect();
+    made.sort_by_key(|d| d.made.stamp);
+    wb.cfv_formats_loaded(made.into_iter());
     let sh = wb.cfv_sheet_mut(sheet);
-    for mut r in rules {
-        r.seq = sh.rules.iter().map(|x| x.seq).max().unwrap_or(0) + 1;
+    let mut placed = sh.placed();
+    let mut seq = placed.iter().map(|p| p.seq).max().unwrap_or(0);
+    for mut p in rules {
+        seq += 1;
+        p.seq = seq;
         sh.next_id += 1;
-        r.id = sh.next_id;
-        sh.rules.push(r);
+        p.rule.id = sh.next_id;
+        placed.push(p);
     }
+    sh.set_placed(placed);
 }
 
-fn same(a: &[CfRule], b: &[CfRule]) -> bool {
+fn same(a: &[Placed], b: &[Placed]) -> bool {
     a.len() == b.len()
         && a.iter().zip(b).all(|(x, y)| {
             let (mut x, mut y) = (x.clone(), y.clone());
-            (x.id, x.seq, y.id, y.seq) = (0, 0, 0, 0);
+            (x.rule.id, x.seq, y.rule.id, y.seq) = (0, 0, 0, 0);
+            (x.block, y.block) = (0, 0);
             x == y
         })
 }
@@ -335,7 +351,7 @@ fn cfvo_xml(ty: i32, value: f64, formula: Option<&str>, gte: Option<bool>) -> St
     match (ty, formula) {
         (4, Some(f)) => s.push_str(&format!(
             " val=\"{}\"",
-            escape_attr(f.trim_start_matches('='))
+            escape_attr(&xlcalc::stored_formula_text(f.trim_start_matches('=')))
         )),
         (0 | 3 | 5, _) => s.push_str(&format!(" val=\"{value}\"")),
         _ => {}
@@ -372,7 +388,10 @@ fn rule_xml(r: &CfRule, cell: &str, styles: &mut StyleWriter) -> String {
     let mut attrs = String::new();
     let mut body = String::new();
     let ty: &str;
-    let fml = |s: &str| format!("<formula>{}</formula>", escape_text(s));
+    let fml = |s: &str| {
+        let s = xlcalc::stored_formula_text(s);
+        format!("<formula>{}</formula>", escape_text(&s))
+    };
     let strip = |f: &Option<String>| f.as_deref().map(|f| f.trim_start_matches('=').to_string());
     match &r.kind {
         CfKind::CellValue(op) => {
@@ -534,25 +553,20 @@ pub(crate) fn write(
     source: &[Node],
     styles: &mut StyleWriter,
 ) -> Option<Option<String>> {
-    let rules: &[CfRule] = wb.cfv_sheet(sheet).map_or(&[], |s| &s.rules);
+    let sh = wb.cfv_sheet(sheet);
+    let rules = sh.map_or_else(Vec::new, |s| s.placed());
     let src: Vec<&Node> = source.iter().collect();
-    if same(&convert(wb, sheet, &read_nodes(&src)), rules) {
+    if same(&convert(wb, sheet, &read_nodes(&src)), &rules) {
         return None;
     }
-    if rules.is_empty() {
+    let Some(sh) = sh.filter(|s| !s.rules.is_empty()) else {
         return Some(None);
-    }
-    let mut groups: Vec<(Vec<Rect>, Vec<&CfRule>)> = Vec::new();
-    for r in rules {
-        match groups.iter_mut().find(|(a, _)| *a == r.applies) {
-            Some((_, v)) => v.push(r),
-            None => groups.push((r.applies.clone(), vec![r])),
-        }
-    }
+    };
 
-    groups.sort_by_key(|(_, rs)| rs.iter().map(|r| r.seq).min());
     let mut x = String::new();
-    for (applies, rs) in groups {
+    for block in &sh.blocks {
+        let applies = &block.areas;
+        let rs = sh.rules.iter().filter(|r| block.rules.contains(&r.id));
         let sqref: Vec<String> = applies.iter().map(crate::write::rect_text).collect();
         let cell = crate::write::rect_text(&Rect::new(
             applies.iter().map(|r| r.r0).min().unwrap_or(0),

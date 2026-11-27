@@ -26,6 +26,21 @@ pub struct TtcSpec {
     pub trailing_minus: bool,
 
     pub dest: Option<CellAddr>,
+
+    pub refused: bool,
+}
+
+fn field_list(fieldinfo: &[(u32, u32)]) -> Vec<(u32, u32)> {
+    let mut sorted = fieldinfo.to_vec();
+    sorted.sort_by_key(|p| p.0);
+    let mut kept: Vec<(u32, u32)> = Vec::new();
+    for p in sorted {
+        match kept.last_mut() {
+            Some(l) if l.0 == p.0 => *l = p,
+            _ => kept.push(p),
+        }
+    }
+    kept
 }
 
 fn split_delimited(
@@ -158,7 +173,7 @@ fn guess_breaks(lines: &[Vec<u16>]) -> Vec<u32> {
 }
 
 fn split_fixed(line: &str, breaks: &[u32]) -> Vec<String> {
-    let ch: Vec<u16> = line.encode_utf16().collect();
+    let ch: Vec<u16> = crate::text::wide::units(line).collect();
     let mut out = Vec::new();
     for (j, &s) in breaks.iter().enumerate() {
         let s = s as usize;
@@ -169,7 +184,7 @@ fn split_fixed(line: &str, breaks: &[u32]) -> Vec<String> {
             .get(j + 1)
             .map_or(ch.len(), |&e| (e as usize).min(ch.len()));
         out.push(
-            String::from_utf16_lossy(&ch[s..e.max(s)])
+            crate::text::wide::from_units(&ch[s..e.max(s)])
                 .trim_matches([' ', '\u{3000}'])
                 .to_string(),
         );
@@ -335,18 +350,8 @@ impl Workbook {
             delims.push(c);
         }
         let mut breaks: Vec<(u32, u32)> = Vec::new();
+        let mut fi = field_list(&spec.fieldinfo);
         if spec.fixed {
-            let mut fi = spec.fieldinfo.clone();
-            fi.sort_by_key(|p| p.0);
-
-            let mut kept: Vec<(u32, u32)> = Vec::new();
-            for p in fi {
-                match kept.last_mut() {
-                    Some(l) if l.0 == p.0 => *l = p,
-                    _ => kept.push(p),
-                }
-            }
-            fi = kept;
             if fi.is_empty() {
                 let first = self
                     .cell_table_extent(sheet)
@@ -365,18 +370,21 @@ impl Workbook {
                             }
                             None => String::new(),
                         };
-                        t.encode_utf16().collect()
+                        crate::text::wide::units(&t).collect()
                     })
                     .collect();
                 fi = guess_breaks(&texts).into_iter().map(|p| (p, 1)).collect();
             }
-            breaks = fi;
+            breaks = std::mem::take(&mut fi);
         }
         if !(rect.r0..=rect.r1).any(|r| {
             self.sheet(sheet)
                 .is_some_and(|s| s.cells.get(r, rect.c0).is_some())
         }) {
             return Err(EditError::Compile("No data was selected to parse.".into()));
+        }
+        if spec.refused {
+            return Ok(RecalcReport::default());
         }
         let mut rows: Vec<Vec<(String, u32)>> = Vec::new();
         for r in rect.r0..=rect.r1 {
@@ -398,14 +406,7 @@ impl Workbook {
                 split_delimited(&text, &delims, spec.consecutive, spec.qualifier)
                     .into_iter()
                     .enumerate()
-                    .map(|(j, s)| {
-                        let ty = spec
-                            .fieldinfo
-                            .iter()
-                            .find(|p| p.0 == j as u32 + 1)
-                            .map_or(1, |p| p.1);
-                        (s, ty)
-                    })
+                    .map(|(j, s)| (s, fi.get(j).map_or(1, |p| p.1)))
                     .collect()
             };
             rows.push(pieces.into_iter().filter(|p| p.1 != 9).collect());
@@ -666,7 +667,7 @@ mod tests {
     use super::*;
 
     fn u(s: &str) -> Vec<u16> {
-        s.encode_utf16().collect()
+        crate::text::wide::units(s).collect()
     }
 
     #[test]
@@ -749,5 +750,10 @@ mod tests {
     fn minus() {
         assert_eq!(trailing_minus("5-").as_deref(), Some("-5"));
         assert_eq!(trailing_minus("x-"), None);
+    }
+
+    #[test]
+    fn field_list_orders_and_replaces() {
+        assert_eq!(field_list(&[(2, 2), (0, 9), (2, 5)]), vec![(0, 9), (2, 5)]);
     }
 }

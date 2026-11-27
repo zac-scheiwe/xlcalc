@@ -195,278 +195,462 @@ fn widen_date_format(f: &str) -> String {
     out
 }
 
-fn paren_percent(inner: &str, loc: &Locale) -> Option<ParsedNumber> {
-    let p = parse_plain(inner, loc)?;
-    if matches!(p.kind, NumberKind::Currency | NumberKind::Percent) {
+const IFMT_GROUP: u32 = 3;
+const IFMT_CURRENCY: u32 = 10;
+const IFMT_PCT: u32 = 13;
+const IFMT_PCT2: u32 = 14;
+const IFMT_SCI: u32 = 15;
+const IFMT_FRAC1: u32 = 17;
+const IFMT_FRAC2: u32 = 18;
+
+struct TypedParts {
+    has_dec: bool,
+    group: bool,
+    currency: bool,
+    percent: bool,
+    euro: bool,
+}
+
+fn typed_ifmt(core: Option<u32>, t: TypedParts) -> Option<u32> {
+    if core.is_some() {
+        return core;
+    }
+    if t.euro {
         return None;
     }
-    let mut q = ParsedNumber::new(number::normalize(p.value / 100.0), NumberKind::Percent);
-    q.format = match p.format.as_deref() {
-        Some("0.00E+00") => p.format,
-        Some(f) if f.starts_with("# ?") => Some("0.00%".to_string()),
-        _ if inner.contains(loc.decimal_sep) => Some("0.00%".to_string()),
-        _ => Some("0%".to_string()),
+    let dec = u32::from(t.has_dec);
+    if t.currency {
+        Some(IFMT_CURRENCY + 2 * dec)
+    } else if t.percent {
+        Some(IFMT_PCT + dec)
+    } else if t.group {
+        Some(IFMT_GROUP + dec)
+    } else {
+        None
+    }
+}
+
+fn typed_ifmt_format(id: u32, loc: &Locale) -> Option<String> {
+    Some(match id {
+        3 => "#,##0".to_string(),
+        4 => "#,##0.00".to_string(),
+        IFMT_PCT => "0%".to_string(),
+        IFMT_PCT2 => "0.00%".to_string(),
+        IFMT_SCI => "0.00E+00".to_string(),
+        IFMT_FRAC1 => "# ?/?".to_string(),
+        IFMT_FRAC2 => "# ??/??".to_string(),
+
+        IFMT_CURRENCY | 12 => currency_fmt_code(loc, true, if id == 12 { 2 } else { 0 }),
+        _ => return None,
+    })
+}
+
+fn currency_fmt_code(loc: &Locale, red: bool, decimals: usize) -> String {
+    let digits = if decimals == 0 {
+        "#,##0".to_string()
+    } else {
+        format!("#,##0.{}", "0".repeat(decimals))
     };
-    Some(q)
+    let c = loc.currency.as_str();
+    let tag = if red { "[Red]" } else { "" };
+    format!("{c}{digits};{tag}-{c}{digits}")
 }
 
 fn parse_plain(t: &str, loc: &Locale) -> Option<ParsedNumber> {
-    let mut s = t;
-    let mut negative = false;
-    let mut kind = NumberKind::Plain;
-    let mut euro = false;
-    let mut paren = false;
-    if let Some(inner) = s.strip_prefix('(').and_then(|x| x.strip_suffix(')')) {
-        paren = true;
-        negative = true;
-        s = inner.trim_matches(' ');
-    }
-
-    if !paren {
-        let wrapped = |x: &str| x.starts_with('(') && x.ends_with(')');
-        if let Some(inner) = s.strip_suffix('%').map(|x| x.trim_end_matches(' ')) {
-            if wrapped(inner) {
-                return paren_percent(inner, loc);
-            }
-        } else if let Some(inner) = s.strip_prefix('%').map(|x| x.trim_start_matches(' ')) {
-            if wrapped(inner) {
-                return paren_percent(inner, loc);
-            }
-        }
-    }
-    let mut percent = false;
-    if let Some(rest) = s.strip_suffix('%') {
-        percent = true;
-        s = rest.trim_end_matches(' ');
-    } else if let Some(rest) = s.strip_prefix('%') {
-        percent = true;
-        s = rest.trim_start_matches(' ');
-    }
-    let take_sign = |s: &mut &str, negative: &mut bool| -> bool {
-        if let Some(r) = s.strip_prefix('-') {
-            *negative = !*negative;
-            *s = r.trim_start_matches(' ');
-            true
-        } else if let Some(r) = s.strip_prefix('+') {
-            *s = r.trim_start_matches(' ');
-            true
-        } else {
-            false
-        }
+    let cs: Vec<char> = t.chars().collect();
+    let own = Currency {
+        symbol: &loc.currency,
+        before: true,
+        euro: false,
     };
-    let had_sign = take_sign(&mut s, &mut negative);
-    if paren && had_sign {
-        return None;
+    let mut euro_seen = false;
+    if let Some(p) = scan_number(&cs, loc, own, &mut euro_seen) {
+        return Some(p);
     }
-    if let Some(r) = s.strip_prefix(loc.currency.as_str()) {
-        kind = NumberKind::Currency;
-        s = r.trim_start_matches(' ');
-        if !had_sign && !paren {
-            take_sign(&mut s, &mut negative);
-            if let Some(inner) = s.strip_prefix('(').and_then(|x| x.strip_suffix(')')) {
-                if !negative {
-                    negative = true;
-                    s = inner.trim_matches(' ');
-                }
-            }
-        }
-    }
-
-    if kind == NumberKind::Plain {
-        if let Some(r) = s.strip_prefix('€') {
-            kind = NumberKind::Currency;
-            euro = true;
-            s = r.trim_start_matches(' ');
-            if let Some(inner) = s.strip_prefix('(').and_then(|x| x.strip_suffix(')')) {
-                if had_sign || paren {
-                    return None;
-                }
-                negative = true;
-                s = inner.trim_matches(' ');
-            }
-            if !had_sign && !paren {
-                take_sign(&mut s, &mut negative);
-            }
-        } else if let Some(r) = s.strip_suffix('€') {
-            kind = NumberKind::Currency;
-            euro = true;
-            s = r.trim_end_matches(' ');
-        }
-    }
-    if kind == NumberKind::Currency && percent {
+    if !euro_seen {
         return None;
     }
 
-    let b = s.as_bytes();
-    if b.is_empty() {
-        return None;
-    }
-    let mut clean = String::with_capacity(b.len());
-    let mut i = 0;
-    let mut grouped = false;
-    let mut int_digits = 0usize;
-    let mut group_len: Option<usize> = None;
-    let mut first_group_zero = false;
-    while i < b.len() {
-        let c = b[i] as char;
-        if c.is_ascii_digit() {
-            clean.push(c);
-            int_digits += 1;
-            if let Some(g) = group_len.as_mut() {
-                *g += 1;
-            }
-        } else if c == loc.thousands_sep
-            && !(c == ' '
-                && int_digits > 0
-                && b[i + 1..].iter().take_while(|d| d.is_ascii_digit()).count() < 3
-                && scan_fraction(b, i + 1).is_some())
-        {
-            if int_digits == 0 || group_len.is_some_and(|g| g < 3) {
-                return None;
-            }
-            if !grouped {
-                first_group_zero = clean.bytes().all(|c| c == b'0');
-            }
-            grouped = true;
-            group_len = Some(0);
-        } else {
-            break;
-        }
-        i += 1;
-    }
-    if group_len.is_some_and(|g| g < 3) {
-        return None;
-    }
+    [true, false].into_iter().find_map(|before| {
+        let euro = Currency {
+            symbol: "\u{20ac}",
+            before,
+            euro: true,
+        };
+        scan_number(&cs, loc, euro, &mut euro_seen)
+    })
+}
 
-    if grouped && (first_group_zero || !clean.bytes().any(|c| (b'1'..=b'9').contains(&c))) {
-        return None;
-    }
+#[derive(Clone, Copy)]
+struct Currency<'a> {
+    symbol: &'a str,
+    before: bool,
+    euro: bool,
+}
 
-    let mut fraction = None;
-    if int_digits > 0 && b.get(i) == Some(&b' ') {
-        if let Some((n, d, end)) = scan_fraction(b, i + 1) {
-            fraction = Some((n, d));
-            i = end;
-        }
-    }
-    let mut sci = false;
-    if fraction.is_none() && i < b.len() && b[i] as char == loc.decimal_sep {
-        clean.push('.');
-        i += 1;
-        while i < b.len() && b[i].is_ascii_digit() {
-            clean.push(b[i] as char);
-            i += 1;
-        }
-    }
-    if fraction.is_none() && i < b.len() && (b[i] == b'e' || b[i] == b'E') {
-        sci = true;
-        clean.push('e');
-        i += 1;
-        if i < b.len() && (b[i] == b'+' || b[i] == b'-') {
-            clean.push(b[i] as char);
-            i += 1;
-        }
-        let es = i;
-        while i < b.len() && b[i].is_ascii_digit() {
-            clean.push(b[i] as char);
-            i += 1;
-        }
-        if es == i {
+impl Currency<'_> {
+    fn read(&self, cs: &[char], from: usize) -> Option<usize> {
+        let symbol = self.symbol.strip_prefix(' ').unwrap_or(self.symbol);
+        if symbol.is_empty() {
             return None;
         }
-    }
-    if i != b.len() || !clean.bytes().any(|c| c.is_ascii_digit()) {
-        return None;
-    }
-
-    if percent {
-        clean = match clean.split_once('e') {
-            Some((m, e)) => format!("{m}e{}", e.parse::<i64>().ok()? - 2),
-            None => format!("{clean}e-2"),
-        };
-    }
-    let mut v = number::parse_literal(&clean)?;
-
-    if let Some((n, d)) = fraction {
-        let q = n / d;
-        v += if percent { q / 100.0 } else { q };
-    }
-    if percent {
-        kind = NumberKind::Percent;
-    } else if kind == NumberKind::Plain {
-        if sci {
-            kind = NumberKind::Scientific;
-        } else if grouped {
-            kind = NumberKind::Thousands;
+        let mut i = from;
+        while cs.get(i) == Some(&' ') {
+            i += 1;
         }
-    }
-    if negative {
-        v = -v;
-    }
-    let mut p = ParsedNumber::new(number::normalize(v), kind);
-    let dec = t.contains(loc.decimal_sep);
-    let exp = t.bytes().any(|c| c == b'e' || c == b'E');
-    p.format = match p.kind {
-        _ if exp => Some("0.00E+00".to_string()),
-        NumberKind::Percent if fraction.is_some() => Some("0.00%".to_string()),
-
-        NumberKind::Plain | NumberKind::Thousands | NumberKind::Currency if fraction.is_some() => {
-            Some(
-                if fraction.is_some_and(|(_, d)| d >= 10.0) {
-                    "# ??/??"
-                } else {
-                    "# ?/?"
-                }
-                .to_string(),
-            )
+        for s in symbol.chars() {
+            if cs.get(i) != Some(&s) {
+                return None;
+            }
+            i += 1;
         }
-        NumberKind::Percent => Some(if dec { "0.00%" } else { "0%" }.to_string()),
-        NumberKind::Thousands => Some(if dec { "#,##0.00" } else { "#,##0" }.to_string()),
+        Some(i)
+    }
+}
 
-        NumberKind::Currency if euro => None,
-        NumberKind::Currency => {
-            let (c, d) = (loc.currency.as_str(), if dec { ".00" } else { "" });
-            Some(format!("{c}#,##0{d};[Red]-{c}#,##0{d}"))
-        }
-        _ => None,
+struct Prefix {
+    start: usize,
+    negative: bool,
+    parens: u32,
+    percents: u32,
+    currencies: u32,
+}
+
+fn scan_prefix(
+    cs: &[char],
+    loc: &Locale,
+    currency: Currency,
+    euro_seen: &mut bool,
+) -> Option<Prefix> {
+    let mut p = Prefix {
+        start: 0,
+        negative: false,
+        parens: 0,
+        percents: 0,
+        currencies: 0,
     };
+    let mut signs = 0;
+    let mut i = 0;
+    loop {
+        let c = *cs.get(i)?;
+        if c == loc.decimal_sep {
+            cs.get(i + 1).filter(|d| d.is_ascii_digit())?;
+            break;
+        }
+        if c.is_ascii_digit() {
+            break;
+        }
+        *euro_seen |= c == '\u{20ac}';
+        if currency.before {
+            if let Some(next) = currency.read(cs, i) {
+                p.currencies += 1;
+                i = next;
+                continue;
+            }
+        }
+        match c {
+            ' ' => {}
+            '%' => p.percents += 1,
+            '(' | '+' | '-' => {
+                if signs > 0 {
+                    return None;
+                }
+                signs += 1;
+                if c == '(' {
+                    p.parens += 1;
+                }
+                p.negative |= c != '+';
+            }
+            _ => return None,
+        }
+        i += 1;
+    }
+    p.start = i;
     Some(p)
 }
 
-pub fn bare_fraction_as_mixed(s: &str) -> Option<String> {
-    let t = s.trim_matches(' ');
-    let b = t.as_bytes();
-    if t.starts_with(['=', '\'']) {
+fn scan_number(
+    cs: &[char],
+    loc: &Locale,
+    currency: Currency,
+    euro_seen: &mut bool,
+) -> Option<ParsedNumber> {
+    let mut p = scan_prefix(cs, loc, currency, euro_seen)?;
+    let rest = &cs[p.start..];
+    let core = parse_number_core(rest, p.negative, p.percents > 0 || rest.contains(&'%'), loc)?;
+    let mut i = p.start + core.end;
+    while let Some(&c) = cs.get(i) {
+        *euro_seen |= c == '\u{20ac}';
+        if !currency.before {
+            if let Some(next) = currency.read(cs, i) {
+                p.currencies += 1;
+                i = next;
+                continue;
+            }
+        }
+        match c {
+            ' ' => {}
+            '%' => p.percents += 1,
+            ')' => p.parens = p.parens.checked_sub(1)?,
+            _ => return None,
+        }
+        i += 1;
+    }
+    if p.parens > 0 || p.currencies + p.percents > 1 {
         return None;
     }
-    let start = b.iter().position(|c| c.is_ascii_digit())?;
-    if !t[..start].chars().all(|c| {
-        matches!(c, '(' | '+' | '-' | ' ')
-            || !c.is_alphanumeric() && c != '/' && c != '.' && c != ','
-    }) {
-        return None;
-    }
-    let (n, d, end) = scan_fraction(b, start)?;
-    if n == 0.0 || d == 0.0 || !t[end..].chars().all(|c| matches!(c, ')' | '%' | ' ')) {
-        return None;
-    }
-    Some(format!("{}0 {}", &t[..start], &t[start..]))
+    let kind = if p.percents > 0 {
+        NumberKind::Percent
+    } else if p.currencies > 0 {
+        NumberKind::Currency
+    } else if core.ifmt == Some(IFMT_SCI) {
+        NumberKind::Scientific
+    } else if core.grouped {
+        NumberKind::Thousands
+    } else {
+        NumberKind::Plain
+    };
+    let mut parsed = ParsedNumber::new(number::normalize(core.value), kind);
+    let ifmt = typed_ifmt(
+        core.ifmt,
+        TypedParts {
+            has_dec: core.decimal,
+            group: parsed.kind == NumberKind::Thousands,
+            currency: parsed.kind == NumberKind::Currency,
+            percent: parsed.kind == NumberKind::Percent,
+            euro: currency.euro,
+        },
+    );
+    parsed.format = ifmt.and_then(|id| typed_ifmt_format(id, loc));
+    Some(parsed)
 }
 
-fn scan_fraction(b: &[u8], i: usize) -> Option<(f64, f64, usize)> {
-    let int = |mut j: usize| -> Option<(f64, usize)> {
-        let st = j;
-        while j < b.len() && b[j].is_ascii_digit() {
+struct CoreNumber {
+    value: f64,
+    end: usize,
+    ifmt: Option<u32>,
+    decimal: bool,
+    grouped: bool,
+}
+
+struct DigitGroups {
+    sizes: Vec<u32>,
+    uniform: Option<u32>,
+}
+
+impl DigitGroups {
+    fn from_sgrouping(g: &str) -> DigitGroups {
+        let mut sizes: Vec<u32> = g
+            .chars()
+            .step_by(2)
+            .map(|c| c as u32 - '0' as u32)
+            .collect();
+        if sizes.first() == Some(&0) {
+            sizes = vec![0x7fff_ffff, 0x7fff_ffff];
+        }
+        let uniform = (sizes.len() == 2 && sizes[1] == 0).then_some(sizes[0]);
+        DigitGroups { sizes, uniform }
+    }
+
+    fn size_for(&self, remaining: u32) -> u32 {
+        if let Some(u) = self.uniform {
+            return u;
+        }
+        let count = self.sizes.len() as u32;
+        let mut idx = remaining.wrapping_sub(1);
+        if count <= idx && count > 1 && self.sizes[count as usize - 1] == 0 {
+            idx = count - 2;
+        }
+        if (idx as i32) < 0 || count - 1 < idx {
+            0x7fff_ffff
+        } else {
+            self.sizes[idx as usize]
+        }
+    }
+}
+
+fn parse_number_core(
+    c: &[char],
+    negative: bool,
+    percent: bool,
+    loc: &Locale,
+) -> Option<CoreNumber> {
+    let at = |i: usize| c.get(i).copied().unwrap_or('\0');
+    let digit = |ch: char| ch.is_ascii_digit();
+    let groups = DigitGroups::from_sgrouping("3;0");
+    let mut i = 0;
+    while at(i) == '0' {
+        i += 1;
+    }
+
+    let mut remaining: u32 = 1;
+    if groups.uniform.is_none() {
+        remaining = 0;
+        let mut j = i;
+        while at(j) != '\0' {
+            if at(j) == loc.thousands_sep {
+                remaining += 1;
+            } else if !digit(at(j)) {
+                break;
+            }
             j += 1;
         }
-        if j == st || j - st > 5 {
-            return None;
+    }
+    let mut digits: Vec<u8> = Vec::new();
+    let mut exp: i64 = 0;
+    let mut any_int = false;
+    let mut grouped = false;
+    while digit(at(i)) {
+        any_int = true;
+        exp += 1;
+        if digits.len() < 15 {
+            digits.push(at(i) as u8 - b'0');
         }
-        let v: u32 = std::str::from_utf8(&b[st..j]).ok()?.parse().ok()?;
-        (v <= 32767).then_some((v as f64, j))
+        i += 1;
+        if remaining > 0 && at(i) != '\0' && at(i) == loc.thousands_sep {
+            let size = groups.size_for(remaining);
+            let mut found = 0u32;
+            if size != 0 {
+                let mut j = i + 1;
+                while at(j) != '\0' && digit(at(j)) {
+                    found += 1;
+                    if size <= found {
+                        break;
+                    }
+                    j += 1;
+                }
+            }
+            if found == size {
+                if groups.uniform.is_none() {
+                    remaining -= 1;
+                }
+                grouped = true;
+                i += 1;
+            }
+        }
+    }
+    let mut ifmt = None;
+    let mut decimal = false;
+    let mut fraction: Option<f64> = None;
+
+    let mixed = (at(i) == ' ').then(|| scan_fraction(c, i + 1)).flatten();
+    if let Some((n, d, end)) = mixed {
+        fraction = Some(n / d);
+        ifmt = Some(if d > 9.0 { IFMT_FRAC2 } else { IFMT_FRAC1 });
+        decimal = true;
+        i = end;
+    } else {
+        if at(i) == loc.decimal_sep {
+            decimal = true;
+            i += 1;
+        }
+        if !any_int {
+            while at(i) == '0' {
+                i += 1;
+                exp -= 1;
+            }
+        }
+        if decimal {
+            while digit(at(i)) {
+                if digits.len() < 15 {
+                    digits.push(at(i) as u8 - b'0');
+                }
+                i += 1;
+            }
+        }
+        let stars = at(i) == '*' && at(i + 1) == '*';
+        if matches!(at(i), 'e' | 'E') || stars {
+            if stars {
+                i += 1;
+            }
+            i += 1;
+            let mut neg = false;
+            match at(i) {
+                '+' => i += 1,
+                '-' => {
+                    neg = true;
+                    i += 1;
+                }
+                _ => {}
+            }
+
+            let mut v: u32 = 0;
+            let st = i;
+            while digit(at(i)) {
+                if v > 0x0ccc_cccc {
+                    return None;
+                }
+                v = v * 10 + (at(i) as u32 - '0' as u32);
+                if v > i32::MAX as u32 {
+                    return None;
+                }
+                i += 1;
+            }
+            if i == st {
+                return None;
+            }
+            exp += if neg { -i64::from(v) } else { i64::from(v) };
+            ifmt = Some(IFMT_SCI);
+        }
+    }
+    if percent {
+        if let Some(f) = fraction.as_mut() {
+            *f /= 100.0;
+            ifmt = Some(IFMT_PCT2);
+        }
+        exp -= 2;
+    }
+    if exp.abs() > 308 {
+        return None;
+    }
+    let d = digits.iter().fold(0u64, |a, &x| a * 10 + u64::from(x));
+    let mut value = number::pack_decimal(d, exp - digits.len() as i64);
+    if let Some(f) = fraction {
+        value += f;
+    }
+    if negative {
+        value = -value;
+    }
+    Some(CoreNumber {
+        value,
+        end: i,
+        ifmt,
+        decimal,
+        grouped,
+    })
+}
+
+pub fn bare_fraction_as_mixed(s: &str, loc: &Locale) -> Option<String> {
+    let cs: Vec<char> = s.trim_matches(' ').chars().collect();
+    let own = Currency {
+        symbol: &loc.currency,
+        before: true,
+        euro: false,
+    };
+    let start = scan_prefix(&cs, loc, own, &mut false)?.start;
+    let zeros = cs[start..].iter().take_while(|&&c| c == '0').count();
+    scan_fraction(&cs, start + zeros)?;
+    let mut mixed: String = cs[..start].iter().collect();
+    mixed.push_str("0 ");
+    mixed.extend(&cs[start..]);
+    parse_plain(&mixed, loc).map(|_| mixed)
+}
+
+fn scan_fraction(b: &[char], i: usize) -> Option<(f64, f64, usize)> {
+    let int = |mut j: usize| -> Option<(f64, usize)> {
+        let mut v: u32 = 0;
+        let st = j;
+        while let Some(d) = b.get(j).and_then(|c| c.to_digit(10)) {
+            if j - st == 5 {
+                return None;
+            }
+            v = v * 10 + d;
+            j += 1;
+        }
+        (j > st && v <= 32767).then_some((f64::from(v), j))
     };
     let (n, j) = int(i)?;
-    if b.get(j) != Some(&b'/') {
+    if b.get(j) != Some(&'/') {
         return None;
     }
     let (d, j) = int(j + 1)?;
@@ -556,12 +740,11 @@ fn next_sep(cs: &[char], pos: &mut usize, prev: i32, loc: &Locale) -> i32 {
     -1
 }
 
+const YEAR_PIVOT: i32 = 1930;
+
 fn expand_year(y: i32) -> i32 {
-    if y < 30 {
-        2000 + y
-    } else {
-        1900 + y
-    }
+    let p = YEAR_PIVOT % 100;
+    (if p <= y { y } else { y + 100 }) - p + YEAR_PIVOT
 }
 
 pub(crate) fn parse_datetime_text(t: &str, env: ParseEnv) -> Option<ParsedNumber> {
@@ -577,13 +760,16 @@ fn parse_datetime_text_lead(t: &str, env: ParseEnv, lead: bool) -> Option<Parsed
     let mut toks: Vec<DtToken> = Vec::new();
 
     let mut seps: Vec<i32> = Vec::new();
+    if lead {
+        seps.push(SEP_NONE);
+    }
     let mut prev = SEP_NONE;
     let mut month_seen = false;
     let mut ampm_seen = false;
     let mut frac_digits = 0usize;
     let mut pos = 0;
     while pos < cs.len() {
-        if toks.len() >= 9 {
+        if seps.len() >= 9 {
             return None;
         }
         let c = cs[pos];
@@ -603,7 +789,7 @@ fn parse_datetime_text_lead(t: &str, env: ParseEnv, lead: bool) -> Option<Parsed
                 }
                 month_seen = true;
             } else {
-                let k = toks.len();
+                let k = seps.len();
                 if ampm_seen || k == 0 || seps[k - 1] != SEP_SPACE {
                     return None;
                 }
@@ -651,10 +837,7 @@ fn parse_datetime_text_lead(t: &str, env: ParseEnv, lead: bool) -> Option<Parsed
             pos += 1;
         }
     }
-    if lead {
-        seps.insert(0, SEP_SPACE);
-    }
-    let n = toks.len() + lead as usize;
+    let n = seps.len();
     let tk = |k: usize| {
         toks.get(k).copied().unwrap_or(DtToken {
             d: MISSING as f64,
@@ -879,6 +1062,10 @@ fn parse_datetime_text_lead(t: &str, env: ParseEnv, lead: bool) -> Option<Parsed
         if !(1900..=9999).contains(&y) || d < 1 || d > days_in_month_1900(y, month) {
             return None;
         }
+
+        if env.date_system == DateSystem::D1900Gregorian && y == 1900 && month == 2 && d == 29 {
+            return None;
+        }
         let s = if env.date_system == DateSystem::D1900 && y == 1900 && month == 2 && d == 29 {
             60
         } else {
@@ -1093,5 +1280,36 @@ mod tests {
         assert_eq!(num("12:00 PM"), Some(0.5));
         assert_eq!(num("12:00 AM"), Some(0.0));
         assert_eq!(num("1/2/2020 12:00"), Some(43862.5));
+    }
+
+    #[test]
+    fn number_core_edges() {
+        assert_eq!(num("12345678901234567"), Some(12345678901234500.0));
+        assert_eq!(num("0.1234567890123456789"), Some(0.123456789012345));
+
+        assert_eq!(num("1,0000"), Some(10000.0));
+        assert_eq!(num("1,23"), None);
+        assert_eq!(num("0,001"), None);
+        assert_eq!(num("1 1/2"), Some(1.5));
+        assert_eq!(num("1 1/0"), None);
+
+        assert_eq!(num("1e307"), Some(1e307));
+        assert_eq!(num("1e308"), None);
+        assert_eq!(num("1e"), None);
+        assert_eq!(num("1e+"), None);
+        assert_eq!(num(".5"), Some(0.5));
+        assert_eq!(num("0.000e5"), Some(0.0));
+        assert_eq!(num("1e308%"), Some(1e306));
+    }
+
+    #[test]
+    fn digit_groups_table() {
+        let g = DigitGroups::from_sgrouping("3;0");
+        assert_eq!(g.uniform, Some(3));
+        let g = DigitGroups::from_sgrouping("3;2;0");
+        assert_eq!(g.uniform, None);
+        assert_eq!(g.size_for(1), 3);
+        assert_eq!(g.size_for(2), 2);
+        assert_eq!(g.size_for(3), 0);
     }
 }

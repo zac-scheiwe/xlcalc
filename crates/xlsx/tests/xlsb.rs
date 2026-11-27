@@ -147,3 +147,83 @@ fn xlsb_writer_matches_excel_for_external_3d_spans() {
         );
     }
 }
+
+fn with_part(bytes: &[u8], name: &str, edit: impl Fn(&str) -> String) -> Vec<u8> {
+    use std::io::{Read, Write};
+    let mut from = zip::ZipArchive::new(std::io::Cursor::new(bytes)).unwrap();
+    let mut to = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+    for i in 0..from.len() {
+        let mut part = from.by_index(i).unwrap();
+        let this = part.name().unwrap().into_owned();
+        let mut data = Vec::new();
+        part.read_to_end(&mut data).unwrap();
+        if this == name {
+            data = edit(std::str::from_utf8(&data).unwrap()).into_bytes();
+        }
+        to.start_file(this, zip::write::SimpleFileOptions::default())
+            .unwrap();
+        to.write_all(&data).unwrap();
+    }
+    to.finish().unwrap().into_inner()
+}
+
+#[test]
+fn view_state_survives_the_binary_formats() {
+    let mut wb = xlcalc::Workbook::new();
+    let sheet = wb.add_sheet("S").unwrap();
+    wb.set_value(
+        xlcalc::CellAddr::new(sheet, 0, 0),
+        xlcalc::Value::Number(1.0),
+    );
+    let plain = xlcalc_xlsx::save(&wb, None, &Default::default())
+        .unwrap()
+        .bytes;
+    let view = "<sheetViews><sheetView tabSelected=\"1\" view=\"pageBreakPreview\" \
+        topLeftCell=\"B3\" zoomScale=\"80\" workbookViewId=\"0\"><selection activeCell=\"F7\" \
+        activeCellId=\"1\" sqref=\"C4 F7:G8\"/></sheetView></sheetViews>";
+    let source = with_part(&plain, "xl/worksheets/sheet1.xml", |x| {
+        let from = x.find("<sheetData").unwrap();
+        let to = x.find("</sheetData>").map_or_else(
+            || from + x[from..].find("/>").unwrap() + 2,
+            |at| at + "</sheetData>".len(),
+        );
+        let open = x.find("<worksheet").unwrap();
+        let head = &x[..open + x[open..].find('>').unwrap() + 1];
+        format!(
+            "{head}<sheetPr><tabColor rgb=\"FF123456\"/></sheetPr>{view}\
+             <cols><col min=\"2\" max=\"2\" width=\"12\" style=\"1\" customWidth=\"1\"/></cols>\
+             {}<rowBreaks count=\"1\" manualBreakCount=\"1\"><brk id=\"7\" max=\"16383\" \
+             man=\"1\"/></rowBreaks></worksheet>",
+            &x[from..to]
+        )
+    });
+    let source = with_part(&source, "xl/styles.xml", |x| {
+        let from = x.find("<cellXfs").unwrap();
+        let to = x.find("</cellXfs>").unwrap();
+        let xf = "<xf numFmtId=\"2\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\" \
+            applyNumberFormat=\"1\"/>";
+        let open = from + x[from..].find('>').unwrap() + 1;
+        let first = &x[open..to];
+        format!("{}<cellXfs count=\"2\">{first}{xf}{}", &x[..from], &x[to..])
+    });
+    let (xlsb, _) = xlcalc_xlsx::xlsx_to_xlsb(&source).unwrap();
+    let (xls, _) = xlcalc_xlsx::xlsx_to_xls(&source).unwrap();
+    for (format, bytes) in [("xlsb", xlsb), ("xls", xls)] {
+        let imp = xlcalc_xlsx::import_bytes(bytes).unwrap();
+        let out = xlcalc_xlsx::save(&imp.workbook, Some(&imp.package), &Default::default())
+            .unwrap()
+            .bytes;
+        let xml = String::from_utf8(zip_part(&out, "xl/worksheets/sheet1.xml")).unwrap();
+        for want in [
+            "rgb=\"FF123456\"",
+            "view=\"pageBreakPreview\"",
+            "topLeftCell=\"B3\"",
+            "zoomScale=\"80\"",
+            "activeCell=\"F7\" activeCellId=\"1\" sqref=\"C4 F7:G8\"",
+            "<brk id=\"7\"",
+            "style=\"",
+        ] {
+            assert!(xml.contains(want), "{format}: no {want} in {xml}");
+        }
+    }
+}

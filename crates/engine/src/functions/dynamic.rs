@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::args::*;
-use super::{args, lazy, volatile, FnDef, MANY254};
+use super::{args, lazy, FnDef, MANY254};
 use crate::coerce;
 use crate::eval::lambda::{invoke, LambdaValue};
 use crate::eval::{EvalCtx, Operand};
@@ -11,7 +11,7 @@ use crate::workbook::MAX_ARRAY_CELLS;
 
 pub const DEFS: &[FnDef] = &[
     args("SEQUENCE", 1, 4, "VVVV", sequence),
-    volatile(args("RANDARRAY", 0, 5, "VVVVV", randarray)),
+    args("RANDARRAY", 0, 5, "VVVVV", randarray),
     lazy("ISOMITTED", 1, 1, isomitted),
     args("MAP", 2, MANY254, "R", map),
     args("REDUCE", 3, 3, "R", |c, o| reduce_scan(c, o, false)),

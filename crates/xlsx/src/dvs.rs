@@ -196,7 +196,7 @@ pub(crate) fn write(wb: &Workbook, sheet: SheetId) -> Option<String> {
             if let Some(f) = f.as_deref().filter(|f| !f.is_empty()) {
                 x.push_str(&format!(
                     "<{n}>{}</{n}>",
-                    escape_text(&file_limit(d.kind, f))
+                    escape_text(&xlcalc::stored_formula_text(&file_limit(d.kind, f)))
                 ));
             }
         }

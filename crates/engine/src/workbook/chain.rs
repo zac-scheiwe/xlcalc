@@ -51,17 +51,6 @@ impl Workbook {
         r
     }
 
-    pub(crate) fn outside_creation<R>(&mut self, f: impl FnOnce(&mut Workbook) -> R) -> R {
-        if self.calc.creation.is_none() {
-            return f(self);
-        }
-        self.order_creation();
-        let scope = self.calc.creation.take();
-        let r = f(self);
-        self.calc.creation = scope;
-        r
-    }
-
     pub(crate) fn flush_creation(&mut self) {
         self.order_creation();
     }
@@ -323,6 +312,25 @@ mod tests {
             wb.set_input(a(0, 2), "=7").unwrap();
         });
         assert_eq!(wb.debug_chain(), "A1 C1 B1 B2 B3 A2");
+    }
+
+    #[test]
+    fn a_restored_totals_row_enters_left_column_first() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let a = |r, c| CellAddr::new(s, r, c);
+        for (c, head) in ["x", "y", "z"].into_iter().enumerate() {
+            wb.set_input(a(0, c as u32), head).unwrap();
+            wb.set_input(a(1, c as u32), "1").unwrap();
+        }
+        wb.add_table("T", s, Rect::new(0, 0, 1, 2)).unwrap();
+        wb.set_table_totals("T", true).unwrap();
+        for c in [2, 0, 1] {
+            wb.set_input(a(2, c), "=NOW()").unwrap();
+        }
+        wb.set_table_totals("T", false).unwrap();
+        wb.set_table_totals("T", true).unwrap();
+        assert_eq!(wb.debug_chain(), "A3 B3 C3");
     }
 
     #[test]

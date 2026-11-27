@@ -3,7 +3,8 @@ use xlcalc_variant::Variant;
 
 use crate::addr::{max_cols, max_rows};
 use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef};
-use crate::conv::Args;
+use crate::cmdargs::Reader;
+use crate::conv::{command_int, Args};
 use crate::error::OmError;
 use crate::typelib::{InvokeKind, Member};
 
@@ -11,27 +12,18 @@ const CREATOR: i32 = 0x5843_454C;
 const XL_LEFT: i32 = -4131;
 const XL_RIGHT: i32 = -4152;
 
-pub(crate) fn group_axis(rect: Rect, mode: Mode) -> bool {
+fn outline_rows(rect: Rect, mode: Mode, start: Option<i32>) -> Result<bool, OmError> {
     let rows = rect.c0 == 0 && rect.c1 == max_cols() - 1;
     let cols = rect.r0 == 0 && rect.r1 == max_rows() - 1;
-    match (mode, rows, cols) {
-        (Mode::Columns, _, true) => false,
-
-        (Mode::Rows, _, _) | (_, true, _) => true,
-        _ => false,
+    if rows != cols {
+        return Ok(rows);
     }
-}
-
-fn level_arg(a: &Args, i: usize) -> Result<u32, OmError> {
-    let n = match a.get(i) {
-        None => 0,
-        Some(Variant::Bool(b)) => i32::from(*b),
-        Some(_) => a.f64(i)?.map_or(0, |x| x.trunc() as i32),
-    };
-    u32::try_from(n)
-        .ok()
-        .filter(|n| *n <= 8)
-        .ok_or_else(OmError::app_defined)
+    match start {
+        None => Ok(mode == Mode::Rows),
+        Some(1) => Ok(true),
+        Some(2) => Ok(false),
+        Some(_) => Err(OmError::app_defined()),
+    }
 }
 
 impl Application<'_> {
@@ -75,10 +67,27 @@ impl Application<'_> {
                 if a.get(0).is_none() && a.get(1).is_none() {
                     return Err(OmError::app_defined());
                 }
-                let rows = level_arg(a, 0)?;
-                let cols = level_arg(a, 1)?;
-                self.book_mut(b)?.wb.outline_show_levels(s, rows, cols);
-                Ok(Variant::Bool(true))
+
+                let operands = self
+                    .member_operands("Outline", m.dispid, a)
+                    .map_err(|_| OmError::app_defined())?;
+                let refused = OmError::app_defined();
+                self.run_command(b, a.lcid, operands, &refused, |app, o| {
+                    let reader = Reader {
+                        wb: &app.book(b)?.wb,
+                        lcid: a.lcid,
+                    };
+                    let level = |i: usize| {
+                        let n = reader.int(o.get(i)).map_err(|_| OmError::app_defined())?;
+                        u32::try_from(n.unwrap_or(0))
+                            .ok()
+                            .filter(|n| *n <= 8)
+                            .ok_or_else(OmError::app_defined)
+                    };
+                    let (rows, cols) = (level(0)?, level(1)?);
+                    app.book_mut(b)?.wb.outline_show_levels(s, rows, cols);
+                    Ok(Variant::Bool(true))
+                })
             }
             ("Application", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
             ("Creator", Get) => Ok(Variant::I4(CREATOR)),
@@ -116,25 +125,32 @@ impl Application<'_> {
         }
         match (m.name, m.kind) {
             ("Group" | "Ungroup", Func) => {
-                if a.get(1).is_some()
-                    || (r.mode == Mode::Cells
-                        && !(rect.c0 == 0 && rect.c1 == max_cols() - 1)
-                        && !(rect.r0 == 0 && rect.r1 == max_rows() - 1)
-                        && (0..4).any(|i| a.get(i).is_some()))
-                {
+                if (1..4).any(|i| a.get(i).is_some()) {
                     return Err(OmError::app_defined());
                 }
-                let rows = group_axis(rect, r.eff_mode());
-                let (at, count) = if rows {
-                    (rect.r0, rect.rows())
-                } else {
-                    (rect.c0, rect.cols())
-                };
-                self.book_mut(book)?
-                    .wb
-                    .group_axis(sheet, rows, at, count, m.name == "Group")
+                let operands = self
+                    .range_operands(m.dispid, a)
                     .map_err(|_| OmError::app_defined())?;
-                Ok(Variant::Bool(true))
+                let refused = OmError::app_defined();
+                let mode = r.eff_mode();
+                self.run_command(book, a.lcid, operands, &refused, |app, o| {
+                    let reader = Reader {
+                        wb: &app.book(book)?.wb,
+                        lcid: a.lcid,
+                    };
+                    let start = reader.int(o.get(0)).map_err(|_| OmError::app_defined())?;
+                    let rows = outline_rows(rect, mode, start)?;
+                    let (at, count) = if rows {
+                        (rect.r0, rect.rows())
+                    } else {
+                        (rect.c0, rect.cols())
+                    };
+                    app.book_mut(book)?
+                        .wb
+                        .group_axis(sheet, rows, at, count, m.name == "Group")
+                        .map_err(|_| OmError::app_defined())?;
+                    Ok(Variant::Bool(true))
+                })
             }
             ("ShowDetail", _) => {
                 let rows = r.eff_mode() == Mode::Rows;
@@ -184,13 +200,17 @@ impl Application<'_> {
                         Variant::Null
                     });
                 }
-                let x = self.put_f64(a)?.trunc();
-                if !(1.0..=8.0).contains(&x) {
-                    return Err(OmError::app_defined());
-                }
+
+                let wb = &self.book(book)?.wb;
+                let level = command_int(a.put.as_ref(), a.lcid, wb)
+                    .ok()
+                    .flatten()
+                    .and_then(|x| u32::try_from(x).ok())
+                    .filter(|x| (1..=8).contains(x))
+                    .ok_or_else(OmError::app_defined)?;
                 self.book_mut(book)?
                     .wb
-                    .set_outline_levels(sheet, rows, lo, hi - lo + 1, x as u32);
+                    .set_outline_levels(sheet, rows, lo, hi - lo + 1, level);
                 Ok(Variant::Empty)
             }
             _ => Err(unsupported("Range", m)),
@@ -226,5 +246,21 @@ impl Application<'_> {
             .set_active_sheet(id)
             .map_err(crate::objects::edit_error)?;
         Ok(Variant::Empty)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn group_start_picks_the_axis_of_a_block_only() {
+        let rows = Rect::new(1, 0, 2, max_cols() - 1);
+        let block = Rect::new(1, 1, 2, 2);
+        assert!(outline_rows(rows, Mode::Rows, Some(7)).unwrap());
+        assert!(!outline_rows(block, Mode::Cells, None).unwrap());
+        assert!(outline_rows(block, Mode::Rows, None).unwrap());
+        assert!(outline_rows(block, Mode::Cells, Some(1)).unwrap());
+        assert!(outline_rows(block, Mode::Cells, Some(0)).is_err());
     }
 }

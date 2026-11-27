@@ -276,6 +276,16 @@ pub fn trailing_ignorable(s: &str) -> usize {
         .count()
 }
 
+pub fn equal_ignoring_accents(a: char, b: char) -> bool {
+    let (Ok(a), Ok(b)) = (u16::try_from(a as u32), u16::try_from(b as u32)) else {
+        return false;
+    };
+    match (rec(a), rec(b)) {
+        (Some(x), Some(y)) => x.n == y.n && x.p == y.p && x.w == y.w && x.x == y.x,
+        _ => false,
+    }
+}
+
 pub fn compare(a: &str, b: &str) -> Ordering {
     if a.len() == b.len() && a.is_ascii() && b.is_ascii() && a.eq_ignore_ascii_case(b) {
         return Ordering::Equal;
@@ -354,8 +364,8 @@ mod tests {
     }
 
     fn os_compare(a: &str, b: &str) -> Ordering {
-        let x: Vec<u16> = a.encode_utf16().collect();
-        let y: Vec<u16> = b.encode_utf16().collect();
+        let x: Vec<u16> = crate::text::wide::units(a).collect();
+        let y: Vec<u16> = crate::text::wide::units(b).collect();
 
         let r = unsafe {
             CompareStringEx(
@@ -489,7 +499,7 @@ mod tests {
                 continue;
             }
             let s = c.to_string();
-            let u: Vec<u16> = s.encode_utf16().collect();
+            let u: Vec<u16> = crate::text::wide::units(&s).collect();
             if sort_key(&s) != os_key(&u) {
                 bad.push(cp);
             }

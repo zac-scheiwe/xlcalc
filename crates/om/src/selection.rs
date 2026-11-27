@@ -218,7 +218,7 @@ impl Application<'_> {
             };
 
             let cut = app.clip_cut;
-            if let Err(e) = app.paste_copy(b, (ss, src), (ds, dr), cut) {
+            if let Err(e) = app.paste_copy(b, (ss, src), (ds, dr), cut, true) {
                 if dest.is_none() {
                     app.book_mut(b)?
                         .wb
@@ -247,6 +247,7 @@ impl Application<'_> {
         (ss, src): (SheetId, Rect),
         (ds, dr): (SheetId, Rect),
         cut: bool,
+        objects: bool,
     ) -> Result<(), OmError> {
         let mark = self.notice_mark(b);
         let area = if cut {
@@ -288,6 +289,10 @@ impl Application<'_> {
             paste_area(src, dr)
         };
         self.book_mut(b)?.wb.hl_paste(ss, src, ds, pasted, cut);
+
+        if objects {
+            self.carry_objects(b, (ss, src), (ds, pasted), cut)?;
+        }
         self.book_mut(b)?.wb.notes_paste(ss, src, ds, pasted, cut);
         self.restore_locked(b, &kept);
         if pasted != dr {

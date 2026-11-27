@@ -339,6 +339,7 @@ pub(crate) fn adopt(
                         items.push(xlcalc::pivot::Item {
                             value: v.clone(),
                             label: String::new(),
+                            date: false,
                         });
                     }
                 }
@@ -743,11 +744,14 @@ fn cache_parts(
             if dates[f] {
                 14
             } else {
-                crate::styles::builtin_id(wb.number_format(xlcalc::CellAddr::new(
-                    c.sheet,
-                    c.rect.r0 + 1,
-                    c.rect.c0 + f as u32,
-                )))
+                crate::styles::builtin_id(
+                    wb.locale(),
+                    wb.number_format(xlcalc::CellAddr::new(
+                        c.sheet,
+                        c.rect.r0 + 1,
+                        c.rect.c0 + f as u32,
+                    )),
+                )
             },
             groups[f]
         ));
@@ -912,6 +916,9 @@ fn date_group_field(
     let lo = start.unwrap_or_else(|| nums.iter().cloned().fold(f64::INFINITY, f64::min));
     let hi = end.unwrap_or_else(|| nums.iter().cloned().fold(f64::NEG_INFINITY, f64::max) + 1.0);
     let (by, step) = match unit {
+        DateUnit::Second => ("seconds", None),
+        DateUnit::Minute => ("minutes", None),
+        DateUnit::Hour => ("hours", None),
         DateUnit::Days(n) => ("days", (n > 1).then(|| format!(" groupInterval=\"{n}\""))),
         DateUnit::Month => ("months", None),
         DateUnit::Quarter => ("quarters", None),

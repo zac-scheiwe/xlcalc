@@ -11,7 +11,7 @@ pub(crate) fn border() -> (i64, i64) {
     )
 }
 
-const MIN_HARD: i64 = 10;
+pub(crate) const MIN_HARD: i64 = 10;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub(crate) enum Dock {
@@ -28,6 +28,8 @@ pub(crate) struct LObj {
     pub soft: Rect,
     pub hard: Rect,
     pub slots: [Rect; 5],
+
+    pub grow: bool,
 }
 
 impl LObj {
@@ -36,6 +38,7 @@ impl LObj {
             soft,
             hard: soft,
             slots: [soft; 5],
+            grow: false,
         }
     }
 
@@ -49,6 +52,16 @@ impl LObj {
     pub(crate) fn shrink_to_slots(&mut self) {
         let [mut l, mut t, w, h] = self.hard;
         let (mut r, mut b) = (l + w, t + h);
+        if self.grow {
+            for s in &self.slots {
+                l = l.min(s[0]);
+                t = t.min(s[1]);
+                r = r.max(s[0] + s[2]);
+                b = b.max(s[1] + s[3]);
+            }
+            self.hard = [l, t, (r - l).max(MIN_HARD), (b - t).max(MIN_HARD)];
+            return;
+        }
         for s in &self.slots {
             l = l.max(s[0]);
             t = t.max(s[1]);
@@ -81,18 +94,26 @@ impl LObj {
             }
         };
 
+        let grow = self.grow;
         let across = |at: i64, room: i64, lo: i64, len: i64, plo: i64, phi: i64| -> (i64, i64) {
-            let a = (lo + plo).max(at);
-            let e = (lo - phi + len).min(a + room);
-            (a, e - a)
+            if grow {
+                let a = (lo - plo).min(at);
+                let e = (lo + len + phi).max(a + room);
+                (a, e - a)
+            } else {
+                let a = (lo + plo).max(at);
+                let e = (lo - phi + len).min(a + room);
+                (a, e - a)
+            }
         };
         let child;
         match dock {
             Dock::Top | Dock::Bottom => {
-                let (y, rest_y) = if dock == Dock::Top {
-                    (sy + by, sy + by + ch)
-                } else {
-                    (sy + sh - ch - by, sy)
+                let (y, rest_y) = match (dock == Dock::Top, grow) {
+                    (true, false) => (sy + by, sy + by + ch),
+                    (false, false) => (sy + sh - ch - by, sy),
+                    (true, true) => (sy - ch, sy - ch - by),
+                    (false, true) => (sy + sh, sy),
                 };
                 let x = centre(&mut cw, sx, sw);
                 child = [x, y, cw, ch];
@@ -101,14 +122,15 @@ impl LObj {
                 self.slots[space][2] = aw;
                 if consume {
                     self.slots[space][1] = rest_y;
-                    self.slots[space][3] = sh - ch - by;
+                    self.slots[space][3] = if grow { sh + ch + by } else { sh - ch - by };
                 }
             }
             Dock::Left | Dock::Right => {
-                let (x, rest_x) = if dock == Dock::Left {
-                    (sx + bx, sx + bx + cw)
-                } else {
-                    (sx + sw - cw - bx, sx)
+                let (x, rest_x) = match (dock == Dock::Left, grow) {
+                    (true, false) => (sx + bx, sx + bx + cw),
+                    (false, false) => (sx + sw - cw - bx, sx),
+                    (true, true) => (sx - cw, sx - cw - bx),
+                    (false, true) => (sx + sw, sx),
                 };
                 let y = centre(&mut ch, sy, sh);
                 child = [x, y, cw, ch];
@@ -117,7 +139,7 @@ impl LObj {
                 self.slots[space][3] = ah;
                 if consume {
                     self.slots[space][0] = rest_x;
-                    self.slots[space][2] = sw - cw - bx;
+                    self.slots[space][2] = if grow { sw + cw + bx } else { sw - cw - bx };
                 }
             }
             Dock::Fill => {
@@ -139,6 +161,36 @@ mod tests {
     #[test]
     fn border_is_eight_pixels() {
         assert_eq!(border(), (76_200, 76_200));
+    }
+
+    #[test]
+    fn growing_docks_reach_outward() {
+        let mut o = LObj::new([100_000, 100_000, 1_000_000, 800_000]);
+        o.grow = true;
+
+        let b = o.dock(
+            [-1, 200_000],
+            Dock::Bottom,
+            1,
+            [30_000, 40_000, 0, 0],
+            false,
+            true,
+        );
+        assert_eq!(b, [100_000, 900_000, 1_000_000, 200_000]);
+
+        assert_eq!(o.slots[1], [70_000, 100_000, 1_070_000, 800_000 + 200_000]);
+        assert_eq!(o.hard, [70_000, 100_000, 1_070_000, 1_000_000]);
+        let l = o.dock(
+            [50_000, -1],
+            Dock::Left,
+            0,
+            [0, 0, 20_000, 10_000],
+            true,
+            true,
+        );
+        assert_eq!(l[0], 50_000);
+        assert_eq!(o.slots[0][0], 100_000 - 50_000 - border().0);
+        assert_eq!(o.hard[0], o.slots[0][0]);
     }
 
     #[test]

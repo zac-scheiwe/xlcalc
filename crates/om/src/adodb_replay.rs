@@ -53,13 +53,13 @@ pub(crate) fn dec(s: &str, dir: &str) -> String {
         out.extend_from_slice(u[i].encode_utf16(&mut b));
         i += 1;
     }
-    String::from_utf16_lossy(&out).replace("<T>", dir)
+    xlcalc::wide::from_units(&out).replace("<T>", dir)
 }
 
 pub(crate) fn enc(s: &str, dir: &str) -> String {
     let s = s.replace(dir, "<T>");
     let mut out = String::new();
-    for c in s.encode_utf16() {
+    for c in xlcalc::wide::units(&s) {
         if (32..=126).contains(&c) && c != 0x25 && c != 0x27 {
             out.push(c as u8 as char);
         } else if c < 256 {

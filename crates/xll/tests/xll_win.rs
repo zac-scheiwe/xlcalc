@@ -140,7 +140,7 @@ fn functions_follow_excel() {
 fn registration_events_and_volatility(host: &XllHost) {
     assert_eq!(host.manager_info().as_deref(), Some("Xlc Test XLL"));
     let names = host.function_names();
-    assert_eq!(names.len(), 57);
+    assert_eq!(names.len(), 58);
     assert!(names.iter().any(|n| n == "XLCTYPE"));
     let mut wb = Workbook::new();
     wb.set_function_host(Some(Arc::new(host.clone())));

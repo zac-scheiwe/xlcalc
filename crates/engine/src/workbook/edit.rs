@@ -187,12 +187,10 @@ impl Workbook {
         }
         let (formula, body) = compiled?;
 
-        let formula = match crate::legacy::scalar_entry_expr(self, &body, addr)
-            .and_then(|e| self.compile_expr_normalized(&e, addr).ok())
-        {
-            Some((f, _)) => f,
-            None => formula,
-        };
+        formula.dynamic.set(
+            !crate::legacy::legacy_entry_active()
+                && crate::eval::fdyn::root_flips(self, addr, &formula.root),
+        );
         self.note_placeholders(&formula, addr);
         Ok((Arc::new(formula), body))
     }
@@ -256,7 +254,9 @@ impl Workbook {
         {
             let root = self.formula(fid).formula.root.clone();
             if let Some(f) = self.infer_format(&root, addr) {
-                if !self.cellfmt_has(addr) || self.auto_replaces(self.number_format(addr), &f) {
+                if !self.cellfmt_has(addr)
+                    || self.should_install_format(self.number_format(addr), &f)
+                {
                     self.store_format(addr, &f);
                 }
             }

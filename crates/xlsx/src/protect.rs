@@ -46,7 +46,7 @@ impl PassHash {
                     return false;
                 };
                 let mut buf = salt;
-                buf.extend(given.encode_utf16().flat_map(u16::to_le_bytes));
+                buf.extend(xlcalc::wide::units(given).flat_map(u16::to_le_bytes));
                 let mut h = sha512(&buf).to_vec();
                 for i in 0..*spin {
                     h.extend_from_slice(&i.to_le_bytes());

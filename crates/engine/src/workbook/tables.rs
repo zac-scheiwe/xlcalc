@@ -2,6 +2,7 @@ use super::Command;
 use crate::address::{Rect, SheetId};
 use crate::formula::Formula;
 use crate::workbook::FormulaId;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
@@ -31,9 +32,60 @@ impl Items {
     };
 }
 
+pub(crate) const TOTALS_CODES: [u32; 8] = [109, 101, 103, 102, 105, 104, 107, 110];
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub struct TableId(u64);
+
+impl TableId {
+    pub(crate) fn fresh() -> TableId {
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        TableId(NEXT.fetch_add(1, Ordering::Relaxed))
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
+pub struct ColumnId(u64);
+
+impl ColumnId {
+    pub(crate) fn fresh() -> ColumnId {
+        static NEXT: AtomicU64 = AtomicU64::new(1);
+        ColumnId(NEXT.fetch_add(1, Ordering::Relaxed))
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum TableKey<'a> {
+    Name(&'a str),
+
+    Id(TableId),
+}
+
+impl<'a> From<&'a str> for TableKey<'a> {
+    fn from(name: &'a str) -> Self {
+        TableKey::Name(name)
+    }
+}
+
+impl<'a> From<&'a String> for TableKey<'a> {
+    fn from(name: &'a String) -> Self {
+        TableKey::Name(name)
+    }
+}
+
+impl From<TableId> for TableKey<'_> {
+    fn from(id: TableId) -> Self {
+        TableKey::Id(id)
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Table {
+    pub id: TableId,
+
     pub name: String,
+
+    pub disp: String,
 
     pub sheet: SheetId,
 
@@ -43,6 +95,8 @@ pub struct Table {
 
     pub columns: Vec<String>,
 
+    pub column_ids: Vec<ColumnId>,
+
     pub calc: Vec<bool>,
 
     pub calc_key: Vec<(String, String)>,
@@ -51,9 +105,9 @@ pub struct Table {
 
     pub headers: bool,
 
-    pub totals_code: Option<u32>,
+    pub tot_put: Vec<(String, Option<String>)>,
 
-    pub auto_names: Vec<String>,
+    pub flags: Vec<u8>,
 
     pub dxf: Vec<(String, Arc<str>)>,
 
@@ -86,6 +140,10 @@ pub struct Table {
     pub(crate) sbr_lists: Option<std::collections::BTreeSet<u16>>,
 }
 
+pub(crate) const FLAG_BLANK: u8 = 1;
+
+pub(crate) const FLAG_TEXT: u8 = 4;
+
 impl Table {
     pub(crate) fn rename_in_snapshots(&mut self, old: &str, new: &str) {
         for (cname, snap) in self.calc_snap.iter_mut() {
@@ -109,6 +167,7 @@ impl Table {
             *snap = Arc::new(Formula {
                 root,
                 volatile: snap.volatile,
+                dynamic: snap.dynamic.clone(),
             });
         }
     }
@@ -123,20 +182,16 @@ impl Table {
         name.chars().map(crate::text::fold_upper).collect()
     }
 
-    pub(crate) fn mark_auto(&mut self, name: &str) {
-        let k = Self::auto_key(name);
-        if !self.auto_names.contains(&k) {
-            self.auto_names.push(k);
+    pub(crate) fn add_flag(&mut self, j: usize, bit: u8) {
+        if self.flags.len() <= j {
+            self.flags.resize(j + 1, 0);
         }
+        self.flags[j] |= bit;
     }
 
-    pub(crate) fn unmark_auto(&mut self, name: &str) {
-        let k = Self::auto_key(name);
-        self.auto_names.retain(|x| *x != k);
-    }
-
-    pub(crate) fn is_auto(&self, name: &str) -> bool {
-        self.auto_names.contains(&Self::auto_key(name))
+    pub(crate) fn drop_blanks_header(&self, j: usize) -> bool {
+        let f = self.flags.get(j).copied().unwrap_or(0);
+        f & 3 != 0 && f & FLAG_TEXT == 0
     }
 
     pub(crate) fn col_dxf(&self, name: &str) -> Option<Arc<str>> {
@@ -253,53 +308,7 @@ use crate::value::Value;
 use crate::workbook::{EditError, Entry, Workbook};
 
 pub fn table_display_name(name: &str) -> String {
-    let word = |c: char| c.is_alphanumeric() || matches!(c, '_' | '.' | '\\' | '?');
-    let mut s: String = name
-        .chars()
-        .map(|c| if word(c) { c } else { '_' })
-        .collect();
-    if s.chars()
-        .next()
-        .is_some_and(|c| !(c.is_alphabetic() || c == '_' || c == '\\'))
-        || starts_with_numbered_r1c1(&s)
-    {
-        s.insert(0, '_');
-    } else if crate::address::parse_a1_cell(&s).is_some()
-        || ["R", "C", "RC"].iter().any(|r| s.eq_ignore_ascii_case(r))
-    {
-        s.push('_');
-    }
-    s
-}
-
-fn starts_with_numbered_r1c1(s: &str) -> bool {
-    let b = s.as_bytes();
-    let number = |i: usize| -> (usize, Option<u64>) {
-        let n = b[i..].iter().take_while(|c| c.is_ascii_digit()).count();
-        let v = (n > 0).then(|| s[i..i + n].parse::<u64>().unwrap_or(u64::MAX));
-        (i + n, v)
-    };
-    let mut i = 0;
-    let mut numbered = false;
-    if b.first().is_some_and(|c| c.eq_ignore_ascii_case(&b'R')) {
-        let (j, v) = number(1);
-        if let Some(v) = v {
-            if !(1..=1_048_576).contains(&v) {
-                return false;
-            }
-            numbered = true;
-        }
-        i = j;
-    }
-    if b.get(i).is_some_and(|c| c.eq_ignore_ascii_case(&b'C')) {
-        if let (_, Some(v)) = number(i + 1) {
-            if !(1..=16_384).contains(&v) {
-                return false;
-            }
-            numbered = true;
-        }
-    }
-    numbered
+    crate::parser::cch_legal_name(name).unwrap_or_else(|| "_".to_string())
 }
 
 impl Workbook {
@@ -310,8 +319,135 @@ impl Workbook {
             .or_else(|| {
                 self.tables
                     .iter()
-                    .find(|t| crate::text::eq_ordinal_ci(&table_display_name(&t.name), name))
+                    .find(|t| crate::text::eq_ordinal_ci(&t.disp, name))
             })
+    }
+
+    pub fn table<'a>(&self, key: impl Into<TableKey<'a>>) -> Option<&Table> {
+        self.table_index(key.into()).map(|ti| &self.tables[ti])
+    }
+
+    pub(crate) fn table_on(&self, sheet: SheetId, name: &str) -> Option<&Table> {
+        self.table_index_on(sheet, name).map(|ti| &self.tables[ti])
+    }
+
+    pub(crate) fn table_index_on(&self, sheet: SheetId, name: &str) -> Option<usize> {
+        let find = |text: fn(&Table) -> &str| {
+            self.tables
+                .iter()
+                .position(|t| t.sheet == sheet && crate::text::eq_ordinal_ci(text(t), name))
+        };
+        find(|t| &t.name).or_else(|| find(|t| &t.disp))
+    }
+
+    pub(crate) fn table_name_shadowed(&self, ti: usize) -> bool {
+        self.table_index(TableKey::Name(&self.tables[ti].name)) != Some(ti)
+    }
+
+    pub(crate) fn display_name_taken(&self, text: &str, except: Option<usize>) -> bool {
+        let k = crate::text::name_key(text);
+        self.names
+            .iter()
+            .any(|d| crate::text::name_key(&d.name) == k)
+            || self
+                .tables
+                .iter()
+                .enumerate()
+                .any(|(i, t)| Some(i) != except && crate::text::name_key(&t.disp) == k)
+    }
+
+    pub fn display_name_in_use(&self, text: &str) -> bool {
+        self.display_name_taken(text, None)
+    }
+
+    pub(crate) fn unique_display_name(&self, name: &str, except: Option<usize>) -> String {
+        let base = table_display_name(name);
+        if !self.display_name_taken(&base, except) {
+            return base;
+        }
+        (1u32..)
+            .map(|n| format!("{base}_{n}"))
+            .find(|c| !self.display_name_taken(c, except))
+            .unwrap_or(base)
+    }
+
+    pub(crate) fn renamed_display_name(&self, name: &str, ti: usize) -> String {
+        const MAX: usize = 256;
+        let is_table = |s: &str| {
+            let k = crate::text::name_key(s);
+            self.tables
+                .iter()
+                .any(|t| crate::text::name_key(&t.disp) == k)
+        };
+        let base =
+            crate::parser::cch_legal_name_with(name, &is_table).unwrap_or_else(|| "_".to_string());
+        if !self.display_name_taken(&base, Some(ti)) {
+            return base;
+        }
+        let chars: Vec<char> = base.chars().collect();
+        let numbered = chars
+            .iter()
+            .enumerate()
+            .skip(1)
+            .find(|(_, &c)| c == '_')
+            .map(|(i, _)| i)
+            .or_else(|| (chars.first() == Some(&'_')).then_some(0))
+            .and_then(|i| {
+                let tail: String = chars[i + 1..].iter().collect();
+                let digits = !tail.is_empty() && tail.bytes().all(|b| b.is_ascii_digit());
+                let n = tail.parse::<u32>().ok().filter(|_| digits)?;
+                Some((chars[..=i].iter().collect::<String>(), n))
+            });
+        let (stem, from) = numbered.unwrap_or_else(|| {
+            let kept: String = chars.iter().take(MAX - 12).collect();
+            (format!("{kept}_"), 0)
+        });
+        (from.saturating_add(1)..=u32::MAX)
+            .map(|n| format!("{stem}{n}"))
+            .find(|c| !self.display_name_taken(c, Some(ti)))
+            .unwrap_or(base)
+    }
+
+    pub fn list_row_append_free<'a>(&self, key: impl Into<TableKey<'a>>) -> bool {
+        let Some(ti) = self.table_index(key.into()) else {
+            return false;
+        };
+        let t = &self.tables[ti];
+        if t.rect.r1 + 1 >= crate::address::MAX_ROWS {
+            return false;
+        }
+        let strip = Rect {
+            r0: t.rect.r1 + 1,
+            r1: t.rect.r1 + 1,
+            ..t.rect
+        };
+        let sheet = t.sheet;
+        let nonblank = (strip.c0..=strip.c1)
+            .any(|c| !matches!(self.value(CellAddr::new(sheet, strip.r0, c)), Value::Blank));
+        let cfv = self.cfv_sheet(sheet);
+        !(nonblank
+            || self
+                .tables
+                .iter()
+                .enumerate()
+                .any(|(i, o)| i != ti && o.sheet == sheet && o.rect.intersects(&strip))
+            || self.merges(sheet).iter().any(|m| m.intersects(&strip))
+            || self.pivot_meeting(sheet, &strip).is_some()
+            || cfv.is_some_and(|c| {
+                c.dvs
+                    .iter()
+                    .any(|d| d.applies.iter().any(|r| r.intersects(&strip)))
+                    || c.blocks
+                        .iter()
+                        .any(|b| b.areas.iter().any(|r| r.intersects(&strip)))
+            })
+            || self.views.get(&sheet).is_some_and(|v| {
+                v.filters
+                    .iter()
+                    .any(|f| f.table.is_none() && f.rect.intersects(&strip))
+            })
+            || self.spark_groups(sheet).iter().any(|g| g.touches(&strip))
+            || self.plain_refs_touch(sheet, strip))
     }
 
     pub fn table_text_area(
@@ -327,7 +463,7 @@ impl Workbook {
         let t = self
             .tables
             .iter()
-            .find(|t| crate::text::eq_ordinal_ci(&table_display_name(&t.name), tname.trim()))?;
+            .find(|t| crate::text::eq_ordinal_ci(&t.disp, tname.trim()))?;
         let mut spec = match inner {
             None => Spec {
                 items: Items::DATA,
@@ -352,22 +488,22 @@ impl Workbook {
         self.tables_made
     }
 
-    pub fn set_table_look(&mut self, name: &str, f: impl FnOnce(&mut Table)) -> bool {
-        match self
-            .tables
-            .iter_mut()
-            .find(|t| crate::text::eq_ordinal_ci(&t.name, name))
-        {
-            Some(t) => {
-                f(t);
+    pub fn set_table_look<'a>(
+        &mut self,
+        key: impl Into<TableKey<'a>>,
+        f: impl FnOnce(&mut Table),
+    ) -> bool {
+        match self.table_index(key.into()) {
+            Some(ti) => {
+                f(&mut self.tables[ti]);
                 true
             }
             None => false,
         }
     }
 
-    pub fn table_filter_on(&mut self, name: &str) -> bool {
-        self.set_table_look(name, |t| t.show_filter = true)
+    pub fn table_filter_on<'a>(&mut self, key: impl Into<TableKey<'a>>) -> bool {
+        self.set_table_look(key, |t| t.show_filter = true)
     }
 
     pub fn table_at(&self, addr: CellAddr) -> Option<&Table> {
@@ -511,8 +647,8 @@ impl Workbook {
         let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
         let mut counter = 0u32;
-        let mut generated: Vec<String> = Vec::new();
-        for given in &named {
+        let mut flags: Vec<u8> = Vec::new();
+        for (j, given) in named.iter().enumerate() {
             let mut n = match given {
                 None => {
                     let cand = loop {
@@ -523,12 +659,20 @@ impl Workbook {
                             break cand;
                         }
                     };
-                    generated.push(key(&cand));
+                    flags.push(FLAG_BLANK);
                     cand
                 }
-                Some(s) => s.clone(),
+                Some(s) => {
+                    let text = matches!(
+                        self.value(CellAddr::new(sheet, rect.r0, rect.c0 + j as u32)),
+                        Value::Text(_)
+                    );
+                    flags.push(if text { 0 } else { FLAG_TEXT });
+                    s.clone()
+                }
             };
             if seen.contains(&key(&n)) {
+                flags[j] |= FLAG_TEXT;
                 loop {
                     counter = (counter + 1).max(2);
                     let cand = format!("{n}{counter}");
@@ -559,18 +703,22 @@ impl Workbook {
         }
         self.grow_cell_table_for_new_table(sheet, rect);
         self.tables_made += 1;
+        let disp = self.unique_display_name(name, None);
         self.tables.push(Table {
+            id: TableId::fresh(),
             name: name.to_string(),
+            disp,
             sheet,
             rect,
             totals: false,
             calc: vec![false; columns.len()],
             calc_key: Vec::new(),
             calc_snap: Vec::new(),
+            column_ids: columns.iter().map(|_| ColumnId::fresh()).collect(),
             columns,
             headers: true,
-            totals_code: None,
-            auto_names: generated,
+            tot_put: Vec::new(),
+            flags,
             dxf: Vec::new(),
             tot_snap: None,
             tot_hidden: None,
@@ -711,7 +859,11 @@ impl Workbook {
         }
     }
 
-    pub(crate) fn calc_columns_covered(&self, sheet: SheetId, rect: Rect) -> Vec<(String, String)> {
+    pub(crate) fn calc_columns_covered(
+        &self,
+        sheet: SheetId,
+        rect: Rect,
+    ) -> Vec<(TableId, String)> {
         let mut out = Vec::new();
         for t in self.tables.iter().filter(|t| t.sheet == sheet) {
             let (d0, d1) = t.data_rows();
@@ -721,16 +873,16 @@ impl Workbook {
             for (idx, &is_calc) in t.calc.iter().enumerate() {
                 let col = t.rect.c0 + idx as u32;
                 if is_calc && (rect.c0..=rect.c1).contains(&col) {
-                    out.push((t.name.clone(), t.columns[idx].to_lowercase()));
+                    out.push((t.id, t.columns[idx].to_lowercase()));
                 }
             }
         }
         out
     }
 
-    pub(crate) fn end_calc_columns(&mut self, cols: &[(String, String)]) {
-        for (tn, name) in cols {
-            let Some(t) = self.tables.iter_mut().find(|t| t.name == *tn) else {
+    pub(crate) fn end_calc_columns(&mut self, cols: &[(TableId, String)]) {
+        for (id, name) in cols {
+            let Some(t) = self.tables.iter_mut().find(|t| t.id == *id) else {
                 continue;
             };
             if let Some(idx) = t.columns.iter().position(|c| c.to_lowercase() == *name) {
@@ -817,6 +969,8 @@ impl Workbook {
         let old_name = self.tables[ti].name.clone();
         let name = self.copy_table_name(&old_name);
         let mut copy = self.tables[ti].clone();
+        copy.id = TableId::fresh();
+        copy.disp = self.unique_display_name(&name, None);
         copy.name = name.clone();
         copy.sheet = dst_sheet;
         copy.rect = dest;
@@ -860,6 +1014,7 @@ impl Workbook {
                 let nf = Arc::new(Formula {
                     root,
                     volatile: f.volatile,
+                    dynamic: f.dynamic.clone(),
                 });
                 self.set_compiled_formula(addr, nf, text);
             }
@@ -883,16 +1038,21 @@ impl Workbook {
         }
     }
 
-    pub fn set_table_totals(&mut self, name: &str, show: bool) -> Result<RecalcReport, EditError> {
-        self.command(Command::Table, |wb| wb.set_table_totals_run(name, show))
+    pub fn set_table_totals<'a>(
+        &mut self,
+        key: impl Into<TableKey<'a>>,
+        show: bool,
+    ) -> Result<RecalcReport, EditError> {
+        let key = key.into();
+        self.command(Command::Table, |wb| wb.set_table_totals_run(key, show))
     }
 
-    fn set_table_totals_run(&mut self, name: &str, show: bool) -> Result<RecalcReport, EditError> {
-        let i = self
-            .tables
-            .iter()
-            .position(|t| crate::text::eq_ordinal_ci(&t.name, name))
-            .ok_or(EditError::NoSuchSheet)?;
+    fn set_table_totals_run(
+        &mut self,
+        key: TableKey<'_>,
+        show: bool,
+    ) -> Result<RecalcReport, EditError> {
+        let i = self.table_index(key).ok_or(EditError::NoSuchSheet)?;
         let t = self.tables[i].clone();
         if t.totals == show {
             return Ok(RecalcReport::default());
@@ -958,6 +1118,8 @@ impl Workbook {
             let row = t.rect.r1 + 1;
             shift(self, row, true);
 
+            self.note_changed(t.sheet, &[Rect::new(row, t.rect.c0, row, t.rect.c1)]);
+
             for c in t.rect.c0..=t.rect.c1 {
                 self.store_format(CellAddr::new(t.sheet, row, c), "General");
             }
@@ -991,59 +1153,29 @@ impl Workbook {
                     self.store_format(a, &f);
                 }
             }
+
+            let outer = self.calc.defer_entry;
+            self.calc.defer_entry = mode == crate::workbook::CalcMode::Automatic;
             if hidden.is_some() {
-                for j in 0..t.columns.len() {
-                    let a = CellAddr::new(t.sheet, row, t.rect.c0 + j as u32);
-                    match def(j) {
-                        Some(x) if x.starts_with('\u{1}') => {
-                            let col = escape_column(&t.columns[j]);
-                            self.set_formula(a, &format!("=SUBTOTAL({},[{col}])", &x[1..]))?;
-                        }
-                        Some(x) if x.starts_with('=') => {
-                            let _ = self.set_formula(a, &x);
-                        }
-                        Some(x) => {
-                            self.set_value(a, Value::from(x.as_str()));
-                        }
-                        None => {}
-                    }
-                }
+                let entered = self.creating_formulas(|wb| {
+                    (0..t.columns.len()).try_for_each(|j| {
+                        let a = CellAddr::new(t.sheet, row, t.rect.c0 + j as u32);
+                        wb.write_totals_cell(a, &t.columns[j], def(j).as_deref())
+                    })
+                });
+                self.calc.defer_entry = outer;
+                entered?;
+                self.note_totals_entries(t.sheet, row, t.rect);
                 self.settings.mode = mode;
                 self.redirty_totals_row(i, mode);
-                return Ok(self.table_changed(name));
+                return Ok(self.table_changed(&t.name));
             }
-            let first = CellAddr::new(t.sheet, row, t.rect.c0);
-            let last = CellAddr::new(t.sheet, row, t.rect.c1);
-            self.set_value(first, Value::from("Total"));
-            let (d0, d1) = t.data_rows();
-
-            let kinds: Vec<Value> = (d0..=d1)
-                .map(|r| self.value(CellAddr::new(t.sheet, r, t.rect.c1)))
-                .filter(|v| !matches!(v, Value::Blank))
-                .collect();
-
-            let mut dated = false;
-            for r in d0..=d1 {
-                dated |= self.date_or_text_format(CellAddr::new(t.sheet, r, t.rect.c1), false);
-            }
-            let numeric =
-                !dated && !kinds.is_empty() && kinds.iter().all(|v| matches!(v, Value::Number(_)));
-            let code = t.totals_code.unwrap_or(if numeric { 109 } else { 103 });
-            let col = escape_column(t.columns.last().unwrap());
-            self.set_formula(last, &format!("=SUBTOTAL({code},[{col}])"))?;
-
-            if code == 102 || code == 103 {
-                self.store_format(last, "General");
-            }
+            let entered = self.creating_formulas(|wb| wb.enter_default_totals(i, &t, row));
+            self.calc.defer_entry = outer;
+            entered?;
+            self.note_totals_entries(t.sheet, row, t.rect);
         } else {
             let row = t.rect.r1;
-            let cell = CellAddr::new(t.sheet, row, t.rect.c1);
-            let code = self.formula_at(cell).and_then(|f| {
-                let txt = self.formula(f).text.to_string();
-                let rest = txt.strip_prefix("SUBTOTAL(")?;
-                rest.split(',').next()?.parse::<u32>().ok()
-            });
-            self.tables[i].totals_code = code.or(t.totals_code);
 
             let snap = match self.tables[i].tot_snap.take() {
                 Some(s) => s,
@@ -1088,12 +1220,192 @@ impl Workbook {
             self.tables[i].rect.r1 = row - 1;
             self.tables[i].totals = false;
             shift(self, row, false);
+
+            self.note_changed(t.sheet, &[Rect::new(row, t.rect.c0, row, t.rect.c1)]);
         }
         self.settings.mode = mode;
         if show {
             self.redirty_totals_row(i, mode);
         }
-        Ok(self.table_changed(name))
+        Ok(self.table_changed(&t.name))
+    }
+
+    fn note_totals_entries(&mut self, sheet: SheetId, row: u32, rect: Rect) {
+        for c in rect.c0..=rect.c1 {
+            let a = CellAddr::new(sheet, row, c);
+            if c == rect.c0
+                || self.formula_at(a).is_some()
+                || !matches!(self.value(a), Value::Blank)
+            {
+                self.note_changed(sheet, &[Rect::new(row, c, row, c)]);
+            }
+        }
+    }
+
+    fn enter_default_totals(&mut self, i: usize, t: &Table, row: u32) -> Result<(), EditError> {
+        let first = CellAddr::new(t.sheet, row, t.rect.c0);
+        let last = CellAddr::new(t.sheet, row, t.rect.c1);
+        self.set_value(first, Value::from("Total"));
+        let (d0, d1) = t.data_rows();
+
+        let kinds: Vec<Value> = (d0..=d1)
+            .map(|r| self.value(CellAddr::new(t.sheet, r, t.rect.c1)))
+            .filter(|v| !matches!(v, Value::Blank))
+            .collect();
+
+        let mut dated = false;
+        for r in d0..=d1 {
+            dated |= self.date_or_text_format(CellAddr::new(t.sheet, r, t.rect.c1), false);
+        }
+        let numeric =
+            !dated && !kinds.is_empty() && kinds.iter().all(|v| matches!(v, Value::Number(_)));
+        let code = if numeric { 109 } else { 103 };
+        let col = escape_column(t.columns.last().unwrap());
+        self.set_formula(last, &format!("=SUBTOTAL({code},[{col}])"))?;
+
+        if code == 102 || code == 103 {
+            self.store_format(last, "General");
+        }
+
+        let put = std::mem::take(&mut self.tables[i].tot_put);
+        for (j, name) in t.columns.iter().enumerate() {
+            let Some((_, x)) = put.iter().find(|(k, _)| *k == Table::auto_key(name)) else {
+                continue;
+            };
+            let a = CellAddr::new(t.sheet, row, t.rect.c0 + j as u32);
+            self.write_totals_cell(a, name, x.as_deref())?;
+        }
+        Ok(())
+    }
+
+    fn table_index(&self, key: TableKey<'_>) -> Option<usize> {
+        self.tables.iter().position(|t| match key {
+            TableKey::Name(name) => crate::text::eq_ordinal_ci(&t.name, name),
+            TableKey::Id(id) => t.id == id,
+        })
+    }
+
+    fn write_totals_cell(
+        &mut self,
+        a: CellAddr,
+        column: &str,
+        entry: Option<&str>,
+    ) -> Result<(), EditError> {
+        match entry {
+            Some(x) if x.starts_with('\u{1}') => {
+                let col = escape_column(column);
+                self.set_formula(a, &format!("=SUBTOTAL({},[{col}])", &x[1..]))?;
+            }
+            Some(x) if x.starts_with('=') => {
+                let _ = self.set_formula(a, x);
+            }
+            Some(x) => {
+                self.set_value(a, Value::from(x));
+            }
+            None => {
+                self.clear(a);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn table_totals_calc<'a>(&self, key: impl Into<TableKey<'a>>, j: usize) -> i32 {
+        let Some(ti) = self.table_index(key.into()) else {
+            return 0;
+        };
+        let t = &self.tables[ti];
+        let Some(name) = t.columns.get(j) else {
+            return 0;
+        };
+        let entry = if t.totals {
+            let a = CellAddr::new(t.sheet, t.rect.r1, t.rect.c0 + j as u32);
+            self.formula_text(a)
+        } else {
+            let k = Table::auto_key(name);
+            let hidden = t.tot_hidden.as_ref().unwrap_or(&t.tot_put);
+            hidden
+                .iter()
+                .find(|(n, _)| *n == k)
+                .and_then(|(_, x)| x.clone())
+        };
+        let Some(x) = entry else {
+            return 0;
+        };
+        if let Some(code) = x.strip_prefix('\u{1}') {
+            let c = code.parse::<u32>().unwrap_or(0);
+            return TOTALS_CODES
+                .iter()
+                .position(|&x| x == c)
+                .map_or(9, |n| n as i32 + 1);
+        }
+        if !x.starts_with('=') {
+            return 0;
+        }
+        let col = escape_column(name);
+        for (n, c) in TOTALS_CODES.iter().enumerate() {
+            if x.eq_ignore_ascii_case(&format!("=SUBTOTAL({c},[{col}])")) {
+                return n as i32 + 1;
+            }
+        }
+        9
+    }
+
+    pub fn set_table_totals_calc<'a>(
+        &mut self,
+        key: impl Into<TableKey<'a>>,
+        j: usize,
+        code: i32,
+    ) -> Result<(), EditError> {
+        let key = key.into();
+        self.command(Command::Table, |wb| {
+            wb.set_table_totals_calc_run(key, j, code)
+        })
+    }
+
+    fn set_table_totals_calc_run(
+        &mut self,
+        key: TableKey<'_>,
+        j: usize,
+        code: i32,
+    ) -> Result<(), EditError> {
+        let ti = self.table_index(key).ok_or(EditError::NoSuchSheet)?;
+        let t = self.tables[ti].clone();
+        self.notes.after_if_calculated = true;
+        let Some(name) = t.columns.get(j) else {
+            return Ok(());
+        };
+        let entry = match code {
+            0 => None,
+            1..=8 => Some(format!("\u{1}{}", TOTALS_CODES[code as usize - 1])),
+            _ => return Ok(()),
+        };
+        if t.totals {
+            let a = CellAddr::new(t.sheet, t.rect.r1, t.rect.c0 + j as u32);
+            let held = self.formula_text(a).or_else(|| match self.value(a) {
+                Value::Blank => None,
+                v => Some(self.header_text(a, &v)),
+            });
+
+            let same = match &entry {
+                Some(x) => {
+                    let col = escape_column(name);
+                    let f = format!("=SUBTOTAL({},[{col}])", &x[1..]);
+                    held.is_some_and(|h| h.eq_ignore_ascii_case(&f))
+                }
+                None => j > 0 && held.is_none(),
+            };
+            if !same {
+                self.write_totals_cell(a, name, entry.as_deref())?;
+                self.note_changed(t.sheet, &[Rect::new(a.row, a.col, a.row, a.col)]);
+            }
+            return Ok(());
+        }
+        let k = Table::auto_key(name);
+        let tab = &mut self.tables[ti];
+        let list = tab.tot_hidden.as_mut().unwrap_or(&mut tab.tot_put);
+        list.retain(|(n, _)| *n != k);
+        list.push((k, entry));
+        Ok(())
     }
 
     fn redirty_totals_row(&mut self, ti: usize, mode: crate::workbook::CalcMode) {
@@ -1110,7 +1422,10 @@ impl Workbook {
         }
     }
 
-    pub(crate) fn table_calc_fill(&mut self, addr: CellAddr) {
+    pub(crate) fn table_calc_fill(&mut self, addr: CellAddr) -> bool {
+        if self.op_on(super::Op::RangeEntry) || !self.settings.auto_fill_lists {
+            return false;
+        }
         let Some(ti) = self.tables.iter().position(|t| {
             let (d0, d1) = t.data_rows();
             t.sheet == addr.sheet
@@ -1118,7 +1433,7 @@ impl Workbook {
                 && (t.rect.c0..=t.rect.c1).contains(&addr.col)
                 && !(t.totals && addr.row == t.rect.r1)
         }) else {
-            return;
+            return false;
         };
         let t = &self.tables[ti];
         let (d0, d1) = t.data_rows();
@@ -1148,22 +1463,18 @@ impl Workbook {
             others.iter().all(|o| o.is_none())
         };
         if !ok {
-            return;
+            return false;
         }
-        self.calc_fill_column(ti, addr);
+        self.calc_fill_column(ti, addr)
     }
 
-    pub(crate) fn calc_fill_column(&mut self, ti: usize, addr: CellAddr) {
-        self.outside_creation(|wb| wb.calc_fill_column_in(ti, addr));
-    }
-
-    fn calc_fill_column_in(&mut self, ti: usize, addr: CellAddr) {
+    pub(crate) fn calc_fill_column(&mut self, ti: usize, addr: CellAddr) -> bool {
         let (d0, d1) = self.tables[ti].data_rows();
         let idx = (addr.col - self.tables[ti].rect.c0) as usize;
 
         if let Some(fid) = self.formula_at(addr) {
             if !self.fill_fits(fid, addr.sheet, addr.col, d0..=d1) {
-                return;
+                return false;
             }
         }
         if self.tables[ti].calc.len() <= idx {
@@ -1227,7 +1538,7 @@ impl Workbook {
                 self.restore_own_format(to, own);
                 if cur.eq_ignore_ascii_case("general") {
                     self.store_format(to, &src_fmt);
-                } else if src_general && (self.yielding_format(&cur) || &*cur == "@") {
+                } else if src_general && self.should_install_format(&cur, "General") {
                     self.store_format(to, "General");
                 }
             } else {
@@ -1249,6 +1560,7 @@ impl Workbook {
             }
             calc::recalc_only(self, &filled);
         }
+        true
     }
 
     pub(crate) fn fill_fits(
@@ -1289,11 +1601,7 @@ impl Workbook {
                 }
             }
         };
-        if typed {
-            self.outside_creation(&mut fill);
-        } else {
-            self.creating_formulas(&mut fill);
-        }
+        self.creating_formulas(&mut fill);
         if self.settings.mode != crate::workbook::CalcMode::Automatic && !filled.is_empty() {
             if typed {
                 calc::recalc_only(self, &filled);
@@ -1971,9 +2279,12 @@ impl Workbook {
                 k += 1;
             }
             let name = format!("Column{k}");
-            t.columns.push(name.clone());
+            t.columns.push(name);
+            t.column_ids.push(ColumnId::fresh());
             t.calc.push(false);
-            t.mark_auto(&name);
+
+            t.flags.resize(t.columns.len() - 1, 0);
+            t.flags.push(FLAG_BLANK);
         } else if grow_col {
             let hdr = CellAddr::new(addr.sheet, rect.r0, rect.c1);
 
@@ -1985,7 +2296,11 @@ impl Workbook {
                 _ => None,
             };
             self.tables[ti].columns.push(String::new());
+            self.tables[ti].column_ids.push(ColumnId::fresh());
             self.tables[ti].calc.push(false);
+            let n = self.tables[ti].columns.len() - 1;
+            self.tables[ti].flags.resize(n, 0);
+            self.tables[ti].flags.push(0);
             if let Some(n) = next {
                 if let Some(sh) = self.sheet_mut(addr.sheet) {
                     sh.cells.set(
@@ -2019,10 +2334,47 @@ impl Workbook {
         }) else {
             return;
         };
-        self.resync_table_headers(ti, Some(addr.col));
 
-        let cont = self.tables[ti].totals || self.op_on(super::Op::PasteHeader);
-        self.header_edited_one(ti, addr, cont);
+        if self
+            .paste_block()
+            .is_some_and(|(s, b)| s == addr.sheet && b.contains(addr.row, addr.col))
+        {
+            return;
+        }
+
+        let paste = self.op_on(super::Op::PasteHeader);
+        self.validate_headers(ti, Some(addr.col), &|c| c == addr.col && !paste);
+    }
+
+    pub(crate) fn paste_headers_pass(&mut self, sheet: SheetId, block: Rect) {
+        let mut ran = false;
+        for ti in 0..self.tables.len() {
+            let t = &self.tables[ti];
+            let Some(row) = t.header_row() else { continue };
+            if t.sheet == sheet && block.r0 <= row && row <= block.r1 && block.intersects(&t.rect) {
+                let cells: Vec<CellAddr> = (t.rect.c0..=t.rect.c1)
+                    .map(|c| CellAddr::new(sheet, row, c))
+                    .collect();
+                let before: Vec<String> = cells
+                    .iter()
+                    .map(|&a| format!("{:?}", self.value(a)))
+                    .collect();
+                self.validate_headers(ti, None, &|_| false);
+                for (a, b) in cells.into_iter().zip(before) {
+                    if format!("{:?}", self.value(a)) != b {
+                        calc::cell_changed(self, a);
+                        ran = true;
+                    }
+                }
+            }
+        }
+
+        if ran
+            && self.settings.mode == super::CalcMode::Automatic
+            && !self.op_on(super::Op::DeferPasteRecalc)
+        {
+            calc::recalc(self);
+        }
     }
 
     pub(crate) fn snap_totals_before_sort(&mut self, sheet: SheetId, rect: Rect) {
@@ -2067,7 +2419,7 @@ impl Workbook {
                 continue;
             }
 
-            self.resync_table_headers(ti, None);
+            self.resync_table_headers(ti);
             let snap = self.tables[ti].tot_snap.take().unwrap();
             let t = self.tables[ti].clone();
             if !t.totals {
@@ -2105,218 +2457,170 @@ impl Workbook {
         }
     }
 
-    pub(crate) fn resync_table_headers(&mut self, ti: usize, skip: Option<u32>) {
-        self.resync_headers_with(ti, skip, &|_| true);
+    pub(crate) fn resync_table_headers(&mut self, ti: usize) {
+        self.validate_headers(ti, None, &|_| false);
     }
 
     pub(crate) fn resync_headers_after_cut(&mut self, ti: usize, dest: Option<Rect>) {
-        let totals = self.tables[ti].totals;
         let row = self.tables[ti].header_row().unwrap_or(0);
-        self.resync_headers_with(ti, None, &|c| {
-            totals || dest.is_some_and(|d| d.contains(row, c))
-        });
+        self.validate_headers(ti, None, &|c| !dest.is_some_and(|d| d.contains(row, c)));
     }
 
-    fn resync_headers_with(&mut self, ti: usize, skip: Option<u32>, cont: &dyn Fn(u32) -> bool) {
+    fn validate_headers(&mut self, ti: usize, edited: Option<u32>, entry: &dyn Fn(u32) -> bool) {
+        let totals = self.tables[ti].totals;
+        let cont = |c: u32| totals || !entry(c);
         let Some(row) = self.tables[ti].header_row() else {
             return;
         };
         let (sheet, c0) = (self.tables[ti].sheet, self.tables[ti].rect.c0);
-        for j in 0..self.tables[ti].columns.len() {
-            let col = c0 + j as u32;
-            if skip == Some(col) {
-                continue;
+        let n = self.tables[ti].columns.len();
+        let key = |s: &str| s.chars().map(crate::text::fold_upper).collect::<String>();
+
+        let mut shown: std::collections::HashMap<String, u32> = std::collections::HashMap::new();
+        for j in 0..n {
+            if let Value::Text(t) = self.value(CellAddr::new(sheet, row, c0 + j as u32)) {
+                *shown.entry(key(&t)).or_insert(0) += 1;
             }
+        }
+
+        let mut earlier: std::collections::HashSet<String> = std::collections::HashSet::new();
+        let mut counter = 1u32;
+
+        let mut renames: Vec<(String, String)> = Vec::new();
+        for j in 0..n {
+            let col = c0 + j as u32;
             let addr = CellAddr::new(sheet, row, col);
             let v = self.value(addr);
+            let old = self.tables[ti].columns[j].clone();
             let drift = match &v {
-                Value::Blank => !self.tables[ti].columns[j].is_empty(),
-                Value::Text(t) => **t != *self.tables[ti].columns[j],
+                Value::Blank => !old.is_empty(),
+                Value::Text(t) => **t != *old,
                 _ => true,
             };
-            if drift && j > 0 && matches!(v, Value::Blank) && cont(col) {
-                let prev = self.tables[ti].columns[j - 1].clone();
-                let others: Vec<String> = self.tables[ti]
-                    .columns
-                    .iter()
-                    .enumerate()
-                    .filter(|&(i, _)| i != j)
-                    .map(|(_, c)| c.clone())
-                    .collect();
-                if let Some(n) = next_header_name(&prev, &others) {
-                    if let Some(sh) = self.sheet_mut(sheet) {
-                        sh.cells
-                            .set(row, col, Entry::Const(Value::from(n.as_str())));
+            let dup = matches!(&v, Value::Text(t) if !t.is_empty() && earlier.contains(&key(t)));
+            if !(drift || dup || edited == Some(col)) {
+                earlier.insert(key(&old));
+                continue;
+            }
+            let was_blank = matches!(v, Value::Blank);
+
+            if was_blank && !old.is_empty() && self.op_on(super::Op::TextToColumns) {
+                self.tables[ti].columns[j] = String::new();
+                continue;
+            }
+            let has = |shown: &std::collections::HashMap<String, u32>, s: &str| {
+                shown.get(&key(s)).is_some_and(|&c| c > 0)
+            };
+
+            let numbered = |shown: &std::collections::HashMap<String, u32>,
+                            counter: &mut u32,
+                            base: &str,
+                            from: u32| {
+                let mut k = (*counter).max(from);
+                loop {
+                    let cand = format!("{base}{k}");
+                    k += 1;
+                    if !has(shown, &cand) {
+                        *counter = k;
+                        return cand;
                     }
+                }
+            };
+            let cut = |s: &str| s.chars().take(252).collect::<String>();
+            let blank = was_blank || matches!(&v, Value::Text(t) if t.is_empty());
+            let mut notify = false;
+            let new = if blank {
+                let prev = if j > 0 {
+                    self.tables[ti].columns[j - 1].clone()
+                } else {
+                    String::new()
+                };
+                let smart = (j > 0 && cont(col))
+                    .then(|| crate::autofill::smart_fill_next(&prev))
+                    .flatten()
+                    .filter(|c| !crate::text::eq_ordinal_ci(c, &prev));
+                match smart {
+                    Some(c) if !has(&shown, &c) => {
+                        notify = true;
+                        c
+                    }
+                    Some(_) => {
+                        notify = true;
+                        counter = 2;
+                        numbered(&shown, &mut counter, &prev, 2)
+                    }
+                    None => numbered(&shown, &mut counter, "Column", 1),
+                }
+            } else {
+                let cand = match &v {
+                    Value::Text(t) => t.to_string(),
+                    other => self.header_text(addr, other),
+                };
+                if (matches!(&v, Value::Text(_)) && !dup) || !has(&shown, &cand) {
+                    cand
+                } else {
+                    notify = !drift && edited != Some(col);
+                    numbered(&shown, &mut counter, &cut(&cand), 2)
+                }
+            };
+            if !matches!(self.value(addr), Value::Text(ref s) if **s == *new) {
+                if let Value::Text(t) = &v {
+                    if let Some(c) = shown.get_mut(&key(t)) {
+                        *c = c.saturating_sub(1);
+                    }
+                }
+                if self.formula_at(addr).is_some() {
+                    self.remove_cell(addr);
+                }
+                if let Some(sh) = self.sheet_mut(sheet) {
+                    sh.cells
+                        .set(row, col, Entry::Const(Value::from(new.as_str())));
+                }
+                *shown.entry(key(&new)).or_insert(0) += 1;
+                if notify {
                     calc::cell_changed(self, addr);
                 }
             }
-            if drift {
-                self.header_edited_one(ti, addr, false);
-            }
-        }
-    }
+            earlier.insert(key(&new));
+            self.tables[ti].columns[j] = new.clone();
 
-    fn header_edited_one(&mut self, ti: usize, addr: CellAddr, cont: bool) {
-        let idx = (addr.col - self.tables[ti].rect.c0) as usize;
-        let old = self.tables[ti].columns[idx].clone();
-
-        let numeric = matches!(self.value(addr), Value::Number(_));
-        let cur_value = self.value(addr);
-        let was_blank = matches!(cur_value, Value::Blank);
-
-        if was_blank && !old.is_empty() && self.op_on(super::Op::TextToColumns) {
-            self.tables[ti].columns[idx] = String::new();
-            return;
-        }
-        let cur_base = match &cur_value {
-            Value::Blank => String::new(),
-            v => self.header_text(addr, v),
-        };
-        let others: Vec<&String> = {
-            let cols = &self.tables[ti].columns;
-
-            let pasted = self.paste_block().is_some_and(|(sh, d)| {
-                sh == addr.sheet && d.r0 <= addr.row && addr.row <= d.r1 && d.c1 > d.c0
-            });
-            if numeric && !pasted {
-                (0..cols.len())
-                    .filter(|&j| j != idx)
-                    .map(|j| &cols[j])
-                    .collect()
-            } else {
-                cols[..idx].iter().collect()
+            if blank {
+                self.tables[ti].add_flag(j, FLAG_BLANK);
+            } else if !matches!(&v, Value::Text(t) if **t == *old && !dup) {
+                self.tables[ti].add_flag(j, FLAG_TEXT);
             }
-        };
-        let taken = |n: &str| others.iter().any(|c| crate::text::eq_ordinal_ci(c, n));
-
-        let cont = match (&cur_value, idx) {
-            (Value::Blank, 1..) if cont => {
-                let cols = &self.tables[ti].columns;
-                let others: Vec<String> = (0..cols.len())
-                    .filter(|&j| j != idx)
-                    .map(|j| cols[j].clone())
-                    .collect();
-                next_header_name(&cols[idx - 1], &others)
-            }
-            _ => None,
-        };
-        let new = match self.value(addr) {
-            Value::Blank if cont.is_some() => cont.unwrap(),
-            Value::Blank => {
-                let used: std::collections::HashSet<u64> = self.tables[ti]
-                    .columns
-                    .iter()
-                    .enumerate()
-                    .filter(|&(i, _)| i != idx)
-                    .filter_map(|(_, c)| {
-                        let (h, d) = c.split_at_checked(6)?;
-                        let canon = !d.is_empty()
-                            && d.bytes().all(|b| b.is_ascii_digit())
-                            && !d.starts_with('0');
-                        (h.eq_ignore_ascii_case("column") && canon)
-                            .then(|| d.parse::<u64>().ok())
-                            .flatten()
-                    })
-                    .collect();
-                let mut k = 1u64;
-                while used.contains(&k) {
-                    k += 1;
-                }
-                format!("Column{k}")
-            }
-            _ => {
-                let base = cur_base;
-                if taken(&base) {
-                    let fold = |n: &str| n.chars().map(crate::text::fold_upper).collect::<String>();
-                    let fb = fold(&base);
-                    let used: std::collections::HashSet<u64> = others
-                        .iter()
-                        .filter_map(|c| {
-                            let d = if c.is_ascii() && fb.is_ascii() {
-                                let (h, d) = c.split_at_checked(fb.len())?;
-                                h.eq_ignore_ascii_case(&fb).then_some(d.to_string())?
-                            } else {
-                                fold(c).strip_prefix(fb.as_str())?.to_string()
-                            };
-                            let canon = !d.is_empty()
-                                && d.bytes().all(|b| b.is_ascii_digit())
-                                && !d.starts_with('0');
-                            canon.then(|| d.parse::<u64>().ok()).flatten()
-                        })
-                        .collect();
-                    let mut k = 2u64;
-                    while used.contains(&k) {
-                        k += 1;
-                    }
-                    format!("{base}{k}")
-                } else {
-                    base
-                }
-            }
-        };
-        if !matches!(self.value(addr), Value::Text(ref s) if **s == *new) {
-            if self.formula_at(addr).is_some() {
-                self.remove_cell(addr);
-            }
-            if self.sheet(addr.sheet).is_some() {
-                self.sheet_mut(addr.sheet).unwrap().cells.set(
-                    addr.row,
-                    addr.col,
-                    crate::workbook::Entry::Const(Value::from(new.as_str())),
-                );
-            }
-        }
-
-        let n_cols = self.tables[ti].columns.len();
-        for j in idx + 1..n_cols {
-            let cur = self.tables[ti].columns[j].clone();
-            if !crate::text::eq_ordinal_ci(&cur, &new) {
+            if old == new {
                 continue;
             }
-            let mut k = 2;
-            let fresh = loop {
-                let cand = format!("{cur}{k}");
-                if !self.tables[ti]
-                    .columns
-                    .iter()
-                    .any(|c| crate::text::eq_ordinal_ci(c, &cand))
-                    && !crate::text::eq_ordinal_ci(&cand, &new)
-                {
-                    break cand;
+            renames.push((old, new));
+        }
+        self.apply_column_renames(ti, renames);
+    }
+
+    fn apply_column_renames(&mut self, ti: usize, mut renames: Vec<(String, String)>) {
+        while !renames.is_empty() {
+            let i = (0..renames.len())
+                .find(|&i| {
+                    !renames
+                        .iter()
+                        .enumerate()
+                        .any(|(k, r)| k != i && crate::text::eq_ordinal_ci(&r.0, &renames[i].1))
+                })
+                .unwrap_or(0);
+            let (old, new) = renames.remove(i);
+            for (n, _) in self.tables[ti].calc_snap.iter_mut() {
+                if *n == old.to_lowercase() {
+                    *n = new.to_lowercase();
                 }
-                k += 1;
-            };
-            let t = &self.tables[ti];
-            let (sheet, row, col) = (t.sheet, t.rect.r0, t.rect.c0 + j as u32);
-            self.tables[ti].columns[j] = fresh.clone();
-            self.sheet_mut(sheet).unwrap().cells.set(
-                row,
-                col,
-                crate::workbook::Entry::Const(Value::from(fresh.as_str())),
-            );
-            calc::cell_changed(self, CellAddr::new(sheet, row, col));
-            self.rename_table_column(ti, &cur, &fresh);
-        }
-        self.tables[ti].columns[idx] = new.clone();
-        if was_blank {
-            self.tables[ti].mark_auto(&new);
-        }
-        if old == new {
-            return;
-        }
-        if !was_blank {
-            self.tables[ti].unmark_auto(&old);
-        }
-        for (n, _) in self.tables[ti].calc_snap.iter_mut() {
-            if *n == old.to_lowercase() {
-                *n = new.to_lowercase();
             }
+            self.rename_table_column(ti, &old, &new);
         }
-        self.rename_table_column(ti, &old, &new);
     }
 
     pub(crate) fn rename_table_column(&mut self, ti: usize, old: &str, new: &str) {
+        if self.table_name_shadowed(ti) {
+            return;
+        }
         let tname = self.tables[ti].name.clone();
         for c in self.slicer_caches.iter_mut().filter(|c| !c.pivot) {
             if crate::text::eq_ordinal_ci(&c.table, &tname)
@@ -2345,6 +2649,14 @@ impl Workbook {
                         if *n == ko {
                             *n = kn.clone();
                         }
+                    }
+                }
+            }
+            if t.tot_put.iter().any(|(n, _)| *n == ko) {
+                t.tot_put.retain(|(n, _)| *n != kn);
+                for (n, _) in t.tot_put.iter_mut() {
+                    if *n == ko {
+                        *n = kn.clone();
                     }
                 }
             }
@@ -2399,6 +2711,7 @@ impl Workbook {
                 self.formula_mut(fid).formula = std::sync::Arc::new(crate::formula::Formula {
                     root,
                     volatile: formula.volatile,
+                    dynamic: formula.dynamic.clone(),
                 });
             }
         }
@@ -2418,6 +2731,7 @@ impl Workbook {
                     self.tables[ti2].calc_snap[k].1 = Arc::new(Formula {
                         root,
                         volatile: formula.volatile,
+                        dynamic: formula.dynamic.clone(),
                     });
                 }
             }
@@ -2437,9 +2751,11 @@ impl Workbook {
             });
             if changed {
                 def.refers_to = crate::formula_print::print_node(self, &root, host);
+                def.refresh_info();
                 def.formula = Arc::new(Formula {
                     root,
                     volatile: def.formula.volatile,
+                    dynamic: def.formula.dynamic.clone(),
                 });
                 self.names.insert(def);
             }
@@ -2736,34 +3052,8 @@ pub fn spec_text(table: Option<&str>, spec: &Spec) -> String {
 }
 
 pub(crate) fn next_header_name(prev: &str, columns: &[String]) -> Option<String> {
-    let base = prev.trim_end_matches(' ');
-
-    let lead = base.bytes().take_while(|b| b.is_ascii_digit()).count();
-    let (head, num, tail) = if lead > 0 && base.as_bytes().get(lead) == Some(&b' ') {
-        (&base[..0], &base[..lead], &base[lead..])
-    } else {
-        let digits = base
-            .bytes()
-            .rev()
-            .take_while(|b| b.is_ascii_digit())
-            .count();
-        (
-            &base[..base.len() - digits],
-            &base[base.len() - digits..],
-            &base[..0],
-        )
-    };
-    let digits = num.len();
-    if digits == 0 || digits > 15 {
-        return None;
-    }
-    let n: u64 = num.parse().ok()?;
-    if n > u32::MAX as u64 {
-        return None;
-    }
-    let next = (n + 1) as u32 as u64;
-    let width = if next == 0 { 0 } else { digits };
-    let cand = format!("{head}{next:0width$}{tail}");
+    let cand =
+        crate::autofill::smart_fill_next(prev).filter(|c| !crate::text::eq_ordinal_ci(c, prev))?;
     let taken = |c: &str| columns.iter().any(|o| crate::text::eq_ordinal_ci(o, c));
     if !taken(&cand) {
         return Some(cand);
@@ -2791,6 +3081,80 @@ mod tests {
         assert_eq!(t("Unit Price"), "Sales[Unit Price]");
         assert_eq!(t("#Data"), "Sales[#Data]");
         assert_eq!(t(""), "Sales");
+    }
+
+    #[test]
+    fn totals_calculation_is_the_stored_function() {
+        use crate::address::CellAddr;
+        let mut wb = crate::workbook::Workbook::new();
+        let s = wb.sheet_at(0).id;
+        for (c, h) in ["X", "Y"].iter().enumerate() {
+            wb.set_input(CellAddr::new(s, 0, c as u32), h).unwrap();
+            wb.set_input(CellAddr::new(s, 1, c as u32), "1").unwrap();
+        }
+        wb.add_table("T", s, Rect::new(0, 0, 1, 1)).unwrap();
+
+        wb.set_table_totals_calc("T", 0, 2).unwrap();
+        assert_eq!(wb.table_totals_calc("T", 0), 2);
+        assert_eq!(wb.table_totals_calc("T", 1), 0);
+        wb.set_table_totals("T", true).unwrap();
+        assert_eq!(wb.table_totals_calc("T", 0), 2);
+        assert_eq!(wb.table_totals_calc("T", 1), 1);
+        wb.set_input(CellAddr::new(s, 2, 0), "=SUBTOTAL(109,[X])+0")
+            .unwrap();
+        assert_eq!(wb.table_totals_calc("T", 0), 9);
+        wb.set_input(CellAddr::new(s, 2, 0), "=SUBTOTAL(104,[X])")
+            .unwrap();
+        assert_eq!(wb.table_totals_calc("T", 0), 6);
+        wb.set_input(CellAddr::new(s, 2, 0), "text").unwrap();
+        assert_eq!(wb.table_totals_calc("T", 0), 0);
+        wb.set_table_totals_calc("T", 1, 0).unwrap();
+        assert!(wb.formula_text(CellAddr::new(s, 2, 1)).is_none());
+    }
+
+    #[test]
+    fn display_name_avoids_defined_names_and_tables() {
+        use crate::address::CellAddr;
+        let mut wb = crate::workbook::Workbook::new();
+        let s = wb.sheet_at(0).id;
+        wb.set_input(CellAddr::new(s, 0, 0), "X").unwrap();
+        wb.set_input(CellAddr::new(s, 1, 0), "1").unwrap();
+        wb.define_name("nm", "=Sheet1!$H$1", None).unwrap();
+        wb.add_table("T", s, Rect::new(0, 0, 1, 0)).unwrap();
+        wb.rename_table("T", "nm").unwrap();
+        assert_eq!(wb.table_by_name("nm").unwrap().disp, "nm_1");
+        assert!(wb.set_table_display_name("nm", "nm").is_err());
+        assert!(wb.define_name("NM_1", "=Sheet1!$H$2", None).is_err());
+        wb.set_table_display_name("nm", "Sales").unwrap();
+        assert_eq!(wb.table_by_name("Sales").unwrap().disp, "Sales");
+    }
+
+    #[test]
+    fn renamed_display_name_skips_names_read_as_tables() {
+        let mut wb = crate::workbook::Workbook::new();
+        let s = wb.sheet_at(0).id;
+        for (c, name) in ["P", "Q", "R", "S"].iter().enumerate() {
+            let c = c as u32 * 2;
+            wb.add_table(name, s, Rect::new(0, c, 1, c)).unwrap();
+        }
+        let mut disp = |old: &str, new: &str| {
+            wb.rename_table(old, new).unwrap();
+            wb.table_by_name(new).unwrap().disp.clone()
+        };
+        assert_eq!(disp("P", "ab1"), "ab1_");
+        assert_eq!(disp("Q", " "), "_");
+        assert_eq!(disp("R", "_"), "__");
+
+        wb.add_sheet("Other").unwrap();
+        let o = wb.sheet_at(1).id;
+        wb.add_table("T", o, Rect::new(0, 0, 1, 0)).unwrap();
+        wb.rename_table("T", "AB1").unwrap();
+        assert_eq!(wb.table_on(o, "AB1").unwrap().disp, "_AB1");
+
+        wb.rename_table("S", "Tbl").unwrap();
+        wb.add_table("U", o, Rect::new(0, 2, 1, 2)).unwrap();
+        wb.rename_table("U", "Tbl").unwrap();
+        assert_eq!(wb.table_on(o, "Tbl").unwrap().disp, "Tbl_1");
     }
 
     #[test]

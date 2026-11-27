@@ -823,7 +823,7 @@ impl<'a> Matcher<'a> {
         k: Cont<'_, 'a>,
     ) -> bool {
         let (min, max, greedy) = params;
-        stacker::maybe_grow(128 * 1024, 4 * 1024 * 1024, || {
+        xlcalc_stack::maybe_grow(128 * 1024, 4 * 1024 * 1024, || {
             let (can_stop, can_more) = (count >= min, count < max);
             if !greedy && can_stop && k(self, pos) {
                 return true;
@@ -858,7 +858,7 @@ pub(crate) mod tests {
     use super::*;
 
     fn units(s: &str) -> Vec<u16> {
-        s.encode_utf16().collect()
+        xlcalc::wide::units(s).collect()
     }
 
     pub(crate) fn dec(s: &str) -> Vec<u16> {

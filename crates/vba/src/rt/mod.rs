@@ -18,7 +18,7 @@ pub(crate) fn let_date(locale: Locale, v: &Variant) -> Result<Variant, crate::Vb
 }
 pub use strings::ansi_bytes;
 pub use util::host_text;
-pub(crate) use util::{bytes_of, from_bytes, join, split_odd};
+pub(crate) use util::{bytes_of, from_bytes, join, normalize, split_odd};
 
 use crate::types::VType;
 use crate::VbaError;

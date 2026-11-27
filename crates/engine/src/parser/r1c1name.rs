@@ -54,7 +54,7 @@ fn zero_of(c: u16) -> u16 {
     }
 }
 
-fn digit(c: char) -> Option<u32> {
+pub(super) fn digit_value(c: char) -> Option<u32> {
     let u = u16::try_from(c as u32).ok()?;
     let d = u.checked_sub(zero_of(u))?;
     (d < 10).then_some(u32::from(d))
@@ -63,7 +63,7 @@ fn digit(c: char) -> Option<u32> {
 fn parse_int(s: &[char], i: usize, min: u32, ceiling: u32) -> Result<(u32, usize), usize> {
     let mut v: u32 = 0;
     let mut j = i;
-    while let Some(d) = s.get(j).copied().and_then(digit) {
+    while let Some(d) = s.get(j).copied().and_then(digit_value) {
         if v > 0x0ccc_cccc {
             return Err(j);
         }
@@ -97,7 +97,7 @@ fn axis_part(s: &[char], i: usize, size: u32) -> usize {
     }
 }
 
-fn continues_word(c: char) -> bool {
+pub(super) fn continues_word(c: char) -> bool {
     c.is_ascii_alphanumeric()
         || matches!(c, '.' | '?' | '\\' | '_')
         || (!c.is_ascii() && c.is_alphanumeric())
@@ -127,25 +127,11 @@ pub fn ref_prefix(s: &[char]) -> Option<usize> {
     Some(end)
 }
 
-fn dotted_tail_is_ref(s: &[char], end: usize) -> bool {
-    let row_digits =
-        s[0].eq_ignore_ascii_case(&'R') && s.get(1).is_some_and(|&c| digit(c).is_some());
-    let has_col = s[..end]
-        .iter()
-        .skip(1)
-        .any(|c| c.eq_ignore_ascii_case(&'C'));
-    if row_digits && has_col {
-        return true;
-    }
-    let rest = &s[end + 1..];
-    ref_prefix(rest) == Some(rest.len()) && rest.iter().any(|&c| digit(c).is_some())
-}
-
 pub fn reads_as_r1c1(name: &str) -> bool {
     let s: Vec<char> = name.chars().collect();
     match ref_prefix(&s) {
         None => false,
-        Some(end) if s.get(end) == Some(&'.') => dotted_tail_is_ref(&s, end),
+        Some(end) if s.get(end) == Some(&'.') => super::prsnam::name_reads_as_ref(&s),
         Some(_) => true,
     }
 }

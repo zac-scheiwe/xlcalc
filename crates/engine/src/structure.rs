@@ -7,9 +7,10 @@ use crate::datatable::{is_table_formula, DataTable, PART_ERROR};
 use crate::formula::{CRef, Formula, LambdaDef, Node, Rc, SheetRef};
 use crate::formula_print::{cref_text, print_node};
 use crate::value::Value;
+use crate::workbook::tables::TableId;
 use crate::workbook::{EditError, Entry, FormulaId, Op, Workbook};
 
-type SheetFormulas = (String, Vec<(u32, FormulaId, Arc<Formula>)>);
+type SheetFormulas = (TableId, Vec<(u32, FormulaId, Arc<Formula>)>);
 
 type PlannedCell = Result<Value, (Arc<Formula>, String, Value)>;
 
@@ -128,51 +129,70 @@ pub(crate) fn encode(abs_index: u32, abs: bool, host: u32) -> Rc {
 
 pub(crate) fn shift_cref(cref: &CRef, old: CellAddr, new: CellAddr, s: &Shift) -> Result<CRef, ()> {
     let (rmax, cmax) = (MAX_ROWS, MAX_COLS);
-    let rows = s.axis == Axis::Rows;
-    let one = |rc: Rc, along: bool, oh: u32, nh: u32, max: u32| -> Result<Rc, ()> {
-        let i = resolve(rc, oh, max).ok_or(())?;
-        let j = if along { s.map_index(i).ok_or(())? } else { i };
-        Ok(encode(j, rc.abs, nh))
+    let (r0, r1, c0, c1) = match *cref {
+        CRef::Cell { row, col } => (row, row, col, col),
+        CRef::Area { r0, c0, r1, c1 } => (r0, r1, c0, c1),
+        CRef::Cols { c0, c1 } => (
+            Rc { v: 0, abs: true },
+            Rc {
+                v: rmax as i32 - 1,
+                abs: true,
+            },
+            c0,
+            c1,
+        ),
+        CRef::Rows { r0, r1 } => (
+            r0,
+            r1,
+            Rc { v: 0, abs: true },
+            Rc {
+                v: cmax as i32 - 1,
+                abs: true,
+            },
+        ),
     };
-    let span = |a: Rc, b: Rc, along: bool, oh: u32, nh: u32, max: u32| -> Result<(Rc, Rc), ()> {
-        let i = resolve(a, oh, max).ok_or(())?;
-        let j = resolve(b, oh, max).ok_or(())?;
-        let (i, j) = if along {
-            let (lo, hi) = (i.min(j), i.max(j));
-            if lo == 0 && hi == max - 1 {
-                return Ok((encode(i, a.abs, nh), encode(j, b.abs, nh)));
-            }
-            let (na, nb) = s.map_span(lo, hi).ok_or(())?;
+    let at = |rc: Rc, h: u32, max: u32| resolve(rc, h, max).ok_or(());
+    let (a, b, x, y) = (
+        at(r0, old.row, rmax)?,
+        at(r1, old.row, rmax)?,
+        at(c0, old.col, cmax)?,
+        at(c1, old.col, cmax)?,
+    );
+    let rect = Rect::new(a.min(b), x.min(y), a.max(b), x.max(y));
+    let to = crate::adjust::AdjustContext::of_shift(s)
+        .area(&rect)
+        .ok_or(())?;
 
-            let nb = if !s.insert && hi == max - 1 {
-                max - 1
-            } else {
-                nb
-            };
-            (na, nb)
-        } else {
-            (i, j)
-        };
-        Ok((encode(i, a.abs, nh), encode(j, b.abs, nh)))
+    let (na, nb) = if a <= b {
+        (to.r0, to.r1)
+    } else {
+        (to.r1, to.r0)
     };
+    let (nx, ny) = if x <= y {
+        (to.c0, to.c1)
+    } else {
+        (to.c1, to.c0)
+    };
+    let e = |rc: Rc, i: u32, h: u32| encode(i, rc.abs, h);
     Ok(match *cref {
         CRef::Cell { row, col } => CRef::Cell {
-            row: one(row, rows, old.row, new.row, rmax)?,
-            col: one(col, !rows, old.col, new.col, cmax)?,
+            row: e(row, na, new.row),
+            col: e(col, nx, new.col),
         },
-        CRef::Area { r0, c0, r1, c1 } => {
-            let (r0, r1) = span(r0, r1, rows, old.row, new.row, rmax)?;
-            let (c0, c1) = span(c0, c1, !rows, old.col, new.col, cmax)?;
-            CRef::Area { r0, c0, r1, c1 }
-        }
-        CRef::Cols { c0, c1 } => {
-            let (c0, c1) = span(c0, c1, !rows, old.col, new.col, cmax)?;
-            CRef::Cols { c0, c1 }
-        }
-        CRef::Rows { r0, r1 } => {
-            let (r0, r1) = span(r0, r1, rows, old.row, new.row, rmax)?;
-            CRef::Rows { r0, r1 }
-        }
+        CRef::Area { r0, c0, r1, c1 } => CRef::Area {
+            r0: e(r0, na, new.row),
+            c0: e(c0, nx, new.col),
+            r1: e(r1, nb, new.row),
+            c1: e(c1, ny, new.col),
+        },
+        CRef::Cols { c0, c1 } => CRef::Cols {
+            c0: e(c0, nx, new.col),
+            c1: e(c1, ny, new.col),
+        },
+        CRef::Rows { r0, r1 } => CRef::Rows {
+            r0: e(r0, na, new.row),
+            r1: e(r1, nb, new.row),
+        },
     })
 }
 
@@ -332,16 +352,13 @@ fn edit_refs_at_inner(
             Box::new(edit_refs_rec(
                 x,
                 f,
-                matches!(
-                    *op,
-                    crate::parser::ast::UnaryOp::Implicit
-                        | crate::parser::ast::UnaryOp::ImplicitQuiet
-                ),
+                matches!(*op, crate::parser::ast::UnaryOp::Implicit),
             )),
         ),
         Node::Percent(x) => Node::Percent(Box::new(m(x))),
         Node::Spill(x) => Node::Spill(Box::new(m(x))),
         Node::Paren(x) => Node::Paren(Box::new(m(x))),
+        Node::MemErr(e, x) => Node::MemErr(*e, Box::new(m(x))),
         Node::Binary(op, a, b) => Node::Binary(*op, Box::new(m(a)), Box::new(m(b))),
         Node::Func { id, args } => Node::Func {
             id: *id,
@@ -509,12 +526,10 @@ impl Shift {
         if !self.cells || self.insert {
             return None;
         }
-        let x = self.deleted_rect()?;
+        self.limit?;
         let r = crate::moves::cref_rect(cref, old)?;
-        match crate::moves::remove_band(&r, &x) {
-            crate::moves::Adj::To(to) => Some(crate::moves::encode_rect(cref, to, new)),
-            _ => None,
-        }
+        let to = crate::adjust::AdjustContext::of_shift(self).area(&r)?;
+        (to != r).then(|| crate::moves::encode_rect(cref, to, new))
     }
 }
 
@@ -711,13 +726,13 @@ impl Workbook {
             .tables
             .iter()
             .filter(|t| t.sheet == sheet && t.rect.r0 < at && at <= t.rect.r1)
-            .map(|t| (t.name.clone(), self.calc_column_sources(t, at)))
+            .map(|t| (t.id, self.calc_column_sources(t, at)))
             .collect();
-        let mid: Vec<String> = self
+        let mid: Vec<TableId> = self
             .tables
             .iter()
             .filter(|t| t.sheet == sheet && t.data_start() < at && at <= t.rect.r1)
-            .map(|t| t.name.clone())
+            .map(|t| t.id)
             .collect();
         let sh = Shift {
             sheet,
@@ -729,16 +744,16 @@ impl Workbook {
             cells: false,
         };
         let report = self.shift(sh)?;
-        for name in mid {
-            if let Some(t) = self.tables.iter_mut().find(|t| t.name == name) {
+        for id in mid {
+            if let Some(t) = self.tables.iter_mut().find(|t| t.id == id) {
                 t.ins_rows.extend(at..at + count);
             }
         }
 
         let quiet = !(self.calc.volatile.is_empty() && self.calc.host_volatile.is_empty());
         let hold = !self.calc.circular.is_empty();
-        for (name, sources) in inside {
-            if let Some(ti) = self.tables.iter().position(|t| t.name == name) {
+        for (id, sources) in inside {
+            if let Some(ti) = self.tables.iter().position(|t| t.id == id) {
                 let sources = self.calc_sources_shifted(ti, sources, &sh);
                 self.insert_row_formats(ti, (at, at + count - 1));
                 if quiet {
@@ -806,6 +821,7 @@ impl Workbook {
                 let nf = Arc::new(Formula {
                     root,
                     volatile: f.volatile,
+                    dynamic: f.dynamic.clone(),
                 });
                 (col, fid, nf)
             })
@@ -1055,7 +1071,7 @@ impl Workbook {
         let moves_table =
             || EditError::Compile("This won't work because it would move cells in a table".into());
         let end = at + count - 1;
-        let mut grown: Vec<String> = Vec::new();
+        let mut grown: Vec<TableId> = Vec::new();
         for t in self.tables.iter().filter(|t| t.sheet == sheet) {
             let (ta, tb, p0, p1) = if rows {
                 (t.rect.r0, t.rect.r1, t.rect.c0, t.rect.c1)
@@ -1073,7 +1089,7 @@ impl Workbook {
                     }
                 } else if lim == (p0, p1) {
                     if rows {
-                        grown.push(t.name.clone());
+                        grown.push(t.id);
                     }
                 } else {
                     return Err(moves_table());
@@ -1117,8 +1133,8 @@ impl Workbook {
         }
         let sources: Vec<SheetFormulas> = grown
             .iter()
-            .filter_map(|n| self.tables.iter().find(|t| &t.name == n))
-            .map(|t| (t.name.clone(), self.calc_column_sources(t, at)))
+            .filter_map(|id| self.tables.iter().find(|t| t.id == *id))
+            .map(|t| (t.id, self.calc_column_sources(t, at)))
             .collect();
         let sh = Shift {
             sheet,
@@ -1130,8 +1146,8 @@ impl Workbook {
             cells: true,
         };
         let report = self.shift(sh)?;
-        for (name, sources) in sources {
-            if let Some(ti) = self.tables.iter().position(|t| t.name == name) {
+        for (id, sources) in sources {
+            if let Some(ti) = self.tables.iter().position(|t| t.id == id) {
                 let sources = self.calc_sources_shifted(ti, sources, &sh);
                 if rows {
                     self.apply_col_dxf(ti, at, at + count - 1);
@@ -1270,7 +1286,7 @@ impl Workbook {
             for ti in 0..self.tables.len() {
                 let t = &self.tables[ti];
                 if t.sheet == s.sheet && s.at > t.rect.c0 && s.at <= t.rect.c1 {
-                    self.resync_table_headers(ti, None);
+                    self.resync_table_headers(ti);
                 }
             }
         }
@@ -1300,6 +1316,7 @@ impl Workbook {
 
         self.cfv_shift(&s);
         let resplit = self.drawing_shift(&s);
+        self.object_formulas_shift(&s);
         self.spark_shift(&s);
         self.hl_shift(&s);
         self.notes_shift(&s);
@@ -1469,6 +1486,7 @@ impl Workbook {
             f.formula = Arc::new(Formula {
                 root,
                 volatile: formula.volatile,
+                dynamic: formula.dynamic.clone(),
             });
             f.text = text;
             f.spill = None;
@@ -1479,9 +1497,14 @@ impl Workbook {
         let mut gone: Vec<(String, Vec<String>)> = Vec::new();
 
         let mut headers: Vec<(SheetId, u32, u32, String)> = Vec::new();
-        let mut new_cols: Vec<(String, u32)> = Vec::new();
+        let mut new_cols: Vec<(TableId, u32)> = Vec::new();
 
         let mut removed: Vec<String> = Vec::new();
+
+        let shadowed: Vec<TableId> = (0..self.tables.len())
+            .filter(|&ti| self.table_name_shadowed(ti))
+            .map(|ti| self.tables[ti].id)
+            .collect();
         for mut t in std::mem::take(&mut self.tables) {
             if t.sheet != s.sheet || (s.limit.is_some() && !(s.cells && s.rect_in_band(&t.rect))) {
                 kept.push(t);
@@ -1492,7 +1515,9 @@ impl Workbook {
                 Axis::Cols => (t.rect.c0, t.rect.c1),
             };
             let Some((na, nb)) = s.map_span(a, b) else {
-                removed.push(t.name.clone());
+                if !shadowed.contains(&t.id) {
+                    removed.push(t.name.clone());
+                }
                 continue;
             };
             match s.axis {
@@ -1523,16 +1548,20 @@ impl Workbook {
                                 while t.column_index(&format!("Column{n}")).is_some() {
                                     n += 1;
                                 }
-                                t.mark_auto(&format!("Column{n}"));
                                 format!("Column{n}")
                             };
                             if t.headers {
                                 headers.push((t.sheet, t.rect.r0, s.at + k as u32, name.clone()));
                             }
                             t.columns.insert(pos + k, name);
-                            new_cols.push((t.name.clone(), s.at + k as u32));
+                            t.column_ids
+                                .insert(pos + k, crate::workbook::tables::ColumnId::fresh());
+                            new_cols.push((t.id, s.at + k as u32));
                             t.calc.resize(t.columns.len() - 1, false);
                             t.calc.insert(pos + k, false);
+
+                            t.flags.resize(t.columns.len() - 1, 0);
+                            t.flags.insert(pos + k, crate::workbook::tables::FLAG_BLANK);
                         }
                     } else if !s.insert {
                         let (lo, hi) = (s.at, s.at + s.count);
@@ -1549,6 +1578,27 @@ impl Workbook {
                             })
                             .map(|(_, v)| *v)
                             .collect();
+                        t.flags.resize(t.columns.len(), 0);
+                        let flags_old = std::mem::take(&mut t.flags);
+                        t.flags = flags_old
+                            .iter()
+                            .enumerate()
+                            .filter(|(j, _)| {
+                                let c = a + *j as u32;
+                                !(c >= lo && c < hi)
+                            })
+                            .map(|(_, v)| *v)
+                            .collect();
+                        let ids_old = std::mem::take(&mut t.column_ids);
+                        t.column_ids = ids_old
+                            .into_iter()
+                            .enumerate()
+                            .filter(|(j, _)| {
+                                let c = a + *j as u32;
+                                !(c >= lo && c < hi)
+                            })
+                            .map(|(_, v)| v)
+                            .collect();
                         t.columns.retain(|name| {
                             let c = a + i;
                             i += 1;
@@ -1558,7 +1608,7 @@ impl Workbook {
                             }
                             keep
                         });
-                        if !removed.is_empty() {
+                        if !removed.is_empty() && !shadowed.contains(&t.id) {
                             gone.push((t.name.clone(), removed));
                         }
                     }
@@ -1576,8 +1626,8 @@ impl Workbook {
         }
         self.drawing_resplit(&resplit);
 
-        for (tn, c) in new_cols {
-            if let Some(ti) = self.tables.iter().position(|t| t.name == tn) {
+        for (id, c) in new_cols {
+            if let Some(ti) = self.tables.iter().position(|t| t.id == id) {
                 self.init_col_dxf(ti, c);
             }
         }
@@ -1614,6 +1664,7 @@ impl Workbook {
                     f.formula = Arc::new(Formula {
                         root,
                         volatile: formula.volatile,
+                        dynamic: formula.dynamic.clone(),
                     });
                     f.text = text;
                 }
@@ -1641,6 +1692,7 @@ impl Workbook {
                         *snap = Arc::new(Formula {
                             root,
                             volatile: snap.volatile,
+                            dynamic: snap.dynamic.clone(),
                         });
                     }
                 }
@@ -1697,9 +1749,11 @@ impl Workbook {
                 _ => None,
             });
             def.refers_to = print_node(self, &root, host);
+            def.refresh_info();
             def.formula = Arc::new(Formula {
                 root,
                 volatile: def.formula.volatile,
+                dynamic: def.formula.dynamic.clone(),
             });
             self.names.insert(def);
         }
@@ -1707,7 +1761,7 @@ impl Workbook {
 
         if let Some(before) = snapshot {
             self.calc.relink_scope = Some(DirtyScope {
-                whole: true,
+                to_calc: vec![s.sheet],
                 ..DirtyScope::new(s.sheet, before)
             });
         }
@@ -2026,16 +2080,28 @@ impl Workbook {
         src: Rect,
         dst: CellAddr,
     ) -> Result<RecalcReport, EditError> {
+        let to = Rect::new(
+            dst.row,
+            dst.col,
+            dst.row.saturating_add(src.rows() - 1),
+            dst.col.saturating_add(src.cols() - 1),
+        );
+        self.copy_range_tile(src_sheet, src, dst, Some(to))
+    }
+
+    pub(crate) fn copy_range_tile(
+        &mut self,
+        src_sheet: SheetId,
+        src: Rect,
+        dst: CellAddr,
+        cf: Option<Rect>,
+    ) -> Result<RecalcReport, EditError> {
         self.command(Command::Copy, |wb| {
             wb.note_changed(dst.sheet, &[notice::paste_area(src, notice::cell(dst))]);
             let report = wb.copy_range_run(src_sheet, src, dst)?;
-            let to = Rect::new(
-                dst.row,
-                dst.col,
-                dst.row + src.rows() - 1,
-                dst.col + src.cols() - 1,
-            );
-            wb.cfv_copy(src_sheet, src, dst.sheet, to, false, true);
+            if let Some(to) = cf {
+                wb.cfv_copy(src_sheet, src, dst.sheet, to, false, true);
+            }
             wb.notify_list_select(dst.sheet, dst.row, dst.col);
             Ok(report)
         })
@@ -2215,6 +2281,7 @@ impl Workbook {
                                 Arc::new(Formula {
                                     root,
                                     volatile: f.formula.volatile,
+                                    dynamic: f.formula.dynamic.clone(),
                                 }),
                                 text,
                                 f.value_at(f.addr.row, f.addr.col),
@@ -2495,7 +2562,7 @@ impl Workbook {
 pub(crate) struct DirtyScope {
     pub sheet: SheetId,
 
-    pub whole: bool,
+    pub to_calc: Vec<SheetId>,
 
     pub listed: bool,
     pub rects: Vec<(SheetId, Rect)>,
@@ -2503,6 +2570,8 @@ pub(crate) struct DirtyScope {
     pub dest: Option<SheetId>,
 
     pub moved: rustc_hash::FxHashSet<FormulaId>,
+
+    pub relocated: rustc_hash::FxHashSet<FormulaId>,
 
     pub forced: rustc_hash::FxHashSet<FormulaId>,
 
@@ -2515,15 +2584,49 @@ pub(crate) struct DirtyScope {
 
 pub(crate) type Snapshot = rustc_hash::FxHashMap<FormulaId, (String, CellAddr)>;
 
+fn host_position_flag(root: &Node) -> bool {
+    fn post(n: &Node, area: &mut bool, hit: &mut bool) {
+        match n {
+            Node::Unary(_, x) | Node::Percent(x) | Node::Spill(x) | Node::Paren(x) => {
+                post(x, area, hit)
+            }
+            Node::Ws { node, .. } => post(node, area, hit),
+            Node::Binary(_, a, b) => {
+                post(a, area, hit);
+                post(b, area, hit);
+            }
+            Node::Func { id, args } => {
+                args.iter().for_each(|a| post(a, area, hit));
+                let name = crate::functions::def(*id).name;
+                *hit |= matches!(name, "ROW" | "COLUMN")
+                    || (*area && matches!(name, "INDEX" | "IFERROR" | "IFNA"));
+            }
+            Node::Ref(_, c) => *area |= !matches!(c, CRef::Cell { .. }),
+            _ => {}
+        }
+    }
+    let (mut area, mut hit) = (false, false);
+    post(root, &mut area, &mut hit);
+
+    let mut at = false;
+    crate::formula::walk(root, &mut |n| {
+        if let Node::Unary(crate::parser::ast::UnaryOp::Implicit, x) = n {
+            at |= matches!(&**x, Node::Ref(_, c) if !matches!(c, CRef::Cell { .. }));
+        }
+    });
+    hit || at
+}
+
 impl DirtyScope {
     pub(crate) fn new(sheet: SheetId, before: Snapshot) -> Self {
         DirtyScope {
             sheet,
-            whole: false,
+            to_calc: Vec::new(),
             listed: false,
             rects: Vec::new(),
             dest: None,
             moved: Default::default(),
+            relocated: Default::default(),
             forced: Default::default(),
             before,
             spared: Default::default(),
@@ -2550,23 +2653,30 @@ impl DirtyScope {
         let unchanged = self
             .before
             .get(&fid)
-            .is_some_and(|(t, a)| *t == f.text && *a == f.addr);
+            .is_some_and(|(t, a)| *t == f.text && (*a == f.addr || self.relocated.contains(&fid)));
         let volatile = wb.calc.volatile.contains(&fid);
+        if self.relocated.contains(&fid)
+            && self.before.get(&fid).is_some_and(|(_, a)| *a != f.addr)
+            && host_position_flag(&f.formula.root)
+        {
+            return true;
+        }
         if unchanged && !volatile && self.spared.contains(&fid) {
             return false;
         }
+
+        let carried = f.array.is_some() && self.relocated.contains(&fid);
         if !unchanged
             || volatile
-            || f.spill.is_some()
-            || f.array.is_some()
-            || matches!(f.value, Value::Array(_))
+            || (!carried
+                && (f.spill.is_some() || f.array.is_some() || matches!(f.value, Value::Array(_))))
         {
             return true;
         }
         if self.listed {
             return false;
         }
-        if self.whole && f.addr.sheet == self.sheet {
+        if self.to_calc.contains(&f.addr.sheet) {
             return true;
         }
 
@@ -2582,8 +2692,39 @@ impl DirtyScope {
                 self.rects.iter().any(|(rs, y)| rs == s && y.intersects(x))
             }
 
-            crate::graph::Prec::Name(k) => wb.names.lookup(k, f.addr.sheet).is_some(),
+            crate::graph::Prec::Name(k) => wb.names.iter().any(|d| {
+                crate::text::name_key(&d.name) == **k && self.name_reaches(wb, d, f.addr.sheet)
+            }),
         })
+    }
+
+    fn name_reaches(
+        &self,
+        wb: &Workbook,
+        def: &crate::workbook::names::NameDef,
+        host: SheetId,
+    ) -> bool {
+        let hits = |s: SheetId| s == self.sheet || self.dest == Some(s);
+        let pos = |s: SheetId| wb.sheet_position(s);
+        let mut hit = false;
+        crate::formula::walk(&def.formula.root, &mut |n| {
+            hit |= match n {
+                Node::Ref(sr, _) | Node::DeadRef(sr) => match sr {
+                    SheetRef::Sheet(s) => hits(*s),
+                    SheetRef::Span(a, b) => match (pos(*a), pos(*b)) {
+                        (Some(a), Some(b)) => [Some(self.sheet), self.dest]
+                            .into_iter()
+                            .flatten()
+                            .any(|s| pos(s).is_some_and(|p| a.min(b) <= p && p <= a.max(b))),
+                        _ => false,
+                    },
+                    _ => hits(def.scope.unwrap_or(host)),
+                },
+                Node::StructRef { .. } => true,
+                _ => false,
+            };
+        });
+        hit
     }
 
     fn xal_forced(&self, wb: &Workbook, f: &crate::workbook::FormulaCell) -> bool {
@@ -2613,7 +2754,7 @@ impl DirtyScope {
                     .tables
                     .iter()
                     .find(|t| t.name.eq_ignore_ascii_case(table))
-                    .is_some_and(|t| t.sheet != f.addr.sheet && hits(t.sheet)),
+                    .is_some_and(|t| hits(t.sheet)),
                 _ => false,
             };
         });
@@ -2681,6 +2822,7 @@ impl Workbook {
             f.formula = Arc::new(Formula {
                 root,
                 volatile: formula.volatile,
+                dynamic: formula.dynamic.clone(),
             });
             f.text = text;
             f.spill = None;

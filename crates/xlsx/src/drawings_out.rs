@@ -4,22 +4,13 @@ use crate::drawings::{
 use crate::package::{dir_of, relative, Package, Rel};
 use crate::rawxml::{self, escape_attr, escape_text, Tag};
 use std::collections::BTreeSet;
-use xlcalc::drawing::{Anchor, Chart, ChartAxis, Part, Pos, Shape, ShapeKind};
+use xlcalc::drawing::{
+    literal_items, unquoted_item, Anchor, Chart, ChartAxis, NameLink, Part, Pos, Shape, ShapeKind,
+};
 use xlcalc::{Rect, SheetId, Workbook};
 
 fn abs_cell(r: u32, c: u32) -> String {
     format!("${}${}", xlcalc::col_to_letters(c), r + 1)
-}
-
-fn quote_sheet(name: &str) -> String {
-    let plain = !name.is_empty()
-        && name.chars().all(|c| c.is_alphanumeric() || c == '_')
-        && !name.chars().next().is_some_and(|c| c.is_ascii_digit());
-    if plain {
-        name.to_string()
-    } else {
-        format!("'{}'", name.replace('\'', "''"))
-    }
 }
 
 fn areas_text(wb: &Workbook, areas: &[(SheetId, Rect)]) -> String {
@@ -30,7 +21,8 @@ fn areas_text(wb: &Workbook, areas: &[(SheetId, Rect)]) -> String {
         } else {
             format!("{}:{}", abs_cell(r.r0, r.c0), abs_cell(r.r1, r.c1))
         };
-        format!("{}!{cells}", quote_sheet(&name))
+        let sheet = xlcalc::testing::sheet_name_text(&name);
+        xlcalc::stored_formula_text(&format!("{sheet}!{cells}"))
     };
     let v: Vec<String> = areas.iter().map(one).collect();
     if v.len() == 1 {
@@ -83,9 +75,65 @@ fn all_numbers(wb: &Workbook, areas: &[(SheetId, Rect)]) -> bool {
     any
 }
 
+fn name_text(wb: &Workbook, n: &NameLink) -> String {
+    let name = wb
+        .names()
+        .get(&n.name, n.scope)
+        .map_or(&n.name, |d| &d.name);
+    match n.scope {
+        None => format!("[0]!{name}"),
+        Some(s) => {
+            let sheet = wb.sheet(s).map_or(String::new(), |x| x.name.clone());
+            format!("{}!{name}", xlcalc::testing::sheet_name_text(&sheet))
+        }
+    }
+}
+
+fn name_cache(wb: &Workbook, p: &Part) -> String {
+    let text = match &*wb.resolve_part(p) {
+        Part::Refs(a) => a
+            .first()
+            .map(|&(s, r)| {
+                let cells = (r.c0..=r.c1)
+                    .flat_map(|col| (r.r0..=r.r1).map(move |row| (row, col)))
+                    .filter_map(|(row, col)| cell_cache(wb, s, row, col))
+                    .map(|(_, t)| t);
+                cells.collect::<Vec<_>>().join(" ")
+            })
+            .unwrap_or_default(),
+        Part::Text(t) => literal_items(t)
+            .first()
+            .map(|i| unquoted_item(i.0).unwrap_or_else(|| i.0.to_string()))
+            .unwrap_or_default(),
+        _ => "#REF!".to_string(),
+    };
+    str_cache(&text)
+}
+
+fn str_cache(text: &str) -> String {
+    format!(
+        "<c:strCache><c:ptCount val=\"1\"/><c:pt idx=\"0\"><c:v>{}</c:v></c:pt></c:strCache>",
+        escape_text(text)
+    )
+}
+
 fn part_xml(wb: &Workbook, tag: &str, p: &Part, force_num: bool) -> String {
     match p {
         Part::None | Part::Dead => String::new(),
+        Part::Name(n) => {
+            let cells = wb.resolve_part(p);
+            let areas = match &*cells {
+                Part::Refs(a) => Some(a),
+                _ => None,
+            };
+            let num = force_num || (tag != "tx" && areas.is_some_and(|a| all_numbers(wb, a)));
+            let r = if num { "numRef" } else { "strRef" };
+            format!(
+                "<c:{tag}><c:{r}><c:f>{}</c:f>{}</c:{r}></c:{tag}>",
+                escape_text(&name_text(wb, n)),
+                areas.map_or(String::new(), |a| cache(wb, a, num))
+            )
+        }
         Part::External(f) => {
             let r = if tag == "tx" || !force_num {
                 "strRef"
@@ -107,9 +155,9 @@ fn part_xml(wb: &Workbook, tag: &str, p: &Part, force_num: bool) -> String {
             )
         }
         Part::Text(t) => {
-            if let Some(inner) = t.strip_prefix('{').and_then(|x| x.strip_suffix('}')) {
-                let items: Vec<&str> = inner.split(',').collect();
-                let num = force_num || items.iter().all(|i| i.trim().parse::<f64>().is_ok());
+            if t.starts_with('{') && t.ends_with('}') {
+                let items: Vec<&str> = literal_items(t).into_iter().map(|i| i.0).collect();
+                let num = force_num || items.iter().all(|i| i.parse::<f64>().is_ok());
                 let lit = if num { "numLit" } else { "strLit" };
                 let mut s = format!("<c:{tag}><c:{lit}>");
                 if num {
@@ -119,7 +167,7 @@ fn part_xml(wb: &Workbook, tag: &str, p: &Part, force_num: bool) -> String {
                 for (i, it) in items.iter().enumerate() {
                     s.push_str(&format!(
                         "<c:pt idx=\"{i}\"><c:v>{}</c:v></c:pt>",
-                        escape_text(it.trim().trim_matches('"'))
+                        escape_text(&unquoted_item(it).unwrap_or_else(|| it.to_string()))
                     ));
                 }
                 s.push_str(&format!("</c:{lit}></c:{tag}>"));
@@ -143,6 +191,40 @@ fn rich(text: &str, size: Option<u32>) -> String {
         })
         .collect();
     format!("<c:tx><c:rich><a:bodyPr/><a:lstStyle/>{paras}</c:rich></c:tx>")
+}
+
+fn text_tx(
+    wb: &Workbook,
+    link: Option<&Part>,
+    text: &str,
+    size: Option<u32>,
+    title: bool,
+) -> String {
+    match link {
+        Some(p @ Part::Name(n)) => format!(
+            "<c:tx><c:strRef><c:f>{}</c:f>{}</c:strRef></c:tx>",
+            escape_text(&name_text(wb, n)),
+            name_cache(wb, p)
+        ),
+        Some(Part::Text(t)) if title => format!(
+            "<c:tx><c:strRef><c:f>{}</c:f>{}</c:strRef></c:tx>",
+            escape_text(&format!("\"{}\"", t.replace('"', "\"\""))),
+            str_cache(t)
+        ),
+        Some(Part::Refs(a)) => format!(
+            "<c:tx><c:strRef><c:f>{}</c:f>{}</c:strRef></c:tx>",
+            escape_text(&areas_text(wb, a)),
+            cache(wb, a, false)
+        ),
+        Some(Part::External(f)) => format!(
+            "<c:tx><c:strRef><c:f>{}</c:f>{}</c:strRef></c:tx>",
+            escape_text(f),
+            str_cache("#REF!")
+        ),
+        Some(Part::Text(t)) => rich(t, size),
+        Some(Part::None | Part::Dead) => rich("", size),
+        None => rich(text, size),
+    }
 }
 
 fn legend_pos(code: i32) -> &'static str {
@@ -193,6 +275,7 @@ fn crosses_xml(c: &Chart, other: &str) -> String {
 }
 
 fn axis_xml(
+    wb: &Workbook,
     a: &ChartAxis,
     kind: &str,
     ids: (u32, u32),
@@ -222,7 +305,7 @@ fn axis_xml(
     if a.has_title {
         s.push_str(&format!(
             "<c:title>{}<c:overlay val=\"0\"/></c:title>",
-            rich(&a.title, None)
+            text_tx(wb, a.title_ref.as_ref(), &a.title, None, true)
         ));
     }
     s.push_str("<c:numFmt formatCode=\"General\" sourceLinked=\"1\"/><c:majorTickMark val=\"out\"/><c:minorTickMark val=\"none\"/><c:tickLblPos val=\"nextTo\"/>");
@@ -307,7 +390,14 @@ fn group_xml(wb: &Workbook, c: &Chart, t: i32, idxs: &[usize], ax_ids: &str) -> 
             "<c:ser><c:idx val=\"{i}\"/><c:order val=\"{i}\"/>"
         ));
         s.push_str(&part_xml(wb, "tx", &ser.name, false));
-        s.push_str(&crate::serfmt_xml::series_pre(el, st, &ser.fmt));
+        let texts: Vec<(u16, String)> = ser
+            .fmt
+            .label_texts
+            .iter()
+            .filter(|t| !t.auto)
+            .map(|t| (t.point, text_tx(wb, t.link.as_ref(), &t.text, None, false)))
+            .collect();
+        s.push_str(&crate::serfmt_xml::series_pre(el, st, &ser.fmt, &texts));
         if scatter {
             s.push_str(&part_xml(wb, "xVal", &ser.x, true));
             s.push_str(&part_xml(wb, "yVal", &ser.values, true));
@@ -341,19 +431,18 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
         &REL[..REL.len() - 1]
     ));
     if c.has_title {
-        let body = match &c.title_ref {
-            Some(Part::Refs(a)) => format!(
-                "<c:tx><c:strRef><c:f>{}</c:f>{}</c:strRef></c:tx>",
-                escape_text(&areas_text(wb, a)),
-                cache(wb, a, false)
-            ),
-            _ => rich(&c.title, Some(1400)),
+        let typed = c.title_ref.is_some() || c.bag.contains_key(xlcalc::drawing::TITLE_TYPED);
+
+        let body = if typed {
+            text_tx(wb, c.title_ref.as_ref(), &c.title, Some(1400), true)
+        } else {
+            String::new()
         };
         s.push_str(&format!("<c:title>{body}<c:overlay val=\"0\"/></c:title>"));
     }
     s.push_str(&format!(
         "<c:autoTitleDeleted val=\"{}\"/><c:plotArea><c:layout/>",
-        u8::from(!c.has_title)
+        u8::from(c.bag.contains_key(xlcalc::drawing::TITLE_DELETED))
     ));
     let groups = chart_groups(c);
     let secondary = groups.iter().any(|g| g.1 == 2);
@@ -368,6 +457,7 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
     if !no_axes {
         if scatter {
             s.push_str(&axis_xml(
+                wb,
                 &c.axes[0],
                 "valAx",
                 (111_111_111, 222_222_222),
@@ -378,6 +468,7 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
         } else {
             let p = if dir == "bar" { "l" } else { "b" };
             s.push_str(&axis_xml(
+                wb,
                 &c.axes[0],
                 "catAx",
                 (111_111_111, 222_222_222),
@@ -388,6 +479,7 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
         }
         let p = if dir == "bar" { "b" } else { "l" };
         s.push_str(&axis_xml(
+            wb,
             &c.axes[1],
             "valAx",
             (222_222_222, 111_111_111),
@@ -398,6 +490,7 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
         if secondary {
             let p = if dir == "bar" { "t" } else { "r" };
             let v = axis_xml(
+                wb,
                 &c.axes[2],
                 "valAx",
                 (444_444_444, 333_333_333),
@@ -414,6 +507,7 @@ pub(crate) fn chart_xml(wb: &Workbook, c: &Chart) -> String {
                 ("catAx", "b")
             };
             let x = axis_xml(
+                wb,
                 &ChartAxis::new(false),
                 kind,
                 (333_333_333, 444_444_444),
@@ -548,7 +642,17 @@ fn shape_xml(
     link: Option<&str>,
 ) -> Option<String> {
     let body = shape_body(wb, sheet, s, rid, link)?;
-    Some(wrap_anchor(wb, sheet, &s.pos, &body))
+    let anchored = wrap_anchor(wb, sheet, &s.pos, &body);
+    Some(if s.locked {
+        anchored
+    } else {
+        match anchored.rsplit_once("<xdr:clientData/>") {
+            Some((head, tail)) => {
+                format!("{head}<xdr:clientData fLocksWithSheet=\"0\"/>{tail}")
+            }
+            None => anchored,
+        }
+    })
 }
 
 fn shape_body(
@@ -562,7 +666,8 @@ fn shape_body(
         ShapeKind::Slicer => {
             let (x, y, w, h) = wb.shape_rect_emu(sheet, &s.pos);
             let cnv = c_nv_pr(s);
-            crate::slicers_xml::frame(&s.name, &cnv, x, y, w, h)
+            let fixed = wb.slicer_position_locked(sheet, s.id);
+            crate::slicers_xml::frame(&s.name, &cnv, x, y, w, h, fixed)
         }
         ShapeKind::Timeline => {
             let (x, y, w, h) = wb.shape_rect_emu(sheet, &s.pos);

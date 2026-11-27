@@ -1,10 +1,10 @@
-use xlcalc::{Rect, SheetId, Table};
+use xlcalc::{ColumnId, Rect, SheetId, Table, TableId};
 use xlcalc_variant::Variant;
 
-use crate::addr::parse_range_text;
+use crate::addr::parse_areas_text;
 use crate::app::{unsupported, Application, BookId, Mode, Object, SortOwner};
-use crate::conv::Args;
-use crate::error::OmError;
+use crate::conv::{is_missing, Args};
+use crate::error::{OmError, DISP_E_BADPARAMCOUNT, DISP_E_PARAMNOTOPTIONAL, DISP_E_TYPEMISMATCH};
 use crate::objects::edit_error;
 use crate::typelib::{InvokeKind, Member};
 
@@ -33,10 +33,10 @@ fn lenient_pos(v: &Variant, lcid: u32) -> Result<i64, OmError> {
 }
 
 impl Application<'_> {
-    pub(crate) fn table_of(&self, b: BookId, name: &str) -> Result<Table, OmError> {
+    pub(crate) fn table_of(&self, b: BookId, id: TableId) -> Result<Table, OmError> {
         self.book(b)?
             .wb
-            .table_by_name(name)
+            .table(id)
             .cloned()
             .ok_or_else(OmError::object_required)
     }
@@ -115,184 +115,314 @@ impl Application<'_> {
             "Count" => Ok(Variant::I4(list.len() as i32)),
             "Item" | "_Default" => {
                 let i = self.item_index(a.get(0), a.lcid, &list, |t| t.name.as_str())?;
-                Ok(self.alloc(Object::Table(b, list[i].name.clone())))
+                Ok(self.alloc(Object::Table(b, list[i].id, true)))
             }
             "_NewEnum" => {
                 let items = list
                     .iter()
-                    .map(|t| self.alloc(Object::Table(b, t.name.clone())))
+                    .map(|t| self.alloc(Object::Table(b, t.id, true)))
                     .collect();
                 Ok(self.alloc_enumerator(items))
             }
-            "Add" | "_Add" => {
-                self.table_guard(b, s, true)?;
-
-                if a.i32(0)?.unwrap_or(1) != 1 {
-                    return Err(OmError::unsupported(
-                        "ListObjects.Add of a source other than xlSrcRange",
-                    ));
-                }
-                let has_headers = a.i32(3)?.unwrap_or(0);
-                if !(0..=2).contains(&has_headers) {
-                    return Err(OmError::app_defined());
-                }
-                let (sheet, mut rect) = match a.get(1) {
-                    Some(Variant::Bstr(text)) => {
-                        let wb = &self.book(b)?.wb;
-                        parse_range_text(wb, s, text).ok_or_else(OmError::app_defined)?
-                    }
-                    other => self.range_arg(other)?,
-                };
-                if sheet != s {
-                    return Err(OmError::app_defined());
-                }
-
-                if rect.is_cell() {
-                    rect = self.book(b)?.wb.current_region(sheet, rect);
-                }
-                if list.iter().any(|t| t.rect.intersects(&rect)) {
-                    self.book_mut(b)?.wb.table_create_off_sheet(sheet);
-                    return Err(OmError::app_defined_with(
-                        "A table can't overlap another table. ",
-                    ));
-                }
-                let wb = &self.book(b)?.wb;
-
-                let headed = match has_headers {
-                    1 => true,
-                    2 => false,
-                    _ => {
-                        rect.rows() > 1
-                            && (rect.c0..=rect.c1).all(|c| {
-                                matches!(
-                                    wb.value(xlcalc::CellAddr::new(sheet, rect.r0, c)),
-                                    xlcalc::Value::Text(_)
-                                )
-                            })
-                    }
-                };
-
-                if wb.list_add_meets_filter(sheet, rect, headed) {
-                    self.book_mut(b)?.wb.table_create_off_sheet(sheet);
-                    return Err(OmError::app_defined_with(
-                        "This will change a filtered range on your worksheet. To complete this task, please remove AutoFilters.",
-                    ));
-                }
-                let wb = &mut self.book_mut(b)?.wb;
-                let mut emptied = false;
-                if headed {
-                    if rect.rows() < 2 {
-                        rect.r1 += 1;
-                        emptied = true;
-                    }
-                } else {
-                    let first = Rect {
-                        r1: rect.r0,
-                        ..rect
-                    };
-                    wb.insert_cells(sheet, first, true).map_err(edit_error)?;
-                    rect.r1 += 1;
-                }
-
-                let mut k = wb.tables_made() + 1;
-                while wb.table_by_name(&format!("Table{k}")).is_some() {
-                    k += 1;
-                }
-                let name = format!("Table{k}");
-                wb.add_table(&name, sheet, rect).map_err(edit_error)?;
-                if emptied {
-                    wb.set_table_look(&name, |t| t.emptied = true);
-                }
-
-                if wb.selection_of(sheet).areas != [rect] {
-                    let mark = self.notice_mark(b);
-                    self.note_selection(b, mark, crate::selection::At::Last, sheet, &[rect]);
-                }
-                Ok(self.alloc(Object::Table(b, name)))
-            }
+            "Add" | "_Add" => self.list_objects_add(b, s, &list, a),
             _ => Err(unsupported("ListObjects", m)),
         }
     }
 
-    fn table_renamed(&mut self, b: BookId, old: &str, new: &str) {
-        let same = |n: &str| n.eq_ignore_ascii_case(old);
-        self.arena.for_each_mut(|o| match o {
-            Object::Table(ob, n)
-            | Object::ListColumns(ob, n)
-            | Object::ListColumn(ob, n, _)
-            | Object::ListRows(ob, n)
-            | Object::ListRow(ob, n, _)
-                if *ob == b && same(n) =>
-            {
-                *n = new.to_string();
-            }
-            Object::Sort(SortOwner::Table(ob, n))
-            | Object::SortFields(SortOwner::Table(ob, n))
-            | Object::SortField(SortOwner::Table(ob, n), _)
-                if *ob == b && same(n) =>
-            {
-                *n = new.to_string();
-            }
-            _ => {}
-        });
-        if let Some(st) = self
-            .sorts
-            .remove(&SortOwner::Table(b, old.to_string()).key())
-        {
-            self.sorts
-                .insert(SortOwner::Table(b, new.to_string()).key(), st);
+    fn list_objects_add(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        list: &[Table],
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        let source_type = a.i32(0)?.unwrap_or(1);
+        if source_type == 2 {
+            return Err(invalid_arg());
         }
+        self.table_guard(b, s, true)?;
+        match source_type {
+            1 => {}
+            0 | 3 | 4 => return Err(self.external_source_error(s, source_type == 4, a)),
+            _ => return Err(invalid_arg()),
+        }
+
+        let has_headers = a.i32(3)?.unwrap_or(0);
+        let rect = self.list_source(b, s, a.get(1))?;
+        if list.iter().any(|t| t.rect.intersects(&rect)) {
+            self.book_mut(b)?.wb.table_create_off_sheet(s);
+            return Err(OmError::app_defined_with(
+                "A table can't overlap another table. ",
+            ));
+        }
+        let wb = &self.book(b)?.wb;
+
+        let guess = || {
+            rect.rows() > 1
+                && (rect.c0..=rect.c1).all(|c| {
+                    matches!(
+                        wb.value(xlcalc::CellAddr::new(s, rect.r0, c)),
+                        xlcalc::Value::Text(_)
+                    )
+                })
+        };
+        let headed = match has_headers {
+            0 => guess(),
+            1 => true,
+            2 => false,
+            _ => a.get(1).is_none() && guess(),
+        };
+
+        if wb.list_add_meets_filter(s, rect, headed) {
+            self.book_mut(b)?.wb.table_create_off_sheet(s);
+            return Err(OmError::app_defined_with(
+                "This will change a filtered range on your worksheet. To complete this task, please remove AutoFilters.",
+            ));
+        }
+
+        let style = match a.get(5) {
+            None => None,
+            Some(v) => {
+                let name = match v {
+                    Variant::Bstr(n) => Some(n.as_str()),
+                    Variant::Dispatch(Some(id)) => match self.arena.get(*id) {
+                        Some(Object::TableStyle(n)) => Some(n.as_str()),
+                        _ => None,
+                    },
+                    _ => None,
+                };
+                Some(name.and_then(structured_style).ok_or_else(invalid_arg)?.0)
+            }
+        };
+        let id = self.list_create(b, s, rect, headed)?;
+        if let Some(style) = style {
+            self.book_mut(b)?
+                .wb
+                .set_table_look(id, |t| t.style = Some(style));
+        }
+        Ok(self.alloc(Object::Table(b, id, false)))
+    }
+
+    fn external_source_error(&self, s: SheetId, model: bool, a: &Args) -> OmError {
+        let connect = || OmError::unsupported("ListObjects.Add of an external source");
+
+        match self.range_arg(a.get(4)) {
+            Ok((sheet, r)) if r.is_cell() => {
+                if sheet != s {
+                    return OmError::app_defined();
+                }
+            }
+            _ => return invalid_arg(),
+        }
+        let prefixed = |text: &str, prefixes: &[&str]| {
+            prefixes.iter().any(|p| {
+                text.get(..p.len())
+                    .is_some_and(|head| head.eq_ignore_ascii_case(p))
+            })
+        };
+        let array = match a.get(1) {
+            Some(Variant::Array(array)) if !model => array,
+
+            Some(Variant::Bstr(text)) if !model => {
+                return if prefixed(text, &["FINDER;", "OLEDB;", "ODBC;", "URL;", "TEXT;"]) {
+                    connect()
+                } else {
+                    OmError::app_defined()
+                };
+            }
+
+            Some(Variant::Dispatch(_)) if model => return connect(),
+            _ => return invalid_arg(),
+        };
+
+        let [(lower, len)] = array.bounds[..] else {
+            return invalid_arg();
+        };
+        if lower < 0 {
+            return invalid_arg();
+        }
+        let upper = i64::from(lower) + i64::from(len) - 1;
+        let element = |i: i32| {
+            let at = usize::try_from(i - lower).ok()?;
+            array.data.get(at).map(|v| a.variant_string(v))
+        };
+        let address = match element(0) {
+            None => return OmError::bad_index(),
+            Some(Ok(Some(text))) => text,
+            Some(_) => return connect(),
+        };
+        if prefixed(&address, &["ODBC;", "OLEDB;", "FINDER;"]) {
+            return connect();
+        }
+
+        if prefixed(&address, &["URL;", "TEXT;"]) || upper > 2 || a.bool(2).is_err() {
+            return invalid_arg();
+        }
+        match element(1) {
+            None => OmError::bad_index(),
+            Some(_) => connect(),
+        }
+    }
+
+    fn list_source(
+        &self,
+        b: BookId,
+        s: SheetId,
+        source: Option<&Variant>,
+    ) -> Result<Rect, OmError> {
+        let wb = &self.book(b)?.wb;
+        let (sheet, rect) = match source {
+            None => {
+                let sel = wb.selection_of(s);
+                let rect = match sel.areas.as_slice() {
+                    [one] if !one.is_cell() => *one,
+                    _ => {
+                        let (r, c) = sel.active;
+                        let cell = Rect {
+                            r0: r,
+                            r1: r,
+                            c0: c,
+                            c1: c,
+                        };
+                        wb.current_region(s, cell)
+                    }
+                };
+                return Ok(rect);
+            }
+            Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
+                Some(Object::Range(r)) => self.resolve(r)?,
+                Some(Object::Multi(_)) => return Err(OmError::app_defined()),
+                _ => return Err(invalid_arg()),
+            },
+            Some(Variant::Bstr(text)) if text.encode_utf16().count() <= 255 => {
+                let text = text.strip_prefix('=').unwrap_or(text);
+                match parse_areas_text(wb, s, text) {
+                    Some((sheet, areas)) if sheet == s => match areas.as_slice() {
+                        [one] => (sheet, *one),
+                        _ => return Err(OmError::app_defined()),
+                    },
+                    _ => return Err(invalid_arg()),
+                }
+            }
+            _ => return Err(invalid_arg()),
+        };
+        if sheet != s {
+            return Err(OmError::app_defined());
+        }
+        Ok(rect)
+    }
+
+    fn list_create(
+        &mut self,
+        b: BookId,
+        sheet: SheetId,
+        mut rect: Rect,
+        headed: bool,
+    ) -> Result<TableId, OmError> {
+        let wb = &mut self.book_mut(b)?.wb;
+        let mut emptied = false;
+        if headed {
+            if rect.rows() < 2 {
+                rect.r1 += 1;
+                emptied = true;
+            }
+        } else {
+            let first = Rect {
+                r1: rect.r0,
+                ..rect
+            };
+            wb.insert_cells(sheet, first, true).map_err(edit_error)?;
+            rect.r1 += 1;
+        }
+
+        let mut k = wb.tables_made() + 1;
+        while wb.table_by_name(&format!("Table{k}")).is_some()
+            || wb.display_name_in_use(&format!("Table{k}"))
+        {
+            k += 1;
+        }
+        let name = format!("Table{k}");
+        wb.add_table(&name, sheet, rect).map_err(edit_error)?;
+
+        let id = wb
+            .table_by_name(&name)
+            .map(|t| t.id)
+            .ok_or_else(OmError::object_required)?;
+        if emptied {
+            wb.set_table_look(id, |t| t.emptied = true);
+        }
+
+        if wb.selection_of(sheet).areas != [rect] {
+            let mark = self.notice_mark(b);
+            self.note_selection(b, mark, crate::selection::At::Last, sheet, &[rect]);
+        }
+        Ok(id)
     }
 
     pub(crate) fn list_object_member(
         &mut self,
         b: BookId,
-        name: &str,
+        id: TableId,
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
-        let t = self.table_of(b, name)?;
-        let handle = name.to_string();
+        let t = self.table_of(b, id)?;
+
+        if m.kind == Put && m.name != "TableStyle" && a.put.as_ref().is_some_and(is_missing) {
+            return Err(OmError::hresult(DISP_E_PARAMNOTOPTIONAL));
+        }
         match (m.name, m.kind) {
-            ("DisplayName", Get) => Ok(Variant::Bstr(xlcalc::table_display_name(&t.name))),
+            ("DisplayName", Get) => Ok(Variant::Bstr(t.disp.clone())),
             ("Name" | "_Default", Get) => Ok(Variant::Bstr(t.name.clone())),
+
             ("Name" | "DisplayName", Put) => {
-                let new = self.put_string(a)?;
-                if m.name == "Name" && new.chars().count() > 255 {
-                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+                let new = self.put_string_alpha(a)?;
+                if m.name == "Name" && new == t.name {
+                    return Ok(Variant::Empty);
                 }
+                self.table_guard(b, t.sheet, false)?;
+                if new.encode_utf16().count() > 255 {
+                    return Err(invalid_arg());
+                }
+                if m.name == "DisplayName" && !display_name_ok(&new) {
+                    return Err(OmError::app_defined());
+                }
+                let wb = &mut self.book_mut(b)?.wb;
                 if m.name == "DisplayName" {
-                    if new.chars().count() > 255 {
-                        return Err(OmError::exception(0x8007_0057_u32 as i32, None));
-                    }
-                    if !display_name_ok(&new) {
+                    wb.set_table_display_name(id, &new)
+                } else {
+                    wb.rename_table(id, &new)
+                }
+                .map_err(edit_error)?;
+                Ok(Variant::Empty)
+            }
+            ("ShowTotals", Get) => Ok(Variant::Bool(t.totals)),
+
+            ("ShowTotals", Put) => {
+                let on = self.put_bool(a)?;
+                if on != t.totals {
+                    self.table_guard(b, t.sheet, false)?;
+                    if on && t.rect.r1 + 1 >= crate::addr::XLSX_ROWS {
                         return Err(OmError::app_defined());
                     }
                 }
                 self.book_mut(b)?
                     .wb
-                    .rename_table(&t.name, &new)
-                    .map_err(edit_error)?;
-                self.table_renamed(b, &handle, &new);
-                Ok(Variant::Empty)
-            }
-            ("ShowTotals", Get) => Ok(Variant::Bool(t.totals)),
-            ("ShowTotals", Put) => {
-                self.table_guard(b, t.sheet, false)?;
-                let on = self.put_bool(a)?;
-                self.book_mut(b)?
-                    .wb
-                    .set_table_totals(&t.name, on)
+                    .set_table_totals(id, on)
                     .map_err(edit_error)?;
                 Ok(Variant::Empty)
             }
             ("ShowHeaders", Get) => Ok(Variant::Bool(t.headers)),
+
             ("ShowHeaders", Put) => {
                 let on = self.put_bool(a)?;
+                if self.table_guard(b, t.sheet, false).is_err() {
+                    return Ok(Variant::Empty);
+                }
                 self.book_mut(b)?
                     .wb
-                    .set_table_headers(&t.name, on)
+                    .set_table_headers(id, on)
                     .map_err(edit_error)?;
                 Ok(Variant::Empty)
             }
@@ -309,8 +439,8 @@ impl Application<'_> {
                 let r = t.totals_row().map(|row| Rect { r0: row, ..t.rect });
                 self.optional_range(b, t.sheet, r)
             }
-            ("ListColumns", Get) => Ok(self.alloc(Object::ListColumns(b, handle))),
-            ("ListRows", Get) => Ok(self.alloc(Object::ListRows(b, handle))),
+            ("ListColumns", Get) => Ok(self.alloc(Object::ListColumns(b, id))),
+            ("ListRows", Get) => Ok(self.alloc(Object::ListRows(b, id))),
             ("SourceType", Get) => Ok(Variant::I4(1)),
             ("DisplayRightToLeft", Get) => Ok(Variant::Bool(false)),
 
@@ -318,15 +448,19 @@ impl Application<'_> {
             ("InsertRowRange" | "XmlMap", Get) => Ok(Variant::Dispatch(None)),
             ("TableObject" | "SharePointURL" | "QueryTable", Get) => Err(OmError::app_defined()),
             ("AlternativeText" | "Summary", Get) => {
-                let key = format!("tbl{}:{}:{}", b.0, t.name, m.name);
+                let key = format!("tbl{}:{id:?}:{}", b.0, m.name);
                 Ok(self.opts.get(&key).cloned().unwrap_or(Variant::BstrNull))
             }
+
             ("AlternativeText" | "Summary", Put) => {
-                let text = self.put_string(a)?;
-                self.opts.insert(
-                    format!("tbl{}:{}:{}", b.0, t.name, m.name),
-                    Variant::Bstr(text),
-                );
+                self.table_guard(b, t.sheet, false)?;
+                let text = self.put_string_alpha(a)?;
+                let max = if m.name == "Summary" { 50_000 } else { 25_000 };
+                if text.encode_utf16().count() > max {
+                    return Err(invalid_arg());
+                }
+                self.opts
+                    .insert(format!("tbl{}:{id:?}:{}", b.0, m.name), Variant::Bstr(text));
                 Ok(Variant::Empty)
             }
             ("TableStyle", Get) => Ok(match &t.style {
@@ -334,20 +468,8 @@ impl Application<'_> {
                 None => Variant::Bstr("\u{0}".to_string()),
             }),
             ("TableStyle", Put) => {
-                let style = match a.put.as_ref() {
-                    Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
-                        Some(Object::TableStyle(n)) => n.clone(),
-                        _ => return Err(OmError::type_mismatch()),
-                    },
-                    _ => self.put_string(a)?,
-                };
-                let valid = style.is_empty() || table_style_exists(&style);
-                if !valid {
-                    return Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT));
-                }
-                self.book_mut(b)?.wb.set_table_look(&t.name, |t| {
-                    t.style = (!style.is_empty()).then_some(style);
-                });
+                let style = self.table_style_put(b, &t, a)?;
+                self.book_mut(b)?.wb.set_table_look(id, |t| t.style = style);
                 Ok(Variant::Empty)
             }
             (
@@ -369,18 +491,18 @@ impl Application<'_> {
                 let on = self.put_bool(a)?;
                 self.book_mut(b)?
                     .wb
-                    .set_table_look(&t.name, |t| t.stripes[idx] = on);
+                    .set_table_look(id, |t| t.stripes[idx] = on);
                 Ok(Variant::Empty)
             }
             ("Comment", Get) => Ok(Variant::Bstr(t.comment.clone())),
             ("Comment", Put) => {
-                let text = self.put_string(a)?;
-                if text.chars().count() > 255 {
-                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+                let text = self.put_string_alpha(a)?;
+                if text.encode_utf16().count() > 255 {
+                    return Err(invalid_arg());
                 }
                 self.book_mut(b)?
                     .wb
-                    .set_table_look(&t.name, |t| t.comment = text);
+                    .set_table_look(id, |t| t.comment = text);
                 Ok(Variant::Empty)
             }
 
@@ -388,7 +510,7 @@ impl Application<'_> {
                 t.show_filter
                     && t.headers
                     && !matches!(
-                        self.opts.get(&format!("tbl{}:{}:dd", b.0, t.name)),
+                        self.opts.get(&format!("tbl{}:{id:?}:dd", b.0)),
                         Some(Variant::Bool(false))
                     ),
             )),
@@ -398,39 +520,37 @@ impl Application<'_> {
                     return Err(OmError::app_defined());
                 }
                 self.opts
-                    .insert(format!("tbl{}:{}:dd", b.0, t.name), Variant::Bool(on));
+                    .insert(format!("tbl{}:{id:?}:dd", b.0), Variant::Bool(on));
                 Ok(Variant::Empty)
             }
             ("AutoFilter" | "_AutoFilter" | "ShowAutoFilter", _) => {
                 self.table_view_member(b, &t, m, a)
             }
-            ("Sort", Get) => Ok(self.alloc(Object::Sort(SortOwner::Table(b, handle)))),
+            ("Sort", Get) => Ok(self.alloc(Object::Sort(SortOwner::Table(b, id)))),
             ("Parent", Get) => Ok(self.alloc(Object::Worksheet(b, t.sheet))),
             ("Unlist", Func) => {
-                self.book_mut(b)?
-                    .wb
-                    .unlist_table(&t.name)
-                    .map_err(edit_error)?;
-                self.sorts
-                    .remove(&SortOwner::Table(b, t.name.clone()).key());
+                self.book_mut(b)?.wb.unlist_table(id).map_err(edit_error)?;
+                self.sorts.remove(&SortOwner::Table(b, id));
                 Ok(Variant::Empty)
             }
             ("Delete", Func) => {
-                self.book_mut(b)?
-                    .wb
-                    .delete_table(&t.name)
-                    .map_err(edit_error)?;
-                self.sorts
-                    .remove(&SortOwner::Table(b, t.name.clone()).key());
+                self.book_mut(b)?.wb.delete_table(id).map_err(edit_error)?;
+                self.sorts.remove(&SortOwner::Table(b, id));
                 Ok(Variant::Empty)
             }
+
             ("Resize", Func) => {
+                let typed = matches!(a.get(0), Some(Variant::Dispatch(Some(id)))
+                    if matches!(self.arena.get(*id), Some(Object::Range(_) | Object::Multi(_))));
+                if !typed {
+                    return Err(OmError::arg(DISP_E_TYPEMISMATCH, 0));
+                }
                 self.table_guard(b, t.sheet, false)?;
                 let (_, rect) = self.range_arg(a.get(0))?;
 
                 self.book_mut(b)?
                     .wb
-                    .resize_table(&t.name, rect)
+                    .resize_table(id, rect)
                     .map_err(edit_error)?;
                 Ok(Variant::Empty)
             }
@@ -438,14 +558,53 @@ impl Application<'_> {
         }
     }
 
+    fn table_style_put(&self, b: BookId, t: &Table, a: &Args) -> Result<Option<String>, OmError> {
+        let refused = || OmError::hresult(DISP_E_BADPARAMCOUNT);
+        self.table_guard(b, t.sheet, false).map_err(|_| refused())?;
+        let name = match a.put.as_ref() {
+            Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
+                Some(Object::TableStyle(n)) => n.clone(),
+                Some(Object::Worksheet(..)) => return Ok(None),
+                _ => return Err(OmError::type_mismatch()),
+            },
+            Some(Variant::Array(_)) => return Err(refused()),
+            Some(v) if is_missing(v) => return Ok(None),
+            Some(Variant::Null) => return Ok(None),
+            _ => self.put_string_alpha(a)?,
+        };
+        if name.is_empty() || name.encode_utf16().count() > 255 {
+            return Ok(None);
+        }
+        match structured_style(&name) {
+            Some((style, false)) => Ok(Some(style)),
+            _ => Err(refused()),
+        }
+    }
+
+    pub(crate) fn pivot_style_put(&self, a: &Args) -> Result<String, OmError> {
+        let name = match a.put.as_ref() {
+            Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
+                Some(Object::TableStyle(n)) => n.clone(),
+
+                _ => return Err(OmError::unsupported("TableStyle2 of another object")),
+            },
+            _ => self.put_string_alpha(a).unwrap_or_default(),
+        };
+        match structured_style(&name) {
+            Some((style, false)) => Ok(style),
+            Some((_, true)) => Err(OmError::hresult(DISP_E_BADPARAMCOUNT)),
+            None => Ok(String::new()),
+        }
+    }
+
     pub(crate) fn list_columns_member(
         &mut self,
         b: BookId,
-        name: &str,
+        id: TableId,
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
-        let t = self.table_of(b, name)?;
+        let t = self.table_of(b, id)?;
         match m.name {
             "Count" => Ok(Variant::I4(t.columns.len() as i32)),
             "Item" | "_Default" => {
@@ -454,11 +613,13 @@ impl Application<'_> {
                     self.item_index(Some(a.get(0).unwrap_or(&first)), a.lcid, &t.columns, |c| {
                         c.as_str()
                     })?;
-                Ok(self.alloc(Object::ListColumn(b, name.to_string(), i)))
+                Ok(self.alloc(Object::ListColumn(b, id, t.column_ids[i], true)))
             }
             "_NewEnum" => {
-                let items = (0..t.columns.len())
-                    .map(|i| self.alloc(Object::ListColumn(b, name.to_string(), i)))
+                let items = t
+                    .column_ids
+                    .iter()
+                    .map(|&c| self.alloc(Object::ListColumn(b, id, c, true)))
                     .collect();
                 Ok(self.alloc_enumerator(items))
             }
@@ -487,7 +648,7 @@ impl Application<'_> {
                         c1: t.rect.c1 + 1,
                         ..t.rect
                     };
-                    wb.resize_table(&t.name, rect).map_err(edit_error)?;
+                    wb.resize_table(id, rect).map_err(edit_error)?;
                 } else {
                     let col = t.rect.c0 + pos as u32;
                     let cells = Rect {
@@ -502,10 +663,11 @@ impl Application<'_> {
                             c1: t.rect.c1 + 1,
                             ..t.rect
                         };
-                        wb.resize_table(&t.name, rect).map_err(edit_error)?;
+                        wb.resize_table(id, rect).map_err(edit_error)?;
                     }
                 }
-                Ok(self.alloc(Object::ListColumn(b, name.to_string(), pos)))
+                let column = self.table_of(b, id)?.column_ids[pos];
+                Ok(self.alloc(Object::ListColumn(b, id, column, false)))
             }
             _ => Err(unsupported("ListColumns", m)),
         }
@@ -514,13 +676,19 @@ impl Application<'_> {
     pub(crate) fn list_column_member(
         &mut self,
         b: BookId,
-        name: &str,
-        i: usize,
+        id: TableId,
+        column: ColumnId,
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
-        let t = self.table_of(b, name)?;
+        let t = self.table_of(b, id)?;
+
+        let i = t
+            .column_ids
+            .iter()
+            .position(|&c| c == column)
+            .ok_or_else(OmError::object_required)?;
         let col = t.rect.c0 + i as u32;
         let narrow = |r: Rect| Rect {
             c0: col,
@@ -528,12 +696,8 @@ impl Application<'_> {
             ..r
         };
         match (m.name, m.kind) {
-            ("Name" | "_Default", Get) => Ok(Variant::Bstr(
-                t.columns
-                    .get(i)
-                    .cloned()
-                    .ok_or_else(OmError::object_required)?,
-            )),
+            ("Parent", Get) => Ok(self.alloc(Object::Table(b, id, true))),
+            ("Name" | "_Default", Get) => Ok(Variant::Bstr(t.columns[i].clone())),
             ("Name", Put) => {
                 let new = self.put_string(a)?;
                 if !t.headers {
@@ -577,15 +741,8 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("TotalsCalculation", Get) => {
-                let Some(row) = t.totals_row() else {
-                    return Ok(Variant::I4(0));
-                };
                 let wb = &self.book(b)?.wb;
-                let text = wb.formula_text(xlcalc::CellAddr::new(t.sheet, row, col));
-                Ok(Variant::I4(match text {
-                    None => 0,
-                    Some(f) => totals_code(&f),
-                }))
+                Ok(Variant::I4(wb.table_totals_calc(id, i)))
             }
             ("TotalsCalculation", Put) => {
                 let code = Application::put_value(a)
@@ -594,27 +751,17 @@ impl Application<'_> {
                 if !(0..=9).contains(&code) {
                     return Err(OmError::exception(0x8007_0057_u32 as i32, None));
                 }
-                let Some(row) = t.totals_row() else {
-                    return Ok(Variant::Empty);
-                };
-                let addr = xlcalc::CellAddr::new(t.sheet, row, col);
                 let wb = &mut self.book_mut(b)?.wb;
-                match code {
-                    0 => {
-                        wb.clear(addr);
-                    }
-                    1..=8 => {
-                        let f = [109, 101, 103, 102, 105, 104, 107, 110][code as usize - 1];
-                        let colname = xlcalc::testing::escape_column(&t.columns[i]);
-                        let text = format!("=SUBTOTAL({f},{}[{colname}])", t.name);
-                        wb.set_formula(addr, &text).map_err(edit_error)?;
-                    }
-                    _ => {}
-                }
+                wb.set_table_totals_calc(id, i, code).map_err(edit_error)?;
                 Ok(Variant::Empty)
             }
             _ => Err(unsupported("ListColumn", m)),
         }
+    }
+
+    pub(crate) fn style_object(&mut self, name: &str) -> Variant {
+        let name = structured_style(name).map_or_else(|| name.to_string(), |(n, _)| n);
+        self.alloc(Object::TableStyle(name))
     }
 
     pub(crate) fn table_style_member(
@@ -625,21 +772,7 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         match m.name {
             "Name" | "_Default" => Ok(Variant::Bstr(name.to_string())),
-
-            "NameLocal" => {
-                let mut out = String::new();
-                let mut prev = ' ';
-                for c in name.chars() {
-                    let split = (c.is_ascii_uppercase() && prev.is_ascii_lowercase())
-                        || (c.is_ascii_digit() && !prev.is_ascii_digit() && prev != ' ');
-                    if split {
-                        out.push(' ');
-                    }
-                    out.push(c);
-                    prev = c;
-                }
-                Ok(Variant::Bstr(out))
-            }
+            "NameLocal" => Ok(Variant::Bstr(style_local_name(name))),
             _ => {
                 let slot = format!("TableStyle:{name}");
                 match self.bag_member(crate::bag::Store::App, "TableStyle", &slot, m, a) {
@@ -653,11 +786,11 @@ impl Application<'_> {
     pub(crate) fn list_rows_member(
         &mut self,
         b: BookId,
-        name: &str,
+        id: TableId,
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
-        let t = self.table_of(b, name)?;
+        let t = self.table_of(b, id)?;
         let n = if t.emptied {
             0
         } else {
@@ -669,7 +802,7 @@ impl Application<'_> {
                 let rows: Vec<usize> = (0..n).collect();
                 let first = Variant::I4(1);
                 let i = self.item_index(Some(a.get(0).unwrap_or(&first)), a.lcid, &rows, |_| "")?;
-                Ok(self.alloc(Object::ListRow(b, name.to_string(), i)))
+                Ok(self.alloc(Object::ListRow(b, id, i)))
             }
             "Add" | "_Add" => {
                 let pos = match a.get(0) {
@@ -679,17 +812,33 @@ impl Application<'_> {
                 if pos < 1 || pos > n as i64 + 1 {
                     return Err(OmError::bad_index());
                 }
-
-                if matches!(a.get(1), Some(Variant::Bstr(_))) {
-                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
-                }
                 let pos = pos as usize - 1;
                 if n == 0 {
                     return Err(OmError::app_defined());
                 }
                 let first = body(&t).ok_or_else(OmError::object_required)?;
                 let row = first.r0 + pos as u32;
+
+                if row + 1 >= crate::addr::XLSX_ROWS {
+                    return Err(OmError::app_defined());
+                }
+                let always = match a.get(1) {
+                    Some(Variant::Bstr(_)) => {
+                        return Err(OmError::exception(0x8007_0057_u32 as i32, None))
+                    }
+                    Some(Variant::Bool(f)) => *f,
+                    _ => true,
+                };
                 let wb = &mut self.book_mut(b)?.wb;
+
+                if !always && pos == n && wb.list_row_append_free(id) {
+                    let rect = Rect {
+                        r1: t.rect.r1 + 1,
+                        ..t.rect
+                    };
+                    wb.resize_table(id, rect).map_err(edit_error)?;
+                    return Ok(self.alloc(Object::ListRow(b, id, pos)));
+                }
                 let cells = Rect {
                     r0: row,
                     r1: row,
@@ -697,19 +846,19 @@ impl Application<'_> {
                 };
                 wb.insert_cells(t.sheet, cells, true).map_err(edit_error)?;
 
-                let grown = wb.table_by_name(&t.name).map(|x| x.rect);
+                let grown = wb.table(id).map(|x| x.rect);
                 if grown == Some(t.rect) {
                     let rect = Rect {
                         r1: t.rect.r1 + 1,
                         ..t.rect
                     };
-                    wb.resize_table(&t.name, rect).map_err(edit_error)?;
+                    wb.resize_table(id, rect).map_err(edit_error)?;
                 }
-                Ok(self.alloc(Object::ListRow(b, name.to_string(), pos)))
+                Ok(self.alloc(Object::ListRow(b, id, pos)))
             }
             "_NewEnum" => {
                 let items = (0..n)
-                    .map(|i| self.alloc(Object::ListRow(b, name.to_string(), i)))
+                    .map(|i| self.alloc(Object::ListRow(b, id, i)))
                     .collect();
                 Ok(self.alloc_enumerator(items))
             }
@@ -720,11 +869,11 @@ impl Application<'_> {
     pub(crate) fn list_row_member(
         &mut self,
         b: BookId,
-        name: &str,
+        id: TableId,
         i: usize,
         m: &'static Member,
     ) -> Result<Variant, OmError> {
-        let t = self.table_of(b, name)?;
+        let t = self.table_of(b, id)?;
         let body = body(&t).ok_or_else(OmError::object_required)?;
         let row = body.r0 + i as u32;
         match m.name {
@@ -756,59 +905,57 @@ impl Application<'_> {
     }
 }
 
-fn totals_code(f: &str) -> i32 {
-    let up = f.to_ascii_uppercase();
-    let Some(rest) = up.strip_prefix("=SUBTOTAL(") else {
-        return 9;
-    };
-    match rest.split(',').next().map(str::trim) {
-        Some("109") => 1,
-        Some("101") => 2,
-        Some("103") => 3,
-        Some("102") => 4,
-        Some("105") => 5,
-        Some("104") => 6,
-        Some("107") => 7,
-        Some("110") => 8,
-        _ => 9,
-    }
+pub(crate) fn structured_style(name: &str) -> Option<(String, bool)> {
+    const FAMILIES: [(&str, u32, bool); 11] = [
+        ("TableStyleLight", 21, false),
+        ("TableStyleMedium", 28, false),
+        ("TableStyleDark", 11, false),
+        ("PivotStyleLight", 28, false),
+        ("PivotStyleMedium", 28, false),
+        ("PivotStyleDark", 28, false),
+        ("SlicerStyleLight", 6, true),
+        ("SlicerStyleDark", 6, true),
+        ("SlicerStyleOther", 2, true),
+        ("TimeSlicerStyleLight", 6, true),
+        ("TimeSlicerStyleDark", 6, true),
+    ];
+    FAMILIES.iter().find_map(|&(family, count, slicer)| {
+        let head = name.get(..family.len())?;
+        let digits = name.get(family.len()..)?;
+        if !head.eq_ignore_ascii_case(family) || digits.starts_with(['0', '+']) {
+            return None;
+        }
+        let n = digits.parse::<u32>().ok()?;
+        (1..=count)
+            .contains(&n)
+            .then(|| (format!("{family}{n}"), slicer))
+    })
 }
 
-fn table_style_exists(name: &str) -> bool {
-    let (kind, max) = if let Some(n) = name.strip_prefix("TableStyleLight") {
-        (n, 21)
-    } else if let Some(n) = name.strip_prefix("TableStyleMedium") {
-        (n, 28)
-    } else if let Some(n) = name.strip_prefix("TableStyleDark") {
-        (n, 11)
-    } else {
-        return false;
+pub(crate) fn style_local_name(name: &str) -> String {
+    const GALLERIES: [(&str, &str); 4] = [
+        ("TimeSlicerStyle", "Timeline Style"),
+        ("SlicerStyle", "Slicer Style"),
+        ("PivotStyle", "Pivot Style"),
+        ("TableStyle", "Table Style"),
+    ];
+    let Some((style, _)) = structured_style(name) else {
+        return name.to_string();
     };
-    kind.parse::<u32>().is_ok_and(|n| (1..=max).contains(&n)) && !kind.starts_with('0')
+    GALLERIES
+        .iter()
+        .find_map(|(family, gallery)| {
+            let rest = style.strip_prefix(family)?;
+            let (shade, number) = rest.split_at(rest.find(|c: char| c.is_ascii_digit())?);
+            Some(format!("{gallery} {shade} {number}"))
+        })
+        .unwrap_or(style)
 }
 
-const BACKSLASH: char = '\\';
+fn invalid_arg() -> OmError {
+    OmError::exception(0x8007_0057_u32 as i32, None)
+}
 
 fn display_name_ok(s: &str) -> bool {
-    let mut cs = s.chars();
-    let Some(first) = cs.next() else {
-        return false;
-    };
-    if !(first.is_alphabetic() || first == '_' || first == BACKSLASH) {
-        return false;
-    }
-    if !cs.all(|c| c.is_alphanumeric() || matches!(c, '_' | '.' | BACKSLASH | '?')) {
-        return false;
-    }
-    let letters = s.chars().take_while(|c| c.is_ascii_alphabetic()).count();
-    let rest = &s[letters..];
-    let a1 =
-        (1..=3).contains(&letters) && !rest.is_empty() && rest.chars().all(|c| c.is_ascii_digit());
-    let up = s.to_ascii_uppercase();
-    let r1c1 = up == "R"
-        || up == "C"
-        || up
-            .strip_prefix('R')
-            .is_some_and(|t| !t.is_empty() && t.chars().all(|c| c.is_ascii_digit() || c == 'C'));
-    !(a1 || r1c1)
+    xlcalc::is_valid_name(s)
 }

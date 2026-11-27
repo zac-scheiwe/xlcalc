@@ -135,7 +135,7 @@ impl Application<'_> {
                     if t == 4 {
                         return;
                     }
-                    c.formula = None;
+
                     c.value = match t {
                         3 if first => 0.0,
                         3 if end => 100.0,
@@ -155,20 +155,12 @@ impl Application<'_> {
                 if matches!(c.ty, 1 | 2) {
                     return Err(OmError::app_defined());
                 }
-                let v = Application::put_value(a);
-                if let Ok(Some(n)) = v.f64(0) {
-                    self.scale_edit(book, sheet, id, k, |c| {
-                        c.value = n;
-                        c.formula = None;
-                    })
-                } else {
-                    let t = v.string(0)?.ok_or_else(OmError::app_defined)?;
-                    let t = if t.starts_with('=') {
-                        t
-                    } else {
-                        format!("=\"{}\"", t.replace('"', "\"\""))
-                    };
-                    self.scale_edit(book, sheet, id, k, |c| c.formula = Some(t))
+                let anchor = self.cf_rule_anchor(book, sheet, id);
+                match self.cf_threshold_value(book, anchor, a)? {
+                    CfValue::Num(n) => self.scale_edit(book, sheet, id, k, |c| c.value = n),
+                    CfValue::Formula(t) => {
+                        self.scale_edit(book, sheet, id, k, |c| c.formula = Some(t))
+                    }
                 }
             }
             ("FormatColor", Get) => Ok(self.alloc(Object::ScaleColor(book, sheet, id, k))),
@@ -191,14 +183,59 @@ impl Application<'_> {
         match (m.name, m.kind) {
             ("Color", Get) => Ok(i4(swap_rb(c.color) as i32)),
             ("Color", Put) => {
-                let n = Application::put_value(a)
-                    .i32(0)?
-                    .ok_or_else(OmError::app_defined)?;
+                let n = match Application::put_value(a).get(0) {
+                    Some(Variant::Bool(_)) => return Err(OmError::app_defined()),
+                    Some(Variant::R8(x)) => x.round_ties_even() as i32,
+                    _ => Application::put_value(a)
+                        .i32(0)?
+                        .ok_or_else(OmError::app_defined)?,
+                };
                 self.scale_edit(book, sheet, id, k, |c| {
                     c.color = swap_rb(n as u32 & 0xFFFFFF)
                 })
             }
             _ => Err(unsupported("FormatColor", m)),
+        }
+    }
+}
+
+pub(crate) enum CfValue {
+    Num(f64),
+    Formula(String),
+}
+
+impl Application<'_> {
+    pub(crate) fn cf_threshold_value(
+        &self,
+        book: BookId,
+        anchor: CellAddr,
+        a: &Args,
+    ) -> Result<CfValue, OmError> {
+        let refused = OmError::app_defined;
+        let v = Application::put_value(a);
+        match v.get(0) {
+            None | Some(Variant::Empty) => Err(refused()),
+            Some(Variant::Bool(b)) => {
+                Ok(CfValue::Formula(if *b { "=TRUE" } else { "=FALSE" }.into()))
+            }
+            Some(Variant::Bstr(t)) => {
+                let bare = t.trim();
+                if t.is_empty() {
+                    Err(refused())
+                } else if t.starts_with('=') && t.len() > 1 {
+                    let wb = &self.book(book)?.wb;
+                    wb.cfv_threshold_formula(t, anchor)
+                        .map(CfValue::Formula)
+                        .ok_or_else(refused)
+                } else if let Ok(n) = bare.parse::<f64>() {
+                    Ok(CfValue::Num(n))
+                } else if bare.eq_ignore_ascii_case("TRUE") || bare.eq_ignore_ascii_case("FALSE") {
+                    Ok(CfValue::Formula(format!("={}", bare.to_ascii_uppercase())))
+                } else {
+                    Ok(CfValue::Formula(format!("=\"{}\"", t.replace('"', "\"\""))))
+                }
+            }
+            Some(_) => Ok(CfValue::Num(v.f64(0)?.ok_or_else(refused)?)),
         }
     }
 }
@@ -253,36 +290,64 @@ fn formula_arg(a: &Args, i: usize) -> Result<Option<String>, OmError> {
     })
 }
 
+fn cf_formula_arg(a: &Args, i: usize) -> Result<Option<String>, OmError> {
+    let f = formula_arg(a, i)?;
+    Ok(f.map(|t| {
+        let bare = t.trim();
+        let literal = bare.parse::<f64>().is_ok()
+            || bare.eq_ignore_ascii_case("TRUE")
+            || bare.eq_ignore_ascii_case("FALSE")
+            || (bare.starts_with('#') && bare.len() > 1);
+        if t.starts_with('=')
+            || bare.is_empty()
+            || literal
+            || !matches!(a.get(i), Some(Variant::Bstr(_)))
+        {
+            t
+        } else {
+            format!("=\"{}\"", t.replace('"', "\"\""))
+        }
+    }))
+}
+
 impl Application<'_> {
-    fn cf_handle(&mut self, book: BookId, sheet: SheetId, id: u32, scope: Rect) -> Variant {
+    fn cf_handle(&mut self, book: BookId, sheet: SheetId, id: u32, scope: &[Rect]) -> Variant {
         let iface = self
             .book(book)
             .ok()
             .and_then(|b| b.wb.cfv_sheet(sheet))
             .and_then(|s| s.index_of(id).map(|i| CfIface::of(&s.rules[i].kind)))
             .unwrap_or(CfIface::Plain);
+        let scope = scope.to_vec();
         self.alloc(Object::FormatCondition(book, sheet, id, iface, scope))
+    }
+
+    pub(crate) fn cf_rule_anchor(&self, book: BookId, sheet: SheetId, id: u32) -> CellAddr {
+        let (r, c) = self
+            .book(book)
+            .ok()
+            .and_then(|b| b.wb.cfv_sheet(sheet))
+            .map(|s| s.anchor(id))
+            .unwrap_or((0, 0));
+        CellAddr::new(sheet, r, c)
     }
 
     fn cf_target(&self, r: &RangeRef) -> Result<(SheetId, Rect), OmError> {
         self.resolve(r)
     }
 
-    fn cf_ids(&self, r: &RangeRef) -> Result<Vec<u32>, OmError> {
-        let (sheet, rect) = self.cf_target(r)?;
+    fn cf_ids(&self, r: &RangeRef, rects: &[Rect]) -> Result<Vec<u32>, OmError> {
+        let (sheet, _) = self.cf_target(r)?;
         let wb = &self.book(r.book)?.wb;
-        Ok(wb.cfv_sheet(sheet).map_or_else(Vec::new, |s| {
-            s.rules
-                .iter()
-                .filter(|x| x.applies.iter().any(|a| a.intersects(&rect)))
-                .map(|x| x.id)
-                .collect()
-        }))
+        Ok(wb
+            .cfv_sheet(sheet)
+            .map_or_else(Vec::new, |s| s.listing(rects)))
     }
 
     pub(crate) fn format_conditions_member(
         &mut self,
         r: &RangeRef,
+        more: &[RangeRef],
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
@@ -291,10 +356,17 @@ impl Application<'_> {
             return Err(OmError::app_defined());
         }
         let (sheet, rect) = self.cf_target(r)?;
+
+        let mut rects = vec![rect];
+        for o in more {
+            if let Ok((_, q)) = self.cf_target(o) {
+                rects.push(q);
+            }
+        }
         match (m.name, m.kind) {
-            ("Count", Get) => Ok(i4(self.cf_ids(r)?.len() as i32)),
+            ("Count", Get) => Ok(i4(self.cf_ids(r, &rects)?.len() as i32)),
             ("Item" | "_Default", _) => {
-                let ids = self.cf_ids(r)?;
+                let ids = self.cf_ids(r, &rects)?;
                 let i = a
                     .i32(0)
                     .map_err(|_| OmError::bad_index())?
@@ -302,37 +374,30 @@ impl Application<'_> {
                 if i < 1 || i as usize > ids.len() {
                     return Err(OmError::bad_index());
                 }
-                Ok(self.cf_handle(r.book, sheet, ids[i as usize - 1], rect))
+                Ok(self.cf_handle(r.book, sheet, ids[i as usize - 1], &rects))
             }
             ("_NewEnum", Get) => {
                 let items = self
-                    .cf_ids(r)?
+                    .cf_ids(r, &rects)?
                     .into_iter()
-                    .map(|id| self.cf_handle(r.book, sheet, id, rect))
+                    .map(|id| self.cf_handle(r.book, sheet, id, &rects))
                     .collect();
                 Ok(self.alloc_enumerator(items))
             }
             ("Delete", Func) => {
+                self.object_guard(r.book, sheet, ProtObject::FormatCondition, None)?;
                 let wb = &mut self.book_mut(r.book)?.wb;
-                let sh = wb.cfv_sheet_mut(sheet);
-                for rule in &mut sh.rules {
-                    rule.applies = rule
-                        .applies
-                        .iter()
-                        .flat_map(|x| x.subtract(&rect))
-                        .collect();
-                }
-                sh.rules.retain(|x| !x.applies.is_empty());
+                wb.cfv_clear_range(sheet, &rects);
                 Ok(Variant::Empty)
             }
             ("Add", Func) => {
                 self.object_guard(r.book, sheet, ProtObject::FormatCondition, None)?;
-                self.cf_add(r, sheet, rect, a)
+                self.cf_add(r, sheet, &rects, a)
             }
             ("AddTop10", Func) => self.cf_push(
                 r.book,
                 sheet,
-                rect,
+                &rects,
                 CfKind::Top10 {
                     bottom: false,
                     percent: false,
@@ -343,13 +408,13 @@ impl Application<'_> {
             ),
             ("AddColorScale", Func) => {
                 let n = a.i32(0)?.ok_or_else(OmError::app_defined)?;
-                let kind = scale_kind(n).ok_or_else(OmError::app_defined)?;
-                self.cf_push(r.book, sheet, rect, kind, None, None)
+                let kind = scale_kind(n).ok_or_else(OmError::bad_index)?;
+                self.cf_push(r.book, sheet, &rects, kind, None, None)
             }
             ("AddDatabar", Func) => self.cf_push(
                 r.book,
                 sheet,
-                rect,
+                &rects,
                 CfKind::DataBar(Box::default()),
                 None,
                 None,
@@ -357,7 +422,7 @@ impl Application<'_> {
             ("AddIconSetCondition", Func) => self.cf_push(
                 r.book,
                 sheet,
-                rect,
+                &rects,
                 CfKind::IconSet(IconSetSpec::new(4, false).ok_or_else(OmError::app_defined)?),
                 None,
                 None,
@@ -365,7 +430,7 @@ impl Application<'_> {
             ("AddUniqueValues", Func) => self.cf_push(
                 r.book,
                 sheet,
-                rect,
+                &rects,
                 CfKind::Unique { duplicate: false },
                 None,
                 None,
@@ -373,7 +438,7 @@ impl Application<'_> {
             ("AddAboveAverage", Func) => self.cf_push(
                 r.book,
                 sheet,
-                rect,
+                &rects,
                 CfKind::AboveAverage {
                     below: false,
                     equal: false,
@@ -391,7 +456,7 @@ impl Application<'_> {
         &mut self,
         r: &RangeRef,
         sheet: SheetId,
-        rect: Rect,
+        rects: &[Rect],
         a: &Args,
     ) -> Result<Variant, OmError> {
         let needed = || OmError::exception(PARAM_NOT_OPTIONAL, None);
@@ -403,8 +468,15 @@ impl Application<'_> {
         } else {
             None
         };
-        let f1 = formula_arg(a, 2)?.filter(|_| given(2));
-        let f2 = formula_arg(a, 3)?.filter(|_| given(3));
+        let f1 = cf_formula_arg(a, 2)?.filter(|_| given(2));
+        let f2 = cf_formula_arg(a, 3)?.filter(|_| given(3));
+
+        if (ty == 9 && (!given(4) || a.get(5).is_none())) || (ty == 11 && a.get(6).is_none()) {
+            return Err(needed());
+        }
+        if given(7) && number_arg(a, 7).is_some() {
+            return Err(invalid());
+        }
         let kind = match ty {
             1 => {
                 let op = op.ok_or_else(needed)?;
@@ -428,7 +500,11 @@ impl Application<'_> {
             }
             9 => {
                 let text = a.string(4)?.filter(|_| given(4)).ok_or_else(needed)?;
-                let op = a.i32(5)?.unwrap_or(0);
+
+                let op = strict_int(a, 5)?.ok_or_else(needed)?;
+                if text.encode_utf16().count() >= 256 {
+                    return Err(invalid());
+                }
                 if !(0..=3).contains(&op) {
                     return Err(OmError::exception(E_UNEXPECTED, None));
                 }
@@ -437,7 +513,8 @@ impl Application<'_> {
 
             10 | 14 | 15 => CfKind::Blanks,
             11 => {
-                let period = a.i32(6)?.filter(|_| given(6)).ok_or_else(needed)?;
+                let period = strict_int(a, 6)?.ok_or_else(needed)?;
+
                 if !(0..=9).contains(&period) {
                     return Err(invalid());
                 }
@@ -465,23 +542,39 @@ impl Application<'_> {
             _ => return Err(invalid()),
         };
         let (f1, f2) = if matches!(ty, 1 | 2) {
-            (f1, if matches!(op, Some(1 | 2)) { f2 } else { None })
+            let anchor = CellAddr::new(
+                sheet,
+                rects.iter().map(|q| q.r0).min().unwrap_or(0),
+                rects.iter().map(|q| q.c0).min().unwrap_or(0),
+            );
+            let wb = &self.book(r.book)?.wb;
+            let f2 = f2.filter(|_| matches!(op, Some(1 | 2)));
+            for f in [&f1, &f2].into_iter().flatten() {
+                if wb.cfv_bare_area(f, anchor) {
+                    return Err(invalid());
+                }
+            }
+            (f1, f2)
         } else {
             (None, None)
         };
-        self.cf_push(r.book, sheet, rect, kind, f1, f2)
+        self.cf_push(r.book, sheet, rects, kind, f1, f2)
     }
 
     fn cf_push(
         &mut self,
         book: BookId,
         sheet: SheetId,
-        rect: Rect,
+        rects: &[Rect],
         kind: CfKind,
         f1: Option<String>,
         f2: Option<String>,
     ) -> Result<Variant, OmError> {
-        let anchor = CellAddr::new(sheet, rect.r0, rect.c0);
+        let anchor = CellAddr::new(
+            sheet,
+            rects.iter().map(|q| q.r0).min().unwrap_or(0),
+            rects.iter().map(|q| q.c0).min().unwrap_or(0),
+        );
         let wb = &mut self.book_mut(book)?.wb;
         let conv = |wb: &xlcalc::Workbook, f: Option<String>| -> Result<Option<String>, OmError> {
             match f {
@@ -497,7 +590,6 @@ impl Application<'_> {
         let rule = CfRule {
             id: 0,
             prio: 0,
-            seq: 0,
             stop: matches!(
                 kind,
                 CfKind::CellValue(_)
@@ -511,24 +603,13 @@ impl Application<'_> {
                     | CfKind::AboveAverage { .. }
             ),
             kind,
-            applies: vec![rect],
             f1,
             f2,
             dxf: Dxf::default(),
         };
         let sh = wb.cfv_sheet_mut(sheet);
-        let id = sh.add_rule(rule);
-
-        let block: Vec<u32> = sh
-            .rules
-            .iter()
-            .filter(|r| r.id != id && r.applies == [rect])
-            .map(|r| r.id)
-            .collect();
-        for b in block.into_iter().rev() {
-            sh.list_first_in_priority(b);
-        }
-        Ok(self.cf_handle(book, sheet, id, rect))
+        let id = sh.add_on_range(rule, rects);
+        Ok(self.cf_handle(book, sheet, id, rects))
     }
 
     pub(crate) fn format_condition_member(
@@ -536,20 +617,25 @@ impl Application<'_> {
         book: BookId,
         sheet: SheetId,
         id: u32,
-        scope: Rect,
+        scope: &[Rect],
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
         let gone = || OmError::exception(crate::error::SCODE_BAD_INDEX, None);
-        let (pos, rule) = {
+        let (pos, rule, areas, at) = {
             let wb = &self.book(book)?.wb;
             let sh = wb.cfv_sheet(sheet).ok_or_else(gone)?;
             let pos = sh.index_of(id).ok_or_else(gone)?;
-            (pos, sh.rules[pos].clone())
+            (
+                pos,
+                sh.rules[pos].clone(),
+                sh.areas(id).to_vec(),
+                sh.anchor(id),
+            )
         };
-        let anchor = CellAddr::new(sheet, rule.anchor().0, rule.anchor().1);
-        let owner = StyleOwner::Cond(book, sheet, id, scope);
+        let anchor = CellAddr::new(sheet, at.0, at.1);
+        let owner = StyleOwner::Cond(book, sheet, id, scope.to_vec());
         if let Some(r) = self.cf_deco_member(book, sheet, id, &rule, m, a) {
             return r;
         }
@@ -563,26 +649,38 @@ impl Application<'_> {
                 if p < 1 {
                     return Err(invalid_arg());
                 }
+                self.object_guard(book, sheet, ProtObject::FormatCondition, None)?;
                 let wb = &mut self.book_mut(book)?.wb;
                 let sh = wb.cfv_sheet_mut(sheet);
                 sh.set_priority(pos, p);
                 Ok(Variant::Empty)
             }
             ("SetFirstPriority", Func) | ("SetLastPriority", Func) => {
+                self.object_guard(book, sheet, ProtObject::FormatCondition, None)?;
                 let wb = &mut self.book_mut(book)?.wb;
                 let sh = wb.cfv_sheet_mut(sheet);
-                if m.name == "SetFirstPriority" {
-                    sh.set_priority(pos, 1);
-                } else {
-                    let top = sh.rules.iter().map(|r| r.prio).max().unwrap_or(0);
-                    sh.rules[pos].prio = top + 1;
-                    sh.rules.sort_by_key(|r| r.prio);
+
+                let p = match m.name {
+                    "SetFirstPriority" => 1,
+                    _ => sh.next_priority(),
+                };
+                if p < 1 {
+                    return Err(invalid_arg());
                 }
+                sh.set_priority(pos, p);
                 Ok(Variant::Empty)
             }
             ("ModifyAppliesToRange", Func) => {
-                let (_, to_sheet, rects) = self.range_areas(a.get(0))?;
-                if to_sheet != sheet || rects.is_empty() {
+                if let Some(v) = a.get(0) {
+                    let is_range = matches!(v, Variant::Dispatch(Some(id))
+                        if matches!(self.arena.get(*id), Some(Object::Range(_) | Object::Multi(_))));
+                    if !is_range {
+                        return Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0));
+                    }
+                }
+                let (_, _, rects) = self.range_areas(a.get(0))?;
+
+                if rects.is_empty() {
                     return Err(OmError::app_defined());
                 }
 
@@ -597,18 +695,27 @@ impl Application<'_> {
                     f.as_ref()
                         .map(|t| wb.cfv_retarget(t, old, new).unwrap_or_else(|| t.clone()))
                 });
-                self.cf_edit(book, sheet, id, |r| {
-                    r.applies = rects;
+                let done = self.cf_edit(book, sheet, id, |r| {
                     let [f1, f2] = moved;
                     r.f1 = f1;
                     r.f2 = f2;
-                })
+                })?;
+                let wb = &mut self.book_mut(book)?.wb;
+                wb.cfv_sheet_mut(sheet).set_applies_to(id, &rects);
+                Ok(done)
             }
             ("ReverseOrder" | "ShowIconOnly", Get) => Ok(Variant::Bool(false)),
             ("ShowValue", Get) => Ok(Variant::Bool(true)),
             ("StopIfTrue", Get) => Ok(Variant::Bool(rule.stop)),
             ("StopIfTrue", Put) => {
+                if Application::put_value(a)
+                    .get(0)
+                    .is_none_or(crate::conv::is_missing)
+                {
+                    return Err(OmError::hresult(crate::error::DISP_E_PARAMNOTOPTIONAL));
+                }
                 let b = Application::put_value(a).bool(0)?.unwrap_or(false);
+                self.object_guard(book, sheet, ProtObject::FormatCondition, None)?;
                 self.cf_edit(book, sheet, id, |r| r.stop = b)
             }
             ("Formula1" | "Formula2", Get) => {
@@ -622,6 +729,9 @@ impl Application<'_> {
                     Some(f) => Ok(Variant::Bstr(
                         wb.cfv_from_relative(f, anchor).unwrap_or_default(),
                     )),
+                    None if matches!(&rule.kind, CfKind::Text { text, .. } if text.is_empty()) => {
+                        Err(OmError::app_defined())
+                    }
                     None if m.name == "Formula1" && !matches!(rule.kind, CfKind::CellValue(_)) => {
                         Ok(Variant::Bstr(wb.cf_condition_text(sheet, &rule)))
                     }
@@ -755,26 +865,21 @@ impl Application<'_> {
                 _ => Err(OmError::app_defined()),
             },
             ("Text", Get) => match &rule.kind {
-                CfKind::Text { text, .. } => Ok(bstr(text)),
+                CfKind::Text { text, .. } => Ok(Variant::Bstr(text.clone())),
                 _ => Err(OmError::app_defined()),
             },
             ("TextOperator", Get) => match rule.kind {
                 CfKind::Text { op, .. } => Ok(i4(op)),
-
-                _ => self
-                    .opts
-                    .get(&format!("fc{}:{}:{}:to", book.0, sheet.0, id))
-                    .cloned()
-                    .ok_or_else(OmError::app_defined),
+                _ => Err(OmError::app_defined()),
             },
-            ("TextOperator", Put) if !matches!(rule.kind, CfKind::Text { .. }) => {
+            ("TextOperator", Put) if !matches!(&rule.kind, CfKind::Text { text, .. } if !text.is_empty()) =>
+            {
                 self.coerce_wb_put(m, a)?;
                 let v = self.put_i32(a)?;
                 if !(0..=3).contains(&v) {
                     return Err(invalid_arg());
                 }
-                self.opts
-                    .insert(format!("fc{}:{}:{}:to", book.0, sheet.0, id), i4(v));
+                self.cf_become_text(book, sheet, id, v)?;
                 Err(OmError::app_defined())
             }
             ("DateOperator", Get) => match rule.kind {
@@ -802,27 +907,25 @@ impl Application<'_> {
                     Err(invalid_arg())
                 }
             }
-            ("AppliesTo", Get) => {
-                let rects = rule.applies.clone();
-                self.new_multi(book, sheet, &rects, crate::app::Mode::Cells)
-            }
-            ("NumberFormat", Get) => {
-                if rule.dxf.mask.number_format {
-                    Ok(bstr(&rule.dxf.style.number_format))
-                } else {
-                    Ok(Variant::Empty)
-                }
-            }
+            ("AppliesTo", Get) => self.new_multi(book, sheet, &areas, crate::app::Mode::Cells),
+            ("NumberFormat", Get) => match self.book(book)?.wb.cfv_number_format(&rule.dxf) {
+                xlcalc::CfNumberFormat::Code(f) => Ok(bstr(&f)),
+                xlcalc::CfNumberFormat::Unset => Ok(Variant::Empty),
+                xlcalc::CfNumberFormat::Gone => Err(OmError::app_defined()),
+            },
             ("NumberFormat", Put) => {
                 let f = match Application::put_value(a).get(0) {
                     None | Some(Variant::Empty) => ";;".to_string(),
                     Some(Variant::Bool(t)) => if *t { "-1" } else { "0" }.to_string(),
                     _ => Application::put_value(a).string(0)?.unwrap_or_default(),
                 };
-                self.cf_edit(book, sheet, id, |r| {
-                    r.dxf.mask.number_format = true;
-                    r.dxf.style.number_format = f.as_str().into();
-                })
+
+                let f = if f.is_empty() { ";;".to_string() } else { f };
+                self.object_guard(book, sheet, ProtObject::FormatCondition, None)?;
+
+                self.cf_edit(book, sheet, id, |_| ())?;
+                self.book_mut(book)?.wb.cfv_put_number_format(sheet, id, &f);
+                Ok(Variant::Empty)
             }
             ("Font", Get) => Ok(self.alloc(Object::Font(owner))),
             ("Interior", Get) => Ok(self.alloc(Object::Interior(owner))),
@@ -834,49 +937,125 @@ impl Application<'_> {
                 None => Ok(self.alloc(Object::Borders(owner))),
             },
             ("Delete", Func) => {
+                self.object_guard(book, sheet, ProtObject::FormatCondition, None)?;
                 let wb = &mut self.book_mut(book)?.wb;
-                let sh = wb.cfv_sheet_mut(sheet);
-                let applies = std::mem::take(&mut sh.rules[pos].applies);
-                sh.rules[pos].applies = applies.iter().flat_map(|x| x.subtract(&scope)).collect();
-                if sh.rules[pos].applies.is_empty() {
-                    sh.rules.remove(pos);
+                wb.cfv_delete_rule_at(sheet, id, scope);
+                Ok(Variant::Empty)
+            }
+            ("Modify" | "_Modify", Func) => self.cf_modify(book, sheet, scope, &rule, anchor, a),
+            _ => Err(unsupported("FormatCondition", m)),
+        }
+    }
+
+    fn cf_become_text(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        id: u32,
+        op: i32,
+    ) -> Result<(), OmError> {
+        self.cf_edit(book, sheet, id, |r| {
+            r.kind = CfKind::Text {
+                op,
+                text: String::new(),
+            };
+            r.f1 = None;
+            r.f2 = None;
+        })
+        .map(|_| ())
+    }
+
+    fn cf_modify(
+        &mut self,
+        book: BookId,
+        sheet: SheetId,
+        scope: &[Rect],
+        rule: &CfRule,
+        anchor: CellAddr,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        let ty = a
+            .i32(0)?
+            .ok_or_else(|| OmError::exception(PARAM_NOT_OPTIONAL, None))?;
+        let id = rule.id;
+        self.object_guard(book, sheet, ProtObject::FormatCondition, None)?;
+        let needed = || OmError::exception(PARAM_NOT_OPTIONAL, None);
+        let invalid = || OmError::exception(HResult::E_INVALIDARG.0, None);
+        match ty {
+            1 | 2 => {
+                let op = if ty == 1 {
+                    a.get(1).ok_or_else(needed)?;
+                    let n = a.i32(1).map_err(|_| invalid())?.ok_or_else(invalid)?;
+                    if !(1..9).contains(&n) {
+                        return Err(invalid());
+                    }
+                    n
+                } else {
+                    1
+                };
+                let wb = &self.book(book)?.wb;
+                let conv = |i: usize| -> Result<String, OmError> {
+                    a.get(i).ok_or_else(needed)?;
+                    let t = cf_formula_arg(a, i)
+                        .map_err(|_| invalid())?
+                        .ok_or_else(invalid)?;
+                    if wb.cfv_bare_area(&t, anchor) {
+                        return Err(invalid());
+                    }
+                    wb.cfv_to_relative(&t, anchor).map_err(|_| invalid())
+                };
+                let f1 = conv(2)?;
+                let f2 = if ty == 1 && matches!(op, 1 | 2) {
+                    Some(conv(3)?)
+                } else {
+                    None
+                };
+                let kind = if ty == 1 {
+                    CfKind::CellValue(op)
+                } else {
+                    CfKind::Expression
+                };
+                let wb = &mut self.book_mut(book)?.wb;
+                let prio = wb.cfv_sheet_mut(sheet).next_priority();
+                wb.cfv_put_on_scope(sheet, id, scope, None, |sh| {
+                    if let Some(pos) = sh.index_of(id) {
+                        let r = &mut sh.rules[pos];
+                        (r.kind, r.f1, r.f2, r.stop, r.prio) = (kind, Some(f1), f2, true, prio);
+                        sh.rules.sort_by_key(|r| r.prio);
+                    }
+                });
+                Ok(Variant::Empty)
+            }
+            9 => {
+                if a.get(4).is_some() {
+                    let text = a.string(4)?.unwrap_or_default();
+                    let CfKind::Text { .. } = rule.kind else {
+                        return Err(OmError::app_defined());
+                    };
+                    self.cf_edit(book, sheet, id, |r| {
+                        if let CfKind::Text { text: t, .. } = &mut r.kind {
+                            *t = text;
+                        }
+                    })?;
+                }
+                if a.get(5).is_some() {
+                    let op = a.i32(5)?.unwrap_or(0);
+                    if !(0..4).contains(&op) {
+                        return Err(OmError::app_defined());
+                    }
+                    let CfKind::Text { .. } = rule.kind else {
+                        self.cf_become_text(book, sheet, id, op)?;
+                        return Err(OmError::app_defined());
+                    };
+                    self.cf_edit(book, sheet, id, |r| {
+                        if let CfKind::Text { op: o, .. } = &mut r.kind {
+                            *o = op;
+                        }
+                    })?;
                 }
                 Ok(Variant::Empty)
             }
-            ("Modify" | "_Modify", Func) => {
-                let ty = a.i32(0)?.ok_or_else(OmError::app_defined)?;
-                let op = a.i32(1)?;
-                let f1 = formula_arg(a, 2)?;
-                let f2 = formula_arg(a, 3)?;
-                if ty != rule.kind.type_code() && !matches!(ty, 1 | 2) {
-                    return Err(OmError::app_defined());
-                }
-                let kind = match ty {
-                    1 => CfKind::CellValue(
-                        op.filter(|o| (1..=8).contains(o))
-                            .ok_or_else(OmError::app_defined)?,
-                    ),
-                    2 => CfKind::Expression,
-                    _ => rule.kind.clone(),
-                };
-                let wb = &self.book(book)?.wb;
-                let conv = |f: Option<String>| -> Result<Option<String>, OmError> {
-                    match f {
-                        None => Ok(None),
-                        Some(t) => wb
-                            .cfv_to_relative(&t, anchor)
-                            .map(Some)
-                            .map_err(|_| OmError::app_defined()),
-                    }
-                };
-                let (f1, f2) = (conv(f1)?, conv(f2)?);
-                self.cf_edit(book, sheet, id, |r| {
-                    r.kind = kind;
-                    r.f1 = f1;
-                    r.f2 = f2;
-                })
-            }
-            _ => Err(unsupported("FormatCondition", m)),
+            _ => Ok(Variant::Empty),
         }
     }
 
@@ -1014,7 +1193,12 @@ impl Application<'_> {
                         return Err(none());
                     }
                 }
-                let ty = match (a.i32(0)?, &old) {
+
+                if modify && (0..5).all(|i| a.get(i).is_none()) {
+                    return Err(none());
+                }
+                let vint = |i: usize| a.i32(i).map_err(|_| OmError::app_defined());
+                let ty = match (if modify { vint(0)? } else { a.i32(0)? }, &old) {
                     (Some(t), _) => t,
                     (None, Some(o)) if modify => o.kind,
                     _ => return Err(none()),
@@ -1038,13 +1222,15 @@ impl Application<'_> {
                         }
                     }
                 }
-                let alert = a.i32(1)?.unwrap_or(keep.map_or(1, |o| o.alert));
-                let op = a.i32(2)?.unwrap_or(keep.map_or(1, |o| o.op));
+                let alert = vint(1)?.unwrap_or(keep.map_or(1, |o| o.alert));
+                let op = vint(2)?.unwrap_or(keep.map_or(1, |o| o.op));
                 if !(1..=3).contains(&alert) || !(1..=8).contains(&op) {
                     return Err(none());
                 }
                 let f1 = formula_arg(a, 3)?.or_else(|| keep.and_then(|o| o.f1.clone()));
                 let f2 = formula_arg(a, 4)?.or_else(|| keep.and_then(|o| o.f2.clone()));
+
+                let (f1, f2) = if ty == 0 { (None, None) } else { (f1, f2) };
                 if ty != 0 && f1.as_deref().is_none_or(str::is_empty) {
                     return Err(none());
                 }
@@ -1071,6 +1257,10 @@ impl Application<'_> {
                     }
                 }
                 let wb = &mut self.book_mut(r.book)?.wb;
+
+                if ty != 0 && (ty != 3 || f1.as_deref().is_some_and(|t| t.starts_with('='))) {
+                    wb.note_number_format(None);
+                }
                 let conv = |f: Option<String>| -> Result<Option<String>, OmError> {
                     match f {
                         Some(t) if t.starts_with('=') => wb
@@ -1304,7 +1494,8 @@ impl Application<'_> {
                         let s = self.put_string_alpha(a)?;
                         let limit = match m.name {
                             "ErrorMessage" => 225,
-                            "InputMessage" => 255,
+
+                            "InputMessage" => 254,
                             _ => 32,
                         };
                         if s.encode_utf16().count() > limit {
@@ -1339,5 +1530,26 @@ impl Application<'_> {
             .ok_or_else(OmError::app_defined)?;
         f(d);
         Ok(Variant::Empty)
+    }
+}
+
+fn number_arg(a: &Args, i: usize) -> Option<f64> {
+    match a.get(i)? {
+        Variant::I2(n) => Some(f64::from(*n)),
+        Variant::I4(n) => Some(f64::from(*n)),
+        Variant::R4(x) => Some(f64::from(*x)),
+        Variant::R8(x) | Variant::Date(x) => Some(*x),
+        Variant::Cy(c) => Some(*c as f64 / 10_000.0),
+        _ => None,
+    }
+}
+
+fn strict_int(a: &Args, i: usize) -> Result<Option<i32>, OmError> {
+    match a.get(i) {
+        None => Ok(None),
+        Some(_) => match number_arg(a, i) {
+            Some(x) if x.trunc().abs() < 2_147_483_648.0 => Ok(Some(x.trunc() as i32)),
+            _ => Err(OmError::exception(crate::error::SCODE_TYPE_MISMATCH, None)),
+        },
     }
 }

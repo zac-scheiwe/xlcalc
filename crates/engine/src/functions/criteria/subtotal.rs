@@ -245,7 +245,12 @@ pub fn subtotal(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
         .ok_or(XlError::VALUE)?;
         let mut vals = Vec::new();
-        let hide = if n >= 100.0 {
+
+        let hide = if n >= 100.0
+            || ops[1..].iter().any(|op| {
+                matches!(op, Operand::Ref(r)
+                    if r.areas().iter().any(|a| ctx.wb.filter_mode_for_subtotal(a.sheet)))
+            }) {
             Hide::Always
         } else {
             Hide::IfFiltered
@@ -285,6 +290,11 @@ pub fn aggregate(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     if grids.is_empty() {
         return aggregate_one(ctx, &ops);
     }
+
+    let mode_multi_k = ops.len() == 4
+        && grids.iter().any(|g| g.0 == 3)
+        && matches!(ops[0], Operand::Val(Value::Number(n)) if n == 13.0)
+        && matches!(&ops[2], Operand::Ref(crate::eval::Reference::Multi(a)) if a.len() > 1);
     let rows = grids.iter().map(|g| g.1.rows).max().unwrap();
     let cols = grids.iter().map(|g| g.1.cols).max().unwrap();
     let mut data = Vec::with_capacity(rows as usize * cols as usize);
@@ -304,6 +314,9 @@ pub fn aggregate(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 });
             }
             let v = match aggregate_one(ctx, &call) {
+                Operand::Val(Value::Error(XlError::NA)) if mode_multi_k => {
+                    Value::Error(XlError::VALUE)
+                }
                 Operand::Val(Value::Array(a)) => a.data[0].clone(),
                 Operand::Val(v) => v,
                 other => ctx.deref(other),
@@ -360,6 +373,16 @@ fn aggregate_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             for op in &ops[2..] {
                 match op {
                     Operand::Ref(crate::eval::Reference::Grid(_)) => return Err(XlError::VALUE),
+
+                    Operand::Ref(crate::eval::Reference::Multi(areas))
+                        if matches!(f, Func::Mode) && areas.len() > 1 =>
+                    {
+                        return Err(if skip_errors {
+                            XlError::NA
+                        } else {
+                            XlError::VALUE
+                        });
+                    }
                     Operand::Ref(r) => {
                         gather_ref(ctx, r, skip_nested, skip_errors, hide, &mut vals)?
                     }

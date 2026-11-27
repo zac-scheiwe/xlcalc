@@ -134,7 +134,7 @@ pub(super) fn emit(o: &mut Out, items: &[Item], dgid: u32) -> u32 {
 
 fn txo(o: &mut Out, text: &str) {
     let wide = !text.is_ascii();
-    let units: Vec<u16> = text.encode_utf16().collect();
+    let units: Vec<u16> = xlcalc::wide::units(text).collect();
     let cch = units.len().min(0x7FFF);
     let mut t = Vec::new();
     t.extend(0x0212u16.to_le_bytes());
@@ -896,7 +896,7 @@ pub(super) fn item(
     }
     let mut complex = Vec::new();
     if !s.name.is_empty() {
-        for u in s.name.encode_utf16().chain([0]) {
+        for u in xlcalc::wide::units(&s.name).chain([0]) {
             complex.extend(u.to_le_bytes());
         }
         props.push((0xC380, complex.len() as u32));
@@ -909,7 +909,7 @@ pub(super) fn item(
         complex.extend(obj);
         if let Some(t) = tip.as_ref().filter(|t| !t.is_empty()) {
             let before = complex.len();
-            for u in t.encode_utf16().chain([0]) {
+            for u in xlcalc::wide::units(t).chain([0]) {
                 complex.extend(u.to_le_bytes());
             }
             props.push((0xC38D, (complex.len() - before) as u32));

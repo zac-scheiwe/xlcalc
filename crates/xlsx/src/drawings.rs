@@ -2,7 +2,8 @@ use crate::package::{dir_of, resolve, Package, Rel};
 use crate::rawxml::{self, Tag};
 use crate::xml::{self, Node};
 use xlcalc::drawing::{
-    Anchor, Chart, ChartAxis, Image, Part, Pos, Series, Shape, ShapeKind, ShapeProps, SheetDrawing,
+    Anchor, Chart, ChartAxis, Image, NameLink, Part, PointText, Pos, Series, SeriesFmt, Shape,
+    ShapeKind, ShapeProps, SheetDrawing,
 };
 use xlcalc::{CellAddr, Rect, SheetId, Value, Workbook};
 
@@ -589,6 +590,31 @@ pub(crate) fn parse_ref(wb: &Workbook, f: &str) -> Option<Part> {
     Some(Part::Refs(areas))
 }
 
+fn chart_formula(wb: &Workbook, f: &str) -> Option<Part> {
+    let f = f.trim();
+    let link = |scope: Option<SheetId>, name: &str| {
+        let plain = name.starts_with(|c: char| c.is_alphabetic() || c == '_' || c == '\\')
+            && !name.contains(['$', ':', '!', ',', '(', ')'])
+            && parse_cell_ref(name).is_none();
+        plain.then(|| {
+            Part::Name(NameLink {
+                scope,
+                name: wb
+                    .names()
+                    .get(name, scope)
+                    .map_or_else(|| name.to_string(), |d| d.name.clone()),
+            })
+        })
+    };
+    if let Some(name) = f.strip_prefix("[0]!") {
+        return link(None, name);
+    }
+    parse_ref(wb, f).or_else(|| {
+        let (sheet, name) = f.rsplit_once('!')?;
+        link(Some(wb.sheet_by_name(&unquote_sheet(sheet))?.id), name)
+    })
+}
+
 fn literal_part(n: &Node) -> Part {
     let pts: Vec<String> = n
         .children("pt")
@@ -600,7 +626,7 @@ fn literal_part(n: &Node) -> Part {
         Part::Text(format!(
             "{{{}}}",
             pts.iter()
-                .map(|p| format!("\"{p}\""))
+                .map(|p| xlcalc::drawing::quoted_item(p))
                 .collect::<Vec<_>>()
                 .join(",")
         ))
@@ -613,7 +639,7 @@ fn series_part(wb: &Workbook, n: &Node) -> Part {
             "strRef" | "numRef" | "multiLvlStrRef" => {
                 return k
                     .child("f")
-                    .and_then(|f| parse_ref(wb, &f.text))
+                    .and_then(|f| chart_formula(wb, &f.text))
                     .unwrap_or(Part::Dead)
             }
             "numLit" | "strLit" => return literal_part(k),
@@ -726,13 +752,46 @@ fn legend_code(v: &str) -> i32 {
     }
 }
 
-fn axis_of(ax: &Node, value_axis: bool) -> ChartAxis {
+fn text_link(wb: &Workbook, tx: &Node) -> Option<Part> {
+    let f = &find(tx, "f")?.text;
+    if let Some(t) = f.strip_prefix('"').and_then(|t| t.strip_suffix('"')) {
+        return Some(Part::Text(t.replace("\"\"", "\"")));
+    }
+
+    chart_formula(wb, f).or_else(|| f.contains('!').then(|| Part::External(f.clone())))
+}
+
+fn label_texts(wb: &Workbook, ser: &Node) -> Vec<PointText> {
+    let Some(labels) = ser.child("dLbls") else {
+        return Vec::new();
+    };
+    labels
+        .children("dLbl")
+        .filter_map(|l| {
+            let idx: u16 = l.child("idx")?.attr("val")?.parse().ok()?;
+            let tx = l.child("tx").filter(|tx| find(tx, "fld").is_none())?;
+            let link = text_link(wb, tx);
+            if link.is_none() && tx.child("rich").is_none() {
+                return None;
+            }
+            Some(PointText {
+                point: idx.checked_add(1)?,
+                text: rich_text(tx),
+                link,
+                auto: false,
+            })
+        })
+        .collect()
+}
+
+fn axis_of(wb: &Workbook, ax: &Node, value_axis: bool) -> ChartAxis {
     let mut a = ChartAxis::new(false);
     a.grid_major = ax.child("majorGridlines").is_some();
     a.grid_minor = ax.child("minorGridlines").is_some();
-    if ax.child("title").is_some() {
+    if let Some(t) = ax.child("title") {
         a.has_title = true;
-        a.title = rich_text(ax.child("title").unwrap_or(ax));
+        a.title = rich_text(t);
+        a.title_ref = text_link(wb, t);
     }
     if let Some(s) = ax.child("scaling") {
         let v = |n: &str| {
@@ -820,7 +879,10 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
                     values: v,
                     chart_type: t,
                     axis_group: group,
-                    fmt: crate::serfmt_xml::read_fmt(s, &el.name, t),
+                    fmt: SeriesFmt {
+                        label_texts: label_texts(wb, s),
+                        ..crate::serfmt_xml::read_fmt(s, &el.name, t)
+                    },
                 },
             ));
         }
@@ -829,12 +891,16 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
     c.series = ordered.into_iter().map(|x| x.1).collect();
     if let Some(t) = chart_el.child("title") {
         c.has_title = true;
-        if let Some(f) = find(t, "f") {
-            c.title_ref = parse_ref(wb, &f.text);
+        if find(t, "tx").is_some() {
+            c.bag.insert(
+                xlcalc::drawing::TITLE_TYPED.into(),
+                xlcalc::drawing::BagVal::I(1),
+            );
             c.title = rich_text(t);
         } else {
-            c.title = rich_text(t);
+            c.title = "Chart Title".into();
         }
+        c.title_ref = text_link(wb, t);
     }
     if let Some(l) = chart_el.child("legend") {
         c.has_legend = true;
@@ -865,7 +931,7 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
         .find(|a| id_of(a).as_ref() == secondary_ids.get(1))
         .or_else(|| sec.iter().find(|a| a.name == "valAx"))
     {
-        c.axes[2] = axis_of(a, true);
+        c.axes[2] = axis_of(wb, a, true);
 
         c.bag.insert(
             xlcalc::drawing::SECONDARY_ZERO.into(),
@@ -904,10 +970,10 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
         }
     }
     if let Some(a) = axes.first() {
-        c.axes[0] = axis_of(a, a.name == "valAx");
+        c.axes[0] = axis_of(wb, a, a.name == "valAx");
     }
     if let Some(a) = axes.get(1) {
-        c.axes[1] = axis_of(a, true);
+        c.axes[1] = axis_of(wb, a, true);
     } else if axes.is_empty() {
         c.axes = [
             ChartAxis::new(false),
@@ -939,13 +1005,15 @@ pub(crate) fn read_chart(wb: &Workbook, pkg: &Package, part: &str) -> Option<Cha
     };
 
     if chart_el.child("title").is_none()
-        && c.series.len() == 1
         && chart_el
             .child("autoTitleDeleted")
             .and_then(|a| a.attr("val"))
-            .is_none_or(|v| v == "0")
+            .is_some_and(|v| v != "0")
     {
-        c.has_title = true;
+        c.bag.insert(
+            xlcalc::drawing::TITLE_DELETED.into(),
+            xlcalc::drawing::BagVal::I(1),
+        );
     }
     Some(c)
 }

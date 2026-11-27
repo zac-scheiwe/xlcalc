@@ -1,3 +1,5 @@
+mod afilter;
+mod calcprops;
 mod cfs;
 mod check;
 mod csv;
@@ -11,6 +13,7 @@ mod ext_out;
 mod extras;
 mod ftext;
 mod hyperlinks;
+mod lines;
 mod merges;
 mod notesxml;
 mod package;
@@ -18,11 +21,15 @@ mod pivot;
 mod protect;
 mod rawxml;
 mod richerr;
+mod rst;
 mod scenarios;
 mod serfmt_xml;
 mod slicers_xml;
 mod sparks;
+mod strict;
+mod strict_notes;
 mod styles;
+mod ui;
 mod write;
 mod xls;
 mod xlsb;
@@ -34,6 +41,7 @@ mod xlsb_ftab;
 mod xlsb_pivot;
 mod xlsb_rec;
 mod xlsb_sheet;
+mod xlsb_slicer;
 mod xlsb_spark;
 mod xlsb_styles;
 mod xlsb_write;
@@ -52,16 +60,21 @@ pub use protect::{
     book_protection_xml, legacy_hash, protected_ranges_xml, read_book_protection,
     read_sheet_protection, sheet_protection_xml, EditRangeDef, PassHash, SheetProtection,
 };
+pub use ui::{core_property, read_sheet_ui, PageUi, SheetUi, TabColor, ViewUi};
 pub use write::{save, FileKind, Protection, SaveOptions, Saved, VbaWrite};
-pub use xls::xlsx_to_xls;
+pub use xls::{xlsx_to_xls, xlsx_to_xls_of};
 pub use xlsb_write::xlsx_to_xlsb;
 
 use package::{rels_name, resolve};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::io::Read;
 use xlcalc::style::Style;
-use xlcalc::{CalcMode, CellAddr, DateSystem, Rect, SheetId, SheetState, Value, Workbook, XlError};
+use xlcalc::{
+    CalcMode, CellAddr, DateSystem, Rect, SheetId, SheetState, TableInput, Value, Workbook, XlError,
+};
 use xml::Node;
+
+const SHEET_ROWS: u32 = 1_048_576;
 
 pub use csv::{export_csv, import_csv, import_csv_unsplit, save_as_csv, CsvImport, CsvSaved};
 
@@ -153,43 +166,6 @@ fn external_targets(zip: &mut Zip, owner: &str) -> HashMap<String, String> {
         .collect()
 }
 
-fn iso_serial(t: &str, date1904: bool) -> Option<f64> {
-    let (d, tm) = match t.split_once('T') {
-        Some((d, tm)) => (Some(d), Some(tm)),
-        None if t.contains(':') => (None, Some(t)),
-        None => (Some(t), None),
-    };
-    let mut days = 0.0;
-    if let Some(d) = d {
-        let mut it = d.split('-');
-        let y: i64 = it.next()?.parse().ok()?;
-        let m: i64 = it.next()?.parse().ok()?;
-        let dd: i64 = it.next()?.parse().ok()?;
-
-        let (yy, mm) = if m <= 2 { (y - 1, m + 9) } else { (y, m - 3) };
-        let era = yy.div_euclid(400);
-        let yoe = yy - era * 400;
-        let doy = (153 * mm + 2) / 5 + dd - 1;
-        let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-        let unix = era * 146_097 + doe - 719_468;
-        days = (unix + 25_569) as f64;
-        if date1904 {
-            days -= 1462.0;
-        } else if (1.0..61.0).contains(&days) {
-            days -= 1.0;
-        }
-    }
-    if let Some(tm) = tm {
-        let tm = tm.trim_end_matches('Z');
-        let mut it = tm.split(':');
-        let h: f64 = it.next()?.parse().ok()?;
-        let mi: f64 = it.next().map_or(Some(0.0), |x| x.parse().ok())?;
-        let se: f64 = it.next().map_or(Some(0.0), |x| x.parse().ok())?;
-        days += (h * 3600.0 + mi * 60.0 + se) / 86400.0;
-    }
-    Some(days)
-}
-
 pub(crate) fn file_number(t: &str) -> Option<Value> {
     let x = t.trim().parse::<f64>().ok()?;
     Some(if x.is_infinite() {
@@ -231,6 +207,39 @@ pub(crate) fn si_text(n: &Node) -> String {
     ftext::unescape_xstring(&s)
 }
 
+type Runs = Vec<(usize, usize, Option<xlcalc::rich::RunFont>)>;
+
+#[derive(Clone, Default)]
+struct Rich {
+    runs: Runs,
+    phonetic: Option<rst::PhRef>,
+}
+
+impl Rich {
+    fn is_plain(&self) -> bool {
+        self.runs.is_empty() && self.phonetic.is_none()
+    }
+}
+
+fn si_rich(n: &Node) -> Rich {
+    let mut at = 0;
+    let mut runs = Runs::new();
+    for k in n.children("r") {
+        let len = k.child("t").map_or(0, |t| {
+            xlcalc::wide::units(&ftext::unescape_xstring(&t.text)).count()
+        });
+        runs.push((at, at + len, k.child("rPr").map(styles::run_font)));
+        at += len;
+    }
+    if runs.iter().all(|r| r.2.is_none()) {
+        runs.clear();
+    }
+    Rich {
+        runs,
+        phonetic: rst::phonetic_of(n),
+    }
+}
+
 #[derive(Clone)]
 enum Form {
     Plain(String),
@@ -240,7 +249,21 @@ enum Form {
     Array(Rect, String),
 }
 
-type DataTableDef = (Rect, Option<(u32, u32)>, Option<(u32, u32)>);
+fn mem_errors(attr: &str) -> Vec<(usize, XlError)> {
+    attr.split(',')
+        .filter_map(|e| {
+            let (at, code) = e.split_once(':')?;
+            let error = XlError::parse(xlsb::error_name(code.parse().ok()?)?)?;
+            Some((at.parse().ok()?, error))
+        })
+        .collect()
+}
+
+type TableInputDef = (u32, u32, bool);
+
+type DataTableDef = (Rect, Option<TableInputDef>, Option<TableInputDef>);
+
+type MemErrDef = (u32, u32, Vec<(usize, XlError)>);
 
 #[derive(Default)]
 struct SheetData {
@@ -251,18 +274,33 @@ struct SheetData {
     macro_kind: u8,
     consts: Vec<(u32, u32, Value)>,
     forms: Vec<(u32, u32, Form)>,
+
+    mem_errs: Vec<MemErrDef>,
     styles: Vec<(u32, u32, u32)>,
     hidden_rows: Vec<u32>,
 
     row_heights: Vec<(u32, u32)>,
 
-    cols: Vec<(u32, u32, Option<u32>, bool, bool)>,
+    cols: Vec<(u32, u32, Option<u32>, bool, bool, bool)>,
+
+    col_styles: Vec<(u32, u32, u32)>,
+
+    row_styles: BTreeMap<u32, u32>,
+
+    default_col_px: Option<u32>,
+
+    base_col_width: Option<u32>,
+
+    lines: Option<lines::LineState>,
 
     cached: Vec<(u32, u32, Value)>,
 
     uncached_arrays: Vec<(u32, u32)>,
 
     data_tables: Vec<DataTableDef>,
+
+    auto_filter: Option<xlcalc::RangeFilterFile>,
+    filter_mode: bool,
 
     scenarios: Option<xlcalc::scenarios::SheetScenarios>,
 
@@ -277,9 +315,22 @@ struct SheetData {
     cfs: Vec<cfs::CfDef>,
 
     notes: Vec<notesxml::NoteDef>,
+
+    rich: Vec<(u32, u32, Rich)>,
+}
+
+impl SheetData {
+    fn line_styled(&self, r: u32, c: u32) -> bool {
+        self.row_styles.contains_key(&r)
+            || self
+                .col_styles
+                .iter()
+                .any(|&(a, b, _)| (a..=b).contains(&c))
+    }
 }
 
 struct TableDef {
+    filter: Option<xlcalc::RangeFilterFile>,
     name: String,
     sheet: usize,
     rect: Rect,
@@ -293,8 +344,9 @@ struct TableDef {
 
 fn read_sheet(
     date1904: bool,
+    compat: bool,
     n: &Node,
-    shared: &[String],
+    shared: &[(String, Rich)],
     dynamic_cm: &[bool],
     warnings: &mut Vec<String>,
     name: &str,
@@ -304,7 +356,18 @@ fn read_sheet(
         ..SheetData::default()
     };
     sd.scenarios = scenarios::read(n);
+    sd.lines = Some(lines::LineState::read(n));
     sd.sparks = sparks::find(n);
+    sd.default_col_px = n
+        .child("sheetFormatPr")
+        .and_then(|f| f.attr("defaultColWidth"))
+        .and_then(|w| w.parse::<f64>().ok())
+        .filter(|w| *w > 0.0)
+        .map(xlcalc::file_width_to_px);
+    sd.base_col_width = n
+        .child("sheetFormatPr")
+        .and_then(|f| f.attr("baseColWidth"))
+        .and_then(|w| w.parse::<u32>().ok());
     if let Some(cols) = n.child("cols") {
         for c in cols.children("col") {
             let num = |k: &str| c.attr(k).and_then(|v| v.parse::<f64>().ok());
@@ -315,13 +378,19 @@ fn read_sheet(
                 continue;
             }
             let on = |k: &str| matches!(c.attr(k), Some("1" | "true"));
+            let (first, last) = (min as u32 - 1, (max as u32).min(16_384) - 1);
             sd.cols.push((
-                min as u32 - 1,
-                (max as u32).min(16_384) - 1,
+                first,
+                last,
                 num("width").map(xlcalc::file_width_to_px),
                 on("customWidth"),
+                on("bestFit"),
                 on("hidden"),
             ));
+
+            if let Some(s) = num("style").map(|s| s as u32).filter(|&s| s != 0) {
+                sd.col_styles.push((first, last, s));
+            }
         }
     }
     let mut masters: HashMap<String, (u32, u32, String)> = HashMap::new();
@@ -340,6 +409,14 @@ fn read_sheet(
             },
             None => row_ix + 1,
         };
+
+        if matches!(row.attr("customFormat"), Some("1" | "true")) {
+            let s = row
+                .attr("s")
+                .and_then(|s| s.parse::<u32>().ok())
+                .unwrap_or(0);
+            sd.row_styles.insert(row_ix - 1, s);
+        }
         if row.attr("hidden") == Some("1") {
             sd.hidden_rows.push(row_ix - 1);
         }
@@ -360,20 +437,25 @@ fn read_sheet(
                 continue;
             };
             next_col = col + 1;
-            if let Some(s) = c.attr("s").and_then(|s| s.parse::<u32>().ok()) {
-                if s != 0 {
-                    sd.styles.push((r, col, s));
-                }
+            let s = c.attr("s").and_then(|s| s.parse::<u32>().ok()).unwrap_or(0);
+
+            if s != 0 || sd.line_styled(r, col) {
+                sd.styles.push((r, col, s));
             }
             let ty = c.attr("t").unwrap_or("n");
             let v = c.child("v").map(|v| v.text.as_str());
+            let item = (ty == "s")
+                .then(|| v.and_then(|v| v.trim().parse::<usize>().ok()))
+                .flatten()
+                .and_then(|i| shared.get(i));
+            let inline = (ty == "inlineStr").then(|| c.child("is")).flatten();
+            let rich =
+                inline.map_or_else(|| item.map_or_else(Rich::default, |s| s.1.clone()), si_rich);
+            if !rich.is_plain() {
+                sd.rich.push((r, col, rich));
+            }
             let value = match (ty, v) {
-                ("s", Some(v)) => v
-                    .trim()
-                    .parse::<usize>()
-                    .ok()
-                    .and_then(|i| shared.get(i))
-                    .map(|s| Value::from(s.as_str())),
+                ("s", _) => item.map(|s| Value::from(s.0.as_str())),
                 ("inlineStr", _) => c.child("is").map(|i| Value::from(si_text(i).as_str())),
                 ("str", Some(v)) => Some(Value::from(ftext::unescape_xstring(v).as_str())),
                 ("b", Some(v)) => Some(Value::Bool(matches!(v.trim(), "1" | "true"))),
@@ -381,7 +463,7 @@ fn read_sheet(
                     XlError::parse(v.trim()).unwrap_or(XlError::VALUE),
                 )),
                 ("d", Some(v)) => {
-                    let serial = iso_serial(v.trim(), date1904);
+                    let serial = strict::from_iso(v.trim(), date1904, compat);
                     if serial.is_none() {
                         warnings.push(format!(
                             "{name}: ISO date cell {} unreadable",
@@ -396,6 +478,9 @@ fn read_sheet(
             if let Some(f) = c.child("f") {
                 let at = f.attr("t").unwrap_or("normal");
                 let body = f.text.clone();
+                if let Some(a) = f.attr("xlcMemErr") {
+                    sd.mem_errs.push((r, col, mem_errors(a)));
+                }
                 match at {
                     "shared" => {
                         let si = f.attr("si").unwrap_or("").to_string();
@@ -443,8 +528,12 @@ fn read_sheet(
                     }
                     "dataTable" => {
                         let rect = f.attr("ref").and_then(parse_rect);
-                        let r1 = f.attr("r1").and_then(parse_cell);
-                        let r2 = f.attr("r2").and_then(parse_cell);
+                        let input = |r: &str, del: &str| {
+                            let deleted = matches!(f.attr(del), Some("1" | "true"));
+                            f.attr(r).and_then(parse_cell).map(|(r, c)| (r, c, deleted))
+                        };
+                        let r1 = input("r1", "del1");
+                        let r2 = input("r2", "del2");
                         let two = f.attr("dt2D") == Some("1");
                         let row_table = f.attr("dtr") == Some("1");
                         match (rect, r1) {
@@ -458,6 +547,9 @@ fn read_sheet(
                                     (None, Some(a))
                                 };
                                 sd.data_tables.push((rect, ri, ci));
+                                if let Some(v) = value {
+                                    sd.cached.push((r, col, v));
+                                }
                             }
                             _ => warnings.push(format!(
                                 "{name}: data table at {} unreadable",
@@ -479,7 +571,9 @@ fn read_sheet(
     }
 
     for (r, c, v) in raw {
-        if !array_rects.iter().any(|a| a.contains(r, c)) {
+        if sd.data_tables.iter().any(|t| t.0.contains(r, c)) {
+            sd.cached.push((r, c, v));
+        } else if !array_rects.iter().any(|a| a.contains(r, c)) {
             sd.consts.push((r, c, v));
         }
     }
@@ -488,7 +582,8 @@ fn read_sheet(
 
 fn load(bytes: Vec<u8>) -> Result<Import, String> {
     let mut warnings: Vec<String> = Vec::new();
-    let bytes = if xls::is_cfb(&bytes) {
+    let from_xls = xls::is_cfb(&bytes);
+    let bytes = if from_xls {
         let (converted, w) = xls::to_xlsx(&bytes)?;
         warnings = w;
         converted
@@ -505,6 +600,13 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     }
     let bytes = zip.into_inner().into_inner();
     let mut package = Package::read(&bytes)?;
+    package.from_xls = from_xls;
+
+    let bytes = if package.was_strict() {
+        package.to_zip()?
+    } else {
+        bytes
+    };
     let mut zip: Zip =
         zip::ZipArchive::new(std::io::Cursor::new(bytes)).map_err(|e| e.to_string())?;
     let wbx = tree(&mut zip, "xl/workbook.xml")?.ok_or("no xl/workbook.xml")?;
@@ -546,9 +648,10 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     }
     let ext_keys: Vec<String> = ext_links.iter().map(FileLink::key).collect();
 
-    let shared: Vec<String> = match wb_rels.iter().find(|r| r.1.ends_with("/sharedStrings")) {
+    let shared: Vec<(String, Rich)> = match wb_rels.iter().find(|r| r.1.ends_with("/sharedStrings"))
+    {
         Some((_, _, p)) => tree(&mut zip, p)?
-            .map(|n| n.children("si").map(si_text).collect())
+            .map(|n| n.children("si").map(|s| (si_text(s), si_rich(s))).collect())
             .unwrap_or_default(),
         None => Vec::new(),
     };
@@ -595,6 +698,8 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     let date1904 = wbpr.is_some_and(|p| matches!(p.attr("date1904"), Some("1") | Some("true")));
     let calc = wbx.child("calcPr");
 
+    let compat = wbx.attr("conformance") != Some("strict");
+
     let mut sheet_code_names: Vec<(String, Option<String>)> = Vec::new();
     let mut sheets: Vec<SheetData> = Vec::new();
 
@@ -604,7 +709,6 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
 
     let mut table_ids: Vec<(u32, String)> = Vec::new();
     let mut slicer_parts: Vec<(usize, String)> = Vec::new();
-    let mut table_filters: Vec<slicers_xml::TableValues> = Vec::new();
     if let Some(ss) = wbx.child("sheets") {
         for s in ss.children("sheet") {
             let name = s.attr("name").unwrap_or("Sheet").to_string();
@@ -631,11 +735,25 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                     .filter(|st| *st != "visible")
                     .map(str::to_string),
             ));
-            let mut sd = read_sheet(date1904, &sx, &shared, &dynamic_cm, &mut warnings, &name);
+            let mut sd = read_sheet(
+                date1904,
+                compat,
+                &sx,
+                &shared,
+                &dynamic_cm,
+                &mut warnings,
+                &name,
+            );
             sd.links = hyperlinks::read(&sx, &external_targets(&mut zip, path));
             sd.merged = merges::read(&sx);
             sd.dvs = dvs::read(&sx);
             sd.cfs = cfs::read(&sx);
+            let dxfs: Vec<&str> = styles.table().dxfs.iter().map(|d| &**d).collect();
+            sd.auto_filter = afilter::read(&sx, &dxfs);
+            sd.filter_mode = sx
+                .child("sheetPr")
+                .and_then(|p| p.attr("filterMode"))
+                .is_some_and(|v| matches!(v, "1" | "true"));
             sd.notes = read_notes(&mut zip, path, &sx);
             sd.chart = sx.name == "chartsheet";
             sd.macro_kind = match sx.name.as_str() {
@@ -694,7 +812,6 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                             .collect()
                     })
                     .unwrap_or_default();
-                table_filters.extend(slicers_xml::table_values(&t, &tname));
                 if let Some(i) = t.attr("id").and_then(|i| i.parse().ok()) {
                     table_ids.push((i, tname.clone()));
                 }
@@ -710,7 +827,9 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                         ],
                     )
                 });
+                let dxfs: Vec<&str> = styles.table().dxfs.iter().map(|d| &**d).collect();
                 tables.push(TableDef {
+                    filter: afilter::read(&t, &dxfs),
                     style,
                     columns,
                     headers: t.attr("headerRowCount") != Some("0"),
@@ -765,6 +884,10 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     wb.set_mode(CalcMode::Manual);
     if date1904 {
         wb.set_date_system(DateSystem::D1904);
+    }
+
+    if !compat {
+        wb.set_date_compat(false);
     }
 
     let mut aliases: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
@@ -882,6 +1005,8 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
             let name = d.attr("name").unwrap_or("");
             let name = match name.strip_prefix("_xlnm.") {
                 Some(n @ ("Auto_Open" | "Auto_Close" | "Auto_Activate" | "Auto_Deactivate")) => n,
+                Some(n @ ("Print_Area" | "Print_Titles")) => n,
+                Some(n @ ("_FilterDatabase" | "Criteria" | "Extract")) => n,
                 Some(_) => continue,
                 None => name,
             };
@@ -938,6 +1063,18 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
     }
 
     *wb.style_table_mut() = styles.table().clone();
+    for code in styles.defined_formats() {
+        wb.register_number_format(code);
+    }
+
+    for x in &styles.table().dxfs {
+        if let Ok(x) = crate::xml::parse(x.as_bytes()) {
+            let d = crate::styles::dxf_read(&x);
+            if d.mask.number_format {
+                wb.register_number_format(&d.style.number_format);
+            }
+        }
+    }
     if let Some(base) = styles.base() {
         wb.set_base_style(base);
     }
@@ -946,7 +1083,11 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
             let addr = CellAddr::new(id, *r, *c);
             let res = match f {
                 Form::Plain(t) => wb.set_legacy_input(addr, &format!("={t}")),
-                Form::Dynamic(t) => wb.set_formula(addr, &format!("={t}")),
+                Form::Dynamic(t) => {
+                    let r = wb.set_formula(addr, &format!("={t}"));
+                    wb.mark_dynamic_entry(addr);
+                    r
+                }
                 Form::Array(rect, t) => wb.set_array_formula(id, *rect, &format!("={t}")),
             };
             if let Err(e) = res {
@@ -958,6 +1099,9 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                 ));
             }
         }
+        for (r, c, errors) in &sd.mem_errs {
+            wb.restore_mem_errors(CellAddr::new(id, *r, *c), errors);
+        }
         for (rect, ri, ci) in &sd.data_tables {
             let whole = Rect::new(
                 rect.r0.saturating_sub(1),
@@ -965,8 +1109,13 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                 rect.r1,
                 rect.c1,
             );
-            let at = |x: &Option<(u32, u32)>| x.map(|(r, c)| CellAddr::new(id, r, c));
-            if let Err(e) = wb.add_data_table(id, whole, at(ri), at(ci)) {
+            let at = |x: &Option<TableInputDef>| {
+                x.map(|(r, c, deleted)| match deleted {
+                    true => TableInput::Deleted,
+                    false => TableInput::Cell(CellAddr::new(id, r, c)),
+                })
+            };
+            if let Err(e) = wb.load_data_table(id, whole, at(ri), at(ci)) {
                 warnings.push(format!("{}: data table: {e}", sd.name));
             }
         }
@@ -976,44 +1125,9 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
         if let Some(sc) = &sd.scenarios {
             wb.set_scenarios(id, sc.clone());
         }
-        merges::apply(&mut wb, id, &sd.merged);
-        dvs::apply(&mut wb, id, &sd.dvs);
-        cfs::apply(&mut wb, id, &sd.cfs);
-        hyperlinks::apply(&mut wb, id, &sd.links);
-        notesxml::apply(&mut wb, id, &sd.notes);
-        for &(r, h8) in &sd.row_heights {
-            wb.set_row_h8(id, r, h8);
-        }
-        if !sd.hidden_rows.is_empty() {
-            for &r in &sd.hidden_rows {
-                let _ = wb.set_rows_hidden(id, r, 1, true);
-            }
-        }
-        for &(c0, c1, px, hand, hidden) in &sd.cols {
-            if let Some(px) = px.filter(|&p| p != wb.standard_px()) {
-                wb.set_column_px(id, c0, c1, px, hand);
-            }
-            if hidden {
-                wb.set_cols_hidden(id, c0, c1 - c0 + 1, true);
-            }
-        }
-    }
-    for (sd, &id) in sheets.iter().zip(&ids) {
-        let mut cells = sd.styles.clone();
-        cells.sort_unstable();
-        let mut i = 0;
-        while i < cells.len() {
-            let (r, c, s) = cells[i];
-            let mut j = i;
-            while j + 1 < cells.len()
-                && cells[j + 1].0 == r
-                && cells[j + 1].1 == cells[j].1 + 1
-                && cells[j + 1].2 == s
-            {
-                j += 1;
-            }
-            let rect = Rect::new(r, c, r, cells[j].1);
 
+        for &(c0, c1, s) in &sd.col_styles {
+            let rect = Rect::new(0, c0, SHEET_ROWS - 1, c1);
             if let Some(st) = styles.style_of(s) {
                 if st.with_number_format("General") != *wb.base_style() {
                     wb.set_style_with(id, rect, &|x| Style {
@@ -1023,6 +1137,109 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
                 }
             }
             if let Some(code) = styles.format_of(s) {
+                wb.set_number_format_stored(id, rect, &code);
+            }
+        }
+
+        for (&r, &s) in &sd.row_styles {
+            let style = styles
+                .style_of(s)
+                .map_or_else(|| wb.base_style().clone(), Clone::clone);
+            let code = styles.format_of(s);
+            let code = code.as_deref().unwrap_or("General");
+            wb.load_row_style(id, r, &style.with_number_format(code));
+        }
+        merges::apply(&mut wb, id, &sd.merged);
+        dvs::apply(&mut wb, id, &sd.dvs);
+        cfs::apply(&mut wb, id, &sd.cfs);
+        hyperlinks::apply(&mut wb, id, &sd.links);
+        notesxml::apply(&mut wb, id, &sd.notes);
+        for (r, c, rich) in &sd.rich {
+            let phonetic = rich.phonetic.as_ref().and_then(|p| styles.phonetic(p));
+            wb.rich_load(CellAddr::new(id, *r, *c), &rich.runs, phonetic);
+        }
+        for &(r, h8) in &sd.row_heights {
+            wb.set_row_h8(id, r, h8);
+        }
+        if !sd.hidden_rows.is_empty() {
+            for &r in &sd.hidden_rows {
+                let _ = wb.set_rows_hidden(id, r, 1, true);
+            }
+        }
+        if let Some(px) = sd.default_col_px {
+            wb.set_sheet_standard_px(id, px);
+        } else if let Some(cch) = sd.base_col_width.filter(|_| !from_xls) {
+            wb.set_sheet_base_col_width(id, cch);
+        }
+
+        let biff = sd.base_col_width.filter(|_| from_xls);
+        let std = wb.sheet_std_px(id);
+        let font_px = wb.standard_px();
+        let mut under = false;
+        if let Some(cch) = biff {
+            let px = match cch {
+                8 => font_px,
+                cch => wb.biff_col_width_px(cch as u16),
+            };
+
+            let before_end = sd.default_col_px.and_then(|_| {
+                let end = sd.cols.iter().rev().find(|c| c.1 == 255)?;
+                Some(end.0)
+            });
+            let cols = if px != font_px { Some(256) } else { before_end };
+            if let Some(cols) = cols {
+                wb.load_default_columns(id, cols, px, px != std);
+                under = true;
+            }
+        }
+        for &(c0, c1, px, user, best, hidden) in &sd.cols {
+            let px = px.unwrap_or_else(|| wb.sheet_std_px(id));
+
+            if c0 == 0 && c1 == 16_383 && px != 0 && !user && !best && !hidden {
+                wb.set_sheet_standard_px(id, px);
+                continue;
+            }
+
+            if under && px == font_px && !user && !best && !hidden {
+                continue;
+            }
+            let user = user || biff.is_some() && (hidden || px != std);
+            let w = xlcalc::ColWidth { px, user, best };
+            wb.set_column_record(id, c0, c1, w, hidden);
+        }
+        if let Some(l) = &sd.lines {
+            l.apply(&mut wb, id);
+        }
+    }
+    for (sd, &id) in sheets.iter().zip(&ids) {
+        let mut cells = sd.styles.clone();
+        cells.sort_unstable();
+        let mut i = 0;
+        while i < cells.len() {
+            let (r, c, s) = cells[i];
+            let mut j = i;
+
+            let over = sd.line_styled(r, c);
+            while j + 1 < cells.len()
+                && cells[j + 1].0 == r
+                && cells[j + 1].1 == cells[j].1 + 1
+                && cells[j + 1].2 == s
+                && sd.line_styled(r, cells[j + 1].1) == over
+            {
+                j += 1;
+            }
+            let rect = Rect::new(r, c, r, cells[j].1);
+
+            if let Some(st) = styles.style_of(s) {
+                if over || st.with_number_format("General") != *wb.base_style() {
+                    wb.set_style_with(id, rect, &|x| Style {
+                        number_format: x.number_format.clone(),
+                        ..st.clone()
+                    });
+                }
+            }
+            let code = styles.format_of(s);
+            if let Some(code) = code.or_else(|| over.then(|| "General".to_string())) {
                 wb.set_number_format_stored(id, rect, &code);
             }
             i = j + 1;
@@ -1070,23 +1287,23 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
         }
     }
     let manual = calc.is_some_and(|c| c.attr("calcMode") == Some("manual"));
+    wb.set_calc_on_save(!calc.is_some_and(|c| matches!(c.attr("calcOnSave"), Some("0" | "false"))));
     let mut opened_uncalculated = false;
     wb.full_recalc();
+
+    let (kept, calc_id) = calcprops::load_decision(&wbx, from_xls);
     if manual {
         for (sd, &id) in sheets.iter().zip(&ids) {
             for (r, c, v) in &sd.cached {
                 xlcalc::testing::restore_saved_value(&mut wb, CellAddr::new(id, *r, *c), v.clone());
             }
         }
+        if !kept {
+            wb.set_load_pending(calc_id);
+        }
     } else {
         wb.set_mode(CalcMode::Automatic);
-
-        let current = calc
-            .and_then(|c| c.attr("calcId"))
-            .and_then(|s| s.parse::<u32>().ok())
-            .is_some_and(|id| id >= 191029);
-        let forced = calc.is_some_and(|c| matches!(c.attr("fullCalcOnLoad"), Some("1" | "true")));
-        opened_uncalculated = current && !forced;
+        opened_uncalculated = kept;
         if opened_uncalculated {
             let mut saved = Vec::new();
             let mut blank = Vec::new();
@@ -1131,6 +1348,9 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
             .map_err(|e| format!("sheet state: {e}"))?;
     }
     if let Some(&tab) = ids.get(tab) {
+        if let Err(e) = wb.set_active_sheet(tab) {
+            warnings.push(format!("active sheet: {e}"));
+        }
         package.active = Some((wb.active_sheet(), tab));
     }
     pivot::adopt(&mut wb, &ids, &pivot_defs, &styles, &mut warnings);
@@ -1158,6 +1378,22 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
             }
         }
     }
+
+    for (&id, sd) in ids.iter().zip(&sheets) {
+        if let Some(f) = &sd.auto_filter {
+            if !wb.load_range_filter(id, f) {
+                warnings.push(format!("{}: the autoFilter is not installed", sd.name));
+            }
+        }
+        if sd.filter_mode {
+            wb.load_filter_mode(id);
+        }
+    }
+
+    for t in &tables {
+        wb.load_table_filter(&t.name, t.filter.as_ref());
+    }
+    wb.load_table_selection();
     slicers_xml::adopt(
         &mut wb,
         &ids,
@@ -1165,7 +1401,6 @@ fn load(bytes: Vec<u8>) -> Result<Import, String> {
         &slicer_trees,
         &table_ids,
         &pivot_defs,
-        &table_filters,
     );
     let vba = part(&mut zip, "xl/vbaProject.bin").map(|raw| VbaPart {
         project: xlcalc_vbaproject::VbaProject::parse(raw.clone()),
@@ -1202,7 +1437,8 @@ pub fn import_bytes(bytes: Vec<u8>) -> Result<Import, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{file_number, iso_serial};
+    use super::file_number;
+    use crate::strict::from_iso;
     use xlcalc::{Value, XlError};
 
     #[test]
@@ -1224,14 +1460,14 @@ mod tests {
 
     #[test]
     fn iso_dates() {
-        assert_eq!(iso_serial("2026-10-30", false), Some(46_325.0));
-        assert_eq!(iso_serial("1900-03-01", false), Some(61.0));
-        assert_eq!(iso_serial("1900-02-28", false), Some(59.0));
-        assert_eq!(iso_serial("1900-01-01", false), Some(1.0));
-        assert_eq!(iso_serial("2026-10-30", true), Some(46_325.0 - 1462.0));
-        assert_eq!(iso_serial("2026-10-30T12:00:00", false), Some(46_325.5));
-        assert_eq!(iso_serial("06:00:00", false), Some(0.25));
-        assert_eq!(iso_serial("nonsense", false), None);
+        assert_eq!(from_iso("2026-10-30", false, true), Some(46_325.0));
+        assert_eq!(from_iso("1900-03-01", false, true), Some(61.0));
+        assert_eq!(from_iso("1900-02-28", false, true), Some(59.0));
+        assert_eq!(from_iso("1900-01-01", false, true), Some(1.0));
+        assert_eq!(from_iso("2026-10-30", true, true), Some(46_325.0 - 1462.0));
+        assert_eq!(from_iso("2026-10-30T12:00:00", false, true), Some(46_325.5));
+        assert_eq!(from_iso("06:00:00", false, true), Some(0.25));
+        assert_eq!(from_iso("nonsense", false, true), None);
     }
 
     #[test]
@@ -1557,6 +1793,10 @@ mod tests {
         ch.chart_type = 51;
         ch.has_title = true;
         ch.title = "T".into();
+        ch.bag.insert(
+            xlcalc::drawing::TITLE_TYPED.into(),
+            xlcalc::drawing::BagVal::I(1),
+        );
         ch.series.push(Series {
             name: Part::Text("S1".into()),
             x: Part::None,

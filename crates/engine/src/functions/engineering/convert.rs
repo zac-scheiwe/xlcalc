@@ -108,6 +108,7 @@ static UNITS: &[Unit] = &[
     up("p", Pressure, ONE, 1),
     up("atm", Pressure, 0x40F8BCD000000000, 1),
     up("at", Pressure, 0x40F8BCD000000000, 1),
+    up("SI_at", Pressure, 0x40F7F12828F5C28F, 1),
     up("mmHg", Pressure, 0x4060AA4DD2F1A9FC, 1),
     u("psi", Pressure, 0x40BAEEC1DDF70F99),
     u("Torr", Pressure, 0x4060AA50D79435E5),
@@ -232,28 +233,27 @@ static UNITS: &[Unit] = &[
     up("mph", Speed, 0x3FDC9C4DA9003EEA, 1),
 ];
 
-const DECIMAL_PREFIXES: &[(&str, i32)] = &[
-    ("Y", 24),
-    ("Z", 21),
-    ("E", 18),
-    ("P", 15),
-    ("T", 12),
-    ("G", 9),
-    ("M", 6),
-    ("k", 3),
-    ("h", 2),
-    ("da", 1),
-    ("e", 1),
-    ("d", -1),
-    ("c", -2),
-    ("m", -3),
-    ("u", -6),
-    ("n", -9),
-    ("p", -12),
-    ("f", -15),
-    ("a", -18),
-    ("z", -21),
-    ("y", -24),
+const DECIMAL_PREFIXES: &[(char, i32)] = &[
+    ('Y', 24),
+    ('Z', 21),
+    ('E', 18),
+    ('P', 15),
+    ('T', 12),
+    ('G', 9),
+    ('M', 6),
+    ('k', 3),
+    ('h', 2),
+    ('e', 1),
+    ('d', -1),
+    ('c', -2),
+    ('m', -3),
+    ('u', -6),
+    ('n', -9),
+    ('p', -12),
+    ('f', -15),
+    ('a', -18),
+    ('z', -21),
+    ('y', -24),
 ];
 
 const BINARY_PREFIXES: &[(&str, i32)] = &[
@@ -272,56 +272,72 @@ struct Parsed {
 
     dec: i32,
 
-    bin: i32,
+    bin: Option<f64>,
 }
 
 fn exact(name: &str) -> Option<&'static Unit> {
     UNITS.iter().find(|u| u.name == name)
 }
 
+fn decimal(name: &str, e: i32) -> Option<Parsed> {
+    let unit = exact(name).filter(|u| u.prefix > 0)?;
+    Some(Parsed {
+        unit,
+        dec: e * i32::from(unit.prefix),
+        bin: None,
+    })
+}
+
+fn prefixed(name: &str) -> Option<Parsed> {
+    let one = DECIMAL_PREFIXES
+        .iter()
+        .find_map(|&(p, e)| name.strip_prefix(p).and_then(|rest| decimal(rest, e)));
+    if one.is_some() {
+        return one;
+    }
+    if let Some(rest) = name.strip_prefix("da") {
+        return decimal(rest, 1);
+    }
+    let (rest, k) = BINARY_PREFIXES
+        .iter()
+        .find_map(|&(p, k)| name.strip_prefix(p).map(|rest| (rest, k)))?;
+    let unit = exact(rest).filter(|u| u.binary)?;
+    Some(Parsed {
+        unit,
+        dec: 0,
+        bin: Some(2f64.powi(k)),
+    })
+}
+
 fn lookup(name: &str) -> Option<Parsed> {
-    if let Some(unit) = exact(name) {
-        return Some(Parsed {
+    match exact(name) {
+        Some(unit) => Some(Parsed {
             unit,
             dec: 0,
-            bin: 0,
-        });
+            bin: None,
+        }),
+        None => prefixed(name),
     }
-    for (p, e) in BINARY_PREFIXES {
-        if let Some(unit) = name.strip_prefix(p).and_then(exact) {
-            if unit.binary {
-                return Some(Parsed {
-                    unit,
-                    dec: 0,
-                    bin: *e,
-                });
-            }
-        }
-    }
-    for (p, e) in DECIMAL_PREFIXES {
-        if let Some(unit) = name.strip_prefix(p).and_then(exact) {
-            if unit.prefix > 0 {
-                return Some(Parsed {
-                    unit,
-                    dec: e * unit.prefix as i32,
-                    bin: 0,
-                });
-            }
-        }
-    }
-    None
 }
 
-fn pow10(e: i32) -> f64 {
-    format!("1e{e}").parse().unwrap()
-}
-
-fn scale10(x: f64, e: i32) -> f64 {
-    if e >= 0 {
-        x * pow10(e)
+fn reread_pc(parsed: Parsed, name: &str, other: Cat) -> Option<Parsed> {
+    if parsed.unit.cat == Cat::Length && other == Cat::Energy && name == "pc" {
+        prefixed(name)
     } else {
-        x / pow10(-e)
+        Some(parsed)
     }
+}
+
+fn parse(from: &str, to: &str) -> Option<(Parsed, Parsed)> {
+    let a = lookup(from)?;
+    let b = lookup(to)?;
+    let a = reread_pc(a, from, b.unit.cat)?;
+    let b = reread_pc(b, to, a.unit.cat)?;
+    Some((a, b))
+}
+
+fn tento(e: i32) -> f64 {
+    crate::number::pack_decimal(1, i64::from(e))
 }
 
 fn temp_kind(u: &Unit) -> Temp {
@@ -334,31 +350,35 @@ fn temp_kind(u: &Unit) -> Temp {
     }
 }
 
-fn temperature(x: f64, a: Temp, b: Temp) -> f64 {
+fn temperature(x: f64, from: &Parsed, to: &Parsed) -> f64 {
     use crate::x87::{add, div, mul, sub};
     use Temp::*;
-    match (a, b) {
+    let (f0, t0) = (tento(from.dec), tento(to.dec));
+
+    let v = || mul(mul(f0, 1.0), x);
+    match (temp_kind(from.unit), temp_kind(to.unit)) {
         (C, F) => add(mul(x, 1.8), 32.0),
-        (C, K) => add(273.15, x),
+        (C, K) => div(add(273.15, x), t0),
         (C, Rank) => mul(add(x, 273.15), 1.8),
         (C, Reau) => mul(x, 0.8),
         (F, C) => div(sub(x, 32.0), 1.8),
-        (F, K) => add(div(sub(x, 32.0), 1.8), 273.15),
+        (F, K) => div(add(div(sub(x, 32.0), 1.8), 273.15), t0),
         (F, Rank) => add(x, 459.67),
         (F, Reau) => div(mul(sub(x, 32.0), 0.8), 1.8),
-        (K, C) => sub(x, 273.15),
-        (K, F) => add(mul(sub(x, 273.15), 1.8), 32.0),
+        (K, C) => sub(v(), 273.15),
+        (K, F) => add(mul(sub(v(), 273.15), 1.8), 32.0),
+        (K, K) => div(v(), mul(t0, 1.0)),
         (K, Rank) => mul(x, 1.8),
         (K, Reau) => mul(sub(x, 273.15), 0.8),
         (Rank, C) => sub(div(x, 1.8), 273.15),
         (Rank, F) => sub(x, 459.67),
-        (Rank, K) => div(x, 1.8),
+        (Rank, K) => div(div(x, 1.8), t0),
         (Rank, Reau) => mul(sub(div(x, 1.8), 273.15), 0.8),
         (Reau, C) => div(x, 0.8),
         (Reau, F) => add(div(mul(x, 1.8), 0.8), 32.0),
         (Reau, K) => add(div(x, 0.8), 273.15),
         (Reau, Rank) => mul(add(div(x, 0.8), 273.15), 1.8),
-        _ => x,
+        (C, C) | (F, F) | (Rank, Rank) | (Reau, Reau) => x,
     }
 }
 
@@ -366,42 +386,25 @@ fn convert_value(x: f64, from: &Parsed, to: &Parsed) -> R<f64> {
     if from.unit.cat != to.unit.cat {
         return Err(XlError::NA);
     }
-    let r = if from.unit.cat == Cat::Temperature && temp_kind(from.unit) != temp_kind(to.unit) {
-        let (a, b) = (temp_kind(from.unit), temp_kind(to.unit));
-
-        let mut x = x;
-        if from.dec != 0 && matches!(b, Temp::C | Temp::F | Temp::K) {
-            x = scale10(x, from.dec);
-        }
-        let mut r = temperature(x, a, b);
-        if to.dec != 0 && matches!(a, Temp::C | Temp::F | Temp::K | Temp::Rank) {
-            r = x87::div(r, pow10(to.dec));
-        }
-        r
+    let r = if from.unit.cat == Cat::Temperature {
+        temperature(x, from, to)
     } else {
+        let scale = match (from.bin, to.bin) {
+            (Some(a), Some(b)) => x87::div(a, b),
+            (None, Some(b)) => x87::div(tento(from.dec), b),
+            (Some(a), None) => x87::div(a, tento(to.dec)),
+            (None, None) => tento(from.dec - to.dec),
+        };
         let fa = f64::from_bits(from.unit.factor);
         let fb = f64::from_bits(to.unit.factor);
 
         let m = x87::mul(x, fa);
-        let mut r = if m.is_infinite() && x.is_finite() {
+        let q = if m.is_infinite() && x.is_finite() {
             x87::mul(x87::div(x, fb), fa)
         } else {
             x87::div(m, fb)
         };
-        if (from.bin != 0 || to.bin != 0) && to.unit.name == "bit" {
-            if from.dec != 0 {
-                r = x87::mul(r, pow10(from.dec));
-            }
-            if to.dec != 0 {
-                r = x87::div(r, pow10(to.dec));
-            }
-        } else if from.dec != to.dec {
-            r = x87::mul(r, pow10(from.dec - to.dec));
-        }
-        if from.bin != to.bin {
-            r = x87::mul(r, 2f64.powi(from.bin - to.bin));
-        }
-        r
+        x87::mul(q, scale)
     };
     if r.is_finite() {
         Ok(if r.abs() < f64::MIN_POSITIVE { 0.0 } else { r })
@@ -423,9 +426,30 @@ pub fn convert(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             if to.chars().count() > 255 {
                 return Err(XlError::VALUE);
             }
-            let from = lookup(&from).ok_or(XlError::NA)?;
-            let to = lookup(&to).ok_or(XlError::NA)?;
-            convert_value(x, &from, &to).map(Value::num)
+            let (a, b) = parse(&from, &to).ok_or(XlError::NA)?;
+            convert_value(x, &a, &b).map(Value::num)
         })())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn conv(from: &str, to: &str) -> Option<R<f64>> {
+        parse(from, to).map(|(a, b)| convert_value(1.0, &a, &b))
+    }
+
+    #[test]
+    fn prefixes_and_second_reading() {
+        assert!(matches!(conv("pc", "J"), Some(Ok(v)) if v > 0.0 && v < 1e-11));
+        assert_eq!(conv("pc", "W"), Some(Err(XlError::NA)));
+        assert_eq!(conv("pc", "pc"), Some(Ok(1.0)));
+        assert_eq!(conv("dam", "m"), Some(Ok(10.0)));
+        assert_eq!(conv("kibyte", "byte"), Some(Ok(1024.0)));
+        assert!(conv("kin", "bit").is_none());
+
+        let r = conv("Zm3", "zm3").unwrap().unwrap();
+        assert_eq!(r.to_bits(), 1e126f64.to_bits() + 1);
+    }
 }

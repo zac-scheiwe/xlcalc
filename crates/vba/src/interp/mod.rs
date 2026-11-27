@@ -564,7 +564,7 @@ impl<'a> Exec<'a> {
         self.me = me;
         self.st.frames.push(me);
 
-        let r = stacker::maybe_grow(256 * 1024, 8 * 1024 * 1024, || self.enter(p));
+        let r = xlcalc_stack::maybe_grow(256 * 1024, 8 * 1024 * 1024, || self.enter(p));
         self.st.units = units_before;
         let ret = match &mut self.st.stack[base] {
             Cell::Own(s) => std::mem::replace(&mut s.val, Variant::Empty),
@@ -1325,9 +1325,7 @@ impl<'a> Exec<'a> {
         if op == BinOp::Is {
             let x = spill(x, a.ty())?;
             let y = spill(y, b.ty())?;
-            return Ok(Val::V(Variant::Bool(
-                objects::identity(&x)? == objects::identity(&y)?,
-            )));
+            return Ok(Val::V(Variant::Bool(self.is_same(&x, &y)?)));
         }
         let text = self.text();
         if res.is_dynamic() || a.ty().is_dynamic() || b.ty().is_dynamic() {
@@ -1589,7 +1587,8 @@ impl<'a> Exec<'a> {
                 Variant::Bool(matches!(v, Variant::Dispatch(_) | Variant::Unknown(_)))
             }
             Intrinsic::TypeName => Variant::Bstr(self.type_name(&v)?),
-            Intrinsic::VarType => Variant::I4(i32::from(v.vt())),
+
+            Intrinsic::VarType => Variant::I4(i32::from(self.range_default(v)?.vt())),
             Intrinsic::StrPtr => match v {
                 Variant::BstrNull => Variant::I8(0),
                 Variant::Bstr(_) => Variant::I8(0x1000),

@@ -1,5 +1,6 @@
 use crate::address::CellAddr;
 use crate::calc;
+use crate::numfmt::LimPrec;
 use crate::value::Value;
 use crate::workbook::Command;
 use crate::workbook::{EditError, Entry, Workbook};
@@ -24,7 +25,7 @@ impl Seek<'_> {
         let a = self.changing;
 
         let x = if self.wb.precision_as_displayed() {
-            self.wb.precision_value(a, x)
+            self.wb.precision_value(a, x, LimPrec::Store)
         } else {
             x
         };

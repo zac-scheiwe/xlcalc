@@ -313,38 +313,75 @@ impl Workbook {
                         lines.insert((k.0, i), v);
                     }
                 }
-                if insert && at > 0 {
-                    let above: Vec<_> = f
-                        .map
-                        .iter()
-                        .filter(|(k, _)| k.0 == sheet && along(k) == at - 1)
-                        .map(|(k, v)| (*k, v.clone()))
-                        .collect();
-                    let above: Vec<_> = above
-                        .into_iter()
-                        .map(|(k, v)| {
-                            let after = f.map.get(&place(&k, at + count)).cloned();
-                            (k, f.inherited(v, after.as_ref(), rows))
-                        })
-                        .collect();
-                    let lines = if rows { &f.rows } else { &f.cols };
-                    let after = lines.get(&(sheet, at + count)).map(|(_, v)| v.clone());
-                    let line = lines
-                        .get(&(sheet, at - 1))
-                        .cloned()
-                        .map(|(seq, v)| (seq, f.inherited(v, after.as_ref(), rows)));
-                    for j in 0..count.min(max - at) {
-                        for (k, v) in &above {
-                            f.map.insert(place(k, at + j), v.clone());
-                        }
-                        if let Some(l) = &line {
-                            let lines = if rows { &mut f.rows } else { &mut f.cols };
-                            lines.insert((sheet, at + j), l.clone());
-                        }
-                    }
+                if insert {
+                    self.fmt_zero_lines(sheet, rows, at, count);
                 }
             }
             Some((l0, l1)) => self.fmt_shift_cells(sheet, rows, at, count, insert, (l0, l1)),
+        }
+    }
+
+    fn insert_origin(&self, at: u32, count: u32, max: u32) -> (Option<u32>, u32) {
+        let after = (at + count).min(max - 1);
+        if self.insert_format_below {
+            (Some(after), at.saturating_sub(1))
+        } else {
+            (at.checked_sub(1), after)
+        }
+    }
+
+    fn fmt_zero_lines(&mut self, sheet: SheetId, rows: bool, at: u32, count: u32) {
+        let max = if rows { MAX_ROWS } else { MAX_COLS };
+        let (Some(src), other) = self.insert_origin(at, count, max) else {
+            return;
+        };
+        let cell = |i: u32, x: u32| {
+            if rows {
+                CellAddr::new(sheet, i, x)
+            } else {
+                CellAddr::new(sheet, x, i)
+            }
+        };
+
+        let mut across: Vec<u32> = self
+            .cellfmt
+            .map
+            .keys()
+            .filter(|k| k.0 == sheet)
+            .map(|k| if rows { (k.1, k.2) } else { (k.2, k.1) })
+            .filter(|&(i, _)| i == src || i == other)
+            .map(|(_, x)| x)
+            .collect();
+        across.sort_unstable();
+        across.dedup();
+        let mut cells = Vec::new();
+        for x in across {
+            let a = cell(src, x);
+            let Some(v) = self.fmt_at(a) else { continue };
+            let after = self.fmt_at(cell(other, x));
+            let own = self.cellfmt.map.contains_key(&(a.sheet, a.row, a.col));
+            let new = self.cellfmt.inherited(v.clone(), after.as_ref());
+            if own || new != v {
+                cells.push((x, new));
+            }
+        }
+        let f = &mut self.cellfmt;
+        let lines = if rows { &f.rows } else { &f.cols };
+        let after = lines.get(&(sheet, other)).map(|(_, v)| v.clone());
+        let line = lines
+            .get(&(sheet, src))
+            .cloned()
+            .map(|(seq, v)| (seq, f.inherited(v, after.as_ref())));
+        for i in at..(at + count).min(max) {
+            for (x, v) in &cells {
+                let a = cell(i, *x);
+                self.cellfmt.map.insert((a.sheet, a.row, a.col), v.clone());
+            }
+            if let Some(l) = &line {
+                let f = &mut self.cellfmt;
+                let lines = if rows { &mut f.rows } else { &mut f.cols };
+                lines.insert((sheet, i), l.clone());
+            }
         }
     }
 
@@ -400,15 +437,6 @@ impl Workbook {
                 snap.insert((i, x), self.fmt_at(cell(i, x)));
             }
         }
-        let above: Vec<Option<Sty>> = (l0..=l1)
-            .map(|x| {
-                let after = self.fmt_at(cell(at, x));
-                (insert && at > 0)
-                    .then(|| self.fmt_at(cell(at - 1, x)))
-                    .flatten()
-                    .map(|v| self.cellfmt.inherited(v, after.as_ref(), rows))
-            })
-            .collect();
 
         let hi = if insert {
             (end + count).min(max - 1)
@@ -436,10 +464,15 @@ impl Workbook {
             }
         }
         if insert {
-            for j in 0..count.min(max - at) {
-                for (k, x) in (l0..=l1).enumerate() {
-                    let f = above[k].clone();
-                    self.put_style(cell(at + j, x), f);
+            let (src, other) = self.insert_origin(at, count, max);
+            for x in l0..=l1 {
+                let f = src.and_then(|src| {
+                    let after = self.fmt_at(cell(other, x));
+                    self.fmt_at(cell(src, x))
+                        .map(|v| self.cellfmt.inherited(v, after.as_ref()))
+                });
+                for i in at..(at + count).min(max) {
+                    self.put_style(cell(i, x), f.clone());
                 }
             }
         }

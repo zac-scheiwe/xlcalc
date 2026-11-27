@@ -67,7 +67,7 @@ pub(crate) fn record(p: &mut P, dxf: &Node) {
     if let Some(n) = dxf.child("numFmt") {
         let id: u16 = n.attr("numFmtId").and_then(|v| v.parse().ok()).unwrap_or(0);
         props.push((0x29, id.to_le_bytes().to_vec()));
-        let code: Vec<u16> = n.attr("formatCode").unwrap_or("").encode_utf16().collect();
+        let code: Vec<u16> = xlcalc::wide::units(n.attr("formatCode").unwrap_or("")).collect();
         let mut d = (code.len() as u16).to_le_bytes().to_vec();
         for u in code {
             d.extend(u.to_le_bytes());
@@ -166,7 +166,7 @@ pub(crate) fn xml(d: &[u8]) -> Result<String, String> {
                     .iter()
                     .map(|c| u16::from_le_bytes(*c))
                     .collect();
-                code = Some(String::from_utf16_lossy(&units));
+                code = Some(xlcalc::wide::from_units(&units));
             }
             _ => {}
         }

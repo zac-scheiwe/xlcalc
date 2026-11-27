@@ -16,6 +16,8 @@ pub struct CsvImport {
     pub name: String,
 
     pub file_format: i32,
+
+    pub last_format: Option<String>,
 }
 
 pub fn import_csv(bytes: &[u8], file_name: &str, local: bool) -> CsvImport {
@@ -45,6 +47,8 @@ fn import(bytes: &[u8], file_name: &str, local: bool, unsplit: bool) -> CsvImpor
     if !local {
         locale.date_order = Locale::en_us().date_order;
     }
+
+    let mut last_format = None;
     wb.with_input_locale(&locale, |wb| {
         for (r, row) in rows.iter().enumerate() {
             for (c, field) in row.iter().enumerate() {
@@ -53,6 +57,8 @@ fn import(bytes: &[u8], file_name: &str, local: bool, unsplit: bool) -> CsvImpor
                 }
                 let addr = CellAddr::new(sheet, r as u32, c as u32);
                 enter(wb, addr, field);
+                let f = wb.number_format(addr);
+                last_format = (!f.eq_ignore_ascii_case("general")).then(|| f.to_string());
             }
         }
     });
@@ -60,6 +66,7 @@ fn import(bytes: &[u8], file_name: &str, local: bool, unsplit: bool) -> CsvImpor
         workbook: wb,
         name: file_name.to_string(),
         file_format,
+        last_format,
     }
 }
 
@@ -120,7 +127,7 @@ fn decode(bytes: &[u8]) -> (String, char, i32) {
             .iter()
             .map(|p| u16::from_le_bytes(*p))
             .collect();
-        return (String::from_utf16_lossy(&units), '\t', XL_UNICODE_TEXT);
+        return (xlcalc::wide::from_units(&units), '\t', XL_UNICODE_TEXT);
     }
     if bytes.starts_with(b"ID;") {
         return (String::new(), ',', XL_SYLK);
@@ -241,19 +248,21 @@ pub fn export_csv(wb: &Workbook, sheet: SheetId, file_format: i32) -> Result<Vec
     if file_format != XL_CSV && file_format != XL_CSV_UTF8 {
         return Err(format!("not a CSV format: {file_format}"));
     }
+
+    let delim = wb.locale().list_sep;
     let mut out = String::new();
     if let Some(Rect { r0, c0, r1, c1 }) = wb.used_range(sheet) {
         for r in r0..=r1 {
             for c in c0..=c1 {
                 if c > c0 {
-                    out.push(',');
+                    out.push(delim);
                 }
                 let mut t = cell_text(wb, CellAddr::new(sheet, r, c));
 
                 if let Some((i, _)) = t.char_indices().nth(32767) {
                     t.truncate(i);
                 }
-                if t.contains([',', '"', '\r', '\n', '\t']) {
+                if t.contains([delim, '"', '\r', '\n', '\t']) {
                     out.push('"');
                     out.push_str(&t.replace('"', "\"\""));
                     out.push('"');
@@ -355,8 +364,36 @@ fn encode_ansi(s: &str) -> Vec<u8> {
         {
             out.push(0x80 + i as u8);
         } else {
-            out.extend(std::iter::repeat_n(b'?', ch.len_utf16()));
+            out.extend(std::iter::repeat_n(b'?', xlcalc::wide::char_units(ch)));
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn list_separator_is_the_delimiter() {
+        let mut wb = Workbook::new();
+        let mut l = Locale::en_nz();
+        l.list_sep = ';';
+        wb.set_locale(l);
+        let s = wb.active_sheet();
+        wb.set_value(CellAddr::new(s, 0, 0), Value::from("a,b"));
+        wb.set_value(CellAddr::new(s, 0, 1), Value::from("c;d"));
+        let out = export_csv(&wb, s, XL_CSV).unwrap();
+        assert_eq!(out, b"a,b;\"c;d\"\r\n");
+    }
+
+    #[test]
+    fn the_last_field_read_sets_vifmt() {
+        let last = |text: &str| import_csv(text.as_bytes(), "a.csv", false).last_format;
+        assert_eq!(last("x,50%,\r\n").as_deref(), Some("0%"));
+        assert_eq!(last("50%,abc\r\n"), None);
+        assert_eq!(last("50%,12\r\n"), None);
+        assert_eq!(last("abc\r\n50%\r\n").as_deref(), Some("0%"));
+        assert_eq!(last(",,,,\r\n"), None);
+    }
 }

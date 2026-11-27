@@ -10,7 +10,7 @@ pub struct Note {
 
     pub visible: bool,
 
-    pub shape_no: u32,
+    pub spid: u32,
 }
 
 pub type NoteMap = BTreeMap<(u32, u32), Note>;
@@ -48,22 +48,36 @@ impl Workbook {
         author: &str,
         visible: bool,
     ) -> Option<u32> {
-        let map = self.cell_notes.entry(at.sheet).or_default();
-        if map.contains_key(&(at.row, at.col)) {
+        self.note_load(at, text, author, visible, 0)
+    }
+
+    pub fn note_load(
+        &mut self,
+        at: CellAddr,
+        text: &str,
+        author: &str,
+        visible: bool,
+        spid: u32,
+    ) -> Option<u32> {
+        if self.note_at(at.sheet, at.row, at.col).is_some() {
             return None;
         }
         self.note_next += 1;
         let id = self.note_next;
-        let shape_no = self.note_shapes.entry(at.sheet).or_default();
-        *shape_no += 1;
-        map.insert(
+        let spid = if spid == 0 {
+            self.legacy_shape_new(at.sheet)
+        } else {
+            self.legacy_shape_loaded(at.sheet, spid);
+            spid
+        };
+        self.cell_notes.entry(at.sheet).or_default().insert(
             (at.row, at.col),
             Note {
                 id,
                 text: text.to_string(),
                 author: author.to_string(),
                 visible,
-                shape_no: *shape_no,
+                spid,
             },
         );
 
@@ -90,6 +104,7 @@ impl Workbook {
     }
 
     pub fn notes_paste(&mut self, ss: SheetId, src: Rect, ds: SheetId, pasted: Rect, cut: bool) {
+        self.rich_paste(ss, src, ds, pasted, cut);
         let inside: Vec<((u32, u32), Note)> = self
             .notes(ss)
             .filter(|((r, c), _)| src.contains(*r, *c))
@@ -110,6 +125,9 @@ impl Workbook {
                         self.note_next += 1;
                         n.id = self.note_next;
                     }
+                    if !cut || ss != ds {
+                        n.spid = self.legacy_shape_new(ds);
+                    }
                     self.cell_notes
                         .entry(ds)
                         .or_default()
@@ -122,6 +140,7 @@ impl Workbook {
     }
 
     pub(crate) fn notes_shift(&mut self, s: &Shift) {
+        self.rich_shift(s);
         let rows = s.axis == Axis::Rows;
         let Some(m) = self.cell_notes.get_mut(&s.sheet) else {
             return;
@@ -142,6 +161,7 @@ impl Workbook {
     }
 
     pub(crate) fn notes_sort_pairs(&mut self, pairs: &[(CellAddr, CellAddr)]) {
+        self.rich_sort_pairs(pairs);
         let Some(first) = pairs.first() else {
             return;
         };
@@ -167,15 +187,21 @@ impl Workbook {
 
     pub(crate) fn notes_drop_sheet(&mut self, id: SheetId) {
         self.cell_notes.remove(&id);
+        self.rich.remove(&id);
+        self.shape_ids.drop_sheet(id);
+        self.control_anchors.retain(|k, _| k.0 != id);
     }
 
     pub(crate) fn notes_copy_sheet(&mut self, src: SheetId, new: SheetId) {
+        self.rich_copy_sheet(src, new);
         if let Some(mut m) = self.cell_notes.get(&src).cloned() {
             for n in m.values_mut() {
                 self.note_next += 1;
                 n.id = self.note_next;
             }
             self.cell_notes.insert(new, m);
+
+            self.legacy_number_copy(new, 0);
         }
     }
 }

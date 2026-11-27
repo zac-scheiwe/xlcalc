@@ -1,0 +1,229 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A1')",
+   "prop": "Value2",
+   "value": "n"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B1')",
+   "prop": "Value2",
+   "value": "d"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A2')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A3')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A4')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A1:B4')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B2:B4')",
+   "prop": "Formula",
+   "value": "=A2*2"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').ListObjects(1)",
+   "prop": "ShowHeaders",
+   "value": false
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D1')",
+   "prop": "FormulaArray",
+   "value": "=SUM({1;10;100}*{1;2;3})"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1:F1')",
+   "prop": "FormulaArray",
+   "value": "={7,8}"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D3:D5')",
+   "prop": "FormulaArray",
+   "value": "=A2:A4+{1;2;3}"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D6')",
+   "prop": "Formula",
+   "value": "=SUM({1,2,3;4,5,6})"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D7')",
+   "prop": "Value2",
+   "value": "after"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/arr.xls",
+    56
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/arr.xls"
+   ]
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "file_read",
+   "file": "@out/arr.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('F1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('F1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D5')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D5')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D6')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D6')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D7')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D7')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B4')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('B4')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  }
+ ],
+ "fresh_excel": true
+}

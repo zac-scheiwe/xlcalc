@@ -4,9 +4,10 @@ use xlcalc_variant::Variant;
 
 use crate::app::{unsupported, Application, BookId, Object};
 use crate::conv::Args;
-use crate::error::OmError;
+use crate::error::{OmError, DISP_E_BADPARAMCOUNT};
 use crate::objects::edit_error;
 use crate::shapes::{DrawKind, DrawRef};
+use crate::tables::structured_style;
 use crate::typelib::{InvokeKind, Member};
 
 #[derive(Clone, Debug)]
@@ -18,8 +19,6 @@ pub(crate) enum SlicerPart {
     Item(usize, String),
     Slicers(usize),
     Slicer(usize, usize),
-
-    Style(usize, usize),
 
     Timeline(usize),
 
@@ -37,7 +36,6 @@ impl SlicerPart {
             SlicerPart::Item(..) => "SlicerItem",
             SlicerPart::Slicers(_) => "Slicers",
             SlicerPart::Slicer(..) => "Slicer",
-            SlicerPart::Style(..) => "TableStyle",
             SlicerPart::Timeline(_) => "TimelineState",
             SlicerPart::TimelineView(..) => "TimelineViewState",
             SlicerPart::PivotTables(_) => "SlicerPivotTables",
@@ -61,6 +59,10 @@ fn from_err(e: SlicerError) -> OmError {
 const DEFAULT_RECT: [f64; 4] = [642.5, 240.0, 144.0, 206.249_763_779_527_57];
 
 const TIMELINE_RECT: [f64; 4] = [583.5, 290.0, 262.5, 108.0];
+
+fn emu(points: f64) -> i64 {
+    (points * xlcalc::drawing::EMU_PT) as i64
+}
 
 fn not_impl() -> OmError {
     OmError::exception(0x8000_4001_u32 as i32, None)
@@ -92,6 +94,27 @@ impl Application<'_> {
             }
             None => Err(OmError::bad_index()),
         }
+    }
+
+    fn slicer_style_put(&self, a: &Args, timeline: bool, locked: bool) -> Result<String, OmError> {
+        let refused = || OmError::hresult(DISP_E_BADPARAMCOUNT);
+        if locked {
+            return Err(refused());
+        }
+        let name = match a.put.as_ref() {
+            Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
+                Some(Object::TableStyle(n)) => n.clone(),
+                _ => return Err(refused()),
+            },
+            Some(Variant::Bstr(n)) => n.clone(),
+            _ => return Err(refused()),
+        };
+        let (style, slicer_family) = structured_style(&name).ok_or_else(refused)?;
+        let timeline_style = style.starts_with("TimeSlicerStyle");
+        if !slicer_family || timeline_style != timeline {
+            return Err(refused());
+        }
+        Ok(style)
     }
 
     fn slc_of(&self, b: BookId, i: usize) -> Result<xlcalc::slicer::SlicerCache, OmError> {
@@ -127,12 +150,13 @@ impl Application<'_> {
         k: usize,
         v: f64,
     ) -> Result<(), OmError> {
-        let mut g = self.slicer_geometry(b, i, j)?;
-        g[k] = v;
+        let mut g = self
+            .slicer_geometry(b, i, j)?
+            .map(xlcalc::drawing::pt_to_emu);
+        g[k] = emu(v);
         let wb = &mut self.book_mut(b)?.wb;
         let s = wb.slicer_caches()[i].slicers[j].clone();
-        let e = |x: f64| xlcalc::drawing::pt_to_emu(x);
-        wb.set_shape_rect(s.sheet, s.shape, (e(g[0]), e(g[1]), e(g[2]), e(g[3])));
+        wb.set_shape_rect(s.sheet, s.shape, (g[0], g[1], g[2], g[3]));
         Ok(())
     }
 
@@ -191,7 +215,19 @@ impl Application<'_> {
                         Ok(Variant::Bstr(name.clone()))
                     }
                     ("SourceName", false) => Ok(Variant::Bstr(name.clone())),
-                    ("HasData", false) => Ok(Variant::Bool(true)),
+
+                    ("HasData", false)
+                        if self.slc_of(b, *i).is_ok_and(|c| c.pivot && c.cross == 1) =>
+                    {
+                        Err(invalid())
+                    }
+                    ("HasData", false) => Ok(Variant::Bool(
+                        self.book(b)?
+                            .wb
+                            .slicer_items_data(*i)
+                            .iter()
+                            .any(|(n, d)| *d && n == name),
+                    )),
                     ("Selected", false) => Ok(Variant::Bool(on)),
                     ("Selected", true) => {
                         let v = crate::chartparts::put_bool(a)?;
@@ -229,14 +265,6 @@ impl Application<'_> {
             SlicerPart::Timeline(i) => self.timeline_member(b, *i, m, a),
             SlicerPart::TimelineView(i, j) => self.timeline_view_member(b, *i, *j, m, a),
             SlicerPart::PivotTables(i) => self.slicer_pivots_member(b, *i, m, a),
-            SlicerPart::Style(i, j) => {
-                let c = self.slc_of(b, *i)?;
-                let s = c.slicers.get(*j).ok_or_else(OmError::object_required)?;
-                match (m.name, put) {
-                    ("Name" | "NameLocal", false) => Ok(Variant::Bstr(s.style.clone())),
-                    _ => Err(unsupported("TableStyle", m)),
-                }
-            }
         }
     }
 
@@ -268,7 +296,9 @@ impl Application<'_> {
             "Add" | "Add2" => {
                 let (table, pivot) = match a.get(0) {
                     Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
-                        Some(Object::Table(_, name)) => (name.clone(), false),
+                        Some(Object::Table(book, id, _)) => {
+                            (self.table_of(*book, *id)?.name, false)
+                        }
                         Some(Object::Pivot(crate::pivot::PivotRef::Table(_, name))) => {
                             (name.clone(), true)
                         }
@@ -347,7 +377,20 @@ impl Application<'_> {
             ("SlicerCacheType", false) if c.timeline.is_some() => Ok(Variant::I4(2)),
             ("SlicerCacheType", false) => Ok(Variant::I4(i32::from(c.pivot))),
             ("ShowAllItems" | "SortItems", _) if c.timeline.is_some() => Err(not_impl()),
-            ("ShowAllItems", false) => Ok(Variant::Bool(true)),
+            ("ShowAllItems", false) => Ok(Variant::Bool(c.show_all)),
+
+            ("ShowAllItems", true) => {
+                let v = crate::chartparts::put_bool(a)?;
+                if !c.pivot && !v {
+                    return Err(OmError::exception(0x8000_FFFF_u32 as i32, None));
+                }
+                let wb = &mut self.book_mut(b)?.wb;
+                if let Some(x) = wb.slicer_cache_mut(i) {
+                    x.show_all = v;
+                }
+                wb.slicer_reload(i);
+                Ok(Variant::Empty)
+            }
             ("FilterCleared", false) if c.timeline.is_some() => Ok(Variant::Bool(
                 c.timeline.as_ref().is_some_and(|t| t.range.is_none()),
             )),
@@ -371,15 +414,26 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("SortUsingCustomLists", false) => Ok(Variant::Bool(c.custom_lists)),
+            ("SortUsingCustomLists", true) => {
+                let v = crate::chartparts::put_bool(a)?;
+                let wb = &mut self.book_mut(b)?.wb;
+                if let Some(x) = wb.slicer_cache_mut(i) {
+                    x.custom_lists = v;
+                }
+                wb.slicer_reload(i);
+                Ok(Variant::Empty)
+            }
             ("SortItems", false) => Ok(Variant::I4(c.sort)),
             ("SortItems", true) => {
                 let v = crate::controls::put_num(a)? as i32;
                 if !(2..=3).contains(&v) {
                     return Err(invalid());
                 }
-                if let Some(x) = self.book_mut(b)?.wb.slicer_cache_mut(i) {
+                let wb = &mut self.book_mut(b)?.wb;
+                if let Some(x) = wb.slicer_cache_mut(i) {
                     x.sort = v;
                 }
+                wb.slicer_reload(i);
                 Ok(Variant::Empty)
             }
             ("CrossFilterType", false) => Ok(Variant::I4(c.cross)),
@@ -388,9 +442,11 @@ impl Application<'_> {
                 if !(1..=3).contains(&v) {
                     return Err(invalid());
                 }
-                if let Some(x) = self.book_mut(b)?.wb.slicer_cache_mut(i) {
+                let wb = &mut self.book_mut(b)?.wb;
+                if let Some(x) = wb.slicer_cache_mut(i) {
                     x.cross = v;
                 }
+                wb.slicer_reload(i);
                 Ok(Variant::Empty)
             }
             ("RequireManualUpdate", false) => Ok(Variant::Bool(c.manual)),
@@ -402,7 +458,14 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("ListObject", false) if c.pivot => Err(OmError::app_defined()),
-            ("ListObject", false) => Ok(self.alloc(Object::Table(b, c.table))),
+            ("ListObject", false) => {
+                let wb = &self.book(b)?.wb;
+                let id = wb
+                    .table_by_name(&c.table)
+                    .ok_or_else(OmError::object_required)?
+                    .id;
+                Ok(self.alloc(Object::Table(b, id, false)))
+            }
             ("SlicerItems", false) => {
                 Ok(self.alloc(Object::Slicer(b, SlicerPart::Items(i, false))))
             }
@@ -415,6 +478,12 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("Delete", _) => {
+                let c = self.slc_of(b, i)?;
+                for s in &c.slicers {
+                    if self.slicer_held(b, s)? {
+                        return Err(OmError::app_defined());
+                    }
+                }
                 self.book_mut(b)?.wb.slicer_cache_delete(i);
                 Ok(Variant::Empty)
             }
@@ -460,6 +529,26 @@ impl Application<'_> {
         Ok(self.alloc(Object::Slicer(b, SlicerPart::Slicer(i, j))))
     }
 
+    fn slicer_held(&self, b: BookId, s: &xlcalc::slicer::Slicer) -> Result<bool, OmError> {
+        let prot = self.sheet_prot(b, s.sheet);
+        Ok(prot.contents && prot.objects && self.book(b)?.wb.slicer_locked(s))
+    }
+
+    fn slicer_gate_refusal(name: &str, put: bool) -> Option<OmError> {
+        match (name, put) {
+            ("Delete", _)
+            | ("Caption" | "DisplayHeader" | "Locked" | "DisableMoveResizeUI", true) => {
+                Some(OmError::app_defined())
+            }
+            (
+                "Name" | "Left" | "Top" | "Width" | "Height" | "NumberOfColumns" | "RowHeight"
+                | "ColumnWidth",
+                true,
+            ) => Some(invalid()),
+            _ => None,
+        }
+    }
+
     fn one_slicer_member(
         &mut self,
         b: BookId,
@@ -476,6 +565,30 @@ impl Application<'_> {
             .get(j)
             .cloned()
             .ok_or_else(OmError::object_required)?;
+
+        if c.timeline.is_some() {
+            match (m.name, put) {
+                ("ColumnWidth" | "RowHeight" | "DisableMoveResizeUI", false) => {
+                    return Err(OmError::app_defined());
+                }
+                ("ColumnWidth" | "RowHeight" | "DisableMoveResizeUI", true)
+                | ("NumberOfColumns", true) => return Err(invalid()),
+                _ => {}
+            }
+        }
+        if (put || m.name == "Delete") && self.slicer_held(b, &s)? {
+            if let Some(e) = Self::slicer_gate_refusal(m.name, put) {
+                return Err(e);
+            }
+        }
+
+        let moves = matches!(
+            m.name,
+            "Left" | "Top" | "Width" | "Height" | "NumberOfColumns"
+        );
+        if put && moves && s.position_locked {
+            return Err(invalid());
+        }
         let geo = |k: usize| -> Result<Variant, OmError> {
             Ok(Variant::R8(self.slicer_geometry(b, i, j)?[k]))
         };
@@ -504,17 +617,10 @@ impl Application<'_> {
             ("NumberOfColumns" | "DisplayHeader", false) if c.timeline.is_some() => {
                 Err(OmError::app_defined())
             }
-            ("NumberOfColumns", true) if c.timeline.is_some() => Err(invalid()),
             ("TimelineViewState", false) if c.timeline.is_some() => {
                 Ok(self.alloc(Object::Slicer(b, SlicerPart::TimelineView(i, j))))
             }
             ("TimelineViewState", false) => Ok(Variant::Dispatch(None)),
-            ("Style", true)
-                if c.timeline.is_some()
-                    && !matches!(a.put.as_ref(), Some(Variant::Bstr(n)) if n.starts_with("TimeSlicerStyle")) =>
-            {
-                Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT))
-            }
             ("NumberOfColumns", false) => Ok(Variant::I4(s.columns)),
             ("NumberOfColumns", true) => {
                 let v = crate::controls::put_num(a)? as i32;
@@ -530,22 +636,42 @@ impl Application<'_> {
                 self.edit_slicer(b, i, j, |x| x.header = v);
                 Ok(Variant::Empty)
             }
-            ("Locked", false) => Ok(Variant::Bool(s.locked)),
+            ("Locked", false) => Ok(Variant::Bool(self.book(b)?.wb.slicer_locked(&s))),
             ("Locked", true) => {
                 let v = crate::chartparts::put_bool(a)?;
-                self.edit_slicer(b, i, j, |x| x.locked = v);
+                let wb = &mut self.book_mut(b)?.wb;
+                if let Some(sh) = wb.drawing_mut(s.sheet).get_mut(s.shape) {
+                    sh.locked = v;
+                }
                 Ok(Variant::Empty)
             }
-            ("ColumnWidth", false) => Ok(Variant::R8(s.col_w)),
+            ("DisableMoveResizeUI", false) => Ok(Variant::Bool(s.position_locked)),
+            ("DisableMoveResizeUI", true) => {
+                let v = crate::chartparts::put_bool(a)?;
+                self.edit_slicer(b, i, j, |x| x.position_locked = v);
+                Ok(Variant::Empty)
+            }
+
+            ("ColumnWidth", false) => {
+                let w = self.book(b)?.wb.slicer_item_width(i, j);
+                let w = w.ok_or_else(OmError::object_required)?;
+                Ok(Variant::R8(w as f64 / xlcalc::drawing::EMU_PT))
+            }
             ("ColumnWidth", true) => {
-                let v = crate::controls::put_num(a)?;
-                self.edit_slicer(b, i, j, |x| x.col_w = v);
+                let w = emu(crate::controls::put_num(a)?);
+                if w < 0 {
+                    return Err(OmError::app_defined());
+                }
+                self.book_mut(b)?.wb.slicer_set_item_width(i, j, w);
                 Ok(Variant::Empty)
             }
-            ("RowHeight", false) => Ok(Variant::R8(s.row_h)),
+            ("RowHeight", false) => Ok(Variant::R8(s.row_h as f64 / xlcalc::drawing::EMU_PT)),
             ("RowHeight", true) => {
-                let v = crate::controls::put_num(a)?;
-                self.edit_slicer(b, i, j, |x| x.row_h = v);
+                let h = emu(crate::controls::put_num(a)?);
+                if !(0..=i64::from(u32::MAX)).contains(&h) {
+                    return Err(invalid());
+                }
+                self.edit_slicer(b, i, j, |x| x.row_h = h);
                 Ok(Variant::Empty)
             }
             ("Left", false) => geo(0),
@@ -561,12 +687,10 @@ impl Application<'_> {
                 self.slicer_set_geometry(b, i, j, k, v)?;
                 Ok(Variant::Empty)
             }
-            ("Style", false) => Ok(self.alloc(Object::Slicer(b, SlicerPart::Style(i, j)))),
+            ("Style", false) => Ok(self.style_object(&s.style)),
             ("Style", true) => {
-                let n = match a.put.as_ref() {
-                    Some(Variant::Bstr(n)) => n.clone(),
-                    _ => return Err(OmError::type_mismatch()),
-                };
+                let locked = self.slicer_held(b, &s)?;
+                let n = self.slicer_style_put(a, c.timeline.is_some(), locked)?;
                 self.edit_slicer(b, i, j, |x| x.style = n);
                 Ok(Variant::Empty)
             }
@@ -639,6 +763,10 @@ impl Application<'_> {
             .get(j)
             .cloned()
             .ok_or_else(OmError::object_required)?;
+
+        if put && self.slicer_held(b, &s)? {
+            return Err(OmError::app_defined());
+        }
         let flag = |this: &mut Self,
                     get: bool,
                     set: fn(&mut xlcalc::slicer::TimelineView, bool)|

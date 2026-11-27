@@ -1,0 +1,10 @@
+[package]
+name = "xlcalc-stack"
+description = "Stack growth for deep recursion that can still run foreign code on the thread's own stack"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[target.'cfg(not(windows))'.dependencies]
+stacker = "0.1"

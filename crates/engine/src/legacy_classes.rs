@@ -34,10 +34,6 @@ pub(crate) fn class_of_grbit(g: u32) -> u8 {
     }
 }
 
-pub(crate) fn is_known(name: &str) -> bool {
-    entry(name).is_some()
-}
-
 pub(crate) fn class_of(name: &str, i: usize) -> Option<u8> {
     class_of_n(name, i, usize::MAX)
 }

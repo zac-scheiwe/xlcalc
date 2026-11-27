@@ -6,8 +6,6 @@ use xlcalc_om::{
 use xlcalc_variant::{ObjectId, Variant};
 use xlcalc_vba::{InvokeKind, VbaError};
 
-static SERIAL: std::sync::Mutex<()> = std::sync::Mutex::new(());
-
 struct Injected(WindowsBridge);
 
 impl ComBridge for Injected {
@@ -105,9 +103,6 @@ fn text(app: &mut Application, formula: &str) -> String {
 
 #[test]
 fn automation_functions_follow_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     if xlcalc_winbridge::create("Xlc.TestFuncs").is_err() {
         eprintln!("skipped: Xlc.TestFuncs is not registered");
         return;
@@ -227,9 +222,6 @@ fn read(app: &mut Application, cell: &str) -> String {
 
 #[test]
 fn automation_ranges_and_spills_follow_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     if xlcalc_winbridge::create("Xlc.TestFuncs").is_err() {
         eprintln!("skipped: Xlc.TestFuncs is not registered");
         return;
@@ -376,9 +368,6 @@ fn prop_text(app: &mut Application, a1: &str, name: &str, args: &[Variant]) -> S
 
 #[test]
 fn automation_probe4_follows_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     if xlcalc_winbridge::create("Xlc.TestFuncs").is_err() {
         eprintln!("skipped: Xlc.TestFuncs is not registered");
         return;
@@ -480,9 +469,6 @@ fn automation_probe4_follows_excel() {
 
 #[test]
 fn automation_type_names_follow_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     if xlcalc_winbridge::create("Xlc.TestFuncs").is_err() {
         eprintln!("skipped: Xlc.TestFuncs is not registered");
         return;
@@ -636,9 +622,6 @@ fn g15(n: f64) -> String {
 
 #[test]
 fn evaluate_follows_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     if xlcalc_winbridge::create("Xlc.TestFuncs").is_err() {
         eprintln!("skipped: Xlc.TestFuncs is not registered");
         return;
@@ -812,9 +795,6 @@ fn evaluate_follows_excel() {
 
 #[test]
 fn evaluate_with_vba_calls_follows_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     if xlcalc_winbridge::create("Xlc.TestFuncs").is_err() {
         eprintln!("skipped: Xlc.TestFuncs is not registered");
         return;
@@ -953,9 +933,6 @@ End Function
 
 #[test]
 fn xll_addins_follow_excel() {
-    let _serial = SERIAL
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let Some(dll) = std::env::current_exe()
         .ok()
         .and_then(|e| Some(e.parent()?.parent()?.join("xlc_testxll.dll")))

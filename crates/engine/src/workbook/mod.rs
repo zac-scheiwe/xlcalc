@@ -17,7 +17,7 @@ mod transfer;
 
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -29,7 +29,7 @@ use crate::graph::{collect_precedents, DepGraph, Prec};
 use crate::input::{self, Entered};
 use crate::locale::Locale;
 use crate::parser;
-use crate::value::{Text, Value};
+use crate::value::{Text, Value, XlError};
 
 pub use names::{NameDef, Names};
 pub use notice::{paste_area, Command, Notice, Outcome};
@@ -63,6 +63,8 @@ pub struct Settings {
 
     pub date_system: DateSystem,
 
+    pub date_compat: bool,
+
     pub threads: usize,
 
     pub except_tables: bool,
@@ -72,6 +74,10 @@ pub struct Settings {
     pub force_full: bool,
 
     pub force_full_seen: bool,
+
+    pub auto_fill_lists: bool,
+
+    pub calc_on_save: bool,
 }
 
 impl Default for Settings {
@@ -82,11 +88,14 @@ impl Default for Settings {
             max_iterations: 100,
             max_change: 0.001,
             date_system: DateSystem::D1900,
+            date_compat: true,
             threads: 0,
             except_tables: false,
             multi_threaded: true,
             force_full: false,
             force_full_seen: false,
+            auto_fill_lists: true,
+            calc_on_save: true,
         }
     }
 }
@@ -236,7 +245,7 @@ pub struct FormulaCell {
 
     pub(crate) share: Option<u32>,
 
-    pub(crate) fdyn: std::sync::atomic::AtomicU64,
+    pub(crate) cls_store: std::sync::Mutex<Option<crate::eval::fdyn::CachedClasses>>,
 
     pub(crate) legacy_entry: bool,
 }
@@ -297,6 +306,8 @@ pub struct CalcState {
 
     pub(crate) skip_volatile: bool,
 
+    pub(crate) skip_position_volatile: bool,
+
     pub(crate) spill_resized: bool,
 
     pub(crate) skip_host_volatile: bool,
@@ -304,6 +315,8 @@ pub struct CalcState {
     pub(crate) defer_host: bool,
 
     pub(crate) sheet_calc_pending: bool,
+
+    pub(crate) load_pending: Option<u32>,
 
     pub(crate) hold_free: bool,
     pub(crate) held: Vec<FormulaId>,
@@ -328,6 +341,8 @@ pub struct CalcState {
     pub(crate) host_volatile: FxHashSet<FormulaId>,
 
     pub(crate) cmd_manual: bool,
+
+    pub(crate) defer_entry: bool,
     pub(crate) circular: FxHashSet<FormulaId>,
     pub(crate) dirty_list: Vec<FormulaId>,
 
@@ -346,6 +361,8 @@ pub struct CalcState {
     pub(crate) dt_seed: Vec<FormulaId>,
 
     pub(crate) relink_scope: Option<crate::structure::DirtyScope>,
+
+    pub(crate) whole_blocks: rustc_hash::FxHashSet<FormulaId>,
 
     pub(crate) entered: Vec<FormulaId>,
 
@@ -454,6 +471,11 @@ pub struct Workbook {
 
     pub(crate) drawings: crate::drawing::Drawings,
 
+    pub(crate) control_anchors: FxHashMap<(SheetId, u32), crate::drawing::Pos>,
+
+    pub(crate) object_formulas:
+        FxHashMap<(SheetId, u32, crate::objfmla::ObjFmla), crate::formula::Node>,
+
     pub(crate) session: Session,
 
     pub(crate) arrays_seen: bool,
@@ -483,10 +505,15 @@ pub struct Workbook {
     pub(crate) hl_next: u32,
     pub(crate) cell_notes: FxHashMap<SheetId, crate::notes::NoteMap>,
     pub(crate) note_next: u32,
-    pub(crate) note_shapes: FxHashMap<SheetId, u32>,
+
+    pub(crate) shape_ids: crate::spid::ShapeIds,
+
+    pub(crate) rich: rustc_hash::FxHashMap<SheetId, crate::rich::RichMap>,
 
     pub(crate) spark_free: FxHashMap<SheetId, Vec<u32>>,
     pub(crate) slicer_caches: Vec<crate::slicer::SlicerCache>,
+
+    pub(crate) custom_lists: Vec<Vec<String>>,
 
     pub(crate) pivots: crate::pivot::Pivots,
 
@@ -517,9 +544,42 @@ pub(crate) struct Session {
 
     pub(crate) rows_over_header: bool,
 
-    pub(crate) last_format: Option<String>,
+    pub(crate) last_format: LastFormat,
 
     pub(crate) keep_corners: bool,
+}
+
+#[derive(Clone, Debug)]
+pub struct LastFormat(Arc<Mutex<Option<String>>>);
+
+impl Default for LastFormat {
+    fn default() -> LastFormat {
+        LastFormat(Arc::new(Mutex::new(Some("General".into()))))
+    }
+}
+
+impl LastFormat {
+    fn lock(&self) -> std::sync::MutexGuard<'_, Option<String>> {
+        self.0
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+    }
+
+    pub fn get(&self) -> Option<String> {
+        self.lock().clone()
+    }
+
+    pub fn set(&self, fmt: Option<String>) {
+        *self.lock() = fmt;
+    }
+
+    pub(crate) fn take(&self) -> Option<String> {
+        self.lock().take()
+    }
+
+    pub(crate) fn is(&self, other: &LastFormat) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -638,7 +698,7 @@ impl Workbook {
                 copy_mark: None,
                 math_error: false,
                 rows_over_header: false,
-                last_format: Some("General".into()),
+                last_format: LastFormat::default(),
                 keep_corners: false,
             },
             op: op::OpFlags::IDLE,
@@ -667,10 +727,12 @@ impl Workbook {
                 stores: 0,
                 next_born: 0,
                 skip_volatile: false,
+                skip_position_volatile: false,
                 spill_resized: false,
                 skip_host_volatile: false,
                 defer_host: false,
                 sheet_calc_pending: false,
+                load_pending: None,
                 hold_free: false,
                 held: Vec::new(),
                 spilling: FxHashSet::default(),
@@ -684,6 +746,7 @@ impl Workbook {
                 volatile: FxHashSet::default(),
                 host_volatile: FxHashSet::default(),
                 cmd_manual: false,
+                defer_entry: false,
                 circular: FxHashSet::default(),
                 dirty_list: Vec::new(),
                 spill_dirty: Vec::new(),
@@ -694,6 +757,7 @@ impl Workbook {
                 fixed_now: None,
                 dt_seed: Vec::new(),
                 relink_scope: None,
+                whole_blocks: Default::default(),
                 entered: Vec::new(),
                 entered_groups: Vec::new(),
                 bulk: false,
@@ -729,8 +793,12 @@ impl Workbook {
             hl_next: 0,
             cell_notes: Default::default(),
             note_next: 0,
-            note_shapes: Default::default(),
+            shape_ids: Default::default(),
+            control_anchors: Default::default(),
+            object_formulas: Default::default(),
+            rich: Default::default(),
             slicer_caches: Vec::new(),
+            custom_lists: Vec::new(),
             pivots: Default::default(),
             tracks: Default::default(),
             sbr: Default::default(),
@@ -813,6 +881,7 @@ impl Workbook {
     }
 
     pub fn set_name_macro_type(&mut self, key: &str, scope: Option<SheetId>, t: Option<i32>) {
+        self.names.note_definition(key, scope);
         self.names.set_macro_type(key, scope, t);
     }
 
@@ -1236,7 +1305,7 @@ impl Workbook {
 
     pub fn typed_text<'a>(&mut self, addr: CellAddr, input: &'a str) -> std::borrow::Cow<'a, str> {
         if !self.op_on(Op::ReplaceEntry) && self.fraction_first(addr) {
-            if let Some(t) = crate::coerce::bare_fraction_as_mixed(input) {
+            if let Some(t) = crate::coerce::bare_fraction_as_mixed(input, &self.locale) {
                 return t.into();
             }
         }
@@ -1299,14 +1368,12 @@ impl Workbook {
                     (col && self.tables[ti].totals && addr.row == self.tables[ti].rect.r1)
                         .then_some(())
                 });
-                let in_totals = grown.is_some()
-                    || self.tables.iter().any(|t| {
-                        t.sheet == addr.sheet
-                            && t.totals
-                            && t.contains(addr.sheet, addr.row, addr.col)
-                            && addr.row == t.rect.r1
-                    });
-                let v = if in_totals && !matches!(v, Value::Text(_)) {
+                let in_totals = grown.is_some() || self.in_totals_row(addr);
+
+                let to_text = in_totals && matches!(v, Value::Number(_) | Value::Bool(_));
+                let v = if in_totals
+                    && !matches!(v, Value::Text(_) | Value::Number(_) | Value::Bool(_))
+                {
                     Value::from(input)
                 } else {
                     v
@@ -1328,6 +1395,9 @@ impl Workbook {
                 let report = self.set_value(addr, v);
                 if typed && !in_header {
                     self.note_typed_format(addr, input);
+                }
+                if to_text {
+                    return Ok(self.totals_display_text(addr));
                 }
                 Ok(report)
             }
@@ -1489,6 +1559,34 @@ impl Workbook {
         }
     }
 
+    fn in_totals_row(&self, addr: CellAddr) -> bool {
+        self.tables.iter().any(|t| {
+            t.sheet == addr.sheet
+                && t.totals
+                && t.contains(addr.sheet, addr.row, addr.col)
+                && addr.row == t.rect.r1
+        })
+    }
+
+    pub fn set_value_entered(&mut self, addr: CellAddr, v: Value) -> RecalcReport {
+        let to_text = matches!(v, Value::Number(_) | Value::Bool(_)) && self.in_totals_row(addr);
+        let report = self.set_value(addr, v);
+        if to_text {
+            return self.totals_display_text(addr);
+        }
+        report
+    }
+
+    fn totals_display_text(&mut self, addr: CellAddr) -> RecalcReport {
+        let text = match self.value(addr) {
+            Value::Number(n) if self.number_format(addr).eq_ignore_ascii_case("general") => {
+                crate::numfmt::format_general_width(n, crate::numfmt::TEXT_GENERAL_WIDTH)
+            }
+            _ => self.display_text(addr),
+        };
+        self.set_value(addr, Value::from(text.as_str()))
+    }
+
     pub fn set_value(&mut self, addr: CellAddr, v: Value) -> RecalcReport {
         self.command(Command::Entry, |wb| {
             wb.note_changed(addr.sheet, &[notice::cell(addr)]);
@@ -1554,6 +1652,8 @@ impl Workbook {
     pub(crate) fn after_edit(&mut self, edited: Vec<CellAddr>) -> RecalcReport {
         let mut report = if self.settings.mode == CalcMode::Automatic {
             calc::recalc(self)
+        } else if self.calc.defer_entry {
+            return RecalcReport::default();
         } else {
             let mut cells: Vec<CellAddr> = Vec::new();
             for a in &edited {
@@ -1605,6 +1705,12 @@ impl Workbook {
             front.reverse();
             front.append(&mut report.changed);
             report.changed = front;
+        }
+
+        if !self.slicer_caches.is_empty() {
+            for a in &report.changed {
+                self.slicer_reload_cells(a.sheet, &[Rect::new(a.row, a.col, a.row, a.col)]);
+            }
         }
         report
     }
@@ -1673,7 +1779,32 @@ impl Workbook {
         }
     }
 
+    pub fn mark_dynamic_entry(&mut self, addr: CellAddr) {
+        if let Some(fid) = self.formula_at(addr) {
+            self.formula(fid).formula.dynamic.set(true);
+        }
+    }
+
+    pub fn restore_mem_errors(&mut self, addr: CellAddr, errors: &[(usize, XlError)]) {
+        let Some(fid) = self.formula_at(addr) else {
+            return;
+        };
+        let f = self.formula_mut(fid);
+        f.formula = Arc::new(crate::formula::Formula {
+            root: crate::formula::wrap_mem_errors(&f.formula.root, errors),
+            volatile: f.formula.volatile,
+            dynamic: f.formula.dynamic.clone(),
+        });
+        f.cls_store = Default::default();
+    }
+
     fn alloc_formula(&mut self, addr: CellAddr, formula: Arc<Formula>, text: String) -> FormulaId {
+        if formula.dynamic.get().is_none() {
+            formula.dynamic.set(
+                !crate::legacy::legacy_entry_active()
+                    && crate::eval::fdyn::root_flips(self, addr, &formula.root),
+            );
+        }
         let seq = self.chain_top();
         let cell = FormulaCell {
             addr,
@@ -1697,7 +1828,7 @@ impl Workbook {
             spill_kept: false,
             spill_src: false,
             member_retry: false,
-            fdyn: std::sync::atomic::AtomicU64::new(0),
+            cls_store: std::sync::Mutex::new(None),
             legacy_entry: crate::legacy::legacy_entry_active(),
             share: None,
         };
@@ -2034,6 +2165,16 @@ impl Workbook {
         refers_to: &str,
         scope: Option<SheetId>,
     ) -> Result<RecalcReport, EditError> {
+        let key = crate::text::name_key(name);
+        if self
+            .tables
+            .iter()
+            .any(|t| crate::text::name_key(&t.disp) == key)
+        {
+            return Err(EditError::Compile(
+                "A table with that name already exists. Select a different name.".into(),
+            ));
+        }
         self.define_name_quiet(name, refers_to, scope)?;
         calc::name_changed(self, &crate::text::name_key(name));
         Ok(self.after_edit(vec![]))
@@ -2143,6 +2284,7 @@ impl Workbook {
                 Formula {
                     root,
                     volatile: compiled.volatile,
+                    dynamic: Default::default(),
                 }
             } else {
                 compiled
@@ -2162,7 +2304,10 @@ impl Workbook {
 
             self.names.mark_copy_stale(s, key.into(), Vec::new());
         }
+        self.names
+            .note_definition(&crate::text::name_key(name), scope);
         self.names.insert(NameDef {
+            def_info: None,
             name: name.to_string(),
             scope,
             refers_to: body.to_string(),
@@ -2203,6 +2348,7 @@ impl Workbook {
                 self.formula_mut(fid).formula = Arc::new(Formula {
                     root,
                     volatile: f.volatile,
+                    dynamic: f.dynamic.clone(),
                 });
             }
         }
@@ -2210,9 +2356,11 @@ impl Workbook {
         for d in defs {
             if let Some(root) = map(&d.formula.root) {
                 self.names.insert(NameDef {
+                    def_info: None,
                     formula: Arc::new(Formula {
                         root,
                         volatile: d.formula.volatile,
+                        dynamic: d.formula.dynamic.clone(),
                     }),
                     ..d
                 });
@@ -2238,6 +2386,26 @@ impl Workbook {
         &self.settings
     }
 
+    pub fn set_calc_on_save(&mut self, on: bool) {
+        self.settings.calc_on_save = on;
+    }
+
+    pub fn set_load_pending(&mut self, calc_id: u32) {
+        let ids: Vec<FormulaId> = self.formula_ids().collect();
+        for fid in ids {
+            calc::mark_dirty(self, fid);
+        }
+        self.calc.load_pending = Some(calc_id);
+    }
+
+    pub fn load_pending(&self) -> Option<u32> {
+        self.calc.load_pending
+    }
+
+    pub fn set_auto_fill_lists(&mut self, on: bool) {
+        self.settings.auto_fill_lists = on;
+    }
+
     pub fn set_force_full(&mut self, on: bool) {
         self.settings.force_full = on;
         self.settings.force_full_seen |= on;
@@ -2257,12 +2425,33 @@ impl Workbook {
     }
 
     fn set_date_system_run(&mut self, ds: DateSystem) -> RecalcReport {
-        self.settings.date_system = ds;
+        self.settings.date_system = match ds {
+            DateSystem::D1900 | DateSystem::D1900Gregorian => {
+                if self.settings.date_compat {
+                    DateSystem::D1900
+                } else {
+                    DateSystem::D1900Gregorian
+                }
+            }
+            other => other,
+        };
         if self.settings.mode == CalcMode::Automatic {
             self.full_recalc()
         } else {
             RecalcReport::default()
         }
+    }
+
+    pub fn set_date_compat(&mut self, on: bool) -> RecalcReport {
+        self.command(Command::Setting, |wb| {
+            wb.settings.date_compat = on;
+            let ds = wb.settings.date_system;
+            wb.set_date_system_run(ds)
+        })
+    }
+
+    pub fn date_compat(&self) -> bool {
+        self.settings.date_compat
     }
 
     pub fn set_threads(&mut self, threads: usize) {
@@ -2303,6 +2492,9 @@ impl Workbook {
         comment: Option<String>,
         shortcut: Option<String>,
     ) {
+        if comment.is_some() {
+            self.names.note_definition(key, scope);
+        }
         let n = self.names.notes_mut(key, scope);
         if let Some(c) = comment {
             n.comment = c;
@@ -2536,6 +2728,7 @@ impl Workbook {
                 .chain(wb.calc.host_volatile.iter())
                 .any(|&f| wb.formula(f).addr.sheet != sheet);
             wb.calc.sheet_calc_pending = outside;
+            wb.calc.load_pending = None;
             report
         })
     }
@@ -2548,7 +2741,7 @@ impl Workbook {
         if self.settings.mode == CalcMode::Automatic {
             return self.command(Command::Calculate, calc::recalc);
         }
-        self.command(Command::Calculate, |wb| {
+        self.command(Command::CalculateRange, |wb| {
             let cells: Vec<CellAddr> = wb
                 .formula_ids()
                 .filter(|&f| {
@@ -2570,7 +2763,6 @@ impl Workbook {
             for fid in readers {
                 calc::mark_dirty(wb, fid);
             }
-            wb.notes.no_after = true;
             wb.silently(|wb| calc::recalc_only(wb, &cells))
         })
     }

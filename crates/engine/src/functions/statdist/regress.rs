@@ -41,11 +41,22 @@ fn to_numbers(vals: Vec<Value>) -> R<Vec<f64>> {
         .collect()
 }
 
+fn y_numbers(vals: Vec<Value>, log: bool) -> R<Vec<f64>> {
+    vals.into_iter()
+        .map(|v| match v {
+            Value::Number(n) if log && n <= 0.0 => Err(XlError::NUM),
+            Value::Number(n) => Ok(n),
+            _ => Err(XlError::VALUE),
+        })
+        .collect()
+}
+
 fn design(
     ctx: &mut EvalCtx,
     yo: &Operand,
     xo: Option<&Operand>,
     flags: Option<XlError>,
+    log: bool,
 ) -> R<Design> {
     let (ry, cy, yv) = grid_values(ctx, yo)?;
     let (ry, cy) = (ry as usize, cy as usize);
@@ -55,7 +66,7 @@ fn design(
         if let Some(e) = flags {
             return Err(e);
         }
-        let y = to_numbers(yv)?;
+        let y = y_numbers(yv, log)?;
         return Ok(Design {
             row,
             dims: (ry, cy),
@@ -77,8 +88,8 @@ fn design(
     }
 
     let row = row || (n == 1 && !same && by_row && rx > 1);
-    let y = to_numbers(yv)?;
     let xv = to_numbers(xv)?;
+    let y = y_numbers(yv, log)?;
     let x = if same {
         vec![xv]
     } else if by_col {
@@ -390,14 +401,10 @@ fn opt_flag(o: Option<&Operand>, default: bool) -> R<bool> {
     }
 }
 
-fn log_y(d: &mut Design) -> R<()> {
+fn log_y(d: &mut Design) {
     for v in d.y.iter_mut() {
-        if *v <= 0.0 {
-            return Err(XlError::NUM);
-        }
         *v = x87::ln(*v);
     }
-    Ok(())
 }
 
 const LIFT_LINEST: FnDef = args("LINEST", 1, 4, "RRVV", |_, _| Operand::Missing);
@@ -434,10 +441,10 @@ pub fn linest(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
         let (constant, stats) = (opt_flag(o.get(2), true), opt_flag(o.get(3), false));
 
         let fe = constant.as_ref().err().or(stats.as_ref().err()).copied();
-        let mut d = design(ctx, &o[0], present(o.get(1)), fe)?;
+        let mut d = design(ctx, &o[0], present(o.get(1)), fe, log)?;
         let (constant, stats) = (constant?, stats?);
         if log {
-            log_y(&mut d)?;
+            log_y(&mut d);
         }
         let f = fit(&d, constant)?;
         let k = f.m.len();
@@ -488,10 +495,10 @@ pub fn trend(ctx: &mut EvalCtx, o: &[Operand], log: bool) -> Operand {
             _ => None,
         };
         let flag_err = new_x_err.or(constant.as_ref().err().copied());
-        let mut d = design(ctx, &o[0], xo, flag_err)?;
+        let mut d = design(ctx, &o[0], xo, flag_err, log)?;
         let constant = constant?;
         if log {
-            log_y(&mut d)?;
+            log_y(&mut d);
         }
         let f = fit(&d, constant)?;
         let k = f.m.len();

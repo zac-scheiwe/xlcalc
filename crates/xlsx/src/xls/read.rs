@@ -166,7 +166,7 @@ fn read_sst(r: &Rec<'_>, styles: &Styles) -> Result<Vec<String>, String> {
                 left -= n;
             }
         }
-        text.push_str(&String::from_utf16_lossy(&units));
+        text.push_str(&xlcalc::wide::from_units(&units));
 
         let mut run_list: Vec<(usize, u16)> = Vec::new();
         let mut need = runs * 4;
@@ -191,6 +191,7 @@ fn read_sst(r: &Rec<'_>, styles: &Styles) -> Result<Vec<String>, String> {
             ));
         }
         let mut need = ext;
+        let mut block: Vec<u8> = Vec::new();
         while need > 0 {
             if pos >= chunks[ci].len() {
                 ci += 1;
@@ -200,31 +201,64 @@ fn read_sst(r: &Rec<'_>, styles: &Styles) -> Result<Vec<String>, String> {
                 }
             }
             let n = need.min(chunks[ci].len() - pos);
+            block.extend_from_slice(&chunks[ci][pos..pos + n]);
             pos += n;
             need -= n;
         }
-        out.push(si_xml(&text, &run_list, styles));
+        let mut item = si_xml(&text, &run_list, styles);
+        if let Some(ph) = ext_phonetic(&block, xlcalc::wide::units(&text).count(), styles) {
+            item.insert_str(item.len() - "</si>".len(), &ph.xml());
+        }
+        out.push(item);
     }
     Ok(out)
+}
+
+fn ext_phonetic(mut b: &[u8], chars: usize, styles: &Styles) -> Option<crate::rst::PhRef> {
+    let word = |d: &[u8], i: usize| {
+        d.get(2 * i..2 * i + 2)
+            .map(|x| u16::from_le_bytes([x[0], x[1]]))
+    };
+    loop {
+        let (kind, cb) = (word(b, 0)?, usize::from(word(b, 1)?));
+        let data = b.get(4..4 + cb)?;
+        if kind != 1 {
+            b = &b[4 + cb..];
+            continue;
+        }
+        let (font, flags) = (word(data, 0)?, word(data, 1)?);
+        let (count, len) = (usize::from(word(data, 2)?), usize::from(word(data, 4)?));
+        let text: Vec<u16> = (0..len).map_while(|i| word(data, 5 + i)).collect();
+        let readings: Vec<[u16; 3]> = (0..count)
+            .map_while(|i| {
+                let at = 5 + len + 3 * i;
+                Some([word(data, at)?, word(data, at + 1)?, word(data, at + 2)?])
+            })
+            .collect();
+        let font = styles.font_id(font) as u32;
+        return Some(crate::rst::PhRef::from_binary(
+            &text, &readings, chars, font, flags,
+        ));
+    }
 }
 
 pub(super) fn si_xml(text: &str, runs: &[(usize, u16)], styles: &Styles) -> String {
     if runs.is_empty() {
         return format!("<si><t xml:space=\"preserve\">{}</t></si>", xstr(text));
     }
-    let chars: Vec<char> = text.chars().collect();
+    let units: Vec<u16> = xlcalc::wide::units(text).collect();
     let mut s = String::from("<si>");
     if runs[0].0 > 0 {
-        let head: String = chars[..runs[0].0.min(chars.len())].iter().collect();
+        let head = xlcalc::wide::from_units(&units[..runs[0].0.min(units.len())]);
         let _ = write!(s, "<r><t xml:space=\"preserve\">{}</t></r>", xstr(&head));
     }
     for (i, (from, font)) in runs.iter().enumerate() {
         let to = runs
             .get(i + 1)
-            .map_or(chars.len(), |r| r.0)
-            .min(chars.len());
+            .map_or(units.len(), |r| r.0)
+            .min(units.len());
         let from = (*from).min(to);
-        let part: String = chars[from..to].iter().collect();
+        let part = xlcalc::wide::from_units(&units[from..to]);
         let _ = write!(
             s,
             "<r>{}<t xml:space=\"preserve\">{}</t></r>",
@@ -255,6 +289,42 @@ struct Book8 {
     blips: Vec<Option<super::rdraw::Blip>>,
 }
 
+struct CalcRecs {
+    mode: i16,
+    count: u16,
+    delta: f64,
+    iterate: bool,
+    on_save: bool,
+}
+
+impl CalcRecs {
+    fn read(&mut self, r: &Rec<'_>) -> Result<(), String> {
+        let mut c = Cur::new(r.d);
+        match r.id {
+            0x0D => self.mode = c.i16()?,
+            0x0C => self.count = c.u16()?,
+            0x11 => self.iterate = c.u16()? != 0,
+            0x10 => self.delta = c.f64()?,
+            0x5F => self.on_save = c.u16()? != 0,
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn read_sheets(&mut self, recs: &[Rec<'_>]) -> Result<(), String> {
+        let mut depth = 0i32;
+        for r in recs {
+            match r.id {
+                0x809 => depth += 1,
+                0x0A => depth -= 1,
+                _ if depth == 1 => self.read(r)?,
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+}
+
 fn read_globals(recs: &[Rec<'_>]) -> Result<Book8, String> {
     let mut b = Book8 {
         cp: 1252,
@@ -273,8 +343,14 @@ fn read_globals(recs: &[Rec<'_>]) -> Result<Book8, String> {
         window_flags: 0x38,
         blips: Vec::new(),
     };
-    let (mut calc_mode, mut calc_count, mut delta) = (1i16, 100u16, 0.001f64);
-    let (mut iter, mut precision, mut recalc) = (false, true, false);
+    let mut settings = CalcRecs {
+        mode: 1,
+        count: 100,
+        delta: 0.001,
+        iterate: false,
+        on_save: true,
+    };
+    let mut precision = true;
     let mut calc_id: Option<u32> = None;
     let mut sst_rec: Option<usize> = None;
     let mut depth = 0i32;
@@ -285,6 +361,7 @@ fn read_globals(recs: &[Rec<'_>]) -> Result<Book8, String> {
             0x0A => {
                 depth -= 1;
                 if depth <= 0 {
+                    settings.read_sheets(&recs[i + 1..])?;
                     break;
                 }
             }
@@ -448,12 +525,8 @@ fn read_globals(recs: &[Rec<'_>]) -> Result<Book8, String> {
                     extra: c.rest().to_vec(),
                 });
             }
-            0x0D => calc_mode = c.i16()?,
-            0x0C => calc_count = c.u16()?,
-            0x11 => iter = c.u16()? != 0,
-            0x10 => delta = c.f64()?,
+            0x0C | 0x0D | 0x10 | 0x11 | 0x5F => settings.read(r)?,
             0x0E => precision = c.u16()? != 0,
-            0x5F => recalc = c.u16()? != 0,
             0x1C1 => {
                 c.u32()?;
                 calc_id = Some(c.u32()? & 0x3FFFF);
@@ -481,23 +554,22 @@ fn read_globals(recs: &[Rec<'_>]) -> Result<Book8, String> {
     if let Some(id) = calc_id {
         let _ = write!(calc, " calcId=\"{id}\"");
     }
-    match calc_mode {
+    match settings.mode {
         0 => calc.push_str(" calcMode=\"manual\""),
         -1 => calc.push_str(" calcMode=\"autoNoTable\""),
         _ => {}
     }
-    if iter {
+    if settings.iterate {
         let _ = write!(
             calc,
-            " iterate=\"1\" iterateCount=\"{calc_count}\" iterateDelta=\"{delta}\""
+            " iterate=\"1\" iterateCount=\"{}\" iterateDelta=\"{}\"",
+            settings.count, settings.delta
         );
     }
     if !precision {
         calc.push_str(" fullPrecision=\"0\"");
     }
-    if recalc {
-        calc.push_str(" calcOnSave=\"1\"");
-    } else {
+    if !settings.on_save {
         calc.push_str(" calcOnSave=\"0\"");
     }
     b.calc = calc;
@@ -683,8 +755,7 @@ pub(crate) fn to_xlsx(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
                 }
             }
             let what = format!("chart sheet {}", sh.name);
-            let chart =
-                super::rchart::to_xml(&crecs, &mut fx, book.cp, si as u32, &what, &mut warnings);
+            let chart = super::rchart::to_xml(&crecs, &mut fx, book.cp, &what, &mut warnings);
             let mut drawing_tag = String::new();
             if let Some(cx) = chart {
                 let pt = |at: usize| {
@@ -843,7 +914,7 @@ pub(crate) fn to_xlsx(bytes: &[u8]) -> Result<(Vec<u8>, Vec<String>), String> {
             continue;
         }
         let text = match fx.text(&n.rgce, &n.extra, (0, 0), n.scope, book.cp) {
-            Ok(Dec::Text(t)) => t,
+            Ok(Dec::Text(t, _)) => t,
             Ok(Dec::Exp { .. }) => continue,
             Err(e) => {
                 warnings.push(format!("name {}: formula not supported: {e}", n.name));

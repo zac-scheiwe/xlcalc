@@ -1,7 +1,11 @@
+use std::borrow::Cow;
+
 use rustc_hash::FxHashMap;
 
 use crate::address::{CellAddr, Rect, SheetId};
+use crate::host::Evaluated;
 use crate::structure::{Axis, Shift};
+use crate::value::Value;
 use crate::workbook::Workbook;
 
 pub const EMU_PT: f64 = 12700.0;
@@ -61,6 +65,106 @@ pub enum Part {
 
     External(String),
     Text(String),
+
+    Name(NameLink),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct NameLink {
+    pub scope: Option<SheetId>,
+
+    pub name: String,
+}
+
+#[derive(Clone, Debug)]
+pub enum NameRead {
+    Refs(Vec<(SheetId, Rect)>),
+
+    Value(Value),
+    Undefined,
+}
+
+impl Workbook {
+    pub fn read_name_link(&self, n: &NameLink) -> NameRead {
+        if self.names().get(&n.name, n.scope).is_none() {
+            return NameRead::Undefined;
+        }
+        let host = n.scope.or_else(|| {
+            let shadowed = |s: SheetId| self.names().get(&n.name, Some(s)).is_some();
+            self.sheets().map(|s| s.id).find(|&s| !shadowed(s))
+        });
+        let Some(host) = host else {
+            return NameRead::Undefined;
+        };
+        match self.evaluate_text(&n.name, CellAddr::new(host, 0, 0)) {
+            Evaluated::Ref(a) => NameRead::Refs(a.iter().map(|a| (a.sheet, a.rect)).collect()),
+            Evaluated::Value(v) => NameRead::Value(v),
+        }
+    }
+
+    pub fn resolve_part<'a>(&self, p: &'a Part) -> Cow<'a, Part> {
+        let Part::Name(n) = p else {
+            return Cow::Borrowed(p);
+        };
+        let item = |v: &Value| match v {
+            Value::Number(x) => x.to_string(),
+            Value::Text(t) => quoted_item(t),
+            Value::Bool(b) => quoted_item(if *b { "TRUE" } else { "FALSE" }),
+            _ => "0".to_string(),
+        };
+        Cow::Owned(match self.read_name_link(n) {
+            NameRead::Refs(v) => Part::Refs(v),
+            NameRead::Value(Value::Error(_)) | NameRead::Undefined => Part::Dead,
+            NameRead::Value(Value::Array(a)) => {
+                let items: Vec<String> = a.data.iter().map(item).collect();
+                Part::Text(format!("{{{}}}", items.join(",")))
+            }
+            NameRead::Value(v) => Part::Text(format!("{{{}}}", item(&v))),
+        })
+    }
+
+    pub(crate) fn drawing_respell_name(&mut self, key: &str, scope: Option<SheetId>, name: &str) {
+        let key = crate::text::name_key(key);
+        for d in self.drawings.values_mut() {
+            for c in d.shapes.iter_mut().filter_map(|s| s.chart.as_mut()) {
+                for p in c.parts_mut() {
+                    if let Part::Name(n) = p {
+                        if n.scope == scope && crate::text::name_key(&n.name) == key {
+                            n.name = name.to_string();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn literal_items(t: &str) -> Vec<(&str, &str)> {
+    let inner = t.strip_prefix('{').unwrap_or(t);
+    let inner = inner.strip_suffix('}').unwrap_or(inner);
+    let mut out = Vec::new();
+    let (mut start, mut quoted) = (0, false);
+    for (i, c) in inner.char_indices() {
+        match c {
+            '"' => quoted = !quoted,
+            ',' | ';' if !quoted => {
+                out.push((inner[start..i].trim(), &inner[i..=i]));
+                start = i + 1;
+            }
+            _ => {}
+        }
+    }
+    out.push((inner[start..].trim(), ""));
+    out
+}
+
+pub fn unquoted_item(item: &str) -> Option<String> {
+    let inner = item.strip_prefix('"')?.strip_suffix('"')?;
+    Some(inner.replace("\"\"", "\""))
+}
+
+pub fn quoted_item(s: &str) -> String {
+    format!("\"{}\"", s.replace('"', "\"\""))
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -96,6 +200,14 @@ pub struct SeriesFmt {
     pub labels: Option<DataLabels>,
 
     pub point_labels: Vec<u16>,
+
+    pub label_texts: Vec<PointText>,
+
+    pub label_cells: Vec<(u16, Option<CellAddr>)>,
+
+    pub held_labels: Vec<HeldLabel>,
+
+    pub name_data: bool,
     pub trends: Vec<Trendline>,
     pub error_bars: Option<ErrorBars>,
 
@@ -104,6 +216,27 @@ pub struct SeriesFmt {
     pub plot_rank: u32,
 
     pub number: Option<u32>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct PointText {
+    pub point: u16,
+
+    pub text: String,
+
+    pub link: Option<Part>,
+
+    pub auto: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct HeldLabel {
+    pub cell: Option<CellAddr>,
+
+    pub own: bool,
+    pub text: Option<PointText>,
+
+    pub format: Vec<(String, BagVal)>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -189,6 +322,12 @@ pub const CAT_CROSS: &str = "Axis1.#cx";
 
 pub type Bag = std::collections::BTreeMap<String, BagVal>;
 
+pub const TITLE_DELETED: &str = "#title_off";
+
+pub const TITLE_AUTO: &str = "#title_auto";
+
+pub const TITLE_TYPED: &str = "#title_typed";
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Chart {
     pub chart_type: i32,
@@ -237,6 +376,8 @@ pub struct ChartUndo {
 pub struct ChartAxis {
     pub has_title: bool,
     pub title: String,
+
+    pub title_ref: Option<Part>,
     pub grid_major: bool,
     pub grid_minor: bool,
 
@@ -261,6 +402,7 @@ impl ChartAxis {
         ChartAxis {
             has_title: false,
             title: String::new(),
+            title_ref: None,
             grid_major,
             grid_minor: false,
             min: None,
@@ -285,6 +427,32 @@ impl Series {
 }
 
 impl Chart {
+    pub fn auto_title_series(&self) -> Option<&Series> {
+        if self.bag.contains_key(TITLE_DELETED)
+            || self.bag.get("Chart.SeriesNameLevel") == Some(&BagVal::I(-3))
+        {
+            return None;
+        }
+        self.lone_series().filter(|s| s.name != Part::None)
+    }
+
+    pub fn lone_series(&self) -> Option<&Series> {
+        let mut pies: Vec<i32> = Vec::new();
+        let mut count = 0;
+        let mut first = None;
+        for s in self.series.iter().filter(|s| !s.fmt.filtered) {
+            if matches!(s.chart_type, 5 | 68..=71 | -4102) {
+                if pies.contains(&s.axis_group) {
+                    continue;
+                }
+                pies.push(s.axis_group);
+            }
+            count += 1;
+            first = first.or(Some(s));
+        }
+        first.filter(|_| count == 1)
+    }
+
     pub fn free_series_number(&self) -> u32 {
         let used: std::collections::BTreeSet<usize> = self
             .series
@@ -296,7 +464,14 @@ impl Chart {
     }
 
     pub fn parts_mut(&mut self) -> Vec<&mut Part> {
+        let (mut v, texts) = self.parts_split_mut();
+        v.extend(texts);
+        v
+    }
+
+    pub fn parts_split_mut(&mut self) -> (Vec<&mut Part>, Vec<&mut Part>) {
         let mut v: Vec<&mut Part> = Vec::new();
+        let mut texts: Vec<&mut Part> = Vec::new();
         for s in &mut self.series {
             v.push(&mut s.name);
             v.push(&mut s.x);
@@ -304,11 +479,33 @@ impl Chart {
             if let Some(b) = &mut s.fmt.bubbles {
                 v.push(b);
             }
+            texts.extend(s.fmt.label_texts.iter_mut().filter_map(|t| t.link.as_mut()));
+            let held = s.fmt.held_labels.iter_mut().filter_map(|h| h.text.as_mut());
+            texts.extend(held.filter_map(|t| t.link.as_mut()));
         }
-        if let Some(t) = &mut self.title_ref {
-            v.push(t);
+        texts.extend(self.title_ref.as_mut());
+        texts.extend(self.axes.iter_mut().filter_map(|a| a.title_ref.as_mut()));
+        (v, texts)
+    }
+
+    fn label_cells_mut(&mut self) -> impl Iterator<Item = &mut Option<CellAddr>> {
+        self.series.iter_mut().flat_map(|s| {
+            let held = s.fmt.held_labels.iter_mut().map(|h| &mut h.cell);
+            s.fmt.label_cells.iter_mut().map(|c| &mut c.1).chain(held)
+        })
+    }
+
+    pub fn carry_label_cells(&mut self, from: Option<(SheetId, SheetId)>) {
+        let kept = |c: &Option<CellAddr>| from.is_some_and(|f| c.is_some_and(|c| c.sheet == f.0));
+        for s in &mut self.series {
+            s.fmt.label_cells.retain(|c| kept(&c.1));
+            s.fmt.held_labels.retain(|h| kept(&h.cell));
         }
-        v
+        if let Some((_, to)) = from {
+            for c in self.label_cells_mut().flatten() {
+                c.sheet = to;
+            }
+        }
     }
 
     pub fn new() -> Chart {
@@ -793,7 +990,28 @@ impl Workbook {
             tabs.iter()
                 .any(|t| t.r0 <= r.r0 && r.r1 <= t.r1 && t.c0 <= r.c0 && r.c1 <= t.c1)
         };
+
+        self.control_anchors.retain(|&(sheet, _), pos| {
+            if sheet != s.sheet || !reached(pos) {
+                return true;
+            }
+            match pos {
+                Pos::Both { from, to } => {
+                    if in_block(from) && in_block(to) && from != to {
+                        return false;
+                    }
+                    *from = map(from);
+                    *to = map(to);
+                }
+                Pos::One { from, .. } => *from = map(from),
+                Pos::Abs { .. } => {}
+            }
+            true
+        });
         let mut resplit = Vec::new();
+        let shifted = self
+            .sheet(s.sheet)
+            .map(|x| crate::parser::print::sheet_name_text(&x.name));
         let sheets: Vec<SheetId> = self.drawings.keys().copied().collect();
         for sheet in sheets {
             let Some(d) = self.drawings.get_mut(&sheet) else {
@@ -848,8 +1066,27 @@ impl Workbook {
                         .iter()
                         .map(|x| matches!(x.name, Part::Refs(_)))
                         .collect();
-                    for p in c.parts_mut() {
+                    for cell in c.label_cells_mut() {
+                        let Some(at) = *cell else { continue };
+                        let one = Rect::new(at.row, at.col, at.row, at.col);
+                        let mut p = Part::Refs(vec![(at.sheet, one)]);
+                        shift_part(&mut p, s);
+                        *cell = match p {
+                            Part::Refs(v) => v.first().map(|&(x, r)| CellAddr::new(x, r.r0, r.c0)),
+                            _ => None,
+                        };
+                    }
+                    let (parts, texts) = c.parts_split_mut();
+                    for p in parts {
                         trimmed |= shift_part(p, s);
+                    }
+
+                    for p in texts {
+                        if shift_part(p, s) && *p == Part::Dead {
+                            if let Some(name) = &shifted {
+                                *p = Part::External(format!("{name}!#REF!"));
+                            }
+                        }
                     }
 
                     if s.limit.is_some() {
@@ -958,12 +1195,21 @@ impl Workbook {
         for d in self.drawings.values_mut() {
             for sh in &mut d.shapes {
                 if let Some(c) = &mut sh.chart {
+                    for cell in c.label_cells_mut() {
+                        if cell.is_some_and(|at| at.sheet == id) {
+                            *cell = None;
+                        }
+                    }
                     for p in c.parts_mut() {
-                        if let Part::Refs(v) = p {
-                            v.retain(|(s, _)| *s != id);
-                            if v.is_empty() {
-                                *p = Part::Dead;
+                        match p {
+                            Part::Refs(v) => {
+                                v.retain(|(s, _)| *s != id);
+                                if v.is_empty() {
+                                    *p = Part::Dead;
+                                }
                             }
+                            Part::Name(n) if n.scope == Some(id) => *p = Part::Dead,
+                            _ => {}
                         }
                     }
                 }
@@ -975,11 +1221,21 @@ impl Workbook {
         if let Some(mut d) = self.drawings.get(&src).cloned() {
             for sh in &mut d.shapes {
                 if let Some(c) = &mut sh.chart {
+                    for at in c.label_cells_mut().flatten() {
+                        if at.sheet == src {
+                            at.sheet = new;
+                        }
+                    }
                     for p in c.parts_mut() {
-                        if let Part::Refs(v) = p {
-                            for e in v.iter_mut().filter(|e| e.0 == src) {
-                                e.0 = new;
+                        match p {
+                            Part::Refs(v) => {
+                                for e in v.iter_mut().filter(|e| e.0 == src) {
+                                    e.0 = new;
+                                }
                             }
+
+                            Part::Name(n) if n.scope == Some(src) => n.scope = Some(new),
+                            _ => {}
                         }
                     }
                 }
@@ -1029,6 +1285,26 @@ impl Workbook {
                     c.source = None;
                 }
                 let mut moved = false;
+
+                let holds = |r: Rect, at: CellAddr| {
+                    (r.r0..=r.r1).contains(&at.row) && (r.c0..=r.c1).contains(&at.col)
+                };
+                let onto = |v: u32, d: i64| (i64::from(v) + d) as u32;
+                let pasted = Rect::new(
+                    onto(src.r0, dr),
+                    onto(src.c0, dc),
+                    onto(src.r1, dr),
+                    onto(src.c1, dc),
+                );
+                for cell in c.label_cells_mut() {
+                    let Some(at) = *cell else { continue };
+                    if at.sheet == src_sheet && holds(src, at) {
+                        let to = CellAddr::new(dst.sheet, onto(at.row, dr), onto(at.col, dc));
+                        *cell = Some(to);
+                    } else if at.sheet == dst.sheet && holds(pasted, at) {
+                        *cell = None;
+                    }
+                }
                 let before: Vec<Part> = c.series.iter().map(|s| s.values.clone()).collect();
 
                 let dest = Rect::new(
@@ -1164,5 +1440,64 @@ impl Workbook {
             .max(d.next_id)
             .max(2);
         self.drawings.insert(sheet, d);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chart(series: &[(i32, bool)]) -> Chart {
+        let mut c = Chart::new();
+        for &(chart_type, named) in series {
+            c.series.push(Series {
+                name: if named {
+                    Part::Text("n".into())
+                } else {
+                    Part::None
+                },
+                x: Part::None,
+                values: Part::None,
+                chart_type,
+                axis_group: 1,
+                fmt: SeriesFmt::default(),
+            });
+        }
+        c
+    }
+
+    #[test]
+    fn array_literal_items() {
+        let items: Vec<&str> = literal_items("{1,\"a,b\",\"s\"\"t\"}")
+            .into_iter()
+            .map(|i| i.0)
+            .collect();
+        assert_eq!(items, ["1", "\"a,b\"", "\"s\"\"t\""]);
+        assert_eq!(unquoted_item(items[2]).as_deref(), Some("s\"t"));
+        assert_eq!(quoted_item("s\"t"), items[2]);
+        assert_eq!(unquoted_item("1"), None);
+    }
+
+    #[test]
+    fn automatic_title_series() {
+        let has = |c: &Chart| c.auto_title_series().is_some();
+        assert!(!has(&chart(&[])));
+        assert!(has(&chart(&[(51, true)])));
+        assert!(!has(&chart(&[(51, false)])));
+        assert!(!has(&chart(&[(51, true), (51, true)])));
+
+        assert!(has(&chart(&[(5, true), (5, true)])));
+        assert!(!has(&chart(&[(5, false), (5, true)])));
+        assert!(!has(&chart(&[(-4120, true), (-4120, true)])));
+        let mut filtered = chart(&[(51, true), (51, true)]);
+        filtered.series[0].fmt.filtered = true;
+        assert!(has(&filtered));
+        let mut deleted = chart(&[(51, true)]);
+        deleted.bag.insert(TITLE_DELETED.into(), BagVal::I(1));
+        assert!(!has(&deleted));
+        let mut none = chart(&[(51, true)]);
+        none.bag
+            .insert("Chart.SeriesNameLevel".into(), BagVal::I(-3));
+        assert!(!has(&none));
     }
 }

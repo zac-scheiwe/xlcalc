@@ -23,7 +23,7 @@ pub fn confidence_norm(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let alpha = num(ctx, &a[0])?;
         let sd = num(ctx, &a[1])?;
         let n = num(ctx, &a[2])?.trunc();
-        if alpha <= 0.0 || alpha >= 1.0 || sd <= 0.0 || n < 1.0 {
+        if !super::dist::xpos(alpha) || alpha >= 1.0 || !super::dist::xpos(sd) || n < 1.0 {
             return Err(XlError::NUM);
         }
 
@@ -37,7 +37,7 @@ pub fn confidence_t(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let alpha = num(ctx, &a[0])?;
         let sd = num(ctx, &a[1])?;
         let n = num(ctx, &a[2])?.trunc();
-        if alpha <= 0.0 || alpha >= 1.0 || sd <= 0.0 || n < 1.0 {
+        if !super::dist::xpos(alpha) || alpha >= 1.0 || !super::dist::xpos(sd) || n < 1.0 {
             return Err(XlError::NUM);
         }
         if n == 1.0 {

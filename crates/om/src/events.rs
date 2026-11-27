@@ -5,6 +5,7 @@ use xlcalc_variant::{ObjectId, Variant};
 use xlcalc_vba::MacroLookup;
 
 use crate::app::{Application, BookId, Mode, Object, RangeRef, Track};
+use crate::cmdargs::Operands;
 use crate::conv::Args;
 use crate::error::OmError;
 use crate::typelib::{self, Interface, Member};
@@ -506,12 +507,13 @@ impl<'v> Application<'v> {
             let _ = VbaSink.deliver(self, &mut ev);
         }
 
-        let kept: Vec<ObjectId> = self
+        let mut kept: Vec<ObjectId> = self
             .books
             .iter()
             .filter_map(|b| b.vba.host.clone())
             .flat_map(|h| h.project().held_objects())
             .collect();
+        kept.extend(self.dictionary_held());
         for id in made {
             if !kept.contains(&id) {
                 self.release(id);
@@ -637,12 +639,16 @@ impl<'v> Application<'v> {
         Ok((name, errors))
     }
 
-    pub(crate) fn copy_document_module(&mut self, b: BookId, src: SheetId) -> Result<(), OmError> {
+    pub(crate) fn copy_document_module(
+        &mut self,
+        b: BookId,
+        src: SheetId,
+        copy: SheetId,
+    ) -> Result<(), OmError> {
         let Some(code) = self.sheet_code_name(b, src) else {
             return Ok(());
         };
         let bk = self.book(b)?;
-        let copy = bk.wb.active_sheet();
         let Some(source) = bk
             .vba
             .modules
@@ -799,10 +805,16 @@ impl<'v> Application<'v> {
     }
 
     pub(crate) fn open_with_events(&mut self, a: &Args) -> Result<Variant, OmError> {
+        let operands = self.open_operands(a)?;
+        let (_, mut done) = self.each_call(a.lcid, operands, |app, o| app.open_one(o, a.lcid))?;
+        Ok(done.pop().unwrap_or(Variant::Empty))
+    }
+
+    fn open_one(&mut self, operands: Operands, lcid: u32) -> Result<Variant, OmError> {
         let before: Vec<BookId> = self.books.iter().map(|b| b.id).collect();
         self.hold_activation = true;
-        let r = self.workbooks_open(a);
-        let r = match r {
+        let r = self.workbooks_open(operands, lcid);
+        let (r, update_links) = match r {
             Ok(r) => r,
             Err(e) => {
                 self.hold_activation = false;
@@ -810,9 +822,9 @@ impl<'v> Application<'v> {
             }
         };
         if let Some(b) = self.opened_book(&r).filter(|b| !before.contains(b)) {
-            let mut refreshed = match a.i32(1) {
-                Ok(Some(u)) => u != 0,
-                _ => !self.ask_to_update_links,
+            let mut refreshed = match update_links {
+                Some(u) => u != 0,
+                None => !self.ask_to_update_links,
             };
 
             let live = self.book(b).is_ok_and(|bk| {
@@ -864,13 +876,13 @@ impl<'v> Application<'v> {
 
     pub(crate) fn range_list_object(&mut self, r: &RangeRef) -> Result<Variant, OmError> {
         let (sheet, rect) = self.resolve(r)?;
-        let name = self
+        let id = self
             .book(r.book)?
             .wb
             .table_at(xlcalc::CellAddr::new(sheet, rect.r0, rect.c0))
-            .map(|t| t.name.clone());
-        Ok(match name {
-            Some(n) => self.alloc(Object::Table(r.book, n)),
+            .map(|t| t.id);
+        Ok(match id {
+            Some(id) => self.alloc(Object::Table(r.book, id, false)),
             None => Variant::Dispatch(None),
         })
     }

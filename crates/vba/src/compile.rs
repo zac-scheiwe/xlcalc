@@ -142,6 +142,8 @@ struct ModScope {
     events: HashMap<String, usize>,
 
     enums: HashMap<String, (HashMap<String, usize>, bool)>,
+
+    enum_order: Vec<String>,
 }
 
 struct Compiler<'a> {
@@ -445,6 +447,7 @@ impl<'a> Compiler<'a> {
             self.scopes[mi]
                 .enums
                 .insert(lower(&e.name), (members, e.public));
+            self.scopes[mi].enum_order.push(lower(&e.name));
         }
         for c in &m.consts {
             check(self, &c.name, c.pos)?;
@@ -798,7 +801,7 @@ impl<'a> Compiler<'a> {
                     return Some(Sym::Proc(id));
                 }
             }
-            for (members, public) in s.enums.values() {
+            for (members, public) in s.enum_order.iter().map(|e| &s.enums[e]) {
                 if public_only && !public {
                     continue;
                 }

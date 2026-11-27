@@ -1,5 +1,5 @@
 use crate::sheetprot::ProtObject;
-use xlcalc::{FilterSpec, Rect, SheetId, Table};
+use xlcalc::{CellAddr, FilterSpec, Rect, SheetId, Table};
 use xlcalc_variant::Variant;
 
 use crate::addr::{max_cols, max_rows};
@@ -69,7 +69,7 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("Merge", Func) => {
-                let across = a.bool(0)?.unwrap_or(false);
+                let across = self.merge_across(a)?;
                 self.book_mut(book)?
                     .wb
                     .merge_cells(sheet, rect, across)
@@ -95,28 +95,21 @@ impl Application<'_> {
                 self.book_mut(book)?.wb.unmerge_cells(sheet, rect);
                 Ok(Variant::Empty)
             }
-            ("AutoFilter", Func) => self.range_autofilter(book, sheet, rect, m, a),
+            ("AutoFilter", Func) => self.range_autofilter(book, sheet, rect, a),
 
             ("ColumnWidth", Get) => {
                 let wb = &self.book(book)?.wb;
                 let w = wb.column_width(sheet, rect.c0);
 
-                let whole = (rect.r0 == 0 && rect.r1 + 1 >= 1_048_576)
-                    || (rect.c0 == 0 && rect.c1 + 1 >= 16_384);
-                let differs = if whole {
-                    let pop = wb.populated_lines(sheet, false);
-                    let mut ws = pop
-                        .range(rect.c0..=rect.c1)
-                        .map(|c| wb.column_width(sheet, *c));
-                    ws.next().is_some_and(|f| ws.any(|x| x != f))
-                } else {
-                    (rect.c0..=rect.c1).any(|c| wb.column_width(sheet, c) != w)
-                };
-                Ok(if differs {
-                    Variant::Null
-                } else {
-                    Variant::R8(w)
-                })
+                Ok(
+                    if crate::range::used_area_differs(wb, sheet, rect, |c| {
+                        wb.column_width(sheet, c)
+                    }) {
+                        Variant::Null
+                    } else {
+                        Variant::R8(w)
+                    },
+                )
             }
             ("Width", Get) => {
                 let wb = &self.book(book)?.wb;
@@ -202,8 +195,10 @@ impl Application<'_> {
 
                 if cw > 0.0 && rect.is_full_rows() {
                     wb.set_sheet_standard_width(sheet, cw);
+                    wb.use_standard_width(sheet, rect.c0, rect.c1);
+                } else {
+                    wb.set_column_width(sheet, rect.c0, rect.c1, cw);
                 }
-                wb.set_column_width(sheet, rect.c0, rect.c1, cw);
                 Ok(Variant::Empty)
             }
             _ => Err(unsupported("Range", m)),
@@ -230,7 +225,7 @@ impl Application<'_> {
             if rows {
                 !wb.row_hidden(sheet, i) && wb.row_custom_h8(sheet, i).is_none()
             } else {
-                wb.cell_width(sheet, i).1
+                wb.col_standard(sheet, i)
             }
         };
         let span = |r: &Rect| if rows { (r.r0, r.r1) } else { (r.c0, r.c1) };
@@ -273,11 +268,33 @@ impl Application<'_> {
                     }
                 }
             } else if on {
-                let std = wb.sheet_standard_width(sheet);
-                wb.set_column_width(sheet, lo, hi, std);
+                wb.use_standard_width(sheet, lo, hi);
             }
         }
         Ok(Variant::Empty)
+    }
+
+    pub(crate) fn merge_across(&self, a: &Args) -> Result<bool, OmError> {
+        if let Some(Variant::Dispatch(Some(id))) = a.get(0) {
+            let Some(Object::Range(r)) = self.arena.get(*id) else {
+                return Err(OmError::app_defined());
+            };
+            let (sheet, rect) = self.resolve(r)?;
+            let value = self
+                .book(r.book)?
+                .wb
+                .value(CellAddr::new(sheet, rect.r0, rect.c0));
+            return match value {
+                _ if !rect.is_cell() => Err(OmError::app_defined()),
+                xlcalc::Value::Blank => Ok(false),
+                xlcalc::Value::Bool(b) => Ok(b),
+                xlcalc::Value::Number(n) => Ok(n != 0.0),
+                _ => Err(OmError::app_defined()),
+            };
+        }
+        Ok(a.bool(0)
+            .map_err(|_| OmError::app_defined())?
+            .unwrap_or(false))
     }
 
     fn range_autofilter(
@@ -285,25 +302,20 @@ impl Application<'_> {
         book: BookId,
         sheet: SheetId,
         rect: Rect,
-        m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
-        let table: Option<String> = self
+        let table = self
             .book(book)?
             .wb
             .tables()
             .iter()
             .find(|t| t.sheet == sheet && t.rect == rect)
-            .map(|t| t.name.clone());
-
-        if !matches!(a.get(4), None | Some(Variant::I4(1))) || a.get(5).is_some() {
-            return Err(unsupported("Range", m));
-        }
-        let Some(field) = a.i32(0)? else {
+            .map(|t| (t.id, t.name.clone()));
+        let Some(_) = a.get(0) else {
             if a.get(1).is_some() {
                 return Err(OmError::app_defined());
             }
-            if let Some(name) = table {
+            if let Some((id, name)) = table {
                 let on = self
                     .book(book)?
                     .wb
@@ -314,7 +326,7 @@ impl Application<'_> {
                 if on {
                     wb.autofilter_off(sheet, Some(&name)).map_err(edit_error)?;
                 } else {
-                    wb.table_filter_on(&name);
+                    wb.table_filter_on(id);
                 }
                 return Ok(Variant::Bool(true));
             }
@@ -322,96 +334,78 @@ impl Application<'_> {
                 .wb
                 .autofilter_toggle(sheet, rect)
                 .map_err(edit_error)?;
+            if !self.book(book)?.wb.autofilter_mode(sheet) {
+                self.drop_filter_sort(book, sheet);
+            }
             return Ok(Variant::Bool(true));
         };
-        let criteria1: Option<String> = match a.get(1) {
-            None | Some(Variant::Null | Variant::Empty) => None,
 
-            Some(Variant::Bool(b)) => Some(if *b { "TRUE" } else { "FALSE" }.to_string()),
-            Some(Variant::Bstr(s)) => Some(s.clone()),
-            Some(Variant::Array(arr)) => {
-                let mut items = Vec::new();
-                for v in &arr.data {
-                    match v {
-                        Variant::Bstr(s) => items.push(s.as_str()),
-                        _ => return Err(OmError::type_mismatch()),
+        let args = match self.af_args(a) {
+            Ok(args) => args,
+            Err(f) => {
+                if f.arrows && table.is_none() {
+                    let wb = &mut self.book_mut(book)?.wb;
+                    if !wb.autofilter_mode(sheet) {
+                        wb.autofilter_toggle(sheet, rect).ok();
                     }
                 }
-                Some(items.join(&xlcalc::testing::VALUES_SEP.to_string()))
+                return Err(f.err);
             }
-            Some(Variant::R8(x)) => Some(x.to_string()),
-            Some(Variant::I4(n)) => Some(n.to_string()),
-            Some(Variant::I2(n)) => Some(n.to_string()),
-            Some(_) => return Err(OmError::type_mismatch()),
         };
+        let values_op = args.operator == "values";
 
-        let op_arg = match a.get(2) {
-            Some(Variant::Null | Variant::Empty) => return Err(OmError::app_defined()),
-            Some(Variant::Bool(true)) => None,
-            _ => a.i32(2)?,
+        let operator = match (values_op, &args.values) {
+            (true, None) => "and",
+            _ => args.operator,
         };
-        let op_code = match op_arg {
-            Some(1) if a.get(3).is_none() => 0,
-            o => o.unwrap_or(0),
-        };
-        let operator = match op_arg {
-            None | Some(1) => "and",
-            Some(2) => "or",
-            Some(3) => "top10",
-            Some(4) => "bottom10",
-            Some(5) => "top10pct",
-            Some(6) => "bottom10pct",
-            Some(7) => "values",
-            Some(11) => "dynamic",
-            Some(_) => return Err(OmError::app_defined()),
-        };
-        let criteria2 = a.string(3)?;
-        let field = u32::try_from(field).unwrap_or(0);
+        let joined = args
+            .values
+            .as_ref()
+            .map(|v| v.join(&xlcalc::testing::VALUES_SEP.to_string()));
+        let first_field = args.calls.first().map_or(0, |c| c.field);
 
-        let each: Vec<String> = match a.get(1) {
-            Some(Variant::Array(arr)) if op_code != 7 => arr
-                .data
-                .iter()
-                .filter_map(|v| match v {
-                    Variant::Bstr(s) => Some(s.clone()),
-                    _ => None,
-                })
-                .collect(),
-            _ => Vec::new(),
-        };
-        let runs: Vec<Option<&str>> = if each.is_empty() {
-            vec![criteria1.as_deref()]
-        } else {
-            each.iter().map(|s| Some(s.as_str())).collect()
-        };
+        let none = matches!(&args.values, Some(v) if v.is_empty());
 
         let wb = &mut self.book_mut(book)?.wb;
         let locale = crate::conv::input_locale(a.lcid, wb.locale());
-        for criteria1 in runs {
+        for call in &args.calls {
+            let op_code = match (values_op, &args.values) {
+                (true, Some(_)) => 7,
+                (true, None) => i32::from(call.c2.is_some()),
+                _ if matches!(args.op_code, 1 | 2) && call.c2.is_none() => 0,
+                _ => args.op_code,
+            };
             let spec = FilterSpec {
-                field,
-                criteria1,
+                field: u32::try_from(call.field).unwrap_or(0),
+                criteria1: none
+                    .then_some(xlcalc::testing::VALUES_NONE)
+                    .or(joined.as_deref())
+                    .or(call.c1.as_deref())
+                    .or((operator == "icon").then_some(""))
+                    .or((values_op && call.c2.is_some()).then_some("=")),
                 operator: Some(operator),
-                criteria2: criteria2.as_deref(),
+                criteria2: call.c2.as_deref().filter(|_| !none),
                 op_code,
+                rich: args.rich,
             };
             wb.with_input_locale(&locale, |wb| {
-                wb.autofilter(sheet, rect, table.as_deref(), spec)
+                wb.autofilter(sheet, rect, table.as_ref().map(|(_, n)| n.as_str()), spec)
             })
             .map_err(edit_error)?;
         }
 
-        if op_code == 7 {
-            return Ok(Variant::R8(f64::from(field)));
+        if values_op || operator == "icon" {
+            return Ok(Variant::R8(f64::from(first_field)));
         }
-        if let Some(Variant::Array(arr)) = a.get(1) {
-            return Ok(Variant::Array(Box::new(xlcalc_variant::SafeArray {
-                elem: xlcalc_variant::VarType::Variant,
-                bounds: vec![(1, arr.data.len() as u32)],
-                data: vec![Variant::Bool(true); arr.data.len()],
-            })));
-        }
-        Ok(Variant::Bool(true))
+        let total = args
+            .shape
+            .as_ref()
+            .map_or(1, |b| b.iter().map(|&(_, n)| n as usize).product());
+        Ok(Self::af_answer(&args.shape, total))
+    }
+
+    fn drop_filter_sort(&mut self, book: BookId, sheet: SheetId) {
+        self.sorts.remove(&SortOwner::Filter(book, sheet));
     }
 
     pub(crate) fn sheet_view_member(
@@ -441,6 +435,7 @@ impl Application<'_> {
                     return Err(OmError::app_defined());
                 }
                 wb.autofilter_off(s, None).map_err(edit_error)?;
+                self.drop_filter_sort(b, s);
                 Ok(Variant::Empty)
             }
             ("FilterMode", Get) => Ok(Variant::Bool(self.book(b)?.wb.filter_mode(s))),
@@ -476,11 +471,14 @@ impl Application<'_> {
                 Ok(self.alloc(Object::AutoFilter(b, t.sheet, Some(t.name.clone()))))
             }
             ("ShowAutoFilter", Get) => Ok(Variant::Bool(t.show_filter)),
+
             ("ShowAutoFilter", Put) => {
-                self.object_guard(b, t.sheet, ProtObject::TableFilter, None)?;
                 let on = self.put_bool(a)?;
+                if on != t.show_filter {
+                    self.object_guard(b, t.sheet, ProtObject::TableFilter, None)?;
+                }
                 if on {
-                    self.book_mut(b)?.wb.table_filter_on(&t.name);
+                    self.book_mut(b)?.wb.table_filter_on(t.id);
                 } else {
                     self.book_mut(b)?
                         .wb
@@ -518,12 +516,27 @@ impl Application<'_> {
                 let v = self
                     .book(b)?
                     .wb
-                    .autofilter_view(s)
+                    .autofilter_view(s, table)
                     .ok_or_else(OmError::app_defined)?;
                 self.new_range(b, s, v.rect, Mode::Cells)
             }
-            ("Filters", Get) => Ok(self.alloc(Object::Filters(b, s))),
-            ("Sort", Get) => Ok(self.alloc(Object::Sort(SortOwner::Filter(b, s)))),
+            ("Filters", Get) => Ok(self.alloc(Object::Filters(b, s, table.map(str::to_string)))),
+
+            ("Sort", Get) => {
+                let object = match table {
+                    Some(name) => {
+                        let id = self
+                            .book(b)?
+                            .wb
+                            .table_by_name(name)
+                            .map(|t| t.id)
+                            .ok_or_else(OmError::app_defined)?;
+                        Object::TableFilterSort(b, id)
+                    }
+                    None => Object::Sort(SortOwner::Filter(b, s)),
+                };
+                Ok(self.alloc(object))
+            }
             ("Parent", Get) => Ok(self.alloc(Object::Worksheet(b, s))),
             _ => Err(unsupported("AutoFilter", m)),
         }
@@ -533,24 +546,26 @@ impl Application<'_> {
         &mut self,
         b: BookId,
         s: SheetId,
+        table: Option<&str>,
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
+        let name = || table.map(str::to_string);
         let n = self
             .book(b)?
             .wb
-            .autofilter_view(s)
+            .autofilter_view(s, table)
             .map_or(0, |v| v.fields.len());
         match m.name {
             "Count" => Ok(Variant::I4(n as i32)),
             "Item" | "_Default" => {
                 let cols: Vec<usize> = (0..n).collect();
                 let i = self.item_index(a.get(0), a.lcid, &cols, |_| "")?;
-                Ok(self.alloc(Object::Filter(b, s, i)))
+                Ok(self.alloc(Object::Filter(b, s, name(), i)))
             }
             "_NewEnum" => {
                 let items = (0..n)
-                    .map(|i| self.alloc(Object::Filter(b, s, i)))
+                    .map(|i| self.alloc(Object::Filter(b, s, name(), i)))
                     .collect();
                 Ok(self.alloc_enumerator(items))
             }
@@ -558,17 +573,41 @@ impl Application<'_> {
         }
     }
 
+    pub(crate) fn filter_color_member(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        table: Option<&str>,
+        i: usize,
+        m: &'static Member,
+    ) -> Result<Variant, OmError> {
+        let col = self
+            .book(b)?
+            .wb
+            .autofilter_view(s, table)
+            .and_then(|v| v.fields.get(i).cloned().flatten())
+            .ok_or_else(OmError::app_defined)?;
+        match (m.name, m.kind) {
+            ("Color", InvokeKind::Get) => match col.c1.parse::<f64>() {
+                Ok(n) => Ok(Variant::R8(n)),
+                Err(_) => Err(OmError::app_defined()),
+            },
+            _ => Err(unsupported("Interior", m)),
+        }
+    }
+
     pub(crate) fn autofilter_col_member(
         &mut self,
         b: BookId,
         s: SheetId,
+        table: Option<&str>,
         i: usize,
         m: &'static Member,
     ) -> Result<Variant, OmError> {
         let view = self
             .book(b)?
             .wb
-            .autofilter_view(s)
+            .autofilter_view(s, table)
             .ok_or_else(OmError::app_defined)?;
         let col = view.fields.get(i).ok_or_else(OmError::app_defined)?;
         match m.name {
@@ -583,6 +622,29 @@ impl Application<'_> {
                         data,
                     })));
                 }
+
+                if c.op == 14 {
+                    return Ok(Variant::Empty);
+                }
+
+                if c.op == 0 && c.c1.is_empty() {
+                    return Err(OmError::app_defined());
+                }
+                if matches!(c.op, 8 | 12) {
+                    return Ok(self.alloc(Object::FilterColor(
+                        b,
+                        s,
+                        table.map(str::to_string),
+                        i,
+                        false,
+                    )));
+                }
+
+                if matches!(c.op, 9 | 11 | 13) {
+                    if let Ok(n) = c.c1.parse::<i32>() {
+                        return Ok(Variant::I4(n));
+                    }
+                }
                 Ok(Variant::Bstr(c.c1.clone()))
             }
             "Criteria2" => match col.as_ref().and_then(|c| c.c2.clone()) {
@@ -595,7 +657,9 @@ impl Application<'_> {
             )),
             "Count" => {
                 let c = col.as_ref().ok_or_else(OmError::app_defined)?;
-                Ok(Variant::I4(if c.values.len() > 1 {
+                Ok(Variant::I4(if c.op == 0 && c.c1.is_empty() {
+                    0
+                } else if c.values.len() > 1 {
                     c.values.len() as i32
                 } else {
                     1 + i32::from(c.c2.is_some())

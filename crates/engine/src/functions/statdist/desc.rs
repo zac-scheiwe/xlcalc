@@ -1,5 +1,4 @@
 use super::*;
-use crate::functions::math::{round_decimal, RoundMode};
 use crate::number;
 use crate::value::Array;
 use crate::x87;
@@ -24,6 +23,10 @@ pub(super) fn pairs(ctx: &mut EvalCtx, a: &Operand, b: &Operand) -> R<(Vec<f64>,
 
     let mut calc = false;
     for (x, y) in va.iter().zip(vb.iter()) {
+        if crate::functions::args::is_long_text(x) {
+            return Err(XlError::NUM);
+        }
+
         for v in [x, y] {
             match v {
                 Value::Error(XlError::CALC) => calc = true,
@@ -203,7 +206,7 @@ pub fn covar(ctx: &mut EvalCtx, o: &[Operand], sample: bool) -> Operand {
 }
 
 fn sorted_numbers(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
-    let mut v = collect_numbers(ctx, std::slice::from_ref(op), SUM_POLICY)?;
+    let mut v = collect_numbers(ctx, std::slice::from_ref(op), SKIP_LONG_POLICY)?;
     v.sort_by(|a, b| a.partial_cmp(b).unwrap());
     Ok(v)
 }
@@ -276,7 +279,11 @@ pub fn percentrank(ctx: &mut EvalCtx, o: &[Operand], exclusive: bool) -> Operand
         };
         let v = sorted_numbers(ctx, &o[0])?;
         let n = v.len();
-        if n == 0 || x < v[0] || x > v[n - 1] {
+
+        let less = v.iter().filter(|&&a| a < x).count();
+        let found = v.contains(&x);
+
+        if less == n || (less == 0 && !found) {
             return Err(XlError::NA);
         }
 
@@ -290,24 +297,32 @@ pub fn percentrank(ctx: &mut EvalCtx, o: &[Operand], exclusive: bool) -> Operand
         if sig >= 309.0 {
             return Err(XlError::DIV0);
         }
+        let p = crate::number::tento(sig as u32);
         let nf = n as f64;
-        let rank = {
-            let less = v.iter().filter(|&&a| a < x).count();
-            let pos = if v[less] == x {
-                less as f64
-            } else {
-                let lo = v[less - 1];
-                let hi = v[less];
-                (less - 1) as f64 + (x - lo) / (hi - lo)
-            };
-            if exclusive {
-                (pos + 1.0) / (nf + 1.0)
-            } else {
-                pos / (nf - 1.0)
-            }
+
+        let mut r0 = less as f64;
+        if exclusive {
+            r0 = x87::add(r0, 1.0);
+        }
+        if !found {
+            r0 = x87::sub(r0, 1.0);
+        }
+        let denom = if exclusive {
+            x87::add(nf, 1.0)
+        } else {
+            x87::sub(nf, 1.0)
         };
-        let digits = sig.min(400.0) as i32;
-        Ok(round_decimal(rank, digits, RoundMode::Down))
+        let mut acc = x87::div(r0, denom);
+        if !found {
+            let lo = v[less - 1];
+            let hi = v[less];
+            let inv = x87::div(1.0, denom);
+            let q = x87::div(x87::sub(x, lo), x87::sub(hi, lo));
+            acc = x87::add(acc, x87::mul(q, inv));
+        }
+
+        let scaled = crate::number::round15(x87::mul(acc, p)).trunc();
+        Ok(x87::div(scaled, p))
     })())
 }
 
@@ -373,22 +388,6 @@ pub fn rank(ctx: &mut EvalCtx, o: &[Operand], avg: bool) -> Operand {
 }
 
 fn mode_values(ctx: &mut EvalCtx, ops: &[Operand]) -> R<Vec<f64>> {
-    for op in ops {
-        match op {
-            Operand::Missing => return Err(XlError::VALUE),
-            Operand::Val(Value::Error(e)) => return Err(*e),
-
-            Operand::Ref(r) if r.single().is_some_and(|a| a.rect.is_cell()) => {
-                let area = *r.single().unwrap();
-                match ctx.area_array(&area) {
-                    Value::Blank => return Err(XlError::VALUE),
-                    Value::Error(e) => return Err(e),
-                    _ => {}
-                }
-            }
-            _ => {}
-        }
-    }
     let mut out = Vec::new();
     for op in ops {
         match op {
@@ -431,7 +430,8 @@ pub fn mode(ctx: &mut EvalCtx, o: &[Operand], multi: bool) -> Operand {
 pub fn trimmean(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
     opfin((|| {
         let p = opnum(ctx, &o[1])?;
-        let data = collect_numbers(ctx, std::slice::from_ref(&o[0]), SUM_POLICY)?;
+
+        let data = collect_numbers(ctx, std::slice::from_ref(&o[0]), SKIP_LONG_POLICY)?;
         let mut v = data.clone();
         v.sort_by(|a, b| a.partial_cmp(b).unwrap());
         if !(0.0..1.0).contains(&p) || v.is_empty() {
@@ -496,6 +496,8 @@ pub fn frequency(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
         }),
         Operand::Val(Value::Number(n)) => Ok(vec![*n]),
         Operand::Val(Value::Error(e)) => Err(*e),
+
+        Operand::Val(v) if long_text_in(v) => Err(XlError::NA),
         Operand::Val(Value::Array(_)) | Operand::Ref(_) => numbers_only(ctx, &o[0]),
         _ => Ok(Vec::new()),
     };
@@ -568,7 +570,7 @@ fn moment_sum(v: &[f64], m: f64, s: f64, fourth: bool, f: &mut x87::MathFlag) ->
 
 pub fn kurt(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
     opfin((|| {
-        let v = collect_numbers(ctx, o, SUM_POLICY)?;
+        let v = collect_numbers(ctx, o, SKIP_LONG_POLICY)?;
         if v.len() < 4 {
             return Err(XlError::DIV0);
         }
@@ -589,7 +591,7 @@ pub fn kurt(ctx: &mut EvalCtx, o: &[Operand]) -> Operand {
 
 pub fn skew(ctx: &mut EvalCtx, o: &[Operand], population: bool) -> Operand {
     opfin((|| {
-        let v = collect_numbers(ctx, o, SUM_POLICY)?;
+        let v = collect_numbers(ctx, o, SKIP_LONG_POLICY)?;
         if v.len() < 3 {
             return Err(XlError::DIV0);
         }
@@ -611,7 +613,8 @@ pub fn standardize(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let x = num(ctx, &a[0])?;
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
-        if s <= 0.0 {
+
+        if !super::dist::xpos(s) {
             return Err(XlError::NUM);
         }
         Ok(x87::div(x87::sub(x, m), s))

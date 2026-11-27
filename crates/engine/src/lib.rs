@@ -1,19 +1,23 @@
 #[inline]
 pub(crate) fn command_stack<R>(f: impl FnOnce() -> R) -> R {
-    stacker::maybe_grow(4 * 1024 * 1024, 64 * 1024 * 1024, f)
+    xlcalc_stack::maybe_grow(4 * 1024 * 1024, 64 * 1024 * 1024, f)
 }
 
 #[inline]
 pub(crate) fn deep<R>(f: impl FnOnce() -> R) -> R {
-    stacker::maybe_grow(64 * 1024, 1024 * 1024, f)
+    xlcalc_stack::maybe_grow(64 * 1024, 1024 * 1024, f)
 }
 
 pub(crate) mod address;
+pub(crate) mod adjust;
 pub(crate) mod advfilter;
 pub mod atp;
 pub(crate) mod autofill;
 pub(crate) mod calc;
+mod carry;
 pub(crate) mod cellfmt;
+mod cfblock;
+mod cfgradient;
 pub mod cfv;
 mod cfv_edit;
 mod cfv_hosed;
@@ -26,6 +30,7 @@ pub(crate) mod datatable;
 pub(crate) mod datetime;
 pub(crate) mod deadref;
 pub(crate) mod dedup;
+pub mod dfrtree;
 pub mod drawing;
 mod drawing_groups;
 pub mod drawing_text;
@@ -45,11 +50,16 @@ pub(crate) mod goalseek;
 pub(crate) mod graph;
 pub(crate) mod host;
 pub mod hyperlink;
+mod ifmt_auto;
+mod ifmt_slots;
+#[doc(hidden)]
+pub mod ifmt_tables;
 pub(crate) mod input;
 pub(crate) mod legacy;
 mod legacy_classes;
 mod legacy_ftab;
 mod legacy_grbit;
+mod legacy_pass;
 mod legacy_single;
 pub(crate) mod locale;
 pub(crate) mod merge;
@@ -57,23 +67,29 @@ pub(crate) mod moves;
 pub mod notes;
 pub(crate) mod number;
 pub(crate) mod numfmt;
+pub mod objfmla;
 mod pagebreak;
 pub mod parser;
+pub use parser::print::stored_formula_text;
 pub(crate) mod pastespecial;
 pub mod pivot;
 pub mod refit;
 pub(crate) mod replace;
+pub mod rich;
 pub(crate) mod rowheight;
 pub mod scenarios;
 pub(crate) mod share;
 pub mod slicer;
+mod slicer_layout;
 pub mod solver;
 pub(crate) mod sort;
 pub mod sparkline;
+pub mod spid;
 pub(crate) mod structure;
 pub mod style;
 pub(crate) mod subtotal;
 pub(crate) mod text;
+mod token_classes;
 mod trace;
 pub(crate) mod ttc;
 pub(crate) mod value;
@@ -90,12 +106,13 @@ pub use address::{col_to_letters, letters_to_col, parse_a1_rect, CellAddr, Rect,
 pub use advfilter::AdvancedFilterSpec;
 pub use autofill::FillType;
 pub use calc::RecalcReport;
-pub use cellfmt::format_code_as_read;
 pub use cellfmt::number_format_refused;
+pub use cellfmt::{format_code_as_read, format_code_normalized, CfNumberFormat};
 pub use colwidth::{
-    file_width_to_px, px_to_file_width, px_to_width, width_to_px, STANDARD_PX as STANDARD_COLUMN_PX,
+    coldx_to_dx, coldx_to_px, digit_px, file_width_to_px, px_to_coldx, px_to_file_width,
+    px_to_width, standard_px_for, width_to_px, STANDARD_PX as STANDARD_COLUMN_PX,
 };
-pub use datatable::DataTable;
+pub use datatable::{DataTable, TableInput};
 pub use datetime::DateSystem;
 pub use dedup::DedupSpec;
 pub use eval::lambda::LambdaValue;
@@ -103,15 +120,18 @@ pub use eval::Area;
 pub use fileform::{file_prefix, FileFormula, FileFormulaKind};
 pub use fillseries::{DateUnit, SeriesSpec, SeriesType};
 pub use findcells::{EndDir, FindSpec, LookIn, SpecialKind};
+pub use formula::name_ch_xls;
+pub use functions::arity as function_arity;
 pub use functions::names as function_names;
 pub use host::{
     Arg, CallContext, Evaluated, FunctionHost, ParamKind, ReadView, RtdSource, RuntimeError,
     Signature,
 };
+pub use ifmt_slots::{builtin_code_of_file_id, builtin_file_id_of_code, NumberFormatTable};
 pub use locale::{DateOrder, Locale};
-pub use number::format_general;
-pub use numfmt::{Color, NumberFormat, Rendered};
-pub use parser::{is_valid_name, ParseError};
+pub use number::{format_general, format_literal};
+pub use numfmt::{Color, ElapsedUnit, NumberFormat, Rendered, StrictDate};
+pub use parser::{is_valid_name, name_from_label, ParseError};
 pub use pastespecial::{PasteOp, PasteSpecial, PasteWhat};
 pub use replace::ReplaceSpec;
 pub use rowheight::window_rows;
@@ -144,13 +164,17 @@ pub fn window_rows_with(zoom: f64, hp: &dyn Fn(u32) -> u32) -> u32 {
 }
 pub use sort::{SortColor, SortKey, SortSpec};
 pub use subtotal::{SubFunc, SubtotalSpec};
-pub use text::{collate_compare, collate_compare_match_case};
+pub use text::wide;
+pub use text::{collate_compare, collate_compare_match_case, name_key};
+pub use token_classes::{token_classes, FormulaContext, TokenClass, TokenClasses};
 pub use ttc::TtcSpec;
 pub use value::{Array, Value, XlError};
 pub mod xlm;
-pub use view::{ColView, FilterSpec, FilterView};
+pub use view::filterfile::{Attrs, FileColumn, FileCrit, FileSort, RangeFilterFile};
+pub use view::{ColView, ColWidth, FilterSpec, FilterView};
 pub use workbook::ext::{split_path, ExtLink, ExtName, ExtSheetData, OpenBook};
-pub use workbook::tables::{table_display_name, Table};
+pub use workbook::tables::{table_display_name, ColumnId, Table, TableId, TableKey};
+pub use workbook::LastFormat;
 pub use workbook::{
     paste_area, CalcMode, Command, EditError, Entry, FormulaCell, FormulaId, NameDef, Names,
     Notice, Outcome, Selection, Settings, Sheet, SheetKind, SheetState, TrackId, Workbook,
@@ -160,13 +184,8 @@ pub use workbook::{
 pub struct FunctionInfo {
     pub min_args: u8,
     pub max_args: u8,
+
     pub volatile: bool,
-
-    pub params: &'static str,
-}
-
-pub fn argument_class(upper_name: &str, i: usize) -> Option<u8> {
-    legacy_classes::class_of(upper_name, i)
 }
 
 pub fn function_info(upper_name: &str) -> Option<FunctionInfo> {
@@ -174,8 +193,7 @@ pub fn function_info(upper_name: &str) -> Option<FunctionInfo> {
     Some(FunctionInfo {
         min_args: def.min_args,
         max_args: def.max_args,
-        volatile: def.volatile,
-        params: def.params,
+        volatile: def.volatile_record(),
     })
 }
 

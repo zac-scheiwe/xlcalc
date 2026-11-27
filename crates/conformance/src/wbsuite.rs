@@ -20,6 +20,7 @@ pub fn run_workbook(golden: &J, xlsx: &Path, check_text: bool) -> Tally {
     if imp.opened_uncalculated {
         imp.workbook.full_recalc();
     }
+    widen_columns(golden, &mut imp.workbook);
     compare_book(golden, xlsx, &imp.workbook, check_text, "", &mut tally);
 
     if !imp.workbook.settings().iteration {
@@ -37,7 +38,8 @@ pub fn run_workbook(golden: &J, xlsx: &Path, check_text: bool) -> Tally {
             }
         });
         match saved {
-            Ok(back) => {
+            Ok(mut back) => {
+                widen_columns(golden, &mut back.workbook);
                 for w in &back.warnings {
                     tally.add(Outcome::Wrong, || format!("saved: import: {w}"));
                 }
@@ -54,6 +56,25 @@ pub fn run_workbook(golden: &J, xlsx: &Path, check_text: bool) -> Tally {
         }
     }
     tally
+}
+
+fn widen_columns(golden: &J, wb: &mut xlcalc::Workbook) {
+    for it in golden["items"].as_array().into_iter().flatten() {
+        let Some(sh) = it["sheet"].as_str().and_then(|n| wb.sheet_by_name(n)) else {
+            continue;
+        };
+        let id = sh.id;
+        let max_col = it["cells"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .filter_map(|c| parse_cell_ref(wb, c["cell"].as_str()?, id))
+            .map(|a| a.col)
+            .max();
+        if let Some(m) = max_col {
+            wb.set_column_width(id, 0, m, 60.0);
+        }
+    }
 }
 
 fn compare_opened(golden: &J, wb: &xlcalc::Workbook, tally: &mut Tally) {
@@ -129,7 +150,7 @@ fn compare_book(
                 )
             });
             if let Some(text) = c["text"].as_str() {
-                let t = wb.display_text(addr);
+                let t = wb.shown_text(addr);
                 let o = if t == text {
                     Outcome::Exact
                 } else {

@@ -79,7 +79,7 @@ impl Rec {
     }
 
     fn st(&mut self, s: &str) -> &mut Self {
-        self.u16(s.encode_utf16().count().min(255) as u16);
+        self.u16(xlcalc::wide::units(s).count().min(255) as u16);
         put_chars(&mut self.0, s);
         self
     }
@@ -208,7 +208,7 @@ fn sxaddl(o: &mut Out, sxc: u8, sxd: u8, data: &[u8]) {
 
 fn sxaddl_id(o: &mut Out, sxc: u8, s: &str) {
     let mut d = Rec::default();
-    d.u32(s.encode_utf16().count() as u32).u16(0).st(s);
+    d.u32(xlcalc::wide::units(s).count() as u32).u16(0).st(s);
     sxaddl(o, sxc, 0, &d.0);
 }
 
@@ -331,13 +331,13 @@ pub(super) fn write_caches(
                 .u16(rc.r1 as u16)
                 .u8(rc.c0 as u8)
                 .u8(rc.c1 as u8)
-                .u16(text.encode_utf16().count() as u16 + 1)
+                .u16(xlcalc::wide::units(&text).count() as u16 + 1)
                 .u8(if text.is_ascii() { 0 } else { 1 });
             if text.is_ascii() {
                 d.u8(prefix).raw(text.as_bytes());
             } else {
                 d.u16(u16::from(prefix));
-                for u in text.encode_utf16() {
+                for u in xlcalc::wide::units(&text) {
                     d.u16(u);
                 }
             }
@@ -710,8 +710,8 @@ pub(super) fn write_view(o: &mut Out, p: &PivotIn, cache: &CacheIn, warnings: &m
         .u16(nlines("colItems") as u16)
         .u16(grbit)
         .u16(1)
-        .u16(name.encode_utf16().count() as u16)
-        .u16(data_name.encode_utf16().count() as u16);
+        .u16(xlcalc::wide::units(name).count() as u16)
+        .u16(xlcalc::wide::units(data_name).count() as u16);
     put_chars(&mut d.0, name);
     put_chars(&mut d.0, data_name);
     o.rec(SXVIEW, &d.0);
@@ -934,9 +934,9 @@ pub(super) fn write_view(o: &mut Out, p: &PivotIn, cache: &CacheIn, warnings: &m
         .unwrap_or("");
     if !style.is_empty() {
         let mut d = Rec::default();
-        let n = style.encode_utf16().count() as u16;
+        let n = xlcalc::wide::units(style).count() as u16;
         d.raw(&[0; 6]).u16(n * 3).u16(n);
-        for u in style.encode_utf16() {
+        for u in xlcalc::wide::units(style) {
             d.u16(u);
         }
         sxaddl(o, 0, 0x1E, &d.0);

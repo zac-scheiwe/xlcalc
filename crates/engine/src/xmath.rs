@@ -34,10 +34,22 @@ pub fn acos(x: f64) -> f64 {
     crate::x87::sub(FRAC_PI_2, asin(x))
 }
 
+fn expm1(x: f64) -> f64 {
+    use crate::x87;
+    if x.abs() > 1.0 {
+        return x87::sub(x87::exp(x), 1.0);
+    }
+    if x.abs() <= f64::EPSILON {
+        return x;
+    }
+    let u = x87::exp(x);
+    x87::div(x87::mul(x87::sub(u, 1.0), x), x87::ln(u))
+}
+
 pub fn sinh(x: f64) -> f64 {
     use crate::x87;
     let d = if x.abs() < 1.0 {
-        x87::sub(x87::expm1(x), x87::expm1(-x))
+        x87::sub(expm1(x), expm1(-x))
     } else {
         x87::sub(x87::exp(x), x87::exp(-x))
     };
@@ -51,22 +63,24 @@ pub fn cosh(x: f64) -> f64 {
 
 pub fn tanh(x: f64) -> f64 {
     use crate::x87;
-    if x.abs() > 354.0 {
-        return x.signum();
-    }
-    if x.abs() >= 1.0 {
-        let (p, m) = (x87::exp(x), x87::exp(-x));
-        return x87::div(x87::sub(p, m), x87::add(p, m));
-    }
-    let (p, m) = (x87::expm1(x), x87::expm1(-x));
-    x87::div(x87::sub(p, m), x87::add(2.0, x87::add(p, m)))
+    let (p, m, den) = if x.abs() < 1.0 {
+        let (m, p) = (expm1(-x), expm1(x));
+        (p, m, x87::add(x87::add(p, m), 2.0))
+    } else {
+        let (m, p) = (x87::exp(-x), x87::exp(x));
+        if !p.is_finite() || !m.is_finite() {
+            return 1.0f64.copysign(x);
+        }
+        (p, m, x87::add(p, m))
+    };
+    x87::div(x87::sub(p, m), den)
 }
 
 pub fn asinh(x: f64) -> f64 {
     use crate::x87;
     let a = x.abs();
     let r = x87::ln(x87::add(x87::sqrt(x87::add(x87::mul(a, a), 1.0)), a));
-    if x < 0.0 {
+    if x < 0.0 && r != 0.0 {
         -r
     } else {
         r
@@ -136,6 +150,19 @@ pub fn pow(x: f64, y: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hyperbolic_branch_edges() {
+        let t = 1.75 * f64::EPSILON / 2.0;
+        assert_eq!(expm1(t), t);
+        assert_eq!(expm1(-f64::EPSILON), -f64::EPSILON);
+        assert_eq!(sinh(t), t);
+        assert_eq!(tanh(-t), -t);
+        assert_eq!(tanh(1000.0), 1.0);
+        assert_eq!(tanh(-1000.0), -1.0);
+        assert_eq!(tanh(40.0), 1.0);
+        assert_eq!(asinh(-1e-300).to_bits(), 0);
+    }
 
     #[test]
     fn matches_excel_samples() {

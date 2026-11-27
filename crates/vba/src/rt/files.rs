@@ -140,7 +140,7 @@ pub(super) fn to_ansi(s: &str) -> Vec<u8> {
 
 pub(super) fn from_ansi(b: &[u8]) -> String {
     let u: Vec<u16> = b.iter().map(|&c| ansi_unit(u16::from(c))).collect();
-    String::from_utf16_lossy(&u)
+    xlcalc::wide::from_units(&u)
 }
 
 pub(super) fn open(ctx: &RtContext, a: &[Variant]) -> R {

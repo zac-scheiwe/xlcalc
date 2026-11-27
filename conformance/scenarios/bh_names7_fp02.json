@@ -1,0 +1,344 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "g",
+    "=Sheet1!$A$1:$A$3"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets(2).Names",
+   "call": "Add",
+   "args": [
+    "g",
+    "=Sheet1!$A$1"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "h",
+    "=Sheet1!$A$1"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets(2).Names",
+   "call": "Add",
+   "args": [
+    "h",
+    "=Sheet1!$A$1:$A$3"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets(2).Names",
+   "call": "Add",
+   "args": [
+    "k",
+    "=Sheet1!$A$1:$A$3"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets(3).Names",
+   "call": "Add",
+   "args": [
+    "k",
+    "=Sheet1!$A$2"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "m",
+    "=Sheet1!$A$1:$A$3"
+   ]
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F1",
+   "input": "=g+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F2",
+   "input": "=ABS(g)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F3",
+   "input": "=INDEX(g,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F4",
+   "input": "=Sheet1!g+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F5",
+   "input": "=ABS(Sheet1!g)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F6",
+   "input": "=INDEX(Sheet1!g,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F7",
+   "input": "=Sheet2!g+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F8",
+   "input": "=ABS(Sheet2!g)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F9",
+   "input": "=INDEX(Sheet2!g,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F10",
+   "input": "=Sheet3!g+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F11",
+   "input": "=ABS(Sheet3!g)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F12",
+   "input": "=INDEX(Sheet3!g,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F13",
+   "input": "=h+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F14",
+   "input": "=ABS(h)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F15",
+   "input": "=INDEX(h,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F16",
+   "input": "=Sheet1!h+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F17",
+   "input": "=ABS(Sheet1!h)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F18",
+   "input": "=INDEX(Sheet1!h,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F19",
+   "input": "=Sheet2!h+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F20",
+   "input": "=ABS(Sheet2!h)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F21",
+   "input": "=INDEX(Sheet2!h,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F22",
+   "input": "=Sheet3!h+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F23",
+   "input": "=ABS(Sheet3!h)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F24",
+   "input": "=INDEX(Sheet3!h,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F25",
+   "input": "=k+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F26",
+   "input": "=ABS(k)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F27",
+   "input": "=INDEX(k,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F28",
+   "input": "=Sheet1!k+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F29",
+   "input": "=ABS(Sheet1!k)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F30",
+   "input": "=INDEX(Sheet1!k,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F31",
+   "input": "=Sheet2!k+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F32",
+   "input": "=ABS(Sheet2!k)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F33",
+   "input": "=INDEX(Sheet2!k,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F34",
+   "input": "=Sheet3!k+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F35",
+   "input": "=ABS(Sheet3!k)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F36",
+   "input": "=INDEX(Sheet3!k,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F37",
+   "input": "=m+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F38",
+   "input": "=ABS(m)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F39",
+   "input": "=INDEX(m,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F40",
+   "input": "=Sheet1!m+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F41",
+   "input": "=ABS(Sheet1!m)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F42",
+   "input": "=INDEX(Sheet1!m,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F43",
+   "input": "=Sheet2!m+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F44",
+   "input": "=ABS(Sheet2!m)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F45",
+   "input": "=INDEX(Sheet2!m,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F46",
+   "input": "=Sheet3!m+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F47",
+   "input": "=ABS(Sheet3!m)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F48",
+   "input": "=INDEX(Sheet3!m,1)"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!F1:F48"
+  }
+ ]
+}

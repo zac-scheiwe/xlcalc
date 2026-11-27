@@ -84,7 +84,7 @@ fn read_fmt(rpr: Option<&Node>) -> CharFmt {
 }
 
 fn utf16_len(s: &str) -> usize {
-    s.encode_utf16().count()
+    xlcalc::wide::units(s).count()
 }
 
 pub(crate) fn read_frame(obj: &Node, text: &str) -> TextFrame {
@@ -314,7 +314,7 @@ pub(crate) fn tx_body(s: &Shape) -> String {
     if s.text.is_empty() {
         p.push_str(&rpr("endParaRPr", &tf.base));
     } else {
-        let units: Vec<u16> = s.text.encode_utf16().collect();
+        let units: Vec<u16> = xlcalc::wide::units(&s.text).collect();
         let mut i = 0;
         while i < units.len() {
             let f = tf.fmt_at(i);
@@ -322,7 +322,7 @@ pub(crate) fn tx_body(s: &Shape) -> String {
             while j < units.len() && tf.fmt_at(j) == f {
                 j += 1;
             }
-            let run = String::from_utf16_lossy(&units[i..j]);
+            let run = xlcalc::wide::from_units(&units[i..j]);
             p.push_str(&format!(
                 "<a:r>{}<a:t>{}</a:t></a:r>",
                 rpr("rPr", f),

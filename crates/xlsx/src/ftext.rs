@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 use xlcalc::{col_to_letters, letters_to_col};
 
-pub const ALIAS: &str = "_xlcalc_wb_";
+pub const ALIAS: &str = "_calc_wb_";
 
 fn is_tok(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '$' || c == '\\'
@@ -394,8 +394,8 @@ pub fn unescape_xstring(s: &str) -> String {
     while i < chars.len() {
         if chars[i] == '_' && i + 6 < chars.len() && chars[i + 1] == 'x' && chars[i + 6] == '_' {
             let hex: String = chars[i + 2..i + 6].iter().collect();
-            if let Some(ch) = u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32) {
-                out.push(ch);
+            if let Ok(unit) = u16::from_str_radix(&hex, 16) {
+                out.push_str(&xlcalc::wide::from_units(&[unit]));
                 i += 7;
                 continue;
             }
@@ -403,7 +403,7 @@ pub fn unescape_xstring(s: &str) -> String {
         out.push(chars[i]);
         i += 1;
     }
-    out
+    xlcalc::wide::join_halves(out)
 }
 
 pub fn ext_index(text: &str, keys: &[String]) -> String {
@@ -497,7 +497,7 @@ mod tests {
     fn prepares() {
         let mut al = BTreeSet::new();
         assert_eq!(prepare("LET(_xlpm.x,1,_xlpm.x+1)", &mut al), "LET(x,1,x+1)");
-        assert_eq!(prepare("[0]!Rate+1", &mut al), "_xlcalc_wb_Rate+1");
+        assert_eq!(prepare("[0]!Rate+1", &mut al), "_calc_wb_Rate+1");
         assert!(al.contains("Rate"));
         assert_eq!(prepare("SUM(_xlfn.ANCHORARRAY(A1))", &mut al), "SUM(A1#)");
         assert_eq!(prepare("_xlfn.SINGLE(A1:A3)+1", &mut al), "@A1:A3+1");

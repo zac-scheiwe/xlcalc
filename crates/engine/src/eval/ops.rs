@@ -60,7 +60,7 @@ pub fn percent(ctx: &EvalCtx, v: Value) -> Value {
     })
 }
 
-fn arith(op: BinOp, a: f64, b: f64) -> Value {
+pub(crate) fn arith(op: BinOp, a: f64, b: f64) -> Value {
     use crate::x87;
     let r = match op {
         BinOp::Add => x87::add(a, b),
@@ -145,6 +145,7 @@ fn scalar_binary(ctx: &EvalCtx, op: BinOp, a: &Value, b: &Value, snap: bool) -> 
             let mut s = String::with_capacity(x.len() + y.len());
             s.push_str(&x);
             s.push_str(&y);
+            s = text::wide::join_halves(s);
 
             if text::utf16_len(&s) > crate::value::MAX_TEXT_LEN {
                 s = text::utf16_slice(&s, 0, crate::value::MAX_TEXT_LEN);
@@ -179,11 +180,26 @@ fn scalar_binary(ctx: &EvalCtx, op: BinOp, a: &Value, b: &Value, snap: bool) -> 
     }
 }
 
-pub fn binary(ctx: &EvalCtx, op: BinOp, a: Value, b: Value) -> Value {
+fn pair_too_big(ctx: &mut EvalCtx, a: &Value, b: &Value) -> bool {
+    match (a, b) {
+        (Value::Array(x), Value::Array(y)) => {
+            ctx.shape_too_big(x.rows.max(y.rows), x.cols.max(y.cols))
+        }
+        _ => false,
+    }
+}
+
+pub fn binary(ctx: &mut EvalCtx, op: BinOp, a: Value, b: Value) -> Value {
+    if pair_too_big(ctx, &a, &b) {
+        return Value::Error(XlError::NUM);
+    }
     map2(a, b, |x, y| scalar_binary(ctx, op, x, y, false))
 }
 
-pub fn binary_snapped(ctx: &EvalCtx, op: BinOp, a: Value, b: Value) -> Value {
+pub fn binary_snapped(ctx: &mut EvalCtx, op: BinOp, a: Value, b: Value) -> Value {
+    if pair_too_big(ctx, &a, &b) {
+        return Value::Error(XlError::NUM);
+    }
     map2(a, b, |x, y| scalar_binary(ctx, op, x, y, true))
 }
 

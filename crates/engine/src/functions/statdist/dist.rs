@@ -24,6 +24,18 @@ fn coerce_all(ctx: &EvalCtx, a: &[Value], spec: &str) -> R<()> {
     Ok(())
 }
 
+pub(super) fn xpos(x: f64) -> bool {
+    let b = x.to_bits();
+    b & 0xFFFF_0000_0000_0000 != 0 && b >> 63 == 0 && x.is_finite()
+}
+
+fn comb_count(x: f64) -> R<f64> {
+    if x < 0.0 || x >= 2147483647.0 {
+        return Err(XlError::NUM);
+    }
+    Ok(x.trunc())
+}
+
 fn int(ctx: &EvalCtx, a: &[Value], i: usize) -> R<f64> {
     Ok(num(ctx, &a[i])?.trunc())
 }
@@ -181,7 +193,7 @@ pub fn norm_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
-        if s <= 0.0 {
+        if !xpos(s) {
             return Err(XlError::NUM);
         }
         let z = x87::div(x87::sub(x, m), s);
@@ -224,8 +236,16 @@ fn prob_open(p: f64) -> R<f64> {
     }
 }
 
+fn prob_open_xnum(p: f64) -> R<f64> {
+    if !xpos(p) || p >= 1.0 {
+        Err(XlError::NUM)
+    } else {
+        Ok(p)
+    }
+}
+
 pub fn norm_s_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
-    fin((|| Ok(norm_s_inv_xl(prob_open(num(ctx, &a[0])?)?)))())
+    fin((|| Ok(norm_s_inv_xl(prob_open_xnum(num(ctx, &a[0])?)?)))())
 }
 
 fn norm_s_inv_xl(p: f64) -> f64 {
@@ -237,8 +257,8 @@ pub fn norm_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
-        prob_open(p)?;
-        if s <= 0.0 {
+        prob_open_xnum(p)?;
+        if !xpos(s) {
             return Err(XlError::NUM);
         }
         Ok(x87::add(m, x87::mul(s, norm_s_inv_xl(p))))
@@ -256,7 +276,7 @@ pub fn lognorm_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 }
 
 fn lognorm(x: f64, m: f64, s: f64, cum: bool) -> R<f64> {
-    if x <= 0.0 || s <= 0.0 {
+    if !xpos(x) || !xpos(s) {
         return Err(XlError::NUM);
     }
 
@@ -294,8 +314,8 @@ pub fn lognorm_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let p = num(ctx, &a[0])?;
         let m = num(ctx, &a[1])?;
         let s = num(ctx, &a[2])?;
-        prob_open(p)?;
-        if s <= 0.0 {
+        prob_open_xnum(p)?;
+        if !xpos(s) {
             return Err(XlError::NUM);
         }
 
@@ -1117,7 +1137,7 @@ pub fn gamma_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let al = num(ctx, &a[1])?;
         let be = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
-        if x < 0.0 || al <= 0.0 || be <= 0.0 {
+        if x < 0.0 || !xpos(al) || !xpos(be) {
             return Err(XlError::NUM);
         }
         if cum {
@@ -1152,7 +1172,7 @@ pub fn expon_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let x = num(ctx, &a[0])?;
         let l = num(ctx, &a[1])?;
         let cum = flag(a, 2)?;
-        if x < 0.0 || l <= 0.0 {
+        if x < 0.0 || !xpos(l) {
             return Err(XlError::NUM);
         }
 
@@ -1174,7 +1194,7 @@ pub fn weibull_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         let al = num(ctx, &a[1])?;
         let be = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
-        if x < 0.0 || al <= 0.0 || be <= 0.0 {
+        if x < 0.0 || !xpos(al) || !xpos(be) {
             return Err(XlError::NUM);
         }
 
@@ -1189,12 +1209,14 @@ pub fn weibull_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if cum {
             return Ok(x87::sub(0.0, xl_expm1(-u)));
         }
-        if x == 0.0 {
-            return Ok(0.0);
-        }
         let e = x87::exp(-u);
 
-        let (px, pb) = (xl_pow(x, x87::sub(al, 1.0)), xl_pow(be, al));
+        let px = if x == 0.0 {
+            0.0
+        } else {
+            xl_pow(x, x87::sub(al, 1.0))
+        };
+        let pb = xl_pow(be, al);
         if !px.is_finite() || !pb.is_finite() {
             return Err(XlError::NUM);
         }
@@ -1268,12 +1290,18 @@ pub fn binom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn binom_dist_range(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let n = int(ctx, a, 0)?;
+        let n = num(ctx, &a[0])?;
         let p = num(ctx, &a[1])?;
-        let s = int(ctx, a, 2)?;
+        let s = num(ctx, &a[2])?;
         let s2 = match a.get(3) {
-            None | Some(Value::Blank) => s,
-            Some(v) => num(ctx, v)?.trunc(),
+            None | Some(Value::Blank) => None,
+            Some(v) => Some(num(ctx, v)?),
+        };
+        let n = comb_count(n)?;
+        let s = comb_count(s)?;
+        let s2 = match s2 {
+            Some(v) => comb_count(v)?,
+            None => s,
         };
 
         if n < 0.0
@@ -1354,10 +1382,12 @@ fn binom_range(n: f64, p: f64, s: f64, s2: f64) -> f64 {
 
 pub fn binom_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let n = int(ctx, a, 0)?;
+        let n = num(ctx, &a[0])?;
         let p = num(ctx, &a[1])?;
         let alpha = num(ctx, &a[2])?;
-        if n < 0.0 || n >= MAX_TRIALS || p <= 0.0 || p >= 1.0 || alpha <= 0.0 || alpha >= 1.0 {
+
+        let n = comb_count(n)?;
+        if !xpos(p) || p >= 1.0 || !xpos(alpha) || alpha >= 1.0 {
             return Err(XlError::NUM);
         }
 
@@ -1379,8 +1409,8 @@ pub fn binom_inv(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn negbinom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let f = int(ctx, a, 0)?;
-        let s = int(ctx, a, 1)?;
+        let f = num(ctx, &a[0])?;
+        let s = num(ctx, &a[1])?;
         let p = num(ctx, &a[2])?;
         let cum = flag(a, 3)?;
         negbinom(f, s, p, cum)
@@ -1389,8 +1419,8 @@ pub fn negbinom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn negbinomdist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let f = int(ctx, a, 0)?;
-        let s = int(ctx, a, 1)?;
+        let f = num(ctx, &a[0])?;
+        let s = num(ctx, &a[1])?;
         let p = num(ctx, &a[2])?;
         negbinom(f, s, p, false)
     })())
@@ -1408,8 +1438,13 @@ fn negbinom(f: f64, s: f64, p: f64, cum: bool) -> R<f64> {
     if f < 0.0 || s < 1.0 || p <= 0.0 || p >= 1.0 {
         return Err(XlError::NUM);
     }
+    let (f, s) = (f.trunc(), s.trunc());
     if !cum {
         return Ok(negbinom_pmf(f, s, p));
+    }
+
+    if f == 0.0 {
+        return Ok(x87::exp(x87::mul(s, x87::ln(p))));
     }
     Ok(ibeta(s, f + 1.0, p))
 }
@@ -1480,12 +1515,24 @@ fn hypgeom(k: f64, n: f64, kk: f64, nn: f64, cum: bool) -> R<f64> {
     Ok(hypgeom_cdf_sum(k, n, kk, nn))
 }
 
+fn hypgeom_counts(ctx: &EvalCtx, a: &[Value]) -> R<[f64; 4]> {
+    let mut v = [0.0; 4];
+    for (i, slot) in v.iter_mut().enumerate() {
+        *slot = num(ctx, &a[i])?;
+    }
+
+    if let Some(f) = a.get(4) {
+        boolean(f)?;
+    }
+    if v.iter().any(|x| *x < 0.0) {
+        return Err(XlError::NUM);
+    }
+    Ok(v.map(f64::trunc))
+}
+
 pub fn hypgeom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let k = int(ctx, a, 0)?;
-        let n = int(ctx, a, 1)?;
-        let kk = int(ctx, a, 2)?;
-        let nn = int(ctx, a, 3)?;
+        let [k, n, kk, nn] = hypgeom_counts(ctx, a)?;
         let cum = flag(a, 4)?;
         hypgeom(k, n, kk, nn, cum)
     })())
@@ -1493,10 +1540,7 @@ pub fn hypgeom_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 
 pub fn hypgeomdist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let k = int(ctx, a, 0)?;
-        let n = int(ctx, a, 1)?;
-        let kk = int(ctx, a, 2)?;
-        let nn = int(ctx, a, 3)?;
+        let [k, n, kk, nn] = hypgeom_counts(ctx, a)?;
         hypgeom(k, n, kk, nn, false)
     })())
 }
@@ -2025,9 +2069,14 @@ fn igamma_pq(a: f64, y: f64) -> (f64, f64) {
 
 pub fn poisson_dist(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     fin((|| {
-        let k = int(ctx, a, 0)?;
+        let k = num(ctx, &a[0])?;
         let l = num(ctx, &a[1])?;
         let cum = flag(a, 2)?;
+
+        if k < 0.0 {
+            return Err(XlError::NUM);
+        }
+        let k = k.trunc();
         if k == 0.0 && l < 0.0 {
             return Ok(x87::exp(-l));
         }

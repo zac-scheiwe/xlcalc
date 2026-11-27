@@ -188,7 +188,7 @@ pub(super) fn write(o: &mut Out, notes: &[NoteIn], first_id: u32) {
         d.extend((note.col as u16).to_le_bytes());
         d.extend((if note.visible { 2u16 } else { 0 }).to_le_bytes());
         d.extend(((first_id + i as u32) as u16).to_le_bytes());
-        let units: Vec<u16> = note.author.encode_utf16().take(54).collect();
+        let units: Vec<u16> = xlcalc::wide::units(&note.author).take(54).collect();
         let wide = !note.author.is_ascii();
         d.extend((units.len() as u16).to_le_bytes());
         d.push(u8::from(wide));

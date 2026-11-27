@@ -814,7 +814,7 @@ impl crate::Application<'_> {
     }
 
     fn x_char_len(&self, n: usize) -> usize {
-        self.xml.nodes[n].value.encode_utf16().count()
+        xlcalc::wide::units(&self.xml.nodes[n].value).count()
     }
 
     fn x_chardata_call(&mut self, n: usize, name: &str, put: bool, args: &[Variant]) -> R {
@@ -1648,20 +1648,20 @@ fn attr_text(v: &Variant) -> Result<String, VbaError> {
 }
 
 fn slice16(s: &str, from: usize, count: usize) -> String {
-    let u: Vec<u16> = s.encode_utf16().collect();
+    let u: Vec<u16> = xlcalc::wide::units(s).collect();
     let a = from.min(u.len());
     let b = a.saturating_add(count).min(u.len());
-    String::from_utf16_lossy(&u[a..b])
+    xlcalc::wide::from_units(&u[a..b])
 }
 
 fn splice16(s: &str, from: usize, count: usize, with: &str) -> String {
-    let u: Vec<u16> = s.encode_utf16().collect();
+    let u: Vec<u16> = xlcalc::wide::units(s).collect();
     let a = from.min(u.len());
     let b = a.saturating_add(count).min(u.len());
     let mut out: Vec<u16> = u[..a].to_vec();
-    out.extend(with.encode_utf16());
+    out.extend(xlcalc::wide::units(with));
     out.extend_from_slice(&u[b..]);
-    String::from_utf16_lossy(&out)
+    xlcalc::wide::from_units(&out)
 }
 
 fn parse_xmlns_attrs(s: &str) -> Result<Vec<(String, String)>, String> {
@@ -1746,7 +1746,7 @@ fn decode_bytes(b: &[u8]) -> Decoded {
                 }
             })
             .collect();
-        String::from_utf16_lossy(&units)
+        xlcalc::wide::from_units(&units)
     };
     if let Some(r) = b.strip_prefix(&[0xEF, 0xBB, 0xBF]) {
         return String::from_utf8(r.to_vec())
@@ -1820,7 +1820,7 @@ fn encode_text(xml: &str, enc: Option<&str>) -> Vec<u8> {
     match enc.map(str::to_ascii_lowercase).as_deref() {
         Some("utf-16") => {
             let mut out = vec![0xFF, 0xFE];
-            for u in xml.encode_utf16() {
+            for u in xlcalc::wide::units(xml) {
                 out.extend_from_slice(&u.to_le_bytes());
             }
             out

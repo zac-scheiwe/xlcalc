@@ -31,6 +31,16 @@ impl Workbook {
         crate::formula_print::print_node_r1c1(self, &def.formula.root, host)
     }
 
+    pub fn number_in_text(&self, text: &str, locale: &crate::locale::Locale) -> Option<f64> {
+        let env = crate::coerce::ParseEnv {
+            locale,
+            date_system: self.settings.date_system,
+            current_year: self.calc.current_year,
+            iso_t: false,
+        };
+        crate::coerce::parse_number_text(text, env).map(|p| p.value)
+    }
+
     pub fn with_input_locale<R>(
         &mut self,
         locale: &crate::locale::Locale,
@@ -144,7 +154,8 @@ impl Workbook {
 
     fn delete_name_run(&mut self, name: &str, scope: Option<SheetId>) -> Option<RecalcReport> {
         let key = name.to_uppercase();
-        self.names.delete(&key, scope)?;
+        let gone = self.names.delete(&key, scope)?;
+        self.drawing_respell_name(&key, scope, &gone.name);
         calc::name_changed(self, &key);
         Some(self.after_edit(vec![]))
     }

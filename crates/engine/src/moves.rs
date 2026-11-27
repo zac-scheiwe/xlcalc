@@ -2,6 +2,7 @@ use crate::workbook::{notice, Command};
 use std::sync::Arc;
 
 use crate::address::{CellAddr, Rect, SheetId, MAX_COLS, MAX_ROWS};
+use crate::adjust::{adjust_area, AdjustContext, Kind};
 use crate::calc::RecalcReport;
 use crate::formula::{CRef, Formula, Rc, SheetRef};
 use crate::formula_print::print_node;
@@ -31,196 +32,35 @@ fn offset(r: &Rect, dr: i64, dc: i64) -> Rect {
     )
 }
 
-fn band(
-    (a, b): (i64, i64),
-    (s0, s1): (i64, i64),
-    d: i64,
-    (p0, p1): (i64, i64),
-    (q0, q1): (i64, i64),
-    dperp: i64,
-) -> Option<Option<(i64, i64)>> {
-    if !(q0 <= p0 && p1 <= q1) || dperp != 0 {
-        return None;
+fn adjusted(kind: Kind, r: &Rect, s: &Rect, dr: i64, dc: i64) -> Adj {
+    let x = AdjustContext {
+        kind,
+        rect: *s,
+        dr,
+        dc,
+        dest: offset(s, dr, dc),
+    };
+    let mut touched = false;
+    let a = adjust_area(
+        &x,
+        r,
+        MAX_ROWS as i64,
+        MAX_COLS as i64,
+        &|_| false,
+        &mut touched,
+    );
+    match a.code {
+        8 => Adj::Keep,
+        1 | 2 => Adj::Dead,
+        5 => Adj::Moved(a.rect),
+        _ if a.rect == *r => Adj::Keep,
+        _ if kind == Kind::Move && inside(r, s) => Adj::Moved(a.rect),
+        _ => Adj::To(a.rect),
     }
-    let (d0, d1) = (s0 + d, s1 + d);
-    if s0 > a && s0 <= b && b <= s1 {
-        let nb = b + d;
-        if d0 <= a && a <= d1 {
-            return Some(Some((a.min(s0 + d), nb.max(s0 - 1))));
-        }
-        if nb < a {
-            return Some(None);
-        }
-        if s1 > b {
-            return Some(Some((a, nb)));
-        }
-        return Some(Some((a.min(s0 + d), nb.max(s0 - 1))));
-    }
-    if s1 < b && s0 <= a && a <= s1 {
-        let na = a + d;
-        if d0 <= b && b <= d1 {
-            return Some(Some((na.min(s1 + 1), b.max(s1 + d))));
-        }
-        if na > b {
-            return Some(None);
-        }
-        if s0 < a {
-            return Some(Some((na, b)));
-        }
-        return Some(Some((na.min(s1 + 1), b.max(s1 + d))));
-    }
-    None
-}
-
-fn dest_side(r: &Rect, d: &Rect) -> Adj {
-    if inside(r, d) {
-        return Adj::Dead;
-    }
-    if d.c0 <= r.c0 && r.c1 <= d.c1 {
-        if d.r0 < r.r0 && r.r0 <= d.r1 && d.r1 < r.r1 {
-            return Adj::To(Rect::new(d.r1 + 1, r.c0, r.r1, r.c1));
-        }
-        if r.r0 < d.r0 && d.r0 <= r.r1 && r.r1 < d.r1 {
-            return Adj::To(Rect::new(r.r0, r.c0, d.r0 - 1, r.c1));
-        }
-    }
-    if d.r0 <= r.r0 && r.r1 <= d.r1 {
-        if d.c0 < r.c0 && r.c0 <= d.c1 && d.c1 < r.c1 {
-            return Adj::To(Rect::new(r.r0, d.c1 + 1, r.r1, r.c1));
-        }
-        if r.c0 < d.c0 && d.c0 <= r.c1 && r.c1 < d.c1 {
-            return Adj::To(Rect::new(r.r0, r.c0, r.r1, d.c0 - 1));
-        }
-    }
-    Adj::Keep
-}
-
-pub(crate) fn remove_band(r: &Rect, s: &Rect) -> Adj {
-    if s.c0 <= r.c0 && r.c1 <= s.c1 {
-        if s.r0 <= r.r0 && r.r0 <= s.r1 && s.r1 < r.r1 {
-            return Adj::To(Rect::new(s.r1 + 1, r.c0, r.r1, r.c1));
-        }
-        if r.r0 < s.r0 && s.r0 <= r.r1 && r.r1 <= s.r1 {
-            return Adj::To(Rect::new(r.r0, r.c0, s.r0 - 1, r.c1));
-        }
-    }
-    if s.r0 <= r.r0 && r.r1 <= s.r1 {
-        if s.c0 <= r.c0 && r.c0 <= s.c1 && s.c1 < r.c1 {
-            return Adj::To(Rect::new(r.r0, s.c1 + 1, r.r1, r.c1));
-        }
-        if r.c0 < s.c0 && s.c0 <= r.c1 && r.c1 <= s.c1 {
-            return Adj::To(Rect::new(r.r0, r.c0, r.r1, s.c0 - 1));
-        }
-    }
-    Adj::Keep
 }
 
 pub(crate) fn move_area(r: &Rect, s: &Rect, dr: i64, dc: i64) -> Adj {
-    if inside(r, s) {
-        return Adj::Moved(offset(r, dr, dc));
-    }
-    let d = offset(s, dr, dc);
-    let i = |x: u32| x as i64;
-    if let Some(x) = band(
-        (i(r.r0), i(r.r1)),
-        (i(s.r0), i(s.r1)),
-        dr,
-        (i(r.c0), i(r.c1)),
-        (i(s.c0), i(s.c1)),
-        dc,
-    ) {
-        return match x {
-            None => Adj::Keep,
-            Some((a, b)) => Adj::To(Rect::new(a as u32, r.c0, b as u32, r.c1)),
-        };
-    }
-    if let Some(x) = band(
-        (i(r.c0), i(r.c1)),
-        (i(s.c0), i(s.c1)),
-        dc,
-        (i(r.r0), i(r.r1)),
-        (i(s.r0), i(s.r1)),
-        dr,
-    ) {
-        return match x {
-            None => Adj::Keep,
-            Some((a, b)) => Adj::To(Rect::new(r.r0, a as u32, r.r1, b as u32)),
-        };
-    }
-    corners(r, s, &d, dr, dc)
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Fate {
-    Src,
-
-    Dst,
-
-    Stay,
-}
-
-fn corners(r: &Rect, s: &Rect, d: &Rect, dr: i64, dc: i64) -> Adj {
-    let fate = |row: u32, col: u32| {
-        if s.contains(row, col) {
-            Fate::Src
-        } else if d.contains(row, col) {
-            Fate::Dst
-        } else {
-            Fate::Stay
-        }
-    };
-    let pts = [(r.r0, r.c0), (r.r0, r.c1), (r.r1, r.c0), (r.r1, r.c1)];
-    let [tl, tr, bl, br] = pts.map(|(y, x)| fate(y, x));
-    let moved = r.intersection(s).map(|i| offset(&i, dr, dc));
-    let edge = |f: Fate| {
-        (tl == f && tr == f) || (bl == f && br == f) || (tl == f && bl == f) || (tr == f && br == f)
-    };
-    if inside(r, d) {
-        return match moved {
-            Some(m) if edge(Fate::Src) => Adj::To(m),
-            _ => Adj::Dead,
-        };
-    }
-    if !edge(Fate::Dst) {
-        return Adj::Keep;
-    }
-    let pos = |(y, x): (u32, u32), f: Fate| -> Option<(i64, i64)> {
-        match f {
-            Fate::Src => Some((y as i64 + dr, x as i64 + dc)),
-            Fate::Stay => Some((y as i64, x as i64)),
-            Fate::Dst => None,
-        }
-    };
-    let [ptl, ptr, pbl, pbr] = [
-        pos(pts[0], tl),
-        pos(pts[1], tr),
-        pos(pts[2], bl),
-        pos(pts[3], br),
-    ];
-    let i = |x: u32| x as i64;
-
-    let fallback = match moved {
-        Some(m) if tl == Fate::Src || br == Fate::Src => (i(m.r0), i(m.c0), i(m.r1), i(m.c1)),
-        _ => (
-            if d.r0 < r.r0 { i(d.r1) + 1 } else { i(r.r0) },
-            if d.c0 < r.c0 { i(d.c1) + 1 } else { i(r.c0) },
-            if d.r1 > r.r1 { i(d.r0) - 1 } else { i(r.r1) },
-            if d.c1 > r.c1 { i(d.c0) - 1 } else { i(r.c1) },
-        ),
-    };
-    let pick = |a: Option<(i64, i64)>, b: Option<(i64, i64)>, row: bool, fb: i64| {
-        a.or(b).map_or(fb, |p| if row { p.0 } else { p.1 })
-    };
-    let top = pick(ptl, ptr, true, fallback.0);
-    let left = pick(ptl, pbl, false, fallback.1);
-    let bottom = pick(pbr, pbl, true, fallback.2);
-    let right = pick(pbr, ptr, false, fallback.3);
-    let to = Rect::new(top as u32, left as u32, bottom as u32, right as u32);
-    if to == *r {
-        Adj::Keep
-    } else {
-        Adj::To(to)
-    }
+    adjusted(Kind::Move, r, s, dr, dc)
 }
 
 pub(crate) fn cref_rect(cref: &CRef, host: CellAddr) -> Option<Rect> {
@@ -310,6 +150,7 @@ impl Move {
     }
 
     pub fn adjust(&self, t: SheetId, r: &Rect) -> Adj {
+        let with = |kind| adjusted(kind, r, &self.src, self.dr, self.dc);
         if self.ss == self.ds {
             if t != self.ss {
                 return Adj::Keep;
@@ -317,18 +158,21 @@ impl Move {
             return move_area(r, &self.src, self.dr, self.dc);
         }
         if t == self.ss {
-            if inside(r, &self.src) {
-                return Adj::Moved(offset(r, self.dr, self.dc));
-            }
-            return remove_band(r, &self.src);
+            with(Kind::MoveSource)
+        } else if t == self.ds {
+            with(Kind::Overwrite)
+        } else {
+            Adj::Keep
         }
-        if t == self.ds {
-            return dest_side(r, &self.dest());
-        }
-        Adj::Keep
     }
 
-    fn edit(&self, sheet: &SheetRef, cref: &CRef, old: CellAddr, new: CellAddr) -> RefEdit {
+    pub(crate) fn edit(
+        &self,
+        sheet: &SheetRef,
+        cref: &CRef,
+        old: CellAddr,
+        new: CellAddr,
+    ) -> RefEdit {
         let target = match sheet {
             SheetRef::Current | SheetRef::Own => Some(old.sheet),
             SheetRef::Sheet(id) => Some(*id),
@@ -336,30 +180,27 @@ impl Move {
         };
 
         let stay = |sheet: &SheetRef| stay_ref(sheet, cref, old, new);
-        let (Some(t), Some(rect)) = (target, cref_rect(cref, old)) else {
+        let Some(t) = target else {
             return stay(sheet);
         };
-        let single = matches!(cref, CRef::Cell { .. });
-        let adj = if single {
-            let (r, c) = (rect.r0, rect.c0);
-            if t == self.ss && self.src.contains(r, c) {
-                Adj::Moved(offset(&rect, self.dr, self.dc))
-            } else if t == self.ds && self.dest().contains(r, c) {
-                Adj::Dead
-            } else {
-                Adj::Keep
-            }
-        } else {
-            match self.adjust(t, &rect) {
-                Adj::To(_) if new.sheet != old.sheet && t == self.ss => {
-                    match rect.intersection(&self.src) {
-                        Some(i) => Adj::Moved(offset(&i, self.dr, self.dc)),
-                        None => Adj::Keep,
-                    }
-                }
-                a => a,
-            }
+
+        if new.sheet != old.sheet
+            && t == self.ss
+            && matches!(sheet, SheetRef::Current | SheetRef::Own)
+        {
+            let area = as_area(cref);
+            return match cref_rect(&area, old).map(|r| (r, r.intersection(&self.src))) {
+                Some((r, Some(i))) if i != r || area == *cref => RefEdit::Set(
+                    self.moved_sheet(sheet, new),
+                    encode_rect(&area, offset(&i, self.dr, self.dc), new),
+                ),
+                _ => stay(sheet),
+            };
+        }
+        let Some(rect) = cref_rect(cref, old) else {
+            return stay(sheet);
         };
+        let adj = self.adjust(t, &rect);
         match adj {
             Adj::Keep => stay(sheet),
             Adj::Dead => RefEdit::Dead(sheet.clone()),
@@ -371,13 +212,38 @@ impl Move {
                 RefEdit::Set(s, encode_rect(cref, to, new))
             }
             Adj::Moved(to) => {
-                let s = match sheet {
-                    SheetRef::Current if new.sheet == self.ds => SheetRef::Current,
-                    _ => SheetRef::Sheet(self.ds),
-                };
-                RefEdit::Set(s, encode_rect(cref, to, new))
+                RefEdit::Set(self.moved_sheet(sheet, new), encode_rect(cref, to, new))
             }
         }
+    }
+
+    fn moved_sheet(&self, written: &SheetRef, new: CellAddr) -> SheetRef {
+        match written {
+            SheetRef::Current if new.sheet == self.ds => SheetRef::Current,
+            _ => SheetRef::Sheet(self.ds),
+        }
+    }
+}
+
+fn as_area(cref: &CRef) -> CRef {
+    let end = |v: u32| Rc {
+        v: v as i32,
+        abs: true,
+    };
+    match *cref {
+        CRef::Cols { c0, c1 } => CRef::Area {
+            r0: end(0),
+            c0,
+            r1: end(MAX_ROWS - 1),
+            c1,
+        },
+        CRef::Rows { r0, r1 } => CRef::Area {
+            r0,
+            c0: end(0),
+            r1,
+            c1: end(MAX_COLS - 1),
+        },
+        c => c,
     }
 }
 
@@ -406,6 +272,59 @@ fn misses_host(r: &Rect, host: CellAddr) -> bool {
     }
 }
 
+struct GrowRefs {
+    sheet: SheetId,
+    d0: u32,
+    d1: u32,
+    old: Rect,
+    header_too: bool,
+    add: i64,
+}
+
+fn grow_ref_edit(
+    s: &SheetRef,
+    cref: &CRef,
+    host: CellAddr,
+    g: &GrowRefs,
+    need_abs: bool,
+) -> RefEdit {
+    let t = match s {
+        SheetRef::Current | SheetRef::Own => host.sheet,
+        SheetRef::Sheet(id) => *id,
+        _ => return RefEdit::Keep,
+    };
+    if t != g.sheet || !matches!(cref, CRef::Area { .. }) || (need_abs && !all_abs(cref)) {
+        return RefEdit::Keep;
+    }
+    match cref_rect(cref, host) {
+        Some(r)
+            if (r.r0 == g.d0 || g.header_too && r.r0 == g.old.r0)
+                && r.r1 == g.d1
+                && g.old.c0 <= r.c0
+                && r.c1 <= g.old.c1 =>
+        {
+            RefEdit::Set(
+                s.clone(),
+                encode_rect(
+                    cref,
+                    Rect::new(r.r0, r.c0, (r.r1 as i64 + g.add) as u32, r.c1),
+                    host,
+                ),
+            )
+        }
+        _ => RefEdit::Keep,
+    }
+}
+
+fn holds_name(root: &crate::formula::Node) -> bool {
+    let mut found = false;
+    crate::formula::walk(root, &mut |n| {
+        use crate::formula::Node;
+        found |= matches!(n, Node::Name { .. } | Node::NamedCall { .. });
+    });
+    found
+}
+
 fn all_abs(cref: &CRef) -> bool {
     match *cref {
         CRef::Cell { row, col } => row.abs && col.abs,
@@ -422,42 +341,35 @@ pub(crate) struct PasteInfo {
 }
 
 impl Workbook {
-    fn cut_column_readers(
+    fn cut_sheets_to_calc(
         &self,
         src_sheet: SheetId,
-        src: Rect,
         dst_sheet: SheetId,
-        moved: &rustc_hash::FxHashMap<FormulaId, CellAddr>,
-    ) -> Vec<FormulaId> {
-        let mut read: Vec<Rect> = Vec::new();
-        for fid in self.formula_ids() {
-            let f = self.formula(fid);
-            if f.addr.sheet != src_sheet
-                || moved.contains_key(&fid)
-                || f.addr.col < src.c0
-                || f.addr.col > src.c1
-            {
-                continue;
-            }
-            for p in &f.precedents {
-                match p {
-                    crate::graph::Prec::Cell(s, r, c) if *s == dst_sheet => {
-                        read.push(Rect::new(*r, *c, *r, *c))
-                    }
-                    crate::graph::Prec::Range(s, x) if *s == dst_sheet => read.push(*x),
-                    _ => {}
+        cut: Rect,
+        dest: Rect,
+    ) -> Vec<SheetId> {
+        let manual =
+            self.settings.mode == crate::workbook::CalcMode::Manual && self.calc.cmd_manual;
+        let small = |s: SheetId| {
+            let mut ext = self.cell_table_extent(s);
+            for (sheet, r) in [(src_sheet, cut), (dst_sheet, dest)] {
+                if sheet == s {
+                    ext = Some(ext.map_or(r, |e| e.union_bounds(&r)));
                 }
             }
+            let area = ext.map_or(0, |e| e.rows() as u64 * e.cols() as u64);
+            manual || area < cut.rows() as u64 * cut.cols() as u64 * 4
+        };
+        let (small_src, small_dst) = (small(src_sheet), small(dst_sheet));
+
+        let dst_whole = small_dst || (dst_sheet != src_sheet && small_src);
+        let mut sheets = Vec::new();
+        for (s, whole) in [(src_sheet, small_src), (dst_sheet, dst_whole)] {
+            if whole && !sheets.contains(&s) {
+                sheets.push(s);
+            }
         }
-        if read.is_empty() {
-            return Vec::new();
-        }
-        self.formula_ids()
-            .filter(|&g| {
-                let a = self.formula(g).addr;
-                a.sheet == dst_sheet && read.iter().any(|x| x.contains(a.row, a.col))
-            })
-            .collect()
+        sheets
     }
 
     pub fn move_range(
@@ -562,6 +474,8 @@ impl Workbook {
         if mv.ss == mv.ds && mv.dr == 0 && mv.dc == 0 {
             return Ok(RecalcReport::default());
         }
+
+        let to_calc = self.cut_sheets_to_calc(src_sheet, dst.sheet, src, mv.dest());
         self.names_follow(src_sheet, src, dst.sheet, false);
         self.track_move(&mv);
         let dest = mv.dest();
@@ -746,6 +660,7 @@ impl Workbook {
             f.formula = Arc::new(Formula {
                 root,
                 volatile: formula.volatile,
+                dynamic: formula.dynamic.clone(),
             });
             f.text = text;
             f.spill = None;
@@ -765,13 +680,16 @@ impl Workbook {
             });
             if changed {
                 def.refers_to = print_node(self, &root, host);
+                def.refresh_info();
                 def.formula = Arc::new(Formula {
                     root,
                     volatile: def.formula.volatile,
+                    dynamic: def.formula.dynamic.clone(),
                 });
                 self.names.insert(def);
             }
         }
+        self.object_formulas_move(&mv);
 
         let moving: Vec<String> = self
             .tables
@@ -826,24 +744,27 @@ impl Workbook {
             None,
             self.sheet_count() == 1,
         );
-        let mut reenter: Vec<(CellAddr, FormulaId)> =
-            new_addr.iter().map(|(f, a)| (*a, *f)).collect();
-        reenter.sort_by_key(|(a, _)| (a.sheet.0, a.row, a.col));
-        let reenter: Vec<FormulaId> = reenter.into_iter().map(|(_, f)| f).collect();
-        self.chain_reenter(&reenter);
-        let mut always: rustc_hash::FxHashSet<FormulaId> = new_addr.keys().copied().collect();
-        if dst.sheet != src_sheet {
-            always.extend(self.cut_column_readers(src_sheet, src, dst.sheet, &new_addr));
+        let mut forced = rustc_hash::FxHashSet::default();
+        if mv.ss != mv.ds {
+            self.reenter_moved(&mv, &new_addr);
+            forced.extend(
+                new_addr
+                    .keys()
+                    .copied()
+                    .filter(|&f| holds_name(&self.formula(f).formula.root)),
+            );
+
+            self.calc.whole_blocks.extend(&forced);
         }
         self.calc.relink_scope = Some(crate::structure::DirtyScope {
             rects: [(src_sheet, src), (dst.sheet, dest)]
                 .into_iter()
                 .chain(spills)
                 .collect(),
-            moved: always,
-
-            whole: self.settings.mode == crate::workbook::CalcMode::Manual && self.calc.cmd_manual,
+            relocated: new_addr.keys().copied().collect(),
+            to_calc,
             dest: (dst.sheet != src_sheet).then_some(dst.sheet),
+            forced,
             ..crate::structure::DirtyScope::new(src_sheet, snapshot)
         });
         let mut report = self.relink_and_recalc();
@@ -887,6 +808,17 @@ impl Workbook {
             report = self.grow_table_by_paste(ti, rect, added_rows, None);
         }
         Ok(report)
+    }
+
+    fn reenter_moved(&mut self, mv: &Move, new_addr: &rustc_hash::FxHashMap<FormulaId, CellAddr>) {
+        let mut cells: Vec<(CellAddr, FormulaId)> =
+            new_addr.iter().map(|(f, a)| (*a, *f)).collect();
+        cells.sort_by_key(|(a, _)| (a.row, a.col));
+        if !(mv.dr < 0 || (mv.dr == 0 && mv.dc < 0)) {
+            cells.reverse();
+        }
+        let ids: Vec<FormulaId> = cells.into_iter().map(|(_, f)| f).collect();
+        self.chain_reenter(&ids);
     }
 
     pub(crate) fn paste_growth(
@@ -1136,6 +1068,14 @@ impl Workbook {
 
         let sheet = self.tables[ti].sheet;
         let (d0, d1) = (self.tables[ti].data_start(), old.r1);
+        let grow = GrowRefs {
+            sheet,
+            d0,
+            d1,
+            old,
+            header_too,
+            add,
+        };
         let ids: Vec<FormulaId> = self.formula_ids().collect();
         for fid in ids {
             let (host, formula) = {
@@ -1144,38 +1084,17 @@ impl Workbook {
             };
             let mut changed = false;
             let root = edit_refs(&formula.root, &mut |s, cref| {
-                let t = match s {
-                    SheetRef::Current | SheetRef::Own => host.sheet,
-                    SheetRef::Sheet(id) => *id,
-                    _ => return RefEdit::Keep,
-                };
-                if t != sheet || !matches!(cref, CRef::Area { .. }) {
-                    return RefEdit::Keep;
-                }
-                match cref_rect(cref, host) {
-                    Some(r)
-                        if (r.r0 == d0 || (header_too && r.r0 == old.r0))
-                            && r.r1 == d1
-                            && old.c0 <= r.c0
-                            && r.c1 <= old.c1 =>
-                    {
-                        changed = true;
-                        RefEdit::Set(
-                            s.clone(),
-                            encode_rect(
-                                cref,
-                                Rect::new(r.r0, r.c0, (r.r1 as i64 + add) as u32, r.c1),
-                                host,
-                            ),
-                        )
-                    }
-                    _ => RefEdit::Keep,
-                }
+                let own = self.tables[ti].name.clone();
+                let need_abs = self.table_at(host).is_some_and(|t| t.name != own);
+                let e = grow_ref_edit(s, cref, host, &grow, need_abs);
+                changed |= !matches!(e, RefEdit::Keep);
+                e
             });
             if changed {
                 let new = Arc::new(Formula {
                     root,
                     volatile: formula.volatile,
+                    dynamic: formula.dynamic.clone(),
                 });
                 if let Some(firsts) = calc_firsts.as_deref_mut() {
                     let t = &self.tables[ti];
@@ -1199,6 +1118,30 @@ impl Workbook {
                 let f = self.formula_mut(fid);
                 f.formula = new;
                 f.text = text;
+            }
+        }
+
+        let defs: Vec<_> = self.names.iter().cloned().collect();
+        for mut def in defs {
+            let host = def.host();
+            let mut changed = false;
+            let root = edit_refs(&def.formula.root, &mut |s, cref| {
+                let e = grow_ref_edit(s, cref, host, &grow, false);
+                changed |= !matches!(e, RefEdit::Keep);
+                e
+            });
+            if changed {
+                def.refers_to = print_node(self, &root, host);
+                def.refresh_info();
+                def.formula = Arc::new(Formula {
+                    root,
+                    volatile: def.formula.volatile,
+                    dynamic: def.formula.dynamic.clone(),
+                });
+                let key = crate::text::name_key(&def.name);
+                self.names.insert(def);
+                crate::calc::name_changed(self, &key);
+                any = true;
             }
         }
         any
@@ -1353,7 +1296,13 @@ impl Workbook {
                 _ => None,
             };
             self.tables[ti].columns.push(String::new());
+            self.tables[ti]
+                .column_ids
+                .push(crate::workbook::tables::ColumnId::fresh());
             self.tables[ti].calc.push(false);
+            let n = self.tables[ti].columns.len() - 1;
+            self.tables[ti].flags.resize(n, 0);
+            self.tables[ti].flags.push(0);
             if let Some(n) = next {
                 self.set_value(hdr, crate::value::Value::from(n.as_str()));
             }

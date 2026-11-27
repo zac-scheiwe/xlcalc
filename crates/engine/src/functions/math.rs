@@ -1,6 +1,6 @@
 use super::args::*;
 use super::engineering::atp;
-use super::{args, scalar, volatile, FnDef, MANY};
+use super::{args, scalar, FnDef, MANY};
 use crate::eval::{EvalCtx, Operand};
 use crate::number;
 use crate::value::{Value, XlError};
@@ -140,8 +140,8 @@ pub const DEFS: &[FnDef] = &[
     scalar("RADIANS", 1, 1, |c, a| {
         m1(c, a, |x| crate::x87::mul(x, std::f64::consts::PI / 180.0))
     }),
-    volatile(scalar("RAND", 0, 0, |c, _| Value::Number(c.wb.random()))),
-    volatile(args("RANDBETWEEN", 2, 2, "R", randbetween)),
+    scalar("RAND", 0, 0, |c, _| Value::Number(c.wb.random())),
+    args("RANDBETWEEN", 2, 2, "R", randbetween),
 ];
 
 fn int_fn(x: f64) -> f64 {
@@ -225,7 +225,7 @@ fn sumproduct(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         if let Err(e) = check_array_args(ctx, &[op]) {
             return Operand::err(e);
         }
-        match Grid::from_operand_3d(op) {
+        match Grid::from_operand(op) {
             Ok(g) => grids.push(g.to_array(ctx)),
             Err(e) => return Operand::err(e),
         }
@@ -319,20 +319,35 @@ fn gcd2(mut a: f64, mut b: f64) -> f64 {
 }
 
 fn gcd(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-    opval(integers(ctx, ops).map(|v| Value::num(v.into_iter().fold(0.0, gcd2))))
+    opval(integers(ctx, ops).map(|v| {
+        let mut it = v.into_iter().rev();
+        let first = it.next().unwrap_or(0.0);
+        Value::num(it.fold(first, |acc, n| gcd2(n, acc)))
+    }))
 }
 
 fn lcm(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
+    const LIMIT: f64 = 9.007_199_254_740_992e15;
     opval(integers(ctx, ops).and_then(|v| {
-        let mut acc = 1.0;
-        for n in v {
+        if v.len() == 1 {
+            return Ok(Value::num(v[0]));
+        }
+        let mut acc = v[0];
+        for &n in v.iter().rev() {
             if n == 0.0 {
                 return Ok(Value::Number(0.0));
             }
-            acc = acc / gcd2(acc, n) * n;
-            if acc > 9.007_199_254_740_992e15 {
+            let g = gcd2(n, acc);
+            let t = crate::x87::mul(crate::x87::div(acc, g), n);
+            if !t.is_finite() {
                 return Err(XlError::NUM);
             }
+            if t > acc {
+                acc = t;
+            }
+        }
+        if acc > LIMIT {
+            return Err(XlError::NUM);
         }
         Ok(Value::num(acc))
     }))
@@ -360,7 +375,7 @@ pub fn round_decimal(x: f64, digits: i32, mode: RoundMode) -> f64 {
 
     let keep = (exp + 1).wrapping_add(digits);
     if keep >= ds.len() as i32 {
-        return number::round15(x);
+        return number::flush_subnormal(number::round15(x));
     }
     let sign = x.signum();
     if keep < 0 {
@@ -378,12 +393,10 @@ pub fn round_decimal(x: f64, digits: i32, mode: RoundMode) -> f64 {
     };
     let mut kept: Vec<u8> = ds[..keep].to_vec();
     let last_weight = exp - keep as i32 + 1;
+
     let parse = |digits: &[u8], w: i32| -> f64 {
-        if digits.is_empty() {
-            return 0.0;
-        }
-        let t: String = digits.iter().map(|d| (d + b'0') as char).collect();
-        format!("{}e{}", t, w).parse().unwrap_or(0.0)
+        let d = digits.iter().fold(0u64, |a, &d| a * 10 + u64::from(d));
+        number::pack_decimal(d, i64::from(w))
     };
     if bump && mode == RoundMode::Up {
         let v = parse(&kept, last_weight) + parse(&[1], last_weight);
@@ -413,22 +426,30 @@ pub fn round_decimal(x: f64, digits: i32, mode: RoundMode) -> f64 {
     number::normalize(sign * v)
 }
 
-const MIN_NORMAL_ROUNDED: f64 = f64::from_bits(0x000F_FFFF_FFFF_FFFA);
+fn view_rounded_denormal(x: f64) -> Option<f64> {
+    let v = if (x.to_bits() >> 52) & 0x7ff == 0 {
+        x
+    } else {
+        number::round15(x)
+    };
+    ((v.to_bits() >> 52) & 0x7ff == 0).then_some(v)
+}
 
 fn round_fn(ctx: &mut EvalCtx, a: &[Value], mode: RoundMode) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let d = num(ctx, &a[1])?;
-
-        if x == f64::MIN_POSITIVE {
-            return Ok(Value::num(if matches!(mode, RoundMode::HalfAway) {
-                0.0
-            } else {
-                MIN_NORMAL_ROUNDED
-            }));
+        if !matches!(mode, RoundMode::HalfAway) {
+            if let Some(v) = view_rounded_denormal(x) {
+                return Ok(Value::num(v));
+            }
         }
         if matches!(mode, RoundMode::HalfAway) {
             let n = ifuzz(d).clamp(-2147483647.0, 2147483647.0) as i32;
+
+            if (x.to_bits() >> 52) & 0x7ff == 0 {
+                return Ok(Value::Number(0.0));
+            }
             return Ok(Value::num(round_decimal(x, n, mode)));
         }
         if matches!(mode, RoundMode::Down) {
@@ -474,8 +495,8 @@ fn trunc_fn(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let d = trunc_digits(opt_num(ctx, a, 1, 0.0)?);
-        if x == f64::MIN_POSITIVE {
-            return Ok(Value::num(MIN_NORMAL_ROUNDED));
+        if let Some(v) = view_rounded_denormal(x) {
+            return Ok(Value::num(v));
         }
         Ok(Value::num(round_decimal(x, d, RoundMode::Down)))
     })())
@@ -494,26 +515,36 @@ fn sqrtpi(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     })
 }
 
+fn div_ppa(x: f64, s: f64) -> Result<f64, XlError> {
+    if (s.to_bits() >> 52) & 0x7ff == 0 {
+        return Err(XlError::DIV0);
+    }
+    crate::x87::chk(crate::x87::div(x, s))
+}
+
+fn mul_chk(a: f64, b: f64) -> Result<f64, XlError> {
+    crate::x87::chk(crate::x87::mul(a, b))
+}
+
 fn mround(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     atp::call(ctx, ops, "aa", |ctx, a, _| {
         val((|| {
             let x = atp::req_num(ctx, a, 0)?;
             let m = atp::req_num(ctx, a, 1)?;
-            if m == 0.0 || x == 0.0 {
+            if m == 0.0 {
                 return Ok(Value::Number(0.0));
             }
-            if x.signum() != m.signum() {
+            if x != 0.0 && x.is_sign_negative() != m.is_sign_negative() {
                 return Err(XlError::NUM);
             }
-
-            let q = crate::x87::div(x, m).abs();
+            let q = crate::x87::chk(crate::x87::div(x, m))?;
             let f = q.floor();
             let f = if crate::x87::sub(q, f) >= crate::x87::sub(0.5, 5e-15) {
                 crate::x87::add(f, 1.0)
             } else {
                 f
             };
-            Ok(Value::num(crate::x87::mul(f, m.abs()).copysign(x)))
+            Ok(Value::num(mul_chk(f, m)?))
         })())
     })
 }
@@ -522,21 +553,14 @@ fn ceiling(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let s = num(ctx, &a[1])?;
-        if x == 0.0 || s == 0.0 {
-            return Ok(Value::Number(0.0));
-        }
         if x > 0.0 && s < 0.0 {
             return Err(XlError::NUM);
         }
-        let q = crate::x87::div(x, s);
-        let r = round_decimal(q, 0, RoundMode::Up);
-
-        let r = if x < 0.0 && s > 0.0 {
-            round_decimal(q, 0, RoundMode::Down)
-        } else {
-            r
-        };
-        Ok(Value::num(crate::x87::mul(r, s)))
+        if x == 0.0 || s == 0.0 {
+            return Ok(Value::Number(0.0));
+        }
+        let q = div_ppa(x, s)?;
+        Ok(Value::num(mul_chk(ceil_tol(q), s)?))
     })())
 }
 
@@ -544,22 +568,14 @@ fn floor(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let x = num(ctx, &a[0])?;
         let s = num(ctx, &a[1])?;
-        if x == 0.0 {
-            return Ok(Value::Number(0.0));
-        }
-        if s == 0.0 {
-            return Err(XlError::DIV0);
-        }
         if x > 0.0 && s < 0.0 {
             return Err(XlError::NUM);
         }
-        let q = crate::x87::div(x, s);
-        let r = if x < 0.0 && s > 0.0 {
-            round_decimal(q, 0, RoundMode::Up)
-        } else {
-            round_decimal(q, 0, RoundMode::Down)
-        };
-        Ok(Value::num(crate::x87::mul(r, s)))
+        if x == 0.0 {
+            return Ok(Value::Number(0.0));
+        }
+        let q = div_ppa(x, s)?;
+        Ok(Value::num(mul_chk(floor_tol(q), s)?))
     })())
 }
 
@@ -612,13 +628,13 @@ fn ceiling_math(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if s == 0.0 || x == 0.0 {
             return Ok(Value::Number(0.0));
         }
-        let q = crate::x87::div(x, s);
+        let q = div_ppa(x, s)?;
         let r = if x < 0.0 && mode != 0.0 {
             round_decimal(q, 0, RoundMode::Up)
         } else {
             ceil_tol(q)
         };
-        Ok(Value::num(crate::x87::mul(r, s)))
+        Ok(Value::num(mul_chk(r, s)?))
     })())
 }
 
@@ -630,13 +646,13 @@ fn floor_math(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if s == 0.0 || x == 0.0 {
             return Ok(Value::Number(0.0));
         }
-        let q = crate::x87::div(x, s);
+        let q = div_ppa(x, s)?;
         let r = if x < 0.0 && mode != 0.0 {
             round_decimal(q, 0, RoundMode::Down)
         } else {
             floor_tol(q)
         };
-        Ok(Value::num(crate::x87::mul(r, s)))
+        Ok(Value::num(mul_chk(r, s)?))
     })())
 }
 
@@ -647,9 +663,9 @@ fn precise(ctx: &mut EvalCtx, a: &[Value], up: bool) -> Value {
         if s == 0.0 || x == 0.0 {
             return Ok(Value::Number(0.0));
         }
-        let q = crate::x87::div(x, s);
+        let q = div_ppa(x, s)?;
         let r = if up { ceil_tol(q) } else { floor_tol(q) };
-        Ok(Value::num(crate::x87::mul(r, s)))
+        Ok(Value::num(mul_chk(r, s)?))
     })())
 }
 
@@ -671,20 +687,31 @@ fn modulo(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let n = num(ctx, &a[0])?;
         let d = num(ctx, &a[1])?;
-        if d == 0.0 {
+        if (d.to_bits() >> 48) & 0x7fff == 0 {
             return Err(XlError::DIV0);
         }
-
-        if (n / d).abs() >= 1.1259e12 {
-            return Err(XlError::NUM);
-        }
-
-        let mut r = n % d;
-        if r != 0.0 && (r < 0.0) != (d < 0.0) {
-            r += d;
-            if r == d {
+        let (an, ad) = (n.abs(), d.abs());
+        let mut r = if an < ad {
+            an
+        } else if an == ad {
+            0.0
+        } else {
+            if crate::x87::div(an, ad).to_bits() >= 0x4270_624d_e9b0_0000 {
+                return Err(XlError::NUM);
+            }
+            an % ad
+        };
+        if n.is_sign_negative() != d.is_sign_negative() {
+            r = crate::x87::add(-r, ad);
+            if r == ad {
                 r = 0.0;
             }
+        }
+        if d.is_sign_negative() {
+            r = -r;
+        }
+        if r != 0.0 && (r.to_bits() >> 52) & 0x7ff == 0 {
+            return Err(XlError::NUM);
         }
         Ok(Value::num(r))
     })())
@@ -698,7 +725,7 @@ fn quotient(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             if d == 0.0 {
                 return Err(XlError::DIV0);
             }
-            Ok(Value::num((n / d).trunc()))
+            Ok(Value::num(crate::x87::chk(crate::x87::div(n, d))?.trunc()))
         })())
     })
 }
@@ -731,7 +758,9 @@ fn fact(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             return Err(XlError::NUM);
         }
         let n = ifuzz(n);
-
+        if n >= 171.0 {
+            return Err(XlError::NUM);
+        }
         let mut acc = 1.0f64;
         let mut i = n;
         while i >= 2.0 {
@@ -752,7 +781,10 @@ fn fact_double(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
             if n < -1.0 {
                 return Err(XlError::NUM);
             }
-            let n = n.trunc();
+            let n = n.floor();
+            if n > 300.0 {
+                return Err(XlError::NUM);
+            }
             let mut acc = 1.0f64;
             let mut i = n;
             while i > 1.0 {
@@ -853,6 +885,13 @@ fn randbetween(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn div_ppa_flags() {
+        assert_eq!(div_ppa(1.0, 5e-324), Err(XlError::DIV0));
+        assert_eq!(div_ppa(1e308, 1e-10), Err(XlError::NUM));
+        assert_eq!(div_ppa(6.0, 3.0), Ok(2.0));
+    }
 
     #[test]
     fn decimal_rounding() {

@@ -296,7 +296,8 @@ fn series_from_grid(
             Value::Blank => Cell::Blank,
             Value::Text(_) => Cell::Text,
             Value::Number(_)
-                if crate::NumberFormat::parse(wb.number_format(a)).is_ok_and(|f| f.is_date()) =>
+                if crate::NumberFormat::parse_stored(wb.number_format(a))
+                    .is_ok_and(|f| f.is_date()) =>
             {
                 Cell::Date
             }

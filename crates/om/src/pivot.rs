@@ -48,8 +48,6 @@ pub(crate) enum PivotRef {
 
     Filter(BookId, String, usize),
 
-    Style(BookId, String),
-
     Layout(BookId, String),
 }
 
@@ -68,7 +66,6 @@ impl PivotRef {
             PivotRef::CalcFields(..) => "CalculatedFields",
             PivotRef::CalcItems(..) => "CalculatedItems",
             PivotRef::Filter(..) => "PivotFilter",
-            PivotRef::Style(..) => "TableStyle",
             PivotRef::Layout(..) => "PivotLayout",
         }
     }
@@ -87,7 +84,6 @@ impl PivotRef {
             | PivotRef::CalcFields(b, ..)
             | PivotRef::CalcItems(b, ..)
             | PivotRef::Filter(b, ..)
-            | PivotRef::Style(b, _)
             | PivotRef::Layout(b, _) => *b,
         }
     }
@@ -254,8 +250,11 @@ impl Application<'_> {
     fn pt_commit_typed(&mut self, b: BookId, i: usize, t: PivotTable) -> Result<(), OmError> {
         let wb = &mut self.book_mut(b)?.wb;
         wb.pivots_mut().tables[i] = t;
-        wb.pivot_update_with(i, false)
-            .map_err(crate::objects::edit_error)
+
+        let loads = wb.slicer_loads();
+        let r = wb.pivot_update_with(i, false);
+        wb.restore_slicer_loads(loads);
+        r.map_err(crate::objects::edit_error)
     }
 
     pub(crate) fn pivot_intercept(
@@ -276,7 +275,50 @@ impl Application<'_> {
                     Some(i) => Some(self.pivot_tables_item(*b, *s, i, a.lcid)),
                 }
             }
-            (Object::Range(r), "Group" | "Ungroup") => self.pivot_range_group(r, m.name, a),
+
+            (Object::Multi(rs), "Ungroup") => {
+                let first = rs.first()?;
+                let (sheet, rect) = self.resolve(first).ok()?;
+                let wb = &self.book(first.book).ok()?.wb;
+                wb.pivot_meeting(sheet, &rect)?;
+                let addr = xlcalc::CellAddr::new(sheet, rect.r0, rect.c0);
+                let ok = wb
+                    .pivot_label_at(addr)
+                    .or_else(|| {
+                        wb.pivot_label_above(addr)
+                            .or_else(|| wb.pivot_header_field(addr).map(|(ti, f)| (ti, f, Some(0))))
+                    })
+                    .is_some_and(|l| l.2.is_some());
+                if !ok {
+                    return Some(Err(OmError::app_defined()));
+                }
+                let mut order: Vec<&crate::app::RangeRef> = rs.iter().collect();
+                order.sort_by_key(|r| self.resolve(r).map_or((0, 0), |(_, x)| (x.r0, x.c0)));
+                let mut done = false;
+                for r in order.into_iter().rev() {
+                    if let Some(Ok(_)) = self.pivot_range_group(r, &[], m.name, a) {
+                        done = true;
+                    }
+                }
+                Some(if done {
+                    Ok(Variant::Bool(true))
+                } else {
+                    Err(OmError::app_defined())
+                })
+            }
+
+            (Object::Multi(rs), "Group") => {
+                let r = rs.first()?;
+                self.pivot_range_group(r, &rs[1..], m.name, a)
+            }
+            (Object::Range(r), "PivotTable") if m.kind == InvokeKind::Get => {
+                Some(self.pivot_at_range(r))
+            }
+
+            (Object::Multi(_), "PivotTable") if m.kind == InvokeKind::Get => {
+                Some(Err(OmError::app_defined()))
+            }
+            (Object::Range(r), "Group" | "Ungroup") => self.pivot_range_group(r, &[], m.name, a),
             (Object::Range(r), "Sort") => self.pivot_range_sort(r, a),
             (Object::Range(r), "Insert") => self.pivot_range_insert(r),
             (Object::Range(r), "Value" | "Value2" | "_Default") if m.kind == InvokeKind::Put => {
@@ -425,11 +467,22 @@ impl Application<'_> {
     fn pivot_range_group(
         &mut self,
         r: &crate::app::RangeRef,
+        more: &[crate::app::RangeRef],
         which: &str,
         a: &Args,
     ) -> Option<Result<Variant, OmError>> {
         let (sheet, rect) = self.resolve(r).ok()?;
         let b = r.book;
+        let mut areas = vec![rect];
+        for m in more {
+            let (s2, r2) = self.resolve(m).ok()?;
+            if s2 != sheet {
+                return Some(Err(OmError::app_defined_with(
+                    "Cannot group that selection.",
+                )));
+            }
+            areas.push(r2);
+        }
         let addr = xlcalc::CellAddr::new(sheet, rect.r0, rect.c0);
         let wb = &self.book(b).ok()?.wb;
         wb.pivot_meeting(sheet, &rect)?;
@@ -459,6 +512,39 @@ impl Application<'_> {
                     && matches!(&t.fields[g].group,
                         Some(xlcalc::pivot::Group::Manual { src, .. }) if *src == f)
             });
+
+            if let (Some(_), Some(xlcalc::pivot::Group::Manual { groups, .. })) =
+                (label.and_then(|l| l.2), t.fields[f].group.clone())
+            {
+                let mut names: Vec<&str> = Vec::new();
+                for row in rect.r0..=rect.r1 {
+                    for col in rect.c0..=rect.c1 {
+                        if let Some((_, g, Some(k))) =
+                            wb.pivot_label_at(xlcalc::CellAddr::new(sheet, row, col))
+                        {
+                            if g == f {
+                                names.push(&c.fields[f].items[k as usize].label);
+                            }
+                        }
+                    }
+                }
+                {
+                    let mut left = groups.clone();
+                    let before = left.len();
+                    left.retain(|g| !names.iter().any(|n| g.0.eq_ignore_ascii_case(n)));
+                    if left.len() == before {
+                        return Some(Ok(Variant::Bool(true)));
+                    }
+                    if left.iter().any(|g| g.1.len() > 1) {
+                        if let Some(xlcalc::pivot::Group::Manual { groups, .. }) =
+                            &mut t.fields[f].group
+                        {
+                            *groups = left;
+                        }
+                        return Some(self.pt_commit(b, ti, t).map(|()| Variant::Bool(true)));
+                    }
+                }
+            }
             let target = manual.unwrap_or(f);
             let dated = match &t.fields[target].group {
                 Some(xlcalc::pivot::Group::Derived { src, .. }) => Some(*src),
@@ -470,12 +556,12 @@ impl Application<'_> {
                 let items = &wb.pivots().caches[t.cache].fields[src].items;
                 let mut order: Vec<u32> = (0..items.len() as u32).collect();
                 order.sort_by(|&x, &y| {
-                    xlcalc::pivot::item_cmp(&items[x as usize].value, &items[y as usize].value)
+                    xlcalc::pivot::item_order(&items[x as usize], &items[y as usize])
                 });
                 t.fields[src].manual = Some(order);
             }
         } else {
-            if rect.r0 != rect.r1 || rect.c0 != rect.c1 {
+            if rect.r0 != rect.r1 || rect.c0 != rect.c1 || !more.is_empty() {
                 if matches!(
                     t.fields[f].group,
                     Some(xlcalc::pivot::Group::Num { .. } | xlcalc::pivot::Group::Derived { .. })
@@ -484,16 +570,18 @@ impl Application<'_> {
                 }
 
                 let mut members = Vec::new();
-                for row in rect.r0..=rect.r1 {
-                    for col in rect.c0..=rect.c1 {
-                        match wb.pivot_label_at(xlcalc::CellAddr::new(sheet, row, col)) {
-                            Some((_, g, Some(i))) if g == f => {
-                                members.push(c.fields[f].items[i as usize].label.clone())
-                            }
-                            _ => {
-                                return Some(Err(OmError::app_defined_with(
-                                    "Cannot group that selection.",
-                                )))
+                for ar in &areas {
+                    for row in ar.r0..=ar.r1 {
+                        for col in ar.c0..=ar.c1 {
+                            match wb.pivot_label_at(xlcalc::CellAddr::new(sheet, row, col)) {
+                                Some((_, g, Some(i))) if g == f => {
+                                    members.push(c.fields[f].items[i as usize].label.clone())
+                                }
+                                _ => {
+                                    return Some(Err(OmError::app_defined_with(
+                                        "Cannot group that selection.",
+                                    )))
+                                }
                             }
                         }
                     }
@@ -508,10 +596,31 @@ impl Application<'_> {
                 while used(k, &t) {
                     k += 1;
                 }
-                t.add_manual_group(f, &format!("Group{k}"), members);
+
+                let host = (0..t.fields.len()).find(|&g| {
+                    t.fields[f].group.is_none()
+                        && matches!(&t.fields[g].group,
+                            Some(xlcalc::pivot::Group::Manual { src, .. }) if *src == f)
+                });
+                if let Some(g) = host {
+                    if let Some(xlcalc::pivot::Group::Manual { groups, .. }) =
+                        &mut t.fields[g].group
+                    {
+                        for gr in groups.iter_mut() {
+                            gr.1.retain(|m| !members.iter().any(|x| x.eq_ignore_ascii_case(m)));
+                        }
+                        groups.retain(|gr| !gr.1.is_empty());
+                        groups.push((format!("Group{k}"), members));
+                    }
+                } else {
+                    t.add_manual_group(f, &format!("Group{k}"), members);
+                }
                 return Some(self.pt_commit(b, ti, t).map(|()| Variant::Bool(true)));
             }
-            if let Some(Variant::Array(arr)) = a.get(3) {
+            if let (Some(Variant::Array(arr)), true) = (
+                a.get(3),
+                t.fields[f].group.is_some() || wb.pivot_field_is_date(t.cache, f),
+            ) {
                 let flags: Vec<bool> = arr
                     .data
                     .iter()
@@ -526,6 +635,9 @@ impl Application<'_> {
                     _ => None,
                 };
                 use xlcalc::pivot::DateUnit;
+                if let Err(e) = date_group_slots(a) {
+                    return Some(Err(e));
+                }
 
                 let mut f = f;
                 if let Some(xlcalc::pivot::Group::Derived { src, .. }) = t.fields[f].group {
@@ -534,12 +646,12 @@ impl Application<'_> {
                 }
                 let units: Vec<DateUnit> = match on.as_slice() {
                     [] => return Some(Err(OmError::app_defined())),
-                    _ if on.iter().any(|&i| !(3..=6).contains(&i)) => {
-                        return Some(Err(OmError::app_defined()))
-                    }
                     _ => on
                         .iter()
                         .map(|&i| match i {
+                            0 => DateUnit::Second,
+                            1 => DateUnit::Minute,
+                            2 => DateUnit::Hour,
                             3 => {
                                 DateUnit::Days(opt(2).filter(|v| *v >= 1.0).map_or(1, |v| v as u32))
                             }
@@ -550,6 +662,25 @@ impl Application<'_> {
                         .collect(),
                 };
                 t.add_date_levels(f, &units, opt(0), opt(1));
+                return Some(self.pt_commit(b, ti, t).map(|()| Variant::Bool(true)));
+            }
+
+            if t.fields[f].group.is_none() && wb.pivot_field_is_date(t.cache, f) {
+                if !matches!(a.get(3), None | Some(Variant::Error(_))) {
+                    return Some(Err(OmError::app_defined()));
+                }
+                if let Err(e) = date_group_slots(a) {
+                    return Some(Err(e));
+                }
+
+                let bound = |k: usize| match a.get(k) {
+                    Some(Variant::I4(v)) => Some(f64::from(*v)),
+                    Some(Variant::I2(v)) => Some(f64::from(*v)),
+                    Some(Variant::R8(v)) => Some(*v),
+                    Some(Variant::Date(v)) => Some(*v),
+                    _ => None,
+                };
+                t.add_date_levels(f, &[xlcalc::pivot::DateUnit::Month], bound(0), bound(1));
                 return Some(self.pt_commit(b, ti, t).map(|()| Variant::Bool(true)));
             }
             let nums: Vec<f64> = wb.pivots().caches[t.cache].fields[f]
@@ -602,21 +733,36 @@ impl Application<'_> {
             let (Ok(start), Ok(end)) = (bound(0, min, d_start), bound(1, max, d_end)) else {
                 return Some(Err(OmError::app_defined()));
             };
-            let by = match a.get(2) {
-                Some(Variant::I4(v)) => f64::from(*v),
-                Some(Variant::I2(v)) => f64::from(*v),
-                Some(Variant::R8(v)) => *v,
-                None => d_by,
-                Some(_) => return Some(Err(OmError::app_defined())),
-            };
 
+            if !matches!(a.get(3), None | Some(Variant::Error(_) | Variant::Array(_))) {
+                return Some(Err(OmError::app_defined()));
+            }
+            if let Err(e) = group_bounds(a) {
+                return Some(Err(e));
+            }
+            let by = match group_by(a) {
+                Ok(v) => v.unwrap_or(d_by),
+                Err(e) => return Some(Err(e)),
+            };
             let (lo, hi) = (start.unwrap_or(min), end.unwrap_or(max));
-            if by <= 0.0 || hi < lo {
+
+            let count = ((hi - lo) / by).floor() + 3.0;
+            if by <= 0.0 || hi < lo || count > 1_048_576.0 || count.is_nan() {
                 return Some(Err(OmError::app_defined()));
             }
             t.fields[f].group = Some(xlcalc::pivot::Group::Num { start, end, by });
         }
         Some(self.pt_commit(b, ti, t).map(|()| Variant::Bool(true)))
+    }
+
+    fn pivot_at_range(&mut self, r: &crate::app::RangeRef) -> Result<Variant, OmError> {
+        let (sheet, rect) = self.resolve(r)?;
+        let wb = &self.book(r.book)?.wb;
+        let name = wb
+            .pivot_meeting(sheet, &xlcalc::Rect::cell(rect.r0, rect.c0))
+            .map(|i| wb.pivots().tables[i].name.clone())
+            .ok_or_else(OmError::app_defined)?;
+        Ok(self.alloc(Object::Pivot(PivotRef::Table(r.book, name))))
     }
 
     fn pv_tables_on(&self, b: BookId, s: SheetId) -> Result<Vec<String>, OmError> {
@@ -668,13 +814,6 @@ impl Application<'_> {
                 "PivotTable" => Ok(self.alloc(Object::Pivot(PivotRef::Table(*b, n.clone())))),
                 _ => Err(unsupported("PivotLayout", m)),
             },
-            PivotRef::Style(b, n) => {
-                let t = self.pt(*b, n)?;
-                match m.name {
-                    "Name" | "NameLocal" => Ok(Variant::Bstr(t.style.clone())),
-                    _ => Err(unsupported("TableStyle", m)),
-                }
-            }
         }
     }
 
@@ -1111,7 +1250,6 @@ impl Application<'_> {
                         | PivotRef::CalcFields(ob, nm)
                         | PivotRef::CalcItems(ob, nm, _)
                         | PivotRef::Filter(ob, nm, _)
-                        | PivotRef::Style(ob, nm)
                         | PivotRef::Layout(ob, nm),
                     ) = o
                     {
@@ -1313,16 +1451,10 @@ impl Application<'_> {
                 if t.style.is_empty() {
                     return Ok(Variant::Bstr("\0".to_string()));
                 }
-                Ok(self.alloc(Object::Pivot(PivotRef::Style(b, t.name.clone()))))
+                Ok(self.style_object(&t.style))
             }
             ("TableStyle2", Put) => {
-                match &a.put {
-                    Some(Variant::Bstr(s)) if s.is_empty() || s.starts_with("PivotStyle") => {
-                        t.style = s.clone()
-                    }
-                    Some(Variant::Bstr(_)) => {}
-                    _ => return Err(OmError::type_mismatch()),
-                }
+                t.style = self.pivot_style_put(a)?;
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
             }
@@ -1988,6 +2120,21 @@ impl Application<'_> {
                     .and_then(Orient::from_code)
                     .ok_or_else(|| OmError::unable_to_set("Orientation", "PivotField"))?;
 
+                let cur = t.fields[s].orient;
+                if o != cur
+                    && o != Orient::Data
+                    && t.fields[s].drag
+                        & drag_bit(match o {
+                            Orient::Row => "DragToRow",
+                            Orient::Column => "DragToColumn",
+                            Orient::Page => "DragToPage",
+                            _ => "DragToHide",
+                        })
+                        == 0
+                {
+                    return Err(OmError::unable_to_set("Orientation", "PivotField"));
+                }
+
                 if t.fields.iter().any(|pf| {
                     matches!(&pf.group, Some(xlcalc::pivot::Group::Derived { src, .. }) if *src == s)
                 }) {
@@ -2274,6 +2421,9 @@ impl Application<'_> {
                     .ok_or_else(|| unable("PivotItems", "PivotField"))?;
                 Ok(self.alloc(Object::Pivot(PivotRef::Item(b, t.name.clone(), s, it))))
             }
+            ("HiddenItemsList", _, FieldRef::Src(s)) if t.data.iter().any(|d| d.src == s) => {
+                Err(invalid_arg())
+            }
             ("HiddenItemsList", _, _) => Err(OmError::app_defined_with("")),
             ("ShowAllItems", Get, FieldRef::Src(s)) => Ok(Variant::Bool(t.fields[s].show_all)),
             ("ShowAllItems", Put, FieldRef::Src(s)) => {
@@ -2369,6 +2519,93 @@ impl Application<'_> {
                 self.pt_commit(b, i, t)?;
                 Ok(Variant::Empty)
             }
+
+            (
+                "DragToRow" | "DragToColumn" | "DragToPage" | "DragToHide" | "DragToData",
+                Get,
+                FieldRef::Src(s),
+            ) => Ok(Variant::Bool(t.fields[s].drag & drag_bit(m.name) != 0)),
+            (
+                "DragToRow" | "DragToColumn" | "DragToPage" | "DragToHide" | "DragToData",
+                Put,
+                FieldRef::Src(s),
+            ) => {
+                let on = self.put_bool(a)?;
+                let bit = drag_bit(m.name);
+                t.fields[s].drag = if on {
+                    t.fields[s].drag | bit
+                } else {
+                    t.fields[s].drag & !bit
+                };
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+
+            ("AllItemsVisible", Get, FieldRef::Src(s)) => {
+                Ok(Variant::Bool(t.fields[s].hidden.is_empty()))
+            }
+
+            ("ShowingInAxis", Get, FieldRef::Src(s)) => Ok(Variant::Bool(
+                t.fields[s].orient != Orient::Hidden || t.data.iter().any(|d| d.src == s),
+            )),
+            ("DatabaseSort", Get, FieldRef::Src(_)) => Ok(Variant::Bool(false)),
+            ("MemoryUsed", Get, FieldRef::Src(_)) => Ok(Variant::I4(48)),
+
+            ("SourceCaption", Get, FieldRef::Src(_)) => Err(invalid_arg()),
+            ("VisibleItemsList", _, FieldRef::Src(s)) if t.data.iter().any(|d| d.src == s) => {
+                Err(invalid_arg())
+            }
+            (
+                "IsMemberProperty" | "PropertyOrder" | "StandardFormula" | "DrilledDown"
+                | "VisibleItemsList" | "DisplayAsCaption" | "DisplayAsTooltip",
+                _,
+                FieldRef::Src(_),
+            ) => Err(OmError::app_defined()),
+            ("LayoutPageBreak", Get, FieldRef::Src(s)) => Ok(Variant::Bool(t.fields[s].page_break)),
+            ("LayoutPageBreak", Put, FieldRef::Src(s)) => {
+                t.fields[s].page_break = self.put_bool(a)?;
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+            ("SubtotalName", Get, FieldRef::Src(s)) => {
+                Ok(Variant::Bstr(t.fields[s].subtotal_name.clone()))
+            }
+            ("SubtotalName", Put, FieldRef::Src(s)) => {
+                let Some(Variant::Bstr(v)) = &a.put else {
+                    return Err(OmError::type_mismatch());
+                };
+
+                if v.encode_utf16().count() > 0x7fff {
+                    return Err(invalid_arg());
+                }
+                t.fields[s].subtotal_name = v.clone();
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+            ("ServerBased", Get, FieldRef::Src(_)) => Ok(Variant::Bool(false)),
+
+            ("ServerBased", Put, FieldRef::Src(_)) => {
+                if self.put_bool(a)? {
+                    return Err(OmError::app_defined());
+                }
+                Ok(Variant::Empty)
+            }
+            ("EnableItemSelection", Get, FieldRef::Src(_)) => Ok(Variant::Bool(t.item_selection)),
+            ("EnableItemSelection", Put, FieldRef::Src(_)) => {
+                t.item_selection = self.put_bool(a)?;
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+            ("IncludeNewItemsInFilter", Get, FieldRef::Src(s)) => {
+                Ok(Variant::Bool(t.fields[s].include_new))
+            }
+            ("IncludeNewItemsInFilter", Put, FieldRef::Src(s)) => {
+                t.fields[s].include_new = self.put_bool(a)?;
+                self.pt_commit(b, i, t)?;
+                Ok(Variant::Empty)
+            }
+
+            ("DisplayInReport", _, FieldRef::Src(_)) => Err(OmError::app_defined()),
             ("RepeatLabels", Get, FieldRef::Src(s)) => Ok(Variant::Bool(t.fields[s].repeat)),
             ("RepeatLabels", Put, FieldRef::Src(s)) => {
                 t.fields[s].repeat = self.put_bool(a)?;
@@ -2381,6 +2618,18 @@ impl Application<'_> {
             {
                 Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))
             }
+
+            ("AutoShow", Func, FieldRef::Src(_)) => {
+                if a.get(3).is_none() {
+                    return Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT));
+                }
+                Err(OmError::app_defined())
+            }
+
+            ("AutoShowType", Get, FieldRef::Src(_)) => Ok(Variant::I4(-4135)),
+            ("AutoShowRange", Get, FieldRef::Src(_)) => Ok(Variant::I4(-4160)),
+            ("AutoShowCount", Get, FieldRef::Src(_)) => Ok(Variant::I4(10)),
+            ("AutoShowField", Get, FieldRef::Src(_)) => Ok(Variant::Bstr(String::new())),
             ("AutoSort", Func, FieldRef::Src(s)) => {
                 let order = a.i32(0)?.ok_or_else(invalid_arg)?;
                 let key = a.string(1)?.unwrap_or_default();
@@ -2698,6 +2947,9 @@ impl Application<'_> {
                 let valid = (1..=28).contains(&kind);
                 let value_kind = (1..=14).contains(&kind);
 
+                if !(1..=68).contains(&kind) {
+                    return Err(invalid_arg());
+                }
                 if kind > 28 {
                     return Err(OmError::app_defined());
                 }
@@ -2711,7 +2963,7 @@ impl Application<'_> {
 
                 if let Value::Number(x) = val(2) {
                     let bad = match kind {
-                        1 | 2 => x < 1.0,
+                        1 | 2 => !(1.0..=f64::from(i32::MAX)).contains(&x),
                         3 | 4 => !(0.0..=100.0).contains(&x),
                         _ => false,
                     };
@@ -2920,6 +3172,10 @@ impl Application<'_> {
                 };
                 let total = c.fields[s].items.len() + t.fields[s].calc_items.len();
 
+                if name.encode_utf16().count() > 0x7fff {
+                    return Ok(Variant::Dispatch(None));
+                }
+
                 if !t.rows.contains(&Ax::Field(s))
                     && !t.cols.contains(&Ax::Field(s))
                     && !t.pages.contains(&s)
@@ -3012,7 +3268,10 @@ impl Application<'_> {
                     return Err(OmError::app_defined());
                 }
                 Self::rename_item(&mut t, &c, s, it, new)?;
+
+                let loads = self.book(b)?.wb.slicer_loads();
                 self.pt_commit(b, i, t)?;
+                self.book_mut(b)?.wb.restore_slicer_loads(loads);
                 Ok(Variant::Empty)
             }
             ("Name" | "Caption" | "Value" | "SourceName", Get) => Ok(Variant::Bstr(match it {
@@ -3229,14 +3488,9 @@ impl Application<'_> {
                 }
             }
             ("Cut" | "Copy", Func) => {
-                if let Some(Variant::Dispatch(Some(id))) = a.get(0) {
-                    if let Some(Object::Range(dest)) = self.arena.get(*id) {
-                        let dest = *dest;
-                        let (ds, dr) = self.resolve(&dest)?;
-                        let hit = self.book(book)?.wb.pivot_meeting(ds, &dr);
-                        if hit.is_some() {
-                            return Err(affects());
-                        }
+                if let Ok(Some((ds, dr))) = self.paste_destination(book, sheet, m, a) {
+                    if self.book(book)?.wb.pivot_meeting(ds, &dr).is_some() {
+                        return Err(affects());
                     }
                 }
             }
@@ -3248,4 +3502,51 @@ impl Application<'_> {
 
 fn covers(outer: &Rect, inner: &Rect) -> bool {
     outer.r0 <= inner.r0 && outer.c0 <= inner.c0 && outer.r1 >= inner.r1 && outer.c1 >= inner.c1
+}
+
+fn date_group_slots(a: &Args) -> Result<(), OmError> {
+    group_bounds(a)?;
+    let by = group_by(a)?;
+    if by.is_some_and(|b| !(1.0..32768.0).contains(&b.trunc())) {
+        return Err(OmError::app_defined());
+    }
+    Ok(())
+}
+
+fn group_num(a: &Args, k: usize) -> Result<Option<f64>, OmError> {
+    match a.get(k) {
+        None | Some(Variant::Error(_) | Variant::Bool(_)) => Ok(None),
+        Some(Variant::I4(v)) => Ok(Some(f64::from(*v))),
+        Some(Variant::I2(v)) => Ok(Some(f64::from(*v))),
+        Some(Variant::R8(v) | Variant::Date(v)) => Ok(Some(*v)),
+        Some(_) => Err(OmError::app_defined()),
+    }
+}
+
+fn group_by(a: &Args) -> Result<Option<f64>, OmError> {
+    match a.get(2) {
+        Some(Variant::Bool(b)) => Ok(Some(f64::from(u8::from(*b)))),
+        _ => group_num(a, 2),
+    }
+}
+
+fn group_bounds(a: &Args) -> Result<(), OmError> {
+    if let (Some(s), Some(e)) = (group_num(a, 0)?, group_num(a, 1)?) {
+        if e - s <= 0.0 {
+            return Err(OmError::app_defined_with(
+                "The end number must be greater than the start number.",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn drag_bit(member: &str) -> u8 {
+    match member {
+        "DragToRow" => 1,
+        "DragToColumn" => 2,
+        "DragToPage" => 4,
+        "DragToHide" => 8,
+        _ => 0x10,
+    }
 }

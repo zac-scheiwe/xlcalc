@@ -286,14 +286,14 @@ pub fn slot(
             p
         }
         Ty::Wide => {
-            let mut u: Vec<u16> = text(&v)?.encode_utf16().take(32767).collect();
+            let mut u: Vec<u16> = xlcalc::wide::units(&text(&v)?).take(32767).collect();
             u.push(0);
             let p = u.as_ptr() as u64;
             arena.wide.push(u);
             p
         }
         Ty::WideCounted => {
-            let t: Vec<u16> = text(&v)?.encode_utf16().take(32767).collect();
+            let t: Vec<u16> = xlcalc::wide::units(&text(&v)?).take(32767).collect();
             let mut u = vec![t.len() as u16];
             u.extend(t);
             let p = u.as_ptr() as u64;
@@ -361,14 +361,14 @@ fn fp(
 }
 
 fn ansi_bytes(s: &str) -> Result<Vec<u8>, Fail> {
-    if s.encode_utf16().count() > 255 {
+    if xlcalc::wide::units(s).count() > 255 {
         return Err(ERR_VALUE);
     }
     Ok(ansi_bytes_lossy(s))
 }
 
 pub(crate) fn ansi_bytes_lossy(s: &str) -> Vec<u8> {
-    let units: Vec<u16> = s.encode_utf16().collect();
+    let units: Vec<u16> = xlcalc::wide::units(s).collect();
     if units.is_empty() {
         return Vec::new();
     }
@@ -403,7 +403,7 @@ pub(crate) fn ansi_string(b: &[u8]) -> String {
         let mut out = vec![0u16; usize::try_from(n).unwrap_or(0)];
         let n = MultiByteToWideChar(CP_ACP, MULTI_BYTE_TO_WIDE_CHAR_FLAGS(0), b, Some(&mut out));
         out.truncate(usize::try_from(n).unwrap_or(0));
-        String::from_utf16_lossy(&out)
+        xlcalc::wide::from_units(&out)
     }
 }
 
@@ -503,7 +503,7 @@ pub unsafe fn wide_text(p: *const u16) -> Value {
     while *p.add(n) != 0 {
         n += 1;
     }
-    Value::Text(String::from_utf16_lossy(std::slice::from_raw_parts(p, n)).into())
+    Value::Text(xlcalc::wide::from_units(std::slice::from_raw_parts(p, n)).into())
 }
 
 pub unsafe fn counted_text(p: *const u16) -> Value {

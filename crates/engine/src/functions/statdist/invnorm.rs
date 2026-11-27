@@ -125,7 +125,7 @@ fn std_normal_tail(q: f64) -> f64 {
 
 pub fn inverse_erf(y: f64) -> f64 {
     let y2 = x87::mul(y, y);
-    if y <= std::f64::consts::FRAC_1_SQRT_2 {
+    if y2 <= 0.5 {
         let d = horner(&DEN_0, y2);
         return x87::mul(y, x87::div(horner(&NUM_0, y2), d));
     }

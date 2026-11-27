@@ -467,10 +467,10 @@ ShadowFormat Visible i0
 TableStyle BuiltIn b1
 TableStyle Name s"TableStyleMedium2"
 TableStyle NameLocal s"Table Style Medium 2"
-TableStyle ShowAsAvailablePivotTableStyle b0 Fp80070057
-TableStyle ShowAsAvailableSlicerStyle b0 Fp80070057
-TableStyle ShowAsAvailableTableStyle b1 Fp80070057
-TableStyle ShowAsAvailableTimelineStyle b0 Fp80070057
+TableStyle ShowAsAvailablePivotTableStyle Fp80070057
+TableStyle ShowAsAvailableSlicerStyle Fp80070057
+TableStyle ShowAsAvailableTableStyle Fp80070057
+TableStyle ShowAsAvailableTimelineStyle Fp80070057
 TableStyle TableStyleElements oTableStyleElements
 TableStyle _Default s"TableStyleMedium2"
 TextFrame2 AutoSize i0 Fp80070057"The specified value is out of range." @chart:Fg80070057 @line:Fg80070057

@@ -420,6 +420,7 @@ impl Workbook {
                                 Arc::new(Formula {
                                     root,
                                     volatile: f.formula.volatile,
+                                    dynamic: f.formula.dynamic.clone(),
                                 }),
                                 text,
                                 f.value_at(f.addr.row, f.addr.col),

@@ -73,17 +73,6 @@ fn a1(r: &Rect, abs: bool) -> String {
     format!("{}:{}", cell(r.r0, r.c0), cell(r.r1, r.c1))
 }
 
-fn quote(name: &str) -> String {
-    let plain = !name.is_empty()
-        && name.chars().all(|c| c.is_alphanumeric() || c == '_')
-        && !name.chars().next().is_some_and(|c| c.is_ascii_digit());
-    if plain {
-        name.to_string()
-    } else {
-        format!("'{}'", name.replace('\'', "''"))
-    }
-}
-
 impl Application<'_> {
     fn group_ref(&self, b: BookId, s: SheetId, id: u32) -> Result<&SparkGroup, OmError> {
         self.book(b)?
@@ -108,7 +97,7 @@ impl Application<'_> {
         let sheet = match wb {
             Ok(w) if l.src_sheet != s => w
                 .sheet(l.src_sheet)
-                .map(|x| format!("{}!", quote(&x.name)))
+                .map(|x| format!("{}!", xlcalc::testing::sheet_name_text(&x.name)))
                 .unwrap_or_default(),
             _ => String::new(),
         };
@@ -132,7 +121,10 @@ impl Application<'_> {
             } else {
                 self.book(b)
                     .ok()
-                    .and_then(|x| x.wb.sheet(ss).map(|y| format!("{}!", quote(&y.name))))
+                    .and_then(|x| {
+                        x.wb.sheet(ss)
+                            .map(|y| format!("{}!", xlcalc::testing::sheet_name_text(&y.name)))
+                    })
                     .unwrap_or_default()
             };
             return format!("{sheet}{}", a1(&r, g.abs));
@@ -150,7 +142,7 @@ impl Application<'_> {
                     .ok()
                     .and_then(|x| {
                         x.wb.sheet(first.src_sheet)
-                            .map(|y| format!("{}!", quote(&y.name)))
+                            .map(|y| format!("{}!", xlcalc::testing::sheet_name_text(&y.name)))
                     })
                     .unwrap_or_default()
             };

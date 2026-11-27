@@ -357,7 +357,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                 UnaryOp::Neg => "-",
                 UnaryOp::Plus => "+",
                 UnaryOp::Implicit => "@",
-                UnaryOp::ImplicitQuiet | UnaryOp::ArrayZero => "",
+                UnaryOp::ArrayZero => "",
             });
             write(wb, x, host, s);
         }
@@ -391,6 +391,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                 s.push(')');
             }
         }
+        Node::MemErr(_, x) => write(wb, x, host, s),
         Node::Paren(x) => {
             s.push('(');
             write(wb, x, host, s);
@@ -437,11 +438,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
                         s.push_str(&r1c1_call_name(func, host));
                     }
                     None => {
-                        if crate::workbook::ext::plain_part(book) {
-                            s.push_str(book);
-                        } else {
-                            s.push_str(&format!("'{}'", book.replace('\x27', "''")));
-                        }
+                        s.push_str(&sheet_name_text(book));
                         s.push('!');
                         s.push_str(&r1c1_call_name(func, host));
                     }
@@ -517,7 +514,7 @@ fn write_inner(wb: &Workbook, node: &Node, host: CellAddr, s: &mut String) {
         } => {
             let name = wb
                 .table_by_name(table)
-                .map(|t| crate::workbook::tables::table_display_name(&t.name))
+                .map(|t| t.disp.clone())
                 .unwrap_or_else(|| table.to_string());
 
             let whole = spec.cols.is_none() && spec.items == crate::workbook::tables::Items::DATA;

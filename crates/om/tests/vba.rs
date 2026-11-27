@@ -215,3 +215,21 @@ fn open_warns_about_a_module_it_cannot_read() {
         "{w:?}"
     );
 }
+
+#[test]
+fn chrw_halves_join() {
+    let (mut app, book) = setup(
+        "Public Sub Go()\n\
+         Dim s As String\n\
+         s = ChrW(&HD83D) & ChrW(&HDE00)\n\
+         Range(\"A1\").Value = s\n\
+         Range(\"A2\").Value = ChrW(&HD83D) + ChrW(&HDE00)\n\
+         Range(\"A3\").Value = ChrW(&HD83D) & ChrW(&HDE00)\n\
+         End Sub\n",
+    );
+    run(&mut app, &[Variant::Bstr("Go".into())]).unwrap();
+    let want = format!("{:?}", Value::Text("\u{1F600}".into()));
+    for a1 in ["A1", "A2", "A3"] {
+        assert_eq!(value(&app, book, a1), want, "{a1}");
+    }
+}

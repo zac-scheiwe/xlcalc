@@ -1,16 +1,19 @@
 use xlcalc::chart_src::series_from_block;
-use xlcalc::drawing::{BagVal, Chart, HideTrack, Part, Series};
+use xlcalc::drawing::{
+    literal_items, quoted_item, unquoted_item, BagVal, Chart, HideTrack, NameRead, Part, Series,
+};
 use xlcalc::{CellAddr, Rect, SheetId, Value, Workbook};
 use xlcalc_variant::{SafeArray, VarType, Variant};
 
 use crate::addr::{parse_range_text, quote_sheet, range_text, AddressStyle};
 use crate::app::{unsupported, Application};
+use crate::chart_text::{name_link, name_refused, two_d};
 use crate::conv::Args;
 use crate::error::OmError;
 use crate::shapes::{DrawKind, DrawRef};
 use crate::typelib::{InvokeKind, Member};
 
-fn abs_style() -> AddressStyle {
+pub(crate) fn abs_style() -> AddressStyle {
     AddressStyle {
         row_abs: true,
         col_abs: true,
@@ -19,29 +22,28 @@ fn abs_style() -> AddressStyle {
     }
 }
 
-pub(crate) fn part_text(wb: &Workbook, p: &Part, is_name: bool) -> String {
-    match p {
+pub(crate) fn part_text(wb: &Workbook, p: &Part, is_name: bool) -> Option<String> {
+    Some(match p {
         Part::None | Part::Dead if !is_name => String::new(),
         Part::None => String::new(),
         Part::Dead => "#REF!".to_string(),
         Part::External(t) => t.clone(),
-        Part::Text(t) => {
-            if is_name && !t.starts_with('{') {
-                format!("\"{t}\"")
-            } else {
-                t.clone()
-            }
+        Part::Text(t) if t.starts_with('{') => return literal_text(t),
+        Part::Text(t) => t.clone(),
+
+        Part::Name(n) => {
+            let head = match n.scope {
+                Some(s) => wb.sheet(s).map(|x| x.name.to_string()).unwrap_or_default(),
+                None => wb.book_name().to_string(),
+            };
+            let def = wb.names().get(&n.name, n.scope);
+            let name = def.map_or(&n.name, |d| &d.name);
+            format!("{}!{name}", sheet_head(&head))
         }
         Part::Refs(v) => {
             let one = |(s, r): &(SheetId, Rect)| {
                 let name = wb.sheet(*s).map(|x| x.name.to_string()).unwrap_or_default();
-                let q = quote_sheet(&name);
-                let q = if q == name {
-                    xlcalc::testing::sheet_name_text(&name)
-                } else {
-                    q
-                };
-                format!("{q}!{}", range_text(*r, &abs_style()))
+                format!("{}!{}", sheet_head(&name), range_text(*r, &abs_style()))
             };
             if v.len() == 1 {
                 one(&v[0])
@@ -49,7 +51,21 @@ pub(crate) fn part_text(wb: &Workbook, p: &Part, is_name: bool) -> String {
                 format!("({})", v.iter().map(one).collect::<Vec<_>>().join(","))
             }
         }
+    })
+}
+
+fn sheet_head(name: &str) -> String {
+    let q = quote_sheet(name);
+    if q == name {
+        xlcalc::testing::sheet_name_text(name)
+    } else {
+        q
     }
+}
+
+pub(crate) fn parsed_string(item: &str) -> Option<String> {
+    let inner = item.strip_prefix('"')?.strip_suffix('"')?;
+    (!inner.replace("\"\"", "").contains('"')).then(|| inner.replace("\"\"", "\""))
 }
 
 pub(crate) struct HideView<'a> {
@@ -89,7 +105,8 @@ fn hide_snapshot(wb: &Workbook, chart: &Chart) -> std::collections::BTreeSet<(Sh
     let mut out = std::collections::BTreeSet::new();
     for ser in &chart.series {
         for p in [&ser.name, &ser.x, &ser.values] {
-            let Part::Refs(v) = p else { continue };
+            let p = wb.resolve_part(p);
+            let Part::Refs(v) = &*p else { continue };
             for (s, r) in v {
                 for row in r.r0..=r.r1.min(r.r0 + 20_000) {
                     if wb.row_hidden(*s, row) {
@@ -108,7 +125,8 @@ fn hide_snapshot(wb: &Workbook, chart: &Chart) -> std::collections::BTreeSet<(Sh
 }
 
 fn x_all_hidden(hv: &HideView, x: &Part, visible_only: bool) -> bool {
-    let Part::Refs(v) = x else { return false };
+    let x = hv.wb.resolve_part(x);
+    let Part::Refs(v) = &*x else { return false };
     visible_only
         && !v.is_empty()
         && v.iter().all(|(s, r)| {
@@ -116,24 +134,36 @@ fn x_all_hidden(hv: &HideView, x: &Part, visible_only: bool) -> bool {
         })
 }
 
-pub(crate) fn series_formula(wb: &Workbook, s: &Series, order: usize) -> String {
-    let mut values = part_text(wb, &s.values, false);
+pub(crate) fn series_formula(wb: &Workbook, s: &Series, order: usize) -> Option<String> {
+    let mut values = part_text(wb, &s.values, false)?;
     if s.fmt.values_ranged && !values.contains(':') && !values.starts_with('(') {
         if let Some(i) = values.find('!') {
             let cell = values[i + 1..].to_string();
             values = format!("{values}:{cell}");
         }
     }
-    format!(
+    let name = match &s.name {
+        Part::Text(t) if !t.starts_with('{') => {
+            if s.fmt.name_data {
+                format!("\"{}\"", t.replace('"', "\"\""))
+            } else {
+                let quoted = format!("\"{t}\"");
+                parsed_string(&quoted)?;
+                quoted
+            }
+        }
+        p => part_text(wb, p, true)?,
+    };
+    Some(format!(
         "=SERIES({},{},{},{})",
-        part_text(wb, &s.name, true),
-        part_text(wb, &s.x, false),
+        name,
+        part_text(wb, &s.x, false)?,
         values,
         order
-    )
+    ))
 }
 
-fn absolute_r1c1(f: &str) -> String {
+pub(crate) fn absolute_r1c1(f: &str) -> String {
     let b: Vec<char> = f.chars().collect();
     let (mut out, mut i, mut quoted) = (String::new(), 0, false);
     while i < b.len() {
@@ -207,6 +237,9 @@ pub(crate) fn parse_part(wb: &Workbook, home: SheetId, t: &str) -> Result<Part, 
         .strip_prefix('(')
         .and_then(|x| x.strip_suffix(')'))
         .unwrap_or(t);
+    if let Some(n) = name_link(wb, home, inner) {
+        return Ok(Part::Name(n));
+    }
     let mut areas = Vec::new();
     for piece in split_args(inner) {
         let (s, r) = parse_range_text(wb, home, piece.trim()).ok_or_else(OmError::app_defined)?;
@@ -228,11 +261,19 @@ fn parse_series(wb: &Workbook, home: SheetId, f: &str) -> Result<ParsedSeries, O
     if parts.len() != 4 {
         return Err(OmError::app_defined());
     }
-    let parsed = [
-        parse_part(wb, home, &parts[0])?,
-        parse_part(wb, home, &parts[1])?,
-        parse_part(wb, home, &parts[2])?,
-    ];
+
+    let part = |t: &str| {
+        if wb.names().lookup(t.trim(), home).is_some() {
+            return Err(OmError::app_defined());
+        }
+        parse_part(wb, home, t)
+    };
+    let parsed = [part(&parts[0])?, part(&parts[1])?, part(&parts[2])?];
+    for (k, p) in parsed.iter().enumerate() {
+        if matches!(p, Part::Name(n) if name_refused(wb, n, k == 1)) {
+            return Err(OmError::app_defined());
+        }
+    }
 
     let order = match parts[3].trim().parse::<f64>() {
         Ok(o) if o.fract() == 0.0 && (0.0..=255.0).contains(&o) => o as usize,
@@ -326,13 +367,22 @@ pub(crate) fn cell_variant(v: &Value) -> Variant {
     }
 }
 
+pub(crate) fn number_cell_text(wb: &Workbook, addr: CellAddr, n: f64) -> String {
+    let t = wb.display_text(addr);
+    if t.is_empty() || t.contains('#') {
+        xlcalc::format_general(n)
+    } else {
+        t
+    }
+}
+
 pub(crate) fn part_values(wb: &Workbook, p: &Part) -> Vec<Variant> {
     part_values_vis(&HideView::live(wb), p, false)
 }
 
 pub(crate) fn part_values_vis(hv: &HideView, p: &Part, visible_only: bool) -> Vec<Variant> {
     let wb = hv.wb;
-    match p {
+    match &*wb.resolve_part(p) {
         Part::Refs(v) => {
             let mut out = Vec::new();
             for (s, r) in v {
@@ -347,26 +397,74 @@ pub(crate) fn part_values_vis(hv: &HideView, p: &Part, visible_only: bool) -> Ve
             }
             out
         }
-        Part::Text(t) if t.starts_with('{') => t
-            .trim_matches(|c| c == '{' || c == '}')
-            .split([',', ';'])
-            .map(|x| {
-                let x = x.trim();
-                match x.parse::<f64>() {
-                    Ok(n) => Variant::R8(n),
-                    Err(_) => Variant::Bstr(x.trim_matches('"').to_string()),
-                }
+        Part::Text(t) if t.starts_with('{') => literal_items(t)
+            .into_iter()
+            .map(|(x, _)| match x.parse::<f64>() {
+                Ok(n) => Variant::R8(n),
+                Err(_) => Variant::Bstr(unquoted_item(x).unwrap_or_else(|| x.to_string())),
             })
             .collect(),
         _ => Vec::new(),
     }
 }
 
+fn literal_text(t: &str) -> Option<String> {
+    let mut parsed = String::from("{");
+    for (item, sep) in literal_items(t) {
+        match (item.parse::<f64>(), unquoted_item(item)) {
+            (Ok(n), _) => parsed.push_str(&xlcalc::format_general(n)),
+            (_, Some(s)) => parsed.push_str(&format!("\"{s}\"")),
+            _ => parsed.push_str(item),
+        }
+        parsed.push_str(sep);
+    }
+    parsed.push('}');
+    let mut out = String::from("{");
+    for (item, sep) in literal_items(&parsed) {
+        if item.starts_with('"') {
+            out.push_str(&format!("\"{}\"", parsed_string(item)?));
+        } else {
+            out.push_str(item);
+        }
+        out.push_str(sep);
+    }
+    out.push('}');
+    Some(out)
+}
+
+fn array_part(a: &SafeArray, values: bool) -> Result<Part, OmError> {
+    if a.bounds.len() != 1 || a.data.is_empty() {
+        return Err(OmError::app_defined());
+    }
+    let strings = !values && a.data.iter().any(|x| matches!(x, Variant::Bstr(_)));
+    let items = a
+        .data
+        .iter()
+        .map(|x| {
+            let n = match x {
+                Variant::R8(n) => *n,
+                Variant::I4(n) => f64::from(*n),
+                Variant::I2(n) => f64::from(*n),
+                Variant::Bool(b) => f64::from(u8::from(*b)),
+                Variant::Bstr(t) if strings => return Ok(quoted_item(t)),
+                Variant::Bstr(_) => 0.0,
+                _ => return Err(OmError::unsupported("this array element in a series")),
+            };
+            Ok(if strings {
+                quoted_item(&xlcalc::format_general(n))
+            } else {
+                n.to_string()
+            })
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(Part::Text(format!("{{{}}}", items.join(","))))
+}
+
 pub(crate) fn series_x_values(wb: &Workbook, chart: &Chart, ser: &Series) -> Variant {
     let hv = HideView::new(wb, chart);
     let mut v = part_values_vis(&hv, &ser.x, chart.visible_only);
 
-    let nv = if matches!(ser.values, Part::Dead) {
+    let nv = if matches!(*wb.resolve_part(&ser.values), Part::Dead) {
         1
     } else {
         part_values_vis(&hv, &ser.values, chart.visible_only).len()
@@ -379,7 +477,7 @@ pub(crate) fn series_x_values(wb: &Workbook, chart: &Chart, ser: &Series) -> Var
     } else if v.is_empty() {
         let n = nv;
         vec_variant((1..=n).map(|i| Variant::R8(i as f64)).collect())
-    } else if matches!(&ser.x, Part::Text(_)) {
+    } else if matches!(ser.x, Part::Text(_)) {
         let mut out: Vec<Variant> = v
             .into_iter()
             .map(|x| match x {
@@ -426,9 +524,12 @@ fn vec_variant(items: Vec<Variant>) -> Variant {
 
 impl Application<'_> {
     pub(crate) fn chart_of(&self, r: &DrawRef) -> Result<Chart, OmError> {
-        self.shape_clone(r)?
+        let mut chart = self
+            .shape_clone(r)?
             .chart
-            .ok_or_else(OmError::object_required)
+            .ok_or_else(OmError::object_required)?;
+        self.retrack_chart(r.book, &mut chart);
+        Ok(chart)
     }
 
     pub(crate) fn chart_edit<T>(
@@ -436,13 +537,10 @@ impl Application<'_> {
         r: &DrawRef,
         f: impl FnOnce(&mut Workbook, &mut Chart) -> Result<T, OmError>,
     ) -> Result<T, OmError> {
+        let mut chart = self.chart_of(r)?;
+        let out = f(&mut self.book_mut(r.book)?.wb, &mut chart)?;
+        self.retrack_chart(r.book, &mut chart);
         let wb = &mut self.book_mut(r.book)?.wb;
-        let mut chart = wb
-            .drawing(r.sheet)
-            .and_then(|d| d.get(r.id))
-            .and_then(|s| s.chart.clone())
-            .ok_or_else(OmError::object_required)?;
-        let out = f(wb, &mut chart)?;
         if let Some(s) = wb.drawing_mut(r.sheet).get_mut(r.id) {
             s.chart = Some(chart.clone());
         }
@@ -683,22 +781,13 @@ impl Application<'_> {
                 },
                 ("HasTitle", false) => Ok(Variant::Bool(chart.has_title)),
                 ("HasLegend", false) => Ok(Variant::Bool(chart.has_legend)),
-                ("HasTitle" | "HasLegend", true) => {
+                ("HasLegend", true) => {
                     let v = match a.put.as_ref() {
                         Some(Variant::Bool(x)) => *x,
                         _ => return Err(OmError::type_mismatch()),
                     };
-                    let title = m.name == "HasTitle";
                     self.chart_edit(r, |_, c| {
-                        if title {
-                            c.has_title = v;
-                            c.bag.insert(
-                                "#title_off".into(),
-                                xlcalc::drawing::BagVal::I(i32::from(!v)),
-                            );
-                        } else {
-                            c.has_legend = v;
-                        }
+                        c.has_legend = v;
                         Ok(Variant::Empty)
                     })
                 }
@@ -942,13 +1031,21 @@ impl Application<'_> {
                 _ => Err(unsupported("SeriesCollection", m)),
             },
             DrawKind::Series(k) => {
-                let ser = chart
+                let stored = chart
                     .series
                     .get(k)
                     .cloned()
                     .ok_or_else(OmError::object_required)?;
                 let wb = &self.book(r.book)?.wb;
+
+                let mut ser = stored.clone();
+                for p in [&mut ser.name, &mut ser.x, &mut ser.values] {
+                    *p = wb.resolve_part(p).into_owned();
+                }
                 match (m.name, put) {
+                    ("Name", false) if matches!(stored.name, Part::Name(_)) => Ok(Variant::Bstr(
+                        crate::chartparts::series_name_text(wb, k, &stored),
+                    )),
                     ("Name", false) => Ok(Variant::Bstr(match &ser.name {
                         Part::None => format!("Series{}", ser.number(k)),
                         Part::Dead if matches!(ser.values, Part::Dead) => "#REF!".to_string(),
@@ -971,17 +1068,29 @@ impl Application<'_> {
                         {
                             return Err(OmError::exception(0x800A_07E7_u32 as i32, None));
                         }
-                        let mut ser = ser.clone();
+
+                        if [(&stored.name, &ser.name), (&stored.values, &ser.values)]
+                            .iter()
+                            .any(|(s, p)| {
+                                matches!(s, Part::Name(_)) && matches!(p, Part::Refs(v) if two_d(v))
+                            })
+                        {
+                            return Err(OmError::exception(0x800A_03EC_u32 as i32, None));
+                        }
+                        let mut ser = stored.clone();
                         if x_all_hidden(&HideView::new(wb, &chart), &ser.x, chart.visible_only) {
                             ser.x = Part::None;
                         }
-                        let mut f = series_formula(wb, &ser, k + 1);
+                        let mut f =
+                            series_formula(wb, &ser, k + 1).ok_or_else(OmError::app_defined)?;
 
                         if matches!(chart.chart_type, 15 | 87 | 88) && f.ends_with(')') {
                             f.pop();
                             match &ser.fmt.bubbles {
                                 Some(b @ Part::Refs(_)) => {
-                                    f.push_str(&format!(",{})", part_text(wb, b, false)))
+                                    let sizes =
+                                        part_text(wb, b, false).ok_or_else(OmError::app_defined)?;
+                                    f.push_str(&format!(",{sizes})"))
                                 }
                                 _ => {
                                     let n = part_values(wb, &ser.values).len();
@@ -989,6 +1098,8 @@ impl Application<'_> {
                                 }
                             }
                         }
+
+                        let f = xlcalc::stored_formula_text(&f);
                         Ok(Variant::Bstr(if m.name.contains("R1C1") {
                             absolute_r1c1(&f)
                         } else {
@@ -1012,6 +1123,13 @@ impl Application<'_> {
                             _ => return Err(OmError::type_mismatch()),
                         };
                         let ([n, x, v], order) = parse_series(wb, r.sheet, &f)?;
+
+                        if [&x, &v]
+                            .iter()
+                            .any(|p| matches!(p, Part::Text(t) if t.starts_with('{') && literal_text(t).is_none()))
+                        {
+                            return Err(OmError::app_defined());
+                        }
                         self.chart_edit(r, |_, c| {
                             let before = series_refs(c);
 
@@ -1025,6 +1143,7 @@ impl Application<'_> {
                             }
                             let s = &mut c.series[k];
                             (s.name, s.x, s.values) = (n, x, v);
+                            s.fmt.name_data = true;
 
                             let target = order.clamp(1, c.series.len()) - 1;
                             if target != k {
@@ -1042,22 +1161,38 @@ impl Application<'_> {
                         })
                     }
                     ("Values" | "XValues" | "Name", true) => {
-                        let f = match a.put.as_ref() {
-                            Some(Variant::Bstr(f)) => f.clone(),
+                        let mut name_data = false;
+                        let part = match a.put.as_ref() {
+                            Some(Variant::Bstr(f))
+                                if m.name == "Name" && !f.starts_with('=') && !f.is_empty() =>
+                            {
+                                Part::Text(f.clone())
+                            }
+                            Some(Variant::Bstr(f)) => {
+                                name_data = true;
+                                parse_part(wb, r.sheet, f.trim_start_matches('='))?
+                            }
+                            Some(Variant::Array(v)) if m.name != "Name" => {
+                                array_part(v, m.name == "Values")?
+                            }
+                            v @ Some(Variant::Dispatch(_)) if m.name != "Name" => {
+                                Part::Refs(vec![self.range_arg(v)?])
+                            }
                             _ => return Err(OmError::type_mismatch()),
                         };
 
-                        let part = match parse_part(wb, r.sheet, f.trim_start_matches('=')) {
-                            Err(_) if m.name == "Name" && !f.starts_with('=') => {
-                                Part::Text(f.clone())
-                            }
-                            p => p?,
-                        };
-
-                        if m.name == "Values"
-                            && matches!(&part, Part::Refs(v) if v.iter().any(|(_, q)| q.rows() > 1 && q.cols() > 1))
+                        if m.name == "Values" && matches!(&part, Part::Refs(v) if two_d(v))
+                            || matches!(&part, Part::Name(n)
+                                if name_refused(wb, n, m.name == "XValues"))
                         {
                             return Err(OmError::exception(0x800A_03EC_u32 as i32, None));
+                        }
+
+                        if m.name == "Name"
+                            && matches!(&part, Part::Name(n)
+                                if matches!(wb.read_name_link(n), NameRead::Value(Value::Array(_))))
+                        {
+                            return Ok(Variant::Empty);
                         }
                         let which = m.name;
                         self.chart_edit(r, |_, c| {
@@ -1066,7 +1201,10 @@ impl Application<'_> {
                             match which {
                                 "Values" => s.values = part,
                                 "XValues" => s.x = part,
-                                _ => s.name = part,
+                                _ => {
+                                    s.name = part;
+                                    s.fmt.name_data = name_data;
+                                }
                             }
                             if series_refs(c) != before && !still_plotted_by(c, c.plot_by) {
                                 c.plot_by = 0;
@@ -1085,7 +1223,9 @@ impl Application<'_> {
                         )
                         .into_iter()
                         .map(|x| {
-                            if matches!(x, Variant::Bstr(_)) && matches!(ser.values, Part::Refs(_))
+                            if matches!(x, Variant::Bstr(_))
+                                && (matches!(ser.values, Part::Refs(_))
+                                    || matches!(stored.values, Part::Name(_)))
                             {
                                 Variant::R8(0.0)
                             } else {
@@ -1094,7 +1234,7 @@ impl Application<'_> {
                         })
                         .collect(),
                     )),
-                    ("XValues", false) => Ok(series_x_values(wb, &chart, &ser)),
+                    ("XValues", false) => Ok(series_x_values(wb, &chart, &stored)),
                     ("PlotOrder", false) => {
                         let fam = crate::chartparts::group_family(ser.chart_type);
                         let key = (ser.fmt.plot_rank, k);
@@ -1346,7 +1486,24 @@ fn unhidden_series(wb: &Workbook, chart: &Chart) -> Vec<usize> {
 }
 
 pub(crate) fn external_text(wb: &Workbook, p: &Part, book: &str) -> Option<String> {
-    let Part::Refs(v) = p else { return None };
+    let v = match p {
+        Part::Refs(v) => v,
+
+        Part::Name(n) => {
+            let text = part_text(wb, p, false)?;
+            return Some(match n.scope {
+                None => {
+                    let name = wb.names().get(&n.name, None).map_or(&n.name, |d| &d.name);
+                    format!("{}!{name}", sheet_head(book))
+                }
+                Some(_) => match text.strip_prefix('\'') {
+                    Some(rest) => format!("'[{book}]{rest}"),
+                    None => format!("[{book}]{text}"),
+                },
+            });
+        }
+        _ => return None,
+    };
     let one = |(s, r): &(SheetId, Rect)| {
         let name = wb.sheet(*s).map(|x| x.name.to_string()).unwrap_or_default();
         let q = quote_sheet(&name);
@@ -1363,7 +1520,7 @@ pub(crate) fn external_text(wb: &Workbook, p: &Part, book: &str) -> Option<Strin
     })
 }
 
-fn r1c1_text(wb: &Workbook, default: SheetId, text: &str) -> Option<(SheetId, Rect)> {
+pub(crate) fn r1c1_text(wb: &Workbook, default: SheetId, text: &str) -> Option<(SheetId, Rect)> {
     let (sheet, body) = match text.rfind('!') {
         Some(i) => {
             let name = text[..i].trim_matches('\'').replace("''", "'");
@@ -1439,4 +1596,24 @@ fn series_refs(c: &Chart) -> Vec<(Part, Part, Part)> {
         .iter()
         .map(|s| (s.name.clone(), s.x.clone(), s.values.clone()))
         .collect()
+}
+
+#[cfg(test)]
+mod literal_tests {
+    use super::*;
+
+    #[test]
+    fn literal_strings_are_parsed_again() {
+        for (stored, shown) in [
+            (r#"{"p","u,v"}"#, Some(r#"{"p","u,v"}"#)),
+            (r#"{"p","a"",""b"}"#, Some(r#"{"p","a","b"}"#)),
+            (r#"{"p",""""""}"#, Some(r#"{"p","""}"#)),
+            (r#"{"p","x""""y"}"#, Some(r#"{"p","x"y"}"#)),
+            (r#"{1,2.5}"#, Some("{1,2.5}")),
+            (r#"{"p","s""t"}"#, None),
+            (r#"{"p","a"""}"#, None),
+        ] {
+            assert_eq!(literal_text(stored).as_deref(), shown, "{stored}");
+        }
+    }
 }

@@ -102,7 +102,8 @@ pub fn lgamma_xl(x: f64) -> f64 {
     if x.is_infinite() {
         return f64::INFINITY;
     }
-    if x <= 2.22e-16 {
+
+    if x < f64::EPSILON {
         return -x87::ln(x);
     }
     if x >= 8.0 {
@@ -110,9 +111,6 @@ pub fn lgamma_xl(x: f64) -> f64 {
             x87::sub(x87::mul(x87::ln(x), x87::sub(x, 0.5)), x),
             CODY_SQRTPI,
         );
-        if x > 2.25e76 {
-            return base;
-        }
         let q = x87::div(1.0, x);
         let s = x87::mul(horner_x87(&XL_STIRLING, x87::mul(q, q)), q);
         return x87::add(base, s);
@@ -156,6 +154,8 @@ pub fn lgamma_xl(x: f64) -> f64 {
     let r = x87::div(horner_x87(&XL_N1, y), horner_x87(&XL_D1, y));
     x87::add(x87::mul(r, x87::sub(1.0, y)), corr)
 }
+
+const EULER_GAMMA: f64 = std::f64::consts::EULER_GAMMA;
 
 const XL_GAMMA_NUM: [f64; 8] = [
     -41.32975575688121,
@@ -240,6 +240,10 @@ pub fn gamma_xl(x: f64) -> f64 {
     }
     if x < -171.03093456965283 {
         return 0.0;
+    }
+
+    if a <= f64::EPSILON {
+        return x87::sub(x87::div(1.0, x), EULER_GAMMA);
     }
     if f == 0.0 {
         if x <= 88.0 {

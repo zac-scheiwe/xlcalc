@@ -8,7 +8,7 @@ enum VOp {
 
     Time,
 
-    General,
+    Text,
 
     DollarFirst,
 
@@ -70,8 +70,7 @@ impl Fm {
         }
         let mut fm = Fm {
             sections: Arc::new(sections),
-
-            custom: custom || code == "@",
+            custom,
             ty: 0,
             has_date,
             has_time,
@@ -107,7 +106,7 @@ impl Fm {
                 let (t, decisive) = match op {
                     VOp::Date => (3, true),
                     VOp::Time => (4, true),
-                    VOp::General => (8, true),
+                    VOp::Text => (8, true),
                     VOp::DollarFirst => (2, true),
                     VOp::CurrencyTag => (2, false),
                     VOp::Header(t) => (*t, false),
@@ -190,7 +189,8 @@ fn section_ops(body: &Body, raw: &str, negative: bool) -> (Vec<VOp>, bool, bool)
                 ops.push(VOp::CurrencyTag);
             }
         }
-        Body::General(_) => ops.push(VOp::General),
+
+        Body::General(_) => {}
 
         Body::Date(_) if !has_field_letter(raw) => {
             if tag {
@@ -226,11 +226,13 @@ fn section_ops(body: &Body, raw: &str, negative: bool) -> (Vec<VOp>, bool, bool)
                             time = true;
                             ops.push(VOp::Time);
                         }
-                        DateTok::General(_) => ops.push(VOp::General),
-                        DateTok::Era(_) | DateTok::AmPm | DateTok::AmPmCjk => {}
+                        DateTok::General(_)
+                        | DateTok::Era(_)
+                        | DateTok::AmPm(_)
+                        | DateTok::AmPmCjk => {}
                     },
                     Item::Fill(_) => ops.push(VOp::Fill),
-                    Item::General => ops.push(VOp::General),
+                    Item::Text => ops.push(VOp::Text),
                     _ => {}
                 }
             }
@@ -246,7 +248,7 @@ fn fills(items: &[Item], ops: &mut Vec<VOp>) {
     for it in items {
         match it {
             Item::Fill(_) => ops.push(VOp::Fill),
-            Item::General => ops.push(VOp::General),
+            Item::Text => ops.push(VOp::Text),
             _ => {}
         }
     }
@@ -366,15 +368,18 @@ mod tests {
         assert_eq!(ty("d/mm/yy"), 3);
         assert_eq!(ty("hh:mm"), 4);
         assert_eq!(ty("hh:mm d/mm"), 4);
-        assert_eq!(ty("[$-409]General"), 8);
+
+        assert_eq!(ty("[$-409]General"), 9);
+        assert_eq!(ty("General\" a\""), 9);
+        assert_eq!(Fm::of("0;@", true).ty, 1);
         assert_eq!(ty("$#,##0"), 2);
         assert_eq!(ty("#,##0$"), 1);
         assert_eq!(ty("#,##0;[Red]-$#,##0"), 1);
         assert!(Fm::of("$#,##0.00;[Red]-$#,##0.00", false).ty == 2);
         assert_eq!(ty("_($* #,##0_);_($* (#,##0);_($* \"-\"_);_(@_)"), 10);
         assert_eq!(ty("General"), 0);
-        assert_eq!(ty("@"), 9);
-        assert_eq!(Fm::of("@", false).ty, 9);
+        assert_eq!(ty("@"), 8);
+        assert_eq!(Fm::of("@", false).ty, 8);
     }
 
     #[test]
@@ -399,5 +404,11 @@ mod tests {
         assert!(join(&mut g, &general));
         let mut n = num.clone();
         assert!(!join(&mut n, &pct));
+
+        let text = Fm::of("@", false);
+        assert!(join(&mut text.clone(), &Fm::of("0;@", true)));
+        assert!(join(&mut Fm::of("0;@", true), &text));
+        assert!(!join(&mut text.clone(), &num));
+        assert!(!join(&mut text.clone(), &Fm::of("General\" a\"", true)));
     }
 }

@@ -67,7 +67,9 @@ pub unsafe fn call(function: usize, args: &[u64]) -> Returned {
         slots[..args.len()].copy_from_slice(args);
     }
     let mut out = [0u64; 2];
-    xlc_dyncall(function, slots.as_ptr(), args.len(), &mut out);
+    xlcalc_stack::on_thread_stack(|| {
+        xlc_dyncall(function, slots.as_ptr(), args.len(), &mut out);
+    });
     Returned {
         rax: out[0],
         xmm0: f64::from_bits(out[1]),
@@ -98,6 +100,21 @@ mod tests {
         ];
         let r = unsafe { call(mixed as *const () as usize, &args) };
         assert_eq!(r.xmm0, 1.0 + 20.0 + 300.0 + 4000.0 + 5e4 + 6e5);
+    }
+
+    extern "C" fn stack_address() -> usize {
+        let x = 0u8;
+        std::hint::black_box(std::ptr::addr_of!(x)) as usize
+    }
+
+    #[test]
+    fn calls_run_on_the_thread_stack() {
+        let start = stack_address();
+        xlcalc_stack::grow(8 << 20, || {
+            assert!(stack_address().abs_diff(start) > 512 * 1024);
+            let r = unsafe { call(stack_address as *const () as usize, &[]) };
+            assert!((r.rax as usize).abs_diff(start) < 512 * 1024);
+        });
     }
 
     #[test]

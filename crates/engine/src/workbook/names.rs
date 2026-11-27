@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::address::{CellAddr, SheetId};
 use crate::formula::Formula;
@@ -15,17 +15,34 @@ pub struct NameDef {
     pub refers_to: String,
 
     pub(crate) formula: Arc<Formula>,
+
+    pub(crate) def_info: Option<crate::legacy::DefInfo>,
 }
 
 impl NameDef {
+    pub(crate) fn refresh_info(&mut self) {
+        self.def_info = crate::legacy::definition_info(&self.refers_to);
+    }
+
     pub fn host(&self) -> CellAddr {
         CellAddr::new(self.scope.unwrap_or(SheetId(0)), 0, 0)
     }
 }
 
+#[derive(Debug, Default)]
+pub(crate) struct NameIndex {
+    pub(crate) all: FxHashSet<String>,
+
+    pub(crate) merged: FxHashMap<String, crate::legacy::DefInfo>,
+
+    pub(crate) scoped: FxHashMap<(Option<SheetId>, String), crate::legacy::DefInfo>,
+}
+
 #[derive(Default, Debug)]
 pub struct Names {
     map: FxHashMap<(Option<SheetId>, Text), NameDef>,
+
+    index: OnceLock<Arc<NameIndex>>,
 
     placeholders: FxHashMap<Text, Text>,
 
@@ -40,6 +57,8 @@ pub struct Names {
     invisible: rustc_hash::FxHashSet<(Option<SheetId>, Text)>,
 
     macro_types: FxHashMap<(Option<SheetId>, Text), i32>,
+
+    definitions: FxHashMap<(Option<SheetId>, Text), u32>,
 
     notes: FxHashMap<(Option<SheetId>, Text), NameNotes>,
 }
@@ -64,6 +83,15 @@ impl Names {
                 self.macro_types.remove(&(scope, key.into()));
             }
         }
+    }
+
+    pub fn definition_serial(&self, key: &str, scope: Option<SheetId>) -> u32 {
+        let k = (scope, Text::from(key));
+        self.definitions.get(&k).copied().unwrap_or(0)
+    }
+
+    pub(crate) fn note_definition(&mut self, key: &str, scope: Option<SheetId>) {
+        *self.definitions.entry((scope, key.into())).or_default() += 1;
     }
 
     pub fn notes(&self, key: &str, scope: Option<SheetId>) -> Option<&NameNotes> {
@@ -99,7 +127,8 @@ impl Names {
             .or_insert_with(|| display.clone());
     }
 
-    pub fn insert(&mut self, def: NameDef) -> Option<NameDef> {
+    pub fn insert(&mut self, mut def: NameDef) -> Option<NameDef> {
+        def.refresh_info();
         let key = (def.scope, Text::from(crate::text::name_key(&def.name)));
 
         if !self.map.contains_key(&key) {
@@ -110,7 +139,43 @@ impl Names {
             let bound = self.unbound_locals(&def, s);
             self.global_bound.insert((s, key.1.clone()), bound);
         }
+        self.index = OnceLock::new();
         self.map.insert(key, def)
+    }
+
+    pub(crate) fn index(&self) -> Arc<NameIndex> {
+        let build = || {
+            let mut out = NameIndex::default();
+            for n in self.map.values() {
+                let key = n.name.to_uppercase();
+                out.all.insert(key.clone());
+                let Some((info, d1, multi)) = n.def_info.clone() else {
+                    continue;
+                };
+                out.scoped
+                    .entry((n.scope, key.clone()))
+                    .or_insert_with(|| (info, d1.clone(), multi));
+                match out.merged.get_mut(&key) {
+                    Some((i, d, m)) => {
+                        *i |= info;
+                        *d = d.take().or(d1);
+                        *m |= multi;
+                    }
+                    None => {
+                        out.merged.insert(key, (info, d1, multi));
+                    }
+                }
+            }
+            Arc::new(out)
+        };
+        Arc::clone(self.index.get_or_init(build))
+    }
+
+    pub(crate) fn macro_keys(&self) -> FxHashSet<String> {
+        self.macro_types
+            .keys()
+            .map(|(_, k)| k.to_string())
+            .collect()
     }
 
     fn unbound_locals(&self, def: &NameDef, scope: SheetId) -> Vec<Text> {
@@ -169,6 +234,7 @@ impl Names {
             self.global_bound.remove(&(s, Text::from(key)));
             self.copy_stale.remove(&(s, Text::from(key)));
         }
+        self.index = OnceLock::new();
         self.map.remove(&(scope, Text::from(key)))
     }
 

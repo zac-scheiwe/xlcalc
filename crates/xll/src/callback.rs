@@ -1,11 +1,9 @@
-use xlcalc::{CellAddr, Value, Workbook, XlError};
+use xlcalc::{CellAddr, SheetKind, Value, Workbook, XlError};
 
 use crate::args;
 use crate::host::{self, Frame, FRAMES};
 use crate::xlfn;
-use crate::xloper::{
-    self, Alloc, Val, Xlmref12, Xloper12, Xlref12, ERR_NA, ERR_VALUE, MULTI, REF, SREF,
-};
+use crate::xloper::{self, Alloc, Val, Xlmref12, Xloper12, Xlref12, ERR_NA, ERR_VALUE, REF, SREF};
 
 pub const XLF_CALLER: i32 = 89;
 pub const XLF_REGISTER: i32 = 149;
@@ -450,64 +448,222 @@ fn cell_like(word: &str) -> bool {
         && w.bytes().skip(letters).all(|c| c.is_ascii_digit())
 }
 
+fn type_bit(v: &Value) -> u32 {
+    match v {
+        Value::Number(_) => 0x1,
+        Value::Text(_) => 0x2,
+        Value::Bool(_) => 0x4,
+        Value::Error(_) => 0x10,
+        Value::Array(_) => 0x40,
+        Value::Blank => 0x100,
+        _ => 0,
+    }
+}
+
+fn sfix(x: f64) -> Option<i32> {
+    let t = x + 2_147_483_648.0;
+    if t.is_nan() {
+        return None;
+    }
+    if t < 0.0 {
+        return Some(i32::MIN);
+    }
+    Some((t as u32).wrapping_add(0x8000_0000) as i32)
+}
+
+unsafe fn parse_number(ctx: &Ctx, t: &str, at: CellAddr) -> Option<f64> {
+    let wb = ctx.wb?;
+    match (*wb).cfv_eval(&format!("=--\"{}\"", t.replace('"', "\"\"")), at, at) {
+        Value::Number(n) => Some(n),
+        _ => None,
+    }
+}
+
+fn wrap_1x1(one: Value) -> Value {
+    xlcalc::Array::new(1, 1, vec![one]).into_value()
+}
+
+unsafe fn coerce_to_mask(ctx: &Ctx, v: Value, mask: u32, at: CellAddr, int: &mut bool) -> Value {
+    if mask == 0x40 {
+        return match v {
+            Value::Array(_) => v,
+            one => wrap_1x1(one),
+        };
+    }
+
+    let v = match v {
+        Value::Array(a) if mask & 0x40 == 0 && a.rows > 0 && a.cols > 0 => a.get(0, 0).clone(),
+        v => v,
+    };
+    if type_bit(&v) & mask != 0 {
+        return v;
+    }
+    let failed = || Value::Error(XlError::VALUE);
+    match v {
+        Value::Error(_) => v,
+
+        Value::Blank => {
+            if mask & 1 != 0 {
+                Value::Number(0.0)
+            } else if mask & 2 != 0 {
+                Value::Text("".into())
+            } else if mask & 0x800 != 0 {
+                *int = true;
+                Value::Number(0.0)
+            } else if mask & 4 != 0 {
+                Value::Bool(false)
+            } else {
+                failed()
+            }
+        }
+
+        Value::Number(n) => {
+            if mask & 2 != 0 {
+                Value::Text(xlcalc::format_general(n).into())
+            } else if mask & 0x800 != 0 {
+                match sfix(n) {
+                    Some(i) => {
+                        *int = true;
+                        Value::Number(f64::from(i))
+                    }
+                    None => failed(),
+                }
+            } else if mask & 4 != 0 {
+                Value::Bool(n != 0.0)
+            } else if mask & 0x40 != 0 {
+                wrap_1x1(v)
+            } else {
+                failed()
+            }
+        }
+
+        Value::Bool(b) => {
+            if mask & 1 != 0 {
+                Value::Number(f64::from(u8::from(b)))
+            } else if mask & 2 != 0 {
+                Value::Text(if b { "TRUE" } else { "FALSE" }.into())
+            } else if mask & 0x800 != 0 {
+                *int = true;
+                Value::Number(f64::from(u8::from(b)))
+            } else if mask & 0x40 != 0 {
+                wrap_1x1(v)
+            } else {
+                failed()
+            }
+        }
+
+        Value::Text(ref t) => {
+            if mask & 0x801 != 0 {
+                match parse_number(ctx, t, at) {
+                    Some(n) if mask & 1 != 0 => Value::Number(n),
+                    Some(n) => match sfix(n) {
+                        Some(i) => {
+                            *int = true;
+                            Value::Number(f64::from(i))
+                        }
+                        None => failed(),
+                    },
+                    None => failed(),
+                }
+            } else if mask & 4 != 0 && t.eq_ignore_ascii_case("TRUE") {
+                Value::Bool(true)
+            } else if mask & 4 != 0 && t.eq_ignore_ascii_case("FALSE") {
+                Value::Bool(false)
+            } else if mask & 0x40 != 0 {
+                wrap_1x1(v)
+            } else {
+                failed()
+            }
+        }
+
+        _ => failed(),
+    }
+}
+
+unsafe fn int_operand(ctx: &Ctx, p: *mut Xloper12, at: CellAddr) -> Option<i32> {
+    match arg_value(ctx, p)? {
+        Value::Number(n) => sfix(n),
+        Value::Bool(b) => Some(i32::from(b)),
+        Value::Blank => Some(0),
+        Value::Text(t) => sfix(parse_number(ctx, &t, at)?),
+        Value::Array(a) if a.len() == 1 => match a.get(0, 0) {
+            Value::Number(n) => sfix(*n),
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 unsafe fn coerce(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
-    if a.is_empty() || a.len() > 2 {
+    if a.is_empty() {
         return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
     }
-    let Some(v) = arg_value(ctx, a[0]) else {
-        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
-    };
-    let target = if a.len() == 2 {
-        match arg_value(ctx, a[1]) {
-            Some(Value::Number(n)) => n as u32,
-            _ => return (RET_INV_XLOPER, Reply::Error(ERR_VALUE)),
-        }
-    } else {
-        0
-    };
     let at = ctx.caller.unwrap_or(CellAddr {
         sheet: xlcalc::SheetId(0),
         row: 0,
         col: 0,
     });
-    let converted = match (target, &v) {
-        (0, _) => Ok(v.clone()),
-        (xloper::NUM, Value::Error(e)) | (xloper::STR, Value::Error(e)) => Err(*e),
-        (xloper::NUM, x) => match x {
-            Value::Number(_) => Ok(x.clone()),
-            Value::Bool(b) => Ok(Value::Number(f64::from(u8::from(*b)))),
-            Value::Blank => Ok(Value::Number(0.0)),
-            Value::Text(t) => match ctx.wb {
-                Some(wb) => {
-                    match (*wb).cfv_eval(&format!("=--\"{}\"", t.replace('"', "\"\"")), at, at) {
-                        n @ Value::Number(_) => Ok(n),
-                        _ => Err(XlError::VALUE),
-                    }
-                }
-                None => Err(XlError::VALUE),
-            },
-            _ => Err(XlError::VALUE),
-        },
-        (xloper::STR, Value::Number(n)) => Ok(Value::Text(xlcalc::format_general(*n).into())),
-        (xloper::STR, Value::Bool(b)) => Ok(Value::Text(if *b { "TRUE" } else { "FALSE" }.into())),
-        (xloper::STR, Value::Blank) => Ok(Value::Text("".into())),
-        (xloper::STR, t @ Value::Text(_)) => Ok(t.clone()),
-        (xloper::BOOL, Value::Number(n)) => Ok(Value::Bool(*n != 0.0)),
-        (xloper::BOOL, b @ Value::Bool(_)) => Ok(b.clone()),
-        (xloper::BOOL, Value::Blank) => Ok(Value::Bool(false)),
-        (MULTI, Value::Array(_)) => Ok(v.clone()),
-        (MULTI, one) => Ok(xlcalc::Array::new(1, 1, vec![one.clone()]).into_value()),
-        (_, Value::Error(e)) => Err(*e),
-        _ => Err(XlError::VALUE),
-    };
-    match converted {
-        Ok(v) => {
-            let mut alloc = Alloc::default();
-            let x = alloc.convert(&v);
-            (RET_SUCCESS, Reply::Oper(x, Some(alloc)))
+    let mut mask: u32 = 0x157;
+    if let Some(&t) = a.get(1) {
+        if !t.is_null() && (*t).kind() != xloper::MISSING {
+            let Some(n) = int_operand(ctx, t, at) else {
+                return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+            };
+            mask = n as u32;
+            if mask & 0x400 != 0 {
+                mask |= 8;
+            }
         }
-        Err(e) => (RET_FAILED, Reply::Error(xloper::error_code(e))),
     }
+    if !a[0].is_null() {
+        let raw = *a[0];
+        match raw.kind() {
+            xloper::INT if mask & 0x800 != 0 => return (RET_SUCCESS, Reply::Oper(raw, None)),
+
+            SREF if mask & 0x400 != 0 => return (RET_SUCCESS, Reply::Oper(raw, None)),
+            SREF if mask & 8 != 0 => {
+                let r = raw.val.sref.rect;
+                let mut alloc = Alloc::default();
+                let sheet = ctx.caller.map_or(0, |c| c.sheet.0 as usize) + 1;
+                let x = alloc.reference(sheet, &[r]);
+                return (RET_SUCCESS, Reply::Oper(x, Some(alloc)));
+            }
+            REF if mask & 8 != 0 => {
+                let m = raw.val.mref;
+                let mut rects = Vec::new();
+                if !m.refs.is_null() {
+                    let n = (*m.refs).count as usize;
+                    let table = m.refs.cast::<u8>().add(4).cast::<Xlref12>();
+                    rects.extend((0..n).map(|i| table.add(i).read_unaligned()));
+                }
+                let mut alloc = Alloc::default();
+                let x = alloc.reference(m.sheet, &rects);
+                return (RET_SUCCESS, Reply::Oper(x, Some(alloc)));
+            }
+            _ => {}
+        }
+    }
+    let Some(v) = arg_value(ctx, a[0]) else {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    };
+    let mut int = false;
+    let out = coerce_to_mask(ctx, v, mask, at, &mut int);
+    let bit = if int { 0x800 } else { type_bit(&out) };
+    if bit & mask == 0 {
+        let e = match out {
+            Value::Error(e) => e,
+            _ => XlError::VALUE,
+        };
+        return (RET_FAILED, Reply::Error(xloper::error_code(e)));
+    }
+    if int {
+        if let Value::Number(n) = out {
+            return (RET_SUCCESS, int_reply(n as i32));
+        }
+    }
+    let mut alloc = Alloc::default();
+    let x = alloc.convert(&out);
+    (RET_SUCCESS, Reply::Oper(x, Some(alloc)))
 }
 
 unsafe fn sheet_id(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
@@ -517,7 +673,7 @@ unsafe fn sheet_id(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
 
     let omitted = a
         .first()
-        .is_none_or(|&p| !p.is_null() && (*p).kind() == xloper::MISSING);
+        .is_none_or(|&p| p.is_null() || (*p).kind() == xloper::MISSING);
     let found = if omitted {
         Some((*wb).active_sheet().0 as usize)
     } else {
@@ -526,7 +682,8 @@ unsafe fn sheet_id(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
         };
         (*wb)
             .sheets()
-            .find(|s| s.name.eq_ignore_ascii_case(&name.replace('\'', "")))
+            .find(|s| s.name.eq_ignore_ascii_case(&name))
+            .filter(|s| !matches!(s.kind, SheetKind::Chart | SheetKind::Module))
             .map(|s| s.id.0 as usize)
     };
     match found {
@@ -603,27 +760,102 @@ unsafe fn abort(a: &[*mut Xloper12]) -> (i32, Reply) {
     (RET_SUCCESS, bool_reply(false))
 }
 
+fn find_binary(names: &[(String, usize)], name: &str) -> Option<usize> {
+    let lower = name.to_lowercase();
+    names.iter().position(|(n, _)| n.to_lowercase() == lower)
+}
+
 unsafe fn define_binary_name(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
+    use windows::Win32::Foundation::{GlobalFree, HGLOBAL};
+    use windows::Win32::System::Memory::{
+        GlobalAlloc, GlobalLock, GlobalReAlloc, GlobalUnlock, GMEM_MOVEABLE,
+    };
     if a.is_empty() || a.len() > 2 {
         return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
     }
-    if text_arg(ctx, a[0]).is_none() {
+    let Some(name) = text_arg(ctx, a[0]) else {
+        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    };
+    let failed = (RET_FAILED, Reply::Error(ERR_VALUE));
+    let Some(book) = ctx.wb else { return failed };
+    let mut books = ctx
+        .inner
+        .binary_names
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let names = books.entry(book as usize).or_default();
+    if a.len() == 1 {
+        let Some(i) = find_binary(names, &name) else {
+            return failed;
+        };
+        let (_, h) = names.remove(i);
+        let _ = GlobalFree(Some(HGLOBAL(h as *mut _)));
+        return (RET_SUCCESS, bool_reply(true));
+    }
+    if a[1].is_null() || (*a[1]).xltype != xloper::BIGDATA {
         return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
     }
-    if a.len() == 2 && (a[1].is_null() || (*a[1]).kind() != xloper::BIGDATA) {
-        return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+
+    let base = a[1].cast::<u8>();
+    let data = base.cast::<*const u8>().read_unaligned();
+    let size = base.add(8).cast::<i32>().read_unaligned();
+    if size < 0 || (data.is_null() && size > 0) {
+        return failed;
     }
-    (RET_FAILED, Reply::Error(ERR_VALUE))
+    let size = size as usize;
+    let h = match find_binary(names, &name) {
+        Some(i) => match GlobalReAlloc(HGLOBAL(names[i].1 as *mut _), size, 0) {
+            Ok(h) => {
+                names[i].1 = h.0 as usize;
+                h
+            }
+            Err(_) => return failed,
+        },
+        None => match GlobalAlloc(GMEM_MOVEABLE, size) {
+            Ok(h) => {
+                names.push((name, h.0 as usize));
+                h
+            }
+            Err(_) => return failed,
+        },
+    };
+    let p = GlobalLock(h);
+    if !p.is_null() && size > 0 {
+        std::ptr::copy_nonoverlapping(data, p.cast::<u8>(), size);
+    }
+    let _ = GlobalUnlock(h);
+    (RET_SUCCESS, bool_reply(true))
 }
 
 unsafe fn get_binary_name(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {
+    use windows::Win32::Foundation::HGLOBAL;
+    use windows::Win32::System::Memory::GlobalSize;
     if a.len() != 1 {
         return (RET_INV_COUNT, Reply::Error(ERR_VALUE));
     }
-    if text_arg(ctx, a[0]).is_none() {
+    let Some(name) = text_arg(ctx, a[0]) else {
         return (RET_INV_XLOPER, Reply::Error(ERR_VALUE));
+    };
+    let Some(book) = ctx.wb else {
+        return (RET_FAILED, Reply::Error(ERR_VALUE));
+    };
+    let books = ctx
+        .inner
+        .binary_names
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
+    let names = books.get(&(book as usize)).map_or(&[][..], Vec::as_slice);
+    match find_binary(names, &name) {
+        Some(i) => {
+            let h = names[i].1;
+            let size = GlobalSize(HGLOBAL(h as *mut _));
+            (
+                RET_SUCCESS,
+                Reply::Oper(Xloper12::bigdata(h, size as u32), None),
+            )
+        }
+        None => (RET_FAILED, Reply::Error(ERR_VALUE)),
     }
-    (RET_FAILED, Reply::Error(ERR_VALUE))
 }
 
 unsafe fn async_return(ctx: &Ctx, a: &[*mut Xloper12]) -> (i32, Reply) {

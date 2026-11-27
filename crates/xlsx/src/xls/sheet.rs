@@ -7,7 +7,9 @@ use super::read::{ref8, Fx};
 use super::rextras;
 use super::rstyles::Styles;
 use super::Rec;
-use crate::xlsb::{cell_name, error_name, esc, rect_name, rk_value, xstr, Dec};
+use crate::xlsb::{
+    cell_name, error_name, esc, mem_attr, rect_name, rk_value, table_input, xstr, Dec,
+};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 
@@ -46,6 +48,8 @@ pub(super) struct Cell {
     pub val: Val,
     pub formula: bool,
     pub form: Form,
+
+    pub mem: String,
 }
 
 #[derive(Default)]
@@ -86,10 +90,11 @@ fn write_cell(x: &mut String, row: u32, c: &Cell, sst: &[String]) {
         let _ = write!(attrs, " t=\"{ty}\"");
     }
     let f = match &c.form {
-        Form::Text(t) => format!("<f>{}</f>", esc(t)),
+        Form::Text(t) => format!("<f{}>{}</f>", c.mem, esc(t)),
         Form::Array(t, (r0, c0, r1, c1)) => format!(
-            "<f t=\"array\" ref=\"{}\">{}</f>",
+            "<f t=\"array\" ref=\"{}\"{}>{}</f>",
             rect_name(*r0, *c0, *r1, *c1),
+            c.mem,
             esc(t)
         ),
         Form::DataTable(f) => f.clone(),
@@ -139,7 +144,13 @@ pub(super) fn read_sheet(
     let mut code_name = None;
     let mut wsbool = 0x04C1u16;
     let (mut def_col_width, mut def_row_h): (Option<u16>, Option<(u16, f64)>) = (None, None);
+
+    let mut std_width: Option<u16> = None;
     let mut win2 = 0x06B6u16;
+
+    let mut top_left = (0u16, 0u16);
+    let mut page_layout = false;
+    let mut tab_color: Option<String> = None;
     let mut zoom: Option<(u16, u16)> = None;
     let mut pane: Option<(u16, u16, u16, u16)> = None;
     let mut pane_active = 0u8;
@@ -183,7 +194,7 @@ pub(super) fn read_sheet(
             if depth == 1 {
                 if let Some(recs) = chart_cur.take() {
                     let what = format!("{sheet}: chart");
-                    let xml = rchart::to_xml(&recs, fx, cp, idx, &what, warnings);
+                    let xml = rchart::to_xml(&recs, fx, cp, &what, warnings);
                     if let Some(sh) = shapes
                         .iter_mut()
                         .rev()
@@ -250,6 +261,7 @@ pub(super) fn read_sheet(
                     val,
                     formula: false,
                     form: Form::None,
+                    mem: String::new(),
                 });
             }
             0xBD => {
@@ -265,6 +277,7 @@ pub(super) fn read_sheet(
                         val: Val::Num(rk_value(rk)),
                         formula: false,
                         form: Form::None,
+                        mem: String::new(),
                     });
                 }
             }
@@ -280,6 +293,7 @@ pub(super) fn read_sheet(
                         val: Val::Blank,
                         formula: false,
                         form: Form::None,
+                        mem: String::new(),
                     });
                 }
             }
@@ -295,8 +309,9 @@ pub(super) fn read_sheet(
                 let extra = c.rest();
                 let base = (row, col);
                 let mut form = Form::None;
+                let mut mem = String::new();
                 match fx.text(rgce, extra, base, Some(idx), cp) {
-                    Ok(Dec::Text(t)) => form = Form::Text(t),
+                    Ok(Dec::Text(t, m)) => (form, mem) = (Form::Text(t), mem_attr(&m)),
                     Ok(Dec::Exp {
                         row: mr,
                         col: mc,
@@ -306,7 +321,9 @@ pub(super) fn read_sheet(
                             form = Form::Master;
                         } else if let Some(s) = shared.get(&(mr, mc)) {
                             match fx.text(&s.rgce.clone(), &s.extra.clone(), base, Some(idx), cp) {
-                                Ok(Dec::Text(t)) => form = Form::Text(t),
+                                Ok(Dec::Text(t, m)) => {
+                                    (form, mem) = (Form::Text(t), mem_attr(&m));
+                                }
                                 Ok(Dec::Exp { .. }) => {}
                                 Err(e) => warnings.push(format!(
                                     "{sheet}!{}: shared formula not supported: {e}",
@@ -329,6 +346,7 @@ pub(super) fn read_sheet(
                     val,
                     formula: true,
                     form,
+                    mem,
                 });
                 last_formula = Some((row, list.len() - 1));
                 if str_follows {
@@ -364,7 +382,9 @@ pub(super) fn read_sheet(
                     if let Some(cell) = cells.get_mut(&row).and_then(|l| l.get_mut(i)) {
                         if matches!(cell.form, Form::Master) {
                             match fx.text(&rgce, &extra, (row, cell.col), Some(idx), cp) {
-                                Ok(Dec::Text(t)) => cell.form = Form::Text(t),
+                                Ok(Dec::Text(t, m)) => {
+                                    (cell.form, cell.mem) = (Form::Text(t), mem_attr(&m));
+                                }
                                 Ok(Dec::Exp { .. }) => cell.form = Form::None,
                                 Err(e) => {
                                     cell.form = Form::None;
@@ -399,7 +419,8 @@ pub(super) fn read_sheet(
                         if matches!(cell.form, Form::Master) {
                             let at = (row, cell.col);
                             match fx.text(&rgce, &extra, at, Some(idx), cp) {
-                                Ok(Dec::Text(t)) => {
+                                Ok(Dec::Text(t, m)) => {
+                                    cell.mem = mem_attr(&m);
                                     array_masters.push(at);
                                     cell.form = Form::Array(t, (r0, c0, r1, c1));
                                 }
@@ -429,16 +450,17 @@ pub(super) fn read_sheet(
                 let flags = c.u16()?;
                 let (ir1, ic1) = (u32::from(c.u16()?), u32::from(c.u16()?));
                 let (ir2, ic2) = (u32::from(c.u16()?), u32::from(c.u16()?));
+
                 let two = flags & 8 != 0;
-                let mut f = format!(
-                    "<f t=\"dataTable\" ref=\"{}\" r1=\"{}\"",
-                    rect_name(r0, c0, r1, c1),
-                    cell_name(ir1, ic1)
-                );
+                let mut f = format!("<f t=\"dataTable\" ref=\"{}\"", rect_name(r0, c0, r1, c1));
                 if two {
-                    let _ = write!(f, " dt2D=\"1\" r2=\"{}\"", cell_name(ir2, ic2));
+                    f.push_str(" dt2D=\"1\"");
                 } else if flags & 4 != 0 {
                     f.push_str(" dtr=\"1\"");
+                }
+                table_input(&mut f, 1, (ir1, ic1), flags & 0x10 != 0);
+                if two {
+                    table_input(&mut f, 2, (ir2, ic2), flags & 0x20 != 0);
                 }
                 f.push_str("/>");
                 if let Some((row, i)) = last_formula {
@@ -463,14 +485,21 @@ pub(super) fn read_sheet(
                     merges.push(ref8(&mut c)?);
                 }
             }
-            0x55 => def_col_width = Some(c.u16()?),
+
+            0x55 if wsbool & 0x10 == 0 => def_col_width = Some(c.u16()?),
+            0x99 => std_width = Some(c.u16()?),
             0x225 => {
                 let fl = c.u16()?;
                 let h = c.u16()?;
                 def_row_h = Some((fl, f64::from(h) / 20.0));
             }
             0x81 => wsbool = c.u16()?,
-            0x23E => win2 = c.u16()?,
+            0x23E => {
+                win2 = c.u16()?;
+                top_left = (c.u16()?, c.u16()?);
+            }
+            0x88B => page_layout = r.d.get(14).is_some_and(|f| f & 1 != 0),
+            0x862 => tab_color = tab_color_xml(r.d),
             0xA0 => zoom = Some((c.u16()?, c.u16()?)),
             0x41 => {
                 pane = Some((c.u16()?, c.u16()?, c.u16()?, c.u16()?));
@@ -479,7 +508,7 @@ pub(super) fn read_sheet(
             0x1D => {
                 let pnn = c.take(1)?[0];
                 let (r, col) = (c.u16()?, c.u16()?);
-                c.u16()?;
+                let holder = c.u16()?;
                 let n = c.u16()?;
 
                 let mut refs = Vec::new();
@@ -504,8 +533,12 @@ pub(super) fn read_sheet(
                     2 => " pane=\"bottomLeft\"",
                     _ => "",
                 };
+                let id = match holder {
+                    0 => String::new(),
+                    id => format!(" activeCellId=\"{id}\""),
+                };
                 sels.push(format!(
-                    "<selection{pane} activeCell=\"{}\" sqref=\"{rng}\"/>",
+                    "<selection{pane} activeCell=\"{}\"{id} sqref=\"{rng}\"/>",
                     cell_name(u32::from(r), u32::from(col))
                 ));
             }
@@ -599,6 +632,7 @@ pub(super) fn read_sheet(
                     in_note = true;
                     note_objs.push(rcomments::NoteObj {
                         id,
+                        spid: p.as_ref().map_or(0, |p| p.spid),
                         anchor: p.and_then(|p| p.anchor),
                         text: None,
                     });
@@ -651,7 +685,7 @@ pub(super) fn read_sheet(
     let mut x = String::new();
     let _ = write!(x, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<worksheet xmlns=\"{MAIN}\" xmlns:r=\"{REL}\">");
 
-    let mut pr = String::new();
+    let mut pr = tab_color.unwrap_or_default();
     if wsbool & 0x40 == 0 || wsbool & 0x80 == 0 {
         let _ = write!(
             pr,
@@ -684,6 +718,10 @@ pub(super) fn read_sheet(
 
     {
         let mut v = String::from("<sheetView");
+
+        if win2 & 0x01 != 0 {
+            v.push_str(" showFormulas=\"1\"");
+        }
         if win2 & 0x02 == 0 {
             v.push_str(" showGridLines=\"0\"");
         }
@@ -698,6 +736,15 @@ pub(super) fn read_sheet(
         }
         if win2 & 0x200 != 0 {
             v.push_str(" tabSelected=\"1\"");
+        }
+        if page_layout {
+            v.push_str(" view=\"pageLayout\"");
+        } else if win2 & 0x800 != 0 {
+            v.push_str(" view=\"pageBreakPreview\"");
+        }
+        if top_left != (0, 0) {
+            let cell = cell_name(u32::from(top_left.0), u32::from(top_left.1));
+            let _ = write!(v, " topLeftCell=\"{cell}\"");
         }
         if let Some((n, d)) = zoom {
             if d != 0 {
@@ -749,10 +796,39 @@ pub(super) fn read_sheet(
         let _ = write!(x, "<sheetViews>{v}</sheetViews>");
     }
 
+    let d = styles.normal_digit.filter(|d| *d > 0);
+    let d = d.unwrap_or_else(|| xlcalc::digit_px("Arial", 200, false, false));
+    let mut default_dx = xlcalc::standard_px_for(d);
+    let mut ignore_std = false;
+    let mut to_end = None;
+    for col in cols.iter_mut().filter(|col| col.4 & 1 == 0) {
+        if col.4 & 6 == 0 && xlcalc::coldx_to_dx(u32::from(col.2), d) == default_dx {
+            ignore_std = true;
+        } else if col.1 >= 256 && col.4 & 0x700 == 0 {
+            col.4 &= !2;
+            to_end = Some(col.2);
+            default_dx = xlcalc::coldx_to_dx(u32::from(col.2), d);
+            ignore_std = true;
+        }
+    }
+    let global = std_width.filter(|_| !ignore_std);
+    if let Some(w) = global {
+        for col in cols.iter_mut().filter(|col| col.4 & 2 == 0) {
+            col.2 = w;
+            col.4 &= !5;
+        }
+    }
+
     {
         let mut f = String::from("<sheetFormatPr");
-        if let Some(w) = def_col_width {
+
+        if global.is_none() {
+            let w = def_col_width.unwrap_or(8);
             let _ = write!(f, " baseColWidth=\"{w}\"");
+        }
+        if let Some(w) = to_end.or(global) {
+            let w = xlcalc::px_to_file_width(xlcalc::coldx_to_px(u32::from(w)));
+            let _ = write!(f, " defaultColWidth=\"{w}\"");
         }
         match def_row_h {
             Some((fl, h)) => {
@@ -774,7 +850,7 @@ pub(super) fn read_sheet(
         for (min, max, w, xf, fl) in &cols {
             let _ = write!(
                 x,
-                "<col min=\"{}\" max=\"{}\" width=\"{}\"{}{}{}{}{}>",
+                "<col min=\"{}\" max=\"{}\" width=\"{}\"{}{}{}{}{}{}>",
                 min + 1,
                 (*max + 1).min(256),
                 f64::from(*w) / 256.0,
@@ -789,6 +865,7 @@ pub(super) fn read_sheet(
                 } else {
                     ""
                 },
+                if fl & 4 != 0 { " bestFit=\"1\"" } else { "" },
                 match (fl >> 8) & 7 {
                     0 => String::new(),
                     l => format!(" outlineLevel=\"{l}\""),
@@ -1073,5 +1150,32 @@ pub(super) fn read_sheet(
         rels,
         parts,
         code_name,
+    })
+}
+
+fn tab_color_xml(d: &[u8]) -> Option<String> {
+    let word = |at: usize| Some(u32::from_le_bytes(d.get(at..at + 4)?.try_into().ok()?));
+    let icv = word(16)? & 0x7F;
+    if icv == 0x7F {
+        return None;
+    }
+    let (Some(kind), Some(value)) = (word(24), word(28)) else {
+        return Some(format!("<tabColor indexed=\"{icv}\"/>"));
+    };
+    let tint = d
+        .get(32..40)
+        .and_then(|t| t.try_into().ok())
+        .map_or(0.0, f64::from_le_bytes);
+    let tint = match tint {
+        t if t != 0.0 => format!(" tint=\"{t}\""),
+        _ => String::new(),
+    };
+    Some(match kind {
+        2 => {
+            let [r, g, b, _] = value.to_le_bytes();
+            format!("<tabColor rgb=\"FF{r:02X}{g:02X}{b:02X}\"{tint}/>")
+        }
+        3 => format!("<tabColor theme=\"{value}\"{tint}/>"),
+        _ => format!("<tabColor indexed=\"{icv}\"/>"),
     })
 }

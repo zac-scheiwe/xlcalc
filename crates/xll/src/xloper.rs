@@ -90,6 +90,18 @@ impl Xloper12 {
         Xloper12 { val, xltype }
     }
 
+    pub fn bigdata(handle: usize, bytes: u32) -> Xloper12 {
+        Xloper12::with(
+            Val {
+                mref: MRef {
+                    refs: handle as *mut Xlmref12,
+                    sheet: bytes as usize,
+                },
+            },
+            BIGDATA,
+        )
+    }
+
     pub fn nil() -> Xloper12 {
         Xloper12::with(Val { int: 0 }, NIL)
     }
@@ -115,13 +127,14 @@ impl Xloper12 {
 pub struct Alloc {
     strs: Vec<Box<[u16]>>,
     cells: Vec<Box<[Xloper12]>>,
+    mrefs: Vec<Box<[Xlref12]>>,
 }
 
 unsafe impl Send for Alloc {}
 
 impl Alloc {
     fn string(&mut self, s: &str) -> *mut u16 {
-        let units: Vec<u16> = s.encode_utf16().take(32767).collect();
+        let units: Vec<u16> = xlcalc::wide::units(s).take(32767).collect();
         let mut buf = Vec::with_capacity(units.len() + 1);
         buf.push(units.len() as u16);
         buf.extend(units);
@@ -129,6 +142,29 @@ impl Alloc {
         let p = b.as_mut_ptr();
         self.strs.push(b);
         p
+    }
+
+    pub fn reference(&mut self, sheet: usize, rects: &[Xlref12]) -> Xloper12 {
+        let mut b = vec![Xlref12::default(); rects.len() + 1].into_boxed_slice();
+        let p = b.as_mut_ptr();
+
+        unsafe {
+            p.cast::<u16>().write(rects.len() as u16);
+            let table = p.cast::<u8>().add(4).cast::<Xlref12>();
+            for (i, r) in rects.iter().enumerate() {
+                table.add(i).write(*r);
+            }
+        }
+        self.mrefs.push(b);
+        Xloper12::with(
+            Val {
+                mref: MRef {
+                    refs: p.cast::<Xlmref12>(),
+                    sheet,
+                },
+            },
+            REF,
+        )
     }
 
     pub fn convert(&mut self, v: &Value) -> Xloper12 {
@@ -237,7 +273,7 @@ pub unsafe fn counted(p: *const u16) -> String {
         return String::new();
     }
     let n = usize::from(*p);
-    String::from_utf16_lossy(std::slice::from_raw_parts(p.add(1), n))
+    xlcalc::wide::from_units(std::slice::from_raw_parts(p.add(1), n))
 }
 
 pub unsafe fn to_value(x: &Xloper12) -> Option<Value> {

@@ -113,6 +113,19 @@ pub struct AggPolicy {
     pub a_variant: bool,
 
     pub array_text_zero: bool,
+
+    pub long_text_na: bool,
+}
+
+pub fn is_long_text(v: &Value) -> bool {
+    matches!(v, Value::Text(t) if crate::text::utf16_len(t) > 255)
+}
+
+pub fn long_text_in(v: &Value) -> bool {
+    match v {
+        Value::Array(a) => a.data.iter().any(is_long_text),
+        v => is_long_text(v),
+    }
 }
 
 pub const SUM_POLICY: AggPolicy = AggPolicy {
@@ -120,24 +133,33 @@ pub const SUM_POLICY: AggPolicy = AggPolicy {
     direct_text_error: true,
     a_variant: false,
     array_text_zero: false,
+    long_text_na: true,
 };
 pub const COUNT_POLICY: AggPolicy = AggPolicy {
     propagate_errors: false,
     direct_text_error: false,
     a_variant: false,
     array_text_zero: false,
+    long_text_na: false,
 };
 pub const A_POLICY: AggPolicy = AggPolicy {
     propagate_errors: true,
     direct_text_error: true,
     a_variant: true,
     array_text_zero: false,
+    long_text_na: true,
 };
 pub const AVGA_POLICY: AggPolicy = AggPolicy {
     propagate_errors: true,
     direct_text_error: true,
     a_variant: true,
     array_text_zero: true,
+    long_text_na: true,
+};
+
+pub const SKIP_LONG_POLICY: AggPolicy = AggPolicy {
+    long_text_na: false,
+    ..SUM_POLICY
 };
 
 pub fn visit_numbers(
@@ -150,7 +172,8 @@ pub fn visit_numbers(
         match op {
             Operand::Val(Value::Error(e)) if p.propagate_errors => return Err(*e),
             Operand::Val(Value::Lambda(_)) if p.propagate_errors => return Err(XlError::VALUE),
-            Operand::Val(v @ Value::Text(_)) if p.direct_text_error => {
+            Operand::Val(v) if is_long_text(v) && p.long_text_na => return Err(XlError::NA),
+            Operand::Val(v @ Value::Text(_)) if p.direct_text_error && !is_long_text(v) => {
                 ctx.to_number(v)?;
             }
             _ => {}
@@ -164,6 +187,7 @@ pub fn visit_numbers(
                 Value::Number(n) => f(*n),
                 Value::Bool(b) => f(if *b { 1.0 } else { 0.0 }),
                 Value::Blank => f(0.0),
+                Value::Text(_) if is_long_text(v) => {}
                 Value::Text(_) => match ctx.to_number(v) {
                     Ok(n) => f(n),
                     Err(e) => {
@@ -230,6 +254,7 @@ fn visit_array_numbers(a: &Array, p: AggPolicy, f: &mut impl FnMut(f64)) -> R<()
         match v {
             Value::Number(n) => f(*n),
             Value::Error(e) if p.propagate_errors => return Err(*e),
+            v if p.long_text_na && is_long_text(v) => return Err(XlError::NA),
             Value::Text(_) if p.array_text_zero => f(0.0),
             _ => {}
         }
@@ -250,13 +275,6 @@ pub enum Grid {
 }
 
 impl Grid {
-    pub fn from_operand_3d(op: &Operand) -> R<Grid> {
-        match op {
-            Operand::Ref(r) if r.is_span() && r.single().is_none() => Err(XlError::REF),
-            _ => Grid::from_operand(op),
-        }
-    }
-
     pub fn from_operand(op: &Operand) -> R<Grid> {
         Ok(match op {
             Operand::Ref(crate::eval::Reference::Grid(g)) => Grid::Array(g.value_array()),

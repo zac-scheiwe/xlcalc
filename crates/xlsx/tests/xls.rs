@@ -741,3 +741,80 @@ fn xls_draw6_written_legends_carry_layout_record() {
     let n = bytes.windows(key.len()).filter(|w| *w == key).count();
     assert!(n >= 6, "{n} layout records");
 }
+
+#[test]
+fn a_stored_memory_error_survives_a_reopen_only() {
+    let mut wb = xlcalc::Workbook::new();
+    let sheet = wb.sheets().next().unwrap().id;
+    let at = xlcalc::CellAddr::new(sheet, 0, 2);
+    wb.set_input(at, "=SUM(A70000:B70001 A1:B2)").unwrap();
+    let saved = xlcalc_xlsx::save(&wb, None, &Default::default()).unwrap();
+    let (xls, _) = xlcalc_xlsx::xlsx_to_xls_of(&saved.bytes, &wb, false).unwrap();
+    let back = xlcalc_xlsx::import_bytes(xls).unwrap();
+    let first = back.workbook.sheets().next().unwrap().id;
+    let at = xlcalc::CellAddr { sheet: first, ..at };
+    assert!(matches!(
+        back.workbook.value(at),
+        xlcalc::Value::Error(e) if e == xlcalc::XlError::NULL
+    ));
+    let again =
+        xlcalc_xlsx::save(&back.workbook, Some(&back.package), &Default::default()).unwrap();
+    let mut zip = zip::ZipArchive::new(std::io::Cursor::new(again.bytes)).unwrap();
+    let mut xml = String::new();
+    let mut part = zip.by_name("xl/worksheets/sheet1.xml").unwrap();
+    std::io::Read::read_to_string(&mut part, &mut xml).unwrap();
+    assert!(!xml.contains("xlcMemErr"), "{xml}");
+}
+
+#[test]
+fn data_table_inputs_off_the_grid_or_deleted() {
+    use xlcalc::{CellAddr, Rect, TableInput, Value, XlError};
+    let mut wb = xlcalc::Workbook::new();
+    let sheet = wb.sheets().next().unwrap().id;
+    let at = |r, c| CellAddr::new(sheet, r, c);
+
+    let last = TableInput::Cell(at(65535, 255));
+    let low = TableInput::Cell(at(65536, 0));
+    let wide = TableInput::Cell(at(0, 256));
+    let tables = [
+        (Some(last), None, "=TABLE(IV65536,)", "=TABLE(IV65536,)"),
+        (
+            Some(low),
+            Some(wide),
+            "=TABLE(A65537,IW1)",
+            "=TABLE(#REF!,#REF!)",
+        ),
+        (
+            None,
+            Some(TableInput::Deleted),
+            "=TABLE(,#REF!)",
+            "=TABLE(,#REF!)",
+        ),
+        (
+            Some(TableInput::Deleted),
+            Some(last),
+            "=TABLE(#REF!,IV65536)",
+            "=TABLE(#REF!,IV65536)",
+        ),
+    ];
+    for (i, (row, col, ..)) in tables.iter().enumerate() {
+        let top = 4 * i as u32;
+        wb.load_data_table(sheet, Rect::new(top, 0, top + 2, 2), *row, *col)
+            .unwrap();
+    }
+    let saved = xlcalc_xlsx::save(&wb, None, &Default::default()).unwrap();
+    let (xls, _) = xlcalc_xlsx::xlsx_to_xls_of(&saved.bytes, &wb, false).unwrap();
+    let (xlsb, _) = xlcalc_xlsx::xlsx_to_xlsb(&saved.bytes).unwrap();
+    for (bytes, in_xls) in [(saved.bytes, false), (xlsb, false), (xls, true)] {
+        let back = xlcalc_xlsx::import_bytes(bytes).unwrap().workbook;
+        let first = back.sheets().next().unwrap().id;
+        for (i, (.., kept, cut)) in tables.iter().enumerate() {
+            let cell = CellAddr::new(first, 4 * i as u32 + 1, 1);
+            let want = if in_xls { cut } else { kept };
+            assert_eq!(back.formula_text(cell).as_deref(), Some(*want));
+            if want.contains("#REF!") && !in_xls {
+                assert!(matches!(back.value(cell), Value::Error(XlError::REF)));
+            }
+        }
+    }
+}

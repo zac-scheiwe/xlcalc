@@ -3,11 +3,12 @@ use super::rtable::FN_NAMES;
 use super::write::Out;
 use super::wsheet::{Cx, SheetIn};
 use crate::parse_rect;
-use crate::xlsb_enc::{self as enc, Cls};
+use crate::xlsb_enc as enc;
 use crate::xml::Node;
+use xlcalc::FormulaContext;
 
 fn long_str(d: &mut Vec<u8>, s: &str) {
-    d.extend((s.encode_utf16().count().min(32767) as u16).to_le_bytes());
+    d.extend((xlcalc::wide::units(s).count().min(32767) as u16).to_le_bytes());
     put_chars(d, s);
 }
 
@@ -77,6 +78,9 @@ fn table(o: &mut Out, cx: &mut Cx<'_>, t: &Node, idx: u32) {
         flags: u32,
         label: Option<String>,
         formula: Option<Vec<u8>>,
+
+        agg: Vec<u8>,
+        data: Vec<u8>,
     }
     let mut fields = Vec::new();
     for c in &cols {
@@ -87,7 +91,17 @@ fn table(o: &mut Out, cx: &mut Cx<'_>, t: &Node, idx: u32) {
             flags: u32::from(af),
             label: None,
             formula: None,
+            agg: Vec::new(),
+            data: Vec::new(),
         };
+        let dxfn = |key: &str| {
+            c.attr(key)
+                .and_then(|i| i.parse::<usize>().ok())
+                .and_then(|i| cx.dxfs.get(i))
+                .map_or_else(Vec::new, |d| super::wcf::dxfn_list(d, cx))
+        };
+        f.agg = dxfn("totalsRowDxfId");
+        f.data = dxfn("dataDxfId");
         if let Some(func) = c.attr("totalsRowFunction") {
             f.ilta = FN_NAMES.iter().position(|n| *n == func).unwrap_or(0) as u32;
         }
@@ -100,14 +114,14 @@ fn table(o: &mut Out, cx: &mut Cx<'_>, t: &Node, idx: u32) {
         }
         if f.ilta == 9 {
             if let Some(ft) = c.child("totalsRowFormula") {
-                cx.st.row = rc.r1;
+                (cx.st.row, cx.st.col) = (rc.r1, rc.c0);
                 let r = enc::encode(
                     cx.names,
                     cx.tables,
                     cx.st,
                     Some(idx),
                     ft.text.trim(),
-                    Cls::Value,
+                    FormulaContext::Cell,
                 )
                 .and_then(|e| from_biff12(&e.rgce, &e.rgcb));
                 match r {
@@ -154,33 +168,26 @@ fn table(o: &mut Out, cx: &mut Cx<'_>, t: &Node, idx: u32) {
         d.extend(f.id.to_le_bytes());
         d.extend([0u8; 8]);
         d.extend(f.ilta.to_le_bytes());
-        d.extend([0u8; 4]);
+        d.extend((f.agg.len() as u32).to_le_bytes());
         d.extend(0xFFFF_FFFFu32.to_le_bytes());
         d.extend(f.flags.to_le_bytes());
-        d.extend(if f.flags & 0x800 != 0 { 8u32 } else { 0 }.to_le_bytes());
+        d.extend((f.data.len() as u32).to_le_bytes());
         d.extend(0xFFFF_FFFFu32.to_le_bytes());
         long_str(&mut d, &(i + 1).to_string());
         long_str(&mut d, &f.name);
-        let tail = |d: &mut Vec<u8>| {
-            if let Some(l) = &f.label {
-                long_str(d, l);
-            }
-            if let Some(g) = &f.formula {
-                d.extend((g.len() as u16).to_le_bytes());
-                d.extend(g);
-            }
-        };
-        if header {
-            if f.flags & 0x800 != 0 {
-                d.extend([
-                    0xFF, 0xFF, 0x37, 0x82, 0x06, 0x80, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF,
-                ]);
-            } else if f.flags & 1 != 0 {
-                d.extend([0, 0, 0, 0, 0xFF, 0xFF]);
-            }
-            tail(&mut d);
-        } else {
-            tail(&mut d);
+        d.extend(&f.agg);
+        d.extend(&f.data);
+        if header && f.flags & 1 != 0 {
+            d.extend([0, 0, 0, 0, 0xFF, 0xFF]);
+        }
+        if let Some(l) = &f.label {
+            long_str(&mut d, l);
+        }
+        if let Some(g) = &f.formula {
+            d.extend((g.len() as u16).to_le_bytes());
+            d.extend(g);
+        }
+        if !header {
             d.extend([0u8; 4]);
         }
     }

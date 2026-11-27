@@ -7,6 +7,7 @@ pub mod registry;
 pub mod rtd;
 
 use std::ffi::c_void;
+use std::mem::ManuallyDrop;
 
 use marshal::{Objects, RawVariant};
 use windows::core::{Interface, GUID, HSTRING, PCWSTR};
@@ -19,6 +20,7 @@ use windows::Win32::System::Variant::VARIANT;
 use xlcalc_variant::{ObjectId, Variant};
 
 pub use windows::core::IUnknown;
+pub use xlcalc_stack::on_thread_stack;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Access {
@@ -94,7 +96,23 @@ pub fn init_com() {
     }
 }
 
-pub struct Server(pub IDispatch);
+pub struct Server(ManuallyDrop<IDispatch>);
+
+impl Server {
+    pub fn new(dispatch: IDispatch) -> Server {
+        Server(ManuallyDrop::new(dispatch))
+    }
+
+    pub fn dispatch(&self) -> &IDispatch {
+        &self.0
+    }
+}
+
+impl Drop for Server {
+    fn drop(&mut self) {
+        on_thread_stack(|| unsafe { ManuallyDrop::drop(&mut self.0) });
+    }
+}
 
 unsafe impl Send for Server {}
 
@@ -108,6 +126,10 @@ fn clsid_of(progid: &str) -> Result<GUID, BridgeError> {
 }
 
 pub fn create(progid: &str) -> Result<Server, BridgeError> {
+    on_thread_stack(|| create_here(progid))
+}
+
+fn create_here(progid: &str) -> Result<Server, BridgeError> {
     init_com();
     let clsid = clsid_of(progid)?;
     let unk: IUnknown = unsafe { CoCreateInstance(&clsid, None, CLSCTX_ALL) }
@@ -115,7 +137,7 @@ pub fn create(progid: &str) -> Result<Server, BridgeError> {
     let disp: IDispatch = unk
         .cast()
         .map_err(|_| BridgeError::new(430, "Class doesn't support Automation"))?;
-    Ok(Server(disp))
+    Ok(Server::new(disp))
 }
 
 pub struct Outcome {
@@ -124,6 +146,10 @@ pub struct Outcome {
 }
 
 pub fn has_member(server: &IDispatch, member: &str) -> bool {
+    on_thread_stack(|| has_member_here(server, member))
+}
+
+fn has_member_here(server: &IDispatch, member: &str) -> bool {
     let name = HSTRING::from(member);
     let names = [PCWSTR(name.as_ptr())];
     let mut id = 0i32;
@@ -131,6 +157,17 @@ pub fn has_member(server: &IDispatch, member: &str) -> bool {
 }
 
 pub fn invoke(
+    server: &IDispatch,
+    member: &str,
+    access: Access,
+    args: &[Variant],
+    known: &dyn Fn(ObjectId) -> Option<IUnknown>,
+    next: u64,
+) -> Result<Outcome, BridgeError> {
+    on_thread_stack(|| invoke_here(server, member, access, args, known, next))
+}
+
+fn invoke_here(
     server: &IDispatch,
     member: &str,
     access: Access,
@@ -259,6 +296,16 @@ extern "system" {
 }
 
 pub fn call_extensibility(
+    server: &IDispatch,
+    method: Extensibility,
+    application: Option<&IDispatch>,
+    mode: i32,
+    add_in: Option<&IDispatch>,
+) -> Result<bool, BridgeError> {
+    on_thread_stack(|| call_extensibility_here(server, method, application, mode, add_in))
+}
+
+fn call_extensibility_here(
     server: &IDispatch,
     method: Extensibility,
     application: Option<&IDispatch>,

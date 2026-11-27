@@ -79,7 +79,7 @@ impl<'a> Rd<'a> {
                 u16::from(self.u8())
             });
         }
-        String::from_utf16_lossy(&u)
+        xlcalc::wide::from_units(&u)
     }
     fn st(&mut self) -> String {
         let n = usize::from(self.u16());
@@ -199,7 +199,7 @@ pub(super) fn read_caches(
                     if wide {
                         c.external = d.u16() != 2;
                         let u: Vec<u16> = (1..n).map(|_| d.u16()).collect();
-                        c.sheet = String::from_utf16_lossy(&u);
+                        c.sheet = xlcalc::wide::from_units(&u);
                     } else {
                         c.external = d.u8() != 2;
                         c.sheet = (1..n).map(|_| char::from(d.u8())).collect();
@@ -866,7 +866,7 @@ fn view(recs: &[Rec<'_>], caches: &[RCache]) -> Option<View> {
                 c.u16();
                 let n = usize::from(c.u16());
                 let s: Vec<u16> = (0..n).map(|_| c.u16()).collect();
-                style = String::from_utf16_lossy(&s);
+                style = xlcalc::wide::from_units(&s);
             }
             _ => {}
         }

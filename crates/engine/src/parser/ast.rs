@@ -46,8 +46,6 @@ pub enum UnaryOp {
 
     Implicit,
 
-    ImplicitQuiet,
-
     ArrayZero,
 }
 

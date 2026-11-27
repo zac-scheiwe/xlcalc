@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 use super::args::*;
-use super::{args, checked, FnDef, MANY254};
+use super::{args, FnDef, MANY254};
 use crate::address::Rect;
 use crate::eval::{Area, EvalCtx, Operand, Reference};
 use crate::value::{Array, Value, XlError};
@@ -18,7 +18,7 @@ pub const DEFS: &[FnDef] = &[
     args("XMATCH", 2, 4, "R", lookup::xmatch),
     args("LOOKUP", 2, 3, "R", lookup::lookup),
     args("SORT", 1, 4, "RRRR", shape::sort),
-    checked(args("SORTBY", 2, MANY254, "R", shape::sortby), sortby_pairs),
+    args("SORTBY", 2, MANY254, "R", shape::sortby),
     args("UNIQUE", 1, 3, "RRR", shape::unique),
     args("TAKE", 2, 3, "RRR", |c, o| shape::take_drop(c, o, true)),
     args("DROP", 2, 3, "RRR", |c, o| shape::take_drop(c, o, false)),
@@ -37,16 +37,8 @@ pub const DEFS: &[FnDef] = &[
     args("MINVERSE", 1, 1, "R", matrix::minverse),
     args("MDETERM", 1, 1, "R", matrix::mdeterm),
     args("MUNIT", 1, 1, "V", matrix::munit),
-    args("FORMULATEXT", 1, 1, "Q", formulatext),
+    args("FORMULATEXT", 1, 1, "R", formulatext),
 ];
-
-fn sortby_pairs(a: &[crate::parser::ast::Expr]) -> Result<(), &'static str> {
-    if a.len() == 2 || a.len() % 2 == 1 {
-        Ok(())
-    } else {
-        Err("needs by_array/sort_order pairs")
-    }
-}
 
 fn type_rank(v: &Value) -> u8 {
     match v {
@@ -119,13 +111,6 @@ enum Src {
 }
 
 impl Src {
-    fn from_operand_3d(op: &Operand) -> R<Src> {
-        match op {
-            Operand::Ref(r) if r.is_span() && r.single().is_none() => Err(XlError::REF),
-            _ => Src::from_operand(op),
-        }
-    }
-
     fn from_operand(op: &Operand) -> R<Src> {
         Ok(match op {
             Operand::Ref(Reference::Grid(g)) => Src::Array(g.value_array()),
@@ -265,7 +250,8 @@ fn formulatext(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     if rect.is_cell() {
         return Operand::Val(match text_at(rect.r0, rect.c0) {
             e @ Value::Error(_)
-                if ctx.node_cls == crate::eval::ptgclass::Class::Arr && !ctx.in_lambda =>
+                if ctx.node_cls == crate::eval::ptgclass::Class::Arr
+                    && !(ctx.in_lambda || (!ctx.in_array_block() && ctx.dynamic_host())) =>
             {
                 crate::value::Array::from_fn(1, 1, |_, _| e.clone()).into_value()
             }

@@ -1,11 +1,12 @@
 use crate::address::{CellAddr, Rect, SheetId};
 use crate::fontwidth::FontMeasure;
 use crate::numfmt::{
-    format_general_cell, format_general_cell_by, general_best_fit, general_display_flag,
-    NumberFormat, FILL_MARK, GENERAL_MARK, SPACE_MARK, TEXT_GENERAL_WIDTH,
+    format_general_cell, format_general_cell_by, general_best_fit, general_display_flag, FILL_MARK,
+    GENERAL_MARK, SPACE_MARK, TEXT_GENERAL_WIDTH,
 };
 use crate::style::HAlign;
 use crate::value::Value;
+use crate::view::ColWidth;
 use crate::workbook::Workbook;
 
 pub const STANDARD_PX: u32 = 96;
@@ -206,7 +207,19 @@ pub fn file_width_to_px(w: f64) -> u32 {
 }
 
 pub fn px_to_file_width(px: u32) -> f64 {
-    (f64::from(px) * 256.0 / f64::from(DIGIT_PX)).round() / 256.0
+    f64::from(px_to_coldx(px)) / 256.0
+}
+
+pub fn px_to_coldx(px: u32) -> u32 {
+    px * 256 / DIGIT_PX
+}
+
+pub fn coldx_to_px(coldx: u32) -> u32 {
+    coldx_to_dx(coldx, DIGIT_PX).min(MAX_PX)
+}
+
+pub fn coldx_to_dx(coldx: u32, d: u32) -> u32 {
+    (coldx + 128 / d) * d / 256
 }
 
 pub fn width_to_px(cw: f64) -> u32 {
@@ -292,7 +305,16 @@ impl Workbook {
         self.views
             .get(&sheet)
             .and_then(|v| v.col_px.get(&col))
-            .map_or_else(|| self.sheet_std_px(sheet), |w| w.0)
+            .filter(|w| w.px != 0)
+            .map_or_else(|| self.sheet_std_px(sheet), |w| w.px)
+    }
+
+    fn col_record(&self, sheet: SheetId, col: u32) -> Option<ColWidth> {
+        self.views.get(&sheet)?.col_px.get(&col).copied()
+    }
+
+    pub fn col_standard(&self, sheet: SheetId, col: u32) -> bool {
+        !self.col_record(sheet, col).is_some_and(|w| w.user)
     }
 
     pub fn sheet_std_px(&self, sheet: SheetId) -> u32 {
@@ -307,7 +329,46 @@ impl Workbook {
         let default = self.standard_px();
 
         let kept = px_to_width_d(px, self.digit_px());
-        self.view_mut(sheet).std_cw = (px != default).then_some(kept);
+        let v = self.view_mut(sheet);
+        v.std_cw = (px != default).then_some(kept);
+        let hidden = &mut v.hidden_cols;
+        v.col_px.retain(|c, w| {
+            if !w.user {
+                hidden.remove(c);
+            }
+            w.user
+        });
+    }
+
+    pub fn set_sheet_base_col_width(&mut self, sheet: SheetId, cch: u32) {
+        if cch == 0 || cch == 8 || cch > 255 {
+            return;
+        }
+        let d = self.digit_px();
+        let px = (cch * d + pad_for(d)).div_ceil(8) * 8;
+        self.set_sheet_standard_px(sheet, px.min(self.max_px()));
+    }
+
+    pub fn biff_col_width_px(&self, cch: u16) -> u32 {
+        let d = self.digit_px();
+        let px = i32::from(cch as i16) * d as i32 + pad_for(d) as i32 + 7;
+        (px & 0xfff8) as u32
+    }
+
+    pub fn load_default_columns(&mut self, sheet: SheetId, cols: u32, px: u32, user: bool) {
+        for c in 0..cols {
+            let w = ColWidth {
+                px,
+                user,
+                best: false,
+            };
+            self.put_col_record(sheet, c, w);
+        }
+    }
+
+    pub fn set_sheet_standard_px(&mut self, sheet: SheetId, px: u32) {
+        let kept = px_to_width_d(px, self.digit_px());
+        self.view_mut(sheet).std_cw = (px != self.standard_px()).then_some(kept);
     }
 
     pub fn sheet_standard_width(&self, sheet: SheetId) -> f64 {
@@ -317,6 +378,23 @@ impl Workbook {
     pub fn digit_px(&self) -> u32 {
         let f = &self.base_style().font;
         digit_px(&f.name, f.size_twips, f.bold, f.italic)
+    }
+
+    pub fn window_headers_px(&self, zoom: u32, last_row: u32) -> (u32, u32) {
+        let f = &self.base_style().font;
+        let ppem = ((((f.size_twips + 5) / 10).max(2) * zoom + 50) / 100).max(2);
+        let tm = crate::gdi_metrics::tm(&f.name, true, f.italic, ppem);
+        let d = tm.digit.max(1) as u32;
+        let overhang = crate::gdi_metrics::overhang(&f.name, true, f.italic, ppem);
+        let digits = match last_row {
+            0..999 => 3,
+            999..9_999 => 4,
+            9_999..99_999 => 5,
+            99_999..999_999 => 6,
+            _ => 7,
+        };
+        let (ascent, descent) = crate::gdi_metrics::ascent_descent(&tm);
+        (digits * d + overhang + pad_for(d), ascent + descent)
     }
 
     pub fn max_px(&self) -> u32 {
@@ -352,11 +430,10 @@ impl Workbook {
         if self.col_hidden(sheet, col) {
             return (0.0, false);
         }
-        let custom = self
-            .views
-            .get(&sheet)
-            .is_some_and(|v| v.col_px.contains_key(&col));
-        ((self.column_width(sheet, col) + 0.5).floor(), !custom)
+        (
+            (self.column_width(sheet, col) + 0.5).floor(),
+            self.col_standard(sheet, col),
+        )
     }
 
     pub fn set_column_width(&mut self, sheet: SheetId, c0: u32, c1: u32, cw: f64) {
@@ -364,42 +441,108 @@ impl Workbook {
             self.set_cols_hidden(sheet, c0, c1 - c0 + 1, true);
             return;
         }
-        if (c0..=c1).any(|c| self.col_hidden(sheet, c)) {
-            self.set_cols_hidden(sheet, c0, c1 - c0 + 1, false);
-        }
         let px = width_to_px_d(cw, self.digit_px());
         let std = self.sheet_std_px(sheet);
-        let v = self.view_mut(sheet);
-        for c in c0..=c1 {
-            if px == std {
-                v.col_px.remove(&c);
-            } else {
-                v.col_px.insert(c, (px, true));
-            }
+        let records: Vec<(u32, ColWidth)> = (c0..=c1)
+            .map(|c| {
+                let user = px != std || !self.col_standard(sheet, c);
+                (
+                    c,
+                    ColWidth {
+                        px,
+                        user,
+                        best: false,
+                    },
+                )
+            })
+            .collect();
+        self.show_cols_for_width(sheet, c0, c1);
+        for (c, w) in records {
+            self.put_col_record(sheet, c, w);
         }
     }
 
-    pub fn column_state(&self, sheet: SheetId) -> Vec<(u32, u32, bool, bool)> {
+    pub fn use_standard_width(&mut self, sheet: SheetId, c0: u32, c1: u32) {
+        self.show_cols_for_width(sheet, c0, c1);
+        let v = self.view_mut(sheet);
+        v.col_px.retain(|c, _| !(c0..=c1).contains(c));
+    }
+
+    fn show_cols_for_width(&mut self, sheet: SheetId, c0: u32, c1: u32) {
+        if (c0..=c1).any(|c| self.col_hidden(sheet, c)) {
+            self.set_cols_hidden(sheet, c0, c1 - c0 + 1, false);
+        }
+    }
+
+    pub fn paste_column_width(&mut self, from: SheetId, src: u32, sheet: SheetId, col: u32) {
+        if self.col_hidden(from, src) {
+            self.set_column_width(sheet, col, col, 0.0);
+            return;
+        }
+        let std = self.sheet_std_px(sheet);
+        if self.col_standard(from, src) && self.sheet_std_px(from) == std {
+            self.use_standard_width(sheet, col, col);
+            return;
+        }
+        let record = self.col_record(from, src);
+        let px = self.col_px(from, src);
+        let mut w = ColWidth {
+            px,
+            user: record.is_some_and(|w| w.user),
+            best: record.is_some_and(|w| w.best),
+        };
+
+        if w.user && px == std {
+            w.user = !self.col_standard(sheet, col);
+        }
+        self.show_cols_for_width(sheet, col, col);
+        self.put_col_record(sheet, col, w);
+    }
+
+    fn put_col_record(&mut self, sheet: SheetId, col: u32, w: ColWidth) {
+        let plain = w.px == self.sheet_std_px(sheet) && !w.user && !w.best;
+        let v = self.view_mut(sheet);
+        if plain {
+            v.col_px.remove(&col);
+        } else {
+            v.col_px.insert(col, w);
+        }
+    }
+
+    pub fn column_state(&self, sheet: SheetId) -> Vec<(u32, ColWidth, bool)> {
         let Some(v) = self.views.get(&sheet) else {
             return Vec::new();
         };
-        let std = self.sheet_std_px(sheet);
         let mut cols: Vec<u32> = v.col_px.keys().chain(&v.hidden_cols).copied().collect();
         cols.sort_unstable();
         cols.dedup();
         cols.into_iter()
             .map(|c| {
-                let (px, hand) = v.col_px.get(&c).copied().unwrap_or((std, false));
-                (c, px, hand, v.hidden_cols.contains(&c))
+                let w = v.col_px.get(&c).copied().unwrap_or_default();
+                (c, w, v.hidden_cols.contains(&c))
             })
             .collect()
     }
 
-    pub fn set_column_px(&mut self, sheet: SheetId, c0: u32, c1: u32, px: u32, by_hand: bool) {
-        let max_px = self.max_px();
-        let v = self.view_mut(sheet);
+    pub fn set_column_record(
+        &mut self,
+        sheet: SheetId,
+        c0: u32,
+        c1: u32,
+        w: ColWidth,
+        hidden: bool,
+    ) {
+        let w = ColWidth {
+            px: w.px.min(self.max_px()),
+            ..w
+        };
         for c in c0..=c1 {
-            v.col_px.insert(c, (px.min(max_px), by_hand));
+            if w.px != 0 || hidden {
+                self.put_col_record(sheet, c, w);
+            }
+            if hidden {
+                self.view_mut(sheet).hidden_cols.insert(c);
+            }
         }
     }
 
@@ -425,10 +568,10 @@ impl Workbook {
                 .get(&sheet)
                 .and_then(|v| v.col_px.get(&c))
                 .copied();
-            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.user && !s.best) {
                 continue;
             }
-            if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+            if px > set.map_or(self.sheet_std_px(sheet), |s| s.px) {
                 if fitted.is_empty() {
                     fitted = (rect.r0..=rect.r1)
                         .filter(|&r| self.row_custom_h8(sheet, r).is_none())
@@ -438,7 +581,7 @@ impl Workbook {
                 let max_px = self.max_px();
                 self.view_mut(sheet)
                     .col_px
-                    .insert(c, (px.min(max_px), false));
+                    .insert(c, ColWidth::widened(px.min(max_px)));
             }
         }
     }
@@ -457,7 +600,7 @@ impl Workbook {
             if self.cell_style(addr).alignment.indent != 0 {
                 continue;
             }
-            let Ok(f) = NumberFormat::parse(self.number_format(addr)) else {
+            let Ok(f) = self.cellfmt.parse_stored(self.number_format(addr)) else {
                 continue;
             };
             let Ok(out) = f.format_cell_number(x, &self.locale, self.settings.date_system) else {
@@ -495,14 +638,14 @@ impl Workbook {
                 .get(&sheet)
                 .and_then(|v| v.col_px.get(&c))
                 .copied();
-            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.user && !s.best) {
                 continue;
             }
-            if need > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+            if need > set.map_or(self.sheet_std_px(sheet), |s| s.px) {
                 let max_px = self.max_px();
                 self.view_mut(sheet)
                     .col_px
-                    .insert(c, (px.min(max_px), false));
+                    .insert(c, ColWidth::widened(px.min(max_px)));
             }
         }
     }
@@ -514,7 +657,7 @@ impl Workbook {
         if self.col_hidden(addr.sheet, addr.col) {
             return;
         }
-        let Ok(f) = NumberFormat::parse(self.number_format(addr)) else {
+        let Ok(f) = self.cellfmt.parse_stored(self.number_format(addr)) else {
             return;
         };
         let Ok(out) = f.format_cell_number(x, &self.locale, self.settings.date_system) else {
@@ -574,10 +717,10 @@ impl Workbook {
                 .get(&sheet)
                 .and_then(|v| v.col_px.get(&c))
                 .copied();
-            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.user && !s.best) {
                 continue;
             }
-            if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+            if px > set.map_or(self.sheet_std_px(sheet), |s| s.px) {
                 if fitted.is_empty() {
                     fitted = (rect.r0..=rect.r1)
                         .filter(|&r| self.row_custom_h8(sheet, r).is_none())
@@ -587,7 +730,7 @@ impl Workbook {
                 let max_px = self.max_px();
                 self.view_mut(sheet)
                     .col_px
-                    .insert(c, (px.min(max_px), false));
+                    .insert(c, ColWidth::widened(px.min(max_px)));
             }
         }
         fitted
@@ -605,16 +748,30 @@ impl Workbook {
                 .get(&sheet)
                 .and_then(|v| v.col_px.get(&c))
                 .copied();
-            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.1) {
+            if self.col_hidden(sheet, c) || set.is_some_and(|s| s.user && !s.best) {
                 continue;
             }
-            if px > set.map_or(self.sheet_std_px(sheet), |s| s.0) {
+            if px > set.map_or(self.sheet_std_px(sheet), |s| s.px) {
                 let max_px = self.max_px();
                 self.view_mut(sheet)
                     .col_px
-                    .insert(c, (px.min(max_px), false));
+                    .insert(c, ColWidth::widened(px.min(max_px)));
             }
         }
+    }
+
+    fn put_fit_width(&mut self, sheet: SheetId, col: u32, px: u32) {
+        let px = px.min(self.max_px());
+        let user = px != self.sheet_std_px(sheet) || !self.col_standard(sheet, col);
+        self.put_col_record(
+            sheet,
+            col,
+            ColWidth {
+                px,
+                user,
+                best: true,
+            },
+        );
     }
 
     pub fn autofit_columns(&mut self, sheet: SheetId, rect: Rect) {
@@ -654,10 +811,7 @@ impl Workbook {
             if self.col_hidden(sheet, c) {
                 self.set_cols_hidden(sheet, c, 1, false);
             }
-            let max_px = self.max_px();
-            self.view_mut(sheet)
-                .col_px
-                .insert(c, (px.min(max_px), false));
+            self.put_fit_width(sheet, c, px);
         }
     }
 
@@ -665,7 +819,7 @@ impl Workbook {
         let mut out = Vec::new();
         if let Some(v) = self.views.get(&sheet) {
             for f in v.filters.iter().filter(|f| f.table.is_none()) {
-                if let Some(r) = self.filter_rect(f) {
+                if let Some(r) = self.filter_rect(sheet, f) {
                     out.push(HeaderFit {
                         row: r.r0,
                         c0: r.c0,
@@ -720,10 +874,7 @@ impl Workbook {
         }
         for (c, px) in plan.groups(rect.c0, rect.c1, &widest) {
             if !self.col_hidden(sheet, c) {
-                let max_px = self.max_px();
-                self.view_mut(sheet)
-                    .col_px
-                    .insert(c, (px.min(max_px), false));
+                self.put_fit_width(sheet, c, px);
             }
         }
     }
@@ -763,7 +914,7 @@ impl Workbook {
             Value::Blank => return None,
             _ => return text_run(&self.display_text(addr), m),
         };
-        let f = NumberFormat::parse(self.number_format(addr)).ok()?;
+        let f = self.cellfmt.parse_stored(self.number_format(addr)).ok()?;
         let out = f
             .format_cell_number(x, &self.locale, self.settings.date_system)
             .ok()?;
@@ -796,7 +947,7 @@ impl Workbook {
             Value::Bool(_) => return text_run(&self.display_text(addr), m),
             _ => return None,
         };
-        let f = NumberFormat::parse(self.number_format(addr)).ok()?;
+        let f = self.cellfmt.parse_stored(self.number_format(addr)).ok()?;
         let out = f
             .format_cell_number(x, &self.locale, self.settings.date_system)
             .ok()?;
@@ -856,7 +1007,7 @@ impl Workbook {
         if self.col_hidden(addr.sheet, addr.col) {
             return shown;
         }
-        let Ok(f) = NumberFormat::parse(self.number_format(addr)) else {
+        let Ok(f) = self.cellfmt.parse_stored(self.number_format(addr)) else {
             return shown;
         };
         let Ok(out) = f.format_cell_text(&t, &self.locale) else {
@@ -903,7 +1054,7 @@ impl Workbook {
         let sf = ShownFont(m.as_ref());
         let avail = sf.room(self.cell_room_px(addr));
         let code = self.number_format(addr);
-        let Some(f) = NumberFormat::parse(code).ok() else {
+        let Some(f) = self.cellfmt.parse_stored(code).ok() else {
             return self.display_text(addr);
         };
         let Ok(out) = f.format_cell_number(x, &self.locale, self.settings.date_system) else {
@@ -989,6 +1140,16 @@ mod tests {
     }
 
     #[test]
+    fn stored_widths_of_binary_files() {
+        for (px, coldx) in [(172, 4002), (62, 1442), (227, 5282)] {
+            assert_eq!(px_to_coldx(px), coldx);
+            assert_eq!(coldx_to_px(coldx), px);
+            assert_eq!(file_width_to_px(px_to_file_width(coldx_to_px(coldx))), px);
+        }
+        assert_eq!(coldx_to_px(0), 0);
+    }
+
+    #[test]
     fn standard_width_put_keeps_the_read_back_value() {
         let mut wb = Workbook::new();
         let s = wb.sheet_at(0).id;
@@ -1013,5 +1174,90 @@ mod tests {
         wb.set_number_format(s, Rect::cell(0, 1), "* 0");
         wb.set_column_width(s, 1, 1, 8.09);
         assert_eq!(wb.shown_text(a(0, 1)), format!("{}1235", " ".repeat(11)));
+    }
+
+    #[test]
+    fn file_widths_are_truncated() {
+        assert_eq!(px_to_file_width(172), 4002.0 / 256.0);
+    }
+
+    #[test]
+    fn the_user_flag_decides_standard() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let std = wb.sheet_std_px(s);
+
+        wb.set_column_width(s, 1, 1, 20.0);
+        wb.set_column_width(s, 1, 2, 8.09);
+        assert!(!wb.col_standard(s, 1));
+        assert!(wb.col_standard(s, 2));
+
+        wb.set_cols_hidden(s, 3, 1, true);
+        assert!(!wb.col_standard(s, 3));
+        wb.set_sheet_standard_width(s, 20.0);
+        wb.set_cols_hidden(s, 3, 1, false);
+        assert_eq!(wb.col_px(s, 1), std);
+        assert_eq!(wb.col_px(s, 2), wb.sheet_std_px(s));
+        assert_eq!(wb.col_px(s, 3), wb.sheet_std_px(s));
+        assert!(!wb.col_standard(s, 3));
+        wb.use_standard_width(s, 1, 1);
+        assert!(wb.col_standard(s, 1));
+        assert_eq!(wb.col_px(s, 1), wb.sheet_std_px(s));
+    }
+
+    #[test]
+    fn a_standard_width_put_shows_hidden_columns_that_are_not_user_set() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let w = |user| ColWidth {
+            px: 227,
+            user,
+            best: false,
+        };
+        wb.set_column_record(s, 3, 3, w(false), true);
+        wb.set_column_record(s, 4, 4, w(true), true);
+        wb.set_sheet_standard_width(s, 12.0);
+        assert!(!wb.col_hidden(s, 3));
+        assert_eq!(wb.col_px(s, 3), wb.sheet_std_px(s));
+        assert!(wb.col_hidden(s, 4));
+        wb.set_cols_hidden(s, 4, 1, false);
+        assert_eq!(wb.col_px(s, 4), 227);
+    }
+
+    #[test]
+    fn base_column_width_becomes_the_standard_width() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+        let std = wb.sheet_std_px(s);
+        for cch in [0, 8, 264] {
+            wb.set_sheet_base_col_width(s, cch);
+            assert_eq!(wb.sheet_std_px(s), std);
+        }
+
+        wb.set_sheet_base_col_width(s, 10);
+        assert_eq!(wb.sheet_std_px(s), 120);
+    }
+
+    #[test]
+    fn a_colinfo_width_at_the_normal_digit() {
+        for (coldx, d) in [(2340, 7), (2234, 11)] {
+            assert_eq!(coldx_to_dx(coldx, d), standard_px_for(d));
+        }
+        assert_eq!(coldx_to_dx(300 * 256, 11), 3300);
+    }
+
+    #[test]
+    fn biff_default_columns_leave_the_standard_width() {
+        let mut wb = Workbook::new();
+        let s = wb.sheet_at(0).id;
+
+        assert_eq!(wb.biff_col_width_px(10), 120);
+        assert_eq!(wb.biff_col_width_px(0), 8);
+        assert_eq!(wb.biff_col_width_px(300), 3312);
+        wb.load_default_columns(s, 256, 3312, true);
+        assert_eq!(wb.sheet_std_px(s), wb.standard_px());
+        assert_eq!(wb.col_px(s, 255), 3312);
+        assert_eq!(wb.col_px(s, 256), wb.standard_px());
+        assert!(!wb.col_standard(s, 0));
     }
 }

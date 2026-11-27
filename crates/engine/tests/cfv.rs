@@ -14,17 +14,17 @@ fn setup() -> (Workbook, xlcalc::SheetId) {
 fn rule(wb: &mut Workbook, s: xlcalc::SheetId, kind: CfKind, f1: &str) {
     let anchor = parse_cell_ref(wb, "A1", s).unwrap();
     let f1 = wb.cfv_to_relative(f1, anchor).unwrap();
-    wb.cfv_sheet_mut(s).add_rule(CfRule {
+    let rule = CfRule {
         id: 0,
         kind,
-        applies: vec![Rect::new(0, 0, 5, 1)],
         prio: 0,
-        seq: 0,
         stop: true,
         f1: Some(f1),
         f2: None,
         dxf: Dxf::default(),
-    });
+    };
+    wb.cfv_sheet_mut(s)
+        .add_rule(rule, vec![Rect::new(0, 0, 5, 1)]);
 }
 
 #[test]

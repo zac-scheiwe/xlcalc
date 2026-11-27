@@ -31,6 +31,14 @@ pub(super) struct SeriesIn {
     pub weight: Option<i16>,
 
     pub labels: u16,
+
+    pub points: Vec<PointIn>,
+}
+
+pub(super) struct PointIn {
+    pub point: u16,
+    pub link: Option<String>,
+    pub text: String,
 }
 
 pub(super) struct GroupIn {
@@ -46,6 +54,8 @@ pub(super) struct GroupIn {
 #[derive(Default, Clone)]
 pub(super) struct AxisIn {
     pub title: Option<String>,
+
+    pub title_link: Option<String>,
     pub min: Option<f64>,
     pub max: Option<f64>,
     pub major: Option<f64>,
@@ -61,11 +71,9 @@ pub(super) struct ChartIn {
     pub series: Vec<SeriesIn>,
 
     pub axes: [[AxisIn; 2]; 2],
-    pub title: Option<String>,
+    pub title: TitleIn,
 
-    pub auto_title: bool,
-
-    pub title_deleted: bool,
+    pub title_link: Option<String>,
 
     pub legend: Option<u8>,
 }
@@ -83,6 +91,45 @@ fn texts(n: &Node, out: &mut String) {
     for k in &n.kids {
         texts(k, out);
     }
+}
+
+fn text_link(n: &Node) -> Option<String> {
+    let (f, _) = ref_of(n.child("tx")?)?;
+    (!f.starts_with('"')).then_some(f)
+}
+
+fn point_count(n: &Node, f: &str) -> usize {
+    let cached = || {
+        let cache = n
+            .kids
+            .first()?
+            .kids
+            .iter()
+            .find(|k| k.name.ends_with("Cache"))?;
+        val_of(cache, "ptCount")?.parse().ok()
+    };
+    match ref_cells(f) {
+        0 => cached().unwrap_or(0),
+        n => n,
+    }
+}
+
+fn point_texts(s: &Node) -> Vec<PointIn> {
+    let Some(d) = s.child("dLbls") else {
+        return Vec::new();
+    };
+    d.children("dLbl")
+        .filter_map(|l| {
+            let tx = l.child("tx")?;
+            let mut text = String::new();
+            texts(tx, &mut text);
+            Some(PointIn {
+                point: val_of(l, "idx")?.parse().ok()?,
+                link: text_link(l),
+                text,
+            })
+        })
+        .collect()
 }
 
 fn ref_cells(f: &str) -> usize {
@@ -138,15 +185,18 @@ fn axis_in(ax: &Node) -> AxisIn {
     let num = |parent: &Node, n: &str| val_of(parent, n).and_then(|v| v.parse::<f64>().ok());
     let sc = ax.child("scaling");
     let mut title = None;
+    let mut title_link = None;
     if let Some(t) = ax.child("title") {
         let mut s = String::new();
         texts(t, &mut s);
-        if !s.is_empty() {
+        title_link = text_link(t);
+        if !s.is_empty() || title_link.is_some() {
             title = Some(s);
         }
     }
     AxisIn {
         title,
+        title_link,
         min: sc.and_then(|s| num(s, "min")),
         max: sc.and_then(|s| num(s, "max")),
         major: num(ax, "majorUnit"),
@@ -156,6 +206,21 @@ fn axis_in(ax: &Node) -> AxisIn {
         grid_minor: ax.child("minorGridlines").is_some(),
         deleted: on(val_of(ax, "delete")),
     }
+}
+
+pub(super) enum TitleIn {
+    None,
+
+    Typed(String),
+
+    Auto,
+
+    Generated,
+}
+
+fn generated_title_valid(series: &[SeriesIn], groups: &[GroupIn]) -> bool {
+    let pie = matches!(groups, [g] if g.kind == Kind::Pie && !g.donut);
+    (series.len() == 1 || pie) && series.first().is_some_and(|s| !s.name.is_empty())
 }
 
 fn marker_type(sym: &str) -> Option<u16> {
@@ -291,8 +356,14 @@ pub(super) fn parse(
             series.push((
                 order,
                 SeriesIn {
-                    cat_n: cat.as_ref().map_or(0, |c| ref_cells(&c.0)),
-                    val_n: valr.as_ref().map_or(0, |c| ref_cells(&c.0)),
+                    cat_n: s
+                        .child(cat_key)
+                        .zip(cat.as_ref())
+                        .map_or(0, |(n, c)| point_count(n, &c.0)),
+                    val_n: s
+                        .child(val_key)
+                        .zip(valr.as_ref())
+                        .map_or(0, |(n, c)| point_count(n, &c.0)),
                     name_ref: tx.map(|t| t.0),
                     name,
                     has_name: s.child("tx").is_some(),
@@ -317,6 +388,7 @@ pub(super) fn parse(
                         }
                     }),
                     labels: label_flags(s),
+                    points: point_texts(s),
                 },
             ));
         }
@@ -341,22 +413,21 @@ pub(super) fn parse(
         [find(primary.first()), find(primary.get(1))],
         [find(sec_ids.first()), find(sec_ids.get(1))],
     ];
-    let mut title = None;
-    let mut auto_title = false;
-    let mut title_deleted = false;
-    if let Some(t) = chart.child("title") {
-        let mut s = String::new();
-        texts(t, &mut s);
-        if s.is_empty() {
-            auto_title = true;
-        } else {
-            title = Some(s);
+
+    let title_link = chart.child("title").and_then(text_link);
+    let title = match chart.child("title") {
+        Some(t) => {
+            let mut s = String::new();
+            texts(t, &mut s);
+            if s.is_empty() && title_link.is_none() {
+                TitleIn::Auto
+            } else {
+                TitleIn::Typed(s)
+            }
         }
-    } else if series.len() == 1 {
-        let deleted = on(val_of(chart, "autoTitleDeleted"));
-        auto_title = !deleted;
-        title_deleted = deleted;
-    }
+        None if generated_title_valid(&series, &groups) => TitleIn::Generated,
+        None => TitleIn::None,
+    };
     let legend = chart
         .child("legend")
         .map(|l| match val_of(l, "legendPos").unwrap_or("r") {
@@ -371,8 +442,7 @@ pub(super) fn parse(
         series,
         axes,
         title,
-        auto_title,
-        title_deleted,
+        title_link,
         legend,
     })
 }
@@ -406,9 +476,9 @@ fn text_rec(w: &mut W, id: u16, s: &str) {
     let wide = true;
     let mut d = Vec::new();
     d.extend(0u16.to_le_bytes());
-    d.push(s.encode_utf16().count().min(255) as u8);
+    d.push(xlcalc::wide::units(s).count().min(255) as u8);
     d.push(u8::from(wide));
-    for u in s.encode_utf16().take(255) {
+    for u in xlcalc::wide::units(s).take(255) {
         if wide {
             d.extend(u.to_le_bytes());
         } else {
@@ -498,7 +568,35 @@ fn axis_block(w: &mut W, which: u16, a: &AxisIn, value_scale: bool, cross_max: b
     w.end();
 }
 
-fn axis_title(w: &mut W, link: u16, secondary: bool, text: &str) {
+fn text_ai(w: &mut W, link: Option<&str>, enc: &mut dyn FnMut(&str) -> Option<Vec<u8>>) {
+    let rgce = link.and_then(enc);
+    ai(w, 0, rgce.as_deref());
+}
+
+fn point_label(w: &mut W, series: u16, p: &PointIn, enc: &mut dyn FnMut(&str) -> Option<Vec<u8>>) {
+    w.h(
+        0x1025,
+        "0202010000000000000000000000000000000000000000000040080000000000",
+    );
+    w.begin();
+    w.h(0x104F, "0200020000000000000000000000000000000000");
+    text_ai(w, p.link.as_deref(), enc);
+    text_rec(w, 0x100D, &p.text);
+    let mut link = 4u16.to_le_bytes().to_vec();
+    link.extend(series.to_le_bytes());
+    link.extend(p.point.to_le_bytes());
+    w.rec(0x1027, &link);
+    w.end();
+}
+
+fn axis_title(
+    w: &mut W,
+    link: u16,
+    secondary: bool,
+    a: &AxisIn,
+    enc: &mut dyn FnMut(&str) -> Option<Vec<u8>>,
+) {
+    let Some(text) = &a.title else { return };
     let body = match (link, secondary) {
         (3, _) => "02020100000000004d070000950c00001a01000076010000000008000a000000",
         (_, false) => "020201000000000000000000d8050000e600000080010000000208000a005a00",
@@ -508,7 +606,7 @@ fn axis_title(w: &mut W, link: u16, secondary: bool, text: &str) {
     w.begin();
     w.h(0x104F, "02000200d1ffffff000000002c00000024000000");
     w.h(0x1026, "0000");
-    w.h(0x1051, "0001000000000000");
+    text_ai(w, a.title_link.as_deref(), enc);
     text_rec(w, 0x100D, text);
     w.h(0x1032, "00000300");
     w.begin();
@@ -681,12 +779,8 @@ pub(super) fn substream(
             let cm = ag == 1 && !c.axes[1][0].deleted;
             axis_block(&mut w, 0, &c.axes[ag][0], scatter, cm);
             axis_block(&mut w, 1, &c.axes[ag][1], true, cm);
-            if let Some(t) = &c.axes[ag][0].title {
-                axis_title(&mut w, 3, ag == 1, t);
-            }
-            if let Some(t) = &c.axes[ag][1].title {
-                axis_title(&mut w, 2, ag == 1, t);
-            }
+            axis_title(&mut w, 3, ag == 1, &c.axes[ag][0], enc);
+            axis_title(&mut w, 2, ag == 1, &c.axes[ag][1], enc);
         }
         if ag == 0 {
             w.rec(0x1035, &[]);
@@ -701,7 +795,7 @@ pub(super) fn substream(
         }
         w.end();
     }
-    if c.title_deleted {
+    if matches!(c.title, TitleIn::Generated) {
         w.h(
             0x1025,
             "0202010000000000beffffffa8ffffff00000000000000007000080000000000",
@@ -712,11 +806,10 @@ pub(super) fn substream(
         w.h(0x1027, "010000000000");
         w.end();
     }
-    if c.auto_title || c.title.is_some() {
-        let auto = c.title.is_none();
+    if matches!(c.title, TitleIn::Auto | TitleIn::Typed(_)) {
         w.h(
             0x1025,
-            if auto {
+            if matches!(c.title, TitleIn::Auto) {
                 "0202010000000000e60500002a000000c6030000b8020000100008000a000000"
             } else {
                 "0202010000000000e60500002a000000c6030000b8020000000008000a000000"
@@ -725,8 +818,8 @@ pub(super) fn substream(
         w.begin();
         w.h(0x104F, "02000200faffffffd6ffffff9700000043000000");
         w.h(0x1026, "0000");
-        w.h(0x1051, "0001000000000000");
-        if let Some(t) = &c.title {
+        text_ai(&mut w, c.title_link.as_deref(), enc);
+        if let TitleIn::Typed(t) = &c.title {
             text_rec(&mut w, 0x100D, t);
         }
         w.h(0x1032, "00000300");
@@ -736,6 +829,11 @@ pub(super) fn substream(
         w.end();
         w.h(0x1027, "010000000000");
         w.end();
+    }
+    for (i, s) in c.series.iter().enumerate() {
+        for p in &s.points {
+            point_label(&mut w, i as u16, p, enc);
+        }
     }
     w.end();
     w.h(0x200, "0000000004000000000002000000");
@@ -866,4 +964,45 @@ fn legend(w: &mut W, pos: u8, size: (f64, f64)) {
     w.h(0x853, "530800000900000000000000");
     w.end();
     w.h(0x853, "530800000500000000000000");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn title(kind: &str, names: &[&str], rest: &str) -> TitleIn {
+        let series: String = names
+            .iter()
+            .map(|n| format!("<ser><tx><v>{n}</v></tx></ser>"))
+            .collect();
+        let xml = format!(
+            "<chartSpace><chart>{rest}<plotArea><{kind}>{series}</{kind}></plotArea></chart></chartSpace>"
+        );
+        let node = crate::xml::parse(xml.as_bytes()).unwrap();
+        parse(&node, &mut Vec::new(), "t", &[]).unwrap().title
+    }
+
+    #[test]
+    fn title_record_follows_the_series_count_and_name() {
+        let deleted = "<autoTitleDeleted val=\"1\"/>";
+        let generated = |t| matches!(t, TitleIn::Generated);
+
+        assert!(generated(title("barChart", &["a"], "")));
+        assert!(generated(title("barChart", &["a"], deleted)));
+        assert!(generated(title("pieChart", &["a", "b"], deleted)));
+        for (kind, names) in [
+            ("barChart", &[""][..]),
+            ("barChart", &["a", "b"][..]),
+            ("doughnutChart", &["a", "b"][..]),
+        ] {
+            assert!(
+                matches!(title(kind, names, deleted), TitleIn::None),
+                "{kind}"
+            );
+        }
+        assert!(matches!(
+            title("barChart", &["a", "b"], "<title/>"),
+            TitleIn::Auto
+        ));
+    }
 }

@@ -1,8 +1,9 @@
-use xlcalc::drawing::{BagVal, Chart, ChartAxis, Part};
+use xlcalc::drawing::{BagVal, Chart, ChartAxis, Part, TITLE_AUTO, TITLE_DELETED, TITLE_TYPED};
 use xlcalc_variant::Variant;
 
 use crate::app::{unsupported, Application};
-use crate::charts::{parse_part, part_text, part_values};
+use crate::chart_text::{link_formula, link_text, parse_link};
+use crate::charts::{parse_part, part_values};
 use crate::conv::Args;
 use crate::error::OmError;
 use crate::shapes::{DrawKind, DrawRef};
@@ -154,17 +155,61 @@ pub(crate) fn range_err(desc: &str) -> OmError {
 }
 
 pub(crate) fn auto_title(wb: &xlcalc::Workbook, ch: &Chart) -> String {
-    let one = if is_pie(ch.chart_type) || ch.series.len() == 1 {
-        ch.series.first()
-    } else {
-        None
-    };
-    one.and_then(|s| match crate::charts::part_values(wb, &s.name).first() {
-        Some(Variant::Bstr(t)) if !t.is_empty() => Some(t.clone()),
-        Some(Variant::R8(n)) => Some(xlcalc::format_general(*n)),
-        _ => None,
-    })
-    .unwrap_or_else(|| "Chart Title".into())
+    ch.lone_series()
+        .and_then(|s| match &s.name {
+            Part::Text(t) if !t.starts_with('{') => Some(t.clone()).filter(|t| !t.is_empty()),
+            name => match crate::charts::part_values(wb, name).first() {
+                Some(Variant::Bstr(t)) if !t.is_empty() => Some(t.clone()),
+                Some(Variant::R8(n)) => Some(xlcalc::format_general(*n)),
+                _ => None,
+            },
+        })
+        .unwrap_or_else(|| "Chart Title".into())
+}
+
+pub(crate) fn ensure_auto_title(wb: &xlcalc::Workbook, ch: &mut Chart) {
+    if ch.auto_title_series().is_none() {
+        if ch.bag.remove(TITLE_AUTO).is_some() {
+            ch.has_title = false;
+        }
+        return;
+    }
+    if !ch.has_title {
+        new_title(wb, ch);
+    }
+    if !ch.bag.contains_key(TITLE_TYPED) {
+        ch.bag.insert(TITLE_AUTO.into(), BagVal::I(1));
+        ch.title = auto_title(wb, ch);
+    }
+}
+
+fn put_has_title(wb: &xlcalc::Workbook, ch: &mut Chart, v: bool) {
+    if v && !ch.has_title {
+        new_title(wb, ch);
+    } else if !v && ch.has_title {
+        delete_title(ch);
+    }
+}
+
+fn new_title(wb: &xlcalc::Workbook, ch: &mut Chart) {
+    ch.has_title = true;
+    ch.title = auto_title(wb, ch);
+    ch.title_ref = None;
+    for key in [TITLE_DELETED, TITLE_AUTO, TITLE_TYPED] {
+        ch.bag.remove(key);
+    }
+}
+
+fn delete_title(ch: &mut Chart) {
+    ch.has_title = false;
+    ch.bag.remove(TITLE_AUTO);
+    ch.bag.remove(TITLE_TYPED);
+    ch.bag.insert(TITLE_DELETED.into(), BagVal::I(1));
+}
+
+fn typed_title(ch: &mut Chart) {
+    ch.bag.remove(TITLE_AUTO);
+    ch.bag.insert(TITLE_TYPED.into(), BagVal::I(1));
 }
 
 fn is_bubble(t: i32) -> bool {
@@ -182,7 +227,7 @@ pub(crate) fn put_bool(a: &Args) -> Result<bool, OmError> {
     }
 }
 
-fn put_text(a: &Args) -> Result<String, OmError> {
+pub(crate) fn put_text(a: &Args) -> Result<String, OmError> {
     match a.put.as_ref() {
         Some(Variant::Bstr(t)) => Ok(t.clone()),
         _ => Err(OmError::type_mismatch()),
@@ -219,8 +264,18 @@ pub(crate) fn font_size(c: &Chart, p: u8) -> f64 {
     10.0
 }
 
+fn font_rich(c: &Chart, p: u8) -> bool {
+    let u = matches!(c.bag.get(&format!("Font{p}.Underline")), Some(BagVal::I(v)) if *v != -4142);
+    let s = matches!(c.bag.get(&format!("Font{p}.Strike")), Some(BagVal::B(true)));
+    u || s
+}
+
 pub(crate) fn chart_fonts(c: &Chart) -> crate::chartfont::Fonts {
-    let f = |p: u8| crate::chartfont::TextFont::new(&font_name(c, p), font_size(c, p));
+    let f = |p: u8| {
+        let mut t = crate::chartfont::TextFont::new(&font_name(c, p), font_size(c, p));
+        t.rich = font_rich(c, p);
+        t
+    };
     crate::chartfont::Fonts {
         cat: f(FONT_TICKS),
         val: f(FONT_TICKS + 1),
@@ -393,6 +448,18 @@ pub(crate) fn aptos_glyph_units(ch: char, size: f64) -> i64 {
     if let Ok(i) = FALLBACK_UNITS.binary_search_by_key(&(ch as u32), |&(c, _)| u32::from(c)) {
         return rnd(f64::from(FALLBACK_UNITS[i].1) * size / 10.0);
     }
+
+    if ch == '\t' {
+        return rnd(873.0 * 200.0 * size / FONT_UNITS_PER_EM as f64);
+    }
+
+    if matches!(ch as u32, 0xFF61..=0xFF9F) {
+        return rnd(1000.0 * size / 10.0);
+    }
+
+    if let Some(a) = script_advance(ch as u32) {
+        return rnd(f64::from(a) * 200.0 * size / FONT_UNITS_PER_EM as f64);
+    }
     let adv = match ch as u32 {
         32..=126 => i64::from(APTOS_NARROW_ADVANCE[ch as usize - 32]),
         cp => match crate::aptos_adv::APTOS_NARROW_EXTRA
@@ -406,12 +473,41 @@ pub(crate) fn aptos_glyph_units(ch: char, size: f64) -> i64 {
     rnd(adv as f64 * 200.0 * size / FONT_UNITS_PER_EM as f64)
 }
 
+fn script_advance(cp: u32) -> Option<u16> {
+    use crate::chart_script_adv::{ARIAL_ADVANCE, TAHOMA_ADVANCE};
+    let (table, lo, hi) = match cp {
+        0x590..=0x77F => (ARIAL_ADVANCE, 0x590, 0x77F),
+        0xE01..=0xE5B => (TAHOMA_ADVANCE, 0xE01, 0xE5B),
+        _ => return None,
+    };
+    debug_assert!(lo <= hi);
+    table
+        .binary_search_by_key(&cp, |&(c, _)| u32::from(c))
+        .ok()
+        .map(|i| table[i].1)
+}
+
+pub(crate) fn arial_glyph_units(ch: char, size: f64) -> Option<i64> {
+    let table = crate::chart_script_adv::ARIAL_ADVANCE;
+    let i = table
+        .binary_search_by_key(&(ch as u32), |&(c, _)| u32::from(c))
+        .ok()?;
+    Some((f64::from(table[i].1) * 200.0 * size / FONT_UNITS_PER_EM as f64 + 0.5).floor() as i64)
+}
+
 pub(crate) fn series_name_text(
     wb: &xlcalc::Workbook,
     k: usize,
     s: &xlcalc::drawing::Series,
 ) -> String {
-    match &s.name {
+    let name = match &s.name {
+        Part::Name(_) => match wb.resolve_part(&s.name) {
+            p @ std::borrow::Cow::Owned(Part::Refs(_)) => p,
+            _ => std::borrow::Cow::Owned(Part::None),
+        },
+        p => std::borrow::Cow::Borrowed(p),
+    };
+    match &*name {
         Part::None => format!("Series{}", s.number(k)),
         Part::Text(t) => t.clone(),
         Part::Refs(v) => {
@@ -422,14 +518,7 @@ pub(crate) fn series_name_text(
                         let addr = xlcalc::CellAddr::new(*sh, row, col);
                         parts.push(match crate::charts::cell_variant(&wb.value(addr)) {
                             Variant::Bstr(t) => t,
-                            Variant::R8(n) => {
-                                let t = wb.display_text(addr);
-                                if t.is_empty() || t.contains('#') {
-                                    xlcalc::format_general(n)
-                                } else {
-                                    t
-                                }
-                            }
+                            Variant::R8(n) => crate::charts::number_cell_text(wb, addr, n),
                             _ => String::new(),
                         });
                     }
@@ -793,6 +882,49 @@ impl Application<'_> {
         }))
     }
 
+    fn chart_title(&mut self, r: &DrawRef, c: &Chart) -> Result<Variant, OmError> {
+        if c.auto_title_series().is_some() {
+            self.layout_title(r)?;
+        }
+        Ok(self.sub_obj(r, Sub::Title))
+    }
+
+    pub(crate) fn titles_for_xls(&mut self, b: crate::app::BookId) -> Result<(), OmError> {
+        let wb = &self.book(b)?.wb;
+        let charts: Vec<DrawRef> = wb
+            .sheets()
+            .filter_map(|s| Some((s.id, wb.drawing(s.id)?)))
+            .flat_map(|(sheet, d)| {
+                d.shapes.iter().filter_map(move |s| {
+                    let c = s.chart.as_ref()?;
+                    (c.auto_title_series().is_some() != c.has_title).then_some(DrawRef {
+                        book: b,
+                        sheet,
+                        id: s.id,
+                        kind: DrawKind::ChartObject,
+                    })
+                })
+            })
+            .collect();
+        for r in charts {
+            self.layout_title(&r)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn layout_title(&mut self, r: &DrawRef) -> Result<(), OmError> {
+        let c = self.chart_of(r)?;
+        let mut next = c.clone();
+        ensure_auto_title(&self.book(r.book)?.wb, &mut next);
+        if next == c {
+            return Ok(());
+        }
+        self.chart_edit(r, |wb, ch| {
+            ensure_auto_title(wb, ch);
+            Ok(())
+        })
+    }
+
     pub(crate) fn chart_extra(
         &mut self,
         r: &DrawRef,
@@ -803,7 +935,7 @@ impl Application<'_> {
         let put = m.kind == InvokeKind::Put || m.kind == InvokeKind::PutRef;
         Some(match (m.name, put) {
             ("ApplyDataLabels", false) => self.apply_data_labels(r, a),
-            ("ChartTitle", false) => Ok(self.sub_obj(r, Sub::Title)),
+            ("ChartTitle", false) => self.chart_title(r, c),
             ("Legend", false) => {
                 if c.has_legend {
                     Ok(self.sub_obj(r, Sub::Legend))
@@ -894,11 +1026,7 @@ impl Application<'_> {
                     Err(e) => return Some(Err(e)),
                 };
                 self.chart_edit(r, |wb, ch| {
-                    if v && !ch.has_title {
-                        ch.title = auto_title(wb, ch);
-                        ch.title_ref = None;
-                    }
-                    ch.has_title = v;
+                    put_has_title(wb, ch, v);
                     Ok(Variant::Empty)
                 })
             }
@@ -927,12 +1055,7 @@ impl Application<'_> {
                 }
                 self.chart_edit(r, |wb, ch| {
                     match e {
-                        0 => ch.has_title = false,
-                        1 | 2 if !ch.has_title => {
-                            ch.has_title = true;
-                            ch.title = auto_title(wb, ch);
-                            ch.title_ref = None;
-                        }
+                        0..=2 => put_has_title(wb, ch, e != 0),
                         100 => ch.has_legend = false,
                         101..=106 => {
                             ch.has_legend = true;
@@ -953,6 +1076,7 @@ impl Application<'_> {
                             if !ax.has_title {
                                 ax.has_title = true;
                                 ax.title = "Axis Title".into();
+                                ax.title_ref = None;
                             }
                         }
                         331 => ch.axes[1].grid_minor = true,
@@ -995,11 +1119,7 @@ impl Application<'_> {
                     Some(_) => {}
                 }
                 self.chart_edit(r, |wb, ch| {
-                    if !ch.has_title {
-                        ch.has_title = true;
-                        ch.title = auto_title(wb, ch);
-                        ch.title_ref = None;
-                    }
+                    put_has_title(wb, ch, true);
                     Ok(Variant::Empty)
                 })
             }
@@ -1105,19 +1225,56 @@ impl Application<'_> {
     }
 
     fn title_text(&self, r: &DrawRef, c: &Chart) -> Result<String, OmError> {
-        if let Some(p) = &c.title_ref {
-            let wb = &self.book(r.book)?.wb;
-            return Ok(match part_values(wb, p).first() {
-                Some(Variant::Bstr(s)) => s.clone(),
-                Some(Variant::R8(n)) => xlcalc::format_general(*n),
-                _ => String::new(),
+        Ok(match &c.title_ref {
+            Some(p) => link_text(&self.book(r.book)?.wb, p),
+            None => c.title.clone(),
+        })
+    }
+
+    fn title_put_link(&self, r: &DrawRef, t: &str) -> Result<Option<Part>, OmError> {
+        if t.encode_utf16().count() > 255 {
+            return Err(e_fail());
+        }
+        let book = self.book(r.book)?;
+        Ok(t.strip_prefix('=')
+            .map(|f| parse_link(&book.wb, r.sheet, f).unwrap_or(Part::None)))
+    }
+
+    fn title_formula_put(
+        &self,
+        r: &DrawRef,
+        member: &str,
+        f: String,
+    ) -> Result<(String, Option<Part>), OmError> {
+        if f.encode_utf16().count() > 255 {
+            return Err(if member == "Formula" {
+                e_fail()
+            } else {
+                OmError::app_defined()
             });
         }
-
-        if c.title.starts_with('=') {
-            return Ok(String::new());
+        let book = self.book(r.book)?;
+        match f.strip_prefix('=') {
+            Some(rest) => {
+                let link = parse_link(&book.wb, r.sheet, rest).ok_or_else(OmError::app_defined)?;
+                Ok((String::new(), Some(link)))
+            }
+            None => Ok((f, None)),
         }
-        Ok(c.title.clone())
+    }
+
+    fn title_formula(
+        &self,
+        r: &DrawRef,
+        member: &str,
+        text: &str,
+        link: Option<&Part>,
+    ) -> Result<Variant, OmError> {
+        Ok(Variant::Bstr(match link {
+            Some(p) => link_formula(&self.book(r.book)?.wb, p, member.contains("R1C1"))
+                .ok_or_else(e_fail)?,
+            None => text.to_string(),
+        }))
     }
 
     pub(crate) fn sub_member(
@@ -1142,55 +1299,38 @@ impl Application<'_> {
                         Ok(self.sub_obj(r, Sub::TitleChars))
                     }
                     ("Text" | "Caption", false) => Ok(Variant::Bstr(self.title_text(r, &c)?)),
-                    ("Text" | "Caption", true) if k == Sub::Title => {
+                    ("Text" | "Caption", true) => {
                         let t = put_text(a)?;
+
+                        let link = if k == Sub::Title {
+                            self.title_put_link(r, &t)?
+                        } else {
+                            None
+                        };
                         self.chart_edit(r, |_, ch| {
-                            ch.has_title = !t.is_empty();
-                            ch.title = t;
-                            ch.title_ref = None;
+                            if t.is_empty() {
+                                delete_title(ch);
+                            } else {
+                                typed_title(ch);
+                            }
+                            ch.title = if link.is_some() { String::new() } else { t };
+                            ch.title_ref = link;
                             Ok(Variant::Empty)
                         })
                     }
                     ("Formula" | "FormulaLocal" | "FormulaR1C1" | "FormulaR1C1Local", false)
                         if k == Sub::Title =>
                     {
-                        match &c.title_ref {
-                            Some(p) => {
-                                let wb = &self.book(r.book)?.wb;
-                                Ok(Variant::Bstr(format!("={}", part_text(wb, p, false))))
-                            }
-                            None if c.title.starts_with('=') => Ok(Variant::Bstr("=".into())),
-                            None => Ok(Variant::Bstr(c.title.clone())),
-                        }
+                        self.title_formula(r, m.name, &c.title, c.title_ref.as_ref())
                     }
                     ("Formula" | "FormulaLocal" | "FormulaR1C1" | "FormulaR1C1Local", true)
                         if k == Sub::Title =>
                     {
-                        let f = put_text(a)?;
-                        if f.chars().count() > 255 {
-                            let code = if m.name == "Formula" {
-                                0x8000_4005_u32
-                            } else {
-                                0x800A_03EC_u32
-                            };
-                            return Err(OmError::exception(code as i32, None));
-                        }
-                        let sheet = r.sheet;
-                        self.chart_edit(r, |wb, ch| {
-                            match f.strip_prefix('=') {
-                                Some(rest) => match parse_part(wb, sheet, rest)? {
-                                    Part::Refs(v) => ch.title_ref = Some(Part::Refs(v)),
-                                    Part::Text(t) => {
-                                        ch.title = t;
-                                        ch.title_ref = None;
-                                    }
-                                    _ => return Err(OmError::app_defined()),
-                                },
-                                None => {
-                                    ch.title = f;
-                                    ch.title_ref = None;
-                                }
-                            }
+                        let (t, link) = self.title_formula_put(r, m.name, put_text(a)?)?;
+                        self.chart_edit(r, |_, ch| {
+                            typed_title(ch);
+                            ch.title = t;
+                            ch.title_ref = link;
                             Ok(Variant::Empty)
                         })
                     }
@@ -1299,15 +1439,33 @@ impl Application<'_> {
                 let ax = &c.axes[i as usize];
                 let slot = format!("AxisTitle{i}");
                 match (m.name, put) {
-                    ("Text" | "Caption", false) if !ax.has_title => Err(OmError::object_required()),
-                    ("Text" | "Caption", true) if !ax.has_title => Err(OmError::object_required()),
-                    ("Text" | "Caption", false) => Ok(Variant::Bstr(ax.title.clone())),
+                    (
+                        "Text" | "Caption" | "Formula" | "FormulaLocal" | "FormulaR1C1"
+                        | "FormulaR1C1Local",
+                        _,
+                    ) if !ax.has_title => Err(OmError::object_required()),
+                    ("Text" | "Caption", false) => Ok(Variant::Bstr(match &ax.title_ref {
+                        Some(p) => link_text(&self.book(r.book)?.wb, p),
+                        None => ax.title.clone(),
+                    })),
                     ("Text" | "Caption", true) => {
                         let t = put_text(a)?;
+                        let link = self.title_put_link(r, &t)?;
 
                         self.axis_edit(r, i as usize, |x| {
                             x.has_title = !t.is_empty();
+                            x.title = if link.is_some() { String::new() } else { t };
+                            x.title_ref = link;
+                        })
+                    }
+                    ("Formula" | "FormulaLocal" | "FormulaR1C1" | "FormulaR1C1Local", false) => {
+                        self.title_formula(r, m.name, &ax.title, ax.title_ref.as_ref())
+                    }
+                    ("Formula" | "FormulaLocal" | "FormulaR1C1" | "FormulaR1C1Local", true) => {
+                        let (t, link) = self.title_formula_put(r, m.name, put_text(a)?)?;
+                        self.axis_edit(r, i as usize, |x| {
                             x.title = t;
+                            x.title_ref = link;
                         })
                     }
 
@@ -1360,6 +1518,29 @@ impl Application<'_> {
                         let v = put_num(a)?;
                         self.chart_edit(r, |_, ch| {
                             ch.bag.insert(key("Size"), xlcalc::drawing::BagVal::D(v));
+                            Ok(Variant::Empty)
+                        })
+                    }
+                    ("Underline", false) => Ok(Variant::I4(match c.bag.get(&key("Underline")) {
+                        Some(BagVal::I(v)) => *v,
+                        _ => -4142,
+                    })),
+                    ("Strikethrough", false) => Ok(Variant::Bool(matches!(
+                        c.bag.get(&key("Strike")),
+                        Some(BagVal::B(true))
+                    ))),
+                    ("Underline", true) => {
+                        let v = put_num(a)? as i32;
+                        self.chart_edit(r, |_, ch| {
+                            ch.bag
+                                .insert(key("Underline"), xlcalc::drawing::BagVal::I(v));
+                            Ok(Variant::Empty)
+                        })
+                    }
+                    ("Strikethrough", true) => {
+                        let v = put_bool(a)?;
+                        self.chart_edit(r, |_, ch| {
+                            ch.bag.insert(key("Strike"), xlcalc::drawing::BagVal::B(v));
                             Ok(Variant::Empty)
                         })
                     }
@@ -1478,6 +1659,16 @@ impl Application<'_> {
                 "MinimumScale" | "MaximumScale" | "MajorUnit" | "MinorUnit"
             );
         let scaled = scale_read || matches!(c.bag.get(SCALED), Some(BagVal::I(1)));
+
+        if value_axis
+            && !put
+            && matches!(
+                m.name,
+                "MinimumScale" | "MaximumScale" | "MajorUnit" | "MinorUnit"
+            )
+        {
+            self.layout_title(r)?;
+        }
         if scale_read && !matches!(c.bag.get(SCALED), Some(BagVal::I(1))) {
             self.mark_scaled(r)?;
         }
@@ -1561,6 +1752,7 @@ impl Application<'_> {
                 self.axis_edit(r, i, |x| {
                     if v && !x.has_title {
                         x.title = "Axis Title".into();
+                        x.title_ref = None;
                     }
                     x.has_title = v;
                 })
@@ -1910,7 +2102,7 @@ pub(crate) fn group_family(t: i32) -> i32 {
     }
 }
 
-fn stack_kind(t: i32) -> u8 {
+pub(crate) fn stack_kind(t: i32) -> u8 {
     match t {
         63 | 66 | 76 | 78 => 1,
         64 | 67 | 77 | 79 => 3,

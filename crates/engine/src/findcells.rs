@@ -31,6 +31,8 @@ pub struct FindSpec {
     pub match_case: bool,
 
     pub in_macro: bool,
+
+    pub cell_only: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -118,6 +120,10 @@ impl Workbook {
             self.used_range(sheet)?
         };
         let scope: Vec<Rect> = match areas {
+            [one] if one.is_cell() && spec.cell_only => vec![one.intersection(&used)]
+                .into_iter()
+                .flatten()
+                .collect(),
             [one] if one.is_cell() => vec![used],
             _ => areas.iter().filter_map(|a| a.intersection(&used)).collect(),
         };
@@ -168,7 +174,16 @@ impl Workbook {
                 .iter()
                 .position(|&(i, r, c)| i == ai && (r, c) == after)
                 .unwrap_or(0),
-            None => cells.partition_point(|&(_, r, c)| key(r, c) < key(after.0, after.1)),
+
+            None => {
+                let first_past =
+                    cells.partition_point(|&(_, r, c)| key(r, c) < key(after.0, after.1));
+                if spec.backward {
+                    first_past
+                } else {
+                    (first_past + n - 1) % n
+                }
+            }
         };
         let filter_mode = self.filter_mode(sheet);
         for k in 1..=n {

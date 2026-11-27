@@ -254,7 +254,7 @@ fn font_rec(f: &Node, pal: &Palette) -> Rec {
     d.extend((if bold { 700u16 } else { 400 }).to_le_bytes());
     d.extend(sss.to_le_bytes());
     d.extend([uls, family, charset, 0]);
-    d.push(name.encode_utf16().count().min(255) as u8);
+    d.push(xlcalc::wide::units(&name).count().min(255) as u8);
     put_chars(&mut d, &name);
     (0x31, d)
 }
@@ -454,7 +454,69 @@ fn xf_ext_rec(ixfe: u16, props: &[(u16, Vec<u8>)]) -> Vec<u8> {
     d
 }
 
-pub(crate) fn convert(styles: &Node, theme: Option<&Node>) -> StyleOut {
+const CURRENCY_IDS: [u16; 8] = [5, 6, 7, 8, 42, 41, 44, 43];
+
+pub(super) fn format_table(locale: &xlcalc::Locale, slots: &[String]) -> Vec<(u16, String)> {
+    let currency = CURRENCY_IDS.iter().filter_map(|&id| {
+        let code = xlcalc::builtin_code_of_file_id(locale, id.into())?;
+        Some((id, crate::styles::file_code(&code)))
+    });
+    let custom = slots
+        .iter()
+        .zip(164u16..)
+        .map(|(code, id)| (id, crate::styles::file_code(code)));
+    currency.chain(custom).collect()
+}
+
+fn format_records(styles: &Node, table: &[(u16, String)]) -> Vec<Rec> {
+    let mut all: std::collections::BTreeMap<(usize, u16), &str> = Default::default();
+    let key = |id: u16| {
+        let first = CURRENCY_IDS.iter().position(|&c| c == id);
+        (first.unwrap_or(CURRENCY_IDS.len()), id)
+    };
+    for (id, code) in table {
+        all.insert(key(*id), code);
+    }
+    for f in styles
+        .child("numFmts")
+        .into_iter()
+        .flat_map(|n| n.children("numFmt"))
+    {
+        let id = num(f, "numFmtId").unwrap_or(164) as u16;
+        all.insert(key(id), f.attr("formatCode").unwrap_or("General"));
+    }
+    all.into_iter()
+        .map(|((_, id), code)| {
+            let mut d = Vec::new();
+            d.extend(id.to_le_bytes());
+            d.extend((xlcalc::wide::units(code).count() as u16).to_le_bytes());
+            put_chars(&mut d, code);
+            (0x41E, d)
+        })
+        .collect()
+}
+
+pub(crate) fn font_number(index: usize) -> u16 {
+    (if index < 4 { index } else { index + 1 }) as u16
+}
+
+impl StyleOut {
+    pub fn run_font(&mut self, f: &Node, theme: Option<&Node>) -> u16 {
+        let pal = Palette {
+            colors: DEFAULT_PALETTE.to_vec(),
+            theme: theme_colors(theme),
+        };
+        let rec = font_rec(f, &pal);
+        let at = self.fonts.iter().position(|x| *x == rec);
+        let at = at.unwrap_or_else(|| {
+            self.fonts.push(rec);
+            self.fonts.len() - 1
+        });
+        font_number(at)
+    }
+}
+
+pub(crate) fn convert(styles: &Node, theme: Option<&Node>, table: &[(u16, String)]) -> StyleOut {
     let pal = Palette {
         colors: DEFAULT_PALETTE.to_vec(),
         theme: theme_colors(theme),
@@ -473,18 +535,7 @@ pub(crate) fn convert(styles: &Node, theme: Option<&Node>) -> StyleOut {
         fonts.push(fonts[0].clone());
     }
 
-    let mut formats: Vec<Rec> = Vec::new();
-    if let Some(nf) = styles.child("numFmts") {
-        for f in nf.children("numFmt") {
-            let id = num(f, "numFmtId").unwrap_or(164) as u16;
-            let code = f.attr("formatCode").unwrap_or("General");
-            let mut d = Vec::new();
-            d.extend(id.to_le_bytes());
-            d.extend((code.encode_utf16().count() as u16).to_le_bytes());
-            put_chars(&mut d, code);
-            formats.push((0x41E, d));
-        }
-    }
+    let formats = format_records(styles, table);
     let fills: Vec<&Node> = styles
         .child("fills")
         .map(|f| f.children("fill").collect())
@@ -613,7 +664,7 @@ pub(crate) fn convert(styles: &Node, theme: Option<&Node>) -> StyleOut {
                 _ => {
                     let name = s.attr("name").unwrap_or("");
                     d.extend(ixfe.to_le_bytes());
-                    d.extend((name.encode_utf16().count() as u16).to_le_bytes());
+                    d.extend((xlcalc::wide::units(name).count() as u16).to_le_bytes());
                     put_chars(&mut d, name);
                 }
             }

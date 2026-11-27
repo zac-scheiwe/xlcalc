@@ -57,7 +57,6 @@ pub struct FnDef {
     pub max_args: u8,
 
     pub params: &'static str,
-    pub volatile: bool,
     pub imp: Imp,
 
     pub check: Option<ArgCheck>,
@@ -73,14 +72,27 @@ impl FnDef {
         }
     }
 
+    pub fn volatile(&self) -> bool {
+        matches!(self.name, "GETPIVOTDATA" | "RTD") || self.volatile_record()
+    }
+
+    pub(crate) fn volatile_record(&self) -> bool {
+        crate::legacy_single::ftab(self.name).is_some_and(|f| f.attrs & 0x200 != 0)
+    }
+
     pub fn param_class(&self, i: usize) -> ParamClass {
+        let table = crate::legacy_classes::class_of(self.name, i);
+        if table == Some(b'Q') {
+            return ParamClass::Reference;
+        }
         let b = self.params.as_bytes();
         if b.is_empty() {
             return ParamClass::Value;
         }
         match b[i.min(b.len() - 1)] {
             b'R' | b'E' | b'X' | b'M' => ParamClass::Raw,
-            b'Q' => ParamClass::Reference,
+
+            b'Q' if table.is_none() => ParamClass::Reference,
             _ => ParamClass::Value,
         }
     }
@@ -94,24 +106,9 @@ pub const fn checked(
     d
 }
 
-const REFERENCE_FUNCTIONS: &[&str] = &[
-    "INDEX",
-    "OFFSET",
-    "INDIRECT",
-    "IF",
-    "IFS",
-    "CHOOSE",
-    "SWITCH",
-    "XLOOKUP",
-    "LET",
-    "TAKE",
-    "DROP",
-    "REDUCE",
-    "TEXTREF",
-    "ABSREF",
-    "SELECTION",
-    "ACTIVE.CELL",
-];
+pub(crate) fn returns_ref(upper_name: &str) -> bool {
+    crate::legacy_single::ftab(upper_name).is_some_and(|f| f.flags & 8 != 0)
+}
 
 pub fn can_be_called(e: &crate::parser::ast::Expr) -> bool {
     crate::deep(|| {
@@ -137,10 +134,7 @@ pub fn can_be_called(e: &crate::parser::ast::Expr) -> bool {
             Expr::Paren(x) => can_be_called(x),
             Expr::Func { name, .. } => {
                 let up = crate::formula::strip_prefixes(name).to_uppercase();
-                up == "LAMBDA"
-                    || up == "LET"
-                    || REFERENCE_FUNCTIONS.contains(&up.as_str())
-                    || lookup(&up).is_none()
+                up == "LAMBDA" || up == "LET" || returns_ref(&up) || lookup(&up).is_none()
             }
             _ => true,
         }
@@ -178,7 +172,7 @@ pub fn is_reference_expr(e: &crate::parser::ast::Expr) -> bool {
             } => true,
             Expr::Func { name, .. } => {
                 let up = crate::formula::strip_prefixes(name).to_uppercase();
-                REFERENCE_FUNCTIONS.contains(&up.as_str()) || lookup(&up).is_none()
+                returns_ref(&up) || lookup(&up).is_none()
             }
             _ => false,
         }
@@ -213,7 +207,6 @@ pub const fn scalar(
         min_args: min,
         max_args: max,
         params: "",
-        volatile: false,
         imp: Imp::Scalar(f),
         check: None,
     }
@@ -231,7 +224,6 @@ pub const fn args(
         min_args: min,
         max_args: max,
         params,
-        volatile: false,
         imp: Imp::Args(f),
         check: None,
     }
@@ -248,15 +240,9 @@ pub const fn lazy(
         min_args: min,
         max_args: max,
         params: "R",
-        volatile: false,
         imp: Imp::Lazy(f),
         check: None,
     }
-}
-
-pub const fn volatile(mut d: FnDef) -> FnDef {
-    d.volatile = true;
-    d
 }
 
 struct Registry {
@@ -308,8 +294,38 @@ pub fn def(id: FuncId) -> &'static FnDef {
     &REGISTRY.defs[id as usize]
 }
 
+pub fn arity(upper_name: &str) -> Option<(usize, usize)> {
+    let d = def(lookup(upper_name)?);
+    Some((usize::from(d.min_args), usize::from(d.max_args)))
+}
+
 pub fn names() -> Vec<&'static str> {
     let mut v: Vec<_> = REGISTRY.defs.iter().map(|d| d.name).collect();
     v.sort_unstable();
     v
+}
+
+#[cfg(test)]
+mod record_rules {
+    use super::*;
+
+    #[test]
+    fn from_the_function_record() {
+        let volatile = |n: &str| def(lookup(n).unwrap()).volatile();
+        for n in [
+            "RAND",
+            "NOW",
+            "OFFSET",
+            "CELL",
+            "INDIRECT",
+            "SHEET",
+            "FORMULATEXT",
+        ] {
+            assert!(volatile(n), "{n}");
+        }
+        assert!(!volatile("SUM") && !volatile("GET.CELL"));
+        assert!(returns_ref("INDEX") && returns_ref("OFFSET") && !returns_ref("SUM"));
+        let q = |n: &str, i| def(lookup(n).unwrap()).param_class(i) == ParamClass::Reference;
+        assert!(q("COUNTIF", 0) && !q("COUNTIF", 1) && q("ROW", 0) && !q("SUM", 0));
+    }
 }

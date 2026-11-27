@@ -608,7 +608,7 @@ fn rule(
             return Ok(String::new());
         }
         match fx.text(b, &[], base, Some(idx), cp)? {
-            Dec::Text(t) => Ok(t),
+            Dec::Text(t, _) => Ok(t),
             Dec::Exp { .. } => Err("shared formula in a conditional format".into()),
         }
     };

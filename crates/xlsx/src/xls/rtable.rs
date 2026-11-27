@@ -87,31 +87,31 @@ pub(super) fn feature(r: &Rec<'_>, cp: u16) -> Result<Feat, String> {
         };
         c.take(8)?;
         fl.ilta = c.u32()?;
-        c.take(8)?;
+        let cb_agg = c.u32()? as usize;
+        c.take(4)?;
         fl.flags = c.u32()?;
-        c.take(8)?;
+        let cb_data = c.u32()? as usize;
+        c.take(4)?;
         c.long_str(cp)?;
         fl.name = c.long_str(cp)?;
-        let tail = |c: &mut Cur<'_>, fl: &mut Field| -> Result<(), String> {
-            if fl.flags & 0x400 != 0 {
-                fl.label = Some(c.long_str(cp)?);
-            }
-            if fl.flags & 0x80 != 0 {
-                let cce = usize::from(c.u16()?);
-                fl.formula = Some(c.take(cce)?.to_vec());
-            }
-            Ok(())
-        };
+
+        c.take(cb_agg)?;
+        c.take(cb_data)?;
+        if f.header != 0 && fl.flags & 1 != 0 {
+            let cb = c.u32()? as usize;
+            c.take(2)?;
+            c.take(cb)?;
+        }
+        if fl.flags & 0x400 != 0 {
+            fl.label = Some(c.long_str(cp)?);
+        }
+        if fl.flags & 0x80 != 0 {
+            let cce = usize::from(c.u16()?);
+            fl.formula = Some(c.take(cce)?.to_vec());
+        }
         if f.header == 0 {
-            tail(&mut c, &mut fl)?;
-            c.take(4)?;
-        } else {
-            if fl.flags & 0x800 != 0 {
-                c.take(14)?;
-            } else if fl.flags & 1 != 0 {
-                c.take(6)?;
-            }
-            tail(&mut c, &mut fl)?;
+            let cb = c.u32()? as usize;
+            c.take(cb)?;
         }
         f.fields.push(fl);
     }
@@ -199,7 +199,7 @@ pub(super) fn to_xml(
             fl.formula
                 .as_ref()
                 .and_then(|g| match fx.text(g, &[], (0, 0), Some(idx), cp) {
-                    Ok(Dec::Text(t)) => Some(t),
+                    Ok(Dec::Text(t, _)) => Some(t),
                     Ok(_) => None,
                     Err(e) => {
                         warnings.push(format!("{sheet}: table {name}: totals formula: {e}"));

@@ -6,15 +6,10 @@ pub(super) struct CellFmtInfo {
     pub(super) parens: bool,
 }
 
-const LOCALE_MARK: char = '\u{1}';
-
-const A_MARK: char = '\u{2}';
-
 const ELAPSED_MARK: char = '\u{4}';
 
-fn strip_section(sec: &str) -> (String, bool, bool) {
+fn strip_section(sec: &str) -> String {
     let mut clean = String::new();
-    let (mut elapsed, mut locale) = (false, false);
     let mut chars = sec.chars();
     while let Some(c) = chars.next() {
         match c {
@@ -31,14 +26,7 @@ fn strip_section(sec: &str) -> (String, bool, bool) {
                     clean.push('$');
                 }
             }
-            '\\' => {
-                if let Some(d) = chars.next() {
-                    if d.eq_ignore_ascii_case(&'a') {
-                        clean.push(A_MARK);
-                    }
-                }
-            }
-            '_' | '*' => {
+            '\\' | '_' | '*' => {
                 chars.next();
             }
             '[' => {
@@ -51,118 +39,21 @@ fn strip_section(sec: &str) -> (String, bool, bool) {
                 }
                 let l = b.to_ascii_lowercase();
                 if !l.is_empty() && l.chars().all(|c| matches!(c, 'h' | 'm' | 's')) {
-                    elapsed = true;
                     clean.push(ELAPSED_MARK);
-                }
-
-                if l.starts_with('$') && l.contains('-') {
-                    locale = true;
-                    clean.push(LOCALE_MARK);
                 }
             }
             c => clean.push(c),
         }
     }
-    (clean.to_ascii_lowercase(), elapsed, locale)
+    clean.to_ascii_lowercase()
 }
 
-fn date_code(l: &str) -> &'static str {
-    let l = l
-        .replace("am/pm", "p")
-        .replace(&format!("{A_MARK}/p"), "q")
-        .replace("a/p", "q")
-        .replace("/p", "")
-        .replace("b1", &LOCALE_MARK.to_string());
-    let mut toks: Vec<(char, usize)> = Vec::new();
-
-    let mut spans: Vec<(usize, usize)> = Vec::new();
-    let mut prev = ' ';
-    for (at, c) in l.chars().enumerate() {
-        if c == LOCALE_MARK {
-            toks.push(('L', 1));
-            spans.push((at, at));
-        } else if c == ELAPSED_MARK {
-            toks.push(('E', 1));
-            spans.push((at, at));
-        } else if matches!(c, 'd' | 'm' | 'y' | 'h' | 's' | 'p' | 'q' | 'e' | 'g' | 'a') {
-            match toks.last_mut() {
-                Some((t, n)) if *t == c && prev == c && c != 'p' && c != 'q' => {
-                    *n += 1;
-                    if let Some(sp) = spans.last_mut() {
-                        sp.1 = at;
-                    }
-                }
-                _ => {
-                    toks.push((c, 1));
-                    spans.push((at, at));
-                }
-            }
-        }
-        prev = c;
-    }
-    let chars: Vec<char> = l.chars().collect();
-
-    let letter_between = |i: usize| {
-        spans.get(i + 1).is_some_and(|next| {
-            chars[spans[i].1 + 1..next.0]
-                .iter()
-                .any(|c| c.is_alphabetic())
-        })
-    };
-
-    let mut kinds: Vec<char> = Vec::new();
-    let mut elapsed = false;
-    for (i, &(t, n)) in toks.iter().enumerate() {
-        match t {
-            'E' => {
-                elapsed = true;
-
-                if !kinds.is_empty() {
-                    kinds.push('E');
-                }
-            }
-            'm' => {
-                let after_h = i > 0 && toks[i - 1].0 == 'h';
-                let before_s = toks.get(i + 1).is_some_and(|x| x.0 == 's') && !letter_between(i);
-                kinds.push(if (after_h || before_s || elapsed) && n <= 2 {
-                    'n'
-                } else if n <= 5 {
-                    'm'
-                } else {
-                    'x'
-                });
-            }
-            'L' => kinds.push('d'),
-            'a' if n >= 3 => kinds.push('d'),
-            'a' => {}
-            t => kinds.push(t),
-        }
-    }
-
-    let mut seq: Vec<u8> = Vec::new();
-    for k in &kinds {
-        let c = match k {
-            'd' | 'L' => 13,
-            'm' | 'x' => 17,
-            'h' | 'E' => 21,
-            'n' => 23,
-            's' => 25,
-            'y' => 27,
-            'p' => 34,
-            'g' | 'e' => 53,
-            _ => continue,
-        };
-        if seq.len() < 8 {
-            seq.push(c);
-        }
-    }
-
-    for (rcode, row) in DATE_ROWS {
-        if seq.starts_with(row) {
-            return rcode;
-        }
-    }
-    "G"
+fn date_code(fmt: &str) -> &'static str {
+    let classes = NumberFormat::parse_stored(&plain_system_tags(fmt))
+        .ok()
+        .and_then(|f| f.date_op_classes());
+    let row = classes.and_then(|seq| DATE_ROWS.iter().find(|(_, row)| seq.starts_with(row)));
+    row.map_or("G", |(code, _)| code)
 }
 
 const DATE_ROWS: [(&str, &[u8]); 9] = [
@@ -228,7 +119,7 @@ fn has_paren(s: &str) -> bool {
 }
 
 fn is_text_only(sec: &str) -> bool {
-    let (l, _, _) = strip_section(sec);
+    let l = strip_section(sec);
     l.contains('@') && !l.contains(['0', '#', '?', 'd', 'm', 'y', 'h', 's', ELAPSED_MARK])
 }
 
@@ -264,20 +155,24 @@ fn is_hidden(secs: &[&str]) -> bool {
     secs.len() > 1 && l0 == 0 && l1 == 0 && l2 == 0 && text_short
 }
 
-fn number_header(fmt: &str) -> Option<NumberHeader> {
-    let plain = fmt
-        .replace("-F800]", "-409]")
+fn plain_system_tags(fmt: &str) -> String {
+    fmt.replace("-F800]", "-409]")
         .replace("-f800]", "-409]")
         .replace("-F400]", "-409]")
-        .replace("-f400]", "-409]");
-    NumberFormat::parse(&plain).ok()?.number_header()
+        .replace("-f400]", "-409]")
+}
+
+fn number_header(fmt: &str) -> Option<NumberHeader> {
+    NumberFormat::parse(&plain_system_tags(fmt))
+        .ok()?
+        .number_header()
 }
 
 pub(super) fn cell_format_info(fmt: &str, implicit_general: bool) -> CellFmtInfo {
     let secs = split_sections(fmt);
     let pos = secs[0];
     let (color, parens) = parse_flags(&secs, implicit_general);
-    let (lower, _, _) = strip_section(pos);
+    let lower = strip_section(pos);
     let digits = lower.contains(['0', '#', '?']);
     let is_sci = (lower.contains("e+") || lower.contains("e-")) && digits;
     let has_dt = (lower.contains(['d', 'm', 'y', 'h', 's', ELAPSED_MARK])
@@ -289,7 +184,7 @@ pub(super) fn cell_format_info(fmt: &str, implicit_general: bool) -> CellFmtInfo
     } else if lower.trim().is_empty() || lower.contains("general") || lower.contains('@') {
         "G".to_string()
     } else if has_dt && !is_sci {
-        date_code(&lower).to_string()
+        date_code(fmt).to_string()
     } else if is_fraction(&lower) {
         match lower.split_once('/') {
             Some((_, den)) if lower.contains('$') => {
@@ -464,8 +359,17 @@ mod tests {
 
         assert_eq!(code("d/m e"), "D2");
         assert_eq!(code("mmm e"), "G");
+
         assert_eq!(code("[h] dd-mmm-yy"), "D1");
+        assert_eq!(code("d/m/yy [h]"), "D1");
+        assert_eq!(code("[h]:mmm d"), "D5");
         assert_eq!(code("[h]:d/m/yy"), "G");
+        assert_eq!(code("[h]:h:mm"), "G");
+
+        assert_eq!(code("mmm[$-409]"), "D5");
+        assert_eq!(code("B1m/d/yy"), "D2");
+        assert_eq!(code("B2d/m/yy"), "D1");
+        assert_eq!(code("[$-409][h]mmmm"), "D2");
     }
 
     #[test]

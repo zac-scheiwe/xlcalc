@@ -1,0 +1,4683 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2",
+  "Sheet3",
+  "Sheet4",
+  "Off1",
+  "Off2",
+  "Off3",
+  "Off4"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula",
+   "value": "=N(A10)*2+1"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D2')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D3')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('D1:E3')",
+   "call": "Table",
+   "args": [
+    {
+     "missing": true
+    },
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet1').Range('A10')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula",
+   "value": "=N(A10)*100+N(B11)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F1')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D2')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D3')",
+   "prop": "Value2",
+   "value": 4
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1:F3')",
+   "call": "Table",
+   "args": [
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet2').Range('A10')"
+    },
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet2').Range('B11')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula",
+   "value": "=N(H1)*3+1"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F1')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D1:F2')",
+   "call": "Table",
+   "args": [
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet3').Range('H1')"
+    },
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula",
+   "value": "=N(A10)*100+N(B11)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F1')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D2')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D3')",
+   "prop": "Value2",
+   "value": 4
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1:F3')",
+   "call": "Table",
+   "args": [
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet4').Range('A10')"
+    },
+    {
+     "path": "ActiveWorkbook.Worksheets('Sheet4').Range('B11')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula",
+   "value": "=N(A70000)*2+1"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('D2')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('D3')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('D1:E3')",
+   "call": "Table",
+   "args": [
+    {
+     "missing": true
+    },
+    {
+     "path": "ActiveWorkbook.Worksheets('Off1').Range('A70000')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula",
+   "value": "=N(IW1)*3+1"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F1')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D1:F2')",
+   "call": "Table",
+   "args": [
+    {
+     "path": "ActiveWorkbook.Worksheets('Off2').Range('IW1')"
+    },
+    {
+     "missing": true
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula",
+   "value": "=N(A70000)*100+N(B1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F1')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D2')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D3')",
+   "prop": "Value2",
+   "value": 4
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1:F3')",
+   "call": "Table",
+   "args": [
+    {
+     "path": "ActiveWorkbook.Worksheets('Off3').Range('A70000')"
+    },
+    {
+     "path": "ActiveWorkbook.Worksheets('Off3').Range('B1')"
+    }
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula",
+   "value": "=N(B1)*100+N(IW1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E1')",
+   "prop": "Value2",
+   "value": 1
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F1')",
+   "prop": "Value2",
+   "value": 2
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D2')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D3')",
+   "prop": "Value2",
+   "value": 4
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1:F3')",
+   "call": "Table",
+   "args": [
+    {
+     "path": "ActiveWorkbook.Worksheets('Off4').Range('B1')"
+    },
+    {
+     "path": "ActiveWorkbook.Worksheets('Off4').Range('IW1')"
+    }
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('10:10')",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('11:11')",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('H:H')",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('10:10')",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook",
+   "prop": "CheckCompatibility",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/first.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/first.xlsb",
+    50
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/first.xls",
+    56
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/first.xlsx"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/first.xlsb"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/first.xls"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook",
+   "prop": "CheckCompatibility",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/again.xlsx",
+    51
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/again.xlsb",
+    50
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/again.xls",
+    56
+   ]
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/again.xlsx"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/again.xlsb"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  },
+  {
+   "op": "om",
+   "path": "Workbooks",
+   "call": "Open",
+   "args": [
+    "@out/again.xls"
+   ]
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Sheet4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off1').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('D2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off2').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off3').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('D1')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F2')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('E3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Formula"
+  },
+  {
+   "op": "om_get",
+   "path": "ActiveWorkbook.Worksheets('Off4').Range('F3')",
+   "prop": "Value2"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  }
+ ],
+ "fresh_excel": true
+}

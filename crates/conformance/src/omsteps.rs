@@ -746,7 +746,7 @@ impl OmSession {
 
         let stripped;
         let got = match got {
-            Variant::Bstr(s) if rec["op"] == "run" => {
+            Variant::Bstr(s) => {
                 stripped = Variant::Bstr(xlcalc_vba::rt::host_text(s));
                 &stripped
             }

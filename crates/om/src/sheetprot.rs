@@ -4,7 +4,7 @@ use xlcalc::{CellAddr, Rect, SheetId};
 
 use crate::app::{unsupported, Application, BookId, Object};
 use crate::conv::Args;
-use crate::error::{vba_scode, OmError};
+use crate::error::{vba_scode, OmError, DISP_E_PARAMNOTOPTIONAL, DISP_E_TYPEMISMATCH};
 use crate::typelib::{InvokeKind, Member};
 use xlcalc_variant::Variant;
 use xlcalc_xlsx::PassHash;
@@ -83,6 +83,36 @@ pub(crate) struct EditRange {
     pub title: String,
     pub rects: Vec<Rect>,
     pub password: Option<Pw>,
+
+    pub unlocked: bool,
+}
+
+const ADD_PASSWORD_MAX: usize = 255;
+const CHANGE_PASSWORD_MAX: usize = 254;
+
+fn er_text(a: &Args, i: usize) -> Result<String, OmError> {
+    er_value_text(a.get(i), a)
+}
+
+pub(crate) fn er_value_text(v: Option<&Variant>, a: &Args) -> Result<String, OmError> {
+    Ok(match v {
+        None | Some(Variant::Null) => String::new(),
+        Some(Variant::Bool(b)) => if *b { "True" } else { "False" }.to_string(),
+        Some(v) => a.variant_string(v)?.unwrap_or_default(),
+    })
+}
+
+fn title_ok(t: &str) -> bool {
+    let n = t.encode_utf16().count();
+    (1..=255).contains(&n)
+        && t.chars()
+            .enumerate()
+            .all(|(k, c)| c == ' ' || xlcalc::name_ch_xls(c, k == 0))
+}
+
+fn title_exists(list: &[EditRange], t: &str) -> bool {
+    let up = t.to_uppercase();
+    list.iter().any(|r| r.title.to_uppercase() == up)
 }
 
 pub(crate) type BookEditRanges = HashMap<SheetId, Vec<EditRange>>;
@@ -120,6 +150,10 @@ impl Application<'_> {
 
     fn set_sheet_prot(&mut self, b: BookId, s: SheetId, p: SheetProt) -> Result<(), OmError> {
         let book = self.book_mut(b)?;
+        book.wb.set_contents_protected(s, p.contents);
+        for r in book.edit_ranges.entry(s).or_default() {
+            r.unlocked = false;
+        }
         if p == SheetProt::default() {
             book.sheet_prot.remove(&s);
         } else {
@@ -212,6 +246,19 @@ impl Application<'_> {
         }
     }
 
+    fn er_password(&self, b: BookId, a: &Args) -> Result<String, OmError> {
+        let Some(Variant::Dispatch(Some(_))) = a.get(2) else {
+            return er_text(a, 2);
+        };
+        let (sheet, rect) = self.range_arg(a.get(2))?;
+        let v = self
+            .book(b)?
+            .wb
+            .value(xlcalc::CellAddr::new(sheet, rect.r0, rect.c0));
+        let v = crate::conv::cell_variant(&v, "General", crate::conv::Flavour::Value2, false);
+        er_value_text(Some(&v), a)
+    }
+
     fn edit_ranges(&self, b: BookId, s: SheetId) -> Vec<EditRange> {
         self.book(b)
             .ok()
@@ -251,23 +298,36 @@ impl Application<'_> {
                             .ok_or_else(OmError::app_defined)?
                     }
                 };
-                Ok(self.alloc(Object::AllowEditRange(b, s, i)))
+                Ok(self.alloc(Object::AllowEditRange(b, s, i as i32)))
             }
             ("Add", Func) => {
-                if self.sheet_prot(b, s).any() {
+                if a.get(0).is_none() || a.get(1).is_none() {
+                    return Err(OmError::hresult(DISP_E_PARAMNOTOPTIONAL));
+                }
+                if !matches!(a.get(1), Some(Variant::Dispatch(_))) {
+                    return Err(OmError::arg(DISP_E_TYPEMISMATCH, 0));
+                }
+                let title = er_text(a, 0)?;
+                let (_, _, rects) = self.range_areas(a.get(1))?;
+                let password = self.er_password(b, a)?;
+
+                if self.sheet_prot(b, s).contents
+                    || !title_ok(&title)
+                    || title_exists(&list, &title)
+                    || password.encode_utf16().count() > ADD_PASSWORD_MAX
+                {
                     return Err(OmError::app_defined());
                 }
-                let title = a.string(0)?.unwrap_or_default();
-                let (_, _, rects) = self.range_areas(a.get(1))?;
-                let password = a.string(2)?.filter(|p| !p.is_empty()).map(Pw::Text);
+                let password = (!password.is_empty()).then_some(Pw::Text(password));
                 let ranges = self.edit_ranges_mut(b, s)?;
                 ranges.push(EditRange {
                     title,
                     rects,
                     password,
+                    unlocked: false,
                 });
                 let i = ranges.len() - 1;
-                Ok(self.alloc(Object::AllowEditRange(b, s, i)))
+                Ok(self.alloc(Object::AllowEditRange(b, s, i as i32)))
             }
             _ => Err(unsupported("AllowEditRanges", m)),
         }
@@ -277,40 +337,104 @@ impl Application<'_> {
         &mut self,
         b: BookId,
         s: SheetId,
-        i: usize,
+        i: i32,
         m: &'static Member,
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
+
+        let Ok(i) = usize::try_from(i) else {
+            return Err(OmError::app_defined());
+        };
         let Some(me) = self.edit_ranges(b, s).get(i).cloned() else {
             return Err(OmError::app_defined());
         };
         match (m.name, m.kind) {
             ("Title", Get) => Ok(Variant::Bstr(me.title)),
             ("Title", Put) => {
-                let t = match &a.put {
-                    Some(Variant::Bstr(t)) => t.clone(),
-                    _ => return Err(OmError::app_defined()),
-                };
+                if a.put.as_ref().is_none_or(crate::conv::is_missing) {
+                    return Err(OmError::hresult(DISP_E_PARAMNOTOPTIONAL));
+                }
+                let t = er_value_text(a.put.as_ref(), a)?;
+
+                if self.sheet_prot(b, s).contents
+                    || !title_ok(&t)
+                    || title_exists(&self.edit_ranges(b, s), &t)
+                {
+                    return Err(OmError::app_defined());
+                }
                 self.edit_ranges_mut(b, s)?[i].title = t;
                 Ok(Variant::Empty)
             }
             ("Range", Get) => self.new_multi(b, s, &me.rects, crate::app::Mode::Cells),
+
             ("Range", PutRef) => {
-                let (_, _, rects) = self.range_areas(a.get(0))?;
-                self.edit_ranges_mut(b, s)?[i].rects = rects;
+                if let Ok((_, _, rects)) = self.range_areas(a.put.as_ref()) {
+                    if rects.iter().any(|r| {
+                        r.r0 == 0
+                            && r.c0 == 0
+                            && r.r1 + 1 >= crate::addr::max_rows()
+                            && r.c1 + 1 >= crate::addr::max_cols()
+                    }) {
+                        return Err(OmError::app_defined());
+                    }
+                }
                 Ok(Variant::Empty)
             }
             ("Delete", Func) => {
+                if self.sheet_prot(b, s).contents {
+                    return Err(OmError::app_defined());
+                }
                 self.edit_ranges_mut(b, s)?.remove(i);
+
+                let me = self.call_handle;
+                if let Some(h) = me {
+                    if let Some(Object::AllowEditRange(_, _, j)) = self.arena.get_mut(h) {
+                        *j = -1;
+                    }
+                }
+                self.arena.for_each_mut(|o| {
+                    if let Object::AllowEditRange(b2, s2, j) = o {
+                        if *b2 == b && *s2 == s && (i as i32) < *j {
+                            *j -= 1;
+                        }
+                    }
+                });
                 Ok(Variant::Empty)
             }
             ("ChangePassword", Func) => {
-                let p = a.string(0)?.filter(|p| !p.is_empty()).map(Pw::Text);
+                if a.get(0).is_none() {
+                    return Err(OmError::hresult(DISP_E_PARAMNOTOPTIONAL));
+                }
+                let p = er_text(a, 0)?;
+                if self.sheet_prot(b, s).contents || p.encode_utf16().count() > CHANGE_PASSWORD_MAX
+                {
+                    return Err(OmError::app_defined());
+                }
+                let p = (!p.is_empty()).then_some(Pw::Text(p));
                 self.edit_ranges_mut(b, s)?[i].password = p;
                 Ok(Variant::Empty)
             }
-            ("Unprotect", Func) => Ok(Variant::Empty),
+
+            ("Unprotect", Func) => {
+                if !self.sheet_prot(b, s).any() {
+                    return Err(OmError::app_defined());
+                }
+                let given = er_text(a, 0)?;
+                if given.encode_utf16().count() > ADD_PASSWORD_MAX {
+                    return Err(OmError::exception(DISP_E_TYPEMISMATCH.0, None));
+                }
+                let opened = me.unlocked
+                    || me
+                        .password
+                        .as_ref()
+                        .is_none_or(|p| p.matches(Some(given.as_str())));
+                if !opened {
+                    return Err(OmError::app_defined_with(BAD_PASSWORD));
+                }
+                self.edit_ranges_mut(b, s)?[i].unlocked = true;
+                Ok(Variant::Empty)
+            }
             _ => Err(unsupported("AllowEditRange", m)),
         }
     }
@@ -358,6 +482,7 @@ impl Application<'_> {
         for s in ids {
             let (prot, ranges) = xlcalc_xlsx::read_sheet_protection(pkg, s);
             if let Some(p) = prot.filter(|p| p.contents || p.objects || p.scenarios) {
+                bk.wb.set_contents_protected(s, p.contents);
                 bk.sheet_prot.insert(
                     s,
                     SheetProt {
@@ -378,6 +503,7 @@ impl Application<'_> {
                         title: r.title,
                         rects: r.rects,
                         password: r.password.map(Pw::Hash),
+                        unlocked: false,
                     })
                     .collect();
                 bk.edit_ranges.insert(s, list);
@@ -509,7 +635,16 @@ impl Application<'_> {
                     .iter()
                     .find(|m| m.r0 <= r && r <= m.r1 && m.c0 <= c && c <= m.c1)
                     .map_or((r, c), |m| (m.r0, m.c0));
+
                 book.wb.cell_style(CellAddr::new(s, r, c)).locked
+                    && !book.edit_ranges.get(&s).is_some_and(|l| {
+                        l.iter().any(|e| {
+                            (e.password.is_none() || e.unlocked)
+                                && e.rects
+                                    .iter()
+                                    .any(|x| x.r0 <= r && r <= x.r1 && x.c0 <= c && c <= x.c1)
+                        })
+                    })
             })
     }
 
@@ -723,6 +858,17 @@ impl Application<'_> {
         class: &str,
         prop: &str,
     ) -> Result<(), OmError> {
+        if let crate::style::StyleOwner::Cond(b, s, ..) = o {
+            return self
+                .object_guard(*b, *s, ProtObject::FormatCondition, None)
+                .map_err(|_| {
+                    if class == "Font" {
+                        OmError::unable_to_set(prop, class)
+                    } else {
+                        OmError::app_defined()
+                    }
+                });
+        }
         let crate::style::StyleOwner::Range(r) = o else {
             return Ok(());
         };
@@ -732,5 +878,17 @@ impl Application<'_> {
             return Err(OmError::unable_to_set(prop, class));
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod title_tests {
+    use super::title_ok;
+
+    #[test]
+    fn titles_are_name_characters_or_spaces_up_to_255() {
+        assert!(title_ok("Range1") && title_ok("a b") && title_ok("é中"));
+        assert!(!title_ok("") && !title_ok("1a") && !title_ok("a-b"));
+        assert!(title_ok(&"x".repeat(255)) && !title_ok(&"x".repeat(256)));
     }
 }

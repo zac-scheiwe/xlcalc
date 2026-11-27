@@ -6,8 +6,9 @@ use crate::calc::{self, RecalcReport};
 use crate::coerce;
 use crate::formula::{CRef, Formula, Node, Rc, SheetRef};
 use crate::formula_print::print_node;
+use crate::numfmt::LimPrec;
 use crate::parser::ast::{BinOp, UnaryOp};
-use crate::value::{Value, XlError};
+use crate::value::Value;
 use crate::workbook::{CalcMode, EditError, Entry, Workbook};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -278,6 +279,7 @@ impl Workbook {
         Formula {
             root,
             volatile: f.formula.volatile,
+            dynamic: f.formula.dynamic.clone(),
         }
     }
 
@@ -445,6 +447,7 @@ impl Workbook {
         let r = self.with_paste_block((dst_sheet, block), |this| {
             this.paste_special_raw(src_sheet, src, dst_sheet, dst, spec)
         });
+        self.paste_headers_pass(dst_sheet, block);
         if r.is_ok() && matches!(spec.what, PasteWhat::All | PasteWhat::Formats) && !spec.transpose
         {
             let to = Rect::new(
@@ -537,7 +540,6 @@ impl Workbook {
         if r.is_ok()
             && matches!(spec.what, PasteWhat::All | PasteWhat::Formats)
             && (spec.op == PasteOp::None || spec.what == PasteWhat::Formats)
-            && !spec.skip_blanks
         {
             self.paste_merges(src_sheet, src, dst_sheet, dst, spec.transpose);
         }
@@ -808,17 +810,27 @@ impl Workbook {
                     self.set_value(to, v);
                 }
                 Act::Set(v) => {
-                    if spec.op == PasteOp::None {
-                        self.set_value_exact(to, v);
-                    } else {
-                        self.set_value(to, v);
-                    }
+                    let v = match v {
+                        Value::Number(n)
+                            if spec.op != PasteOp::None && self.precision_as_displayed() =>
+                        {
+                            Value::Number(self.precision_value(to, n, LimPrec::Cell))
+                        }
+                        v => v,
+                    };
+                    self.set_value_exact(to, v);
                 }
                 Act::Formula(formula, shown) => {
                     let text = print_node(self, &formula.root, to);
+                    let non_flipping = formula.dynamic.get() == Some(false);
                     self.set_compiled_formula(to, Arc::new(formula), text);
-                    if let (Some(fid), Some(shown)) = (self.formula_at(to), shown) {
-                        self.formula_mut(fid).value = shown;
+                    if let Some(fid) = self.formula_at(to) {
+                        if non_flipping && spec.op != PasteOp::None {
+                            self.formula_mut(fid).legacy_entry = true;
+                        }
+                        if let Some(shown) = shown {
+                            self.formula_mut(fid).value = shown;
+                        }
                     }
                 }
             }
@@ -906,6 +918,16 @@ impl Workbook {
     fn src_blank(&self, from: CellAddr) -> bool {
         self.sheet(from.sheet)
             .is_none_or(|s| s.cells.get(from.row, from.col).is_none())
+            && !self
+                .merges(from.sheet)
+                .iter()
+                .any(|m| m.contains(from.row, from.col))
+    }
+
+    fn in_merge(&self, from: CellAddr) -> bool {
+        self.merges(from.sheet)
+            .iter()
+            .any(|m| m.contains(from.row, from.col))
     }
 
     fn paste_cell(&self, from: CellAddr, to: CellAddr, spec: &PasteSpecial, src: Rect) -> Act {
@@ -923,7 +945,7 @@ impl Workbook {
             None => !values_only || matches!(value(), Value::Blank),
             Some(_) => false,
         };
-        if blank && spec.skip_blanks {
+        if blank && spec.skip_blanks && !self.in_merge(from) {
             return Act::Skip;
         }
         if spec.op == PasteOp::None {
@@ -1006,6 +1028,7 @@ impl Workbook {
                 Dest::Formula(Formula {
                     root: f.formula.root.clone(),
                     volatile: f.formula.volatile,
+                    dynamic: f.formula.dynamic.clone(),
                 })
             }
         };
@@ -1019,13 +1042,7 @@ impl Workbook {
 
         let lit_operand = matches!(operand, Operand::Lit(_));
         match (dest, operand) {
-            (Dest::Num(n), Operand::Lit(s)) => Act::Set(match spec.op {
-                PasteOp::Add => finite(n + s),
-                PasteOp::Sub => finite(n - s),
-                PasteOp::Mul => finite(n * s),
-                _ if s == 0.0 => Value::Error(XlError::DIV0),
-                _ => finite(n / s),
-            }),
+            (Dest::Num(n), Operand::Lit(s)) => Act::Set(crate::eval::ops::arith(op, n, s)),
             (dest, operand) => {
                 let (left, lv) = match dest {
                     Dest::Num(n) => (Node::Lit(Value::Number(n)), false),
@@ -1038,15 +1055,11 @@ impl Workbook {
                 let mut formula = Formula {
                     root: Node::Binary(op, Box::new(left), Box::new(right)),
                     volatile: lv || rv,
+                    dynamic: Default::default(),
                 };
                 if dest_formula && lit_operand {
                 } else if dest_formula {
-                    let text = print_node(self, &formula.root, to);
-                    if let Some((f, _)) = crate::legacy::legacy_quiet_expr(&text)
-                        .and_then(|e| self.compile_expr_normalized(&e, to).ok())
-                    {
-                        formula = f;
-                    }
+                    formula.dynamic.set(false);
                 } else {
                     formula.root = Node::Unary(UnaryOp::ArrayZero, Box::new(formula.root));
                 }
@@ -1060,13 +1073,5 @@ impl Workbook {
                 )
             }
         }
-    }
-}
-
-fn finite(x: f64) -> Value {
-    if x.is_finite() {
-        Value::Number(x)
-    } else {
-        Value::Error(XlError::NUM)
     }
 }

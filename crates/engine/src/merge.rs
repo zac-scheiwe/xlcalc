@@ -594,6 +594,7 @@ impl Workbook {
             this.select_paste(ds, dr.r0, dr.c0);
             r
         });
+        self.paste_headers_pass(ds, keep);
         if pending {
             self.restore_totals(ds, keep, Some(keep));
         }
@@ -691,13 +692,20 @@ impl Workbook {
             let mut report = RecalcReport::default();
             for (k, &to) in tiles.iter().enumerate() {
                 let r = this.with_op(Op::DeferPasteRecalc, k + 1 < tiles.len(), |this| {
-                    this.copy_range(ss, src, to)
+                    this.copy_range_tile(ss, src, to, None)
                 });
                 let r = r?;
                 report.add_sheets(&r);
                 report.changed.extend(r.changed);
                 report.evaluations += r.evaluations;
             }
+            let all = Rect::new(
+                dr.r0,
+                dr.c0,
+                dr.r0 + nr * src.rows() - 1,
+                dr.c0 + nc * src.cols() - 1,
+            );
+            this.cfv_copy(ss, src, ds, all, false, true);
             Ok(report)
         })
     }

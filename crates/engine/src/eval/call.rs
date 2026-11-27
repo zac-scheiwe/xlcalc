@@ -1,6 +1,7 @@
 use super::{EvalCtx, Operand, Reference};
 use crate::formula::Node;
 use crate::functions::{self, FnDef, FuncId, Imp, ParamClass};
+use crate::parser::ast::UnaryOp;
 use crate::value::{Array, Value, XlError};
 
 pub fn call_builtin(ctx: &mut EvalCtx, id: FuncId, args: &[Node]) -> Operand {
@@ -29,16 +30,6 @@ pub fn call_builtin(ctx: &mut EvalCtx, id: FuncId, args: &[Node]) -> Operand {
     out
 }
 
-fn array_slot(name: &str, i: usize) -> bool {
-    match name {
-        "VSTACK" | "HSTACK" => true,
-        "MAP" => true,
-        "TAKE" | "DROP" | "EXPAND" | "CHOOSEROWS" | "CHOOSECOLS" | "TOCOL" | "TOROW"
-        | "WRAPROWS" | "WRAPCOLS" | "SORT" | "SORTBY" | "UNIQUE" | "FILTER" => i == 0,
-        _ => false,
-    }
-}
-
 fn excel_value_class(name: &str, i: usize) -> bool {
     crate::legacy_classes::class_of(name, i) == Some(b'V')
 }
@@ -65,6 +56,9 @@ fn eval_arg(ctx: &mut EvalCtx, name: &str, i: usize, a: &Node) -> Operand {
                     rows = rows.max(br);
                     cols = cols.max(bc);
                 }
+            }
+            if ctx.shape_too_big(rows, cols) {
+                return Operand::err(XlError::NUM);
             }
             let mut data = Vec::with_capacity((rows * cols) as usize);
             for r in 0..rows {
@@ -161,17 +155,30 @@ const PLAIN_EMPTY: &[&str] = &[
     "TOROW",
 ];
 
-fn child_reduce(def: &FnDef, i: usize, inherited: bool) -> bool {
-    if array_slot(def.name, i)
-        || matches!(
-            def.name,
-            "TRANSPOSE" | "INDEX" | "XLOOKUP" | "LET" | "IF" | "IFS" | "CHOOSE"
-        )
-    {
-        return inherited;
+fn consumes_span(def: &FnDef, i: usize) -> bool {
+    let f = super::ptgclass::ftab_of_name(def.name);
+    super::ptgclass::arg_mask(f, i) & 0x8 != 0 && super::ptgclass::takes_span(f)
+}
+
+pub(crate) fn hands_on(node: &Node) -> bool {
+    match node {
+        Node::Paren(x) | Node::Unary(UnaryOp::Plus, x) => hands_on(x),
+        Node::Ws { node, .. } => hands_on(node),
+        Node::Func { id, .. } => matches!(
+            functions::def(*id).name,
+            "IF" | "CHOOSE" | "IFERROR" | "IFNA"
+        ),
+        Node::Let { .. } | Node::Local { .. } => true,
+        _ => false,
     }
-    def.param_class(i) == crate::functions::ParamClass::Raw
-        && !matches!(def.name, "N" | "T" | "MMULT")
+}
+
+pub(crate) fn lifted_branch(ctx: &mut EvalCtx, o: Operand) -> Value {
+    if span_op(&o) {
+        Value::Error(XlError::VALUE)
+    } else {
+        ctx.deref(o)
+    }
 }
 
 fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> Operand {
@@ -179,9 +186,8 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
         Imp::Lazy(f) => {
             let out = f(ctx, args);
 
-            if matches!(def.name, "IF" | "IFS" | "CHOOSE" | "SWITCH")
-                && span_multi(&out)
-                && !(ctx.dyn_reduce && matches!(def.name, "IF" | "CHOOSE"))
+            if span_op(&out)
+                && !(ctx.consumed_by_ref && !matches!(def.name, "IFS" | "SWITCH"))
                 && ctx.at_call != Some(ctx.fn_depth)
             {
                 return Operand::err(XlError::VALUE);
@@ -192,11 +198,10 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             let mut ops = Vec::with_capacity(args.len());
             let mut carried = false;
             for (i, a) in args.iter().enumerate() {
-                ctx.name_first = def.param_letter(i) != b'Q' && matches!(a, Node::Name { .. });
                 ctx.cse_lifted = false;
-                let saved_reduce = std::mem::replace(&mut ctx.dyn_reduce, false);
+                let saved_ref = std::mem::replace(&mut ctx.consumed_by_ref, consumes_span(def, i));
                 let v = eval_arg(ctx, def.name, i, a);
-                ctx.dyn_reduce = saved_reduce;
+                ctx.consumed_by_ref = saved_ref;
                 carried |= std::mem::take(&mut ctx.cse_lifted);
                 ops.push(v);
             }
@@ -204,9 +209,13 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
                 return Operand::err(XlError::CALC);
             }
             note_circ_args(ctx, &ops);
+            if let Some(e) = span_operands(def, &mut ops) {
+                return Operand::err(e);
+            }
 
             ctx.cse_lifted = carried && ctx.fn_depth > 1;
-            call_lifted(ctx, def, ops, &mut |ctx, ops| {
+            let direct = !takes_lift_branch(def, &ops);
+            let out = call_lifted(ctx, def, ops, &mut |ctx, ops| {
                 if long_text(ctx, def.name, ops) {
                     return Operand::err(XlError::VALUE);
                 }
@@ -218,7 +227,8 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
                     })
                     .collect();
                 Operand::Val(f(ctx, &vals))
-            })
+            });
+            reduce_at_return(ctx, direct, out)
         }
         Imp::Args(f) => {
             if let Some(r) = ghost_ref_call(ctx, def.name, args) {
@@ -228,41 +238,21 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             let mut carried = Vec::new();
             for (i, a) in args.iter().enumerate() {
                 let named = ctx.is_name_node(a);
-
-                let reduce = ctx.legacy_form || (def.name == "INDEX" && args.len() > 2);
-                ctx.name_first = named
-                    && match (def.name, i) {
-                        ("INDEX", 0) => reduce || ctx.dyn_reduce,
-
-                        ("OFFSET", 0) => {
-                            ctx.legacy_form
-                                || ctx.fn_depth > 1
-                                || (ctx.node_cls == super::ptgclass::Class::Arr)
-                        }
-
-                        _ if array_slot(def.name, i) && !ctx.legacy_form => ctx.dyn_reduce,
-                        ("TRANSPOSE", 0) if !ctx.legacy_form => false,
-
-                        ("SORTBY", _) | ("XLOOKUP", 2) if !ctx.legacy_form => ctx.dyn_reduce,
-                        _ => {
-                            ctx.legacy_form
-                                || (ctx.node_cls == super::ptgclass::Class::Arr)
-                                || def.param_letter(i) != b'Q'
-                        }
-                    };
-                ctx.name_keep = named && !ctx.name_first && (def.name, i) == ("XLOOKUP", 2);
                 ctx.cse_lifted = false;
-                let saved_reduce = ctx.dyn_reduce;
-                ctx.dyn_reduce = child_reduce(def, i, saved_reduce);
+                let saved_ref = std::mem::replace(&mut ctx.consumed_by_ref, consumes_span(def, i));
                 let mut v = eval_arg(ctx, def.name, i, a);
-                ctx.dyn_reduce = saved_reduce;
+                ctx.consumed_by_ref = saved_ref;
+                if let Some(g) = ghost_arg(ctx, def, i, a) {
+                    v = g;
+                }
 
                 if std::mem::take(&mut ctx.cse_lifted) && !excel_array_class(def.name, i) {
                     carried.push(i);
                 }
 
                 if named
-                    && ctx.legacy_form
+                    && !ctx.array_entry()
+                    && !ctx.in_lambda
                     && matches!(def.name, "N" | "AREAS" | "ROW" | "COLUMN")
                     && matches!(&v, Operand::Val(Value::Array(a)) if a.data.len() > 1)
                 {
@@ -273,14 +263,87 @@ fn call_builtin_inner(ctx: &mut EvalCtx, def: &'static FnDef, args: &[Node]) -> 
             if ctx.interrupted() {
                 return Operand::err(XlError::CALC);
             }
+            if let Some(r) = lifted_arg(ctx, def, args, &ops) {
+                return r;
+            }
             if let Some(r) = cse_lift(ctx, def.name, &ops, &carried, &mut |ctx, ops| {
                 args_tail(ctx, def, f, ops)
             }) {
                 return r;
             }
-            args_tail(ctx, def, f, ops)
+            let direct = !takes_lift_branch(def, &ops);
+            let out = args_tail(ctx, def, f, ops);
+            reduce_at_return(ctx, direct, out)
         }
     }
+}
+
+fn takes_lift_branch(def: &FnDef, ops: &[Operand]) -> bool {
+    lift_shape(def, ops).is_some()
+}
+
+fn lift_shape(def: &FnDef, ops: &[Operand]) -> Option<(u32, u32)> {
+    let f = super::ptgclass::ftab_of_name(def.name);
+    ops.iter()
+        .enumerate()
+        .filter_map(|(i, o)| {
+            let mask = super::ptgclass::arg_mask(f, i);
+            match o {
+                Operand::Val(Value::Array(a)) if mask & 0x40 == 0 => Some((a.rows, a.cols)),
+                Operand::Ref(Reference::Area(a)) if !a.rect.is_cell() && mask & 0x48 == 0 => {
+                    Some((a.rect.rows(), a.rect.cols()))
+                }
+                _ => None,
+            }
+        })
+        .reduce(|a, b| (a.0.max(b.0), a.1.max(b.1)))
+}
+
+fn reduce_at_return(ctx: &mut EvalCtx, direct: bool, out: Operand) -> Operand {
+    match out {
+        Operand::Val(Value::Array(a))
+            if direct
+                && ctx.node_cls == super::ptgclass::Class::Val
+                && !a.data.is_empty()
+                && ctx.host_formula().is_some() =>
+        {
+            Operand::Val(a.data[0].clone())
+        }
+        out => out,
+    }
+}
+
+fn lifted_arg(
+    ctx: &mut EvalCtx,
+    def: &'static FnDef,
+    args: &[Node],
+    ops: &[Operand],
+) -> Option<Operand> {
+    if def.name != "N" || ctx.array_entry() || ctx.in_lambda {
+        return None;
+    }
+    let Some(Node::Func { id, .. }) = args.first() else {
+        return None;
+    };
+    let multi =
+        super::ptgclass::ftab_of(*id).is_some_and(|f| f.ifunc != 0x261 && f.flags & 0x60648 != 0);
+    if !multi {
+        return None;
+    }
+    let one = |v: &Value| match v {
+        Value::Number(n) => Value::Number(*n),
+        Value::Bool(b) => Value::Number(f64::from(u8::from(*b))),
+        Value::Error(e) => Value::Error(*e),
+        Value::Lambda(_) => Value::Error(XlError::VALUE),
+        _ => Value::Number(0.0),
+    };
+    let out = match ops.first()? {
+        Operand::Val(Value::Array(a)) => {
+            Array::new(a.rows, a.cols, a.data.iter().map(one).collect()).into_value()
+        }
+        _ => return None,
+    };
+    Some(Operand::Val(out))
 }
 
 fn cse_lift(
@@ -319,6 +382,9 @@ fn cse_lift(
             rows = rows.max(a.rows);
             cols = cols.max(a.cols);
         }
+    }
+    if ctx.shape_too_big(rows, cols) {
+        return Some(Operand::err(XlError::NUM));
     }
     let value_slot = |i: usize| excel_value_class(name, i);
     let mut data = Vec::with_capacity(rows as usize * cols as usize);
@@ -459,17 +525,17 @@ fn args_tail(
             });
         }
     }
+    if let Some(e) = span_operands(def, &mut ops) {
+        return Operand::err(e);
+    }
     if let Some(r) = grid_args(ctx, def.name, &mut ops) {
         return r;
     }
-    if let Some(e) = mode_union_scan(ctx, def.name, &ops) {
+    if let Some(e) = array_slot_scan(ctx, def.name, &ops) {
         return Operand::err(e);
     }
     if let Some(e) = union_reject(def.name, &ops) {
         return Operand::err(e);
-    }
-    if let Some(r) = span_reject(def.name, &ops) {
-        return r;
     }
     if let Some(e) = closed_reject(ctx, def.name, &ops) {
         return Operand::err(e);
@@ -480,23 +546,15 @@ fn args_tail(
     if lam_blank_reject(def.name, &ops) {
         return Operand::err(XlError::NA);
     }
-    if blank_value_reject(def.name, &ops) {
-        if def.name == "INDEX" {
-            let (mut r, mut c) = (0, 0);
-            for o in &ops[1..] {
-                if let Operand::Val(Value::Array(a)) = o {
-                    r = r.max(a.rows);
-                    c = c.max(a.cols);
-                }
+    if blank_value_reject(def, &ops) {
+        return match lift_shape(def, &ops) {
+            Some((r, c)) => {
+                Operand::Val(Array::filled(r, c, Value::Error(XlError::VALUE)).into_value())
             }
-            if r > 0 {
-                return Operand::Val(
-                    Array::filled(r, c, Value::Error(XlError::VALUE)).into_value(),
-                );
-            }
-        }
-        return Operand::err(XlError::VALUE);
+            None => Operand::err(XlError::VALUE),
+        };
     }
+    coerce_nil(def, &mut ops);
     let plain = PLAIN_EMPTY.contains(&def.name) && ops.iter().any(|o| matches!(o, Operand::Ref(_)));
     let out = call_lifted(ctx, def, ops, &mut |ctx, ops| {
         if let Some(e) = lead_error(ctx, def, ops) {
@@ -514,22 +572,45 @@ fn args_tail(
 }
 
 fn long_text(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> bool {
-    let idx: &[usize] = match name {
-        "CODE" | "UNICODE" | "ASC" | "DBCS" | "VALUE" | "NUMBERVALUE" | "REPT" | "SEARCH"
-        | "SEARCHB" | "N" | "T" | "MATCH" | "VLOOKUP" | "HLOOKUP" | "LOOKUP" => &[0],
-        _ => return false,
+    let long = |t: &str| crate::text::utf16_len(t) > 255;
+    let body_args = match name {
+        "VALUE" | "SEARCH" | "SEARCHB" | "ASC" | "DBCS" | "REPT" => 1,
+        "TEXT" | "DAYS" => 2,
+        _ => 0,
     };
-    idx.iter().any(|&i| match ops.get(i) {
-        Some(Operand::Val(Value::Text(t))) => crate::text::utf16_len(t) > 255,
-        Some(Operand::Ref(r)) => match r.single() {
-            Some(a) if a.rect.is_cell() => matches!(
-                ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0),
-                Value::Text(t) if crate::text::utf16_len(&t) > 255
-            ),
+    let text_ok = super::ptgclass::takes_long_text(super::ptgclass::ftab_of_name(name));
+    for (i, op) in ops.iter().enumerate() {
+        if matches!(op, Operand::Val(Value::Error(_))) {
+            return false;
+        }
+        if !matches!(op, Operand::Val(Value::Text(_)) | Operand::Ref(_)) {
+            continue;
+        }
+        let Some(mask) = crate::legacy_classes::mask_n(name, i, ops.len()) else {
+            continue;
+        };
+        let body_checked = i < body_args;
+        let rejects = body_checked || (mask & 0x40 == 0 && !(mask & 2 != 0 && text_ok));
+        if !rejects {
+            continue;
+        }
+        let hit = match op {
+            Operand::Val(Value::Text(t)) => long(t),
+            Operand::Ref(_) if mask & 8 != 0 && !body_checked => false,
+            Operand::Ref(r) => match r.single() {
+                Some(a) if a.rect.is_cell() => matches!(
+                    ctx.cell_value(a.sheet, a.rect.r0, a.rect.c0),
+                    Value::Text(t) if long(&t)
+                ),
+                _ => false,
+            },
             _ => false,
-        },
-        _ => false,
-    })
+        };
+        if hit {
+            return true;
+        }
+    }
+    false
 }
 
 fn lambda_array_arg(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<Operand> {
@@ -612,6 +693,22 @@ fn ghost_ref_call(ctx: &mut EvalCtx, name: &str, args: &[Node]) -> Option<Operan
     Some(Operand::Val(v))
 }
 
+fn ghost_arg(ctx: &mut EvalCtx, def: &FnDef, i: usize, a: &Node) -> Option<Operand> {
+    let Node::Ref(crate::formula::SheetRef::Missing(name), cref) = a.unwrap_ws() else {
+        return None;
+    };
+    if name.starts_with('\u{3}')
+        || super::ptgclass::arg_mask(super::ptgclass::ftab_of_name(def.name), i) & 0x8 == 0
+    {
+        return None;
+    }
+    let rect = super::refs::resolve_rect(cref, ctx.host, ctx.wrap)?;
+    Some(Operand::Ref(Reference::Area(super::Area {
+        sheet: super::refs::GHOST_SHEET,
+        rect,
+    })))
+}
+
 fn ghost_ref_node(n: &Node) -> bool {
     match n.unwrap_ws() {
         Node::Ref(crate::formula::SheetRef::Missing(_), _) => true,
@@ -629,48 +726,32 @@ fn ghost_ref_node(n: &Node) -> bool {
     }
 }
 
-fn span_multi(op: &Operand) -> bool {
+fn span_op(op: &Operand) -> bool {
     matches!(op, Operand::Ref(r) if r.is_span())
 }
 
-fn span_reject(name: &str, ops: &[Operand]) -> Option<Operand> {
-    if !ops.iter().any(span_multi) {
+fn span_operands(def: &FnDef, ops: &mut [Operand]) -> Option<XlError> {
+    if !ops.iter().any(span_op) {
         return None;
     }
-    let at = |i: usize| ops.get(i).is_some_and(span_multi);
-    let e = match name {
-        "ISREF" => return Some(Operand::Val(Value::Bool(false))),
-        "CELL" if at(0) => XlError::REF,
-        "ROW" | "COLUMN" | "ROWS" | "COLUMNS" | "AREAS" | "CELL" | "ISFORMULA" | "FORMULATEXT"
-        | "PHONETIC" | "N" | "T" | "IMSUM" | "IMPRODUCT" | "LINEST" | "LOGEST" | "TREND"
-        | "GROWTH" | "MAP" => XlError::VALUE,
-
-        "MATCH" | "XMATCH" | "VLOOKUP" | "HLOOKUP" | "LOOKUP" | "XLOOKUP" => {
-            let arrays: &[usize] = match name {
-                "LOOKUP" | "XLOOKUP" => &[1, 2],
-                "MATCH" | "VLOOKUP" | "HLOOKUP" => &[1, 2],
-                _ => &[1],
-            };
-            if arrays.iter().any(|&i| at(i)) {
-                XlError::VALUE
-            } else if name == "XLOOKUP" && at(3) && !(0..ops.len()).any(|i| i != 3 && at(i)) {
-                return None;
-            } else {
-                XlError::REF
+    let f = super::ptgclass::ftab_of_name(def.name);
+    let mut first = None;
+    for (i, op) in ops.iter_mut().enumerate() {
+        let mask = super::ptgclass::arg_mask(f, i);
+        if span_op(op) {
+            if mask & 0x8 == 0 {
+                *op = Operand::err(XlError::REF);
+            } else if !super::ptgclass::takes_span(f) {
+                *op = Operand::err(XlError::VALUE);
             }
         }
-        "SUMX2MY2" | "SUMX2PY2" | "SUMXMY2" | "MDETERM" | "MINVERSE" | "MMULT" => XlError::REF,
-        "MODE" | "MODE.SNGL" | "MODE.MULT" => XlError::REF,
-        "BYROW" | "BYCOL" | "REDUCE" | "SCAN" => {
-            if at(ops.len() - 1) {
-                XlError::REF
-            } else {
-                XlError::VALUE
+        if mask & 0x10 == 0 {
+            if let Operand::Val(Value::Error(e)) = op {
+                first.get_or_insert(*e);
             }
         }
-        _ => return None,
-    };
-    Some(Operand::err(e))
+    }
+    first.filter(|_| !takes_lift_branch(def, ops))
 }
 
 fn grid_top_left(ctx: &mut EvalCtx, g: &super::RefGrid) -> Value {
@@ -774,23 +855,68 @@ fn grid_args(ctx: &mut EvalCtx, name: &str, ops: &mut [Operand]) -> Option<Opera
     Some(Operand::err(e))
 }
 
+fn index_keeps_refs(ctx: &EvalCtx) -> bool {
+    ctx.node_cls == super::ptgclass::Class::Ref && !ctx.dynamic_host()
+}
+
 fn is_union(op: &Operand) -> bool {
     matches!(op, Operand::Ref(r @ Reference::Multi(_)) if r.single().is_none())
 }
 
-fn mode_union_scan(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<XlError> {
-    if !matches!(name, "MODE" | "MODE.SNGL" | "MODE.MULT") || !ops.iter().any(is_union) {
+fn array_slot_scan(ctx: &mut EvalCtx, name: &str, ops: &[Operand]) -> Option<XlError> {
+    let ftab = super::ptgclass::ftab_of_name(name)?;
+    if !ftab.masks.iter().any(|m| m & 0x40 != 0) {
         return None;
     }
-    for op in ops {
+
+    let scalar_slot_arg = |i: usize, op: &Operand| {
+        let m = super::ptgclass::arg_mask(Some(ftab), i);
+
+        (m & 0x40 == 0 || m & 0x7 != 0)
+            && match op {
+                Operand::Val(Value::Array(_) | Value::Text(_)) => true,
+                Operand::Ref(r) => !is_union(op) && r.single().is_none_or(|a| !a.rect.is_cell()),
+                _ => false,
+            }
+    };
+    if ops.iter().enumerate().any(|(i, op)| scalar_slot_arg(i, op)) {
+        return None;
+    }
+    for (i, op) in ops.iter().enumerate() {
+        let mask = super::ptgclass::arg_mask(Some(ftab), i);
+
+        if mask & 0x10 != 0 {
+            continue;
+        }
+        if let Operand::Val(Value::Error(e)) = op {
+            return Some(*e);
+        }
+
+        if matches!(op, Operand::Missing) && mask & 0x197 == 0
+            || matches!(op, Operand::Val(Value::Blank)) && mask & 0x117 == 0
+        {
+            return Some(XlError::VALUE);
+        }
+
+        if mask & 0x8 != 0 {
+            continue;
+        }
         match op {
-            Operand::Val(Value::Error(e)) => return Some(*e),
             _ if is_union(op) => return Some(XlError::VALUE),
             Operand::Ref(r) => {
                 if let Some(area) = r.single().filter(|a| a.rect.is_cell()) {
                     let area = *area;
-                    if let Value::Error(e) = ctx.area_array(&area) {
-                        return Some(e);
+                    match ctx.area_array(&area) {
+                        Value::Error(e) => return Some(e),
+                        Value::Blank if mask & 0x117 == 0 => return Some(XlError::VALUE),
+
+                        Value::Text(t)
+                            if mask & 0x3 == 0x1
+                                && ctx.to_number(&Value::Text(t.clone())).is_err() =>
+                        {
+                            return Some(XlError::VALUE);
+                        }
+                        _ => {}
                     }
                 }
             }
@@ -830,23 +956,33 @@ fn union_reject(name: &str, ops: &[Operand]) -> Option<XlError> {
         } else {
             XlError::VALUE
         }),
-        "MODE" | "MODE.SNGL" | "MODE.MULT" => Some(XlError::VALUE),
         _ => None,
     }
 }
 
-fn blank_value_reject(name: &str, ops: &[Operand]) -> bool {
-    let at: &[usize] = match name {
-        "TOROW" | "TOCOL" | "TAKE" | "DROP" | "VSTACK" | "HSTACK" | "CHOOSEROWS" | "CHOOSECOLS"
-        | "WRAPROWS" | "WRAPCOLS" | "ROWS" | "COLUMNS" | "ARRAYTOTEXT" | "TEXTSPLIT" | "MMULT"
-        | "INDEX" | "FILTER" | "MAP" | "BYROW" | "BYCOL" => &[0],
-        "FREQUENCY" => &[0, 1],
+fn coerce_nil(def: &FnDef, ops: &mut [Operand]) {
+    let f = super::ptgclass::ftab_of_name(def.name);
+    for (i, o) in ops.iter_mut().enumerate() {
+        let mask = super::ptgclass::arg_mask(f, i);
+        if !matches!(o, Operand::Val(Value::Blank)) || mask & 0x100 != 0 {
+            continue;
+        }
+        if mask & 1 != 0 {
+            *o = Operand::Val(Value::Number(0.0));
+        } else if mask & 2 != 0 {
+            *o = Operand::Val(Value::Text("".into()));
+        } else if mask & 4 != 0 {
+            *o = Operand::Val(Value::Bool(false));
+        }
+    }
+}
 
-        "LOOKUP" => &[1],
-        _ => return false,
-    };
-    at.iter()
-        .any(|&i| matches!(ops.get(i), Some(Operand::Val(Value::Blank))))
+fn blank_value_reject(def: &FnDef, ops: &[Operand]) -> bool {
+    let f = super::ptgclass::ftab_of_name(def.name);
+    ops.iter().enumerate().any(|(i, o)| {
+        matches!(o, Operand::Val(Value::Blank))
+            && (super::ptgclass::arg_mask(f, i) & 0x117 == 0 || (def.name == "TEXTSPLIT" && i == 0))
+    })
 }
 
 fn lam_blank_reject(name: &str, ops: &[Operand]) -> bool {
@@ -968,7 +1104,7 @@ pub fn call_lifted(
         return Operand::Val(Array::filled(1, 1, Value::Error(XlError::VALUE)).into_value());
     }
 
-    if def.name == "INDEX" && ctx.name_ref_root == Some(ctx.fn_depth) && cse_block(ctx).is_none() {
+    if def.name == "INDEX" && index_keeps_refs(ctx) && cse_block(ctx).is_none() {
         for &i in &lifted {
             ops[i] = match &ops[i] {
                 Operand::Val(Value::Array(a)) => Operand::Val(a.broadcast_get(0, 0)),
@@ -983,6 +1119,9 @@ pub fn call_lifted(
             .iter()
             .any(|&i| matches!(&ops[i], Operand::Val(v) if super::contains_circ(v)));
     ctx.circ_lifted |= circ;
+    if ctx.shape_too_big(rows, cols) {
+        return Operand::err(XlError::NUM);
+    }
     let mut data = Vec::with_capacity(rows as usize * cols as usize);
     let mut picked: Vec<Result<super::Area, XlError>> = Vec::new();
     let mut picked_all = true;
@@ -1016,8 +1155,7 @@ pub fn call_lifted(
             }
             let out = body(ctx, &elem);
 
-            if (def.name == "INDEX"
-                && (cse_block(ctx).is_some() || ctx.name_ref_root == Some(ctx.fn_depth)))
+            if (def.name == "INDEX" && (cse_block(ctx).is_some() || index_keeps_refs(ctx)))
                 || (def.name == "OFFSET"
                     && matches!(ops.first(), Some(Operand::Ref(Reference::Grid(_)))))
             {
@@ -1062,9 +1200,7 @@ pub fn call_lifted(
 }
 
 fn cse_block(ctx: &EvalCtx) -> Option<(u32, u32)> {
-    ctx.wb
-        .formula_at(ctx.host)
-        .and_then(|f| ctx.wb.formula(f).array)
+    ctx.host_formula().and_then(|f| ctx.wb.formula(f).array)
 }
 
 fn lead_error(ctx: &EvalCtx, def: &FnDef, ops: &[Operand]) -> Option<XlError> {

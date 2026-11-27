@@ -305,6 +305,8 @@ pub fn xstring(s: &str) -> String {
             && b[i + 6] == '_';
         if looks_escaped {
             o.push_str("_x005F_");
+        } else if let Some(half) = xlcalc::wide::lone_unit(c) {
+            o.push_str(&format!("_x{half:04X}_"));
         } else if (c < ' ' && !matches!(c, '\t' | '\n' | '\r'))
             || c == '\u{fffe}'
             || c == '\u{ffff}'

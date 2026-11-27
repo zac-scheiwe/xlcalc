@@ -247,32 +247,17 @@ fn unable_to_get(property: &str, class: &str) -> OmError {
     ))
 }
 
-fn core_property(core: &str, tag: &str) -> String {
-    let open = format!("<{tag}>");
-    let close = format!("</{tag}>");
-    let Some(i) = core.find(&open) else {
-        return String::new();
-    };
-    let rest = &core[i + open.len()..];
-    let text = rest.find(&close).map_or("", |j| &rest[..j]);
-    text.replace("&lt;", "<")
-        .replace("&gt;", ">")
-        .replace("&quot;", "\"")
-        .replace("&apos;", "'")
-        .replace("&amp;", "&")
-}
-
 pub(crate) fn doc_props(package: &xlcalc_xlsx::Package) -> DocProps {
     let core = package
         .part("docProps/core.xml")
         .map(|b| String::from_utf8_lossy(b).into_owned())
         .unwrap_or_default();
     DocProps {
-        title: core_property(&core, "dc:title"),
-        comments: core_property(&core, "dc:description"),
-        subject: core_property(&core, "dc:subject"),
-        author: core_property(&core, "dc:creator"),
-        keywords: core_property(&core, "cp:keywords"),
+        title: xlcalc_xlsx::core_property(&core, "dc:title"),
+        comments: xlcalc_xlsx::core_property(&core, "dc:description"),
+        subject: xlcalc_xlsx::core_property(&core, "dc:subject"),
+        author: xlcalc_xlsx::core_property(&core, "dc:creator"),
+        keywords: xlcalc_xlsx::core_property(&core, "cp:keywords"),
         password: false,
         custom: Vec::new(),
     }

@@ -1,6 +1,5 @@
 use super::atp::{self, Arg};
-use super::days::{self, Basis, Coupons};
-use crate::datetime::DateSystem;
+use super::days::{self, Basis, CoupOp, Coupons};
 use crate::eval::EvalCtx;
 use crate::functions::args::{boolean, R};
 use crate::value::{Value, XlError};
@@ -11,6 +10,14 @@ fn finite(x: f64) -> R<f64> {
         Ok(x)
     } else {
         Err(XlError::NUM)
+    }
+}
+
+fn mp_store(x: f64) -> f64 {
+    if x.is_finite() {
+        x
+    } else {
+        0.0
     }
 }
 
@@ -64,12 +71,7 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         };
 
         let cnt = |x: i64, y: i64, period: bool, count: bool| -> f64 {
-            (match b.basis {
-                0 => days::days360_us_exact(sys, x, y, period),
-                2 if !count => days::days360_us_exact(sys, x, y, period),
-                4 => days::days360_eu(sys, x, y),
-                _ => y - x,
-            }) as f64
+            days::count_days(sys, x, y, b.basis, period, b.basis != 2 || count) as f64
         };
         let pcd = if settle > first && calc_method {
             let (mut pcd, mut cur) = (first, first);
@@ -107,112 +109,147 @@ pub fn accrint(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if out_of_range.get() {
             return Err(XlError::NUM);
         }
-        finite(x87::mul(x87::mul(par, x87::div(rate, freq as f64)), acc))
+
+        Ok(x87::mul(
+            mp_store(x87::mul(par, x87::div(rate, freq as f64))),
+            acc,
+        ))
     })())
 }
 
 pub fn accrintm(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
-        let issue = atp::date(ctx, a, 0)?;
-        let settle = atp::date(ctx, a, 1)?;
+        let issue = atp::kernel_date(ctx, a, 0)?;
+        let settle = atp::kernel_date(ctx, a, 1)?;
         let rate = atp::req(ctx, a, 2)?;
         let par = atp::opt(ctx, a, 3, 1000.0)?;
         let b = basis_of(ctx, a, 4)?;
-        if rate <= 0.0 || par <= 0.0 || issue > settle {
+        if issue > settle || par <= 0.0 || rate <= 0.0 {
             return Err(XlError::NUM);
         }
-        let yf = days::yearfrac_core(b.sys, issue, settle, b.basis)?;
+        let dsm = days::diff_dates(b.sys, issue, settle, b.basis, 0).ok_or(XlError::NUM)?;
 
-        finite(x87::mul(x87::mul(par, rate), yf))
+        let mp = Mp::default();
+        let yf = mp.div(dsm, b.year(issue, settle));
+        Ok(mp.mul(mp.mul(par, rate), yf))
     })())
+}
+
+#[derive(Default)]
+struct Mp(std::cell::RefCell<x87::MathFlag>);
+
+impl Mp {
+    fn add(&self, a: f64, b: f64) -> f64 {
+        self.0.borrow_mut().add(a, b)
+    }
+    fn sub(&self, a: f64, b: f64) -> f64 {
+        self.0.borrow_mut().sub(a, b)
+    }
+    fn mul(&self, a: f64, b: f64) -> f64 {
+        self.0.borrow_mut().mul(a, b)
+    }
+    fn div(&self, a: f64, b: f64) -> f64 {
+        self.0.borrow_mut().div(a, b)
+    }
+    fn sqrt(&self, a: f64) -> f64 {
+        self.0.borrow_mut().sqrt(a)
+    }
+    fn clear(&self) {
+        self.0.borrow_mut().0 = 0;
+    }
+
+    fn code(&self) -> u8 {
+        self.0.borrow().0
+    }
+}
+
+fn negate_nonzero(x: f64) -> f64 {
+    if x.to_bits() >> 48 != 0 {
+        -x
+    } else {
+        x
+    }
+}
+
+fn sign_bit(x: f64) -> bool {
+    (x.to_bits() as i64) < 0
 }
 
 fn disc_args(ctx: &EvalCtx, a: &[Arg]) -> R<(i64, i64, f64, f64, Basis)> {
     let b = basis_of(ctx, a, 4)?;
-    let settle = atp::date(ctx, a, 0)?;
-    let mat = atp::date(ctx, a, 1)?;
+    let settle = atp::kernel_date(ctx, a, 0)?;
+    let mat = atp::kernel_date(ctx, a, 1)?;
     let x = atp::req(ctx, a, 2)?;
     let y = atp::req(ctx, a, 3)?;
-    if settle >= mat {
+    if settle >= mat || x <= 0.0 || y <= 0.0 {
         return Err(XlError::NUM);
     }
     Ok((settle, mat, x, y, b))
 }
 
-pub fn disc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
-    atp::out((|| {
-        let (s, m, pr, redemption, b) = disc_args(ctx, a)?;
-        if pr <= 0.0 || redemption <= 0.0 {
-            return Err(XlError::NUM);
-        }
+fn securities(
+    ctx: &EvalCtx,
+    a: &[Arg],
+    body: impl FnOnce(&Mp, f64, f64, f64, f64) -> R<f64>,
+) -> R<f64> {
+    let (s, m, x, y, b) = disc_args(ctx, a)?;
 
-        let q = x87::sub(1.0, x87::div(pr, redemption));
-        finite(x87::mul(q, x87::div(b.year(s, m), b.days_dsm(s, m))))
-    })())
+    let d = days::diff_dates(b.sys, s, m, b.basis, 2).ok_or(XlError::NUM)?;
+    let by = b.year(s, m);
+    let mp = Mp::default();
+    let r = body(&mp, x, y, d, by)?;
+    if mp.code() != 0 {
+        return Err(XlError::NUM);
+    }
+    Ok(r)
+}
+
+pub fn disc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
+    atp::out(securities(ctx, a, |mp, pr, redemption, d, by| {
+        let q = mp.add(negate_nonzero(mp.div(pr, redemption)), 1.0);
+        Ok(mp.mul(mp.div(by, d), q))
+    }))
+}
+
+fn rate_over_x(mp: &Mp, x: f64, redemption: f64, d: f64, by: f64) -> f64 {
+    let t = mp.div(mp.sub(redemption, x), x);
+    mp.mul(mp.div(by, d), t)
 }
 
 pub fn intrate(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
-    atp::out((|| {
-        let (s, m, inv, redemption, b) = disc_args(ctx, a)?;
-        if inv <= 0.0 || redemption <= 0.0 {
-            return Err(XlError::NUM);
-        }
-
-        let t = x87::div(x87::sub(redemption, inv), inv);
-        finite(x87::mul(x87::div(b.year(s, m), b.days_dsm(s, m)), t))
-    })())
-}
-
-pub fn received(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
-    atp::out((|| {
-        let (s, m, inv, discount, b) = disc_args(ctx, a)?;
-        if inv <= 0.0 || discount <= 0.0 {
-            return Err(XlError::NUM);
-        }
-
-        let d = x87::sub(
-            1.0,
-            x87::div(x87::mul(discount, b.days_dsm(s, m)), b.year(s, m)),
-        );
-        if d <= 0.0 {
-            return Err(XlError::NUM);
-        }
-        finite(x87::div(inv, d))
-    })())
-}
-
-pub fn pricedisc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
-    atp::out((|| {
-        let (s, m, discount, redemption, b) = disc_args(ctx, a)?;
-        if discount <= 0.0 || redemption <= 0.0 {
-            return Err(XlError::NUM);
-        }
-
-        let t = x87::div(
-            x87::mul(x87::mul(discount, redemption), b.days_dsm(s, m)),
-            b.year(s, m),
-        );
-        finite(x87::sub(redemption, t))
-    })())
+    atp::out(securities(ctx, a, |mp, inv, redemption, d, by| {
+        Ok(rate_over_x(mp, inv, redemption, d, by))
+    }))
 }
 
 pub fn yielddisc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
-    atp::out((|| {
-        let (s, m, pr, redemption, b) = disc_args(ctx, a)?;
-        if pr <= 0.0 || redemption <= 0.0 {
+    atp::out(securities(ctx, a, |mp, pr, redemption, d, by| {
+        Ok(rate_over_x(mp, pr, redemption, d, by))
+    }))
+}
+
+pub fn pricedisc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
+    atp::out(securities(ctx, a, |mp, discount, redemption, d, by| {
+        let t = mp.div(mp.mul(mp.mul(discount, redemption), d), by);
+        Ok(mp.add(negate_nonzero(t), redemption))
+    }))
+}
+
+pub fn received(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
+    atp::out(securities(ctx, a, |mp, inv, discount, d, by| {
+        let q = mp.div(mp.mul(discount, d), by);
+        if (q.to_bits() as i64) >= 1.0f64.to_bits() as i64 {
             return Err(XlError::NUM);
         }
-
-        let t = x87::div(x87::sub(redemption, pr), pr);
-        finite(x87::mul(x87::div(b.year(s, m), b.days_dsm(s, m)), t))
-    })())
+        Ok(mp.div(inv, mp.sub(1.0, q)))
+    }))
 }
 
 fn mat_args(ctx: &EvalCtx, a: &[Arg]) -> R<(i64, i64, i64, f64, f64, Basis)> {
     let b = basis_of(ctx, a, 5)?;
-    let settle = atp::date(ctx, a, 0)?;
-    let mat = atp::date(ctx, a, 1)?;
-    let issue = atp::date(ctx, a, 2)?;
+    let settle = atp::kernel_date(ctx, a, 0)?;
+    let mat = atp::kernel_date(ctx, a, 1)?;
+    let issue = atp::kernel_date(ctx, a, 2)?;
     let rate = atp::req(ctx, a, 3)?;
     let x = atp::req(ctx, a, 4)?;
     if settle >= mat || issue >= settle || rate < 0.0 {
@@ -221,22 +258,26 @@ fn mat_args(ctx: &EvalCtx, a: &[Arg]) -> R<(i64, i64, i64, f64, f64, Basis)> {
     Ok((settle, mat, issue, rate, x, b))
 }
 
+fn mat_days(b: Basis, issue: i64, settle: i64, mat: i64) -> R<(f64, f64, f64)> {
+    let ai = days::diff_dates(b.sys, issue, settle, b.basis, 0).ok_or(XlError::NUM)?;
+    let dim = days::diff_dates(b.sys, issue, mat, b.basis, 2).ok_or(XlError::NUM)?;
+    Ok((ai, dim, b.year(issue, settle)))
+}
+
 pub fn pricemat(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
         let (s, m, issue, rate, yld, b) = mat_args(ctx, a)?;
         if yld < 0.0 {
             return Err(XlError::NUM);
         }
-        let by = b.year(issue, s);
-        let dim = b.days(issue, m);
-        let ai = b.days(issue, s);
+        let (ai, dim, by) = mat_days(b, issue, s, m)?;
+        let mp = Mp::default();
+        let dsm = mp.sub(dim, ai);
 
-        use crate::x87::{add, div, mul, sub};
-        let dsm = sub(dim, ai);
-        let num = add(mul(mul(div(dim, by), rate), 100.0), 100.0);
-        let den = add(mul(div(dsm, by), yld), 1.0);
-        let acc = mul(mul(div(ai, by), rate), 100.0);
-        finite(sub(div(num, den), acc))
+        let num = mp.add(mp.mul(mp.mul(mp.div(dim, by), rate), 100.0), 100.0);
+        let den = mp.add(mp.mul(mp.div(dsm, by), yld), 1.0);
+        let acc = mp.mul(mp.mul(mp.div(ai, by), rate), 100.0);
+        Ok(mp.sub(mp.div(num, den), acc))
     })())
 }
 
@@ -246,27 +287,27 @@ pub fn yieldmat(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if pr <= 0.0 {
             return Err(XlError::NUM);
         }
-        let by = b.year(issue, s);
-        let dim = b.days(issue, m);
-        let ai = b.days(issue, s);
+        let (ai, dim, by) = mat_days(b, issue, s, m)?;
+        let mp = Mp::default();
+        let dsm = mp.sub(dim, ai);
 
-        use crate::x87::{add, div, mul, sub};
-        let dsm = sub(dim, ai);
-        let t2 = add(div(pr, 100.0), mul(div(ai, by), rate));
-        let t1 = sub(add(mul(div(dim, by), rate), 1.0), t2);
-        finite(mul(div(t1, t2), div(by, dsm)))
+        let t2 = mp.add(mp.div(pr, 100.0), mp.mul(mp.div(ai, by), rate));
+        let t1 = mp.sub(mp.add(mp.mul(mp.div(dim, by), rate), 1.0), t2);
+        Ok(mp.mul(mp.div(t1, t2), mp.div(by, dsm)))
     })())
 }
 
 fn tbill_args(ctx: &EvalCtx, a: &[Arg]) -> R<(f64, f64)> {
-    let settle = atp::date(ctx, a, 0)?;
-    let mat = atp::date(ctx, a, 1)?;
+    let settle = atp::kernel_date(ctx, a, 0)?;
+    let mat = atp::kernel_date(ctx, a, 1)?;
     let x = atp::req(ctx, a, 2)?;
-
+    if settle >= mat || x <= 0.0 {
+        return Err(XlError::NUM);
+    }
     let sys = atp::date_system(ctx);
     let (y, m, d) = crate::datetime::ymd_from_serial(sys, settle);
     let one_year = crate::datetime::serial_from_ymd(sys, y + 1, i64::from(m), i64::from(d));
-    if settle >= mat || mat > one_year {
+    if mat > one_year {
         return Err(XlError::NUM);
     }
     Ok(((mat - settle) as f64, x))
@@ -274,72 +315,66 @@ fn tbill_args(ctx: &EvalCtx, a: &[Arg]) -> R<(f64, f64)> {
 
 pub fn tbillprice(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
-        let (dsm, discount) = tbill_args(ctx, a)?;
-        if discount <= 0.0 {
+        let (d, discount) = tbill_args(ctx, a)?;
+
+        if d > 366.0 {
             return Err(XlError::NUM);
         }
+        let mp = Mp::default();
 
-        let p = x87::mul(
-            100.0,
-            x87::sub(1.0, x87::div(x87::mul(discount, dsm), 360.0)),
-        );
-
-        if p < 0.0 {
+        let t = mp.div(mp.mul(discount, d), 360.0);
+        let p = mp.mul(mp.add(negate_nonzero(t), 1.0), 100.0);
+        if sign_bit(p) {
             return Err(XlError::NUM);
         }
-        finite(p)
+        Ok(p)
     })())
 }
 
 pub fn tbillyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
-        let (dsm, pr) = tbill_args(ctx, a)?;
-        if pr <= 0.0 {
-            return Err(XlError::NUM);
-        }
+        let (d, pr) = tbill_args(ctx, a)?;
+        let mp = Mp::default();
 
-        finite(x87::mul(
-            x87::div(x87::sub(100.0, pr), pr),
-            x87::div(360.0, dsm),
-        ))
+        let r = mp.div(360.0, d);
+        let t = mp.div(mp.sub(100.0, pr), pr);
+        Ok(mp.mul(t, r))
     })())
 }
 
 pub fn tbilleq(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
-        let (dsm, discount) = tbill_args(ctx, a)?;
-        if discount <= 0.0 {
+        let (d, discount) = tbill_args(ctx, a)?;
+        let mp = Mp::default();
+        let r = if d <= 182.0 {
+            let den = mp.sub(360.0, mp.mul(discount, d));
+            mp.div(mp.mul(365.0, discount), den)
+        } else {
+            let p = mp.div(
+                mp.sub(100.0, mp.div(mp.mul(mp.mul(discount, 100.0), d), 360.0)),
+                100.0,
+            );
+            let yl = if d == 366.0 { 366.0 } else { 365.0 };
+            let b = mp.div(mp.mul(-2.0, d), yl);
+            let c = mp.sub(1.0, mp.div(1.0, p));
+            let qa = mp.sub(mp.div(mp.mul(2.0, d), yl), 1.0);
+            let qc = mp.mul(qa, c);
+            let t2 = xmath::pow(mp.div(d, yl), 2.0);
+            let disc = mp.sub(t2, qc);
+            if sign_bit(disc) {
+                return Err(XlError::NUM);
+            }
+            let s = mp.sqrt(disc);
+            let qa = mp.sub(mp.div(mp.mul(2.0, d), yl), 1.0);
+            if qa.to_bits() == 0 {
+                return Err(XlError::NUM);
+            }
+            mp.div(mp.add(mp.mul(s, 2.0), b), qa)
+        };
+        if sign_bit(r) {
             return Err(XlError::NUM);
         }
-        let price = x87::mul(
-            100.0,
-            x87::sub(1.0, x87::div(x87::mul(discount, dsm), 360.0)),
-        );
-        if price <= 0.0 {
-            return Err(XlError::NUM);
-        }
-        if dsm <= 182.0 {
-            return finite(x87::div(
-                x87::mul(365.0, discount),
-                x87::sub(360.0, x87::mul(discount, dsm)),
-            ));
-        }
-
-        use crate::x87::{add, div, mul, sub};
-        let p = div(
-            sub(100.0, div(mul(mul(100.0, discount), dsm), 360.0)),
-            100.0,
-        );
-
-        let yl = if dsm == 366.0 { 366.0 } else { 365.0 };
-        let b = div(mul(dsm, -2.0), yl);
-        let c = sub(1.0, div(1.0, p));
-        let qa = sub(div(mul(dsm, 2.0), yl), 1.0);
-        let disc = sub(crate::xmath::pow(div(dsm, yl), 2.0), mul(c, qa));
-        if disc < 0.0 {
-            return Err(XlError::NUM);
-        }
-        finite(div(add(b, mul(2.0, crate::x87::sqrt(disc))), qa))
+        Ok(r)
     })())
 }
 
@@ -349,180 +384,212 @@ struct Bond {
     freq: i32,
     b: Basis,
     c: Coupons,
+
+    e: f64,
+
+    a: f64,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum AccruedFrom {
+    PrevCoupon,
+    DayBs,
 }
 
 impl Bond {
     fn n(&self) -> f64 {
         self.c.num as f64
     }
-
     fn e(&self) -> f64 {
-        if self.b.basis == 1 {
-            self.a() + self.b.coupdaysnc(&self.c, self.settle)
-        } else {
-            self.b.coupdays(&self.c, self.mat, self.freq)
-        }
+        self.e
     }
     fn a(&self) -> f64 {
-        self.b.coupdaybs(&self.c, self.settle)
+        self.a
     }
 }
 
-fn bond(ctx: &EvalCtx, settle: i64, mat: i64, freq: f64, a: &[Arg], bi: usize) -> R<Bond> {
+fn bond(
+    ctx: &EvalCtx,
+    settle: i64,
+    mat: i64,
+    freq: f64,
+    a: &[Arg],
+    bi: usize,
+    from: AccruedFrom,
+) -> R<Bond> {
     let freq = atp::frequency(freq)?;
     let b = basis_of(ctx, a, bi)?;
     if settle >= mat {
         return Err(XlError::NUM);
     }
-    let c = days::coupons(b.sys, settle, mat, freq);
+    let months = (12 / freq) as i64;
+    let c = days::bond_coupons(b.sys, settle, mat, months).ok_or(XlError::NUM)?;
+    let e = days::calc_coup(b.sys, mat, settle, months, b.basis, days::CoupOp::Days)
+        .ok_or(XlError::NUM)?;
+    let a_ = match from {
+        AccruedFrom::DayBs => {
+            days::calc_coup(b.sys, mat, settle, months, b.basis, days::CoupOp::DayBs)
+        }
 
-    if c.pcd < 1 {
-        return Err(XlError::NUM);
+        AccruedFrom::PrevCoupon => match b.basis {
+            0 => days::diff_dates(b.sys, c.pcd, settle, 0, 1),
+            4 => days::diff_dates(b.sys, c.pcd, settle, 4, 1),
+            _ => Some((settle - c.pcd) as f64),
+        },
     }
+    .ok_or(XlError::NUM)?;
     Ok(Bond {
         settle,
         mat,
         freq,
         b,
         c,
+        e,
+        a: a_,
     })
 }
 
-fn price_core(bd: &Bond, rate: f64, yld: f64, redemption: f64) -> R<f64> {
-    use crate::x87::{add, div, mul, sub};
+fn fw_pow(mp: &Mp, base: f64, exp: f64) -> Option<f64> {
+    if (base == 0.0 && exp <= 0.0) || (base < 0.0 && exp != exp.trunc()) {
+        return None;
+    }
+    let r = xmath::pow(base, exp);
+    let set = mp.code() != 0;
+    mp.clear();
+    if !r.is_finite() || set {
+        return None;
+    }
+    Some(r)
+}
+
+fn price_core(mp: &Mp, bd: &Bond, rate: f64, yld: f64, redemption: f64) -> Option<f64> {
     let f = bd.freq as f64;
     let n = bd.n();
     let (e, a_) = (bd.e(), bd.a());
-    let dsc = sub(e, a_);
+    let dsc = mp.sub(e, a_);
     if n == 1.0 {
-        let coupon = div(mul(rate, 100.0), f);
-        let num = add(coupon, redemption);
-        let den = add(mul(div(dsc, e), div(yld, f)), 1.0);
-        let accrued = mul(coupon, div(a_, e));
-        return Ok(sub(div(num, den), accrued));
+        let coupon = mp.div(mp.mul(rate, 100.0), f);
+        let num = mp.add(coupon, redemption);
+        let den = mp.add(mp.mul(mp.div(dsc, e), mp.div(yld, f)), 1.0);
+        let accrued = mp.mul(coupon, mp.div(a_, e));
+        return Some(mp.sub(mp.div(num, den), accrued));
     }
-    let base = add(1.0, div(yld, f));
-    let x = div(dsc, e);
-
-    let red = div(redemption, finite(xmath::pow(base, add(sub(n, 1.0), x)))?);
+    let base = mp.add(1.0, mp.div(yld, f));
+    let x = mp.div(dsc, e);
+    let red = mp.div(redemption, fw_pow(mp, base, mp.add(mp.sub(n, 1.0), x))?);
     let mut acc = 0.0;
     let mut k = 1.0;
     while k <= n {
-        let t = add(sub(k, 1.0), x);
-        acc = add(acc, div(div(mul(rate, 100.0), f), xmath::pow(base, t)));
+        let t = mp.add(mp.sub(k, 1.0), x);
+        let c = mp.div(mp.mul(rate, 100.0), f);
+        acc = mp.add(acc, mp.div(c, fw_pow(mp, base, t)?));
         k += 1.0;
     }
-    let accrued = mul(mul(div(rate, f), div(a_, e)), 100.0);
-    Ok(sub(add(acc, red), accrued))
+    let accrued = mp.mul(mp.mul(mp.div(rate, f), mp.div(a_, e)), 100.0);
+    Some(mp.sub(mp.add(acc, red), accrued))
 }
 
 pub fn price(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
         basis_of(ctx, a, 6)?;
-        let settle = atp::date(ctx, a, 0)?;
-        let mat = atp::date(ctx, a, 1)?;
+        let settle = atp::kernel_date(ctx, a, 0)?;
+        let mat = atp::kernel_date(ctx, a, 1)?;
         let rate = atp::req(ctx, a, 2)?;
         let yld = atp::req(ctx, a, 3)?;
         let redemption = atp::req(ctx, a, 4)?;
         let freq = atp::req(ctx, a, 5)?;
-        let bd = bond(ctx, settle, mat, freq, a, 6)?;
+        let bd = bond(ctx, settle, mat, freq, a, 6, AccruedFrom::PrevCoupon)?;
         if rate < 0.0 || yld < 0.0 || redemption <= 0.0 {
             return Err(XlError::NUM);
         }
-        finite(price_core(&bd, rate, yld, redemption)?)
+        price_core(&Mp::default(), &bd, rate, yld, redemption).ok_or(XlError::NUM)
     })())
 }
 
 pub fn yield_(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
         basis_of(ctx, a, 6)?;
-        let settle = atp::date(ctx, a, 0)?;
-        let mat = atp::date(ctx, a, 1)?;
+        let settle = atp::kernel_date(ctx, a, 0)?;
+        let mat = atp::kernel_date(ctx, a, 1)?;
         let rate = atp::req(ctx, a, 2)?;
         let pr = atp::req(ctx, a, 3)?;
         let redemption = atp::req(ctx, a, 4)?;
         let freq = atp::req(ctx, a, 5)?;
-        let bd = bond(ctx, settle, mat, freq, a, 6)?;
+        let bd = bond(ctx, settle, mat, freq, a, 6, AccruedFrom::DayBs)?;
         if rate < 0.0 || pr <= 0.0 || redemption <= 0.0 {
             return Err(XlError::NUM);
         }
         let f = bd.freq as f64;
         if bd.n() <= 1.0 {
-            use crate::x87::{add, div, mul, sub};
-            let e = match bd.b.basis {
-                0 | 4 => bd.e(),
-                _ => (bd.c.ncd - bd.c.pcd) as f64,
+            let mp = Mp::default();
+            let sys = bd.b.sys;
+            let months = (12 / bd.freq) as i64;
+            let e = if matches!(bd.b.basis, 2 | 3) {
+                let pcd = days::calc_coup(sys, bd.mat, bd.settle, months, bd.b.basis, CoupOp::Pcd)
+                    .ok_or(XlError::NUM)?;
+                days::diff_dates(sys, pcd as i64, bd.mat, bd.b.basis, 3).ok_or(XlError::NUM)?
+            } else {
+                bd.e()
             };
             let a_ = bd.a();
-            let dsr = bd.b.days(bd.settle, bd.mat);
-            let t1 = add(div(redemption, 100.0), div(rate, f));
-            let t2 = add(div(pr, 100.0), mul(div(rate, f), div(a_, e)));
-            return finite(mul(div(sub(t1, t2), t2), div(mul(f, e), dsr)));
+            let dsr =
+                days::diff_dates(sys, bd.settle, bd.mat, bd.b.basis, 2).ok_or(XlError::NUM)?;
+            let t1 = mp.add(mp.div(redemption, 100.0), mp.div(rate, f));
+            let t2 = mp.add(mp.div(pr, 100.0), mp.mul(mp.div(rate, f), mp.div(a_, e)));
+            return Ok(mp.mul(mp.div(mp.sub(t1, t2), t2), mp.div(mp.mul(f, e), dsr)));
         }
         yield_newton(&bd, rate, pr, redemption)
     })())
 }
 
-fn yield_start(rate: f64, nn: f64, pr: f64) -> f64 {
-    use crate::x87::{add, div, mul, sub};
-    let d = sub(pr, 100.0);
-    let den = add(add(mul(nn, 100.0), div(mul(d, nn), 2.0)), div(d, 4.0));
-    div(sub(mul(mul(nn, rate), 100.0), d), den)
+fn yield_start(mp: &Mp, rate: f64, nn: f64, pr: f64) -> f64 {
+    let d = mp.sub(pr, 100.0);
+    let den = mp.add(
+        mp.add(mp.mul(nn, 100.0), mp.div(mp.mul(d, nn), 2.0)),
+        mp.div(d, 4.0),
+    );
+    mp.div(mp.sub(mp.mul(mp.mul(nn, rate), 100.0), d), den)
 }
 
-fn yield_deriv(y: f64, f: f64, dsc: f64, e: f64, n: f64, rate: f64, redemption: f64) -> f64 {
-    use crate::x87::{add, div, mul, sub};
-    let base = add(1.0, div(y, f));
-    let x = div(dsc, e);
-    let mut deriv = 0.0;
-    let mut k = 1.0;
-    while k <= n {
-        let pk = xmath::pow(base, add(x, k));
-        let t = add(sub(k, 1.0), x);
-        let c = mul(div(rate, f), 100.0);
-        deriv = add(deriv, div(-mul(t, c), mul(pk, f)));
-        k += 1.0;
-    }
-    let pn = xmath::pow(base, add(x, n));
-    let t = add(sub(n, 1.0), x);
-    sub(deriv, div(mul(t, redemption), mul(pn, f)))
-}
+fn yield_newton(bd: &Bond, rate: f64, pr: f64, redemption: f64) -> R<f64> {
+    let nn = days::diff_years(bd.b.sys, bd.b.basis, bd.settle, bd.mat).ok_or(XlError::NUM)?;
+    let (e, a_) = (bd.e(), bd.a());
 
-fn yield_iterate(
-    mut y: f64,
-    pr: f64,
-    mut price: impl FnMut(f64) -> R<f64>,
-    deriv: impl Fn(f64) -> f64,
-) -> R<f64> {
-    use crate::x87::{add, div, sub};
+    let mp = Mp::default();
+    let dsc = mp.sub(e, a_);
+    let mut y = yield_start(&mp, rate, nn, pr);
     for count in 1..=100 {
-        let p = price(y)?;
-        let step = div(sub(pr, p), deriv(y));
-        if !step.is_finite() {
-            return Err(XlError::NUM);
-        }
+        let p = price_core(&mp, bd, rate, y, redemption).ok_or(XlError::NUM)?;
+        let d = yield_deriv_mp(&mp, bd, y, dsc, rate, redemption).ok_or(XlError::NUM)?;
+
+        let step = mp.div(mp.sub(pr, p), d);
         if step.abs() < 1e-10 {
             if count == 100 {
                 return Err(XlError::NUM);
             }
-            return finite(y);
+            return Ok(y);
         }
-        y = add(y, step);
+        y = mp.add(y, step);
     }
-    finite(y)
+    Ok(y)
 }
 
-fn yield_newton(bd: &Bond, rate: f64, pr: f64, redemption: f64) -> R<f64> {
-    use crate::x87::sub;
-
-    let nn = days::yield_years(bd.b.sys, bd.b.basis, bd.settle, bd.mat);
-    let f = bd.freq as f64;
-    let n = bd.n();
-    let (e, a_) = (bd.e(), bd.a());
-    let dsc = sub(e, a_);
-    let price = |y: f64| price_core(bd, rate, y, redemption);
-    let deriv = |y: f64| yield_deriv(y, f, dsc, e, n, rate, redemption);
-    yield_iterate(yield_start(rate, nn, pr), pr, price, deriv)
+fn yield_deriv_mp(mp: &Mp, bd: &Bond, y: f64, dsc: f64, rate: f64, redemption: f64) -> Option<f64> {
+    let (f, e, n) = (bd.freq as f64, bd.e(), bd.n());
+    let base = mp.add(1.0, mp.div(y, f));
+    let x = mp.div(dsc, e);
+    let mut deriv = 0.0;
+    let mut k = 1.0;
+    while k <= n {
+        let pk = fw_pow(mp, base, mp.add(x, k))?;
+        let t = mp.add(mp.sub(k, 1.0), x);
+        let c = mp.mul(mp.div(rate, f), 100.0);
+        deriv = mp.add(deriv, mp.div(-mp.mul(t, c), mp.mul(pk, f)));
+        k += 1.0;
+    }
+    let pn = fw_pow(mp, base, mp.add(x, n))?;
+    let t = mp.add(mp.sub(n, 1.0), x);
+    Some(mp.sub(deriv, mp.div(mp.mul(t, redemption), mp.mul(pn, f))))
 }
 
 fn duration_core(bd: &Bond, coupon: f64, yld: f64) -> R<f64> {
@@ -536,7 +603,7 @@ fn duration_core(bd: &Bond, coupon: f64, yld: f64) -> R<f64> {
     let x2 = sub(add(x1, n), 1.0);
     let x3 = add(div(yld, f), 1.0);
     let x4 = xmath::pow(x3, x2);
-    if x4.is_infinite() {
+    if !x4.is_finite() || x4.to_bits() >> 48 == 0 {
         return Err(XlError::NUM);
     }
     let term1 = div(mul(x2, 100.0), x4);
@@ -547,7 +614,7 @@ fn duration_core(bd: &Bond, coupon: f64, yld: f64) -> R<f64> {
     while k <= n {
         let x5 = add(sub(k, 1.0), x1);
         let x6 = xmath::pow(x3, x5);
-        if x6.is_infinite() {
+        if !x6.is_finite() || x6.to_bits() >> 48 == 0 {
             return Err(XlError::NUM);
         }
         let x7 = div(div(mul(100.0, coupon), f), x6);
@@ -560,12 +627,12 @@ fn duration_core(bd: &Bond, coupon: f64, yld: f64) -> R<f64> {
 
 fn dur(ctx: &mut EvalCtx, a: &[Arg], modified: bool) -> Value {
     atp::out((|| {
-        let settle = atp::date(ctx, a, 0)?;
-        let mat = atp::date(ctx, a, 1)?;
+        let settle = atp::kernel_date(ctx, a, 0)?;
+        let mat = atp::kernel_date(ctx, a, 1)?;
         let coupon = atp::req(ctx, a, 2)?;
         let yld = atp::req(ctx, a, 3)?;
         let freq = atp::req(ctx, a, 4)?;
-        let bd = bond(ctx, settle, mat, freq, a, 5)?;
+        let bd = bond(ctx, settle, mat, freq, a, 5, AccruedFrom::DayBs)?;
         if coupon < 0.0 || yld < 0.0 {
             return Err(XlError::NUM);
         }
@@ -598,254 +665,180 @@ struct OddF {
     b: Basis,
 }
 
-fn schedule_reaches(sys: DateSystem, anchor: i64, freq: i32, target: i64) -> R<()> {
-    let a = days::ymd(sys, anchor);
-    let eom = a.d >= days::dim(a.y, a.m);
-    let months = (12 / freq) as i64;
-    let first_valid = if sys == DateSystem::D1900 { 1 } else { 0 };
-    let mut k = 1;
-    loop {
-        let (y, m, d) = days::add_months(a.y, a.m, a.d, -k * months, eom);
-        let q = days::serial(sys, y, m, d);
-        if q < first_valid {
-            return Err(XlError::NUM);
-        }
-        if q <= target {
-            return Ok(());
-        }
-        k += 1;
+impl OddF {
+    fn months(&self) -> i64 {
+        (12 / self.freq) as i64
     }
 }
 
 fn oddf_args(ctx: &EvalCtx, a: &[Arg]) -> R<(OddF, f64, f64, f64)> {
-    let settle = atp::date(ctx, a, 0)?;
-    let mat = atp::date(ctx, a, 1)?;
-    let issue = atp::date(ctx, a, 2)?;
-    let first = atp::date(ctx, a, 3)?;
+    let settle = atp::kernel_date(ctx, a, 0)?;
+    let mat = atp::kernel_date(ctx, a, 1)?;
+    let issue = atp::kernel_date(ctx, a, 2)?;
+    let first = atp::kernel_date(ctx, a, 3)?;
     let rate = atp::req(ctx, a, 4)?;
     let x = atp::req(ctx, a, 5)?;
     let redemption = atp::req(ctx, a, 6)?;
     let freq = atp::frequency(atp::req(ctx, a, 7)?)?;
     let b = basis_of(ctx, a, 8)?;
+
     if !(mat > first && first > settle && settle > issue) {
         return Err(XlError::NUM);
-    }
-
-    let mt = days::ymd(b.sys, mat);
-    let eom = mt.d >= days::dim(mt.y, mt.m);
-    let months = (12 / freq) as i64;
-    let mut k = 1;
-    loop {
-        let (y, m, d) = days::add_months(mt.y, mt.m, mt.d, -k * months, eom);
-        let q = days::serial(b.sys, y, m, d);
-        if q == first {
-            break;
-        }
-        if q < first {
-            return Err(XlError::NUM);
-        }
-        k += 1;
     }
     if rate < 0.0 || redemption <= 0.0 {
         return Err(XlError::NUM);
     }
-    schedule_reaches(b.sys, first, freq, issue)?;
-    let o = OddF {
-        settle,
-        mat,
-        issue,
-        first,
-        freq,
-        b,
-    };
+    Ok((
+        OddF {
+            settle,
+            mat,
+            issue,
+            first,
+            freq,
+            b,
+        },
+        rate,
+        x,
+        redemption,
+    ))
+}
 
-    if o.b.days(issue, first) == oddf_e(&o) {
+enum OddFPeriod {
+    Short { dfc: f64, dsc: f64, a: f64 },
+
+    Long { dc: f64, a: f64, dsc: f64, nq: f64 },
+}
+
+struct OddFDates {
+    e: f64,
+
+    n: f64,
+    period: OddFPeriod,
+}
+
+fn oddf_dates(o: &OddF) -> R<OddFDates> {
+    let (sys, basis, months) = (o.b.sys, o.b.basis, o.months());
+
+    let code = days::month_end_code(sys, o.mat);
+    if code == -1 {
         return Err(XlError::NUM);
     }
-    Ok((o, rate, x, redemption))
-}
-
-struct OddFlows {
-    flows: Vec<(f64, f64, bool)>,
-    accrued: f64,
-
-    dsc: f64,
-    e: f64,
-    n: f64,
-}
-
-fn oddfprice_core(o: &OddF, rate: f64, yld: f64, redemption: f64) -> R<f64> {
-    use crate::x87::{add, div, sub};
-    let fl = oddf_flows(o, rate, redemption);
-    let base = add(1.0, div(yld, o.freq as f64));
-
-    let (regular, tail) = fl.flows.split_at(fl.flows.len() - 2);
-    let mut acc = 0.0;
-    for &(amt, t, _) in regular {
-        acc = add(acc, div(amt, finite(xmath::pow(base, t))?));
+    let (mut ok, mut cur) = days::change_month(sys, o.mat, -months, basis, code);
+    while ok && cur > o.first {
+        (ok, cur) = days::change_month(sys, cur, -months, basis, code);
     }
-    let (odd, red) = (tail[0], tail[1]);
-
-    let tail = add(
-        div(odd.0, finite(xmath::pow(base, odd.1))?),
-        div(red.0, finite(xmath::pow(base, red.1))?),
-    );
-    finite(sub(add(acc, tail), fl.accrued))
-}
-
-fn oddf_e(o: &OddF) -> f64 {
-    let months = (12 / o.freq) as i64;
-    let fc = days::ymd(o.b.sys, o.first);
-    let eom = fc.d >= days::dim(fc.y, fc.m);
-    let (y, m, d) = days::add_months(fc.y, fc.m, fc.d, -months, eom);
-    let pcd_first = days::serial(o.b.sys, y, m, d);
-    if o.b.basis == 1 {
-        (o.first - pcd_first) as f64
-    } else {
-        let c0 = Coupons {
-            pcd: pcd_first,
-            ncd: o.first,
-            num: 1,
-        };
-        o.b.coupdays(&c0, o.mat, o.freq)
+    if cur != o.first {
+        return Err(XlError::NUM);
     }
-}
-
-fn oddf_flows(o: &OddF, rate: f64, redemption: f64) -> OddFlows {
-    use crate::x87::{add, div, mul, sub};
-    let b = &o.b;
-    let f = o.freq as f64;
-    let months = (12 / o.freq) as i64;
-    let sys = b.sys;
-    let coupon = div(mul(rate, 100.0), f);
-
-    let regular = days::coupons(sys, o.first, o.mat, o.freq);
-    let _ = regular;
-
-    let n = days::coupons(sys, o.first - 1, o.mat, o.freq).num as f64;
-
-    let fc = days::ymd(sys, o.first);
-    let eom = fc.d >= days::dim(fc.y, fc.m);
-    let q = |k: i64| {
-        let (y, m, d) = days::add_months(fc.y, fc.m, fc.d, k * months, eom);
-        days::serial(sys, y, m, d)
-    };
-
-    let qc = |k: i64| {
-        let mut cur = (fc.y, fc.m, fc.d);
-        for _ in 0..-k {
-            cur = days::add_months(cur.0, cur.1, cur.2, -months, false);
-        }
-        days::serial(sys, cur.0, cur.1, cur.2)
-    };
-    let pcd_first = q(-1);
-    let e = oddf_e(o);
-    if o.issue >= pcd_first {
-        let dfc = b.days(o.issue, o.first);
-        let dsc = b.days(o.settle, o.first);
-        let a_ = b.days(o.issue, o.settle);
-        let x = div(dsc, e);
-
-        let mut flows = Vec::new();
-        let mut k = 2.0;
-        while k <= n {
-            flows.push((coupon, add(k - 1.0, x), false));
-            k += 1.0;
-        }
-        flows.push((div(mul(coupon, dfc), e), x, true));
-        flows.push((redemption, add(n - 1.0, x), false));
-        return OddFlows {
-            flows,
-            accrued: mul(mul(div(rate, f), div(a_, e)), 100.0),
-            dsc,
+    let e =
+        days::calc_coup(sys, o.first, o.settle, months, basis, CoupOp::Days).ok_or(XlError::NUM)?;
+    let n_all = days::bond_coupons(sys, o.settle, o.mat, months).ok_or(XlError::NUM)?;
+    let dfc = days::diff_dates(sys, o.issue, o.first, basis, 2).unwrap_or(0.0);
+    if dfc < e {
+        let dsc = days::diff_dates(sys, o.settle, o.first, basis, 2).unwrap_or(0.0);
+        let a = days::diff_dates(sys, o.issue, o.settle, basis, 0).unwrap_or(0.0);
+        return Ok(OddFDates {
             e,
-            n,
-        };
+            n: n_all.num as f64,
+            period: OddFPeriod::Short { dfc, dsc, a },
+        });
+    }
+    if dfc.partial_cmp(&e) != Some(std::cmp::Ordering::Greater) {
+        return Err(XlError::NUM);
     }
 
-    let mut k = -1i64;
-    while q(k) > o.issue {
-        k -= 1;
-    }
-    let nc = -k;
-    let mut dc_sum = 0.0;
-    let mut a_sum = 0.0;
-    let mut nq = 0.0;
-    let mut dsc_q = 0.0;
-    let mut e_q = e;
-
-    for i in 1..=nc {
-        let p0 = q(-i);
-        let p1 = q(-i + 1);
-        let c = Coupons {
-            pcd: p0,
-            ncd: p1,
-            num: 1,
-        };
-        let nl = if b.basis == 1 {
-            (p1 - p0) as f64
+    let nc = days::bond_coupons(sys, o.issue, o.first, months)
+        .ok_or(XlError::NUM)?
+        .num;
+    let (mut dc, mut a_sum) = (0.0, 0.0);
+    let mut cur = o.first;
+    for rem in (1..=nc).rev() {
+        let (ok, prev) = days::change_month(sys, cur, -months, basis, 0);
+        if !ok {
+            return Err(XlError::NUM);
+        }
+        let nl = if basis == 1 {
+            days::diff_dates(sys, prev, cur, 1, 3).unwrap_or(0.0)
         } else {
-            b.coupdays(&c, o.mat, o.freq)
+            e
         };
-
-        let (c0, c1) = (qc(-i), qc(-i + 1));
-        let nl_c = if b.basis == 1 { (c1 - c0) as f64 } else { nl };
-        let s = o.issue.max(c0);
-
-        dc_sum = add(
-            dc_sum,
-            if o.issue < c0 {
-                1.0
-            } else {
-                div(b.days(s, c1), nl_c)
-            },
-        );
-        if o.settle > c0 {
-            a_sum = add(a_sum, div(b.days(s, o.settle.min(c1)), nl_c));
-        }
-        if o.settle < p0 {
-            nq += 1.0;
-        } else if o.settle < p1 {
-            dsc_q = match b.basis {
-                0 | 4 => sub(nl, b.days(p0, o.settle)),
-                _ => b.days(o.settle, p1),
-            };
-            e_q = nl;
-        }
+        let numer = if rem < 2 {
+            days::diff_dates(sys, o.issue, cur, basis, 2).unwrap_or(0.0)
+        } else {
+            nl
+        };
+        dc = x87::add(x87::div(numer, nl), dc);
+        let hi = o.issue.max(prev);
+        let lo = o.settle.min(cur);
+        let a_num = days::diff_dates(sys, hi, lo, basis, 0).unwrap_or(0.0);
+        a_sum = x87::add(x87::div(a_num, nl), a_sum);
+        cur = prev;
     }
-    let x = div(dsc_q, e_q);
+    let dsc = if matches!(basis, 2 | 3) {
+        let ncd = days::calc_coup(sys, o.first, o.settle, months, basis, CoupOp::Ncd)
+            .ok_or(XlError::NUM)? as i64;
+        days::diff_dates(sys, o.settle, ncd, basis, 2).unwrap_or(0.0)
+    } else {
+        let pcd = days::calc_coup(sys, o.first, o.settle, months, basis, CoupOp::Pcd)
+            .ok_or(XlError::NUM)? as i64;
+        let a_ = days::diff_dates(sys, pcd, o.settle, basis, 2).ok_or(XlError::NUM)?;
+        x87::sub(e, a_)
+    };
+    let nq =
+        days::calc_periods(sys, o.first, o.settle, months, basis, false).ok_or(XlError::NUM)?;
+    let n = days::bond_coupons(sys, o.first, o.mat, months).ok_or(XlError::NUM)?;
+    Ok(OddFDates {
+        e,
+        n: n.num as f64,
+        period: OddFPeriod::Long {
+            dc,
+            a: a_sum,
+            dsc,
+            nq,
+        },
+    })
+}
 
-    let nq_sched = nq;
+fn oddf_price(
+    mp: &Mp,
+    o: &OddF,
+    d: &OddFDates,
+    rate: f64,
+    yld: f64,
+    redemption: f64,
+) -> Option<f64> {
+    let f = o.freq as f64;
+    let base = mp.add(mp.div(yld, f), 1.0);
 
-    if eom {
-        let s = days::ymd(sys, o.settle);
-        let span = (fc.y * 12 + fc.m as i64) - (s.y * 12 + s.m as i64);
-        nq = ((span + months - 1) / months) as f64;
-        if (1..=nc).any(|i| q(-i) == o.settle) {
-            nq -= 1.0;
+    let coupon = || mp.div(mp.mul(100.0, rate), f);
+    match d.period {
+        OddFPeriod::Short { dfc, dsc, a } => {
+            let x = mp.div(dsc, d.e);
+            let red = mp.div(redemption, fw_pow(mp, base, mp.add(mp.sub(d.n, 1.0), x))?);
+            let odd = mp.div(mp.div(mp.mul(coupon(), dfc), d.e), fw_pow(mp, base, x)?);
+            let mut sum = 0.0;
+            let mut k = 2;
+            while k as f64 <= d.n.trunc() {
+                let t = mp.add(mp.sub(k as f64, 1.0), x);
+                sum = mp.add(mp.div(coupon(), fw_pow(mp, base, t)?), sum);
+                k += 1;
+            }
+            let accrued = mp.mul(mp.mul(mp.div(a, d.e), mp.div(rate, f)), 100.0);
+            Some(mp.sub(mp.add(mp.add(red, odd), sum), accrued))
         }
-    }
-
-    let n = n - 1.0;
-
-    let t0 = add(nq, x);
-    let mut flows = Vec::new();
-    let mut k = 1.0;
-
-    while k <= n {
-        flows.push((coupon, add(add(k, nq), x), false));
-        k += 1.0;
-    }
-    flows.push((mul(coupon, dc_sum), t0, true));
-    flows.push((redemption, add(t0, n), false));
-
-    let dsc = b.days(o.settle, o.first);
-    OddFlows {
-        flows,
-        accrued: mul(coupon, a_sum),
-        dsc,
-        e: e_q,
-        n: n + nq_sched + 1.0,
+        OddFPeriod::Long { dc, a, dsc, nq } => {
+            let x = mp.div(dsc, d.e);
+            let red = mp.div(redemption, fw_pow(mp, base, mp.add(mp.add(x, nq), d.n))?);
+            let odd = mp.div(mp.mul(coupon(), dc), fw_pow(mp, base, mp.add(nq, x))?);
+            let mut sum = 0.0;
+            let mut k = 1;
+            while k as f64 <= d.n.trunc() {
+                let t = mp.add(mp.add(k as f64, nq), x);
+                sum = mp.add(mp.div(coupon(), fw_pow(mp, base, t)?), sum);
+                k += 1;
+            }
+            Some(mp.sub(mp.add(mp.add(red, odd), sum), mp.mul(coupon(), a)))
+        }
     }
 }
 
@@ -855,8 +848,34 @@ pub fn oddfprice(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if yld < 0.0 {
             return Err(XlError::NUM);
         }
-        oddfprice_core(&o, rate, yld, redemption)
+        let d = oddf_dates(&o)?;
+        oddf_price(&Mp::default(), &o, &d, rate, yld, redemption).ok_or(XlError::NUM)
     })())
+}
+
+fn oddf_deriv(
+    mp: &Mp,
+    o: &OddF,
+    y: f64,
+    (dsc, e, n): (f64, f64, f64),
+    (rate, red): (f64, f64),
+) -> Option<f64> {
+    let f = o.freq as f64;
+    let base = mp.add(mp.div(y, f), 1.0);
+    let mut deriv = 0.0;
+    let mut k = 1;
+    while k as f64 <= n.trunc() {
+        let pk = fw_pow(mp, base, mp.add(k as f64, mp.div(dsc, e)))?;
+        let t = mp.add(mp.sub(k as f64, 1.0), mp.div(dsc, e));
+        let c = negate_nonzero(mp.mul(mp.div(rate, f), 100.0));
+        deriv = mp.add(mp.div(mp.mul(c, t), mp.mul(f, pk)), deriv);
+        k += 1;
+    }
+    let base = mp.add(mp.div(y, f), 1.0);
+    let pn = fw_pow(mp, base, mp.add(mp.div(dsc, e), n))?;
+    let t = mp.add(mp.sub(n, 1.0), mp.div(dsc, e));
+    let term = mp.div(mp.mul(t, red), mp.mul(f, pn));
+    Some(mp.sub(deriv, term))
 }
 
 pub fn oddfyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
@@ -865,12 +884,32 @@ pub fn oddfyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if pr <= 0.0 {
             return Err(XlError::NUM);
         }
-        let fl = oddf_flows(&o, rate, redemption);
-        let f = o.freq as f64;
-        let nn = days::yield_years(o.b.sys, o.b.basis, o.settle, o.mat);
-        let price = |y: f64| oddfprice_core(&o, rate, y, redemption);
-        let deriv = |y: f64| yield_deriv(y, f, fl.dsc, fl.e, fl.n, rate, redemption);
-        yield_iterate(yield_start(rate, nn, pr), pr, price, deriv)
+        let (sys, basis, months) = (o.b.sys, o.b.basis, o.months());
+        let n_all = days::bond_coupons(sys, o.settle, o.mat, months).ok_or(XlError::NUM)?;
+        let d = oddf_dates(&o)?;
+        if matches!(d.period, OddFPeriod::Long { .. }) {
+            days::calc_coup(sys, o.first, o.settle, months, basis, CoupOp::Ncd)
+                .ok_or(XlError::NUM)?;
+        }
+        let dsc = days::diff_dates(sys, o.settle, o.first, basis, 2).unwrap_or(0.0);
+        let nn = days::diff_years(sys, basis, o.settle, o.mat).ok_or(XlError::NUM)?;
+        let n = n_all.num as f64;
+        let mp = Mp::default();
+        let mut y = yield_start(&mp, rate, nn, pr);
+        for count in 1..=100 {
+            let p = oddf_price(&mp, &o, &d, rate, y, redemption).ok_or(XlError::NUM)?;
+            let deriv =
+                oddf_deriv(&mp, &o, y, (dsc, d.e, n), (rate, redemption)).ok_or(XlError::NUM)?;
+            let step = mp.div(mp.sub(pr, p), deriv);
+            if step.abs() < 1e-10 {
+                if count == 100 {
+                    return Err(XlError::NUM);
+                }
+                return Ok(y);
+            }
+            y = mp.add(y, step);
+        }
+        Ok(y)
     })())
 }
 
@@ -883,25 +922,21 @@ struct OddL {
 }
 
 fn oddl_args(ctx: &EvalCtx, a: &[Arg]) -> R<(OddL, f64, f64, f64)> {
-    let settle = atp::date(ctx, a, 0)?;
-    let mat = atp::date(ctx, a, 1)?;
-    let last = atp::date(ctx, a, 2)?;
+    let settle = atp::kernel_date(ctx, a, 0)?;
+    let mat = atp::kernel_date(ctx, a, 1)?;
+    let last = atp::kernel_date(ctx, a, 2)?;
     let rate = atp::req(ctx, a, 3)?;
     let x = atp::req(ctx, a, 4)?;
     let redemption = atp::req(ctx, a, 5)?;
     let freq = atp::frequency(atp::req(ctx, a, 6)?)?;
-    let mut b = basis_of(ctx, a, 7)?;
+    let b = basis_of(ctx, a, 7)?;
 
-    if b.basis == 2 || b.basis == 3 {
-        b.basis = 1;
-    }
     if !(mat > settle && settle > last) {
         return Err(XlError::NUM);
     }
     if rate < 0.0 || redemption <= 0.0 {
         return Err(XlError::NUM);
     }
-    schedule_reaches(b.sys, mat, freq, last)?;
     Ok((
         OddL {
             settle,
@@ -916,54 +951,40 @@ fn oddl_args(ctx: &EvalCtx, a: &[Arg]) -> R<(OddL, f64, f64, f64)> {
     ))
 }
 
-fn oddl_sums(o: &OddL) -> (f64, f64, f64) {
-    let b = &o.b;
-    let sys = b.sys;
+fn oddl_sums(mp: &Mp, o: &OddL) -> R<(f64, f64, f64)> {
+    let (sys, basis) = (o.b.sys, o.b.basis);
     let months = (12 / o.freq) as i64;
-    let l = days::ymd(sys, o.last);
-
-    let eom = l.d >= days::dim(l.y, l.m);
-    let snapped = |k: i64| {
-        let (y, mo, d) = days::add_months(l.y, l.m, l.d, k * months, eom);
-        days::serial(sys, y, mo, d)
-    };
-    let mut nc = 1usize;
-    while snapped(nc as i64) < o.mat {
-        nc += 1;
-    }
-    let mut q = vec![o.last];
-    let (mut y, mut mo, mut d) = (l.y, l.m, l.d);
-    for _ in 0..=nc {
-        (y, mo, d) = days::add_months(y, mo, d, months, false);
-        q.push(days::serial(sys, y, mo, d));
-    }
-
-    let days = |a: i64, z: i64, both: bool| match b.basis {
-        0 => days::days360_us(sys, a, z, both) as f64,
-        _ => b.days(a, z),
-    };
+    let n = days::bond_coupons(sys, o.last, o.mat, months)
+        .ok_or(XlError::NUM)?
+        .num;
     let (mut dc, mut ac, mut dsc) = (0.0, 0.0, 0.0);
-    for k in 0..nc {
-        let (p0, p1) = (q[k], q[k + 1]);
-        let nl = match b.basis {
-            1 => (p1 - p0) as f64,
-            _ => days(p0, p1, true),
+    let mut cur = o.last;
+    for i in 1..=n {
+        let (ok, next) = days::change_month(sys, cur, months, basis, 0);
+        if !ok {
+            return Err(XlError::NUM);
+        }
+        let nl = days::diff_dates(sys, cur, next, basis, 3).unwrap_or(0.0);
+        let dc_num = if n <= i {
+            days::diff_dates(sys, cur, o.mat, basis, 3).unwrap_or(0.0)
+        } else {
+            nl
         };
-        let end = o.mat.min(p1);
-        dc = crate::x87::add(
-            dc,
-            crate::x87::div(days(p0, if k == nc - 1 { o.mat } else { end }, true), nl),
-        );
-        if o.settle > p1 && b.basis == 0 {
-            ac = crate::x87::add(ac, 1.0);
-        } else if o.settle > p0 {
-            ac = crate::x87::add(ac, crate::x87::div(days(p0, o.settle.min(end), false), nl));
-        }
-        if o.settle < end {
-            dsc = crate::x87::add(dsc, crate::x87::div(days(o.settle.max(p0), end, false), nl));
-        }
+        let a_num = if next < o.settle {
+            dc_num
+        } else if cur < o.settle {
+            days::diff_dates(sys, cur, o.settle, basis, 1).unwrap_or(0.0)
+        } else {
+            0.0
+        };
+        let dsc_num =
+            days::diff_dates(sys, o.settle.max(cur), o.mat.min(next), basis, 0).unwrap_or(0.0);
+        dc = mp.add(mp.div(dc_num, nl), dc);
+        ac = mp.add(mp.div(a_num, nl), ac);
+        dsc = mp.add(mp.div(dsc_num, nl), dsc);
+        cur = next;
     }
-    (dc, ac, dsc)
+    Ok((dc, ac, dsc))
 }
 
 pub fn oddlprice(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
@@ -972,14 +993,14 @@ pub fn oddlprice(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if yld < 0.0 {
             return Err(XlError::NUM);
         }
+        let mp = Mp::default();
         let f = o.freq as f64;
-        let (dc, ac, dsc) = oddl_sums(&o);
+        let (dc, ac, dsc) = oddl_sums(&mp, &o)?;
 
-        use crate::x87::{add, div, mul, sub};
-        let cf = div(mul(100.0, rate), f);
-        let t1 = add(redemption, mul(dc, cf));
-        let t2 = add(div(mul(dsc, yld), f), 1.0);
-        finite(sub(div(t1, t2), mul(ac, cf)))
+        let cf = mp.div(mp.mul(100.0, rate), f);
+        let t1 = mp.add(mp.mul(dc, cf), redemption);
+        let t2 = mp.add(mp.div(mp.mul(dsc, yld), f), 1.0);
+        Ok(mp.sub(mp.div(t1, t2), mp.mul(ac, cf)))
     })())
 }
 
@@ -989,12 +1010,49 @@ pub fn oddlyield(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         if pr <= 0.0 {
             return Err(XlError::NUM);
         }
+        let mp = Mp::default();
         let f = o.freq as f64;
-        let (dc, ac, dsc) = oddl_sums(&o);
-        use crate::x87::{add, div, mul, sub};
-        let cf = div(mul(100.0, rate), f);
-        let t1 = add(redemption, mul(dc, cf));
-        let t2 = add(pr, mul(ac, cf));
-        finite(mul(div(sub(t1, t2), t2), div(f, dsc)))
+        let (dc, ac, dsc) = oddl_sums(&mp, &o)?;
+        let cf = mp.div(mp.mul(100.0, rate), f);
+        let t1 = mp.add(mp.mul(dc, cf), redemption);
+        let t2 = mp.add(mp.mul(ac, cf), pr);
+        let ratio = mp.div(f, dsc);
+        Ok(mp.mul(mp.div(mp.sub(t1, t2), t2), ratio))
     })())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fw_pow_fails_on_the_flag_and_clears_it() {
+        let mp = Mp::default();
+        assert_eq!(fw_pow(&mp, 2.0, 3.0), Some(8.0));
+
+        assert_eq!(mp.mul(f64::MAX, 2.0), 0.0);
+        assert_eq!(fw_pow(&mp, 2.0, 3.0), None);
+        assert_eq!(fw_pow(&mp, 2.0, 3.0), Some(8.0));
+
+        assert_eq!(fw_pow(&mp, 0.0, 0.0), None);
+        assert_eq!(fw_pow(&mp, -2.0, 0.5), None);
+        assert_eq!(fw_pow(&mp, 10.0, 400.0), None);
+        assert_eq!(fw_pow(&mp, -2.0, 2.0), Some(4.0));
+    }
+
+    #[test]
+    fn mp_neg_keeps_zero_and_subnormal_signs() {
+        assert_eq!(negate_nonzero(0.0).to_bits(), 0);
+        assert_eq!(negate_nonzero(5e-324).to_bits(), 5e-324f64.to_bits());
+        assert_eq!(negate_nonzero(1.5), -1.5);
+        assert!(sign_bit(-0.0));
+        assert!(!sign_bit(0.0));
+    }
+
+    #[test]
+    fn a_subnormal_divisor_is_flag_4() {
+        let mp = Mp::default();
+        assert_eq!(mp.div(1.0, 5e-324), 0.0);
+        assert_eq!(mp.code(), 4);
+    }
 }

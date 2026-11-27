@@ -78,7 +78,9 @@ fn header_key(v: &Value) -> Option<Text> {
     match v {
         Value::Blank | Value::Array(_) | Value::Lambda(_) => None,
         Value::Error(e) => Some(Text::from(e.as_str())),
-        v => coerce::to_text(v).ok(),
+        v => coerce::to_text(v)
+            .ok()
+            .filter(|t| t.len() <= 255 || crate::text::utf16_len(t) <= 255),
     }
 }
 
@@ -101,6 +103,8 @@ fn resolve_field(v: &Value, headers: &[Value]) -> R<usize> {
                 Ok(n as usize - 1)
             }
         }
+
+        Value::Text(s) if s.len() > 255 && crate::text::utf16_len(s) > 255 => Err(XlError::VALUE),
         Value::Text(s) if s.is_empty() => headers
             .iter()
             .position(|h| matches!(h, Value::Blank) || matches!(h, Value::Text(t) if t.is_empty()))

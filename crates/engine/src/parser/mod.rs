@@ -2,6 +2,7 @@ pub mod ast;
 pub mod lexer;
 pub(crate) mod namech;
 pub mod print;
+pub(crate) mod prsnam;
 pub mod r1c1;
 pub(crate) mod r1c1name;
 pub mod wild;
@@ -45,7 +46,8 @@ fn parse_entry(
     typed: bool,
 ) -> Result<Expr, ParseError> {
     let body = src.strip_prefix('=').unwrap_or(src);
-    if src.encode_utf16().count() > MAX_FORMULA_CHARS {
+
+    if body.encode_utf16().count() + 1 > MAX_FORMULA_CHARS {
         return Err(ParseError {
             pos: 0,
             message: "formula is too long".into(),
@@ -59,6 +61,8 @@ fn parse_entry(
         funcs: 0,
         parens: 0,
         rhs: 0,
+        uops: 0,
+        operands: 0,
         names_mode: false,
         empty_ws: String::new(),
         binder: 0,
@@ -117,6 +121,10 @@ struct Parser<'a> {
 
     rhs: u32,
 
+    uops: u32,
+
+    operands: u32,
+
     names_mode: bool,
 
     empty_ws: String,
@@ -128,9 +136,15 @@ struct Parser<'a> {
     union_ok: bool,
 }
 
-const MAX_FORMULA_CHARS: usize = 8192;
-const MAX_FUNC_DEPTH: u32 = 65;
-const MAX_PAREN_DEPTH: u32 = 256;
+const MAX_FORMULA_CHARS: usize = 0x2000;
+
+const MAX_FUNC_DEPTH: u32 = 0x41;
+
+const MAX_PAREN_DEPTH: u32 = 0x100;
+
+const MAX_OPR_PUSHES: u32 = (0x8070 - 0x2070) / 0x18 - 1;
+
+const MAX_OPERANDS: u32 = 0x400;
 
 fn col_part(s: &str) -> Option<Coord> {
     let (abs, rest) = match s.strip_prefix('$') {
@@ -340,7 +354,7 @@ impl Parser<'_> {
     }
 
     fn expr(&mut self) -> Result<Expr, ParseError> {
-        stacker::maybe_grow(64 * 1024, 1024 * 1024, || self.comparison())
+        xlcalc_stack::maybe_grow(64 * 1024, 1024 * 1024, || self.comparison())
     }
 
     fn binary_level(
@@ -355,6 +369,7 @@ impl Parser<'_> {
                     let ws = self.cur().ws.clone();
                     left = left.with_ws("", &ws);
                     self.bump();
+                    self.opr_room(1)?;
                     self.rhs += 1;
                     let right = next(self);
                     self.rhs -= 1;
@@ -406,36 +421,41 @@ impl Parser<'_> {
 
     fn percent(&mut self) -> Result<Expr, ParseError> {
         let mut e = self.prefix()?;
-        while self.is_op("%") {
-            let ws = self.cur().ws.clone();
-            self.bump();
-            e = Expr::Percent(Box::new(e.with_ws("", &ws)));
+
+        loop {
+            if self.is_op("%") {
+                let ws = self.cur().ws.clone();
+                self.bump();
+                e = Expr::Percent(Box::new(e.with_ws("", &ws)));
+            } else if let (Expr::Percent(_), Tok::Field(f)) = (&e, &self.cur().tok) {
+                let field = f.clone();
+                self.bump();
+                e = Expr::Field {
+                    expr: Box::new(e),
+                    field,
+                };
+            } else {
+                return Ok(e);
+            }
         }
-        Ok(e)
     }
 
     fn prefix(&mut self) -> Result<Expr, ParseError> {
-        self.check_unary_chain(self.rhs)?;
         let ws = self.cur().ws.clone();
-        let e = stacker::maybe_grow(64 * 1024, 1024 * 1024, || self.prefix_inner())?;
+        let e = xlcalc_stack::maybe_grow(64 * 1024, 1024 * 1024, || self.prefix_inner())?;
         Ok(e.with_ws(&ws, ""))
     }
 
-    fn check_unary_chain(&self, ctx: u32) -> Result<(), ParseError> {
-        let mut n = 0usize;
-        while matches!(self.peek_tok(n), Tok::Op("-" | "+" | "@")) {
-            n += 1;
+    fn opr_room(&self, n: u32) -> Result<(), ParseError> {
+        if self.rhs + self.uops + n > MAX_OPR_PUSHES {
+            return Err(self.err("formula is too complex"));
         }
-        if n == 0 {
-            return Ok(());
-        }
-        let base = match (self.peek_tok(n), self.peek_tok(n + 1)) {
-            (Tok::Number { .. }, _) if !matches!(self.peek_tok(n - 1), Tok::Op("@")) => 0,
-            (Tok::Op("("), _) | (Tok::Ident(_), Tok::Op("(")) => 2,
-            _ => 1,
-        };
-        if n as u32 + ctx + base > 1024 {
-            return Err(self.err("too many consecutive unary operators"));
+        Ok(())
+    }
+
+    fn operand_room(&self) -> Result<(), ParseError> {
+        if self.rhs + self.operands >= MAX_OPERANDS {
+            return Err(self.err("formula is too complex"));
         }
         Ok(())
     }
@@ -448,11 +468,16 @@ impl Parser<'_> {
             _ => None,
         };
         if let Some(op) = op {
+            let folded = op != UnaryOp::Implicit && matches!(self.peek_tok(1), Tok::Number { .. });
+            let pushed = u32::from(!folded);
+            self.opr_room(pushed)?;
             self.bump();
 
             let keep = self.union_ok && op != UnaryOp::Implicit;
             let union_ok = std::mem::replace(&mut self.union_ok, keep);
+            self.uops += pushed;
             let expr = self.prefix();
+            self.uops -= pushed;
             self.union_ok = union_ok;
             let expr = expr?;
             let at_union = op == UnaryOp::Implicit && union_ok;
@@ -474,6 +499,7 @@ impl Parser<'_> {
             };
             return if at_union { self.union_tail(e) } else { Ok(e) };
         }
+        self.operand_room()?;
         self.intersection()
     }
 
@@ -684,7 +710,9 @@ impl Parser<'_> {
         }
         let mark = self.locals.len();
         let union_ok = std::mem::replace(&mut self.union_ok, false);
+        let operands = self.operands;
         let r = self.args_inner();
+        self.operands = operands;
         self.union_ok = union_ok;
         self.locals.truncate(mark);
         self.funcs -= 1;
@@ -704,6 +732,7 @@ impl Parser<'_> {
         loop {
             let k = args.len();
             if self.is_op(",") || self.is_op(")") {
+                self.operand_room()?;
                 args.push(Expr::Missing);
             } else {
                 let var = match (&self.cur().tok, self.peek_tok(1)) {
@@ -736,11 +765,13 @@ impl Parser<'_> {
                     }
                 }
             }
+            self.operands += 1;
             if self.is_op(",") {
                 self.bump();
                 continue;
             }
             if self.is_op(")") {
+                self.opr_room(1)?;
                 let ws = self.cur().ws.clone();
                 if let Some(last) = args.pop() {
                     args.push(if matches!(last, Expr::Missing) {
@@ -792,6 +823,9 @@ impl Parser<'_> {
                         left: Box::new(e),
                         right: Box::new(r),
                     };
+                }
+                if self.is_op(")") {
+                    self.opr_room(1)?;
                 }
                 let ws = if self.is_op(")") {
                     self.cur().ws.clone()
@@ -1106,13 +1140,11 @@ impl Parser<'_> {
                 });
             }
         }
-        if sheet.is_none() {
-            if name.eq_ignore_ascii_case("TRUE") {
-                return Ok(Expr::Bool(true));
+        if name.eq_ignore_ascii_case("TRUE") || name.eq_ignore_ascii_case("FALSE") {
+            if sheet.is_some() {
+                return Err(self.err(format!("invalid name '{name}'")));
             }
-            if name.eq_ignore_ascii_case("FALSE") {
-                return Ok(Expr::Bool(false));
-            }
+            return Ok(Expr::Bool(name.eq_ignore_ascii_case("TRUE")));
         }
         if name.contains('$') || name.starts_with(|c: char| c.is_ascii_digit()) {
             return Err(self.err(format!("invalid reference '{name}'")));
@@ -1226,67 +1258,94 @@ pub fn is_workbook_reserved_name(name: &str) -> bool {
 }
 
 fn is_table_name(name: &str) -> bool {
-    is_valid_name(name)
+    (name.encode_utf16().count() <= 255 && prsnam::prs_nam(name, true))
         || (crate::workbook::tables::table_display_name(name) == name
             && !name.eq_ignore_ascii_case("TRUE")
             && !name.eq_ignore_ascii_case("FALSE"))
 }
 
 pub fn is_valid_name(name: &str) -> bool {
-    let mut chars = name.chars();
-    let Some(first) = chars.next() else {
+    name.encode_utf16().count() <= 255 && prsnam::prs_nam(name, false)
+}
+
+pub fn name_from_label(raw: &str) -> Option<String> {
+    if raw.eq_ignore_ascii_case("TRUE") || raw.eq_ignore_ascii_case("FALSE") {
+        return None;
+    }
+    cch_legal_name(raw)
+}
+
+pub fn cch_legal_name(raw: &str) -> Option<String> {
+    cch_legal_name_with(raw, &|_| false)
+}
+
+fn is_easy_name(name: &str) -> bool {
+    let Some(first) = name.chars().next() else {
         return false;
     };
-    let ok = |c: char, first: bool| {
-        if c.is_ascii() {
-            c.is_ascii_alphabetic()
-                || matches!(c, '_' | '\\')
-                || (!first && (c.is_ascii_digit() || matches!(c, '.' | '?')))
+    if !first.is_alphabetic()
+        || matches!(first, 'R' | 'r' | 'C' | 'c')
+        || name.eq_ignore_ascii_case("TRUE")
+        || name.eq_ignore_ascii_case("FALSE")
+    {
+        return false;
+    }
+    let (mut digits, mut others) = (0, 0);
+    for (i, c) in name.chars().enumerate() {
+        if !prsnam::name_scan_char(c, i == 0) {
+            return false;
+        }
+        if c.is_ascii_digit() {
+            digits += 1;
         } else {
-            namech::name_char(c, first)
+            others += 1;
         }
-    };
-    if !ok(first, true) || !chars.all(|c| ok(c, false)) {
-        return false;
     }
-    if name.encode_utf16().count() > 255 || starts_like_r1c1(name) {
-        return false;
-    }
-    if name.eq_ignore_ascii_case("TRUE") || name.eq_ignore_ascii_case("FALSE") {
-        return false;
-    }
-    if name.eq_ignore_ascii_case("R") || name.eq_ignore_ascii_case("C") {
-        return false;
-    }
+    digits == 0 || others >= 4
+}
 
-    if let Some((base, rest)) = name.split_once('.') {
-        if cell_part(base).is_some() && rest.split('.').any(|seg| cell_part(seg).is_some()) {
-            return false;
+pub(crate) fn cch_legal_name_with(raw: &str, is_table: &dyn Fn(&str) -> bool) -> Option<String> {
+    const MAX: usize = 255;
+    let valid = |s: &str| is_valid_name(s) && (is_easy_name(s) || !is_table(s));
+    let chars: Vec<char> = raw.chars().collect();
+    let first = *chars.first()?;
+    let (first_us, last_us) = (first == '_', *chars.last()? == '_');
+    let mut out: Vec<char> = Vec::new();
+    if !prsnam::name_scan_char(first, true) {
+        out.push('_');
+    }
+    for &c in &chars {
+        if out.len() >= MAX {
+            break;
+        }
+        out.push(if prsnam::name_scan_char(c, out.is_empty()) {
+            c
+        } else {
+            '_'
+        });
+    }
+    if !last_us {
+        while out.len() > 1 && out.last() == Some(&'_') {
+            out.pop();
         }
     }
-    if cell_part(name).is_some() {
-        return false;
-    }
-
-    let up = name.to_ascii_uppercase();
-    let rc = up
-        .strip_prefix('R')
-        .map(|r| r.trim_start_matches(|c: char| c.is_ascii_digit()));
-    if let Some(rest) = rc {
-        if rest.is_empty()
-            || rest
-                .strip_prefix('C')
-                .is_some_and(|c| c.chars().all(|d| d.is_ascii_digit()))
-        {
-            return false;
+    if !first_us {
+        while out.len() > 1 && out[0] == '_' && prsnam::name_scan_char(out[1], true) {
+            out.remove(0);
         }
     }
-    if let Some(rest) = up.strip_prefix('C') {
-        if rest.chars().all(|d| d.is_ascii_digit()) {
-            return false;
+    let base: String = out.iter().collect();
+    if valid(&base) {
+        return Some(base);
+    }
+    if out.len() + 1 < MAX {
+        let appended = format!("{base}_");
+        if valid(&appended) {
+            return Some(appended);
         }
     }
-    true
+    let prepended = format!("_{base}");
+    is_valid_name(&prepended).then_some(prepended)
 }
 
 fn linebreak_operator(ws: &str) -> Option<String> {
@@ -1390,6 +1449,8 @@ mod tests {
         }
         assert!(parse("=1-\u{b2}").is_ok());
         assert!(parse("=- \u{b2}").is_ok());
+
+        assert!(parse("=-\u{2074}").is_ok());
     }
 
     #[test]
@@ -1482,6 +1543,15 @@ mod tests {
         assert_eq!(r1c1::rewrite("=C1!RC", 5, 5).unwrap(), "=C1!F6");
         assert_eq!(r1c1::rewrite("=R1C1!R[1]C", 5, 5).unwrap(), "=R1C1!F7");
         assert_eq!(r1c1::rewrite("=C1!R1C1", 5, 5).unwrap(), "=C1!$A$1");
+
+        assert_eq!(
+            r1c1::rewrite("=SUM(R1C1: $L$6)", 5, 5).unwrap(),
+            "=SUM(\u{1}R1C1: $L$6)"
+        );
+        assert!(r1c1::rewrite("=SUM(R1C1 : $L$6)", 5, 5).is_err());
+        assert!(r1c1::rewrite("=SUM(R1C1:R2C2)", 5, 5)
+            .unwrap()
+            .contains("$B$2"));
         assert_eq!(r1c1::rewrite("=RC.", 5, 5).unwrap(), "=RC.");
         assert_eq!(r1c1::rewrite("=R1C1.x", 5, 5).unwrap(), "=$A$1.x");
         assert!(r1c1::rewrite("=RC[1].", 5, 5).is_err());
@@ -1516,5 +1586,30 @@ mod tests {
         assert!(!is_valid_name("R1C1"));
         assert!(!is_valid_name("TRUE"));
         assert!(!is_valid_name("1abc"));
+        assert!(!is_valid_name("_xlfoo"));
+
+        assert!(is_table_name("_xlfoo"));
+    }
+
+    #[test]
+    fn names_from_labels() {
+        for (label, name) in [
+            ("_xlfoo", Some("__xlfoo")),
+            ("_x", Some("_x")),
+            ("abc1", Some("abc1_")),
+            ("R1C1", Some("_R1C1")),
+            ("R1", Some("_R1")),
+            ("R1C", Some("_R1C")),
+            ("r", Some("r_")),
+            ("RC", Some("RC_")),
+            ("xfd1", Some("xfd1_")),
+            ("xfe1", Some("xfe1")),
+            ("R1.C1", Some("R1.C1_")),
+            ("1abc", Some("_1abc")),
+            ("a b", Some("a_b")),
+            ("TRUE", None),
+        ] {
+            assert_eq!(name_from_label(label).as_deref(), name, "{label}");
+        }
     }
 }

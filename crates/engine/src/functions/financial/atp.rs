@@ -7,16 +7,6 @@ pub type Arg = Option<Value>;
 
 pub type Imp = fn(&mut EvalCtx, &[Arg]) -> Value;
 
-pub fn call(
-    ctx: &mut EvalCtx,
-    ops: &[Operand],
-    array_params: &[usize],
-    quirk: bool,
-    f: Imp,
-) -> Operand {
-    call_ex(ctx, ops, array_params, quirk, false, f)
-}
-
 pub fn call_ex(
     ctx: &mut EvalCtx,
     ops: &[Operand],
@@ -142,7 +132,19 @@ pub fn date(ctx: &EvalCtx, a: &[Arg], i: usize) -> R<i64> {
         .get(i)
         .and_then(|v| v.as_ref())
         .map_or(0.0, |v| ctx.atp_text_shift(v));
-    check_date(ctx, x + shift).map(|d| d - shift as i64)
+    check_date(ctx, x).map(|d| d - shift as i64)
+}
+
+pub fn kernel_offset(ctx: &EvalCtx) -> i64 {
+    if date_system(ctx) == DateSystem::D1904 {
+        1462
+    } else {
+        0
+    }
+}
+
+pub fn kernel_date(ctx: &EvalCtx, a: &[Arg], i: usize) -> R<i64> {
+    date(ctx, a, i).map(|d| d + kernel_offset(ctx))
 }
 
 pub fn basis(ctx: &EvalCtx, a: &[Arg], i: usize) -> R<i32> {

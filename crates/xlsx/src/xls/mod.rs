@@ -37,4 +37,4 @@ pub(crate) struct Rec<'a> {
 }
 
 pub(crate) use read::{is_cfb, to_xlsx};
-pub use write::xlsx_to_xls;
+pub use write::{xlsx_to_xls, xlsx_to_xls_of};

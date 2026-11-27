@@ -89,7 +89,7 @@ fn indices(bounds: &[(i32, u32)]) -> impl Iterator<Item = Vec<i32>> + '_ {
 }
 
 pub fn bstr(s: &str) -> *mut u16 {
-    let units: Vec<u16> = s.encode_utf16().collect();
+    let units: Vec<u16> = xlcalc::wide::units(s).collect();
     unsafe { SysAllocStringLen(units.as_ptr(), units.len() as u32) }
 }
 
@@ -98,7 +98,7 @@ unsafe fn read_bstr(p: *const u16) -> String {
         return String::new();
     }
     let units = std::slice::from_raw_parts(p, SysStringLen(p) as usize);
-    String::from_utf16_lossy(units)
+    xlcalc::wide::from_units(units)
 }
 
 pub fn to_raw(v: &Variant, cx: &mut Objects) -> Result<RawVariant, HResult> {

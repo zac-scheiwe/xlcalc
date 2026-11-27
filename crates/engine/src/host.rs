@@ -472,7 +472,7 @@ pub(crate) fn call(
         return Operand::err(XlError::CALC);
     }
     let mut cx = CallContext::new(ReadView::new(ctx.wb, ctx.host), sig.volatile);
-    cx.legacy = (ctx.legacy_form || under_at) && !ctx.in_array_block();
+    cx.legacy = under_at && !ctx.in_array_block();
     if waits.is_some_and(|g| ctx.wb.calc.no_empty_call && !ctx.wb.calc.moved_now.contains(&g)) {
         ctx.interrupt = waits.map(Interrupt::Pending);
         return Operand::err(XlError::CALC);
@@ -549,12 +549,14 @@ impl Workbook {
         }
 
         let up = body.trim().to_ascii_uppercase();
-        let full_rc = up.strip_prefix('R').is_some_and(|r| {
-            r.split_once('C').is_some_and(|(a, b)| {
-                !a.is_empty()
-                    && !b.is_empty()
-                    && a.bytes().all(|c| c.is_ascii_digit())
-                    && b.bytes().all(|c| c.is_ascii_digit())
+        let full_rc = up.split(':').any(|part| {
+            part.strip_prefix('R').is_some_and(|r| {
+                r.split_once('C').is_some_and(|(a, b)| {
+                    !a.is_empty()
+                        && !b.is_empty()
+                        && a.bytes().all(|c| c.is_ascii_digit())
+                        && b.bytes().all(|c| c.is_ascii_digit())
+                })
             })
         });
         if full_rc || up.contains("R[") || up.contains("C[") {
@@ -607,6 +609,7 @@ impl Workbook {
             }
         }
         let mut ctx = EvalCtx::with_mode(self, host, crate::eval::ReadMode::Stale);
+        ctx.outside_formula = true;
         let op = ctx.eval(&f.root);
         if ctx.interrupted() && !matches!(op, crate::eval::Operand::Ref(_)) {
             return bad();
@@ -618,8 +621,49 @@ impl Workbook {
         }
     }
 
+    pub fn dot_notation_range(&self, text: &str, host: CellAddr) -> Option<Vec<Area>> {
+        use crate::eval::{EvalCtx, Operand, Reference};
+        use crate::formula::Node;
+        let body = text.strip_prefix('=').unwrap_or(text);
+        let (f, _) = self.compile_normalized(body, host).ok()?;
+        let field = crate::functions::lookup(crate::functions::info::FIELD_FN)?;
+        let mut node = &f.root;
+        let mut fields = 0;
+        while let Node::Func { id, args } = node {
+            if *id != field {
+                break;
+            }
+            node = args.first()?;
+            fields += 1;
+        }
+        if fields == 0 || !matches!(node, Node::Ref(..)) {
+            return None;
+        }
+        let mut ctx = EvalCtx::with_mode(self, host, crate::eval::ReadMode::Stale);
+        match ctx.eval(node) {
+            Operand::Ref(Reference::Area(a)) => Some(vec![a]),
+            Operand::Ref(Reference::Multi(m)) => Some(m.to_vec()),
+            _ => None,
+        }
+    }
+
+    pub fn note_dot_notation_name(&mut self, text: &str) {
+        self.names.note_hidden(text.trim());
+    }
+
     pub fn call_function(&self, at: CellAddr, name: &str, args: &[Arg]) -> Option<Value> {
-        self.call_function_in(at, name, args, &self.locale)
+        use crate::eval::{EvalCtx, Operand, ReadMode, Reference};
+        Some(match self.call_function_in(at, name, args, &self.locale)? {
+            Evaluated::Value(v) => v,
+            Evaluated::Ref(areas) => {
+                let mut ctx = EvalCtx::with_mode(self, at, ReadMode::Stale);
+                let r = match areas.as_slice() {
+                    [a] => Reference::Area(*a),
+                    _ => Reference::Multi(areas.into()),
+                };
+                crate::eval::finalize_keeping_nil(ctx.deref(Operand::Ref(r)))
+            }
+        })
     }
 
     pub fn call_function_in(
@@ -628,48 +672,73 @@ impl Workbook {
         name: &str,
         args: &[Arg],
         locale: &crate::Locale,
-    ) -> Option<Value> {
+    ) -> Option<Evaluated> {
+        use crate::eval::{EvalCtx, Operand, ReadMode, Reference};
         use crate::formula::{CRef, Node, Rc, SheetRef};
+        use crate::parser::ast::{BinOp, UnaryOp};
         let id = crate::functions::lookup(&name.to_uppercase())?;
         let def = crate::functions::def(id);
         if args.len() < usize::from(def.min_args) || args.len() > usize::from(def.max_args) {
-            return Some(Value::Error(crate::value::XlError::VALUE));
+            return Some(Evaluated::Value(Value::Error(crate::value::XlError::VALUE)));
         }
         let abs = |v: u32| Rc {
             v: v as i32,
             abs: true,
         };
-        let nodes = args
+        let area_node = |area: &Area| {
+            let r = area.rect;
+            let cref = if r.is_cell() {
+                CRef::Cell {
+                    row: abs(r.r0),
+                    col: abs(r.c0),
+                }
+            } else {
+                CRef::Area {
+                    r0: abs(r.r0),
+                    c0: abs(r.c0),
+                    r1: abs(r.r1),
+                    c1: abs(r.c1),
+                }
+            };
+            Node::Ref(SheetRef::Sheet(area.sheet), cref)
+        };
+        let mut nodes: Vec<Node> = args
             .iter()
             .map(|a| match a {
                 Arg::Missing => Node::Missing,
                 Arg::Value(v) => Node::Lit(v.clone()),
-                Arg::Ref(areas) | Arg::XRef(areas) => match areas.first() {
-                    Some(area) => {
-                        let r = area.rect;
-                        let cref = if r.is_cell() {
-                            CRef::Cell {
-                                row: abs(r.r0),
-                                col: abs(r.c0),
-                            }
-                        } else {
-                            CRef::Area {
-                                r0: abs(r.r0),
-                                c0: abs(r.c0),
-                                r1: abs(r.r1),
-                                c1: abs(r.c1),
-                            }
-                        };
-                        Node::Ref(SheetRef::Sheet(area.sheet), cref)
+                Arg::Ref(areas) | Arg::XRef(areas) => {
+                    let union = areas
+                        .iter()
+                        .map(area_node)
+                        .reduce(|a, b| Node::Binary(BinOp::Union, Box::new(a), Box::new(b)));
+                    match union {
+                        Some(u) if areas.len() > 1 => Node::Paren(Box::new(u)),
+                        Some(one) => one,
+                        None => Node::Lit(Value::Error(crate::value::XlError::REF)),
                     }
-                    None => Node::Lit(Value::Error(crate::value::XlError::REF)),
-                },
+                }
             })
             .collect();
-        let root = Node::Func { id, args: nodes };
-        let mut ctx = crate::eval::EvalCtx::with_mode(self, at, crate::eval::ReadMode::Stale);
+
+        let root = match (def.name, nodes.len()) {
+            ("SINGLE", 1) => Node::Unary(UnaryOp::Implicit, Box::new(nodes.remove(0))),
+            _ => Node::Func { id, args: nodes },
+        };
+        let mut ctx = EvalCtx::with_mode(self, at, ReadMode::Stale);
         ctx.locale = locale;
-        Some(crate::eval::eval_formula(&mut ctx, &root))
+        ctx.outside_formula = true;
+
+        let op = ctx.call_from_outside(&root);
+        let areas = match &op {
+            Operand::Ref(Reference::Area(a)) => Some(vec![*a]),
+            Operand::Ref(Reference::Multi(m)) => Some(m.to_vec()),
+            _ => None,
+        };
+        Some(match areas {
+            Some(areas) if crate::functions::returns_ref(def.name) => Evaluated::Ref(areas),
+            _ => Evaluated::Value(crate::eval::finalize_keeping_nil(ctx.convert_back(op))),
+        })
     }
 }
 

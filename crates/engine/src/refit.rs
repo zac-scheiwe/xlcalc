@@ -48,8 +48,6 @@ pub fn border_gate(old: &Style, new: &Style) -> bool {
 pub enum RefitTest {
     Xf { font_put: bool },
 
-    AnyChange,
-
     HorizontalBorder,
 }
 
@@ -87,7 +85,6 @@ impl Workbook {
     pub fn refit_rows_after(&self, snap: &FormatSnap, test: RefitTest) -> Vec<u32> {
         let changed = |old: &Style, new: &Style| match test {
             RefitTest::Xf { .. } => xf_ifnt_changed(old, new),
-            RefitTest::AnyChange => old != new,
             RefitTest::HorizontalBorder => border_gate(old, new),
         };
         let font_put = test == RefitTest::Xf { font_put: true };

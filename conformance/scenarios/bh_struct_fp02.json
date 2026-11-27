@@ -1,0 +1,671 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "c"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "9"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets(1).ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "Worksheets(1).Range('A1:C4')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(1)",
+   "prop": "Name",
+   "value": "T"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(1)",
+   "prop": "ShowTotals",
+   "value": true
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F1",
+   "input": "=T[a]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F2",
+   "input": "=T[[a]:[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F3",
+   "input": "=T[[a]:[b]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F4",
+   "input": "=T[[#Headers],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F5",
+   "input": "=T[[#Totals],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F6",
+   "input": "=T[[#Data],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F7",
+   "input": "=T[[#All],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F8",
+   "input": "=T[[#Headers],[#Data],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F9",
+   "input": "=T[[#Totals],[#Data],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F10",
+   "input": "=T[[#Headers],[#Totals],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F11",
+   "input": "=T[[#Headers],[a]:[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F12",
+   "input": "=T[[#Headers],[a]:[b]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F13",
+   "input": "=T[[#Totals],[a]:[b]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F14",
+   "input": "=T[#Headers]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F15",
+   "input": "=T[#Totals]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F16",
+   "input": "=T[#Data]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F17",
+   "input": "=T[#All]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F18",
+   "input": "=T[[#Headers],[#Data]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F19",
+   "input": "=T+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F20",
+   "input": "=ABS(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F21",
+   "input": "=ABS(T[[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F22",
+   "input": "=ABS(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F23",
+   "input": "=ABS(T[[#Headers],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F24",
+   "input": "=ABS(T[[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F25",
+   "input": "=ABS(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F26",
+   "input": "=ABS(T[[#All],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F27",
+   "input": "=ABS(T[[#Headers],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F28",
+   "input": "=ABS(T[[#Totals],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F29",
+   "input": "=ABS(T[[#Headers],[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F30",
+   "input": "=ABS(T[[#Headers],[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F31",
+   "input": "=ABS(T[[#Headers],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F32",
+   "input": "=ABS(T[[#Totals],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F33",
+   "input": "=ABS(T[#Headers])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F34",
+   "input": "=ABS(T[#Totals])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F35",
+   "input": "=ABS(T[#Data])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F36",
+   "input": "=ABS(T[#All])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F37",
+   "input": "=ABS(T[[#Headers],[#Data]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F38",
+   "input": "=ABS(T)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F39",
+   "input": "=INDEX(T[a],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F40",
+   "input": "=INDEX(T[[a]:[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F41",
+   "input": "=INDEX(T[[a]:[b]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F42",
+   "input": "=INDEX(T[[#Headers],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F43",
+   "input": "=INDEX(T[[#Totals],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F44",
+   "input": "=INDEX(T[[#Data],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F45",
+   "input": "=INDEX(T[[#All],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F46",
+   "input": "=INDEX(T[[#Headers],[#Data],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F47",
+   "input": "=INDEX(T[[#Totals],[#Data],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F48",
+   "input": "=INDEX(T[[#Headers],[#Totals],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F49",
+   "input": "=INDEX(T[[#Headers],[a]:[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F50",
+   "input": "=INDEX(T[[#Headers],[a]:[b]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F51",
+   "input": "=INDEX(T[[#Totals],[a]:[b]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F52",
+   "input": "=INDEX(T[#Headers],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F53",
+   "input": "=INDEX(T[#Totals],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F54",
+   "input": "=INDEX(T[#Data],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F55",
+   "input": "=INDEX(T[#All],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F56",
+   "input": "=INDEX(T[[#Headers],[#Data]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F57",
+   "input": "=INDEX(T,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F58",
+   "input": "=LEN(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F59",
+   "input": "=LEN(T[[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F60",
+   "input": "=LEN(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F61",
+   "input": "=LEN(T[[#Headers],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F62",
+   "input": "=LEN(T[[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F63",
+   "input": "=LEN(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F64",
+   "input": "=LEN(T[[#All],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F65",
+   "input": "=LEN(T[[#Headers],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F66",
+   "input": "=LEN(T[[#Totals],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F67",
+   "input": "=LEN(T[[#Headers],[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F68",
+   "input": "=LEN(T[[#Headers],[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F69",
+   "input": "=LEN(T[[#Headers],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F70",
+   "input": "=LEN(T[[#Totals],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F71",
+   "input": "=LEN(T[#Headers])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F72",
+   "input": "=LEN(T[#Totals])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F73",
+   "input": "=LEN(T[#Data])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F74",
+   "input": "=LEN(T[#All])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F75",
+   "input": "=LEN(T[[#Headers],[#Data]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F76",
+   "input": "=LEN(T)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F77",
+   "input": "=SUM(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F78",
+   "input": "=SUM(T[[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F79",
+   "input": "=SUM(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F80",
+   "input": "=SUM(T[[#Headers],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F81",
+   "input": "=SUM(T[[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F82",
+   "input": "=SUM(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F83",
+   "input": "=SUM(T[[#All],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F84",
+   "input": "=SUM(T[[#Headers],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F85",
+   "input": "=SUM(T[[#Totals],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F86",
+   "input": "=SUM(T[[#Headers],[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F87",
+   "input": "=SUM(T[[#Headers],[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F88",
+   "input": "=SUM(T[[#Headers],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F89",
+   "input": "=SUM(T[[#Totals],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F90",
+   "input": "=SUM(T[#Headers])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F91",
+   "input": "=SUM(T[#Totals])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F92",
+   "input": "=SUM(T[#Data])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F93",
+   "input": "=SUM(T[#All])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F94",
+   "input": "=SUM(T[[#Headers],[#Data]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F95",
+   "input": "=SUM(T)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F96",
+   "input": "=ROWS(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F97",
+   "input": "=ROWS(T[[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F98",
+   "input": "=ROWS(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F99",
+   "input": "=ROWS(T[[#Headers],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F100",
+   "input": "=ROWS(T[[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F101",
+   "input": "=ROWS(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F102",
+   "input": "=ROWS(T[[#All],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F103",
+   "input": "=ROWS(T[[#Headers],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F104",
+   "input": "=ROWS(T[[#Totals],[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F105",
+   "input": "=ROWS(T[[#Headers],[#Totals],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F106",
+   "input": "=ROWS(T[[#Headers],[a]:[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F107",
+   "input": "=ROWS(T[[#Headers],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F108",
+   "input": "=ROWS(T[[#Totals],[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F109",
+   "input": "=ROWS(T[#Headers])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F110",
+   "input": "=ROWS(T[#Totals])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F111",
+   "input": "=ROWS(T[#Data])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F112",
+   "input": "=ROWS(T[#All])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F113",
+   "input": "=ROWS(T[[#Headers],[#Data]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F114",
+   "input": "=ROWS(T)"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!F1:F114"
+  }
+ ]
+}

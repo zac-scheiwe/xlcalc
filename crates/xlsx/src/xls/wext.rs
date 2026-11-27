@@ -34,6 +34,10 @@ fn encode_url(target: &str, rooted: bool) -> String {
     out
 }
 
+fn unscoped_names(names: &[xlcalc::ExtName]) -> Vec<&xlcalc::ExtName> {
+    names.iter().filter(|n| n.scope.is_none()).collect()
+}
+
 fn name_rgce(sheets: &[String], n: &xlcalc::ExtName) -> Vec<u8> {
     let Some(s) = sheets
         .iter()
@@ -92,16 +96,16 @@ pub(super) fn read_all(
         let url = encode_url(&link.target, link.rooted);
         let mut d = Vec::new();
         d.extend((sheets.len() as u16).to_le_bytes());
-        d.extend((url.encode_utf16().count() as u16).to_le_bytes());
+        d.extend((xlcalc::wide::units(&url).count() as u16).to_le_bytes());
         put_chars(&mut d, &url);
         for s in &sheets {
-            d.extend((s.encode_utf16().count() as u16).to_le_bytes());
+            d.extend((xlcalc::wide::units(s).count() as u16).to_le_bytes());
             put_chars(&mut d, s);
         }
         records.push((0x1AE, d));
-        for nm in &link.names {
+        for nm in unscoped_names(&link.names) {
             let mut d = vec![0u8; 6];
-            d.push(nm.name.encode_utf16().count().min(255) as u8);
+            d.push(xlcalc::wide::units(&nm.name).count().min(255) as u8);
             put_chars(&mut d, &nm.name);
             let rgce = name_rgce(&sheets, nm);
             d.extend((rgce.len() as u16).to_le_bytes());
@@ -148,7 +152,9 @@ pub(super) fn read_all(
                         }
                         Value::Text(t) => {
                             d.push(2);
-                            d.extend((t.encode_utf16().count().min(255) as u16).to_le_bytes());
+                            d.extend(
+                                (xlcalc::wide::units(t).count().min(255) as u16).to_le_bytes(),
+                            );
                             put_chars(&mut d, t);
                         }
                         Value::Bool(b) => {
@@ -170,7 +176,10 @@ pub(super) fn read_all(
         out.push(ExtOut {
             ent: ExtBookEnt {
                 sheets,
-                names: link.names.iter().map(|n| n.name.clone()).collect(),
+                names: unscoped_names(&link.names)
+                    .iter()
+                    .map(|n| n.name.clone())
+                    .collect(),
             },
             records,
         });
@@ -183,5 +192,23 @@ pub(super) fn write(o: &mut Out, exts: &[ExtOut]) {
         for (id, d) in &e.records {
             o.rec(*id, d);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sheet_local_names_are_left_out_of_the_names_written() {
+        let global = xlcalc::ExtName::parse("gn", "'[1]Data'!$A$1").unwrap();
+        let mut local = xlcalc::ExtName::parse("loc", "'[1]Data'!$A$2").unwrap();
+        local.scope = Some("Data".to_string());
+        let names = [local, global];
+        let kept: Vec<&str> = unscoped_names(&names)
+            .iter()
+            .map(|n| n.name.as_str())
+            .collect();
+        assert_eq!(kept, ["gn"]);
     }
 }

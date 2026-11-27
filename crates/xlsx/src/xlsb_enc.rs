@@ -2,6 +2,7 @@ use crate::xlsb_ftab::ftab;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 use xlcalc::parser::ast::{ArrayItem, BinOp, Coord, Expr, RefKind, SheetSpec, UnaryOp};
+use xlcalc::{FormulaContext, TokenClass, TokenClasses};
 
 const MAX_ROW: u32 = 0xF_FFFF;
 const MAX_COL: u32 = 0x3FFF;
@@ -51,6 +52,8 @@ pub(crate) struct State {
     pub legacy: bool,
 
     pub row: u32,
+
+    pub col: u32,
 
     pub addins: Vec<String>,
 }
@@ -215,22 +218,15 @@ impl State {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub(crate) enum Cls {
-    Value,
-    Ref,
-    Arr,
-}
-
-impl Cls {
-    fn bits(self) -> u8 {
-        match self {
-            Cls::Ref => 0x20,
-            Cls::Value => 0x40,
-            Cls::Arr => 0x60,
-        }
+fn bits(c: TokenClass) -> u8 {
+    match c {
+        TokenClass::Reference => REF,
+        TokenClass::Value => 0x40,
+        TokenClass::Array => 0x60,
     }
 }
+
+const REF: u8 = 0x20;
 
 pub(crate) struct Rgce {
     pub rgce: Vec<u8>,
@@ -296,6 +292,10 @@ struct Enc<'a> {
     volatile: bool,
 
     lets: Vec<String>,
+    context: FormulaContext,
+    classes: TokenClasses,
+
+    in_range: bool,
 }
 
 pub(crate) fn encode(
@@ -304,7 +304,7 @@ pub(crate) fn encode(
     st: &mut State,
     cur: Option<u32>,
     src: &str,
-    top: Cls,
+    context: FormulaContext,
 ) -> Result<Rgce, String> {
     let src = crate::ftext::dead_refs(src, true);
     let expr = xlcalc::parser::parse(&src).map_err(|e| e.to_string())?;
@@ -317,8 +317,11 @@ pub(crate) fn encode(
         ex: Vec::new(),
         volatile: false,
         lets: Vec::new(),
+        context,
+        classes: xlcalc::token_classes(&expr, context),
+        in_range: false,
     };
-    e.emit(&expr, top)?;
+    e.emit(&expr)?;
     let mut rgce = Vec::new();
     if e.volatile {
         rgce.extend([0x19, 0x01, 0, 0]);
@@ -409,32 +412,30 @@ impl Enc<'_> {
         }
     }
 
-    fn sub(&mut self, e: &Expr, cls: Cls) -> Result<Vec<u8>, String> {
+    fn bits(&self, e: &Expr) -> u8 {
+        bits(self.classes.of(e))
+    }
+
+    fn sub(&mut self, e: &Expr) -> Result<Vec<u8>, String> {
         let saved = std::mem::take(&mut self.out);
-        let r = self.emit(e, cls);
+        let r = self.emit(e);
         let got = std::mem::replace(&mut self.out, saved);
         r.map(|()| got)
     }
 
-    fn coord_ref(&mut self, sheet: Option<&SheetSpec>, ptg: u8, cls: Cls) -> Result<(), String> {
+    fn coord_ref(&mut self, sheet: Option<&SheetSpec>, ptg: u8, cls: u8) -> Result<(), String> {
         match sheet {
-            None => self.out.push(ptg | cls.bits()),
+            None => self.out.push(ptg | cls),
             Some(s) => {
                 let ix = self.ixti(s)?;
-                self.out.push((ptg + 0x16) | cls.bits());
+                self.out.push((ptg + 0x16) | cls);
                 self.out.extend(ix.to_le_bytes());
             }
         }
         Ok(())
     }
 
-    fn emit(&mut self, e: &Expr, cls: Cls) -> Result<(), String> {
-        let child = match cls {
-            Cls::Arr => Cls::Arr,
-
-            Cls::Ref if self.st.legacy => Cls::Ref,
-            _ => Cls::Value,
-        };
+    fn emit(&mut self, e: &Expr) -> Result<(), String> {
         match e {
             Expr::Number(n) => {
                 if n.fract() == 0.0 && (0.0..=65535.0).contains(n) && !n.is_sign_negative() {
@@ -446,7 +447,7 @@ impl Enc<'_> {
                 }
             }
             Expr::Text(t) => {
-                let units: Vec<u16> = t.encode_utf16().collect();
+                let units: Vec<u16> = xlcalc::wide::units(t).collect();
                 if units.len() > 255 {
                     return Err("text longer than 255 characters".into());
                 }
@@ -457,60 +458,76 @@ impl Enc<'_> {
                 }
             }
             Expr::Bool(b) => self.out.extend([0x1D, u8::from(*b)]),
+
+            Expr::Error(x) if error_code(x.as_str()) == Some(0x17) => {
+                self.out.push(0x0A | self.bits(e));
+                self.out.extend([0u8; 6]);
+            }
             Expr::Error(x) => {
                 let c = error_code(x.as_str()).ok_or("error value")?;
                 self.out.extend([0x1C, c]);
             }
             Expr::DeadRef(sheet) | Expr::DeadTable { sheet, .. } => {
                 let ix = self.ixti(sheet)?;
-                self.out.push(0x1C | cls.bits());
+                self.out.push(0x1C | self.bits(e));
                 self.out.extend(ix.to_le_bytes());
                 self.out.extend([0u8; 6]);
             }
-            Expr::Array(rows) => self.array(rows, cls)?,
-            Expr::Ref { sheet, kind } => self.reference(sheet.as_ref(), kind, cls)?,
-            Expr::Name { sheet, name } => self.name(sheet.as_ref(), name, cls)?,
-            Expr::StructRef { table, spec } => self.struct_ref(table.as_deref(), spec, cls)?,
-            Expr::Func { name, args } => self.func(name, args, cls)?,
+            Expr::Array(rows) => self.array(rows, self.bits(e))?,
+            Expr::Ref { sheet, kind } => self.reference(sheet.as_ref(), kind, self.bits(e))?,
+            Expr::Name { sheet, name } => self.name(sheet.as_ref(), name, self.bits(e))?,
+            Expr::StructRef { table, spec } => {
+                self.struct_ref(table.as_deref(), spec, self.bits(e))?;
+            }
+            Expr::Func { name, args } => {
+                let outer = std::mem::replace(&mut self.in_range, false);
+                self.func(name, args, self.bits(e))?;
+                self.in_range = outer;
+            }
             Expr::Unary { op, expr } => {
                 let tok = match op {
                     UnaryOp::Neg => 0x13,
                     UnaryOp::Plus => 0x12,
                     _ => return Err("implicit intersection operator".into()),
                 };
-                self.emit(expr, child)?;
+                self.emit(expr)?;
                 self.out.push(tok);
             }
             Expr::Percent(x) => {
-                self.emit(x, child)?;
+                self.emit(x)?;
                 self.out.push(0x14);
             }
             Expr::Binary { op, left, right } => {
-                let c = if matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) {
-                    Cls::Ref
-                } else {
-                    child
-                };
-                self.emit(left, c)?;
-                self.emit(right, c)?;
+                let range = matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union);
+                let outermost = range && !self.in_range;
+                let at = self.out.len();
+                let outer = std::mem::replace(&mut self.in_range, range);
+                self.emit(left)?;
+                self.emit(right)?;
+                self.in_range = outer;
                 self.out.push(cmp_bin(*op).ok_or("operator")?);
+                if outermost {
+                    self.mem(e, at)?;
+                }
             }
             Expr::Paren(x) => {
-                self.emit(x, cls)?;
+                self.emit(x)?;
                 self.out.push(0x15);
             }
             Expr::Missing => self.out.push(0x16),
 
             Expr::Unwritten => {}
-            Expr::Ws { expr, .. } => self.emit(expr, cls)?,
+            Expr::Ws { expr, .. } => self.emit(expr)?,
             Expr::Spill(_) => return Err("spill reference operator".into()),
             Expr::Field { .. } => return Err("data type field".into()),
             Expr::Call { callee, args } => {
-                self.emit(callee, Cls::Value)?;
+                let outer = std::mem::replace(&mut self.in_range, false);
+                self.emit(callee)?;
                 for a in args {
-                    self.emit(a, Cls::Value)?;
+                    self.emit(a)?;
                 }
-                self.out.push(0x02 | Cls::Value.bits());
+                self.in_range = outer;
+                self.out.push(0x02 | self.bits(e));
                 self.out.push((args.len() + 1) as u8);
                 self.out.extend(0x00FFu16.to_le_bytes());
             }
@@ -518,13 +535,40 @@ impl Enc<'_> {
         Ok(())
     }
 
-    fn array(&mut self, rows: &[Vec<ArrayItem>], cls: Cls) -> Result<(), String> {
+    fn mem(&mut self, e: &Expr, at: usize) -> Result<(), String> {
+        let class = self.classes.of(e);
+        let found = match self.context {
+            FormulaContext::Name => Constant::No,
+            _ => constant_areas(e),
+        };
+        let cls = bits(class);
+        let mut head = match found {
+            Constant::No => vec![0x09 | cls],
+            Constant::Error(code) => vec![0x07 | cls, code, 0, 0, 0],
+            Constant::Areas(a) if class != TokenClass::Reference && a.len() != 1 => {
+                vec![0x07 | cls, 0x0F, 0, 0, 0]
+            }
+            Constant::Areas(areas) => {
+                self.ex.extend((areas.len() as u32).to_le_bytes());
+                for v in areas.iter().flatten() {
+                    self.ex.extend(v.to_le_bytes());
+                }
+                vec![0x06 | cls, 0, 0, 0, 0]
+            }
+        };
+        let cce = u16::try_from(self.out.len() - at).map_err(|_| "formula too long")?;
+        head.extend(cce.to_le_bytes());
+        self.out.splice(at..at, head);
+        Ok(())
+    }
+
+    fn array(&mut self, rows: &[Vec<ArrayItem>], cls: u8) -> Result<(), String> {
         let h = rows.len();
         let w = rows.first().map_or(0, Vec::len);
         if h == 0 || w == 0 || rows.iter().any(|r| r.len() != w) {
             return Err("ragged array constant".into());
         }
-        self.out.push(cls.bits());
+        self.out.push(cls);
         self.out.extend(((w - 1) as u16).to_le_bytes());
         self.out.extend(((h - 1) as u16).to_le_bytes());
         self.out.extend([0u8; 10]);
@@ -537,7 +581,7 @@ impl Enc<'_> {
                     self.ex.extend(n.to_le_bytes());
                 }
                 ArrayItem::Text(t) => {
-                    let units: Vec<u16> = t.encode_utf16().collect();
+                    let units: Vec<u16> = xlcalc::wide::units(t).collect();
                     if units.len() > 255 {
                         return Err("array text longer than 255 characters".into());
                     }
@@ -561,7 +605,7 @@ impl Enc<'_> {
         &mut self,
         sheet: Option<&SheetSpec>,
         kind: &RefKind,
-        cls: Cls,
+        cls: u8,
     ) -> Result<(), String> {
         let rel = |c: &Coord| !c.abs;
         match kind {
@@ -600,11 +644,11 @@ impl Enc<'_> {
         Ok(())
     }
 
-    fn name(&mut self, sheet: Option<&SheetSpec>, name: &str, cls: Cls) -> Result<(), String> {
+    fn name(&mut self, sheet: Option<&SheetSpec>, name: &str, cls: u8) -> Result<(), String> {
         match sheet {
             None if self.lets.iter().any(|l| l.eq_ignore_ascii_case(name)) => {
                 let idx = self.st.param_name(name);
-                self.out.push(0x03 | cls.bits());
+                self.out.push(0x03 | cls);
                 self.out.extend(idx.to_le_bytes());
             }
             None => {
@@ -613,7 +657,7 @@ impl Enc<'_> {
                     .and_then(|c| self.st.find_name(name, Some(c)))
                     .or_else(|| self.st.find_name(name, None))
                     .ok_or_else(|| format!("name {name} is not defined"))?;
-                self.out.push(0x03 | cls.bits());
+                self.out.push(0x03 | cls);
                 self.out.extend(idx.to_le_bytes());
             }
             Some(SheetSpec::Single(s)) => {
@@ -627,7 +671,18 @@ impl Enc<'_> {
                         self.st.xti_index(-2, -2),
                     ),
                 };
-                self.out.push(0x19 | cls.bits());
+                self.out.push(0x19 | cls);
+                self.out.extend(ix.to_le_bytes());
+                self.out.extend(idx.to_le_bytes());
+            }
+
+            Some(SheetSpec::External { book, sheet: None }) if book == "0" => {
+                let idx = self
+                    .st
+                    .find_name(name, None)
+                    .ok_or_else(|| format!("name {name} is not defined"))?;
+                let ix = self.st.xti_index(-2, -2);
+                self.out.push(0x19 | cls);
                 self.out.extend(ix.to_le_bytes());
                 self.out.extend(idx.to_le_bytes());
             }
@@ -641,7 +696,7 @@ impl Enc<'_> {
                     as u32
                     + 1;
                 let ix = self.st.xti_book(n, -2, -2);
-                self.out.push(0x19 | cls.bits());
+                self.out.push(0x19 | cls);
                 self.out.extend(ix.to_le_bytes());
                 self.out.extend(idx.to_le_bytes());
             }
@@ -650,7 +705,7 @@ impl Enc<'_> {
         Ok(())
     }
 
-    fn struct_ref(&mut self, table: Option<&str>, spec: &str, cls: Cls) -> Result<(), String> {
+    fn struct_ref(&mut self, table: Option<&str>, spec: &str, cls: u8) -> Result<(), String> {
         let tname = table.ok_or("structured reference without a table name")?;
         let t = self
             .tables
@@ -721,6 +776,10 @@ impl Enc<'_> {
             let hdr = u32::from(a.header);
             let (mut r0, mut r1) = (a.r0 + hdr, a.r1 - u32::from(a.totals));
             if this_row {
+                if self.context == FormulaContext::Name || !(r0..=r1).contains(&self.st.row) {
+                    self.out.extend([0x1C, 0x17]);
+                    return Ok(());
+                }
                 (r0, r1) = (self.st.row, self.st.row);
             } else if rows & 1 != 0 {
                 (r0, r1) = (a.r0, a.r1);
@@ -734,13 +793,22 @@ impl Enc<'_> {
                 r1 = a.r1;
             }
 
-            if self.cur == Some(a.sheet) {
+            let totals_cell = matches!(self.context, FormulaContext::Cell | FormulaContext::Array)
+                && self.tables.iter().any(|t| {
+                    t.area.is_some_and(|a| {
+                        a.totals
+                            && Some(a.sheet) == self.cur
+                            && a.r1 == self.st.row
+                            && (a.c0..a.c0 + t.columns.len() as u32).contains(&self.st.col)
+                    })
+                });
+            if totals_cell && self.cur == Some(a.sheet) {
                 if (r0, c0) == (r1, c1) {
-                    self.out.push(0x04 | cls.bits());
+                    self.out.push(0x04 | cls);
                     self.out.extend(r0.to_le_bytes());
                     self.out.extend(word(true, true, c0).to_le_bytes());
                 } else {
-                    self.out.push(0x05 | cls.bits());
+                    self.out.push(0x05 | cls);
                     self.out.extend(r0.to_le_bytes());
                     self.out.extend(r1.to_le_bytes());
                     self.out.extend(word(true, true, c0).to_le_bytes());
@@ -748,20 +816,23 @@ impl Enc<'_> {
                 }
                 return Ok(());
             }
+
             let ix = self.st.xti_index(a.sheet as i32, a.sheet as i32);
-            let rel_row = this_row;
             if (r0, c0) == (r1, c1) {
-                self.out.push(0x1A | cls.bits());
+                self.out.push(0x1A | cls);
                 self.out.extend(ix.to_le_bytes());
                 self.out.extend(r0.to_le_bytes());
-                self.out.extend(word(false, rel_row, c0).to_le_bytes());
+                self.out
+                    .extend(word(totals_cell, this_row || totals_cell, c0).to_le_bytes());
             } else {
-                self.out.push(0x1B | cls.bits());
+                self.out.push(0x1B | cls);
                 self.out.extend(ix.to_le_bytes());
                 self.out.extend(r0.to_le_bytes());
                 self.out.extend(r1.to_le_bytes());
-                self.out.extend(word(false, rel_row, c0).to_le_bytes());
-                self.out.extend(word(false, rel_row, c1).to_le_bytes());
+                self.out
+                    .extend(word(totals_cell, this_row || totals_cell, c0).to_le_bytes());
+                self.out
+                    .extend(word(totals_cell, this_row || totals_cell, c1).to_le_bytes());
             }
             return Ok(());
         }
@@ -770,10 +841,8 @@ impl Enc<'_> {
             (1, _) => 1,
             _ => 2,
         };
-        let mut flags = n_cols | (rows << 2);
-        if rows != 0 || n_cols == 2 {
-            flags |= 0x0400;
-        }
+
+        let mut flags = n_cols | (rows << 2) | u16::from((cls >> 5) - 1) << 10;
         if this_row {
             flags |= 0x0200;
         }
@@ -788,13 +857,7 @@ impl Enc<'_> {
         Ok(())
     }
 
-    fn legacy_call(
-        &mut self,
-        upper: &str,
-        args: &[Expr],
-        cls: Cls,
-        param: &dyn Fn(usize) -> Cls,
-    ) -> Result<(), String> {
+    fn legacy_call(&mut self, upper: &str, args: &[Expr], cls: u8) -> Result<(), String> {
         if ADD_IN_FUNCTIONS.contains(&upper) {
             let ix = self.st.xti_book(ADDIN_BOOK, -2, -2);
             let n = match self.st.addins.iter().position(|a| a == upper) {
@@ -804,80 +867,75 @@ impl Enc<'_> {
                     self.st.addins.len()
                 }
             };
-            self.out.push(0x19 | Cls::Ref.bits());
+            self.out.push(0x19 | REF);
             self.out.extend(ix.to_le_bytes());
             self.out.extend((n as u32).to_le_bytes());
         } else {
             let idx = self.st.future_name(&format!("_xlfn.{upper}"));
-            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.push(0x03 | REF);
             self.out.extend(idx.to_le_bytes());
         }
-        for (i, a) in args.iter().enumerate() {
-            self.emit(a, param(i))?;
+        for a in args {
+            self.emit(a)?;
         }
-        self.out.push(0x02 | cls.bits());
-        self.out.push((args.len() + 1) as u8);
-        self.out.extend(0x00FFu16.to_le_bytes());
+        self.call_255(args.len(), cls);
         Ok(())
     }
 
-    fn let_call(&mut self, args: &[Expr], cls: Cls) -> Result<(), String> {
+    fn call_255(&mut self, argc: usize, cls: u8) {
+        self.out.push(0x02 | cls);
+        self.out.push((argc + 1) as u8);
+        self.out.extend(0x00FFu16.to_le_bytes());
+    }
+
+    fn let_call(&mut self, args: &[Expr], cls: u8) -> Result<(), String> {
         if args.len() < 3 || args.len().is_multiple_of(2) {
             return Err("LET needs name/value pairs and a result".into());
         }
         let depth = self.lets.len();
         let idx = self.st.future_name("_xlfn.LET");
-        self.out.push(0x03 | Cls::Ref.bits());
+        self.out.push(0x03 | REF);
         self.out.extend(idx.to_le_bytes());
         for pair in args[..args.len() - 1].chunks(2) {
             let Expr::Name { sheet: None, name } = &pair[0] else {
                 return Err("LET variable is not a name".into());
             };
             let ix = self.st.param_name(name);
-            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.push(0x03 | REF);
             self.out.extend(ix.to_le_bytes());
-            self.emit(&pair[1], Cls::Value)?;
+            self.emit(&pair[1])?;
             self.lets.push(name.clone());
         }
-        self.emit(&args[args.len() - 1], Cls::Value)?;
+        self.emit(&args[args.len() - 1])?;
         self.lets.truncate(depth);
-        self.out.push(0x02 | cls.bits());
-        self.out.push((args.len() + 1) as u8);
-        self.out.extend(0x00FFu16.to_le_bytes());
+        self.call_255(args.len(), cls);
         Ok(())
     }
 
-    fn lambda_call(&mut self, args: &[Expr], cls: Cls) -> Result<(), String> {
+    fn lambda_call(&mut self, args: &[Expr], cls: u8) -> Result<(), String> {
         if args.is_empty() {
             return Err("LAMBDA needs a body".into());
         }
         let depth = self.lets.len();
         let idx = self.st.future_name("_xlfn.LAMBDA");
-        self.out.push(0x03 | Cls::Ref.bits());
+        self.out.push(0x03 | REF);
         self.out.extend(idx.to_le_bytes());
         for p in &args[..args.len() - 1] {
             let Expr::Name { sheet: None, name } = p else {
                 return Err("LAMBDA parameter is not a name".into());
             };
             let ix = self.st.param_name(name);
-            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.push(0x03 | REF);
             self.out.extend(ix.to_le_bytes());
             self.lets.push(name.clone());
         }
-        let body = if cls == Cls::Arr {
-            Cls::Arr
-        } else {
-            Cls::Value
-        };
-        self.emit(&args[args.len() - 1], body)?;
+        self.emit(&args[args.len() - 1])?;
         self.lets.truncate(depth);
-        self.out.push(0x02 | Cls::Value.bits());
-        self.out.push((args.len() + 1) as u8);
-        self.out.extend(0x00FFu16.to_le_bytes());
+        self.call_255(args.len(), cls);
         Ok(())
     }
 
-    fn func(&mut self, name: &str, args: &[Expr], cls: Cls) -> Result<(), String> {
+    fn func(&mut self, name: &str, args: &[Expr], cls: u8) -> Result<(), String> {
         let lower = name.to_ascii_lowercase();
         let future = lower.starts_with("_xlfn.") || lower.starts_with("_xlws.");
         let bare = if future { &name[6..] } else { name };
@@ -901,36 +959,6 @@ impl Enc<'_> {
             return self.lambda_call(args, cls);
         }
         let info = xlcalc::function_info(&upper);
-        let legacy = self.st.legacy;
-        let param = |i: usize| -> Cls {
-            if legacy {
-                if let Some(l) = xlcalc::argument_class(&upper, i) {
-                    return match l {
-                        b'R' | b'Q' => Cls::Ref,
-                        b'A' => Cls::Arr,
-                        _ if cls == Cls::Arr => Cls::Arr,
-                        _ => Cls::Value,
-                    };
-                }
-            }
-            if matches!(upper.as_str(), "IFERROR" | "IFNA") {
-                return Cls::Value;
-            }
-            if matches!(
-                upper.as_str(),
-                "SUMPRODUCT" | "MMULT" | "TRANSPOSE" | "MINVERSE" | "MDETERM"
-            ) {
-                return Cls::Arr;
-            }
-            let p = info.map_or("", |f| f.params).as_bytes();
-            if p.is_empty() {
-                return Cls::Value;
-            }
-            match p[i.min(p.len() - 1)] {
-                b'R' | b'Q' => Cls::Ref,
-                _ => Cls::Value,
-            }
-        };
         if info.is_some_and(|f| f.volatile) {
             self.volatile = true;
         }
@@ -939,14 +967,12 @@ impl Enc<'_> {
                 .strip_prefix("_XLWS.")
                 .map_or_else(|| upper.clone(), |rest| format!("_xlws.{rest}"));
             let idx = self.st.future_name(&format!("{}{}", &name[..6], inner));
-            self.out.push(0x03 | Cls::Ref.bits());
+            self.out.push(0x03 | REF);
             self.out.extend(idx.to_le_bytes());
-            for (i, a) in args.iter().enumerate() {
-                self.emit(a, param(i))?;
+            for a in args {
+                self.emit(a)?;
             }
-            self.out.push(0x02 | cls.bits());
-            self.out.push((args.len() + 1) as u8);
-            self.out.extend(0x00FFu16.to_le_bytes());
+            self.call_255(args.len(), cls);
             return Ok(());
         }
 
@@ -960,11 +986,14 @@ impl Enc<'_> {
         {
             return Err(format!("LAMBDA is not encoded (call of the name {name})"));
         }
-        let id = *func_ids()
-            .get(upper.as_str())
-            .ok_or_else(|| format!("function {upper} is not in the function table"))?;
+        let Some(&id) = func_ids().get(upper.as_str()) else {
+            if info.is_some() {
+                return self.legacy_call(&upper, args, cls);
+            }
+            return Err(format!("function {upper} is not in the function table"));
+        };
         if self.st.legacy && id > LAST_LEGACY_FUNC {
-            return self.legacy_call(&upper, args, cls, &param);
+            return self.legacy_call(&upper, args, cls);
         }
         let n = args.len();
         match upper.as_str() {
@@ -974,71 +1003,61 @@ impl Enc<'_> {
                 if !self.st.legacy {
                     self.st.future_name("_xlfn.IFERROR");
                 }
-                self.emit(&args[0], param(0))?;
-                let f = self.sub(&args[1], param(1))?;
+                self.emit(&args[0])?;
+                let f = self.sub(&args[1])?;
                 self.out.extend([0x19, 0x80]);
                 self.out.extend((f.len() as u16).to_le_bytes());
                 self.out.extend(&f);
                 self.out.extend([0x19, 0x08]);
                 self.out.extend(2u16.to_le_bytes());
-                self.out.push(0x01 | cls.bits());
+                self.out.push(0x01 | cls);
                 self.out.extend(id.to_le_bytes());
                 return Ok(());
             }
             _ => {}
         }
-        for (i, a) in args.iter().enumerate() {
-            self.emit(a, param(i))?;
+        for a in args {
+            self.emit(a)?;
         }
         let fixed = info.is_some_and(|f| f.min_args == f.max_args && usize::from(f.min_args) == n);
         if upper == "SUM" && n == 1 {
             self.out.extend([0x19, 0x10, 0, 0]);
         } else if fixed {
-            self.out.push(0x01 | cls.bits());
+            self.out.push(0x01 | cls);
             self.out.extend(id.to_le_bytes());
         } else {
-            self.out.push(0x02 | cls.bits());
+            self.out.push(0x02 | cls);
             self.out.push(n as u8);
             self.out.extend(id.to_le_bytes());
         }
         Ok(())
     }
 
-    fn if_fn(&mut self, args: &[Expr], cls: Cls, id: u16) -> Result<(), String> {
-        let first = if self.st.legacy && cls == Cls::Arr {
-            Cls::Arr
-        } else {
-            Cls::Value
-        };
-        self.emit(&args[0], first)?;
-        let t = self.sub(&args[1], cls)?;
+    fn if_fn(&mut self, args: &[Expr], cls: u8, id: u16) -> Result<(), String> {
+        self.emit(&args[0])?;
+        let t = self.sub(&args[1])?;
         self.out.extend([0x19, 0x02]);
         self.out.extend((t.len() as u16 + 4).to_le_bytes());
         self.out.extend(&t);
         if args.len() == 3 {
-            let f = self.sub(&args[2], cls)?;
+            let f = self.sub(&args[2])?;
             self.out.extend([0x19, 0x08]);
             self.out.extend((f.len() as u16 + 7).to_le_bytes());
             self.out.extend(&f);
         }
         self.out.extend([0x19, 0x08]);
         self.out.extend(3u16.to_le_bytes());
-        self.out.push(0x02 | cls.bits());
+        self.out.push(0x02 | cls);
         self.out.push(args.len() as u8);
         self.out.extend(id.to_le_bytes());
         Ok(())
     }
 
-    fn choose(&mut self, args: &[Expr], cls: Cls, id: u16) -> Result<(), String> {
-        let first = if self.st.legacy && cls == Cls::Arr {
-            Cls::Arr
-        } else {
-            Cls::Value
-        };
-        self.emit(&args[0], first)?;
+    fn choose(&mut self, args: &[Expr], cls: u8, id: u16) -> Result<(), String> {
+        self.emit(&args[0])?;
         let picks: Vec<Vec<u8>> = args[1..]
             .iter()
-            .map(|a| self.sub(a, cls))
+            .map(|a| self.sub(a))
             .collect::<Result<_, _>>()?;
         let n = picks.len();
         self.out.extend([0x19, 0x04]);
@@ -1056,10 +1075,81 @@ impl Enc<'_> {
             self.out.extend([0x19, 0x08]);
             self.out.extend(((after - 1) as u16).to_le_bytes());
         }
-        self.out.push(0x02 | cls.bits());
+        self.out.push(0x02 | cls);
         self.out.push((n + 1) as u8);
         self.out.extend(id.to_le_bytes());
         Ok(())
+    }
+}
+
+enum Constant {
+    No,
+    Error(u8),
+
+    Areas(Vec<[u32; 4]>),
+}
+
+fn constant_areas(e: &Expr) -> Constant {
+    match e {
+        Expr::Paren(x) | Expr::Ws { expr: x, .. } => constant_areas(x),
+        Expr::Ref { sheet: None, kind } => {
+            let (a, b) = match kind {
+                RefKind::Cell { row, col } => ((row.index, row.index), (col.index, col.index)),
+                RefKind::Area { r0, c0, r1, c1 } => ((r0.index, r1.index), (c0.index, c1.index)),
+                RefKind::Cols { c0, c1 } => ((0, MAX_ROW), (c0.index, c1.index)),
+                RefKind::Rows { r0, r1 } => ((r0.index, r1.index), (0, MAX_COL)),
+            };
+            Constant::Areas(vec![[a.0, a.1, b.0, b.1]])
+        }
+        Expr::Error(x) => error_code(x.as_str()).map_or(Constant::No, Constant::Error),
+        Expr::DeadRef(_) => Constant::Error(0x17),
+        Expr::Binary { op, left, right } => {
+            let (mut l, r) = match (constant_areas(left), constant_areas(right)) {
+                (Constant::No, _) | (_, Constant::No) => return Constant::No,
+                (Constant::Error(c), _) | (_, Constant::Error(c)) => return Constant::Error(c),
+                (Constant::Areas(l), Constant::Areas(r)) => (l, r),
+            };
+            match op {
+                BinOp::Union => {
+                    l.extend(r);
+                    Constant::Areas(l)
+                }
+                BinOp::Intersect => {
+                    let both: Vec<[u32; 4]> = l
+                        .iter()
+                        .flat_map(|a| r.iter().map(move |b| (a, b)))
+                        .map(|(a, b)| {
+                            [
+                                a[0].max(b[0]),
+                                a[1].min(b[1]),
+                                a[2].max(b[2]),
+                                a[3].min(b[3]),
+                            ]
+                        })
+                        .filter(|v| v[0] <= v[1] && v[2] <= v[3])
+                        .collect();
+                    if both.is_empty() {
+                        Constant::Error(0x00)
+                    } else {
+                        Constant::Areas(both)
+                    }
+                }
+                BinOp::Range => {
+                    let all = l.iter().chain(&r);
+                    let bound = all.fold([u32::MAX, 0, u32::MAX, 0], |m, a| {
+                        [
+                            m[0].min(a[0]),
+                            m[1].max(a[1]),
+                            m[2].min(a[2]),
+                            m[3].max(a[3]),
+                        ]
+                    });
+                    Constant::Areas(vec![bound])
+                }
+                _ => Constant::No,
+            }
+        }
+        _ => Constant::No,
     }
 }
 
@@ -1148,7 +1238,15 @@ mod tests {
             area: None,
         }];
         let mut st = State::default();
-        let r = encode(&sheets, &tables, &mut st, Some(0), src, Cls::Value).unwrap();
+        let r = encode(
+            &sheets,
+            &tables,
+            &mut st,
+            Some(0),
+            src,
+            FormulaContext::Cell,
+        )
+        .unwrap();
         hex(&r.rgce)
     }
 
@@ -1211,7 +1309,7 @@ mod tests {
         );
         assert_eq!(
             enc("VLOOKUP(A1,B1:C5,2,FALSE)"),
-            "240000000000c025000000000400000001c002c01e02001d0042046600"
+            "440000000000c025000000000400000001c002c01e02001d0042046600"
         );
     }
 
@@ -1219,16 +1317,21 @@ mod tests {
     fn arrays_and_tables() {
         let sheets = vec!["Sheet1".to_string()];
         let mut st = State::default();
-        let r = encode(&sheets, &[], &mut st, None, "{\"a\",TRUE}", Cls::Value).unwrap();
+        let r = encode(
+            &sheets,
+            &[],
+            &mut st,
+            None,
+            "{\"a\",TRUE}",
+            FormulaContext::Cell,
+        )
+        .unwrap();
         assert_eq!(
             hex(&r.rgce),
             "40010000000000000000000000000000".get(..30).unwrap()
         );
         assert_eq!(hex(&r.rgcb), "010000000200000001010061000201");
-        assert_eq!(
-            enc("Tbl[col]"),
-            "181900000100010000000000000000".get(..28).unwrap()
-        );
+        assert_eq!(enc("Tbl[col]"), "1819000001040100000000000000");
         assert_eq!(
             enc("Tbl[[#This Row],[col]]"),
             "1819000041060100000000000000"
@@ -1238,10 +1341,49 @@ mod tests {
     }
 
     #[test]
+    fn operand_classes_and_memory_tokens() {
+        assert_eq!(enc("EDATE(A1,1)"), "240000000000c01e010041c101");
+        assert_eq!(enc("ERF(A1)"), "240000000000c04201a701");
+        assert_eq!(enc("REPT(A1,A2)"), "440000000000c0440100000000c0411e00");
+
+        assert_eq!(
+            enc("SUM((A1,A2))"),
+            "26000000000f00240000000000c0240100000000c0101519100000"
+        );
+        assert_eq!(
+            enc("SUM((A1,#REF!))"),
+            "27170000000f00240000000000c02a000000000000101519100000"
+        );
+        let sheets = vec!["Sheet1".to_string()];
+        let mut st = State::default();
+        let r = encode(
+            &sheets,
+            &[],
+            &mut st,
+            Some(0),
+            "SUM(A2:A4*{1;10;100})",
+            FormulaContext::Array,
+        )
+        .unwrap();
+        assert_eq!(
+            hex(&r.rgce),
+            "65010000000300000000c000c06000000200000000000000000000000519100000"
+        );
+    }
+
+    #[test]
     fn future_functions_use_a_hidden_name() {
         let sheets = vec!["Sheet1".to_string()];
         let mut st = State::default();
-        let r = encode(&sheets, &[], &mut st, None, "_xlfn.SEQUENCE(3)", Cls::Value).unwrap();
+        let r = encode(
+            &sheets,
+            &[],
+            &mut st,
+            None,
+            "_xlfn.SEQUENCE(3)",
+            FormulaContext::Cell,
+        )
+        .unwrap();
         assert_eq!(hex(&r.rgce), "23010000001e03004202ff00");
         assert_eq!(st.names[0].name, "_xlfn.SEQUENCE");
     }
@@ -1250,6 +1392,6 @@ mod tests {
     fn undefined_names_are_errors() {
         let sheets = vec!["Sheet1".to_string()];
         let mut st = State::default();
-        assert!(encode(&sheets, &[], &mut st, None, "nope+1", Cls::Value).is_err());
+        assert!(encode(&sheets, &[], &mut st, None, "nope+1", FormulaContext::Cell).is_err());
     }
 }

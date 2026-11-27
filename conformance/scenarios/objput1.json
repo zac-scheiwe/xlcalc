@@ -1,0 +1,844 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "fresh_excel": true,
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H1')",
+   "prop": "Value2",
+   "value": 3
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H2')",
+   "prop": "Value2",
+   "value": true
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H3')",
+   "prop": "Value2",
+   "value": 12
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H4')",
+   "prop": "Value2",
+   "value": "abc"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H6')",
+   "prop": "Value2",
+   "value": 0.5
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H7')",
+   "prop": "Value2",
+   "value": "7"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('H8')",
+   "prop": "Value2",
+   "value": false
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2')",
+   "prop": "Value2",
+   "value": "x"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H2')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H8')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H5')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H7')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1:H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H2')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H5')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ThemeColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ThemeColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ThemeColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H2')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "ThemeColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "TintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H6')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "TintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "TintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "TintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "TintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "TintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H2')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H8')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Bold"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Italic",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H2')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Italic"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Italic",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H5')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Font",
+   "prop": "Italic"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H2')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H5')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Pattern",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Pattern"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Pattern",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "Pattern"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "ThemeColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "ThemeColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "TintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H6')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "TintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternThemeColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternThemeColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternTintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H6')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('B2').Interior",
+   "prop": "PatternTintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "ThemeColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "ThemeColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "TintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H6')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('D4').Borders(9)",
+   "prop": "TintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('F6').Borders",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('F6').Borders",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('F6').Borders",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('F6').Borders",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H3')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "Color",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H4')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "Color"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "ColorIndex",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "ColorIndex"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "ThemeColor",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H1')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "ThemeColor"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "TintAndShade",
+   "value": {
+    "path": "Worksheets('Sheet1').Range('H6')"
+   }
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Tab",
+   "prop": "TintAndShade"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A1')",
+   "prop": "Value2",
+   "value": 12
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A2')",
+   "prop": "Value2",
+   "value": true
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A3')",
+   "prop": "Formula",
+   "value": "=\"abc\""
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets('Sheet1').Range('A4')",
+   "prop": "Value2",
+   "value": "abcd"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A1').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A1').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A1').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A1').Characters(2, 1)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A2').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A2').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A2').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A2').Characters(2, 1)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A3').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A3').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A3').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A3').Characters(2, 1)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4').Characters(2, 1)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A5').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A5').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A5').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A5').Characters(2, 1)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A6:A7').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A6:A7').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A6:A7').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A6:A7').Characters(2, 1)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4:A5').Characters",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4:A5').Characters(2)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4:A5').Characters(2, 0)",
+   "prop": "Count"
+  },
+  {
+   "op": "om_get",
+   "path": "Worksheets('Sheet1').Range('A4:A5').Characters(2, 1)",
+   "prop": "Count"
+  }
+ ]
+}

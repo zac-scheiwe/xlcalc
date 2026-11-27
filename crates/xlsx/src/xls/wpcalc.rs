@@ -259,7 +259,7 @@ impl P<'_> {
         match t {
             Tok::Num(x) => self.number(x),
             Tok::Str(s) => {
-                let n = s.encode_utf16().count();
+                let n = xlcalc::wide::units(&s).count();
                 if n > 255 {
                     return Err("string too long".into());
                 }

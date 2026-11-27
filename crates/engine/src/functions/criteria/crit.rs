@@ -40,6 +40,8 @@ enum Target {
     Num(f64),
     Bool(bool),
     Err(XlError),
+
+    ErrOther,
     Text {
         text: Text,
         pattern: Option<Pattern>,
@@ -77,9 +79,25 @@ impl Criterion {
     }
 
     fn parse_text(ctx: &EvalCtx, s: &Text, flavor: Flavor) -> Result<Criterion, XlError> {
-        if s.len() > MAX_CRITERION_LEN && utf16_len(s) > MAX_CRITERION_LEN {
-            return Err(XlError::VALUE);
-        }
+        let cut;
+        let s = if s.len() > MAX_CRITERION_LEN && utf16_len(s) > MAX_CRITERION_LEN {
+            if flavor == Flavor::Ifs {
+                return Err(XlError::VALUE);
+            }
+
+            let mut units = 0;
+            let end = s
+                .char_indices()
+                .find(|&(_, c)| {
+                    units += crate::text::wide::char_units(c);
+                    units > MAX_CRITERION_LEN
+                })
+                .map_or(s.len(), |(i, _)| i);
+            cut = Text::from(&s[..end]);
+            &cut
+        } else {
+            s
+        };
         let (op, rest, bare) = if let Some(r) = s.strip_prefix("<=") {
             (Op::Le, r, false)
         } else if let Some(r) = s.strip_prefix(">=") {
@@ -113,8 +131,14 @@ impl Criterion {
             Target::Bool(true)
         } else if rest.eq_ignore_ascii_case("FALSE") {
             Target::Bool(false)
-        } else if let Some(e) = XlError::parse(rest).filter(|e| *e <= XlError::NA) {
+        } else if let Some(e) = XlError::parse(rest).filter(|e| *e <= XlError::GETTING_DATA) {
             Target::Err(e)
+        } else if XlError::parse(rest).is_some()
+            || ["#CIRC!", "#PYTHON!", "#TIMEOUT!"]
+                .iter()
+                .any(|n| n.eq_ignore_ascii_case(rest))
+        {
+            Target::ErrOther
         } else {
             let pattern = if prefix {
                 let mut p = rest.to_string();
@@ -158,6 +182,7 @@ impl Criterion {
                 (op, Value::Error(c)) => op.holds(c.cmp(e)),
                 _ => false,
             },
+            Target::ErrOther => matches!(self.op, Op::Ne),
             Target::Text { text, pattern } => {
                 let equal = || match v {
                     Value::Text(t) => match pattern {

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rustc_hash::FxHashMap;
 
-use crate::address::{CellAddr, SheetId};
+use crate::address::{CellAddr, Rect, SheetId};
 use crate::eval::{eval_formula, EvalCtx, Reference};
 pub use crate::eval::{Area, Operand};
 use crate::formula::Node;
@@ -32,6 +32,8 @@ pub trait XlmEnv {
 
     fn command(&mut self, name: &str, args: &[Operand], at: CellAddr) -> Result<Value, XlmError>;
 
+    fn write_values(&mut self, cells: Vec<(CellAddr, Value)>);
+
     fn persist(&mut self, _vars: &XlmVars, _names: &XlmNames) {}
 
     fn overlay(&self) -> Option<Arc<XlmCells>> {
@@ -51,7 +53,7 @@ impl Workbook {
         let writes = PENDING.with(|p| std::mem::take(&mut *p.borrow_mut()));
         for (a, v) in writes {
             if format!("{:?}", self.value(a)) != format!("{:?}", v) {
-                self.set_value(a, v);
+                self.xlm_write_value(a, v);
             }
         }
         let names = PENDING_NAMES.with(|p| std::mem::take(&mut *p.borrow_mut()));
@@ -203,6 +205,80 @@ pub fn var_text(wb: &Workbook, op: &Operand) -> Option<String> {
 
 pub type XlmCells = FxHashMap<(SheetId, u32, u32), Value>;
 
+fn value_arg(wb: &Workbook, op: &Operand, at: CellAddr) -> Value {
+    let r = match op {
+        Operand::Val(v) => return v.clone(),
+        Operand::Missing => return Value::Number(0.0),
+        Operand::Ref(r) => r,
+    };
+    let [a] = r.areas() else {
+        return Value::Error(XlError::VALUE);
+    };
+    let x = a.rect;
+    let cell = if x.is_cell() {
+        Some((x.r0, x.c0))
+    } else if x.c0 == x.c1 && (x.r0..=x.r1).contains(&at.row) {
+        Some((at.row, x.c0))
+    } else if x.r0 == x.r1 && (x.c0..=x.c1).contains(&at.col) {
+        Some((x.r0, at.col))
+    } else {
+        None
+    };
+    cell.map_or(Value::Error(XlError::VALUE), |(r, c)| {
+        match wb.value(CellAddr::new(a.sheet, r, c)) {
+            Value::Blank => Value::Number(0.0),
+            v => v,
+        }
+    })
+}
+
+fn writable<'o>(wb: &Workbook, target: &'o Operand, sheet: SheetId) -> Option<&'o Area> {
+    let Operand::Ref(r) = target else {
+        return None;
+    };
+    let [a] = r.areas() else {
+        return None;
+    };
+    let own = a.sheet == sheet && wb.sheet(sheet).is_some_and(|s| s.kind.is_macro());
+    own.then_some(a)
+}
+
+fn lay_value(sheet: SheetId, rect: Rect, v: &Value) -> Vec<(CellAddr, Value)> {
+    let mut out = Vec::new();
+    for r in rect.r0..=rect.r1 {
+        for c in rect.c0..=rect.c1 {
+            let x = match v {
+                Value::Array(a) => {
+                    let (i, j) = (r - rect.r0, c - rect.c0);
+                    let i = if a.rows == 1 { 0 } else { i };
+                    let j = if a.cols == 1 { 0 } else { j };
+                    if i < a.rows && j < a.cols {
+                        a.data[(i * a.cols + j) as usize].clone()
+                    } else {
+                        Value::Error(XlError::NA)
+                    }
+                }
+                v => v.clone(),
+            };
+            out.push((CellAddr::new(sheet, r, c), x));
+        }
+    }
+    out
+}
+
+pub fn set_value_command(env: &mut dyn XlmEnv, args: &[Operand], at: CellAddr) -> Value {
+    let [target, value, ..] = args else {
+        return Value::Error(XlError::VALUE);
+    };
+    let Some(area) = writable(env.wb(), target, at.sheet) else {
+        return Value::Error(XlError::VALUE);
+    };
+    let v = value_arg(env.wb(), value, at);
+    let cells = lay_value(area.sheet, area.rect, &v);
+    env.write_values(cells);
+    Value::Bool(true)
+}
+
 pub struct ReadOnlyEnv<'a> {
     wb: &'a Workbook,
     cells: Arc<XlmCells>,
@@ -222,35 +298,18 @@ impl XlmEnv for ReadOnlyEnv<'_> {
         self.wb
     }
     fn store(&mut self, _addr: CellAddr, _v: Value) {}
-    fn command(&mut self, name: &str, args: &[Operand], _at: CellAddr) -> Result<Value, XlmError> {
+    fn command(&mut self, name: &str, args: &[Operand], at: CellAddr) -> Result<Value, XlmError> {
         if name == "SET.VALUE" {
-            if let (Some(Operand::Ref(r)), Some(v)) = (args.first(), args.get(1)) {
-                let v = match v {
-                    Operand::Val(v) => v.clone(),
-                    Operand::Ref(r) => r.areas().first().map_or(Value::Blank, |a| {
-                        self.wb.value(CellAddr::new(a.sheet, a.rect.r0, a.rect.c0))
-                    }),
-                    Operand::Missing => Value::Blank,
-                };
-                let cells = Arc::make_mut(&mut self.cells);
-                let mut done = false;
-                let mut pending = Vec::new();
-                for a in r.areas() {
-                    if self.wb.sheet(a.sheet).is_some_and(|s| s.kind.is_macro()) {
-                        for row in a.rect.r0..=a.rect.r1 {
-                            for col in a.rect.c0..=a.rect.c1 {
-                                cells.insert((a.sheet, row, col), v.clone());
-                                pending.push((CellAddr::new(a.sheet, row, col), v.clone()));
-                                done = true;
-                            }
-                        }
-                    }
-                }
-                PENDING.with(|p| p.borrow_mut().extend(pending));
-                return Ok(Value::Bool(done));
-            }
+            return Ok(set_value_command(self, args, at));
         }
         Ok(Value::Bool(false))
+    }
+    fn write_values(&mut self, writes: Vec<(CellAddr, Value)>) {
+        let cells = Arc::make_mut(&mut self.cells);
+        for (a, v) in &writes {
+            cells.insert((a.sheet, a.row, a.col), v.clone());
+        }
+        PENDING.with(|p| p.borrow_mut().extend(writes));
     }
     fn persist(&mut self, vars: &XlmVars, names: &XlmNames) {
         let defs: Vec<(SheetId, String, String)> = vars
@@ -344,10 +403,7 @@ pub fn run(env: &mut dyn XlmEnv, start: CellAddr, args: Vec<Operand>) -> Result<
 
 fn strip(node: &Node) -> &Node {
     match node.unwrap_ws() {
-        Node::Unary(
-            crate::parser::ast::UnaryOp::Implicit | crate::parser::ast::UnaryOp::ImplicitQuiet,
-            x,
-        ) => strip(x),
+        Node::Unary(crate::parser::ast::UnaryOp::Implicit, x) => strip(x),
         n => n,
     }
 }
@@ -772,11 +828,27 @@ impl Interp<'_> {
                     },
                 };
                 if let Value::Text(t) = n {
+                    let mut val = val;
                     if let Some(r) = args.get(2) {
                         let target = self.expr(fr, r, host)?;
-                        if let Some(a) = self.first_cell(&target) {
-                            let v = self.deref(val.clone(), host);
-                            self.env.store(a, v);
+                        let by_ref =
+                            matches!(val, Operand::Ref(_)) && ty.is_some_and(|t| t & 8 != 0);
+                        let area = writable(self.env.wb(), &target, host.sheet).cloned();
+                        if let Some(a) = area.filter(|_| !by_ref) {
+                            let v = self.deref(val, host);
+                            let (rows, cols) = match &v {
+                                Value::Array(x) => (x.rows, x.cols),
+                                _ => (1, 1),
+                            };
+                            let x = a.rect;
+                            let cut = Rect::new(
+                                x.r0,
+                                x.c0,
+                                x.r1.min(x.r0 + rows - 1),
+                                x.c1.min(x.c0 + cols - 1),
+                            );
+                            self.env.write_values(lay_value(a.sheet, cut, &v));
+                            val = target;
                         }
                     }
                     self.set_var(host, &t, val);
@@ -1240,16 +1312,26 @@ impl Workbook {
         }
     }
 
-    pub fn xlm_get_formula(&self, addr: CellAddr) -> String {
-        if let Some(f) = self.formula_text_r1c1(addr) {
-            return f;
+    pub fn xlm_write_value(&mut self, addr: CellAddr, v: Value) -> bool {
+        let block = self.array_at(addr).map(|b| b.0);
+        let Some(fid) = block.or_else(|| self.formula_at(addr)) else {
+            self.set_value(addr, v);
+            return true;
+        };
+        let v = if v.is_blank() {
+            Value::Error(XlError::NA)
+        } else {
+            v
+        };
+        let f = self.formula_mut(fid);
+        match (f.spill, &mut f.value) {
+            (Some(rect), Value::Array(a)) if rect.contains(addr.row, addr.col) => {
+                let i = (addr.row - rect.r0) * a.cols + (addr.col - rect.c0);
+                std::sync::Arc::make_mut(a).data[i as usize] = v;
+            }
+            _ => f.value = v,
         }
-        match self.value(addr) {
-            Value::Blank => String::new(),
-            v => crate::coerce::to_text(&v)
-                .map(|t| t.to_string())
-                .unwrap_or_default(),
-        }
+        false
     }
 
     pub fn xlm_has_cell(&self, addr: CellAddr) -> bool {

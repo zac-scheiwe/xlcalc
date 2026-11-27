@@ -1,5 +1,5 @@
 use super::atp::{self, Arg};
-use crate::eval::{EvalCtx, Operand};
+use crate::eval::{EvalCtx, Operand, Reference};
 use crate::functions::args::{collect_numbers, num, opval, Grid, R, SUM_POLICY};
 use crate::value::{Value, XlError};
 use crate::x87;
@@ -28,6 +28,19 @@ fn flow_values(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
     Ok(out)
 }
 
+fn mirr_values(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
+    match op {
+        Operand::Ref(r @ (Reference::Multi(_) | Reference::Span(_))) => {
+            let mut out = Vec::new();
+            for area in r.areas() {
+                out.extend(flow_values(ctx, &Operand::Ref(Reference::Area(*area)))?);
+            }
+            Ok(out)
+        }
+        _ => flow_values(ctx, op),
+    }
+}
+
 fn scalar_num(ctx: &EvalCtx, op: &Operand, default: f64) -> R<f64> {
     match op {
         Operand::Val(v) => num(ctx, v),
@@ -38,20 +51,18 @@ fn scalar_num(ctx: &EvalCtx, op: &Operand, default: f64) -> R<f64> {
 
 pub fn npv_of(rate: f64, values: &[f64]) -> R<f64> {
     use crate::x87;
-    let b = x87::add(rate, 1.0);
-    if b == 0.0 {
-        return Err(XlError::DIV0);
-    }
+
+    let mut mp = x87::MathFlag::default();
+    let b = mp.add(rate, 1.0);
     let mut acc = values.first().copied().unwrap_or(0.0);
     let mut d = 1.0;
     for &v in values.iter().skip(1) {
-        d = x87::mul(d, b);
-        if !d.is_finite() {
-            return Err(XlError::DIV0);
-        }
-        acc = x87::add(x87::div(v, d), acc);
+        d = mp.mul(d, b);
+        let q = mp.div(v, d);
+        acc = mp.add(q, acc);
     }
-    finite(x87::div(acc, b))
+    let r = mp.div(acc, b);
+    mp.result(r)
 }
 
 pub fn npv(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -88,10 +99,10 @@ fn irr_secant(values: &[f64], guess: f64) -> R<Option<f64>> {
     if div0.get() {
         return Err(XlError::DIV0);
     }
-    let Some(w) = w else { return Ok(None) };
+    let Some((w, tol)) = w else { return Ok(None) };
 
-    if x87::sub(w, 1e-7) <= -1.0 {
-        return Err(XlError::NUM);
+    if !fn_iter_above_m1(w, tol) {
+        return Ok(None);
     }
     let r = x87::sub(x87::div(1.0, x87::add(w, 1.0)), 1.0);
     Ok(r.is_finite().then_some(r))
@@ -106,7 +117,11 @@ pub(super) fn secant_start(x0: f64) -> R<f64> {
     Ok(x0)
 }
 
-pub(super) fn secant_solve(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
+pub(super) fn fn_iter_above_m1(x: f64, tol: f64) -> bool {
+    crate::x87::sub(x, tol) > -1.0
+}
+
+pub(super) fn secant_solve(x0: f64, f: impl Fn(f64) -> f64) -> Option<(f64, f64)> {
     use crate::x87;
     let npv = f;
     let mut x0 = x0;
@@ -138,12 +153,12 @@ pub(super) fn secant_solve(x0: f64, f: impl Fn(f64) -> f64) -> Option<f64> {
         let f2 = npv(x2);
         step = (x2 - x1).abs();
         if f2.abs() < 1e-7 && step < 1e-7 {
-            return Some(x2);
+            return Some((x2, 1e-7));
         }
         (x0, f0, x1, f1) = (x1, f1, x2, f2);
     }
     if f1.abs() < 1e-4 && step < 1e-4 {
-        return Some(x1);
+        return Some((x1, 1e-4));
     }
     None
 }
@@ -214,7 +229,7 @@ pub fn mirr(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         }
         let fr = scalar_num(ctx, &ops[1], 0.0)?;
         let rr = scalar_num(ctx, &ops[2], 0.0)?;
-        let values = flow_values(ctx, &ops[0])?;
+        let values = mirr_values(ctx, &ops[0])?;
 
         let n = values.len() as f64;
         let mut f = x87::MathFlag::default();
@@ -311,6 +326,11 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
             .and_then(|n| atp::check_date(ctx, n))
             .map(|d| d as f64),
 
+        Value::Number(n) if xirr => {
+            atp::check_date(ctx, *n).map(|d| (d + atp::kernel_offset(ctx)) as f64)
+        }
+        Value::Blank if xirr => Ok(atp::kernel_offset(ctx) as f64),
+
         Value::Number(n) => atp::check_date(ctx, *n).map(|d| d as f64).and_then(|d| {
             if !xirr && d == 0.0 {
                 Err(XlError::NUM)
@@ -320,7 +340,6 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
         }),
         Value::Error(e) => Err(*e),
         Value::Text(_) | Value::Bool(_) => Err(text_err(i == 0)),
-        Value::Blank if xirr => Ok(0.0),
         Value::Blank if d_arr && i == 0 => Err(XlError::VALUE),
         _ => Err(XlError::NUM),
     };
@@ -345,6 +364,10 @@ fn xflows(ctx: &EvalCtx, a: &[Arg], vi: usize, di: usize, xirr: bool) -> R<(Vec<
 
     if vals.len() != dates.len() {
         return Err(XlError::NUM);
+    }
+
+    if xirr && vals.len() == 1 {
+        return Err(XlError::NA);
     }
 
     let mut v = Vec::with_capacity(vals.len());
@@ -494,10 +517,6 @@ pub fn xirr(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
     atp::out((|| {
         let guess = atp::opt(ctx, a, 2, 0.1)?;
         let (v, d) = xflows(ctx, a, 0, 1, true)?;
-
-        if v.len() == 1 {
-            return Err(XlError::NA);
-        }
         if !v.iter().any(|&x| x > 0.0) || !v.iter().any(|&x| x < 0.0) {
             return Err(XlError::NUM);
         }
@@ -510,6 +529,23 @@ mod tests {
     use super::*;
 
     const D: [f64; 3] = [43831.0, 43831.0, 44196.0];
+
+    #[test]
+    fn npv_flag_codes() {
+        assert_eq!(npv_of(-1.0, &[1.0, 2.0]), Err(XlError::DIV0));
+        assert_eq!(npv_of(-1.0, &[1.0]), Err(XlError::DIV0));
+
+        let mut v = vec![1e-100; 30];
+        v[0] = 1.0;
+        assert_eq!(npv_of(-1.0 + 1e-16, &v), Err(XlError::DIV0));
+
+        assert_eq!(npv_of(-1.0 + 1e-16, &[1e300, 1.0]), Err(XlError::NUM));
+
+        assert_eq!(npv_of(1e200, &[1.0, 1.0, 1.0]), Err(XlError::DIV0));
+
+        assert_eq!(npv_of(0.0, &[f64::MAX, f64::MAX]), Err(XlError::NUM));
+        assert_eq!(npv_of(0.0, &[1.0, 2.0, 3.0]), Ok(6.0));
+    }
 
     #[test]
     fn zero_first_flow_halves_the_guess_to_zero() {

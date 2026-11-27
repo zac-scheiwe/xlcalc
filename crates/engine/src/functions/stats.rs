@@ -7,7 +7,7 @@ use crate::x87;
 pub const DEFS: &[FnDef] = &[
     args("COUNT", 1, MANY, "R", count),
     args("COUNTA", 1, MANY, "R", counta),
-    args("COUNTBLANK", 1, 1, "Q", countblank),
+    args("COUNTBLANK", 1, 1, "R", countblank),
     args("AVERAGE", 1, MANY, "R", |c, o| {
         agg(c, o, SUM_POLICY, average)
     }),
@@ -18,7 +18,9 @@ pub const DEFS: &[FnDef] = &[
     args("MAX", 1, MANY, "R", |c, o| agg(c, o, SUM_POLICY, max)),
     args("MINA", 1, MANY, "R", |c, o| agg(c, o, A_POLICY, min)),
     args("MAXA", 1, MANY, "R", |c, o| agg(c, o, A_POLICY, max)),
-    args("MEDIAN", 1, MANY, "R", |c, o| agg(c, o, SUM_POLICY, median)),
+    args("MEDIAN", 1, MANY, "R", |c, o| {
+        agg(c, o, SKIP_LONG_POLICY, median)
+    }),
     args("VAR.S", 1, MANY254, "R", |c, o| {
         agg(c, o, SUM_POLICY, |v| var(v, true))
     }),
@@ -61,7 +63,7 @@ pub const DEFS: &[FnDef] = &[
         agg(c, o, SUM_POLICY, geomean)
     }),
     args("HARMEAN", 1, MANY, "R", |c, o| {
-        agg(c, o, SUM_POLICY, harmean)
+        agg(c, o, SKIP_LONG_POLICY, harmean)
     }),
     args("LARGE", 2, 2, "XV", |c, o| kth(c, o, true)),
     args("SMALL", 2, 2, "XV", |c, o| kth(c, o, false)),
@@ -297,7 +299,7 @@ fn kth(ctx: &mut EvalCtx, ops: &[Operand], largest: bool) -> Operand {
         },
         _ => return Operand::err(XlError::NUM),
     };
-    let v = match collect_numbers(ctx, &ops[..1], SUM_POLICY) {
+    let v = match collect_numbers(ctx, &ops[..1], SKIP_LONG_POLICY) {
         Ok(v) => v,
         Err(e) => return Operand::err(e),
     };

@@ -43,6 +43,10 @@ fn name_rgce(sheets: &[String], n: &xlcalc::ExtName) -> Vec<u8> {
     v
 }
 
+fn unscoped_names(names: &[xlcalc::ExtName]) -> Vec<&xlcalc::ExtName> {
+    names.iter().filter(|n| n.scope.is_none()).collect()
+}
+
 pub(super) fn read_all(
     pkg: &Package,
     book: &crate::xml::Node,
@@ -87,7 +91,7 @@ pub(super) fn read_all(
                 p.wstr(s);
             }
         });
-        let mut names = link.names.clone();
+        let mut names = unscoped_names(&link.names);
         names.sort_by_key(|a| a.name.to_lowercase());
         for nm in &names {
             r.with(577, |p| {
@@ -159,4 +163,22 @@ pub(super) fn read_all(
         });
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sheet_local_names_are_left_out_of_the_names_written() {
+        let global = xlcalc::ExtName::parse("gn", "'[1]Data'!$A$1").unwrap();
+        let mut local = xlcalc::ExtName::parse("loc", "'[1]Data'!$A$2").unwrap();
+        local.scope = Some("Data".to_string());
+        let names = [local, global];
+        let kept: Vec<&str> = unscoped_names(&names)
+            .iter()
+            .map(|n| n.name.as_str())
+            .collect();
+        assert_eq!(kept, ["gn"]);
+    }
 }

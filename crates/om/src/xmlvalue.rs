@@ -1139,6 +1139,7 @@ fn write_columns(xml: &mut Xml, wb: &Workbook, sheet: SheetId, rect: Rect) {
     let mut cols: Vec<(u32, u32, bool, bool)> = wb
         .column_state(sheet)
         .into_iter()
+        .map(|(c, w, hidden)| (c, wb.col_px(sheet, c), w.user && !w.best, hidden))
         .filter(|(c, px, _, hidden)| {
             *c >= rect.c0 && *c <= rect.c1 && (*hidden || *px != wb.standard_px())
         })

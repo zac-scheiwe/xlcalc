@@ -5,6 +5,8 @@ use std::fmt::Write;
 #[derive(Default, Clone)]
 pub(super) struct Pending {
     pub spt: u16,
+
+    pub spid: u32,
     pub flags: u32,
     pub anchor: Option<[u16; 8]>,
     pub fill: Option<u32>,
@@ -79,6 +81,7 @@ pub(super) fn scan(d: &[u8], out: &mut Vec<Pending>, st: &mut EscState) {
                 if flags & 4 == 0 {
                     out.push(Pending {
                         spt: inst as u16,
+                        spid: u32::from_le_bytes([b[0], b[1], b[2], b[3]]),
                         flags,
                         bounds,
                         level: st.open.len().saturating_sub(usize::from(flags & 1 != 0)),
@@ -148,7 +151,7 @@ fn opt(b: &[u8], n: usize, cur: &mut Pending) {
                     .map(|c| u16::from_le_bytes(*c))
                     .take_while(|&c| c != 0)
                     .collect();
-                cur.name = String::from_utf16_lossy(&u);
+                cur.name = xlcalc::wide::from_units(&u);
             }
             continue;
         }

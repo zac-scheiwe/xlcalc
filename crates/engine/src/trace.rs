@@ -95,6 +95,7 @@ impl Workbook {
                 inner.push(crate::formula::Formula {
                     root: (**x).clone(),
                     volatile: false,
+                    dynamic: Default::default(),
                 });
             }
         });

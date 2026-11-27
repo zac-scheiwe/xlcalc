@@ -161,16 +161,25 @@ fn flags(d: &DataLabels) -> String {
     )
 }
 
-fn labels(f: &SeriesFmt) -> String {
+fn labels(f: &SeriesFmt, texts: &[(u16, String)]) -> String {
     if f.labels.is_none() && f.point_labels.is_empty() {
         return String::new();
     }
     let mut s = String::from("<c:dLbls>");
-    for p in &f.point_labels {
+    let points: std::collections::BTreeSet<u16> = f
+        .point_labels
+        .iter()
+        .copied()
+        .chain(texts.iter().map(|t| t.0))
+        .collect();
+    for p in points {
+        let tx = texts.iter().find(|t| t.0 == p).map_or("", |t| &t.1);
+
+        let shown = f.labels.as_ref().filter(|_| !tx.is_empty());
         s.push_str(&format!(
-            "<c:dLbl><c:idx val=\"{}\"/>{}</c:dLbl>",
+            "<c:dLbl><c:idx val=\"{}\"/>{tx}{}</c:dLbl>",
             p.saturating_sub(1),
-            flags(&DataLabels::default())
+            flags(shown.unwrap_or(&DataLabels::default()))
         ));
     }
     match &f.labels {
@@ -249,7 +258,12 @@ fn err_bars(el: &str, f: &SeriesFmt) -> String {
     )
 }
 
-pub(crate) fn series_pre(el: &str, chart_type: i32, f: &SeriesFmt) -> String {
+pub(crate) fn series_pre(
+    el: &str,
+    chart_type: i32,
+    f: &SeriesFmt,
+    texts: &[(u16, String)],
+) -> String {
     let mut s = sp_pr(el, chart_type, f);
     if matches!(el, "lineChart" | "scatterChart" | "radarChart") {
         let m = marker(f);
@@ -260,7 +274,7 @@ pub(crate) fn series_pre(el: &str, chart_type: i32, f: &SeriesFmt) -> String {
             s.push_str(&m);
         }
     }
-    s.push_str(&labels(f));
+    s.push_str(&labels(f, texts));
     if !matches!(el, "pieChart" | "doughnutChart" | "radarChart") {
         s.push_str(&trends(f));
         s.push_str(&err_bars(el, f));

@@ -5,8 +5,9 @@ use xlcalc_variant::{ObjectId, SafeArray, VarType, Variant};
 
 use crate::addr::{max_cols, max_rows, parse_areas_text, parse_range_text};
 use crate::app::{unsupported, Application, BookId, Mode, Object, SheetsKind, SortOwner};
-use crate::conv::Args;
+use crate::conv::{command_number, is_missing, sfix, Args};
 use crate::error::OmError;
+use crate::panes::Lines;
 use crate::typelib::{InvokeKind, Member};
 
 #[derive(Clone)]
@@ -97,6 +98,12 @@ impl Application<'_> {
                 return Err(OmError::app_defined());
             }
             rect = rect.union_bounds(&r2);
+        }
+
+        if matches!(first, Variant::Bstr(_)) {
+            if let Ok(b) = self.book_mut(book) {
+                b.wb.note_cell_format(xlcalc::CellAddr::new(s, rect.r0, rect.c0));
+            }
         }
         self.new_range(book, s, rect, Mode::Cells)
     }
@@ -414,6 +421,7 @@ impl Application<'_> {
                         .any(|b| b.split(',').eq(list.iter().map(String::as_str)))
                 {
                     self.user_lists.push(list);
+                    self.share_custom_lists();
                 }
                 Ok(Variant::Bool(true))
             }
@@ -424,6 +432,7 @@ impl Application<'_> {
                     return Err(OmError::app_defined());
                 }
                 self.user_lists.remove(n - BUILTIN_LISTS.len() - 1);
+                self.share_custom_lists();
                 Ok(Variant::Bool(true))
             }
             ("CutCopyMode", Get) => Ok(match self.clip {
@@ -458,7 +467,8 @@ impl Application<'_> {
                 let id = self.running.ok_or_else(OmError::app_defined)?;
                 Ok(self.alloc(Object::Workbook(id)))
             }
-            ("Application", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
+
+            ("Application" | "Parent", Get) => Ok(Variant::Dispatch(Some(self.handle()))),
             ("Caller", Get) => self.app_caller(),
             ("Volatile", Func) => {
                 let on = a.bool(0)?.unwrap_or(true);
@@ -672,6 +682,13 @@ impl Application<'_> {
             }
             "Open" | "_Open" => self.open_with_events(a),
 
+            "OpenText"
+                if !matches!(a.get(0), Some(Variant::Empty))
+                    && !matches!(a.get(0), Some(Variant::Bstr(s)) if s.is_empty()) =>
+            {
+                self.workbooks_open_text(a)
+            }
+
             "OpenXML" | "OpenText" | "OpenDatabase" | "CanCheckOut" | "CheckOut" => {
                 let checkout = matches!(m.name, "CanCheckOut" | "CheckOut");
                 let empty = match a.get(0) {
@@ -745,6 +762,14 @@ impl Application<'_> {
     pub(crate) fn set_current_window(&mut self, w: (BookId, u32)) {
         self.cur_win.retain(|(x, _)| *x != w.0);
         self.cur_win.push(w);
+        self.no_top_window = None;
+        self.focus_window(w);
+    }
+
+    pub(crate) fn focus_window(&mut self, w: (BookId, u32)) {
+        if let Ok(bk) = self.book_mut(w.0) {
+            bk.window.focus(w.1);
+        }
     }
 
     pub(crate) fn window_caption(&self, w: (BookId, u32)) -> Result<String, OmError> {
@@ -797,10 +822,34 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         let list = self.window_list();
         match m.name {
-            "Count" => Ok(Variant::I4(list.len() as i32)),
+            "Count" => Ok(Variant::I4(
+                if self.no_top_window.is_some() && self.no_top_window == self.active {
+                    0
+                } else {
+                    list.len() as i32
+                },
+            )),
             "Item" | "_Default" => {
                 let w = self.window_by_item(&list, a.get(0), a)?;
                 Ok(self.alloc(Object::Window(w.0, w.1)))
+            }
+
+            "Arrange" => {
+                let ok = match a.get(0) {
+                    None | Some(Variant::Null | Variant::Bool(_)) => true,
+                    Some(v) if crate::conv::is_missing(v) => true,
+                    Some(v) => match crate::controls::num_arg(v, a.lcid) {
+                        Ok(n) => {
+                            matches!(n, 1.0..=4.0 | 7.0 | -4166.0 | -4128.0) && n.fract() == 0.0
+                        }
+                        Err(_) => false,
+                    },
+                };
+                if ok {
+                    Ok(Variant::Bool(true))
+                } else {
+                    Err(OmError::app_defined())
+                }
             }
             _ => Err(unsupported("Windows", m)),
         }
@@ -819,7 +868,13 @@ impl Application<'_> {
             .filter(|(x, _)| *x == b)
             .collect();
         match m.name {
-            "Count" => Ok(Variant::I4(list.len() as i32)),
+            "Count" => Ok(Variant::I4(
+                if self.no_top_window.is_some() && self.no_top_window == self.active {
+                    0
+                } else {
+                    list.len() as i32
+                },
+            )),
             "Item" | "_Default" => {
                 let w = self.window_by_item(&list, a.get(0), a)?;
                 Ok(self.alloc(Object::Window(w.0, w.1)))
@@ -835,7 +890,15 @@ impl Application<'_> {
         let list = self.window_list();
         let mine = list.iter().filter(|(x, _)| *x == b).map(|(_, n)| *n);
         let n = mine.clone().max().unwrap_or(0) + 1;
-        let first = mine.min().map(|n| (b, n));
+        let first = mine.clone().min().map(|n| (b, n));
+
+        let from = self
+            .current_window()
+            .filter(|(x, _)| *x == b)
+            .map(|(_, n)| n)
+            .or_else(|| mine.min())
+            .unwrap_or(1);
+        self.book_mut(b)?.window.copy_window(from, n);
         self.wins = list;
         self.wins.insert(0, (b, n));
         self.active = Some(b);
@@ -876,6 +939,10 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         match (m.name, m.kind) {
+            ("Parent", InvokeKind::Get) => {
+                self.book(b)?;
+                Ok(self.alloc(Object::Workbook(b)))
+            }
             ("Activate", _) => {
                 self.book(b)?;
                 if !self.window_list().contains(&(b, n)) {
@@ -900,9 +967,20 @@ impl Application<'_> {
                 if list.iter().filter(|(x, _)| *x == b).count() < 2 {
                     return self.close_book(b, a);
                 }
+
+                let was_active = self.current_window() == Some((b, n));
                 self.wins = list.into_iter().filter(|w| *w != (b, n)).collect();
                 self.cur_win.retain(|w| *w != (b, n));
+                if was_active {
+                    self.no_top_window = Some(b);
+                }
                 self.book_mut(b)?.window.captions.remove(&n);
+                if let Some(cur) = self.current_window().filter(|(x, _)| *x == b) {
+                    self.focus_window(cur);
+                } else if let Some(&(_, first)) = self.wins.iter().find(|(x, _)| *x == b) {
+                    self.focus_window((b, first));
+                }
+                self.book_mut(b)?.window.drop_window(n);
                 Ok(Variant::Bool(true))
             }
             ("Caption", InvokeKind::Put) => {
@@ -924,10 +1002,7 @@ impl Application<'_> {
                 Ok(Variant::I4(at.map_or(1, |p| p as i32 + 1)))
             }
 
-            ("WindowNumber", InvokeKind::Get) => {
-                let at = self.window_list().iter().position(|&w| w == (b, n));
-                Ok(Variant::R8(at.map_or(1, |p| p as i32 + 1) as f64))
-            }
+            ("WindowNumber", InvokeKind::Get) => Ok(Variant::R8(f64::from(n))),
             ("ActiveChart", InvokeKind::Get) => {
                 let sheet = self.book(b)?.wb.active_sheet();
                 Ok(self.active_chart(b, sheet))
@@ -960,7 +1035,7 @@ impl Application<'_> {
                         .unwrap_or(Rect::cell(0, 0))
                 } else {
                     let v = book.window.views.get(&sheet).cloned().unwrap_or_default();
-                    v.visible_rect()
+                    v.visible_rect(&Lines::rows(&book.wb, sheet), &Lines::cols(&book.wb, sheet))
                 };
                 self.new_range(b, sheet, rect, Mode::Cells)
             }
@@ -975,6 +1050,32 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
+        match (m.name, m.kind) {
+            ("Colors", Put) => {
+                let i = a.i32(0)?.ok_or_else(OmError::app_defined)?;
+                let i = usize::try_from(i - 1)
+                    .ok()
+                    .filter(|&i| i < 56)
+                    .ok_or_else(OmError::app_defined)?;
+                let bgr = self.put_f64(a)? as u32 & 0xFF_FFFF;
+                self.book_mut(b)?.wb.style_table_mut().theme.palette[i] =
+                    crate::window::bgr_of(bgr);
+                return Ok(Variant::Empty);
+            }
+            ("ResetColors", Func) => {
+                self.book_mut(b)?.wb.style_table_mut().theme.palette = xlcalc::style::PALETTE;
+                return Ok(Variant::Empty);
+            }
+            ("DeleteNumberFormat", Func) => {
+                let code = a.string(0)?.unwrap_or_default();
+                return if self.book_mut(b)?.wb.delete_number_format(&code) {
+                    Ok(Variant::Bool(true))
+                } else {
+                    Err(OmError::app_defined())
+                };
+            }
+            _ => {}
+        }
         if let Some(r) = self.stored_option(Some(b), m, a) {
             self.book(b)?;
             return r;
@@ -1112,6 +1213,7 @@ impl Application<'_> {
                 self.book_mut(b)?.draw_objects = v;
                 Ok(Variant::Empty)
             }
+            ("WriteReserved", Get) => Ok(Variant::Bool(self.book(b)?.write_reserved)),
             ("ReadOnlyRecommended", Get) => Ok(Variant::Bool(self.book(b)?.ro_recommended)),
             ("ReadOnlyRecommended", Put) => {
                 let on = self.put_bool(a)?;
@@ -1444,10 +1546,9 @@ impl Application<'_> {
             ));
         }
         let bad = || OmError::unable_to_set("Visible", "Sheets");
-        let v = match a.put {
-            Some(Variant::Bool(false)) => 0,
-            _ => self.put_i32(a).map_err(|_| bad())?,
-        };
+
+        let x = command_number(a.put.as_ref(), a.lcid, &self.book(b)?.wb).map_err(|()| bad())?;
+        let v = x.map_or(0, sfix);
         let ids = self.kind_sheets(b, kind)?;
         let wb = &self.book(b)?.wb;
         let others_visible = wb
@@ -1456,19 +1557,15 @@ impl Application<'_> {
         if !matches!(v, 0 | 2) || ids.is_empty() || self.book(b)?.protect.is_some() {
             return Err(bad());
         }
-        if !others_visible {
-            let fraction = matches!(&a.put, Some(Variant::R8(x)) if x.fract() != 0.0);
-            if !fraction {
-                let first = ids[0];
-                self.book_mut(b)?
-                    .wb
-                    .set_active_sheet(first)
-                    .map_err(edit_error)?;
-            }
-            return Err(bad());
+        let first = ids[0];
+        if self.book(b)?.wb.sheet_state(first) == Some(SheetState::Visible) {
+            self.book_mut(b)?
+                .wb
+                .set_active_sheet(first)
+                .map_err(edit_error)?;
         }
 
-        if v != 0 {
+        if !others_visible || v == 2 {
             return Err(bad());
         }
         for id in ids {
@@ -1506,8 +1603,44 @@ impl Application<'_> {
         Ok(Variant::Bool(true))
     }
 
+    fn taken_sheets(&self, b: BookId, ids: Vec<SheetId>) -> Result<Vec<SheetId>, OmError> {
+        let wb = &self.book(b)?.wb;
+        Ok(ids
+            .into_iter()
+            .filter(|&id| {
+                wb.sheet_state(id) != Some(SheetState::VeryHidden)
+                    || wb.sheet(id).is_some_and(|s| s.kind == SheetKind::Module)
+            })
+            .collect())
+    }
+
+    fn move_out_refused(
+        &self,
+        b: BookId,
+        taken: &[SheetId],
+        to_other_book: bool,
+    ) -> Result<(), OmError> {
+        let wb = &self.book(b)?.wb;
+        let visible = |id: SheetId| wb.sheet_state(id) == Some(SheetState::Visible);
+        let all_visible = wb.sheets().filter(|s| visible(s.id)).count();
+        if !to_other_book && taken.len() == all_visible {
+            return Err(OmError::app_defined_with(
+                "There needs to be at least one visible sheet in the workbook.",
+            ));
+        }
+        let taken_visible = taken.iter().filter(|&&id| visible(id)).count();
+        if to_other_book && taken_visible == all_visible && taken.len() != wb.sheet_count() {
+            return Err(OmError::app_defined_with(
+                "A workbook must contain at least one visible worksheet. \n\nTo hide, delete, or \
+                 move the selected sheet(s), you must first insert a new sheet or unhide a sheet \
+                 that is already hidden.",
+            ));
+        }
+        Ok(())
+    }
+
     fn sheets_delete(&mut self, b: BookId, kind: SheetsKind) -> Result<Variant, OmError> {
-        let ids = self.kind_sheets(b, kind)?;
+        let ids = self.taken_sheets(b, self.kind_sheets(b, kind)?)?;
         let wb = &self.book(b)?.wb;
         let left = wb
             .sheets()
@@ -1584,8 +1717,13 @@ impl Application<'_> {
         if r.book != b || !ids.contains(&ss) {
             return Err(OmError::app_defined());
         }
+
+        let all = !matches!(
+            a.get(1),
+            Some(Variant::I4(2 | -4122) | Variant::I2(2 | -4122))
+        );
         for d in ids.into_iter().filter(|d| *d != ss) {
-            self.paste_copy(b, (ss, rect), (d, rect), false)?;
+            self.paste_copy(b, (ss, rect), (d, rect), false, all)?;
         }
         Ok(Variant::Bool(true))
     }
@@ -1613,7 +1751,7 @@ impl Application<'_> {
         if a.values.len() > 2 {
             return Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT));
         }
-        let ids = self.kind_sheets(b, kind)?;
+        let ids = self.taken_sheets(b, self.kind_sheets(b, kind)?)?;
         let named = |i: usize| -> Result<Option<(BookId, SheetId)>, OmError> {
             match a.get(i) {
                 None => Ok(None),
@@ -1646,16 +1784,35 @@ impl Application<'_> {
             Ok(wb.sheet_at(wb.sheet_count() - 1).id)
         };
 
-        if before.is_none() && after.is_none() && moving {
-            let wb = &self.book(b)?.wb;
-            if !wb.sheets().any(|s| !ids.contains(&s.id)) {
-                return Err(OmError::app_defined());
+        let target_book = before.or(after).map(|(tb, _)| tb);
+        if moving && target_book != Some(b) {
+            self.move_out_refused(b, &ids, target_book.is_some())?;
+            self.moving_group = true;
+        }
+
+        let mut hidden = Vec::new();
+        if self.moving_group && ids.len() == self.book(b)?.wb.sheet_count() {
+            for (i, &s) in ids.iter().enumerate() {
+                if self.book(b)?.wb.sheet_state(s) == Some(SheetState::Hidden) {
+                    hidden.push(i);
+                    self.book_mut(b)?
+                        .wb
+                        .set_sheet_state(s, SheetState::Visible)
+                        .map_err(edit_error)?;
+                }
             }
         }
+
+        let mut placed: Vec<(BookId, SheetId)> = Vec::new();
+        let landed = |app: &Self| -> Result<(BookId, SheetId), OmError> {
+            let tb = app.active.ok_or_else(OmError::app_defined)?;
+            Ok((tb, app.book(tb)?.wb.active_sheet()))
+        };
         let mut first: Option<(BookId, SheetId)> = None;
         match before.or(after) {
             None => {
                 call(self, ids[0], None, None)?;
+                placed.push(landed(self)?);
                 if let Some(tb) = self.active {
                     first = Some((tb, self.book(tb)?.wb.active_sheet()));
                 }
@@ -1664,10 +1821,10 @@ impl Application<'_> {
                     let last = last_of(self, tb)?;
                     let h = self.sheet_object(tb, last);
                     call(self, s, None, Some(h))?;
+                    placed.push(landed(self)?);
                 }
             }
             Some((tb, t)) if tb != b => {
-                self.moving_group = moving;
                 for (i, &s) in ids.iter().enumerate() {
                     let at = if i == 0 {
                         t
@@ -1681,6 +1838,7 @@ impl Application<'_> {
                     } else {
                         call(self, s, None, Some(h))?;
                     }
+                    placed.push((tb, self.book(tb)?.wb.active_sheet()));
                     if i == 0 {
                         first = Some((tb, self.book(tb)?.wb.active_sheet()));
                     }
@@ -1719,6 +1877,13 @@ impl Application<'_> {
                 .set_active_sheet(fs)
                 .map_err(edit_error)?;
             self.active = Some(fb);
+        }
+        for i in hidden {
+            let &(pb, ps) = placed.get(i).ok_or_else(OmError::app_defined)?;
+            self.book_mut(pb)?
+                .wb
+                .set_sheet_state(ps, SheetState::Hidden)
+                .map_err(edit_error)?;
         }
         Ok(Variant::Bool(true))
     }
@@ -1768,10 +1933,8 @@ impl Application<'_> {
                 return self.chart_sheet_to_new_book(b, s).map(Some);
             }
         }
-        if moving && self.book(b)?.wb.sheet_count() < 2 && !self.moving_group {
-            return Err(OmError::app_defined_with(
-                "Move method of Worksheet class failed",
-            ));
+        if moving && !self.moving_group {
+            self.move_out_refused(b, &[s], dest.is_some())?;
         }
         let tb = match dest {
             Some(tb) => tb,
@@ -1801,14 +1964,20 @@ impl Application<'_> {
                 let sw = &self.book(b)?.wb;
                 for sh in &mut d.shapes {
                     if let Some(c) = &mut sh.chart {
+                        c.carry_label_cells(Some((s, n)));
                         for p in c.parts_mut() {
-                            if let xlcalc::drawing::Part::Refs(v) = p {
-                                if v.iter().all(|e| e.0 == s) {
+                            match p {
+                                xlcalc::drawing::Part::Refs(v) if v.iter().all(|e| e.0 == s) => {
                                     v.iter_mut().for_each(|e| e.0 = n);
-                                } else if let Some(t) =
-                                    crate::charts::external_text(sw, p, &src_name)
-                                {
-                                    *p = xlcalc::drawing::Part::External(t);
+                                }
+                                xlcalc::drawing::Part::Name(l) if l.scope == Some(s) => {
+                                    l.scope = Some(n);
+                                }
+                                _ => {
+                                    if let Some(t) = crate::charts::external_text(sw, p, &src_name)
+                                    {
+                                        *p = xlcalc::drawing::Part::External(t);
+                                    }
                                 }
                             }
                         }
@@ -1866,20 +2035,51 @@ impl Application<'_> {
     }
 
     pub(crate) fn protect_workbook(&mut self, b: BookId, a: &Args) -> Result<(), OmError> {
-        let password = a.string(0)?.filter(|p| !p.is_empty());
-        let structure = a.bool(1)?.unwrap_or(true);
+        let invalid = || OmError::exception(0x8007_0057_u32 as i32, None);
+        let password = match a.get(0) {
+            Some(Variant::Null) => return Err(invalid()),
+
+            Some(v @ Variant::Bool(_)) => a.variant_string(v)?.unwrap_or_default(),
+            v => crate::sheetprot::er_value_text(v, a)?,
+        };
+        let flag = |i: usize| -> Result<Option<bool>, OmError> {
+            match a.get(i) {
+                None => Ok(None),
+                Some(Variant::Bool(f)) => Ok(Some(*f)),
+                Some(_) => Err(invalid()),
+            }
+        };
+        let structure = flag(1)?;
+        flag(2)?;
         let book = self.book_mut(b)?;
-        match &book.protect {
-            Some(None) => book.protect = None,
-            Some(Some(_)) => return Err(OmError::app_defined()),
-            None if structure => book.protect = Some(password.map(crate::sheetprot::Pw::Text)),
-            None => {}
+        let current = book.protect.is_some();
+        let want = structure.unwrap_or(!current);
+        if want == current {
+            return Ok(());
         }
+        if let Some(Some(p)) = &book.protect {
+            if !p.matches(Some(password.as_str())) {
+                return Err(OmError::app_defined());
+            }
+        }
+
+        let units: Vec<u16> = password.encode_utf16().take(255).collect();
+        let kept = String::from_utf16_lossy(&units);
+        book.protect = want.then(|| (!kept.is_empty()).then_some(crate::sheetprot::Pw::Text(kept)));
         Ok(())
     }
 
     pub(crate) fn unprotect_workbook(&mut self, b: BookId, a: &Args) -> Result<(), OmError> {
         let given = a.string(0)?;
+
+        if given
+            .as_ref()
+            .is_some_and(|g| g.encode_utf16().count() > 255)
+        {
+            return Err(OmError::app_defined_with(
+                "Unprotect method of Workbook class failed",
+            ));
+        }
         let book = self.book_mut(b)?;
         match &book.protect {
             Some(Some(p)) if !p.matches(given.as_deref()) => Err(OmError::app_defined_with(
@@ -1906,66 +2106,111 @@ impl Application<'_> {
                 ) = self.arena.get(*id)
                 {
                     if *ob != b {
-                        let pos = self.book(*ob)?.wb.sheet_position(*s);
-                        let wb = &self.book(b)?.wb;
-                        return Ok(pos
-                            .filter(|&p| p < wb.sheet_count())
-                            .map(|p| wb.sheet_at(p).id));
+                        let pos = self.book(*ob).map_err(|_| failed())?.wb.sheet_position(*s);
+                        let p = pos.ok_or_else(failed)?;
+                        let wb = &self.book(b).map_err(|_| failed())?.wb;
+                        if p < wb.sheet_count() {
+                            return Ok(Some(wb.sheet_at(p).id));
+                        }
+
+                        return Err(if i == 0 {
+                            OmError::unsupported("Add before a position past the end")
+                        } else {
+                            failed()
+                        });
                     }
                 }
             }
-            self.sheet_arg(b, a.get(i))
+            self.sheet_arg(b, a.get(i)).map_err(|_| failed())
         };
-        let before = peer(0).map_err(|_| failed())?;
-        let after = peer(1).map_err(|_| failed())?;
+
+        let given = |i: usize| a.get(i).filter(|v| **v != Variant::Null);
+        let before = given(0).map_or(Ok(None), |_| peer(0))?;
+        let after = given(1).map_or(Ok(None), |_| peer(1))?;
         if before.is_some() && after.is_some() {
             return Err(failed());
         }
 
-        let number = |i: usize, text: bool| -> Result<Option<i32>, OmError> {
-            match a.get(i) {
-                None => Ok(None),
-                Some(Variant::Bool(t)) => Ok(Some(i32::from(*t))),
-                Some(Variant::Bstr(s)) if text => s
-                    .trim()
-                    .parse::<f64>()
-                    .ok()
-                    .filter(|f| f.abs() < 2e9)
-                    .map(|f| Some(f.trunc() as i32))
-                    .ok_or_else(failed),
-                Some(Variant::R8(f)) if f.abs() < 2e9 => Ok(Some(f.trunc() as i32)),
-                Some(Variant::Bstr(_) | Variant::R8(_)) => Err(failed()),
-                Some(_) => a.i32(i).map_err(|_| failed()),
-            }
+        let wb = &self.book(b)?.wb;
+        let number = |v: &Variant| command_number(Some(v), a.lcid, wb).map_err(|()| failed());
+        let count = match given(2) {
+            None => 1,
+            Some(v) => number(v)?.map_or(1, sfix),
         };
-        let count = number(2, true)?.unwrap_or(1);
         if !(1..=255).contains(&count) {
             return Err(failed());
         }
-        if kind == SheetsKind::Charts && a.get(3).is_some() {
-            return Err(failed());
-        }
-        let ty = number(3, false)?;
 
-        let macro_kind = match (kind, ty) {
-            (SheetsKind::Macro, _) | (SheetsKind::All | SheetsKind::Worksheets, Some(3)) => {
-                Some(false)
+        let sheet_type = match given(3).filter(|v| !is_missing(v)) {
+            None => match kind {
+                SheetsKind::Charts => 2,
+                SheetsKind::Macro => 3,
+                SheetsKind::MacroIntl => 4,
+                SheetsKind::Modules => 6,
+                SheetsKind::Dialogs => 7,
+                _ => 1,
+            },
+            Some(_)
+                if matches!(
+                    kind,
+                    SheetsKind::Charts | SheetsKind::Modules | SheetsKind::Dialogs
+                ) =>
+            {
+                return Err(failed())
             }
-            (SheetsKind::MacroIntl, _) | (SheetsKind::All | SheetsKind::Worksheets, Some(4)) => {
-                Some(true)
+
+            Some(Variant::Bstr(s)) if kind == SheetsKind::All => {
+                let titles = [
+                    ("Worksheet", 1),
+                    ("Chart", 2),
+                    ("MS Excel 4.0 Macro", 3),
+                    ("MS Excel 5.0 Dialog", 7),
+                ];
+                titles
+                    .iter()
+                    .find(|(title, _)| title.eq_ignore_ascii_case(s))
+                    .map(|&(_, number)| number)
+                    .ok_or_else(failed)?
             }
+            Some(Variant::Cy(_) | Variant::Date(_)) if kind == SheetsKind::All => {
+                return Err(failed())
+            }
+            Some(v) => {
+                let mut x = number(v)?.ok_or_else(failed)?;
+
+                if !matches!(
+                    v,
+                    Variant::Bstr(_) | Variant::Cy(_) | Variant::Date(_) | Variant::Array(_)
+                ) {
+                    x = match x {
+                        -4109.0 => 2.0,
+                        -4141.0 => 6.0,
+                        -4167.0 => 1.0,
+                        -4116.0 => 7.0,
+                        other => other,
+                    };
+                }
+
+                if kind == SheetsKind::Worksheets && !matches!(sfix(x), 1 | 3 | 4) {
+                    return Err(failed());
+                }
+                let x = x.floor();
+                if !(1.0..8.0).contains(&x) || x == 5.0 {
+                    return Err(failed());
+                }
+                x as i32
+            }
+        };
+        let macro_kind = match sheet_type {
+            3 => Some(false),
+            4 => Some(true),
             _ => None,
         };
-        let chart = match (kind, ty) {
-            _ if macro_kind.is_some() => false,
-            (SheetsKind::Charts, _) | (SheetsKind::All, Some(-4109)) => true,
-            (_, None | Some(-4167 | 1)) => false,
-            (SheetsKind::All, Some(-4116)) => {
-                return Err(OmError::unsupported(
-                    "Sheets.Add of a sheet type other than xlWorksheet or xlChart",
-                ))
-            }
-            _ => return Err(failed()),
+        let chart = sheet_type == 2;
+        let legacy = match sheet_type {
+            6 => Some(SheetKind::Module),
+            7 => Some(SheetKind::Dialog),
+            _ => None,
         };
         let mark = self.notice_mark(b);
         let book = self.book_mut(b)?;
@@ -1993,7 +2238,11 @@ impl Application<'_> {
                 (Some(l), Some(_)) => l,
                 (_, b) => b.unwrap_or_else(|| book.wb.active_sheet()),
             };
-            let (prefix, counter) = if macro_kind.is_some() {
+            let (prefix, counter) = if legacy == Some(SheetKind::Module) {
+                ("Module", &mut book.next_legacy.0)
+            } else if legacy.is_some() {
+                ("Dialog", &mut book.next_legacy.1)
+            } else if macro_kind.is_some() {
                 ("Macro", &mut book.next_macro.0)
             } else if chart {
                 ("Chart", &mut book.next_chart)
@@ -2018,7 +2267,9 @@ impl Application<'_> {
                 }
                 None => Some(anchor),
             };
-            let id = if let Some(intl) = macro_kind {
+            let id = if let Some(legacy) = legacy {
+                book.wb.add_legacy_sheet_before(&name, legacy, target)
+            } else if let Some(intl) = macro_kind {
                 book.wb.add_macro_sheet_before(&name, intl, target)
             } else if chart {
                 book.wb.add_chart_sheet_before(&name, target)
@@ -2029,7 +2280,19 @@ impl Application<'_> {
             last = Some(id);
             made.push(id);
         }
-        let id = last.ok_or_else(OmError::app_defined)?;
+        let mut id = last.ok_or_else(OmError::app_defined)?;
+
+        if legacy == Some(SheetKind::Module) {
+            for &module in &made {
+                book.wb
+                    .set_sheet_state(module, SheetState::VeryHidden)
+                    .map_err(edit_error)?;
+            }
+            book.wb.set_active_sheet(active).map_err(edit_error)?;
+            if kind != SheetsKind::Modules {
+                id = active;
+            }
+        }
 
         if let Some(named) = before.or(next_after).or(after) {
             let log = book.wb.notices_mut();
@@ -2133,6 +2396,7 @@ impl Application<'_> {
             return r;
         }
         match (m.name, m.kind) {
+            ("Parent", Get) => Ok(self.alloc(Object::Workbook(b))),
             ("_CodeName", Get) => Ok(Variant::Bstr(
                 self.has_vba_content(b)?
                     .then(|| self.code_name(b, Some(s)))
@@ -2151,6 +2415,15 @@ impl Application<'_> {
                     .unwrap_or_default(),
             )),
             ("Name", Put) => {
+                match a.put.as_ref() {
+                    Some(v) if crate::conv::is_missing(v) => {
+                        return Err(OmError::hresult(crate::error::DISP_E_PARAMNOTOPTIONAL))
+                    }
+                    Some(Variant::Null | Variant::Error(_)) => {
+                        return Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))
+                    }
+                    _ => {}
+                }
                 if self.book(b)?.protect.is_some() {
                     return Err(OmError::app_defined());
                 }
@@ -2226,6 +2499,7 @@ impl Application<'_> {
                 _,
             ) => self.sheet_view_member(b, s, m, a),
             ("Shapes" | "ChartObjects", Get | Func) => self.sheet_draw_member(b, s, m, a),
+            ("DrawingObjects", Get | Func) => self.drawing_object(b, s, m, a),
             (name, Get | Func) if crate::controls::is_collection_member(name) => {
                 self.sheet_controls_member(b, s, m, a)
             }
@@ -2280,13 +2554,12 @@ impl Application<'_> {
             ("Visible", Put) => {
                 let bad = || OmError::unable_to_set("Visible", "Worksheet");
                 let protected = self.book(b)?.protect.is_some();
-
-                let n = match Application::put_value(a).get(0) {
-                    Some(Variant::R8(x)) if x.abs() < 2.0e9 => x.trunc() as i32,
-                    _ => self.put_i32(a).map_err(|_| bad())?,
-                };
-                let state = match n {
+                let x = command_number(a.put.as_ref(), a.lcid, &self.book(b)?.wb)
+                    .map_err(|()| bad())?;
+                let state = match x.map_or(0, sfix) {
                     -1 | 1 => SheetState::Visible,
+
+                    0 if x.is_some_and(|x| x.to_bits() >> 48 != 0) => SheetState::VeryHidden,
                     0 => SheetState::Hidden,
                     2 => SheetState::VeryHidden,
                     _ => return Err(bad()),
@@ -2311,7 +2584,7 @@ impl Application<'_> {
             )),
             ("CodeName", Get) => Ok(Variant::Bstr(self.code_name(b, Some(s))?)),
 
-            ("Delete" | "Move", Func)
+            ("Delete" | "Move" | "Copy", Func)
                 if self.book(b)?.wb.sheet_state(s) == Some(SheetState::VeryHidden) =>
             {
                 Err(OmError::app_defined_with(&format!(
@@ -2347,6 +2620,16 @@ impl Application<'_> {
                         OmError::app_defined_with("Workbook is protected and cannot be changed.")
                     });
                 }
+
+                let a = &Args {
+                    values: a
+                        .values
+                        .iter()
+                        .map(|v| v.clone().filter(|v| *v != Variant::Null))
+                        .collect(),
+                    put: None,
+                    lcid: a.lcid,
+                };
                 if let Some(r) = self.sheet_to_other_book(b, s, m.name == "Move", a)? {
                     return Ok(r);
                 }
@@ -2376,14 +2659,15 @@ impl Application<'_> {
                 if m.name == "Move" {
                     wb.move_sheet(s, target).map_err(edit_error)?;
                 } else {
-                    wb.copy_sheet(s, target).map_err(edit_error)?;
+                    let copy = wb.copy_sheet(s, target).map_err(edit_error)?;
 
                     self.book_mut(b)?.next_sheet += 1;
-                    self.copy_document_module(b, s)?;
+                    self.copy_document_module(b, s, copy)?;
+                    self.copy_controls(b, s, copy)?;
 
-                    let copy = self.book(b)?.wb.active_sheet();
                     let book = self.book_mut(b)?;
                     if let Some(p) = book.sheet_prot.get(&s).cloned() {
+                        book.wb.set_contents_protected(copy, p.contents);
                         book.sheet_prot.insert(copy, p);
                     }
                     if let Some(p) = book.page_setup.get(&s).cloned() {
@@ -2451,7 +2735,7 @@ impl Application<'_> {
             .collect();
         if scope.is_none() {
             for h in wb.names().hidden() {
-                if wb.names().get(&h.to_uppercase(), None).is_none() {
+                if wb.names().get(&xlcalc::name_key(h), None).is_none() {
                     list.push(NameEntry {
                         shown: h.to_string(),
                         bare: h.to_string(),
@@ -2461,20 +2745,27 @@ impl Application<'_> {
             }
         }
 
-        list.sort_by_key(|e| {
-            (
-                e.bare.to_lowercase(),
-                e.scope.is_none(),
-                e.scope
-                    .and_then(|s| wb.sheet(s))
-                    .map_or_else(|| e.shown.to_lowercase(), |s| s.name.to_lowercase()),
-            )
+        list.sort_by(|x, y| {
+            xlcalc::collate_compare(&x.bare, &y.bare)
+                .then_with(|| x.scope.is_none().cmp(&y.scope.is_none()))
+                .then_with(|| {
+                    let key = |e: &NameEntry| {
+                        e.scope
+                            .and_then(|s| wb.sheet(s))
+                            .map_or_else(|| e.shown.to_lowercase(), |s| s.name.to_lowercase())
+                    };
+                    key(x).cmp(&key(y))
+                })
         });
         Ok(list)
     }
 
     fn name_handle(&mut self, b: BookId, e: &NameEntry) -> Variant {
-        self.alloc(Object::Name(b, e.scope, e.bare.to_uppercase()))
+        let key = xlcalc::name_key(&e.bare);
+        let serial = self
+            .book(b)
+            .map_or(0, |bk| bk.wb.names().definition_serial(&key, e.scope));
+        self.alloc(Object::Name(b, e.scope, key, serial))
     }
 
     pub(crate) fn names_member(
@@ -2492,7 +2783,7 @@ impl Application<'_> {
                     (Some(Variant::Bstr(t)), _) | (None, Some(Variant::Bstr(t))) => {
                         let wb = &self.book(b)?.wb;
                         let first = wb.sheets().next().map(|x| x.id);
-                        let key = t.to_uppercase();
+                        let key = xlcalc::name_key(t);
                         let preferred = if scope.is_some() || t.contains('!') {
                             None
                         } else if first.is_some_and(|f| wb.names().get(&key, Some(f)).is_some()) {
@@ -2506,7 +2797,7 @@ impl Application<'_> {
                         };
                         match preferred.and_then(|p| {
                             list.iter()
-                                .find(|e| e.scope == Some(p) && e.bare.to_uppercase() == key)
+                                .find(|e| e.scope == Some(p) && xlcalc::name_key(&e.bare) == key)
                         }) {
                             Some(e) => e.clone(),
 
@@ -2548,7 +2839,7 @@ impl Application<'_> {
                         list.iter()
                             .find(|e| {
                                 wb.names()
-                                    .get(&e.bare.to_uppercase(), e.scope)
+                                    .get(&xlcalc::name_key(&e.bare), e.scope)
                                     .is_some_and(|d| {
                                         format!("={}", wb.name_refers_to(d))
                                             .eq_ignore_ascii_case(&t)
@@ -2622,7 +2913,7 @@ impl Application<'_> {
                     None => {
                         let active = wb.active_sheet();
                         wb.names()
-                            .get(&bare.to_uppercase(), Some(active))
+                            .get(&xlcalc::name_key(bare), Some(active))
                             .map(|_| active)
                     }
                 };
@@ -2640,13 +2931,13 @@ impl Application<'_> {
                 };
 
                 if let Some(t) = a.i32(3).ok().flatten().filter(|t| matches!(t, 1 | 2)) {
-                    let key = def.name.to_uppercase();
+                    let key = xlcalc::name_key(&def.name);
                     self.book_mut(b)?
                         .wb
                         .set_name_macro_type(&key, def.scope, Some(t));
                 }
                 if a.bool(2).ok().flatten() == Some(false) {
-                    let key = def.name.to_uppercase();
+                    let key = xlcalc::name_key(&def.name);
                     self.book_mut(b)?
                         .wb
                         .set_name_visible(&key, def.scope, false);
@@ -2675,14 +2966,18 @@ impl Application<'_> {
                 return Err(OmError::object_required());
             }
 
-            if !matches!(t, 1 | 2) {
+            if !matches!(t, 1 | 2 | -4142) {
                 return Err(OmError::app_defined());
             }
-            wb.set_name_macro_type(key, scope, Some(t));
+            wb.set_name_macro_type(key, scope, (t != -4142).then_some(t));
             return Ok(Variant::Empty);
         }
 
         if matches!(m.name, "Category" | "CategoryLocal") {
+            let macro_name = self.book(b)?.wb.names().macro_type(key, scope).is_some();
+            if m.kind == InvokeKind::Get && macro_name {
+                return Ok(Variant::Bstr("User Defined".into()));
+            }
             return Err(OmError::app_defined());
         }
         let wb = &self.book(b)?.wb;
@@ -2738,19 +3033,28 @@ impl Application<'_> {
                 Err(OmError::app_defined())
             }
 
-            ("ShortcutKey", Get) => wb
-                .names()
-                .notes(key, scope)
-                .and_then(|n| n.shortcut.clone())
-                .map(Variant::Bstr)
-                .ok_or_else(OmError::app_defined),
+            ("ShortcutKey", Get) => Ok(Variant::Bstr(
+                wb.names()
+                    .notes(key, scope)
+                    .and_then(|n| n.shortcut.clone())
+                    .unwrap_or_default(),
+            )),
+
             ("ShortcutKey", Put) => {
-                let text = Application::put_value(a)
-                    .string(0)?
-                    .ok_or_else(OmError::type_mismatch)?;
+                let put = Application::put_value(a);
+                let text = match put.get(0) {
+                    Some(Variant::Null | Variant::Empty) => String::new(),
+                    Some(Variant::Bool(v)) => if *v { "True" } else { "False" }.to_string(),
+                    _ => put.string(0)?.ok_or_else(OmError::type_mismatch)?,
+                };
+                let first = text.chars().next();
+                if first.is_some_and(|c| !c.is_ascii_alphabetic()) {
+                    return Err(OmError::app_defined());
+                }
+                let key_text: String = first.into_iter().collect();
                 self.book_mut(b)?
                     .wb
-                    .set_name_notes(key, scope, None, Some(text));
+                    .set_name_notes(key, scope, None, Some(key_text));
                 Ok(Variant::Empty)
             }
             ("WorkbookParameter", Get) => Ok(Variant::Bool(false)),
@@ -2989,35 +3293,10 @@ fn sheets_kind(property: &str) -> SheetsKind {
 }
 
 fn label_name(raw: &str) -> Option<String> {
-    if raw.is_empty() {
-        return None;
-    }
-    let mut name: String = raw
-        .chars()
-        .map(|c| {
-            if c.is_alphanumeric() || c == '_' || c == '.' {
-                c
-            } else {
-                '_'
-            }
-        })
-        .collect();
-    if name.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-        name.insert(0, '_');
-    }
-    xlcalc::is_valid_name(&name).then_some(name)
+    xlcalc::name_from_label(raw)
 }
 
-pub(crate) const BUILTIN_LISTS: [&str; 8] = [
-    "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
-    "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
-    "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
-    "January,February,March,April,May,June,July,August,September,October,November,December",
-    "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
-    "Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday",
-    "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sept,Oct,Nov,Dec",
-    "January,February,March,April,May,June,July,August,September,October,November,December",
-];
+pub(crate) use xlcalc::slicer::BUILTIN_LISTS;
 
 impl Application<'_> {
     pub(crate) fn custom_list(&self, n: i32) -> Option<Vec<String>> {

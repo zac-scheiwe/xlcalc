@@ -1,4 +1,4 @@
-use xlcalc::{Value, XlError};
+use xlcalc::{Value, Workbook, XlError};
 use xlcalc_variant::{change_type, HResult, Locale, VarType, Variant};
 
 use crate::error::OmError;
@@ -34,6 +34,47 @@ pub(crate) fn input_locale(lcid: u32, host: &xlcalc::Locale) -> xlcalc::Locale {
     locale
 }
 
+pub(crate) fn command_number(
+    v: Option<&Variant>,
+    lcid: u32,
+    wb: &Workbook,
+) -> Result<Option<f64>, ()> {
+    match v {
+        None | Some(Variant::Null) => Ok(None),
+        Some(v) if is_missing(v) => Ok(None),
+        Some(Variant::Empty) => Ok(Some(0.0)),
+
+        Some(Variant::Bool(t)) => Ok(Some(f64::from(u8::from(*t)))),
+        Some(Variant::Array(sa)) => match sa.data.first() {
+            Some(first) => command_number(Some(first), lcid, wb),
+            None => Err(()),
+        },
+        Some(Variant::Bstr(s)) => wb
+            .number_in_text(s, &input_locale(lcid, wb.locale()))
+            .map(Some)
+            .ok_or(()),
+        Some(
+            Variant::BstrNull | Variant::Dispatch(_) | Variant::Unknown(_) | Variant::Error(_),
+        ) => Err(()),
+        Some(v) => match change_type(v, VarType::R8, variant_locale(lcid), 0) {
+            Ok(Variant::R8(x)) => Ok(Some(x)),
+            _ => Err(()),
+        },
+    }
+}
+
+pub(crate) fn command_int(
+    v: Option<&Variant>,
+    lcid: u32,
+    wb: &Workbook,
+) -> Result<Option<i32>, ()> {
+    Ok(command_number(v, lcid, wb)?.map(sfix))
+}
+
+pub(crate) fn sfix(x: f64) -> i32 {
+    (i64::from((x + 2_147_483_648.0) as u32) - 2_147_483_648) as i32
+}
+
 impl Args {
     pub fn get(&self, i: usize) -> Option<&Variant> {
         self.values.get(i)?.as_ref()
@@ -56,6 +97,24 @@ impl Args {
         })
     }
 
+    pub fn i32_ovf(&self, i: usize) -> Result<Option<i32>, OmError> {
+        if let Some(v) = self.get(i) {
+            if !matches!(v, Variant::Null | Variant::Empty | Variant::Bool(_)) {
+                if let Ok(Variant::R8(x)) =
+                    change_type(v, VarType::R8, variant_locale(self.lcid), 0)
+                {
+                    if !(-2147483648.5..2147483647.5).contains(&x) {
+                        return Err(OmError::exception(
+                            xlcalc_variant::HResult::DISP_E_OVERFLOW.0,
+                            None,
+                        ));
+                    }
+                }
+            }
+        }
+        self.i32(i)
+    }
+
     pub fn bool(&self, i: usize) -> Result<Option<bool>, OmError> {
         Ok(match self.convert(i, VarType::Bool)? {
             Some(Variant::Bool(b)) => Some(b),
@@ -68,6 +127,21 @@ impl Args {
             Some(Variant::R8(x)) => Some(x),
             _ => None,
         })
+    }
+
+    pub(crate) fn variant_f64(&self, v: &Variant) -> Result<f64, OmError> {
+        match change_type(v, VarType::R8, variant_locale(self.lcid), 0) {
+            Ok(Variant::R8(x)) => Ok(x),
+            _ => Err(OmError::type_mismatch()),
+        }
+    }
+
+    pub(crate) fn variant_string(&self, v: &Variant) -> Result<Option<String>, OmError> {
+        match change_type(v, VarType::Bstr, variant_locale(self.lcid), 0) {
+            Ok(Variant::Bstr(s)) => Ok(Some(s)),
+            Ok(_) => Ok(None),
+            Err(_) => Err(OmError::type_mismatch()),
+        }
     }
 
     pub fn string(&self, i: usize) -> Result<Option<String>, OmError> {
@@ -251,4 +325,36 @@ pub(crate) fn is_time_only(code: &str) -> bool {
 
 fn has_bare_dollar(code: &str) -> bool {
     code_chars(code).contains(&'$')
+}
+
+#[cfg(test)]
+mod sfix_tests {
+    use super::sfix;
+
+    #[test]
+    fn floors_and_saturates() {
+        assert_eq!(sfix(-0.5), -1);
+        assert_eq!(sfix(-1.5), -2);
+        assert_eq!(sfix(2.5), 2);
+        assert_eq!(sfix(-1e300), i32::MIN);
+        assert_eq!(sfix(1e300), i32::MAX);
+    }
+}
+
+#[cfg(test)]
+mod command_arg_tests {
+    use super::command_int;
+    use xlcalc::Workbook;
+    use xlcalc_variant::Variant;
+
+    #[test]
+    fn integers_floor() {
+        let wb = Workbook::new();
+        let int = |v: Variant| command_int(Some(&v), 0, &wb);
+        assert_eq!(int(Variant::R8(-4160.5)), Ok(Some(-4161)));
+        assert_eq!(int(Variant::R8(2.9)), Ok(Some(2)));
+        assert_eq!(int(Variant::Bool(true)), Ok(Some(1)));
+        assert_eq!(int(Variant::Null), Ok(None));
+        assert_eq!(int(Variant::Bstr("x".into())), Err(()));
+    }
 }

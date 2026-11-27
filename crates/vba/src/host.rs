@@ -26,6 +26,10 @@ pub trait ObjectHost {
         let _ = on;
     }
 
+    fn same_object(&mut self, a: ObjectId, b: ObjectId) -> bool {
+        a == b
+    }
+
     fn type_name(&mut self, obj: ObjectId) -> String {
         let _ = obj;
         "Object".to_string()

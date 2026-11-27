@@ -239,7 +239,7 @@ fn decode(bytes: &[u8], unicode: bool) -> Vec<char> {
             }
         })
         .collect();
-    String::from_utf16_lossy(&units).chars().collect()
+    xlcalc::wide::from_units(&units).chars().collect()
 }
 
 fn looks_unicode(bytes: &[u8]) -> bool {
@@ -254,7 +254,7 @@ fn looks_unicode(bytes: &[u8]) -> bool {
 
 fn encode(s: &str, unicode: bool) -> Result<Vec<u8>, VbaError> {
     if unicode {
-        return Ok(s.encode_utf16().flat_map(u16::to_le_bytes).collect());
+        return Ok(xlcalc::wide::units(s).flat_map(u16::to_le_bytes).collect());
     }
     s.chars()
         .map(|c| ansi_byte(c).ok_or_else(|| VbaError::new(5)))

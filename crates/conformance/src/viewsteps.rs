@@ -72,7 +72,12 @@ fn span(s: &mut OmSession, step: &J, rows: bool) -> Result<ObjectId, OmError> {
 fn criteria1(step: &J) -> Result<Variant, String> {
     let missing = Variant::Error(xlcalc_variant::HResult::DISP_E_PARAMNOTFOUND.0);
     let op = step["operator"].as_str().unwrap_or("");
-    Ok(match &step["criteria1"] {
+
+    let given = match &step["criteria1"] {
+        J::Array(a) if a.len() == 1 => &a[0],
+        other => other,
+    };
+    Ok(match given {
         J::Array(a) => {
             let data: Vec<Variant> = a
                 .iter()

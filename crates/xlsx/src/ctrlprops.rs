@@ -2,6 +2,7 @@ use crate::package::{dir_of, relative, resolve, Package, Rel};
 use crate::rawxml::{self, escape_attr, escape_text, unescape, Tag};
 use crate::xml;
 use std::collections::BTreeSet;
+use xlcalc::drawing::Anchor;
 use xlcalc::SheetId;
 
 const REL: &str = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/";
@@ -14,6 +15,8 @@ const CT_VML: &str = "application/vnd.openxmlformats-officedocument.vmlDrawing";
 const COL_PT: f64 = 48.0;
 const ROW_PT: f64 = 14.5;
 const EMU_PT: f64 = 12_700.0;
+
+const EMU_PX: i64 = 6_350;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ControlKind {
@@ -100,6 +103,8 @@ pub struct Control {
     pub width: f64,
     pub height: f64,
 
+    pub anchor: Option<[Anchor; 2]>,
+
     pub fmla_link: String,
     pub fmla_range: String,
 
@@ -141,6 +146,7 @@ impl Control {
             top: rect[1],
             width: rect[2],
             height: rect[3],
+            anchor: None,
             fmla_link: String::new(),
             fmla_range: String::new(),
             val: 0,
@@ -178,9 +184,21 @@ struct Found {
     name: String,
     mac: String,
     placement: i32,
+    anchor: Option<[Anchor; 2]>,
     locked: bool,
     enabled: bool,
     print_object: bool,
+}
+
+fn corner_of(anchor: &xml::Node, name: &str) -> Option<Anchor> {
+    let corner = anchor.child(name)?;
+    let get = |key: &str| corner.child(key)?.text.trim().parse::<i64>().ok();
+    Some(Anchor {
+        col: u32::try_from(get("col")?).ok()?,
+        col_off: get("colOff")?,
+        row: u32::try_from(get("row")?).ok()?,
+        row_off: get("rowOff")?,
+    })
 }
 
 fn find_controls(n: &xml::Node, out: &mut Vec<Found>) {
@@ -202,6 +220,7 @@ fn find_controls(n: &xml::Node, out: &mut Vec<Found>) {
                 } else {
                     3
                 },
+                anchor: anchor.and_then(|a| Some([corner_of(a, "from")?, corner_of(a, "to")?])),
                 locked: at("locked") != Some("0"),
                 enabled: at("disabled") != Some("1"),
                 print_object: at("print") != Some("0"),
@@ -286,6 +305,7 @@ fn read_part(pkg: &Package, part: &str) -> Vec<Control> {
         c.shape_id = f.shape_id;
         c.on_action = f.mac;
         c.placement = f.placement;
+        c.anchor = f.anchor;
         c.locked = f.locked;
         c.enabled = f.enabled;
         c.print_object = f.print_object;
@@ -310,6 +330,7 @@ fn read_part(pkg: &Package, part: &str) -> Vec<Control> {
             if let Some([l, t, w, h]) = shape_rect(b) {
                 (c.left, c.top, c.width, c.height) = (l, t, w, h);
             }
+            c.anchor = c.anchor.or_else(|| vml_corners(b));
             if c.on_action.is_empty() {
                 c.on_action = elem(b, "FmlaMacro").unwrap_or_default();
             }
@@ -387,14 +408,40 @@ fn set_elem(block: &mut String, tag: &str, value: Option<&str>) {
     }
 }
 
+fn vml_corners(block: &str) -> Option<[Anchor; 2]> {
+    let text = elem(block, "Anchor")?;
+    let n: Vec<i64> = text
+        .split(',')
+        .map(|v| v.trim().parse().ok())
+        .collect::<Option<_>>()?;
+    let corner = |i: usize| {
+        Some(Anchor {
+            col: u32::try_from(*n.get(i)?).ok()?,
+            col_off: n.get(i + 1)? * EMU_PX,
+            row: u32::try_from(*n.get(i + 2)?).ok()?,
+            row_off: n.get(i + 3)? * EMU_PX,
+        })
+    };
+    Some([corner(0)?, corner(4)?])
+}
+
+fn length(v: &str) -> Option<f64> {
+    let (number, scale) = if let Some(n) = v.strip_suffix("pt") {
+        (n, 1.0)
+    } else if let Some(n) = v.strip_suffix("in") {
+        (n, 72.0)
+    } else {
+        (v, 1.0)
+    };
+    number.parse::<f64>().ok().map(|n| n * scale)
+}
+
 fn shape_rect(block: &str) -> Option<[f64; 4]> {
     let style = style_of(block)?;
     let get = |key: &str| {
         style.split(';').find_map(|p| {
             let (k, v) = p.split_once(':')?;
-            (k.trim() == key)
-                .then(|| v.trim().trim_end_matches("pt").parse::<f64>().ok())
-                .flatten()
+            (k.trim() == key).then(|| length(v.trim())).flatten()
         })
     };
     Some([
@@ -503,33 +550,47 @@ fn set_caption(block: &mut String, caption: &str) {
     block.replace_range(open_end..close, &text);
 }
 
+fn corners(c: &Control) -> [Anchor; 2] {
+    c.anchor.unwrap_or_else(|| {
+        let corner = |x: f64, y: f64| {
+            let col = (x / COL_PT).floor().max(0.0);
+            let row = (y / ROW_PT).floor().max(0.0);
+            Anchor {
+                col: col as u32,
+                col_off: ((x - col * COL_PT) * EMU_PT).round() as i64,
+                row: row as u32,
+                row_off: ((y - row * ROW_PT) * EMU_PT).round() as i64,
+            }
+        };
+        [
+            corner(c.left, c.top),
+            corner(c.left + c.width, c.top + c.height),
+        ]
+    })
+}
+
 fn vml_anchor(c: &Control) -> String {
-    let corner = |x: f64, y: f64| {
-        let col = (x / COL_PT).floor().max(0.0);
-        let row = (y / ROW_PT).floor().max(0.0);
-        format!(
-            "{col}, {}, {row}, {}",
-            ((x - col * COL_PT) * 2.0).round(),
-            ((y - row * ROW_PT) * 2.0).round()
-        )
-    };
-    format!(
-        "{}, {}",
-        corner(c.left, c.top),
-        corner(c.left + c.width, c.top + c.height)
-    )
+    let px = |emu: i64| (emu as f64 / EMU_PX as f64).round() as i64;
+    corners(c)
+        .map(|a| {
+            let (x, y) = (px(a.col_off), px(a.row_off));
+            format!("{}, {x}, {}, {y}", a.col, a.row)
+        })
+        .join(", ")
+}
+
+fn vml_flags(block: &mut String, placement: i32) {
+    set_elem(block, "MoveWithCells", (placement == 3).then_some(""));
+    set_elem(block, "SizeWithCells", (placement != 1).then_some(""));
 }
 
 fn sheet_anchor(c: &Control) -> String {
-    let corner = |x: f64, y: f64| {
-        let col = (x / COL_PT).floor().max(0.0);
-        let row = (y / ROW_PT).floor().max(0.0);
+    let [from, to] = corners(c).map(|a| {
         format!(
-            "<xdr:col>{col}</xdr:col><xdr:colOff>{}</xdr:colOff><xdr:row>{row}</xdr:row><xdr:rowOff>{}</xdr:rowOff>",
-            ((x - col * COL_PT) * EMU_PT).round(),
-            ((y - row * ROW_PT) * EMU_PT).round()
+            "<xdr:col>{}</xdr:col><xdr:colOff>{}</xdr:colOff><xdr:row>{}</xdr:row><xdr:rowOff>{}</xdr:rowOff>",
+            a.col, a.col_off, a.row, a.row_off
         )
-    };
+    });
     let mut flags = String::new();
     if c.placement <= 2 {
         flags.push_str(" moveWithCells=\"1\"");
@@ -537,11 +598,16 @@ fn sheet_anchor(c: &Control) -> String {
     if c.placement == 1 {
         flags.push_str(" sizeWithCells=\"1\"");
     }
-    format!(
-        "<anchor{flags}><from>{}</from><to>{}</to></anchor>",
-        corner(c.left, c.top),
-        corner(c.left + c.width, c.top + c.height)
-    )
+    format!("<anchor{flags}><from>{from}</from><to>{to}</to></anchor>")
+}
+
+fn moved(c: &Control, src: &Control) -> bool {
+    (c.left, c.top, c.width, c.height) != (src.left, src.top, src.width, src.height)
+        || (c.anchor.is_some() && c.anchor != src.anchor)
+}
+
+fn stored(text: &str) -> String {
+    xlcalc::stored_formula_text(text)
 }
 
 fn owned_attrs(c: &Control) -> Vec<(&'static str, Option<String>)> {
@@ -556,12 +622,12 @@ fn owned_attrs(c: &Control) -> Vec<(&'static str, Option<String>)> {
     )];
     v.push((
         "fmlaLink",
-        (!c.fmla_link.is_empty()).then(|| c.fmla_link.clone()),
+        (!c.fmla_link.is_empty()).then(|| stored(&c.fmla_link)),
     ));
     if c.kind.is_list() {
         v.push((
             "fmlaRange",
-            (!c.fmla_range.is_empty()).then(|| c.fmla_range.clone()),
+            (!c.fmla_range.is_empty()).then(|| stored(&c.fmla_range)),
         ));
         v.push(("sel", s(c.sel)));
         v.push(("val", s(0)));
@@ -703,15 +769,10 @@ fn vml_shape(c: &Control, z: usize) -> String {
         "  <x:ClientData ObjectType=\"{}\">\r\n",
         k.vml_type()
     ));
-    if matches!(
-        k,
-        ControlKind::CheckBox
-            | ControlKind::Radio
-            | ControlKind::Scroll
-            | ControlKind::Drop
-            | ControlKind::List
-            | ControlKind::GBox
-    ) {
+    if c.placement == 3 {
+        s.push_str("   <x:MoveWithCells/>\r\n");
+    }
+    if c.placement != 1 {
         s.push_str("   <x:SizeWithCells/>\r\n");
     }
     s.push_str(&format!(
@@ -755,12 +816,16 @@ fn vml_shape(c: &Control, z: usize) -> String {
     set_elem(
         &mut body,
         "FmlaLink",
-        (!c.fmla_link.is_empty()).then_some(c.fmla_link.as_str()),
+        (!c.fmla_link.is_empty())
+            .then(|| stored(&c.fmla_link))
+            .as_deref(),
     );
     set_elem(
         &mut body,
         "FmlaRange",
-        (k.is_list() && !c.fmla_range.is_empty()).then_some(c.fmla_range.as_str()),
+        (k.is_list() && !c.fmla_range.is_empty())
+            .then(|| stored(&c.fmla_range))
+            .as_deref(),
     );
     if k.is_bar() || k.is_list() {
         let (v, mn, mx) = if k.is_bar() {
@@ -807,7 +872,10 @@ fn vml_shape(c: &Control, z: usize) -> String {
 
 fn vml_patch(block: &str, c: &Control, src: &Control) -> String {
     let mut b = block.to_string();
-    if (c.left, c.top, c.width, c.height) != (src.left, src.top, src.width, src.height) {
+    if c.placement != src.placement {
+        vml_flags(&mut b, c.placement);
+    }
+    if moved(c, src) {
         set_rect(&mut b, [c.left, c.top, c.width, c.height]);
         set_elem(
             &mut b,
@@ -821,7 +889,7 @@ fn vml_patch(block: &str, c: &Control, src: &Control) -> String {
     let k = c.kind;
     let opt = |s: &str| (!s.is_empty()).then(|| s.to_string());
     set_elem(&mut b, "FmlaMacro", opt(&c.on_action).as_deref());
-    set_elem(&mut b, "FmlaLink", opt(&c.fmla_link).as_deref());
+    set_elem(&mut b, "FmlaLink", opt(&stored(&c.fmla_link)).as_deref());
     if matches!(k, ControlKind::CheckBox | ControlKind::Radio) {
         set_elem(
             &mut b,
@@ -845,7 +913,7 @@ fn vml_patch(block: &str, c: &Control, src: &Control) -> String {
         }
     }
     if k.is_list() {
-        set_elem(&mut b, "FmlaRange", opt(&c.fmla_range).as_deref());
+        set_elem(&mut b, "FmlaRange", opt(&stored(&c.fmla_range)).as_deref());
         set_elem(&mut b, "Sel", Some(&c.sel.to_string()));
     }
     if k == ControlKind::Drop {
@@ -996,8 +1064,10 @@ pub(crate) fn write_sheet(
                 }
             }
             _ => {
-                c.shape_id = next_id;
-                next_id += 1;
+                if c.shape_id == 0 {
+                    c.shape_id = next_id;
+                    next_id += 1;
+                }
                 let mut n = 1;
                 let part = loop {
                     let p = format!("xl/ctrlProps/ctrlProp{n}.xml");
@@ -1039,6 +1109,7 @@ pub(crate) fn write_sheet(
         Some(text) => merge_vml(&text, &shapes, &before, controls),
         None => format!("{VML_HEAD}{VML_TYPE}{}</xml>", shapes_text(&shapes)),
     };
+    let text = map_ids(&text, shapes.iter().map(|s| s.0));
     match vml_part {
         Some(p) => parts.push((p, text.into_bytes(), CT_VML)),
         None if shapes.is_empty() => {}
@@ -1074,6 +1145,26 @@ pub(crate) fn write_sheet(
         .then(|| format!("<controls xmlns:xdr=\"{NS_XDR}\">{blocks}</controls>"));
     split.put("controls", controls_xml, order);
     Ok(parts)
+}
+
+fn map_ids(vml: &str, ids: impl IntoIterator<Item = u32>) -> String {
+    let Some(old) = vml
+        .split("<o:idmap")
+        .nth(1)
+        .and_then(|t| t.split("data=\"").nth(1))
+        .and_then(|t| t.split('"').next())
+    else {
+        return vml.to_string();
+    };
+    let ids: Vec<u32> = ids.into_iter().collect();
+
+    let kept = if vml.starts_with(VML_HEAD) && !ids.is_empty() {
+        ""
+    } else {
+        old
+    };
+    let new = crate::notesxml::idmap(kept, ids);
+    vml.replacen(&format!("data=\"{old}\""), &format!("data=\"{new}\""), 1)
 }
 
 fn fresh(used: &mut BTreeSet<String>) -> String {
@@ -1115,7 +1206,11 @@ fn patch_block(block: &str, c: &Control, old: &Control) -> String {
             }
         }
     }
-    if (c.left, c.top, c.width, c.height) != (old.left, old.top, old.width, old.height) {
+    if moved(c, old) || c.placement != old.placement {
+        let c = &Control {
+            anchor: c.anchor.or_else(|| old.anchor.filter(|_| !moved(c, old))),
+            ..c.clone()
+        };
         if let (Some(i), Some(j)) = (b.find("<anchor"), b.find("</anchor>")) {
             b.replace_range(i..j + "</anchor>".len(), &sheet_anchor(c));
         }

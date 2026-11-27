@@ -53,6 +53,20 @@ fn scientific() {
 }
 
 #[test]
+fn scientific_without_mantissa_placeholder() {
+    assert_eq!(t(1234.5, "1E+00"), "1E+01");
+    assert_eq!(t(5.0, "1E+00"), "1E+02");
+    assert_eq!(t(4.0, "1E+00"), "1E+01");
+    assert_eq!(t(99.0, "1E+00"), "1E+03");
+    assert_eq!(t(0.0, "1E+00"), "1E+00");
+    assert_eq!(t(-5.0, "1E+0"), "-1E+2");
+    assert_eq!(t(1234.5, "1E+300"), "1E+301");
+    assert!(NumberFormat::parse("E+00").is_err());
+    assert!(NumberFormat::parse("a E+00").is_err());
+    assert!(NumberFormat::parse("1E+0,0").is_err());
+}
+
+#[test]
 fn fractions() {
     assert_eq!(t(1.5, "# ?/?"), "1 1/2");
     assert_eq!(t(0.333, "# ?/?"), " 1/3");
@@ -140,6 +154,15 @@ fn sections_and_conditions() {
     assert_eq!(ts("x", "0;0;0;"), "");
     assert_eq!(ts("x", ";;"), "x");
     assert_eq!(t(1.0, "@;0"), "#VALUE!");
+}
+
+#[test]
+fn stored_spelling_is_the_compiled_stream() {
+    let code = "am/pm [h][hhhhhhhhhhhhhhhhhhhhhhhh]";
+    assert!(NumberFormat::parse(code).is_err());
+    let f = NumberFormat::parse_stored(code).unwrap();
+    let r = f.format_number(0.25, &Locale::en_nz(), DateSystem::D1900);
+    assert_eq!(r.unwrap().text, "am 12000000000000000000000012");
 }
 
 #[test]

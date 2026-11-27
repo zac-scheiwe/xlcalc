@@ -7,6 +7,7 @@ use xlcalc_variant::Variant;
 use crate::app::{unsupported, Application, BookId, Mode, Object, SheetsKind};
 use crate::conv::Args;
 use crate::error::OmError;
+use crate::panes::{freeze_point, Lines};
 use crate::typelib::{InvokeKind, Member};
 
 #[derive(Clone, Debug)]
@@ -24,6 +25,9 @@ pub(crate) struct SheetView {
     pub frozen: bool,
     pub scroll_row: u32,
     pub scroll_col: u32,
+
+    pub pane_row: u32,
+    pub pane_col: u32,
 
     pub color: u32,
     pub color_set: bool,
@@ -48,6 +52,8 @@ impl Default for SheetView {
             frozen: false,
             scroll_row: 1,
             scroll_col: 1,
+            pane_row: 1,
+            pane_col: 1,
             color: 0,
             color_set: false,
             color_rgb: false,
@@ -63,6 +69,8 @@ pub(crate) struct WindowState {
     pub view_mode: i32,
 
     pub pbp_zoom: f64,
+
+    pub pl_zoom: f64,
     pub tab_ratio: f64,
 
     pub captions: HashMap<u32, String>,
@@ -74,6 +82,10 @@ pub(crate) struct WindowState {
     pub group: (Option<SheetId>, Vec<SheetId>),
 
     pub flags: Vec<(&'static str, bool)>,
+
+    pub n: u32,
+
+    pub others: HashMap<u32, WindowState>,
 }
 
 impl Default for WindowState {
@@ -82,6 +94,7 @@ impl Default for WindowState {
             views: HashMap::new(),
             view_mode: 1,
             pbp_zoom: 60.0,
+            pl_zoom: 100.0,
             tab_ratio: 0.6,
             captions: HashMap::new(),
             before_min: -4143,
@@ -100,7 +113,55 @@ impl Default for WindowState {
                 ("DisplayWhitespace", true),
                 ("AutoFilterDateGrouping", true),
             ],
+            n: 1,
+            others: HashMap::new(),
         }
+    }
+}
+
+impl WindowState {
+    fn swap_data(&mut self, o: &mut WindowState) {
+        use std::mem::swap;
+        swap(&mut self.views, &mut o.views);
+        swap(&mut self.view_mode, &mut o.view_mode);
+        swap(&mut self.pbp_zoom, &mut o.pbp_zoom);
+        swap(&mut self.pl_zoom, &mut o.pl_zoom);
+        swap(&mut self.tab_ratio, &mut o.tab_ratio);
+        swap(&mut self.before_min, &mut o.before_min);
+        swap(&mut self.state, &mut o.state);
+        swap(&mut self.group, &mut o.group);
+        swap(&mut self.flags, &mut o.flags);
+    }
+
+    pub(crate) fn focus(&mut self, n: u32) {
+        if self.n == n {
+            return;
+        }
+        let mut theirs = self.others.remove(&n).unwrap_or_default();
+        self.swap_data(&mut theirs);
+        self.others.insert(self.n, theirs);
+        self.n = n;
+    }
+
+    pub(crate) fn copy_window(&mut self, from: u32, new: u32) {
+        self.focus(from);
+        let copy = WindowState {
+            views: self.views.clone(),
+            view_mode: self.view_mode,
+            pbp_zoom: self.pbp_zoom,
+            pl_zoom: self.pl_zoom,
+            tab_ratio: self.tab_ratio,
+            before_min: self.before_min,
+            state: self.state,
+            group: self.group.clone(),
+            flags: self.flags.clone(),
+            ..WindowState::default()
+        };
+        self.others.insert(new, copy);
+    }
+
+    pub(crate) fn drop_window(&mut self, n: u32) {
+        self.others.remove(&n);
     }
 }
 
@@ -133,6 +194,141 @@ fn half_window(v: &SheetView) -> (f64, f64) {
     ((rows / 2.0).floor(), (cols / 2.0).floor())
 }
 
+enum WindowPut {
+    Skip,
+
+    Value(Variant),
+
+    Pass,
+}
+
+impl Application<'_> {
+    fn window_put_arg(&self, b: BookId, m: &Member, a: &Args) -> Result<WindowPut, OmError> {
+        use xlcalc_variant::{change_type, VarType};
+        const BOOLS: [&str; 10] = [
+            "DisplayGridlines",
+            "DisplayHeadings",
+            "DisplayFormulas",
+            "DisplayZeros",
+            "DisplayOutline",
+            "DisplayHorizontalScrollBar",
+            "DisplayVerticalScrollBar",
+            "DisplayWorkbookTabs",
+            "Split",
+            "FreezePanes",
+        ];
+        const NUMS: [&str; 8] = [
+            "Zoom",
+            "ScrollRow",
+            "ScrollColumn",
+            "SplitRow",
+            "SplitColumn",
+            "SplitHorizontal",
+            "SplitVertical",
+            "WindowState",
+        ];
+        let name = m.name;
+        let is_bool = BOOLS.contains(&name);
+        if name == "View" {
+            return match &a.put {
+                Some(v) if crate::conv::is_missing(v) => {
+                    Err(OmError::hresult(crate::error::DISP_E_PARAMNOTOPTIONAL))
+                }
+                Some(Variant::Null | Variant::Array(_)) => {
+                    Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))
+                }
+                Some(Variant::Bstr(t)) if t.trim().parse::<f64>().is_err() => {
+                    Err(OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))
+                }
+                _ => Ok(WindowPut::Pass),
+            };
+        }
+        if !is_bool && !NUMS.contains(&name) {
+            if let Some(Variant::Bstr(t)) = &a.put {
+                if t.trim().parse::<f64>().is_err()
+                    && !matches!(name, "Caption" | "AutoFilterDateGrouping")
+                {
+                    return Err(OmError::app_defined());
+                }
+            }
+            return Ok(WindowPut::Pass);
+        }
+        let refused = || unable(m, true);
+        let mut v = a.put.clone().unwrap_or(Variant::Empty);
+        let mut from_array = false;
+        if let Variant::Array(arr) = &v {
+            match arr.data.as_slice() {
+                [one] => {
+                    v = one.clone();
+                    from_array = true;
+                }
+                _ => return Err(refused()),
+            }
+        }
+        if matches!(v, Variant::Null) || crate::conv::is_missing(&v) {
+            return match name {
+                "SplitHorizontal" | "SplitVertical" => Ok(WindowPut::Value(Variant::R8(0.0))),
+                "Zoom" | "WindowState" => Err(refused()),
+
+                "Split" => Ok(WindowPut::Value(Variant::Bool(false))),
+                "FreezePanes" => {
+                    let frozen = self.view_of(b)?.1.frozen;
+                    Ok(WindowPut::Value(Variant::Bool(!frozen)))
+                }
+                _ => Ok(WindowPut::Skip),
+            };
+        }
+        let lcid = crate::conv::variant_locale(a.lcid);
+        if is_bool {
+            return Ok(WindowPut::Value(Variant::Bool(match v {
+                Variant::Bool(b) => b,
+                Variant::Empty => false,
+                Variant::Bstr(t) => match t.to_ascii_lowercase().as_str() {
+                    "true" => true,
+                    "false" => false,
+                    _ => return Err(refused()),
+                },
+                Variant::Cy(_) | Variant::Date(_) => return Err(refused()),
+                v => match change_type(&v, VarType::R8, lcid, 0) {
+                    Ok(Variant::R8(x)) => x != 0.0,
+                    _ => return Err(refused()),
+                },
+            })));
+        }
+
+        if name == "Zoom" && matches!(v, Variant::Bool(_)) {
+            return Ok(WindowPut::Value(v));
+        }
+
+        let text = matches!(v, Variant::Bstr(_)) || from_array;
+        let n = match v {
+            Variant::Bool(b) => f64::from(u8::from(b)),
+            Variant::Empty => 0.0,
+            Variant::Cy(_) | Variant::Date(_) if name == "WindowState" => {
+                return Err(refused());
+            }
+            v => match change_type(&v, VarType::R8, lcid, 0) {
+                Ok(Variant::R8(x)) => x,
+                _ => return Err(refused()),
+            },
+        };
+        if name == "WindowState" {
+            let t = n.trunc();
+            return Ok(WindowPut::Value(Variant::I4(match t as i32 {
+                s @ (-4143 | -4137 | -4140) if n == t && !text => s,
+                1 => -4140,
+                2 => -4137,
+                3 => -4143,
+                _ => return Err(refused()),
+            })));
+        }
+        if n < 0.0 && name.starts_with("Split") {
+            return Err(refused());
+        }
+        Ok(WindowPut::Value(Variant::R8(n)))
+    }
+}
+
 fn unable(m: &Member, set: bool) -> OmError {
     if set {
         OmError::unable_to_set(m.name, "Window")
@@ -145,7 +341,10 @@ fn unable(m: &Member, set: bool) -> OmError {
 }
 
 pub(crate) fn palette_bgr(index: i32) -> u32 {
-    let rgb = PALETTE[(index - 1) as usize];
+    bgr_of(PALETTE[(index - 1) as usize])
+}
+
+pub(crate) fn bgr_of(rgb: u32) -> u32 {
     ((rgb & 0xFF) << 16) | (rgb & 0xFF00) | (rgb >> 16)
 }
 
@@ -192,11 +391,11 @@ impl Application<'_> {
             while acc < avail && first + n < 16_384 {
                 let c = first + n;
                 if !wb.col_hidden(s, c) {
-                    acc += (i64::from(wb.col_px(s, c)) * 3 * zi + 100) / 200;
+                    acc += (i64::from(wb.col_px(s, c)) * zi + 50) / 100;
                 }
                 n += 1;
             }
-            n
+            n.saturating_sub(1)
         };
         (
             v.scroll_row.saturating_sub(1) + 2 * rows + 2,
@@ -211,6 +410,13 @@ impl Application<'_> {
         if let Ok(bk) = self.book_mut(b) {
             bk.page_setup.insert(s, p);
         }
+    }
+
+    fn palette_bgr_in(&self, b: BookId, i: i32) -> Result<u32, OmError> {
+        let theme = &self.book(b)?.wb.style_table().theme;
+        Ok(theme
+            .indexed(u8::try_from(i + 7).unwrap_or(0))
+            .map_or_else(|| palette_bgr(i), bgr_of))
     }
 
     fn view_of(&self, b: BookId) -> Result<(SheetId, SheetView), OmError> {
@@ -237,15 +443,48 @@ impl Application<'_> {
         Ok(())
     }
 
+    fn set_panes(
+        &mut self,
+        b: BookId,
+        f: impl FnOnce(&mut SheetView, &Lines, &Lines),
+    ) -> Result<(), OmError> {
+        let (sheet, mut view) = self.view_of(b)?;
+        let book = self.book(b)?;
+        f(
+            &mut view,
+            &Lines::rows(&book.wb, sheet),
+            &Lines::cols(&book.wb, sheet),
+        );
+        self.book_mut(b)?.window.views.insert(sheet, view);
+        Ok(())
+    }
+
+    fn set_view_selected(&mut self, b: BookId, f: impl Fn(&mut SheetView)) -> Result<(), OmError> {
+        let sheets = self.selected_sheets(b)?;
+        let book = self.book_mut(b)?;
+        for sheet in sheets {
+            let macro_sheet = book.wb.sheet(sheet).is_some_and(|s| s.kind.is_macro());
+            f(book.window.views.entry(sheet).or_insert_with(|| SheetView {
+                formulas: macro_sheet,
+                ..SheetView::default()
+            }));
+        }
+        Ok(())
+    }
+
     pub(crate) fn freeze_at(&mut self, b: BookId, rows: u32, cols: u32) -> Result<(), OmError> {
-        self.set_view(b, |v| {
-            v.split_row = f64::from(rows);
-            v.split_col = f64::from(cols);
+        self.set_panes(b, |v, rl, cl| {
+            let was_frozen = v.frozen;
+            v.unfreeze(rl, cl);
+            let at = |l: &Lines, scroll: u32, n: u32| l.position(l.first_shown(scroll), n.into());
+            v.split_row = at(rl, v.scroll_row, rows);
+            v.split_col = at(cl, v.scroll_col, cols);
             v.split_by_freeze = false;
-            v.frozen = rows > 0 || cols > 0;
             v.pane4 = false;
-            v.scroll_row = rows + 1;
-            v.scroll_col = cols + 1;
+            if rows == 0 && cols == 0 && !was_frozen {
+                (v.scroll_row, v.scroll_col) = (1, 1);
+            }
+            v.freeze(rl, cl);
         })
     }
 
@@ -315,7 +554,12 @@ impl Application<'_> {
             }
             z.clamp(10, 400)
         };
-        self.set_view(b, |v| v.zoom = z as f64)
+        match self.book(b)?.window.view_mode {
+            2 => self.book_mut(b)?.window.pbp_zoom = z as f64,
+            3 => self.book_mut(b)?.window.pl_zoom = z as f64,
+            _ => return self.set_view(b, |v| v.zoom = z as f64),
+        }
+        Ok(())
     }
 
     pub(crate) fn set_window_state(&mut self, b: BookId, s: i32) -> Result<(), OmError> {
@@ -399,34 +643,41 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
         let set = m.kind == Put;
-
-        if set {
-            if let Some(Variant::Bstr(t)) = &a.put {
-                if t.trim().parse::<f64>().is_err()
-                    && !matches!(m.name, "Caption" | "AutoFilterDateGrouping")
-                {
-                    return Err(OmError::app_defined());
+        let norm;
+        let a = if set {
+            match self.window_put_arg(b, m, a)? {
+                WindowPut::Skip => return Ok(Variant::Empty),
+                WindowPut::Value(v) => {
+                    norm = Args {
+                        values: a.values.clone(),
+                        put: Some(v),
+                        lcid: a.lcid,
+                    };
+                    &norm
                 }
+                WindowPut::Pass => a,
             }
-        }
+        } else {
+            a
+        };
         match (m.name, m.kind) {
             ("Type", Get) => Ok(Variant::I4(1)),
             ("WindowState", Get) => Ok(Variant::I4(self.book(b)?.window.state)),
             ("WindowState", Put) => {
                 let s = self.put_i32(a)?;
-                if ![-4143, -4137, -4140].contains(&s) {
-                    return Err(unable(m, true));
-                }
                 self.set_window_state(b, s)?;
                 Ok(Variant::Empty)
             }
             ("Zoom", Get) if self.book(b)?.window.view_mode == 2 => {
                 Ok(Variant::R8(self.book(b)?.window.pbp_zoom))
             }
+            ("Zoom", Get) if self.book(b)?.window.view_mode == 3 => {
+                Ok(Variant::R8(self.book(b)?.window.pl_zoom))
+            }
             ("Zoom", Get) => Ok(Variant::R8(self.view_of(b)?.1.zoom)),
             ("Zoom", Put) => {
                 if let Some(Variant::Bool(fit)) = a.put {
-                    if fit && self.book(b)?.window.view_mode != 2 {
+                    if fit {
                         self.zoom_to_selection(b)?;
                     }
                     return Ok(Variant::Empty);
@@ -435,10 +686,10 @@ impl Application<'_> {
                 if !(10.0..=400.0).contains(&z) {
                     return Err(unable(m, true));
                 }
-                if self.book(b)?.window.view_mode == 2 {
-                    self.book_mut(b)?.window.pbp_zoom = z;
-                } else {
-                    self.set_view(b, |v| v.zoom = z)?;
+                match self.book(b)?.window.view_mode {
+                    2 => self.book_mut(b)?.window.pbp_zoom = z,
+                    3 => self.book_mut(b)?.window.pl_zoom = z,
+                    _ => self.set_view_selected(b, |v| v.zoom = z)?,
                 }
                 Ok(Variant::Empty)
             }
@@ -454,12 +705,18 @@ impl Application<'_> {
             ("DisplayGridlines" | "DisplayHeadings" | "DisplayFormulas" | "DisplayZeros", Put) => {
                 let on = self.put_bool(a)?;
                 let name = m.name;
-                self.set_view(b, |v| match name {
+                let set = |v: &mut SheetView| match name {
                     "DisplayGridlines" => v.gridlines = on,
                     "DisplayHeadings" => v.headings = on,
                     "DisplayFormulas" => v.formulas = on,
                     _ => v.zeros = on,
-                })?;
+                };
+
+                if name == "DisplayGridlines" {
+                    self.set_view_selected(b, set)?;
+                } else {
+                    self.set_view(b, set)?;
+                }
                 Ok(Variant::Empty)
             }
             ("GridlineColor", Get) => Ok(Variant::R8(f64::from(self.view_of(b)?.1.color))),
@@ -471,7 +728,9 @@ impl Application<'_> {
                 }
                 let c = (c as u32) & 0xFF_FFFF;
                 let rgb = ((c & 0xFF) << 16) | (c & 0xFF00) | (c >> 16);
+
                 let idx = i32::from(nearest_color_index(rgb));
+                let c = self.palette_bgr_in(b, idx)?;
                 self.set_view(b, |v| {
                     v.color = c;
                     v.color_set = true;
@@ -506,8 +765,9 @@ impl Application<'_> {
                 if !(1..=56).contains(&i) {
                     return Err(unable(m, true));
                 }
+                let c = self.palette_bgr_in(b, i)?;
                 self.set_view(b, |v| {
-                    v.color = palette_bgr(i);
+                    v.color = c;
                     v.color_set = true;
                     v.color_rgb = false;
                     v.color_index = i;
@@ -515,12 +775,15 @@ impl Application<'_> {
                 Ok(Variant::Empty)
             }
             ("ScrollRow" | "ScrollColumn", Get) => {
-                let v = self.view_of(b)?.1;
-                Ok(Variant::R8(f64::from(if m.name == "ScrollRow" {
-                    v.scroll_row
+                let (sheet, v) = self.view_of(b)?;
+                let wb = &self.book(b)?.wb;
+                let rows = m.name == "ScrollRow";
+                let lines = if rows {
+                    Lines::rows(wb, sheet)
                 } else {
-                    v.scroll_col
-                })))
+                    Lines::cols(wb, sheet)
+                };
+                Ok(Variant::R8(f64::from(v.shown_scroll(rows, &lines))))
             }
             ("ScrollRow" | "ScrollColumn", Put) => {
                 let n = self.put_f64(a)?.trunc();
@@ -533,30 +796,31 @@ impl Application<'_> {
                     return Err(unable(m, true));
                 }
                 let (row, n) = (m.name == "ScrollRow", n as u32);
-                self.set_view(b, |v| {
-                    if row {
-                        v.scroll_row = n;
-                    } else {
-                        v.scroll_col = n;
-                    }
-                })?;
+                self.set_view(b, |v| v.scroll_to(row, n))?;
                 Ok(Variant::Empty)
             }
             ("SplitRow" | "SplitColumn" | "SplitHorizontal" | "SplitVertical", Get) => {
-                let v = self.view_of(b)?.1;
+                let (sheet, v) = self.view_of(b)?;
                 let (rows, unit, points) = geometry(&v, m.name);
-                let n = if rows { v.split_row } else { v.split_col };
-                Ok(if n <= 0.0 {
+                let wb = &self.book(b)?.wb;
+                let lines = if rows {
+                    Lines::rows(wb, sheet)
+                } else {
+                    Lines::cols(wb, sheet)
+                };
+                let (count, size) = v.split_read(rows, &lines);
+                let split = if rows { v.split_row } else { v.split_col };
+                Ok(if split <= 0.0 {
                     Variant::I4(0)
                 } else if points {
-                    Variant::R8((n * unit * 1e6).round() / 1e6)
+                    Variant::R8((size * unit * 1e6).round() / 1e6)
                 } else {
-                    Variant::R8(n)
+                    Variant::R8(count)
                 })
             }
             ("SplitRow" | "SplitColumn" | "SplitHorizontal" | "SplitVertical", Put) => {
                 let n = self.put_f64(a)?;
-                let v = self.view_of(b)?.1;
+                let (sheet, v) = self.view_of(b)?;
                 let (rows, unit, points) = geometry(&v, m.name);
                 let max = match m.name {
                     "SplitRow" => 1_048_576.0,
@@ -567,10 +831,37 @@ impl Application<'_> {
                     return Err(unable(m, true));
                 }
 
-                let pos = if points { n / unit } else { n.trunc() };
+                let count = if points {
+                    0.0
+                } else {
+                    let wb = &self.book(b)?.wb;
+                    let lines = if rows {
+                        Lines::rows(wb, sheet)
+                    } else {
+                        Lines::cols(wb, sheet)
+                    };
+                    let first = match (v.frozen, rows) {
+                        (true, true) if v.split_row > 0.0 => v.pane_row,
+                        (true, false) if v.split_col > 0.0 => v.pane_col,
+                        (_, true) => v.scroll_row,
+                        (_, false) => v.scroll_col,
+                    };
+                    lines.position(lines.first_shown(first), n)
+                };
+
+                let half = if points {
+                    (n * 2.0).floor()
+                } else {
+                    (count * unit * 2.0 - 1e-9).ceil()
+                };
+                let pos = if !points && count.fract() == 0.0 {
+                    count
+                } else {
+                    half / 2.0 / unit
+                };
                 let edge = if rows { WINDOW_HEIGHT } else { WINDOW_WIDTH } / unit;
                 let far = pos * unit > 16384.0;
-                let pos = if (points && n < 1.0) || far {
+                let pos = if half < 1.0 || far {
                     0.0
                 } else {
                     if pos > edge - 1.0 / unit {
@@ -579,17 +870,12 @@ impl Application<'_> {
                         pos
                     }
                 };
-                self.set_view(b, |v| {
+                self.set_panes(b, |v, rl, cl| {
+                    v.unfreeze(rl, cl);
                     if rows {
                         v.split_row = pos;
                     } else {
                         v.split_col = pos;
-                    }
-
-                    if v.frozen {
-                        v.frozen = false;
-                        v.scroll_row = 1;
-                        v.scroll_col = 1;
                     }
                     v.split_by_freeze = false;
                 })?;
@@ -605,21 +891,21 @@ impl Application<'_> {
                 if !on {
                     if v.frozen && v.split_by_freeze {
                         return self
-                            .set_view(b, |v| {
-                                v.frozen = false;
+                            .set_panes(b, |v, rl, cl| {
+                                v.unfreeze(rl, cl);
                                 v.split_by_freeze = false;
-                                v.scroll_row = 1;
-                                v.scroll_col = 1;
                             })
                             .map(|()| Variant::Empty);
                     }
-                    self.set_view(b, |v| {
+                    self.set_panes(b, |v, rl, cl| {
+                        if v.frozen {
+                            v.unfreeze(rl, cl);
+                        } else {
+                            (v.scroll_row, v.scroll_col) = (1, 1);
+                        }
                         v.split_row = 0.0;
                         v.split_col = 0.0;
-                        v.frozen = false;
                         v.split_by_freeze = false;
-                        v.scroll_row = 1;
-                        v.scroll_col = 1;
                     })?;
                 } else if v.split_row <= 0.0 && v.split_col <= 0.0 {
                     let (rows, cols) = half_window(&v);
@@ -635,40 +921,46 @@ impl Application<'_> {
                 if self.book(b)?.window.state == -4140 {
                     return Err(unable(m, true));
                 }
+
+                if self.book(b)?.window.view_mode == 3 {
+                    return Err(unable(m, true));
+                }
                 let on = self.put_bool(a)?;
                 let (r, c) = self.book(b)?.wb.active_cell();
-                self.set_view(b, |v| {
+                self.set_panes(b, |v, rl, cl| {
                     let at_cell = v.split_row <= 0.0 && v.split_col <= 0.0;
-                    if on && at_cell {
-                        let (r0, c0) = (v.scroll_row - 1, v.scroll_col - 1);
-                        if r == 0 && c == 0 {
-                            let (rows, cols) = half_window(v);
-                            v.split_row = rows;
-                            v.split_col = cols;
-                            v.split_by_freeze = true;
-                        } else {
-                            v.split_row = f64::from(r.saturating_sub(r0));
-                            v.split_col = f64::from(c.saturating_sub(c0));
-                            v.split_by_freeze = true;
-                        }
-                    }
                     if !on && v.frozen {
-                        v.scroll_row = 1;
-                        v.scroll_col = 1;
+                        v.unfreeze(rl, cl);
                         if v.split_by_freeze {
                             v.split_row = 0.0;
                             v.split_col = 0.0;
                             v.split_by_freeze = false;
                         }
                     }
-                    let was_at = v.scroll_row;
-                    let was_ac = v.scroll_col;
-                    v.frozen = on && (v.split_row > 0.0 || v.split_col > 0.0);
-                    v.pane4 = v.frozen && !at_cell && v.split_row > 0.0 && v.split_col > 0.0;
-                    if v.frozen {
-                        v.scroll_row = was_at - 1 + v.split_row as u32 + 1;
-                        v.scroll_col = was_ac - 1 + v.split_col as u32 + 1;
+                    if on && !v.frozen {
+                        if at_cell {
+                            let to = |l: &Lines, scroll: u32, cell: u32| {
+                                let first = l.first_shown(scroll);
+                                if cell > first {
+                                    l.position(first, f64::from(cell - first))
+                                } else {
+                                    0.0
+                                }
+                            };
+                            let scale = v.zoom / 100.0;
+                            (v.split_row, v.split_col) = freeze_point(
+                                (to(rl, v.scroll_row, r + 1), to(cl, v.scroll_col, c + 1)),
+                                (
+                                    WINDOW_HEIGHT / (ROW_POINTS * scale),
+                                    WINDOW_WIDTH / (col_points(v) * scale),
+                                ),
+                                half_window(v),
+                            );
+                            v.split_by_freeze = true;
+                        }
+                        v.freeze(rl, cl);
                     }
+                    v.pane4 = on && v.frozen && !at_cell && v.split_row > 0.0 && v.split_col > 0.0;
                 })?;
                 Ok(Variant::Empty)
             }
@@ -857,25 +1149,15 @@ impl Application<'_> {
                     (false, true, 1) => (false, true),
                     _ => (false, false),
                 };
-                if v.frozen && (m.name == "ScrollRow" && top || m.name == "ScrollColumn" && left) {
-                    return Ok(Variant::R8(1.0));
+                if v.frozen && m.name == "ScrollRow" && top {
+                    return Ok(Variant::R8(v.pane_row.into()));
+                }
+                if v.frozen && m.name == "ScrollColumn" && left {
+                    return Ok(Variant::R8(v.pane_col.into()));
                 }
                 self.window_view_member(b, m, a)
             }
             ("ScrollRow" | "ScrollColumn", InvokeKind::Put) => {
-                let value = match &a.put {
-                    Some(Variant::Bool(t)) => Variant::R8(f64::from(u8::from(*t))),
-                    Some(v) => match crate::controls::num_arg(v, a.lcid) {
-                        Ok(f) if f.abs() < 4e9 => Variant::R8(f),
-                        _ => return Err(OmError::app_defined()),
-                    },
-                    None => return Err(OmError::app_defined()),
-                };
-                let a = &Args {
-                    values: a.values.clone(),
-                    put: Some(value),
-                    lcid: a.lcid,
-                };
                 self.window_view_member(b, m, a).map_err(|e| {
                     if e.scode == crate::error::vba_scode(1004) {
                         OmError::app_defined()
@@ -891,23 +1173,11 @@ impl Application<'_> {
 }
 
 impl SheetView {
-    pub(crate) fn visible_rect(&self) -> xlcalc::Rect {
+    pub(crate) fn visible_rect(&self, rows: &Lines, cols: &Lines) -> xlcalc::Rect {
         let total_r = xlcalc::window_rows(self.zoom);
         let total_c = (WINDOW_WIDTH / (col_points(self) * self.zoom / 100.0)).ceil() as u32;
-        let (sr, sc) = (self.scroll_row, self.scroll_col);
-        let axis = |scroll: u32, split: f64, total: u32| {
-            let split_n = split.ceil() as u32;
-            if split <= 0.0 {
-                (scroll - 1, scroll + total - 2)
-            } else if self.frozen {
-                let origin = scroll - split as u32;
-                (scroll - 1, origin + total - 2)
-            } else {
-                (scroll - 1, scroll + split_n - 2)
-            }
-        };
-        let (r0, r1) = axis(sr, self.split_row, total_r);
-        let (c0, c1) = axis(sc, self.split_col, total_c);
+        let (r0, r1) = self.visible_lines(true, total_r, rows);
+        let (c0, c1) = self.visible_lines(false, total_c, cols);
         xlcalc::Rect::new(r0, c0, r1.min(1_048_575), c1.min(16_383))
     }
 }

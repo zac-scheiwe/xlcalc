@@ -80,7 +80,7 @@ fn checked(s: String) -> Value {
     if utf16_len(&s) > MAX_TEXT_LEN {
         err(XlError::VALUE)
     } else {
-        Value::from(s)
+        Value::from(crate::text::wide::join_halves(s))
     }
 }
 
@@ -170,6 +170,9 @@ pub fn map_case(s: &str, upper: bool) -> String {
 
 fn xl_letter(c: char) -> bool {
     let n = c as u32;
+    if n < 0x80 {
+        return (n | 0x20).wrapping_sub(0x61) <= 25;
+    }
     if n > 0xFFFF {
         return false;
     }
@@ -207,6 +210,7 @@ fn concatenate(_: &mut EvalCtx, a: &[Value]) -> Value {
         for v in a {
             out.push_str(&text(v)?);
         }
+        let out = crate::text::wide::join_halves(out);
 
         Ok(Value::from(if utf16_len(&out) > MAX_TEXT_LEN {
             utf16_slice(&out, 0, MAX_TEXT_LEN)
@@ -264,7 +268,7 @@ fn concat(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     if utf16_len(&out) > MAX_TEXT_LEN {
         return Operand::err(XlError::CALC);
     }
-    Operand::Val(Value::from(out))
+    Operand::Val(Value::from(crate::text::wide::join_halves(out)))
 }
 
 fn textjoin(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
@@ -338,7 +342,9 @@ fn rept(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if utf16_len(&s) as f64 * n > MAX_TEXT_LEN as f64 {
             return Err(XlError::VALUE);
         }
-        Ok(Value::from(s.repeat(n as usize)))
+        Ok(Value::from(crate::text::wide::join_halves(
+            s.repeat(n as usize),
+        )))
     })())
 }
 
@@ -376,6 +382,9 @@ fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         if old.is_empty() {
             return Ok(Value::Text(s));
         }
+        if crate::text::wide::has_halves(&old) {
+            return Ok(substitute_units(&s, &old, &new, k));
+        }
         match k {
             None => Ok(checked(s.replace(&*old, &new))),
             Some(k) => match nth_overlapping(&s, &old, k) {
@@ -392,6 +401,32 @@ fn substitute(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
+fn substitute_units(s: &str, old: &str, new: &str, k: Option<usize>) -> Value {
+    let units = |t: &str| crate::text::wide::units(t).collect::<Vec<u16>>();
+    let (s, old, new) = (units(s), units(old), units(new));
+    let mut out = Vec::with_capacity(s.len());
+    let (mut i, mut n, mut copied) = (0, 0, 0);
+    while i + old.len() <= s.len() {
+        if s[i..i + old.len()] != old[..] {
+            i += 1;
+            continue;
+        }
+        n += 1;
+        if k.is_none_or(|k| k == n) {
+            out.extend_from_slice(&s[copied..i]);
+            out.extend_from_slice(&new);
+            copied = i + old.len();
+        }
+
+        i += if k.is_none() { old.len() } else { 1 };
+        if k == Some(n) {
+            break;
+        }
+    }
+    out.extend_from_slice(&s[copied..]);
+    checked(crate::text::wide::from_units(&out))
+}
+
 pub(super) fn replace(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
@@ -402,6 +437,11 @@ pub(super) fn replace(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             return Err(XlError::VALUE);
         }
         let n = ifuzz(n);
+
+        let est = utf16_len(&new) as i64 - n as i64 + utf16_len(&s) as i64;
+        if est > 0xffff {
+            return Err(XlError::VALUE);
+        }
         let start = (start as usize - 1).min(utf16_len(&s));
         let mut out = utf16_slice(&s, 0, start);
         out.push_str(&new);
@@ -414,7 +454,7 @@ pub(super) fn replace(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     })())
 }
 
-fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
+pub(super) fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
     val((|| {
         let needle = text(&a[0])?;
         let hay = text(&a[1])?;
@@ -431,6 +471,14 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
         if needle.is_empty() {
             return Ok(Value::Number(start as f64 + 1.0));
         }
+        if !search && crate::text::wide::has_halves(&needle) {
+            let units = |t: &str| crate::text::wide::units(t).collect::<Vec<u16>>();
+            let (hay, needle) = (units(&hay), units(&needle));
+            let at = (start..hay.len()).find(|&i| hay[i..].starts_with(&needle));
+            return at
+                .map(|i| Value::Number(i as f64 + 1.0))
+                .ok_or(XlError::VALUE);
+        }
 
         let unit_start = start;
         let start = {
@@ -440,7 +488,7 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
                 if units >= start {
                     break;
                 }
-                units += c.len_utf16();
+                units += crate::text::wide::char_units(c);
                 idx += 1;
             }
             idx
@@ -459,7 +507,11 @@ fn find(ctx: &mut EvalCtx, a: &[Value], search: bool) -> Value {
         };
         let pos = pos.ok_or(XlError::VALUE)?;
 
-        let units: usize = hay.chars().take(pos).map(char::len_utf16).sum();
+        let units: usize = hay
+            .chars()
+            .take(pos)
+            .map(crate::text::wide::char_units)
+            .sum();
         Ok(Value::Number(units as f64 + 1.0))
     })())
 }
@@ -480,16 +532,19 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
         let env = ctx.parse_env();
-        let first =
-            |v: &Value| -> Result<char, XlError> { text(v)?.chars().next().ok_or(XlError::VALUE) };
-        let ldec = env.locale.decimal_sep;
+        let first = |v: &Value| -> Result<u16, XlError> {
+            crate::text::wide::units(&text(v)?)
+                .next()
+                .ok_or(XlError::VALUE)
+        };
+        let ldec = env.locale.decimal_sep as u16;
         let dec = match a.get(1) {
             Some(v) => first(v)?,
             None => ldec,
         };
         let mut group = match a.get(2) {
             Some(v) => first(v)?,
-            None => env.locale.thousands_sep,
+            None => env.locale.thousands_sep as u16,
         };
         if dec == group {
             if a.len() != 2 {
@@ -497,14 +552,14 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             }
             group = ldec;
         }
-        let mut cleaned: Vec<char> = Vec::new();
+        let mut cleaned: Vec<u16> = Vec::new();
         let mut seen_dec = false;
-        for c in s.chars() {
-            if matches!(c, '\t' | '\n' | '\r' | ' ') || (!seen_dec && c == group) {
-                continue;
-            }
+        for c in crate::text::wide::units(&s) {
             if cleaned.len() >= 255 {
                 return Err(XlError::VALUE);
+            }
+            if matches!(c, 9 | 10 | 13 | 32) || (!seen_dec && c == group) {
+                continue;
             }
             if c == dec {
                 seen_dec = true;
@@ -514,7 +569,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             }
         }
         let mut pct = 0;
-        while cleaned.last() == Some(&'%') {
+        while cleaned.last() == Some(&(b'%' as u16)) {
             cleaned.pop();
             pct += 1;
         }
@@ -523,7 +578,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         }
         let mut loc = env.locale.clone();
         loc.date_order = crate::locale::DateOrder::DMY;
-        let body: String = cleaned.into_iter().collect();
+        let body = crate::text::wide::from_units(&cleaned);
         let mut n = coerce::parse_number_text(
             &body,
             coerce::ParseEnv {
@@ -534,7 +589,7 @@ fn numbervalue(ctx: &mut EvalCtx, a: &[Value]) -> Value {
         .ok_or(XlError::VALUE)?
         .value;
         for _ in 0..pct {
-            n /= 100.0;
+            n = crate::x87::div(n, 100.0);
         }
         Ok(Value::num(n))
     })())
@@ -583,23 +638,23 @@ fn code(_: &mut EvalCtx, a: &[Value]) -> Value {
 
 fn unichar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
-        let n = num(ctx, &a[0])?.trunc();
-        if n < 1.0 || n >= 2147483648.0 {
+        let n = num(ctx, &a[0])?;
+        if n < 1.0 {
             return Err(XlError::VALUE);
         }
-        let u = n as u32;
-
-        if (u & 0xFFFE) == 0xFFFE {
+        let u = if n.trunc() >= 2147483648.0 {
+            0x8000_0000u32
+        } else {
+            n.trunc() as u32
+        };
+        if (0xD800..0xE000).contains(&u) || (0xFDD0..0xFDF0).contains(&u) || (u & 0xFFFE) == 0xFFFE
+        {
             return Err(XlError::NA);
         }
         if u > 0x10FFFF {
             return Err(XlError::VALUE);
         }
-
-        if (0xFDD0..=0xFDEF).contains(&u) || (u & 0xFFFE) == 0xFFFE {
-            return Err(XlError::NA);
-        }
-        let c = char::from_u32(u).ok_or(XlError::NA)?;
+        let c = char::from_u32(u).ok_or(XlError::VALUE)?;
         Ok(Value::from(c.to_string()))
     })())
 }
@@ -607,8 +662,16 @@ fn unichar(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 fn unicode(_: &mut EvalCtx, a: &[Value]) -> Value {
     val((|| {
         let s = text(&a[0])?;
-        let c = s.chars().next().ok_or(XlError::VALUE)?;
-        Ok(Value::Number(c as u32 as f64))
+
+        let mut u = crate::text::wide::units(&s);
+        let first = u.next().ok_or(XlError::VALUE)?;
+        let pair = [Some(first), u.next()].into_iter().flatten();
+        let code = match char::decode_utf16(pair).next() {
+            Some(Ok(c)) => c as u32,
+            _ if !(0xD800..0xDC00).contains(&first) => u32::from(first),
+            _ => return Err(XlError::VALUE),
+        };
+        Ok(Value::Number(f64::from(code)))
     })())
 }
 

@@ -1,0 +1,15 @@
+0	halign left wrapA
+1	halign center wrapA
+2	halign left textB
+3	valign top wrapA
+4	valign top textB
+5	wrap off wrapA
+6	wrap on emptyB
+7	shrink wrapA
+8	orient wrapA
+9	nf wrapA
+10	font size wrapA
+11	font bold wrapA
+12	indent textB
+13	indent wrapA
+14	halign left wrapA again

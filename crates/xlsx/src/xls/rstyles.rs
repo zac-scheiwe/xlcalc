@@ -144,6 +144,8 @@ impl Xf {
 #[derive(Default)]
 pub(crate) struct Styles {
     pub fonts: Vec<Font>,
+
+    pub normal_digit: Option<u32>,
     pub formats: Vec<(u16, String)>,
     pub xfs: Vec<Xf>,
 
@@ -183,6 +185,11 @@ impl Styles {
         let charset = c.u8()?;
         c.u8()?;
         let name = c.short_str(cp)?;
+        if self.fonts.is_empty() {
+            let (bold, italic) = (bls >= 700, grbit & 2 != 0);
+            let d = xlcalc::digit_px(&name, u32::from(height), bold, italic);
+            self.normal_digit = Some(d);
+        }
         let mut x = String::from("<font>");
         if bls >= 700 {
             x.push_str("<b/>");
@@ -192,6 +199,12 @@ impl Styles {
         }
         if grbit & 8 != 0 {
             x.push_str("<strike/>");
+        }
+        if grbit & 0x40 != 0 {
+            x.push_str("<condense/>");
+        }
+        if grbit & 0x80 != 0 {
+            x.push_str("<extend/>");
         }
         if grbit & 0x10 != 0 {
             x.push_str("<outline/>");

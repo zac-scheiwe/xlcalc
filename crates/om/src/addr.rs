@@ -1,6 +1,6 @@
 use xlcalc::{col_to_letters, parse_range_ref, Rect, SheetId, Workbook};
 
-const XLSX_ROWS: u32 = 1_048_576;
+pub(crate) const XLSX_ROWS: u32 = 1_048_576;
 const XLSX_COLS: u32 = 16_384;
 const XLS_ROWS: u32 = 65_536;
 const XLS_COLS: u32 = 256;
@@ -69,12 +69,10 @@ pub(crate) fn quote_sheet(name: &str) -> String {
 }
 
 pub(crate) fn external_prefix(book: &str, sheet: &str) -> String {
-    let plain = |s: &str| quote_sheet(s) == s;
-    if plain(book) && plain(sheet) {
-        format!("[{book}]{sheet}!")
-    } else {
-        format!("'[{book}]{}'!", sheet.replace('\'', "''"))
-    }
+    format!(
+        "{}!",
+        xlcalc::testing::sheet_name_text(&format!("[{book}]{sheet}"))
+    )
 }
 
 fn a1_axis(n: u32, abs: bool, col: bool) -> String {

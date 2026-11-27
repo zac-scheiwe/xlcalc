@@ -78,11 +78,17 @@ pub fn forced_name(word: &str) -> bool {
 
 pub fn rewrite(src: &str, row: u32, col: u32) -> Result<String, String> {
     let bound = binders(src)?;
-    let (_, changed) = pass(src, row, col, false, &bound)?;
+    let (_, changed) = pass(src, row, col, false, &bound, None)?;
     if !changed {
         return Ok(src.to_string());
     }
-    Ok(pass(src, row, col, true, &bound)?.0)
+
+    let mut a1_fails = false;
+    let a1 = pass(src, row, col, false, &bound, Some(&mut a1_fails))?;
+    if !a1_fails {
+        return Ok(a1.0);
+    }
+    Ok(pass(src, row, col, true, &bound, None)?.0)
 }
 
 fn binders(src: &str) -> Result<Vec<String>, String> {
@@ -159,6 +165,7 @@ fn pass(
     col: u32,
     names: bool,
     bound: &[String],
+    mut a1_fails: Option<&mut bool>,
 ) -> Result<(String, bool), String> {
     let s = src.as_bytes();
     let mut out = String::with_capacity(src.len());
@@ -216,6 +223,16 @@ fn pass(
         }
         if (c == b'R' || c == b'r') && !prev_word && !(i > 0 && s[i - 1] == b'$') {
             if let Some((text, next)) = token(s, i, row, col)? {
+                if let Some(fails) = a1_fails.as_deref_mut() {
+                    if a1_name_word(s, i, next) {
+                        out.push('\u{1}');
+                        out.push_str(&src[i..next]);
+                        i = next;
+                        changed = true;
+                        continue;
+                    }
+                    *fails = true;
+                }
                 out.push_str(&text);
                 i = next;
                 changed = true;
@@ -225,10 +242,34 @@ fn pass(
         if (c == b'C' || c == b'c') && !prev_word && !(i > 0 && s[i - 1] == b'$') {
             if let Some((text, next)) = line(s, i, col, MAX_COLS, b'C', |n| col_to_letters(n - 1))?
             {
+                if let Some(fails) = a1_fails.as_deref_mut() {
+                    if a1_name_word(s, i, next) {
+                        out.push('\u{1}');
+                        out.push_str(&src[i..next]);
+                        i = next;
+                        changed = true;
+                        continue;
+                    }
+                    *fails = true;
+                }
                 out.push_str(&text);
                 i = next;
                 changed = true;
                 continue;
+            }
+        }
+
+        if names && !prev_word && c.is_ascii_digit() && s.get(i.wrapping_sub(1)) != Some(&b'.') {
+            let mut j = i;
+            while j < s.len() && s[j].is_ascii_digit() {
+                j += 1;
+            }
+            let mut k = j + 1;
+            while s.get(j) == Some(&b':') && k < s.len() && s[k].is_ascii_digit() {
+                k += 1;
+            }
+            if s.get(j) == Some(&b':') && k > j + 1 && s.get(k).is_none_or(|&b| !is_word(b)) {
+                return Err("a bare row range is invalid in R1C1 mode".into());
             }
         }
         if names && !prev_word && (c.is_ascii_alphabetic() || c == b'$') {
@@ -256,6 +297,12 @@ fn pass(
         i += len;
     }
     Ok((if changed { out } else { src.to_string() }, changed))
+}
+
+fn a1_name_word(s: &[u8], i: usize, next: usize) -> bool {
+    s.get(next) == Some(&b':')
+        && !(i > 0 && s[i - 1] == b'!')
+        && s[i..next].iter().all(u8::is_ascii_alphanumeric)
 }
 
 fn token(s: &[u8], i: usize, row: u32, col: u32) -> Result<Option<(String, usize)>, String> {

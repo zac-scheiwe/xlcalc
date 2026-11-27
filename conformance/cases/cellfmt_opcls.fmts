@@ -1,0 +1,17 @@
+# CELL("format"): elapsed codes and B2 have no op class; tags and B1 are day ops
+[$-409][h]mmmm
+[$-409][h]d
+d [h] mmm
+d[h]mmm
+d/m [h] yy
+mmm [h] yy
+mmm[h]d
+[mm] d mmm
+d/m/yy [s]
+[h]"x"dd-mmm
+[h]:mm d mmm
+B2m/d/yy
+B2mmm d
+B2d-mmm
+mmm[$-409]yy
+[$-409]d yy

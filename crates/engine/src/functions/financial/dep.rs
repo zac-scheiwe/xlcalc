@@ -320,7 +320,10 @@ fn amor_yearfrac(sys: crate::datetime::DateSystem, p: i64, f: i64, basis: i32) -
         return Ok(1.0);
     }
     if basis != 1 && basis != 3 {
-        return days::yearfrac_core(sys, p, f, basis);
+        return Ok(x87::div(
+            days::count_days(sys, p, f, basis, false, true) as f64,
+            360.0,
+        ));
     }
     let not_leap_day = |serial: i64| {
         let t = days::ymd(sys, serial);
@@ -354,6 +357,10 @@ pub fn amordegrc(ctx: &mut EvalCtx, a: &[Arg]) -> Value {
         } else {
             1.5
         };
+
+        if m.cost == m.salvage || m.period_raw > life.ceil() {
+            return Ok(0.0);
+        }
         let rate = x87::mul(m.rate, coef);
         let yf = amor_yearfrac(sys, m.purchased, m.first, m.basis)?;
 
@@ -482,11 +489,12 @@ fn amorlinc_jump(rem: f64, one: f64, left: f64) -> Option<(f64, f64)> {
 fn dollar(ctx: &mut EvalCtx, a: &[Arg], to_decimal: bool) -> Value {
     atp::out((|| {
         let x = atp::req(ctx, a, 0)?;
-        let frac = atp::req(ctx, a, 1)?.trunc();
+
+        let frac = atp::req(ctx, a, 1)?.floor();
         if frac < 0.0 {
             return Err(XlError::NUM);
         }
-        if frac < 1.0 {
+        if frac == 0.0 {
             return Err(XlError::DIV0);
         }
         let sign = if x < 0.0 { -1.0 } else { 1.0 };
@@ -494,7 +502,7 @@ fn dollar(ctx: &mut EvalCtx, a: &[Arg], to_decimal: bool) -> Value {
         let int = ax.trunc();
 
         let f = x87::sub(ax, int);
-        let scale = xmath::pow(10.0, frac.log10().ceil());
+        let scale = xmath::pow(10.0, x87::log10(frac).ceil());
         let r = if to_decimal {
             x87::div(x87::mul(f, scale), frac)
         } else {

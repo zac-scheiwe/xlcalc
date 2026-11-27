@@ -31,7 +31,7 @@ fn day(ctx: &EvalCtx, n: f64) -> R<i64> {
 fn atp_date(ctx: &EvalCtx, a: &[Option<Value>], i: usize) -> R<i64> {
     let n = atp::req_num(ctx, a, i)?;
     let shift = a[i].as_ref().map_or(0.0, |v| ctx.atp_text_shift(v));
-    day(ctx, n + shift).map(|d| d - shift as i64)
+    day(ctx, n).map(|d| d - shift as i64)
 }
 
 type Weekend = [bool; 7];
@@ -172,7 +172,7 @@ fn workday(ctx: &mut EvalCtx, ops: &[Operand], intl: bool) -> Operand {
             let s = atp_date(ctx, a, 0)?;
             let days = atp::req_num(ctx, a, 1)?.floor();
 
-            if sys(ctx) == DateSystem::D1904 && s as f64 + days > 2_955_541.0 {
+            if sys(ctx) == DateSystem::D1904 && s as f64 + days > dt::MAX_SERIAL_1904 - 1462.0 {
                 return Err(XlError::NUM);
             }
 
@@ -253,6 +253,10 @@ fn weeknum(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 21 => return Ok(Value::Number(iso_week(cal, s) as f64)),
                 _ => return Err(XlError::NUM),
             };
+
+            if cal == DateSystem::D1900Gregorian && (0..2).contains(&s) {
+                return Ok(Value::Number(52.0));
+            }
             let j = jan1(cal, s);
             let offset = (dt::weekday_from_serial(cal, j) as i64 - start).rem_euclid(7);
             let w = (s - j + offset).div_euclid(7) + 1;
@@ -316,10 +320,24 @@ fn datedif(ctx: &mut EvalCtx, a: &[Value]) -> Value {
             "MD" => md,
 
             "YD" => {
-                let ym = months.rem_euclid(12);
-                let anchor = dt::date_serial(sy, y1 as f64, (m1 as i64 + ym) as f64, d1 as f64)
-                    .ok_or(XlError::NUM)?;
-                anchor as i64 - dt::split_serial(sf).0 + md
+                let compat = sy != DateSystem::D1900Gregorian;
+                let (mut m2a, mut y2a, mut d2a) = (m2 as i64, y2, d2 as i64);
+                if d2 < d1 {
+                    m2a -= 1;
+                    if m2a == 0 {
+                        m2a = 12;
+                        y2a -= 1;
+                    }
+                    d2a += dt::table_month_days(dt::mon_from_yr(y2a, compat) + m2a as usize - 1);
+                }
+                if m2a < m1 as i64 {
+                    m2a += 12;
+                }
+                let base = dt::mon_from_yr(y1, compat);
+                let sum: i64 = (m1 as i64..m2a)
+                    .map(|m| dt::table_month_days(base + m as usize - 1))
+                    .sum();
+                sum - d1 as i64 + d2a
             }
             _ => return Err(XlError::NUM),
         };

@@ -11,9 +11,12 @@ struct Walls {
     right_z: f64,
     z_end: f64,
     z_off: f64,
+
+    x_off: f64,
     pos_value: i32,
 }
 
+#[derive(Clone)]
 pub(crate) struct View3d {
     pub rotation: f64,
     pub elevation: f64,
@@ -58,7 +61,7 @@ impl View3d {
         }
     }
 
-    fn volume(&self, w: i64, h: i64) -> (f64, f64, f64) {
+    fn volume(&self, vol: (i64, i64)) -> (f64, f64, f64) {
         let (s, n) = (self.series as f64, self.categories as i32);
         let (depth, rows) = if self.depth_axis {
             (s * 100.0 * 0.5, (n + self.series as i32) / 2)
@@ -68,7 +71,7 @@ impl View3d {
         };
         let span = f64::from(n) * 50.0;
 
-        let aspect = f64::from((h + 152_400) as f32 / (w + 152_400) as f32);
+        let aspect = f64::from(vol.1 as f32 / vol.0 as f32);
         let height = f64::from(rows) * 50.0 / span * 100.0 * aspect;
         let mut z = depth / span * 100.0 * self.depth_percent / 100.0;
         if self.bar {
@@ -98,6 +101,7 @@ impl View3d {
                 right_z: -pad,
                 z_end: -pad,
                 z_off: 0.0,
+                x_off: 0.0,
                 pos_value: 0x14,
             },
             1 => Walls {
@@ -107,6 +111,7 @@ impl View3d {
                 right_z: 0.0,
                 z_end: z + pad,
                 z_off: z,
+                x_off: 0.0,
                 pos_value: 0x12,
             },
             2 => Walls {
@@ -116,6 +121,7 @@ impl View3d {
                 right_z: z + pad,
                 z_end: z + pad,
                 z_off: z,
+                x_off: x,
                 pos_value: 0x12,
             },
             _ => Walls {
@@ -125,6 +131,7 @@ impl View3d {
                 right_z: z,
                 z_end: -pad,
                 z_off: 0.0,
+                x_off: x,
                 pos_value: 0x14,
             },
         }
@@ -138,9 +145,9 @@ impl View3d {
         }
     }
 
-    fn screen(&self, w: i64, h: i64) -> impl Fn(f64, f64, f64) -> (i64, i64) {
+    fn screen(&self, vol: (i64, i64), w: i64, h: i64) -> impl Fn(f64, f64, f64) -> (i64, i64) {
         let f32r = |x: f64| f64::from(x as f32);
-        let (x, y, z) = self.volume(w, h);
+        let (x, y, z) = self.volume(vol);
         let walls = self.walls(z);
         let c = (x / 2.0, y / 2.0, z / 2.0);
         let mut verts = Vec::with_capacity(8);
@@ -195,26 +202,87 @@ impl View3d {
         }
     }
 
-    fn value_axis_box(&self, w: i64, h: i64, at_max: bool) -> (i64, i64) {
-        if self.bar {
-            return self.x_edge_box(w, h, at_max);
+    pub(crate) fn edge_box(
+        &self,
+        kind: u8,
+        pos: i32,
+        vol: (i64, i64),
+        w: i64,
+        h: i64,
+    ) -> (i64, i64) {
+        if self.right_angle {
+            let (x, y, z, fit, (across, up)) = self.oblique_fit(vol, w, h);
+            let r = |v: f64| (v * fit).round() as i64;
+            return match kind {
+                1 => (0, r(y)),
+                2 => (r(x), 0),
+                _ => (r((z * across).abs()), r((z * up).abs())),
+            };
         }
-        let (_, y, z) = self.volume(w, h);
+        let (x, y, z) = self.volume(vol);
         let walls = self.walls(z);
-        let screen = self.screen(w, h);
-
-        let pos = if at_max {
-            0x14 + 0x12 - walls.pos_value
-        } else {
-            walls.pos_value
+        let screen = self.screen(vol, w, h);
+        let (a, b) = match kind {
+            1 => {
+                let (ax, az) = if pos == 0x14 {
+                    (walls.left_x, walls.left_z)
+                } else {
+                    (walls.right_x, walls.right_z)
+                };
+                ((ax, 0.0, az), (ax, y, az))
+            }
+            2 => {
+                let (yy, zz) = if pos == 0x13 {
+                    (y + PAD, z - walls.z_off)
+                } else {
+                    (0.0, walls.z_end)
+                };
+                ((0.0, yy, zz), (x, yy, zz))
+            }
+            _ => {
+                let (ax, yy) = if pos == 0x13 {
+                    (x - walls.x_off, y + PAD)
+                } else {
+                    (walls.x_off, 0.0)
+                };
+                ((ax, yy, 0.0), (ax, yy, z))
+            }
         };
-        let (ax, az) = if pos == 0x14 {
-            (walls.left_x, walls.left_z)
-        } else {
-            (walls.right_x, walls.right_z)
-        };
-        let (pa, pb) = (screen(ax, 0.0, az), screen(ax, y, az));
+        let (pa, pb) = (screen(a.0, a.1, a.2), screen(b.0, b.1, b.2));
         ((pb.0 - pa.0).abs(), (pb.1 - pa.1).abs())
+    }
+
+    pub(crate) fn kind1_pos(&self, vol: (i64, i64)) -> i32 {
+        let (_, _, z) = self.volume(vol);
+        self.walls(z).pos_value
+    }
+
+    pub(crate) fn vertical_sides(&self) -> (i32, i32) {
+        let rot = self.rotation;
+        let quarter = if !(90.0..360.0).contains(&rot) {
+            0
+        } else if rot < 180.0 {
+            1
+        } else if rot < 270.0 {
+            2
+        } else {
+            3
+        };
+        if quarter % 2 == 0 {
+            (0x14, 0x12)
+        } else {
+            (0x12, 0x14)
+        }
+    }
+
+    fn value_axis_box(&self, w: i64, h: i64, at_max: bool) -> (i64, i64) {
+        let vol = (w + 152_400, h + 152_400);
+        if self.bar {
+            return self.edge_box(2, if at_max { 0x11 } else { 0x13 }, vol, w, h);
+        }
+        let pv = self.kind1_pos(vol);
+        let pos = if at_max { 0x14 + 0x12 - pv } else { pv };
+        self.edge_box(1, pos, vol, w, h)
     }
 
     pub(crate) fn value_axis(&self, w: i64, h: i64, at_max: bool) -> (i64, bool) {
@@ -228,32 +296,17 @@ impl View3d {
             (dx, true)
         }
     }
-
-    fn x_edge_box(&self, w: i64, h: i64, at_max: bool) -> (i64, i64) {
-        let (x, y, z) = self.volume(w, h);
-        let walls = self.walls(z);
-        let screen = self.screen(w, h);
-        let (yy, zz) = if at_max {
-            (0.0, walls.z_end)
-        } else {
-            (y + PAD, z - walls.z_off)
-        };
-        let (pa, pb) = (screen(0.0, yy, zz), screen(x, yy, zz));
-        ((pb.0 - pa.0).abs(), (pb.1 - pa.1).abs())
-    }
-
-    pub(crate) fn category_axis_rise(&self, w: i64, h: i64, at_max: bool) -> Option<i64> {
-        if self.right_angle {
-            return None;
-        }
-        Some(self.x_edge_box(w, h, at_max).1)
-    }
 }
 
 impl View3d {
     fn oblique_value_axis_len(&self, w: i64, h: i64) -> i64 {
+        let (x, y, _, fit, _) = self.oblique_fit((w + 152_400, h + 152_400), w, h);
+        ((if self.bar { x } else { y }) * fit).round() as i64
+    }
+
+    fn oblique_fit(&self, vol: (i64, i64), w: i64, h: i64) -> (f64, f64, f64, f64, (f64, f64)) {
         let f32r = |x: f64| f64::from(x as f32);
-        let (x, y, z) = self.volume(w, h);
+        let (x, y, z) = self.volume(vol);
         let (wf, hf) = (w as f64, h as f64);
 
         let ppu = f32r(f32r(wf / 100.0) * 72.0 / 914_400.0);
@@ -271,7 +324,7 @@ impl View3d {
         } else {
             wf / (2.0 * half_w)
         };
-        ((if self.bar { x } else { y }) * fit).round() as i64
+        (x, y, z, fit, (across, up))
     }
 }
 
@@ -350,8 +403,10 @@ mod tests {
     fn category_axis_matches_traced_box() {
         let v = view(100.0, 15.0, false, 2, 3);
         let (w, h) = (2_941_770, 2_260_600);
-        assert_eq!(v.x_edge_box(w, h, false), (274_195, 712_448));
-        assert_eq!(v.category_axis_rise(w, h, false), Some(712_448));
+        assert_eq!(
+            v.edge_box(2, 0x13, (w + 152_400, h + 152_400), w, h),
+            (274_195, 712_448)
+        );
     }
 
     fn view_len(rot: f64, elev: f64) -> i64 {

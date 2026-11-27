@@ -1,6 +1,6 @@
 use xlcalc::drawing::{Shape, ShapeKind};
 use xlcalc::drawing_text::{CharFmt, FontColor, TextFrame};
-use xlcalc::style::{nearest_color_index, PALETTE};
+use xlcalc::style::{Theme, PALETTE};
 use xlcalc_variant::{HResult, Variant};
 
 use super::{put_f64, put_i32, tri, DrawKind, DrawRef};
@@ -26,7 +26,7 @@ fn not_found() -> OmError {
 }
 
 fn utf16_len(s: &str) -> usize {
-    s.encode_utf16().count()
+    xlcalc::wide::units(s).count()
 }
 
 fn swap_rb(c: u32) -> u32 {
@@ -110,7 +110,7 @@ fn color_of(sh: &Shape, c: FontColor) -> u32 {
     }
 }
 
-fn color_index(sh: &Shape, c: FontColor) -> i32 {
+fn color_index(theme: &Theme, sh: &Shape, c: FontColor) -> i32 {
     match c {
         FontColor::Default => {
             if sh.kind == ShapeKind::TextBox {
@@ -121,7 +121,7 @@ fn color_index(sh: &Shape, c: FontColor) -> i32 {
         }
         FontColor::NoFill => -4142,
         FontColor::Rgb(0) => -4105,
-        FontColor::Rgb(v) => i32::from(nearest_color_index(swap_rb(v))),
+        FontColor::Rgb(v) => i32::from(theme.pcv_color_index(swap_rb(v))),
     }
 }
 
@@ -176,13 +176,13 @@ impl super::Application<'_> {
         new: &str,
     ) -> Result<(), OmError> {
         self.with_frame(r, |x| {
-            let mut units: Vec<u16> = x.text.encode_utf16().collect();
+            let mut units: Vec<u16> = xlcalc::wide::units(&x.text).collect();
             let (s, e) = span(units.len(), start, len);
-            let new_units: Vec<u16> = new.encode_utf16().collect();
+            let new_units: Vec<u16> = xlcalc::wide::units(new).collect();
             let old_len = units.len();
             x.props.tf.splice(old_len, s, e - s, new_units.len());
             units.splice(s..e, new_units);
-            x.text = String::from_utf16_lossy(&units);
+            x.text = xlcalc::wide::from_units(&units);
         })
     }
 
@@ -289,9 +289,9 @@ impl super::Application<'_> {
             }
             (DrawKind::Chars(..), "Font", false) => obj(self, DrawKind::Font(rs, rl)),
             (DrawKind::Chars(..) | DrawKind::TextRange2(..), "Text" | "_Default", false) => {
-                let units: Vec<u16> = sh.text.encode_utf16().collect();
+                let units: Vec<u16> = xlcalc::wide::units(&sh.text).collect();
                 let (s, e) = span(units.len(), rs, rl);
-                Ok(Variant::Bstr(String::from_utf16_lossy(&units[s..e])))
+                Ok(Variant::Bstr(xlcalc::wide::from_units(&units[s..e])))
             }
             (DrawKind::Chars(..) | DrawKind::TextRange2(..), "Text", true) => {
                 let t = crate::controls::put_text(a)?;
@@ -610,13 +610,19 @@ impl super::Application<'_> {
                 set(self, &|c| c.color = FontColor::Rgb(v))
             }
             ("ColorIndex", false) if mixed_color => Err(e_fail()),
-            ("ColorIndex", false) => Ok(Variant::I4(color_index(sh, first.color))),
+            ("ColorIndex", false) => {
+                let theme = self.draw_wb(r.book)?.style_table().theme.clone();
+                Ok(Variant::I4(color_index(&theme, sh, first.color)))
+            }
             ("ColorIndex", true) => {
+                let theme = self.draw_wb(r.book)?.style_table().theme.clone();
                 let c = match put_i32(a)? {
                     0 | -4105 => FontColor::Default,
                     -4142 => FontColor::NoFill,
                     i @ 1..=56 => {
-                        let rgb = PALETTE[(i - 1) as usize];
+                        let rgb = theme
+                            .indexed((i + 7) as u8)
+                            .unwrap_or(PALETTE[(i - 1) as usize]);
                         FontColor::Rgb(swap_rb(rgb))
                     }
                     _ => return Err(OmError::bad_index()),

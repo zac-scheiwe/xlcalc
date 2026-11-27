@@ -1,0 +1,357 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A5",
+   "input": "5"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "nm",
+    "=Sheet1!$A$1:$A$3"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "one",
+    "=Sheet1!$A$1"
+   ]
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F1",
+   "input": "=LET(nm,A1,nm)+nm"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F2",
+   "input": "=ABS(LET(nm,A1,nm)+nm)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F3",
+   "input": "=nm+LET(nm,A1,nm)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F4",
+   "input": "=ABS(nm+LET(nm,A1,nm))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F5",
+   "input": "=LET(one,A1:A3,one)+one"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F6",
+   "input": "=ABS(LET(one,A1:A3,one)+one)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F7",
+   "input": "=LET(q,A1:A3,q)+q"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F8",
+   "input": "=ABS(LET(q,A1:A3,q)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F9",
+   "input": "=LET(q,1,q)+q"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F10",
+   "input": "=ABS(LET(q,1,q)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F11",
+   "input": "=q+LET(q,A1:A3,q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F12",
+   "input": "=ABS(q+LET(q,A1:A3,q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F13",
+   "input": "=LET(q,1,q)+LET(q,A1:A3,q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F14",
+   "input": "=ABS(LET(q,1,q)+LET(q,A1:A3,q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F15",
+   "input": "=LET(q,A1:A3,q)+LET(q,1,q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F16",
+   "input": "=ABS(LET(q,A1:A3,q)+LET(q,1,q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F17",
+   "input": "=LET(q,A1:A3,LET(q,1,q)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F18",
+   "input": "=ABS(LET(q,A1:A3,LET(q,1,q)+q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F19",
+   "input": "=LET(q,1,LET(q,A1:A3,q)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F20",
+   "input": "=ABS(LET(q,1,LET(q,A1:A3,q)+q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F21",
+   "input": "=LET(q,A1:A3,LET(w,q,w)+w)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F22",
+   "input": "=ABS(LET(q,A1:A3,LET(w,q,w)+w))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F23",
+   "input": "=LET(a,A1:A3,b,a,b)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F24",
+   "input": "=ABS(LET(a,A1:A3,b,a,b))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F25",
+   "input": "=LET(a,1,b,a,b)+a"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F26",
+   "input": "=ABS(LET(a,1,b,a,b)+a)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F27",
+   "input": "=LET(nm,nm,nm)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F28",
+   "input": "=ABS(LET(nm,nm,nm))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F29",
+   "input": "=LET(one,nm,one)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F30",
+   "input": "=ABS(LET(one,nm,one))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F31",
+   "input": "=LAMBDA(q,q+1)(A1:A3)+q"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F32",
+   "input": "=ABS(LAMBDA(q,q+1)(A1:A3)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F33",
+   "input": "=LAMBDA(q,q)(A1:A3)+q"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F34",
+   "input": "=ABS(LAMBDA(q,q)(A1:A3)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F35",
+   "input": "=LAMBDA(nm,nm+1)(A1)+nm"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F36",
+   "input": "=ABS(LAMBDA(nm,nm+1)(A1)+nm)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F37",
+   "input": "=nm+LAMBDA(nm,nm+1)(A1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F38",
+   "input": "=ABS(nm+LAMBDA(nm,nm+1)(A1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F39",
+   "input": "=LET(f,LAMBDA(q,q+1),f(A1:A3)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F40",
+   "input": "=ABS(LET(f,LAMBDA(q,q+1),f(A1:A3)+q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F41",
+   "input": "=LET(f,LAMBDA(q,q+1),f(A1:A3)+f)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F42",
+   "input": "=ABS(LET(f,LAMBDA(q,q+1),f(A1:A3)+f))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F43",
+   "input": "=LET(f,LAMBDA(q,q+1),f(A1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F44",
+   "input": "=ABS(LET(f,LAMBDA(q,q+1),f(A1)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F45",
+   "input": "=LET(q,A1:A3,LAMBDA(q,q+1)(1)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F46",
+   "input": "=ABS(LET(q,A1:A3,LAMBDA(q,q+1)(1)+q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F47",
+   "input": "=LET(q,1,LAMBDA(p,p+q)(A1:A3))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F48",
+   "input": "=ABS(LET(q,1,LAMBDA(p,p+q)(A1:A3)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F49",
+   "input": "=LET(q,A1:A3,LAMBDA(p,p+q)(1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F50",
+   "input": "=ABS(LET(q,A1:A3,LAMBDA(p,p+q)(1)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F51",
+   "input": "=LET(q,1,LAMBDA(p,p)(1)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F52",
+   "input": "=ABS(LET(q,1,LAMBDA(p,p)(1)+q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F53",
+   "input": "=LET(q,A1:A3,SUM(q)+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F54",
+   "input": "=ABS(LET(q,A1:A3,SUM(q)+q))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F55",
+   "input": "=LET(q,A1:A3,INDEX(q,1))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F56",
+   "input": "=ABS(LET(q,A1:A3,INDEX(q,1)))"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F57",
+   "input": "=LET(q,A1:A3,INDEX(q,1))+q"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F58",
+   "input": "=ABS(LET(q,A1:A3,INDEX(q,1))+q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F59",
+   "input": "=LET(q,A1:A3,q:q)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!F60",
+   "input": "=ABS(LET(q,A1:A3,q:q))"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!F1:F60"
+  }
+ ]
+}

@@ -1,10 +1,11 @@
-use super::ptg_out::{from_biff12, put_chars};
+use super::ptg_out::{from_biff12, from_biff12_facts, put_chars, Facts};
 use super::write::{bof, flag, num, Out};
 use super::wstyles::StyleOut;
-use crate::xlsb_enc::{self as enc, Cls, State, TableEnt};
+use crate::xlsb_enc::{self as enc, State, TableEnt};
 use crate::xml::Node;
 use crate::{parse_cell, parse_rect, si_text};
 use std::collections::HashMap;
+use xlcalc::FormulaContext;
 
 pub(super) struct SheetIn {
     pub name: String,
@@ -28,6 +29,7 @@ pub(super) struct SheetOut {
 }
 
 pub(super) struct Cx<'a> {
+    pub dates: (bool, bool),
     pub names: &'a [String],
     pub tables: &'a [TableEnt],
     pub st: &'a mut State,
@@ -42,6 +44,8 @@ pub(super) struct Cx<'a> {
     pub calc: Option<&'a Node>,
 
     pub caches: &'a [super::wpivot::CacheIn],
+
+    pub facts: &'a mut Facts,
 }
 
 type RowIn<'a> = (u32, &'a Node, Vec<(u32, &'a Node)>);
@@ -55,13 +59,16 @@ enum V {
     Sst(u32),
 }
 
-fn cell_value(c: &Node) -> V {
+fn cell_value(c: &Node, dates: (bool, bool)) -> V {
     let v = c.child("v").map(|v| v.text.as_str());
     match c.attr("t") {
+        Some("d") => v
+            .and_then(|v| crate::strict::from_iso(v.trim(), dates.0, dates.1))
+            .map_or(V::None, V::Num),
         Some("s") => v
             .and_then(|v| v.trim().parse().ok())
             .map_or(V::None, V::Sst),
-        Some("str") => V::Str(v.unwrap_or("").to_string()),
+        Some("str") => V::Str(crate::ftext::unescape_xstring(v.unwrap_or(""))),
         Some("inlineStr") => V::Str(c.child("is").map(si_text).unwrap_or_default()),
         Some("b") => V::Bool(v.is_some_and(|v| v.trim() == "1")),
         Some("e") => v
@@ -87,14 +94,85 @@ fn rk(v: f64) -> Option<u32> {
 }
 
 fn ref8(d: &mut Vec<u8>, r0: u32, r1: u32, c0: u32, c1: u32) {
-    d.extend((r0 as u16).to_le_bytes());
-    d.extend((r1 as u16).to_le_bytes());
-    d.push(c0 as u8);
-    d.push(c1 as u8);
+    for r in [r0, r1] {
+        d.extend((r.min(0xFFFF) as u16).to_le_bytes());
+    }
+    for c in [c0, c1] {
+        d.push(c.min(0xFF) as u8);
+    }
+}
+
+fn fill_standard_cols(infos: &mut Vec<[u16; 5]>, width: u16, xf: u16) {
+    let mut next = 0;
+    let mut gaps = Vec::new();
+    for &[min, max, ..] in infos.iter() {
+        if min > next {
+            gaps.push([next, min - 1, width, xf, 0]);
+        }
+        next = next.max(max + 1);
+    }
+    if next <= 255 {
+        gaps.push([next, 256, width, xf, 0]);
+    }
+    infos.extend(gaps);
+    infos.sort_unstable_by_key(|i| i[0]);
+}
+
+fn page_breaks(o: &mut Out, root: &Node) {
+    for (tag, id, limit, span) in [
+        ("rowBreaks", 0x1B, 0x1_0000u32, 255u16),
+        ("colBreaks", 0x1A, 256, 0xFFFF),
+    ] {
+        let list: Vec<u16> = root
+            .child(tag)
+            .into_iter()
+            .flat_map(|b| b.children("brk"))
+            .filter(|b| flag(b, "man"))
+            .filter_map(|b| b.attr("id").and_then(|v| v.parse::<u32>().ok()))
+            .filter(|&at| at > 0 && at < limit)
+            .map(|at| at as u16)
+            .take(1026)
+            .collect();
+        if list.is_empty() {
+            continue;
+        }
+        let mut d = Vec::new();
+        d.extend((list.len() as u16).to_le_bytes());
+        for at in list {
+            d.extend(at.to_le_bytes());
+            d.extend(0u16.to_le_bytes());
+            d.extend(span.to_le_bytes());
+        }
+        o.rec(id, &d);
+    }
+}
+
+fn tab_color(o: &mut Out, cx: &Cx<'_>, c: &Node) {
+    let pal = &cx.styles.palette;
+    let index = |k: &str| c.attr(k).and_then(|v| v.parse::<u32>().ok());
+    let (kind, value) = if let Some(t) = index("theme") {
+        (3u32, t)
+    } else if let Some(i) = index("indexed") {
+        (1, i)
+    } else if let Some(rgb) = pal.rgb(c) {
+        let [_, r, g, b] = rgb.to_be_bytes();
+        (2, u32::from_le_bytes([r, g, b, 0xFF]))
+    } else {
+        return;
+    };
+    let icv = u32::from(pal.icv(Some(c), 0x7F)) & 0x7F;
+    let tint: f64 = c.attr("tint").and_then(|v| v.parse().ok()).unwrap_or(0.0);
+    let mut d = vec![0x62, 0x08];
+    d.extend([0; 10]);
+    for v in [40, icv, icv | 0x80, kind, value] {
+        d.extend(v.to_le_bytes());
+    }
+    d.extend(tint.to_le_bytes());
+    o.rec(0x862, &d);
 }
 
 fn xl_string16(d: &mut Vec<u8>, s: &str) {
-    d.extend((s.encode_utf16().count().min(32767) as u16).to_le_bytes());
+    d.extend((xlcalc::wide::units(s).count().min(32767) as u16).to_le_bytes());
     put_chars(d, s);
 }
 
@@ -118,7 +196,15 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
         };
         let dgid = cx.dg.len() as u32 + 1;
         let mut enc_ref = |f: &str| -> Option<Vec<u8>> {
-            let r = enc::encode(cx.names, cx.tables, cx.st, None, f, Cls::Ref).ok()?;
+            let r = enc::encode(
+                cx.names,
+                cx.tables,
+                cx.st,
+                None,
+                f,
+                FormulaContext::Reference,
+            )
+            .ok()?;
             from_biff12(&r.rgce, &r.rgcb).ok().map(|x| x.0)
         };
         let bytes = super::wchart::substream(c, &mut enc_ref, dgid, s.size_pt);
@@ -199,6 +285,7 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
         wsbool |= 0x100;
     }
     o.rec(0x81, &wsbool.to_le_bytes());
+    page_breaks(&mut o, root);
 
     let hf = root.child("headerFooter");
     for (id, key) in [(0x14u16, "oddHeader"), (0x15, "oddFooter")] {
@@ -276,6 +363,12 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
         .and_then(|f| num(f, "baseColWidth"))
         .map_or(8, |v| v as u16);
     o.rec(0x55, &dcw.to_le_bytes());
+
+    let std_width = fmt
+        .and_then(|f| num(f, "defaultColWidth"))
+        .map(|w| xlcalc::px_to_coldx(xlcalc::file_width_to_px(w)) as u16);
+
+    let mut infos: Vec<[u16; 5]> = Vec::new();
     if let Some(cols) = root.child("cols") {
         for c in cols.children("col") {
             let min = num(c, "min").unwrap_or(1.0) as u32 - 1;
@@ -292,19 +385,24 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
             if flag(c, "customWidth") {
                 fl |= 2;
             }
+            if flag(c, "bestFit") {
+                fl |= 4;
+            }
             fl |= (num(c, "outlineLevel").unwrap_or(0.0) as u16 & 7) << 8;
             if flag(c, "collapsed") {
                 fl |= 0x1000;
             }
-            let mut d = Vec::new();
-            d.extend((min as u16).to_le_bytes());
-            d.extend((max as u16).to_le_bytes());
-            d.extend(((width * 256.0).round() as u16).to_le_bytes());
-            d.extend((xf as u16).to_le_bytes());
-            d.extend(fl.to_le_bytes());
-            d.extend(0u16.to_le_bytes());
-            o.rec(0x7D, &d);
+            let width = (width * 256.0).round() as u16;
+            infos.push([min as u16, max as u16, width, xf as u16, fl]);
         }
+    }
+    if let Some(w) = std_width {
+        fill_standard_cols(&mut infos, w, xf_base as u16);
+    }
+    for info in &infos {
+        let mut d: Vec<u8> = info.iter().flat_map(|v| v.to_le_bytes()).collect();
+        d.extend(0u16.to_le_bytes());
+        o.rec(0x7D, &d);
     }
 
     let mut rows: Vec<RowIn<'_>> = Vec::new();
@@ -409,7 +507,15 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
         let mut chart_dgs = 0;
         for (i, s) in flat.iter().enumerate() {
             let mut enc_ref = |f: &str| -> Option<Vec<u8>> {
-                let r = enc::encode(cx.names, cx.tables, cx.st, None, f, Cls::Ref).ok()?;
+                let r = enc::encode(
+                    cx.names,
+                    cx.tables,
+                    cx.st,
+                    None,
+                    f,
+                    FormulaContext::Reference,
+                )
+                .ok()?;
                 from_biff12(&r.rgce, &r.rgcb).ok().map(|x| x.0)
             };
             if s.chart.is_some() {
@@ -459,6 +565,10 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
     let view = root.child("sheetViews").and_then(|v| v.child("sheetView"));
     {
         let mut fl = 0x00B6u16;
+
+        if view.is_some_and(|v| flag(v, "showFormulas")) {
+            fl |= 0x01;
+        }
         if view.is_some_and(|v| v.attr("showGridLines") == Some("0")) {
             fl &= !0x02;
         }
@@ -480,15 +590,29 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
         if frozen {
             fl |= 0x108;
         }
+        let mode = view.and_then(|v| v.attr("view"));
+        if mode == Some("pageBreakPreview") {
+            fl |= 0x800;
+        }
+        let top = view
+            .and_then(|v| v.attr("topLeftCell"))
+            .and_then(parse_cell)
+            .map_or((0, 0), |(r, c)| (r.min(0xFFFF) as u16, c.min(255) as u16));
         let mut d = Vec::new();
         d.extend(fl.to_le_bytes());
-        d.extend(0u16.to_le_bytes());
-        d.extend(0u16.to_le_bytes());
+        d.extend(top.0.to_le_bytes());
+        d.extend(top.1.to_le_bytes());
         d.extend(0x40u32.to_le_bytes());
         d.extend(0u16.to_le_bytes());
         d.extend(0u16.to_le_bytes());
         d.extend(0u32.to_le_bytes());
         o.rec(0x23E, &d);
+        if mode == Some("pageLayout") {
+            let mut d = vec![0x8B, 0x08];
+            d.extend([0; 12]);
+            d.extend(0x000Bu16.to_le_bytes());
+            o.rec(0x88B, &d);
+        }
         if let Some(z) = view.and_then(|v| num(v, "zoomScale")) {
             if z != 100.0 {
                 let mut d = Vec::new();
@@ -541,24 +665,33 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
                 .attr("activeCell")
                 .and_then(parse_cell)
                 .unwrap_or((0, 0));
-            let rc = sel
+            let mut areas: Vec<xlcalc::Rect> = sel
                 .attr("sqref")
-                .and_then(|q| q.split(' ').next())
-                .and_then(parse_rect)
-                .unwrap_or(xlcalc::Rect::new(act.0, act.1, act.0, act.1));
+                .into_iter()
+                .flat_map(|q| q.split(' '))
+                .filter_map(parse_rect)
+                .filter(|r| r.r0 <= 0xFFFF && r.c0 <= 255)
+                .take(1369)
+                .collect();
+            if areas.is_empty() {
+                areas.push(xlcalc::Rect::new(act.0, act.1, act.0, act.1));
+            }
+            let holder = num(sel, "activeCellId").map_or(0, |i| i as usize);
             let mut d = vec![pnn];
             d.extend((act.0 as u16).to_le_bytes());
             d.extend((act.1 as u16).to_le_bytes());
-            d.extend(0u16.to_le_bytes());
-            d.extend(1u16.to_le_bytes());
-            d.extend((rc.r0 as u16).to_le_bytes());
-            d.extend((rc.r1 as u16).to_le_bytes());
-            d.push(rc.c0 as u8);
-            d.push(rc.c1 as u8);
+            d.extend((holder.min(areas.len() - 1) as u16).to_le_bytes());
+            d.extend((areas.len() as u16).to_le_bytes());
+            for rc in areas {
+                ref8(&mut d, rc.r0, rc.r1, rc.c0, rc.c1);
+            }
             o.rec(0x1D, &d);
         }
     }
 
+    if let Some(w) = std_width {
+        o.rec(0x99, &w.to_le_bytes());
+    }
     if let Some(m) = root.child("mergeCells") {
         let list: Vec<_> = m
             .children("mergeCell")
@@ -591,6 +724,9 @@ pub(super) fn write_sheet(cx: &mut Cx<'_>, sh: &SheetIn, idx: u32) -> Result<She
         xl_string16(&mut d, cn);
         o.rec(0x1BA, &d);
     }
+    if let Some(c) = pr.and_then(|p| p.child("tabColor")) {
+        tab_color(&mut o, cx, c);
+    }
     super::wtable::write(&mut o, cx, sh, idx);
     o.rec(0x0A, &[]);
     Ok(SheetOut {
@@ -611,9 +747,9 @@ fn write_cell(o: &mut Out, cx: &mut Cx<'_>, w: &mut Walk<'_>, c: &Node, row: u32
     let (sh, idx) = (w.sh, w.idx);
     let xf =
         (cx.styles.xf_base + c.attr("s").and_then(|v| v.parse::<u32>().ok()).unwrap_or(0)) as u16;
-    let val = cell_value(c);
+    let val = cell_value(c, cx.dates);
     let here = format!("{}{}", xlcalc::col_to_letters(col), row + 1);
-    cx.st.row = row;
+    (cx.st.row, cx.st.col) = (row, col);
     let mut head = Vec::new();
     head.extend((row as u16).to_le_bytes());
     head.extend((col as u16).to_le_bytes());
@@ -631,7 +767,14 @@ fn write_cell(o: &mut Out, cx: &mut Cx<'_>, w: &mut Walk<'_>, c: &Node, row: u32
         let text = f.text.trim();
         match f.attr("t").unwrap_or("normal") {
             "array" if !text.is_empty() => {
-                let encoded = enc::encode(cx.names, cx.tables, cx.st, Some(idx), text, Cls::Value);
+                let encoded = enc::encode(
+                    cx.names,
+                    cx.tables,
+                    cx.st,
+                    Some(idx),
+                    text,
+                    FormulaContext::Array,
+                );
 
                 let encoded = match encoded {
                     Err(e) if e.starts_with("LET is") || e.starts_with("LAMBDA is") => {
@@ -648,7 +791,7 @@ fn write_cell(o: &mut Out, cx: &mut Cx<'_>, w: &mut Walk<'_>, c: &Node, row: u32
                 match encoded {
                     Ok(body) => {
                         if let Some(rc) = f.attr("ref").and_then(parse_rect) {
-                            match from_biff12(&body.rgce, &body.rgcb) {
+                            match from_biff12_facts(&body.rgce, &body.rgcb, None, cx.facts) {
                                 Ok((rgce, extra)) => {
                                     let mut d = Vec::new();
                                     ref8(&mut d, rc.r0, rc.r1, rc.c0, rc.c1);
@@ -701,11 +844,26 @@ fn write_cell(o: &mut Out, cx: &mut Cx<'_>, w: &mut Walk<'_>, c: &Node, row: u32
                     if flag(f, "dt2D") {
                         fl |= 8;
                     }
+
+                    let mut words = [0u16; 4];
+                    let inputs = [(r1, "del1", 0x10), (r2, "del2", 0x20)];
+                    let count = if fl & 8 != 0 { 2 } else { 1 };
+                    for (i, (at, del, bit)) in inputs.into_iter().take(count).enumerate() {
+                        let fits = at.0 <= 0xFFFF && at.1 <= 0xFF && !flag(f, del);
+                        let pair = match fits {
+                            true => [at.0 as u16, at.1 as u16],
+                            false => {
+                                fl |= bit;
+                                [0xFFFF; 2]
+                            }
+                        };
+                        words[2 * i..2 * i + 2].copy_from_slice(&pair);
+                    }
                     let mut d = Vec::new();
                     ref8(&mut d, rc.r0, rc.r1, rc.c0, rc.c1);
                     d.extend(fl.to_le_bytes());
-                    for v in [r1.0, r1.1, r2.0, r2.1] {
-                        d.extend((v as u16).to_le_bytes());
+                    for v in words {
+                        d.extend(v.to_le_bytes());
                     }
                     after.push((0x236, d));
                     for r in rc.r0..=rc.r1 {
@@ -726,7 +884,14 @@ fn write_cell(o: &mut Out, cx: &mut Cx<'_>, w: &mut Walk<'_>, c: &Node, row: u32
                 }
             }
             "normal" if !text.is_empty() => {
-                match enc::encode(cx.names, cx.tables, cx.st, Some(idx), text, Cls::Value) {
+                match enc::encode(
+                    cx.names,
+                    cx.tables,
+                    cx.st,
+                    Some(idx),
+                    text,
+                    FormulaContext::Cell,
+                ) {
                     Ok(x) => formula = Some(x),
 
                     Err(e) if e.starts_with("LET is") || e.starts_with("LAMBDA is") => {
@@ -764,7 +929,7 @@ fn write_cell(o: &mut Out, cx: &mut Cx<'_>, w: &mut Walk<'_>, c: &Node, row: u32
         plain_cell(o, head, &val);
         return;
     };
-    let (rgce, extra) = match from_biff12(&fm.rgce, &fm.rgcb) {
+    let (rgce, extra) = match from_biff12_facts(&fm.rgce, &fm.rgcb, None, cx.facts) {
         Ok(x) => x,
         Err(e) => {
             cx.warnings

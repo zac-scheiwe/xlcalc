@@ -1,0 +1,668 @@
+{
+ "sheets": [
+  "Sheet1"
+ ],
+ "steps": [
+  {
+   "op": "set",
+   "cell": "Sheet1!A1",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B1",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C1",
+   "input": "a b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A3",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B3",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C3",
+   "input": "6"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!A4",
+   "input": "7"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!B4",
+   "input": "8"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!C4",
+   "input": "9"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets(1).ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "Worksheets(1).Range('A1:C4')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(1)",
+   "prop": "Name",
+   "value": "T"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H1",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I1",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J1",
+   "input": "a b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!H2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!I2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!J2",
+   "input": "3"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets(1).ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "Worksheets(1).Range('H1:J2')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(2)",
+   "prop": "Name",
+   "value": "U"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!O1",
+   "input": "a"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!P1",
+   "input": "b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!Q1",
+   "input": "a b"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!O2",
+   "input": "1"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!P2",
+   "input": "2"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!Q2",
+   "input": "3"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!O3",
+   "input": "4"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!P3",
+   "input": "5"
+  },
+  {
+   "op": "set",
+   "cell": "Sheet1!Q3",
+   "input": "6"
+  },
+  {
+   "op": "om",
+   "path": "Worksheets(1).ListObjects",
+   "call": "Add",
+   "args": [
+    1,
+    {
+     "path": "Worksheets(1).Range('O1:Q3')"
+    },
+    {
+     "missing": true
+    },
+    1
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(3)",
+   "prop": "Name",
+   "value": "V"
+  },
+  {
+   "op": "om_put",
+   "path": "Worksheets(1).ListObjects(3)",
+   "prop": "ShowTotals",
+   "value": true
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z1",
+   "input": "=T[a]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z2",
+   "input": "=T[[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z3",
+   "input": "=T[a b]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z4",
+   "input": "=T[[#Data],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z5",
+   "input": "=T[[a]:[b]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z6",
+   "input": "=T+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z7",
+   "input": "=ABS(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z8",
+   "input": "=ABS(T[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z9",
+   "input": "=ABS(T[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z10",
+   "input": "=ABS(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z11",
+   "input": "=ABS(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z12",
+   "input": "=ABS(T)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z13",
+   "input": "=INDEX(T[a],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z14",
+   "input": "=INDEX(T[[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z15",
+   "input": "=INDEX(T[a b],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z16",
+   "input": "=INDEX(T[[#Data],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z17",
+   "input": "=INDEX(T[[a]:[b]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z18",
+   "input": "=INDEX(T,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z19",
+   "input": "=SUM(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z20",
+   "input": "=SUM(T[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z21",
+   "input": "=SUM(T[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z22",
+   "input": "=SUM(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z23",
+   "input": "=SUM(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z24",
+   "input": "=SUM(T)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z25",
+   "input": "=ROWS(T[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z26",
+   "input": "=ROWS(T[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z27",
+   "input": "=ROWS(T[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z28",
+   "input": "=ROWS(T[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z29",
+   "input": "=ROWS(T[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z30",
+   "input": "=ROWS(T)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z31",
+   "input": "=U[a]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z32",
+   "input": "=U[[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z33",
+   "input": "=U[a b]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z34",
+   "input": "=U[[#Data],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z35",
+   "input": "=U[[a]:[b]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z36",
+   "input": "=U+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z37",
+   "input": "=ABS(U[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z38",
+   "input": "=ABS(U[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z39",
+   "input": "=ABS(U[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z40",
+   "input": "=ABS(U[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z41",
+   "input": "=ABS(U[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z42",
+   "input": "=ABS(U)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z43",
+   "input": "=INDEX(U[a],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z44",
+   "input": "=INDEX(U[[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z45",
+   "input": "=INDEX(U[a b],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z46",
+   "input": "=INDEX(U[[#Data],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z47",
+   "input": "=INDEX(U[[a]:[b]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z48",
+   "input": "=INDEX(U,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z49",
+   "input": "=SUM(U[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z50",
+   "input": "=SUM(U[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z51",
+   "input": "=SUM(U[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z52",
+   "input": "=SUM(U[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z53",
+   "input": "=SUM(U[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z54",
+   "input": "=SUM(U)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z55",
+   "input": "=ROWS(U[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z56",
+   "input": "=ROWS(U[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z57",
+   "input": "=ROWS(U[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z58",
+   "input": "=ROWS(U[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z59",
+   "input": "=ROWS(U[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z60",
+   "input": "=ROWS(U)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z61",
+   "input": "=V[a]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z62",
+   "input": "=V[[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z63",
+   "input": "=V[a b]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z64",
+   "input": "=V[[#Data],[a]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z65",
+   "input": "=V[[a]:[b]]+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z66",
+   "input": "=V+1"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z67",
+   "input": "=ABS(V[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z68",
+   "input": "=ABS(V[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z69",
+   "input": "=ABS(V[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z70",
+   "input": "=ABS(V[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z71",
+   "input": "=ABS(V[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z72",
+   "input": "=ABS(V)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z73",
+   "input": "=INDEX(V[a],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z74",
+   "input": "=INDEX(V[[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z75",
+   "input": "=INDEX(V[a b],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z76",
+   "input": "=INDEX(V[[#Data],[a]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z77",
+   "input": "=INDEX(V[[a]:[b]],1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z78",
+   "input": "=INDEX(V,1)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z79",
+   "input": "=SUM(V[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z80",
+   "input": "=SUM(V[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z81",
+   "input": "=SUM(V[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z82",
+   "input": "=SUM(V[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z83",
+   "input": "=SUM(V[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z84",
+   "input": "=SUM(V)"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z85",
+   "input": "=ROWS(V[a])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z86",
+   "input": "=ROWS(V[[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z87",
+   "input": "=ROWS(V[a b])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z88",
+   "input": "=ROWS(V[[#Data],[a]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z89",
+   "input": "=ROWS(V[[a]:[b]])"
+  },
+  {
+   "op": "setl",
+   "cell": "Sheet1!Z90",
+   "input": "=ROWS(V)"
+  },
+  {
+   "op": "fullcalc"
+  },
+  {
+   "op": "read",
+   "range": "Sheet1!Z1:Z90"
+  }
+ ]
+}

@@ -33,6 +33,20 @@ pub(crate) struct Spec {
     fam: Vec<(String, Result<BagVal, Fail>)>,
 }
 
+fn table_style_show_default(style: &str, member: &str) -> Option<bool> {
+    let want = match member {
+        "ShowAsAvailableTableStyle" => "TableStyle",
+        "ShowAsAvailablePivotTableStyle" => "PivotStyle",
+        "ShowAsAvailableSlicerStyle" => "SlicerStyle",
+        "ShowAsAvailableTimelineStyle" => "TimeSlicerStyle",
+        _ => return None,
+    };
+    let family = ["TableStyle", "PivotStyle", "SlicerStyle", "TimeSlicerStyle"]
+        .into_iter()
+        .find(|f| style.starts_with(f))?;
+    Some(family == want)
+}
+
 pub(crate) fn is_3d_type(t: i32) -> bool {
     matches!(
         t,
@@ -701,6 +715,13 @@ impl Application<'_> {
                     ));
                 }
                 return Ok(to_variant(&v, m.ret));
+            }
+            if key == "TableStyle" {
+                if let Some(style) = slot.strip_prefix("TableStyle:") {
+                    if let Some(on) = table_style_show_default(style, m.name) {
+                        return Ok(Variant::Bool(on));
+                    }
+                }
             }
 
             if key == "Axis1" && m.name == "AxisBetweenCategories" {

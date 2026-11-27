@@ -138,7 +138,7 @@ fn fold_unit(u: u16) -> u16 {
 
 impl Pattern {
     fn new(p: &str) -> Pattern {
-        let units: Vec<u16> = p.encode_utf16().collect();
+        let units: Vec<u16> = crate::text::wide::units(p).collect();
         let mut toks = Vec::with_capacity(units.len());
         let mut i = 0;
         while i < units.len() {
@@ -164,7 +164,7 @@ impl Pattern {
     }
 
     fn matches(&self, text: &str) -> bool {
-        let t: Vec<u16> = text.encode_utf16().map(fold_unit).collect();
+        let t: Vec<u16> = crate::text::wide::units(text).map(fold_unit).collect();
         let (mut ti, mut pi) = (0usize, 0usize);
         let mut star: Option<(usize, usize)> = None;
         loop {
@@ -216,7 +216,6 @@ fn target_of(op: &Operand) -> R<Value> {
 fn lookup_src(op: &Operand) -> R<Src> {
     match op {
         Operand::Missing => Err(XlError::VALUE),
-        Operand::Ref(r) if r.is_span() => Err(XlError::VALUE),
 
         Operand::Ref(Reference::Grid(_)) => Src::from_operand(op),
         Operand::Ref(r) if r.single().is_none() => Err(XlError::NA),
@@ -253,9 +252,14 @@ fn xfind(line: &Line, t: &Value, mm: i32, sm: i32) -> Option<u32> {
     if sm.abs() == 2 {
         let (mut lo, mut hi) = (0i64, len as i64 - 1);
         let mut found = None;
+
+        let mut cand: Option<i64> = None;
         while lo <= hi {
             let mid = (lo + hi) / 2;
             let ord = xl_cmp(&line.get(mid as u32), t);
+            if (mm == 1 && ord == Ordering::Greater) || (mm == -1 && ord == Ordering::Less) {
+                cand = Some(mid);
+            }
             match (ord, sm > 0) {
                 (Ordering::Equal, true) => {
                     found = Some(mid);
@@ -272,14 +276,10 @@ fn xfind(line: &Line, t: &Value, mm: i32, sm: i32) -> Option<u32> {
         if let Some(i) = found {
             return Some(i as u32);
         }
-
-        let (smaller, larger) = if sm > 0 { (hi, lo) } else { (lo, hi) };
-        let pick = match mm {
-            -1 => smaller,
-            1 => larger,
-            _ => return None,
+        return match mm {
+            -1 | 1 => cand.map(|i| i as u32),
+            _ => None,
         };
-        return (pick >= 0 && pick < len as i64).then_some(pick as u32);
     }
 
     let mat = line.materialized().min(len);
@@ -478,38 +478,28 @@ fn approx_cmp255(a: &Value, b: &Value) -> Ordering {
 }
 
 fn approx_find(line: &Line, t: &Value) -> Option<u32> {
-    let len = line.len as i64;
-    let mat = line.materialized() as i64;
     let kind = type_rank(t);
-    let (mut lo, mut hi) = (0i64, len - 1);
-    let mut best = None;
-    while lo <= hi {
-        let mid = (lo + hi) / 2;
+    let mat = line.materialized() as i64;
 
-        let mut i = mid;
-        while i <= hi && i < mat && type_rank(&line.get(i as u32)) != kind {
-            i += 1;
+    let sign = |i: i64| -> i32 {
+        if i >= mat {
+            return 2;
         }
-        if i > hi || i >= mat {
-            hi = mid - 1;
-            continue;
+        let v = line.get(i as u32);
+        if type_rank(&v) != kind {
+            return 2;
         }
-        match approx_cmp255(&line.get(i as u32), t) {
-            Ordering::Equal => {
-                let mut j = i;
-                while j + 1 < mat && approx_cmp255(&line.get(j as u32 + 1), t) == Ordering::Equal {
-                    j += 1;
-                }
-                return Some(j as u32);
-            }
-            Ordering::Less => {
-                best = Some(i as u32);
-                lo = i + 1;
-            }
-            Ordering::Greater => hi = i - 1,
+        match approx_cmp255(&v, t) {
+            Ordering::Less => -1,
+            Ordering::Equal => 0,
+            Ordering::Greater => 1,
         }
-    }
-    best
+    };
+    u32::try_from(super::super::lookup::rwcol_binary_search(
+        line.len as i64,
+        sign,
+    ))
+    .ok()
 }
 
 pub fn lookup(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {

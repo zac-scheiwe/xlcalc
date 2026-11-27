@@ -1,0 +1,366 @@
+{
+ "sheets": [
+  "Sheet1",
+  "Sheet2"
+ ],
+ "steps": [
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet2').Range('A70000')",
+   "prop": "Value2",
+   "value": 5
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C1')",
+   "prop": "Formula",
+   "value": "=SUM(Sheet2!A:A)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook",
+   "prop": "CheckCompatibility",
+   "value": false
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc1.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc1.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C2')",
+   "prop": "Formula",
+   "value": "=ADDRESS(1,1)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C3')",
+   "prop": "Formula",
+   "value": "=IFERROR(A1,2)"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C4')",
+   "prop": "Formula",
+   "value": "=A70000"
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C5')",
+   "prop": "Formula",
+   "value": "=SUM(A:A)"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc2.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc2.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "unusedFar",
+    "=Sheet1!$A$70000"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "fits",
+    "=Sheet1!$A$1:$A$65536"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "addin",
+    "=EDATE(1,1)"
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C6')",
+   "prop": "Formula",
+   "value": "=COUNT(fits)+addin"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc3.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc3.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "used",
+    "=Sheet1!$A$70000"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1').FormatConditions",
+   "call": "Add",
+   "args": [
+    2,
+    0,
+    "=used>0"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc4.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc4.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E1').FormatConditions",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc5.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc5.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2').Validation",
+   "call": "Add",
+   "args": [
+    7,
+    1,
+    1,
+    "=used>0"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc6.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc6.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('E2').Validation",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "outer",
+    "=used+1"
+   ]
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc7.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc7.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names('outer')",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names('used')",
+   "call": "Delete",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "col",
+    "=Sheet1!$B:$B"
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "prop": "Formula",
+   "value": "=COUNT(col)"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc8.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc8.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C7')",
+   "call": "ClearContents",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc9.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc9.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "addr",
+    "=ADDRESS(1,1)"
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "prop": "Formula",
+   "value": "=addr"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc10.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc10.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C8')",
+   "call": "ClearContents",
+   "args": []
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook.Names",
+   "call": "Add",
+   "args": [
+    "future",
+    "=IFERROR(Sheet1!$A$1,0)"
+   ]
+  },
+  {
+   "op": "om_put",
+   "path": "ActiveWorkbook.Worksheets('Sheet1').Range('C9')",
+   "prop": "Formula",
+   "value": "=future"
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "SaveAs",
+   "args": [
+    "@out/recalc11.xls",
+    56
+   ]
+  },
+  {
+   "op": "file_read",
+   "file": "@out/recalc11.xls",
+   "fullcalc": true
+  },
+  {
+   "op": "om",
+   "path": "ActiveWorkbook",
+   "call": "Close",
+   "args": [
+    false
+   ]
+  }
+ ],
+ "fresh_excel": true
+}

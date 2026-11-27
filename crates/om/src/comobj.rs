@@ -1,6 +1,8 @@
 use xlcalc_variant::{ObjectId, SafeArray, VarType, Variant};
 use xlcalc_vba::{InvokeKind, VbaError};
 
+use crate::identity;
+
 const TAG: u64 = 1 << 62;
 
 pub(crate) fn com_id(i: usize) -> ObjectId {
@@ -17,13 +19,17 @@ enum Key {
     Bool(bool),
     Null,
     Empty,
+    Object(identity::Key),
 }
 
 #[derive(Debug, Default)]
 pub(crate) struct Dict {
     mode: i32,
-    entries: Vec<(Variant, Variant)>,
+
+    entries: Vec<(Key, Variant, Variant)>,
 }
+
+type Identify<'a> = &'a dyn Fn(ObjectId) -> identity::Key;
 
 #[derive(Debug)]
 pub(crate) enum ComObj {
@@ -75,7 +81,7 @@ impl Dict {
         }
     }
 
-    fn key(&self, v: &Variant) -> Result<Key, VbaError> {
+    fn key(&self, v: &Variant, identify: Identify) -> Result<Key, VbaError> {
         Ok(match v.clone().canon() {
             Variant::Bstr(s) if self.mode != 0 => Key::Text(s.to_lowercase()),
             Variant::Bstr(s) => Key::Text(s),
@@ -88,18 +94,27 @@ impl Dict {
             Variant::R8(x) | Variant::Date(x) => Self::number(x),
             Variant::Empty => Key::Empty,
             Variant::Null => Key::Null,
+            Variant::Dispatch(Some(id)) => Key::Object(identify(id)),
             _ => return Err(VbaError::new(5)),
         })
     }
 
-    fn find(&self, k: &Variant) -> Result<Option<usize>, VbaError> {
-        let want = self.key(k)?;
-        for (i, (e, _)) in self.entries.iter().enumerate() {
-            if self.key(e)? == want {
-                return Ok(Some(i));
-            }
-        }
-        Ok(None)
+    fn find(&self, want: &Key) -> Option<usize> {
+        self.entries.iter().position(|e| e.0 == *want)
+    }
+
+    fn push(&mut self, key: Key, given: &Variant, item: Variant) {
+        self.entries.push((key, given.clone().canon(), item));
+    }
+
+    fn held(&self) -> impl Iterator<Item = ObjectId> + '_ {
+        self.entries
+            .iter()
+            .flat_map(|e| [&e.1, &e.2])
+            .filter_map(|v| match v {
+                Variant::Dispatch(id) => *id,
+                _ => None,
+            })
     }
 
     fn array(items: Vec<Variant>) -> Variant {
@@ -131,6 +146,7 @@ impl Dict {
         name: &str,
         kind: InvokeKind,
         args: &[Variant],
+        identify: Identify,
     ) -> Result<Variant, VbaError> {
         let name = if name.is_empty() { "item" } else { name }.to_ascii_lowercase();
         let put = matches!(kind, InvokeKind::Put | InvokeKind::PutRef);
@@ -139,41 +155,50 @@ impl Dict {
             ("count", 0) if get => Ok(Variant::I4(self.entries.len() as i32)),
             ("comparemode", 0) if get => Ok(Variant::I4(self.mode)),
             ("comparemode", 1) if put => self.compare_mode(&args[0]),
-            ("exists", 1) if get => Ok(Variant::Bool(self.find(&args[0])?.is_some())),
+            ("exists", 1) if get => {
+                let key = self.key(&args[0], identify)?;
+                Ok(Variant::Bool(self.find(&key).is_some()))
+            }
             ("add", 2) if get => {
-                if self.find(&args[0])?.is_some() {
+                let key = self.key(&args[0], identify)?;
+                if self.find(&key).is_some() {
                     return Err(VbaError::new(457));
                 }
-                self.entries
-                    .push((args[0].clone().canon(), args[1].clone()));
+                self.push(key, &args[0], args[1].clone());
                 Ok(Variant::Empty)
             }
-            ("item", 1) if get => match self.find(&args[0])? {
-                Some(i) => Ok(self.entries[i].1.clone()),
-                None => {
-                    self.entries.push((args[0].clone().canon(), Variant::Empty));
-                    Ok(Variant::Empty)
+            ("item", 1) if get => {
+                let key = self.key(&args[0], identify)?;
+                match self.find(&key) {
+                    Some(i) => Ok(self.entries[i].2.clone()),
+                    None => {
+                        self.push(key, &args[0], Variant::Empty);
+                        Ok(Variant::Empty)
+                    }
                 }
-            },
+            }
             ("item", 2) if put => {
-                match self.find(&args[0])? {
-                    Some(i) => self.entries[i].1 = args[1].clone(),
-                    None => self
-                        .entries
-                        .push((args[0].clone().canon(), args[1].clone())),
+                let key = self.key(&args[0], identify)?;
+                match self.find(&key) {
+                    Some(i) => self.entries[i].2 = args[1].clone(),
+                    None => self.push(key, &args[0], args[1].clone()),
                 }
                 Ok(Variant::Empty)
             }
             ("key", 2) if put => {
-                let i = self.find(&args[0])?.ok_or_else(|| VbaError::new(NO_KEY))?;
-                if self.find(&args[1])?.is_some() {
+                let old = self.key(&args[0], identify)?;
+                let i = self.find(&old).ok_or_else(|| VbaError::new(NO_KEY))?;
+                let new = self.key(&args[1], identify)?;
+                if self.find(&new).is_some() {
                     return Err(VbaError::new(457));
                 }
-                self.entries[i].0 = args[1].clone().canon();
+                self.entries[i].0 = new;
+                self.entries[i].1 = args[1].clone().canon();
                 Ok(Variant::Empty)
             }
             ("remove", 1) if get => {
-                let i = self.find(&args[0])?.ok_or_else(|| VbaError::new(NO_KEY))?;
+                let key = self.key(&args[0], identify)?;
+                let i = self.find(&key).ok_or_else(|| VbaError::new(NO_KEY))?;
                 self.entries.remove(i);
                 Ok(Variant::Empty)
             }
@@ -183,10 +208,10 @@ impl Dict {
             }
             ("keys" | "items", 1) if get => Err(VbaError::new(451)),
             ("keys", 0) if get => Ok(Dict::array(
-                self.entries.iter().map(|e| e.0.clone()).collect(),
+                self.entries.iter().map(|e| e.1.clone()).collect(),
             )),
             ("items", 0) if get => Ok(Dict::array(
-                self.entries.iter().map(|e| e.1.clone()).collect(),
+                self.entries.iter().map(|e| e.2.clone()).collect(),
             )),
             (
                 "count" | "comparemode" | "exists" | "add" | "item" | "key" | "remove"
@@ -241,7 +266,12 @@ impl crate::Application<'_> {
     ) -> Result<Variant, VbaError> {
         let i = index(id);
         match self.com.get_mut(i) {
-            Some(ComObj::Dictionary(d)) => d.call(member, kind, args),
+            Some(ComObj::Dictionary(d)) => {
+                let mut d = std::mem::take(d);
+                let out = d.call(member, kind, args, &|o| self.identity_key(o));
+                self.com[i] = ComObj::Dictionary(d);
+                out
+            }
             Some(ComObj::FileSystem) => self.fso_call(member, kind, args),
             Some(ComObj::TextStream(s)) => s.call(member, kind, args),
             Some(ComObj::Bridged(_)) => self.bridged_invoke(id, member, kind, args),
@@ -306,6 +336,17 @@ impl crate::Application<'_> {
         }
     }
 
+    pub(crate) fn dictionary_held(&self) -> Vec<ObjectId> {
+        self.com
+            .iter()
+            .filter_map(|c| match c {
+                ComObj::Dictionary(d) => Some(d.held()),
+                _ => None,
+            })
+            .flatten()
+            .collect()
+    }
+
     pub(crate) fn com_type_name(&self, id: ObjectId) -> &'static str {
         match self.com.get(index(id)) {
             Some(ComObj::Dictionary(_)) => "Dictionary",
@@ -336,7 +377,7 @@ impl crate::Application<'_> {
 
     pub(crate) fn com_enumerate(&mut self, id: ObjectId) -> Result<Vec<Variant>, VbaError> {
         match self.com.get(index(id)) {
-            Some(ComObj::Dictionary(d)) => Ok(d.entries.iter().map(|e| e.0.clone()).collect()),
+            Some(ComObj::Dictionary(d)) => Ok(d.entries.iter().map(|e| e.1.clone()).collect()),
             Some(ComObj::Files(p)) => {
                 let p = p.clone();
                 self.fs_collection_items(&p, true)

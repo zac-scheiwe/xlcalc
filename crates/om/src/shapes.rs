@@ -1,4 +1,5 @@
 use xlcalc::drawing::{pt_to_emu, Chart, Pos, Shape, ShapeKind, ShapeProps, EMU_PT};
+use xlcalc::objfmla::ObjFmla;
 use xlcalc::{Rect, SheetId, Workbook};
 use xlcalc_variant::Variant;
 
@@ -35,6 +36,8 @@ pub(crate) enum DrawKind {
     Chars(u32, u32),
     ChartObjects,
     ChartObject,
+
+    Legacy(&'static str),
     Chart,
     SeriesColl,
     Series(usize),
@@ -43,6 +46,8 @@ pub(crate) enum DrawKind {
     Stub(&'static str),
 
     Multi(usize),
+
+    Mixed(usize),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -58,7 +63,7 @@ impl DrawKind {
         match self {
             DrawKind::Shapes => "Shapes",
             DrawKind::Shape => "Shape",
-            DrawKind::ShapeRange | DrawKind::Multi(_) => "ShapeRange",
+            DrawKind::ShapeRange | DrawKind::Multi(_) | DrawKind::Mixed(_) => "ShapeRange",
             DrawKind::TextFrame => "TextFrame",
             DrawKind::TextFrame2 => "TextFrame2",
             DrawKind::TextRange2(..) | DrawKind::Paras => "TextRange2",
@@ -72,6 +77,7 @@ impl DrawKind {
             DrawKind::Chars(..) => "Characters",
             DrawKind::ChartObjects => "ChartObjects",
             DrawKind::ChartObject => "ChartObject",
+            DrawKind::Legacy(n) => n,
             DrawKind::Chart => "_Chart",
             DrawKind::SeriesColl => "SeriesCollection",
             DrawKind::Series(_) => "Series",
@@ -101,7 +107,7 @@ fn auto_info(t: i32) -> Option<(i32, &'static str)> {
         .map(|e| (e.1, e.2))
 }
 
-fn base_name(k: &ShapeKind) -> &'static str {
+pub(crate) fn base_name(k: &ShapeKind) -> &'static str {
     match k {
         ShapeKind::Auto(t) => crate::shapes_names::AUTO_SHAPES
             .iter()
@@ -220,6 +226,37 @@ fn check_extent(sizes: &[f64]) -> Result<(), OmError> {
     Ok(())
 }
 
+fn put_coord(a: &Args, chart_obj: bool) -> Result<f64, OmError> {
+    let v = put_f64(a)?;
+    if chart_obj {
+        return Ok(v);
+    }
+    check_coord(&[v]).map_err(|_| out_of_range())?;
+    Ok(f64::from(v as f32))
+}
+
+fn put_extent(a: &Args, chart_obj: bool) -> Result<f64, OmError> {
+    let v = put_f64(a)?;
+    if chart_obj {
+        return Ok(v);
+    }
+    let f = f64::from(v as f32);
+    if f > 169_056.0 {
+        return Err(out_of_range());
+    }
+    Ok(f)
+}
+
+fn check_coord(vals: &[f64]) -> Result<(), OmError> {
+    if vals.iter().any(|v| {
+        let f = f64::from(*v as f32);
+        !(-2_147_483_647.0..=2_147_483_647.0).contains(&f)
+    }) {
+        return Err(extent_error());
+    }
+    Ok(())
+}
+
 fn out_of_range() -> OmError {
     OmError::exception(
         0x8007_0057_u32 as i32,
@@ -242,22 +279,36 @@ fn num(a: &Args, i: usize) -> Result<f64, OmError> {
     crate::controls::arg_num(a, i)
 }
 
-enum Item {
+#[derive(Clone, Copy)]
+pub(crate) enum Item {
     Control(u32),
     Shape(u32),
+    Note(u32),
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct RangeItem {
+    item: Item,
+    legacy: bool,
+}
+
+impl RangeItem {
+    fn new(item: Item, legacy: bool) -> RangeItem {
+        RangeItem { item, legacy }
+    }
 }
 
 impl Item {
     fn shape_id(&self) -> Option<u32> {
         match self {
             Item::Shape(id) => Some(*id),
-            Item::Control(_) => None,
+            Item::Control(_) | Item::Note(_) => None,
         }
     }
 }
 
 impl Application<'_> {
-    fn draw_wb(&mut self, b: BookId) -> Result<&mut Workbook, OmError> {
+    pub(crate) fn draw_wb(&mut self, b: BookId) -> Result<&mut Workbook, OmError> {
         Ok(&mut self.book_mut(b)?.wb)
     }
 
@@ -285,6 +336,7 @@ impl Application<'_> {
         let mut drawing = book.wb.drawing(s).cloned().unwrap_or_default();
         for sh in &mut drawing.shapes {
             if let Some(c) = &mut sh.chart {
+                c.carry_label_cells(None);
                 for p in c.parts_mut() {
                     if let Some(t) = crate::charts::external_text(&book.wb, p, &src_name) {
                         *p = xlcalc::drawing::Part::External(t);
@@ -439,16 +491,174 @@ impl Application<'_> {
         self.draw_obj(b, s, 0, DrawKind::Multi(i))
     }
 
-    fn merged_items(&mut self, b: BookId, s: SheetId) -> Result<Vec<(Item, String)>, OmError> {
-        let mut v: Vec<(Item, String)> = self
-            .collection_items(b, s, Coll::Shapes)?
+    fn control_slots(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        top: &[Shape],
+    ) -> Result<Vec<(usize, u32, String)>, OmError> {
+        let controls = self.collection_items(b, s, Coll::Shapes)?;
+        if controls.is_empty() {
+            return Ok(Vec::new());
+        }
+        let bk = self.book(b)?;
+        let blocks: Vec<Vec<u32>> = match bk.wb.drawing(s) {
+            Some(d) => top.iter().map(|x| d.block(x.id)).collect(),
+            None => Vec::new(),
+        };
+        let list = bk.controls.get(&s).map_or(&[][..], |c| &c.list[..]);
+        Ok(controls
             .into_iter()
-            .map(|(uid, _, name)| (Item::Control(uid), name))
-            .collect();
-        for sh in self.top_level(b, s)? {
+            .map(|(uid, _, name)| {
+                let slot = list.iter().find(|c| c.uid == uid).and_then(|c| {
+                    blocks
+                        .iter()
+                        .rposition(|block| block.iter().any(|id| c.under.contains(id)))
+                });
+                (slot.map_or(0, |i| i + 1), uid, name)
+            })
+            .collect())
+    }
+
+    pub(crate) fn merged_items(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+    ) -> Result<Vec<(Item, String)>, OmError> {
+        let top = self.top_level(b, s)?;
+        let mut controls = self.control_slots(b, s, &top)?;
+        controls.sort_by_key(|c| c.0);
+        let mut controls = controls.into_iter().peekable();
+        let mut v = Vec::new();
+        for (i, sh) in top.into_iter().enumerate() {
+            while let Some((_, uid, name)) = controls.next_if(|c| c.0 <= i) {
+                v.push((Item::Control(uid), name));
+            }
             v.push((Item::Shape(sh.id), sh.name));
         }
+        v.extend(controls.map(|(_, uid, name)| (Item::Control(uid), name)));
         Ok(v)
+    }
+
+    fn z_position(&mut self, b: BookId, s: SheetId, id: u32) -> Result<i32, OmError> {
+        let top = self.top_level(b, s)?;
+        let controls = self.control_slots(b, s, &top)?;
+        let Some(d) = self.book(b)?.wb.drawing(s) else {
+            return Ok(1);
+        };
+        let pos = d.index_of(id).unwrap_or(0);
+        let holder = top.iter().position(|x| d.block(x.id).contains(&id));
+        let below = holder.map_or(0, |i| controls.iter().filter(|c| c.0 <= i).count());
+        Ok((below + pos + 1) as i32)
+    }
+
+    fn z_move(&mut self, b: BookId, s: SheetId, id: u32, cmd: i32) -> Result<(), OmError> {
+        let top = self.top_level(b, s)?;
+        if !top.iter().any(|x| x.id == id) {
+            self.draw_wb(b)?.z_order(s, id, cmd);
+            return Ok(());
+        }
+
+        let neighbour = if cmd >= 2 {
+            let items = self.merged_items(b, s)?;
+            let at = items.iter().position(|i| i.0.shape_id() == Some(id));
+            let next = at.and_then(|i| {
+                if cmd == 2 {
+                    Some(i + 1)
+                } else {
+                    i.checked_sub(1)
+                }
+            });
+            match next.and_then(|i| items.get(i)) {
+                Some((Item::Control(uid), _)) => Some(*uid),
+                _ => None,
+            }
+        } else {
+            None
+        };
+        let block = self
+            .book(b)?
+            .wb
+            .drawing(s)
+            .map(|d| d.block(id))
+            .unwrap_or_default();
+
+        let below = matches!(cmd, 1 | 3);
+        if let Some(sc) = self.book_mut(b)?.controls.get_mut(&s) {
+            for c in &mut sc.list {
+                if cmd < 2 || neighbour == Some(c.uid) {
+                    c.under.retain(|x| !block.contains(x));
+                    if below {
+                        c.under.extend_from_slice(&block);
+                    }
+                }
+            }
+        }
+        if neighbour.is_none() {
+            self.draw_wb(b)?.z_order(s, id, cmd);
+        }
+        Ok(())
+    }
+
+    fn shapes_items(&mut self, b: BookId, s: SheetId) -> Result<Vec<(Item, String)>, OmError> {
+        let mut v = self.merged_items(b, s)?;
+        let mut notes: Vec<(u32, u32)> = self
+            .book(b)?
+            .wb
+            .notes(s)
+            .map(|(_, n)| (n.spid, n.id))
+            .collect();
+        notes.sort_unstable();
+        let wb = &self.book(b)?.wb;
+        v.extend(notes.into_iter().map(|(spid, id)| {
+            let name = format!("Comment {}", wb.legacy_shape_number(s, spid));
+            (Item::Note(id), name)
+        }));
+        Ok(v)
+    }
+
+    pub(crate) fn control_z(&mut self, r: &crate::controls::CtlRef) -> Result<Variant, OmError> {
+        let at = self
+            .merged_items(r.book, r.sheet)?
+            .iter()
+            .position(|i| matches!(i.0, Item::Control(uid) if uid == r.uid))
+            .ok_or_else(OmError::object_required)?;
+        Ok(Variant::I4(at as i32 + 1))
+    }
+
+    pub(crate) fn note_z(&mut self, b: BookId, s: SheetId, spid: u32) -> Result<Variant, OmError> {
+        let others = self.merged_items(b, s)?.len();
+        let bk = self.book(b)?;
+        let controls = bk
+            .controls
+            .get(&s)
+            .map_or(0, |c| c.list.iter().filter(|c| c.spid < spid).count());
+        let notes = bk.wb.notes(s).filter(|(_, n)| n.spid < spid).count();
+        Ok(Variant::I4((others + controls + notes) as i32 + 1))
+    }
+
+    fn ensure_current_drawing(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        index: usize,
+    ) -> Result<(), OmError> {
+        if index <= self.merged_items(b, s)?.len() {
+            return Ok(());
+        }
+        let bk = self.book(b)?;
+        let legacy = bk.wb.notes(s).next().is_some()
+            || bk
+                .controls
+                .get(&s)
+                .is_some_and(|c| !c.list.is_empty() || c.husks > 0);
+        let Some(current) = self.active.filter(|_| legacy) else {
+            return Ok(());
+        };
+        let wb = &mut self.book_mut(current)?.wb;
+        let sheet = wb.active_sheet();
+        wb.legacy_drawing_ensure(sheet);
+        Ok(())
     }
 
     fn item_handle(
@@ -459,6 +669,7 @@ impl Application<'_> {
         shape_iface: bool,
     ) -> Result<Variant, OmError> {
         match item {
+            Item::Note(id) => Ok(self.alloc(Object::CommentShape(b, s, *id))),
             Item::Control(uid) => {
                 let kind = self
                     .collection_items(b, s, Coll::Shapes)?
@@ -472,6 +683,7 @@ impl Application<'_> {
                     uid: *uid,
                     kind,
                     shape: true,
+                    ranged: false,
                 })))
             }
             Item::Shape(id) => {
@@ -513,6 +725,60 @@ impl Application<'_> {
         }
     }
 
+    pub(crate) fn drawing_object(
+        &mut self,
+        b: BookId,
+        s: SheetId,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        let items = self.merged_items(b, s)?;
+        let found = match a.get(0) {
+            Some(Variant::Bstr(name)) => items.iter().find(|i| i.1.eq_ignore_ascii_case(name)),
+            Some(v) => {
+                let n = crate::controls::num_arg(v, a.lcid)?.trunc();
+                (n >= 1.0).then(|| items.get(n as usize - 1)).flatten()
+            }
+            None => return Err(unsupported("_Worksheet", m)),
+        };
+        let missing = || {
+            OmError::app_defined_with(
+                "Unable to get the DrawingObjects property of the Worksheet class",
+            )
+        };
+        match &found.ok_or_else(missing)?.0 {
+            Item::Note(_) => Err(missing()),
+            Item::Control(uid) => {
+                let kind = self
+                    .collection_items(b, s, Coll::Shapes)?
+                    .into_iter()
+                    .find(|c| c.0 == *uid)
+                    .map(|c| c.1)
+                    .ok_or_else(missing)?;
+                let control = self.ctl_ref(b, s, *uid, kind, false);
+                Ok(self.alloc(control))
+            }
+            Item::Shape(id) => {
+                let kind = self
+                    .book(b)?
+                    .wb
+                    .drawing(s)
+                    .and_then(|d| d.get(*id))
+                    .and_then(|sh| match sh.kind {
+                        ShapeKind::Chart => Some(DrawKind::ChartObject),
+                        ShapeKind::Auto(1) => Some(DrawKind::Legacy("Rectangle")),
+                        ShapeKind::Auto(9) => Some(DrawKind::Legacy("Oval")),
+                        ShapeKind::TextBox => Some(DrawKind::Legacy("TextBox")),
+                        ShapeKind::Line => Some(DrawKind::Legacy("Line")),
+                        ShapeKind::Picture => Some(DrawKind::Legacy("Picture")),
+                        _ => None,
+                    })
+                    .ok_or_else(|| unsupported("_Worksheet", m))?;
+                Ok(self.draw_obj(b, s, *id, kind))
+            }
+        }
+    }
+
     fn collection_item(
         &mut self,
         r: &DrawRef,
@@ -521,7 +787,7 @@ impl Application<'_> {
     ) -> Result<Variant, OmError> {
         let shapes = r.kind == DrawKind::Shapes;
         let items: Vec<(Item, String)> = if shapes {
-            self.merged_items(r.book, r.sheet)?
+            self.shapes_items(r.book, r.sheet)?
         } else {
             self.top_level(r.book, r.sheet)?
                 .into_iter()
@@ -534,7 +800,10 @@ impl Application<'_> {
                 let flat = self.book(r.book)?.wb.drawing(r.sheet).and_then(|d| {
                     d.shapes
                         .iter()
-                        .find(|x| x.name.eq_ignore_ascii_case(name))
+                        .find(|x| {
+                            x.name.eq_ignore_ascii_case(name)
+                                && !(matches!(x.kind, ShapeKind::Group(_)) && x.parent.is_some())
+                        })
                         .map(|x| x.id)
                 });
                 let hit = match flat {
@@ -554,6 +823,9 @@ impl Application<'_> {
             v => {
                 let n = crate::controls::num_arg(v, lcid)?.trunc();
                 if n >= 1.0 {
+                    if shapes {
+                        self.ensure_current_drawing(r.book, r.sheet, n as usize)?;
+                    }
                     items.get(n as usize - 1)
                 } else {
                     None
@@ -585,9 +857,13 @@ impl Application<'_> {
             return Err(OmError::object_required());
         }
         match (m.name, m.kind) {
+            ("Parent", Get) => Ok(self.alloc(Object::Worksheet(b, s))),
             ("Count", Get) => {
                 let n = if shapes {
-                    self.merged_items(b, s)?.len() + self.book(b)?.wb.notes(s).count()
+                    let read = self.merged_items(b, s)?.len();
+                    let bk = self.book(b)?;
+                    let husks = bk.controls.get(&s).map_or(0, |c| c.husks);
+                    read + bk.wb.notes(s).count() + husks
                 } else {
                     self.top_level(b, s)?
                         .iter()
@@ -602,7 +878,7 @@ impl Application<'_> {
             },
             ("_NewEnum", _) => {
                 let n = if shapes {
-                    self.merged_items(b, s)?.len()
+                    self.shapes_items(b, s)?.len()
                 } else {
                     self.top_level(b, s)?
                         .iter()
@@ -618,12 +894,25 @@ impl Application<'_> {
             ("SelectAll", _) if shapes => Ok(Variant::Empty),
             ("Range", _) if shapes => self.shapes_range(r, a),
             ("AddShape", _) if shapes => {
-                let t = a.i32(0)?.ok_or_else(OmError::app_defined)?;
-                let rect = [num(a, 1)?, num(a, 2)?, num(a, 3)?, num(a, 4)?];
+                let t = a.i32_ovf(0)?.ok_or_else(OmError::app_defined)?;
+
+                let numb = |i: usize| match a.get(i) {
+                    Some(Variant::Bool(t)) => Ok(if *t { -1.0 } else { 0.0 }),
+                    _ => num(a, i),
+                };
+                let mut rect = [numb(1)?, numb(2)?, numb(3)?, numb(4)?];
                 let (actual, name) = auto_info(t).ok_or_else(OmError::app_defined)?;
                 if rect[2] < 0.0 || rect[3] < 0.0 {
                     return Err(OmError::app_defined());
                 }
+                if t == 25 {
+                    check_extent(&[rect[2] * 2.0, rect[3]])?;
+                    rect[0] = rect[0].max(rect[2]);
+                    if pt_to_emu(rect[2]) == 0 {
+                        rect[2] = 1.0 / EMU_PT;
+                    }
+                }
+                check_coord(&[rect[0], rect[1]])?;
                 check_extent(&[rect[2], rect[3]])?;
                 let id = self
                     .draw_wb(b)?
@@ -671,6 +960,7 @@ impl Application<'_> {
                     return Err(extent_error());
                 }
                 check_extent(&[rect[2], rect[3]])?;
+                check_coord(&[rect[0], rect[1]])?;
                 let id = self
                     .draw_wb(b)?
                     .add_shape(s, ShapeKind::TextBox, "TextBox", rect);
@@ -808,7 +1098,16 @@ impl Application<'_> {
         use InvokeKind::*;
         let (b, s, id) = (r.book, r.sheet, r.id);
         let chart_obj = r.kind == DrawKind::ChartObject;
-        let sh = self.shape_clone(r)?;
+        let sh = match self.shape_clone(r) {
+            Err(_) if r.kind == DrawKind::Shape => {
+                return Err(if m.name == "Duplicate" {
+                    OmError::app_defined()
+                } else {
+                    OmError::exception(0x800A_01A8_u32 as i32, None)
+                });
+            }
+            sh => sh?,
+        };
         let rect = self.book(b)?.wb.shape_rect_emu(s, &sh.pos);
         let put = m.kind == Put || m.kind == PutRef;
         let is_group = matches!(sh.kind, ShapeKind::Group(_));
@@ -831,13 +1130,27 @@ impl Application<'_> {
             }
             set_rect(app, rc)
         };
+
+        if put
+            && matches!(m.name, "Left" | "Top" | "Width" | "Height")
+            && self.book(b)?.wb.slicer_position_locked(s, id)
+        {
+            return Err(OmError::exception(0x8007_0057_u32 as i32, None));
+        }
         match (m.name, put) {
             ("Name", false) => Ok(Variant::Bstr(sh.name)),
             ("Name", true) => {
                 let name = match a.put.as_ref() {
                     Some(Variant::Bstr(n)) => n.clone(),
-                    _ => return Err(OmError::type_mismatch()),
+                    _ if chart_obj => return Err(OmError::type_mismatch()),
+
+                    Some(Variant::Null) => return Err(out_of_range()),
+                    Some(Variant::Bool(v)) => if *v { "True" } else { "False" }.to_string(),
+                    _ => crate::controls::put_text(a)?,
                 };
+                if !chart_obj && !(1..=254).contains(&name.encode_utf16().count()) {
+                    return Err(out_of_range());
+                }
                 if let Some(x) = self.draw_wb(b)?.drawing_mut(s).get_mut(id) {
                     x.name = name;
                 }
@@ -873,7 +1186,10 @@ impl Application<'_> {
             ("Top", false) => Ok(emu_pt(rect.1)),
             ("Width", false) => Ok(emu_pt(rect.2)),
             ("Height", false) => Ok(emu_pt(rect.3)),
-            ("Left", true) => set_pos(self, (pt_to_emu(put_f64(a)?), rect.1, rect.2, rect.3)),
+            ("Left", true) => {
+                let v = put_coord(a, chart_obj)?;
+                set_pos(self, (pt_to_emu(v), rect.1, rect.2, rect.3))
+            }
             ("IncrementLeft", _) => {
                 let to = rect.0 as f64 / EMU_PT + num(a, 0)?;
                 set_pos(self, (pt_to_emu(to), rect.1, rect.2, rect.3))
@@ -882,9 +1198,12 @@ impl Application<'_> {
                 let to = rect.1 as f64 / EMU_PT + num(a, 0)?;
                 set_pos(self, (rect.0, pt_to_emu(to), rect.2, rect.3))
             }
-            ("Top", true) => set_pos(self, (rect.0, pt_to_emu(put_f64(a)?), rect.2, rect.3)),
+            ("Top", true) => {
+                let v = put_coord(a, chart_obj)?;
+                set_pos(self, (rect.0, pt_to_emu(v), rect.2, rect.3))
+            }
             ("Width", true) => {
-                let w = pt_to_emu(put_f64(a)?).max(0);
+                let w = pt_to_emu(put_extent(a, chart_obj)?).max(0);
                 let h = if !sh.lock_aspect {
                     rect.3
                 } else if rect.2 > 0 {
@@ -900,7 +1219,7 @@ impl Application<'_> {
                 )
             }
             ("Height", true) => {
-                let h = pt_to_emu(put_f64(a)?).max(0);
+                let h = pt_to_emu(put_extent(a, chart_obj)?).max(0);
                 let w = if !sh.lock_aspect {
                     rect.2
                 } else if rect.3 > 0 {
@@ -943,14 +1262,7 @@ impl Application<'_> {
             ("ZOrderPosition", false) | ("ZOrder", false)
                 if chart_obj || m.name == "ZOrderPosition" =>
             {
-                let nctl = self.collection_items(b, s, Coll::Shapes)?.len();
-                let pos = self
-                    .book(b)?
-                    .wb
-                    .drawing(s)
-                    .and_then(|d| d.index_of(id))
-                    .unwrap_or(0);
-                Ok(Variant::I4((nctl + pos + 1) as i32))
+                Ok(Variant::I4(self.z_position(b, s, id)?))
             }
             ("Visible", false) if chart_obj => Ok(Variant::Bool(sh.visible)),
             ("Visible", false) => Ok(tri(sh.visible)),
@@ -1312,14 +1624,17 @@ impl Application<'_> {
                 Ok(self.draw_obj(b, s, nid, kind))
             }
             ("ZOrder", _) => {
-                let cmd = a.i32(0)?.ok_or_else(OmError::app_defined)?;
-                if !(0..=3).contains(&cmd) {
+                let cmd = a.i32_ovf(0)?.ok_or_else(OmError::app_defined)?;
+
+                if !(0..=5).contains(&cmd) {
                     return Err(OmError::exception(
                         0x8007_0057_u32 as i32,
                         Some("The specified value is out of range."),
                     ));
                 }
-                self.draw_wb(b)?.z_order(s, id, cmd);
+                if cmd <= 3 {
+                    self.z_move(b, s, id, cmd)?;
+                }
                 Ok(Variant::Empty)
             }
             ("GroupItems", false) => {
@@ -1401,6 +1716,35 @@ impl Application<'_> {
         Ok(Variant::Empty)
     }
 
+    fn drawing_formula(
+        &mut self,
+        r: &DrawRef,
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        let (b, s, id) = (r.book, r.sheet, r.id);
+        self.shape_clone(r)?;
+        if m.kind == InvokeKind::Get {
+            let text = self
+                .book(b)?
+                .wb
+                .object_formula((s, id), ObjFmla::Drawing)
+                .unwrap_or_default();
+
+            let text = if text.is_empty() {
+                text
+            } else {
+                format!("{text} ")
+            };
+            return Ok(Variant::Bstr(text));
+        }
+        let text = crate::controls::put_text(a)?;
+        if !self.book_mut(b)?.wb.drawing_formula_put((s, id), &text) {
+            return Err(OmError::unable_to_set(m.name, r.kind.interface_name()));
+        }
+        Ok(Variant::Empty)
+    }
+
     pub(crate) fn draw_member(
         &mut self,
         r: &DrawRef,
@@ -1415,6 +1759,18 @@ impl Application<'_> {
                 }
                 self.shape_member(r, m, a)
             }
+            DrawKind::Legacy(iface) => match (m.name, m.kind) {
+                ("Formula", _) => self.drawing_formula(r, m, a),
+                ("Name" | "Left" | "Top" | "Width" | "Height", InvokeKind::Get) => {
+                    let shape = DrawRef {
+                        kind: DrawKind::Shape,
+                        ..*r
+                    };
+                    self.shape_member(&shape, m, a)
+                }
+                _ => Err(unsupported(iface, m)),
+            },
+            DrawKind::Mixed(i) => self.mixed_range_member(r, i, m, a),
             DrawKind::Multi(i) => {
                 let got = self.shape_range_member(r, i, m, a)?;
                 if let (Some(g), Variant::Dispatch(Some(id))) = (self.group_ranges.get(&i), &got) {
@@ -1435,6 +1791,7 @@ impl Application<'_> {
             | DrawKind::Fill
             | DrawKind::LineFmt => self.text_member(r, m, a),
             DrawKind::Sub(k) => self.chart_undo_wrap(r, m, |s| s.sub_member(r, k, m, a)),
+            DrawKind::Stub(_) if m.name == "Formula" => self.drawing_formula(r, m, a),
             DrawKind::Stub(name) => {
                 match self.bag_member(crate::bag::Store::Shape(r), name, name, m, a) {
                     Some(res) => res,

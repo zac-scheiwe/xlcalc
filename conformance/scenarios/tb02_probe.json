@@ -1,0 +1,14115 @@
+{
+"sheets": [
+"Other",
+"p_a",
+"p_b",
+"p_c",
+"p_ab",
+"p_s",
+"p_e",
+"p_f",
+"p_gap",
+"p_two",
+"p_two_b",
+"p_none",
+"p_d",
+"p_blank",
+"t_a",
+"t_b",
+"t_s",
+"t_e",
+"t_f",
+"t_e2",
+"t_d",
+"t_p",
+"t_bool",
+"t_gap",
+"t_none",
+"t_in",
+"t_ab",
+"t_two",
+"t_str",
+"t_neg",
+"t_ex",
+"t_eq"
+],
+"steps": [
+{
+"op": "setv",
+"cell": "p_a!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_a!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_a!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_a!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_a!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_a!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_a!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_a!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_a!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_a!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_a!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_a!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_a!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_a!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_a!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_a!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_a!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_a!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_a!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_a!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_a!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_a!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_a!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_a!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_a!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_a!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_a!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_a!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_a",
+"refers_to": "=p_a!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_a",
+"refers_to": "=p_a!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_a!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_a!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_a!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_a!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_a!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_a!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_a!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_a!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_a!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_a!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_a!G18",
+"input": "=SUM(rng_p_a)"
+},
+{
+"op": "set",
+"cell": "p_a!G19",
+"input": "=SUM(rng2_p_a)"
+},
+{
+"op": "set",
+"cell": "p_a!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_a!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_a!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_a!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_a!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_a!G26",
+"input": "=SUM(T_p_a[X])"
+},
+{
+"op": "set",
+"cell": "p_a!G27",
+"input": "=SUM(T_p_a[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_a!G28",
+"input": "=SUM(T_p_a)"
+},
+{
+"op": "set",
+"cell": "p_a!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_a!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_a!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_a!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_a!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_a!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_a!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A1",
+"input": "=SUM(p_a!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B1",
+"input": "=SUM(p_a!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C1",
+"input": "=SUM(p_a!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D1",
+"input": "=SUM(p_a!A6)"
+},
+{
+"op": "table",
+"name": "T_p_a",
+"range": "p_a!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_a!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "read",
+"range": "p_a!A1:D12"
+},
+{
+"op": "read",
+"range": "p_a!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A1:D1"
+},
+{
+"op": "setv",
+"cell": "p_b!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_b!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_b!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_b!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_b!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_b!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_b!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_b!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_b!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_b!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_b!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_b!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_b!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_b!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_b!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_b!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_b!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_b!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_b!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_b!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_b!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_b!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_b!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_b!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_b!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_b!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_b!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_b!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_b",
+"refers_to": "=p_b!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_b",
+"refers_to": "=p_b!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_b!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_b!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_b!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_b!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_b!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_b!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_b!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_b!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_b!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_b!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_b!G18",
+"input": "=SUM(rng_p_b)"
+},
+{
+"op": "set",
+"cell": "p_b!G19",
+"input": "=SUM(rng2_p_b)"
+},
+{
+"op": "set",
+"cell": "p_b!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_b!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_b!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_b!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_b!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_b!G26",
+"input": "=SUM(T_p_b[X])"
+},
+{
+"op": "set",
+"cell": "p_b!G27",
+"input": "=SUM(T_p_b[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_b!G28",
+"input": "=SUM(T_p_b)"
+},
+{
+"op": "set",
+"cell": "p_b!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_b!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_b!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_b!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_b!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_b!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_b!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A2",
+"input": "=SUM(p_b!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B2",
+"input": "=SUM(p_b!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C2",
+"input": "=SUM(p_b!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D2",
+"input": "=SUM(p_b!A6)"
+},
+{
+"op": "table",
+"name": "T_p_b",
+"range": "p_b!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_b!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "p_b!A1:D12"
+},
+{
+"op": "read",
+"range": "p_b!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A2:D2"
+},
+{
+"op": "setv",
+"cell": "p_c!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_c!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_c!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_c!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_c!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_c!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_c!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_c!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_c!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_c!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_c!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_c!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_c!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_c!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_c!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_c!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_c!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_c!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_c!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_c!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_c!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_c!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_c!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_c!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_c!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_c!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_c!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_c!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_c",
+"refers_to": "=p_c!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_c",
+"refers_to": "=p_c!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_c!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_c!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_c!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_c!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_c!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_c!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_c!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_c!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_c!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_c!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_c!G18",
+"input": "=SUM(rng_p_c)"
+},
+{
+"op": "set",
+"cell": "p_c!G19",
+"input": "=SUM(rng2_p_c)"
+},
+{
+"op": "set",
+"cell": "p_c!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_c!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_c!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_c!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_c!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_c!G26",
+"input": "=SUM(T_p_c[X])"
+},
+{
+"op": "set",
+"cell": "p_c!G27",
+"input": "=SUM(T_p_c[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_c!G28",
+"input": "=SUM(T_p_c)"
+},
+{
+"op": "set",
+"cell": "p_c!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_c!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_c!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_c!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_c!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_c!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_c!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A3",
+"input": "=SUM(p_c!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B3",
+"input": "=SUM(p_c!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C3",
+"input": "=SUM(p_c!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D3",
+"input": "=SUM(p_c!A6)"
+},
+{
+"op": "table",
+"name": "T_p_c",
+"range": "p_c!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_c!C7",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "read",
+"range": "p_c!A1:D12"
+},
+{
+"op": "read",
+"range": "p_c!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A3:D3"
+},
+{
+"op": "setv",
+"cell": "p_ab!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_ab",
+"refers_to": "=p_ab!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_ab",
+"refers_to": "=p_ab!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_ab!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_ab!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_ab!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_ab!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_ab!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_ab!G18",
+"input": "=SUM(rng_p_ab)"
+},
+{
+"op": "set",
+"cell": "p_ab!G19",
+"input": "=SUM(rng2_p_ab)"
+},
+{
+"op": "set",
+"cell": "p_ab!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_ab!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_ab!G26",
+"input": "=SUM(T_p_ab[X])"
+},
+{
+"op": "set",
+"cell": "p_ab!G27",
+"input": "=SUM(T_p_ab[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_ab!G28",
+"input": "=SUM(T_p_ab)"
+},
+{
+"op": "set",
+"cell": "p_ab!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_ab!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_ab!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_ab!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A4",
+"input": "=SUM(p_ab!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B4",
+"input": "=SUM(p_ab!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C4",
+"input": "=SUM(p_ab!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D4",
+"input": "=SUM(p_ab!A6)"
+},
+{
+"op": "table",
+"name": "T_p_ab",
+"range": "p_ab!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_ab!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "p_ab!B7",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "p_ab!A1:D12"
+},
+{
+"op": "read",
+"range": "p_ab!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A4:D4"
+},
+{
+"op": "setv",
+"cell": "p_s!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_s!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_s!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_s!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_s!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_s!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_s!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_s!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_s!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_s!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_s!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_s!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_s!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_s!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_s!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_s!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_s!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_s!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_s!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_s!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_s!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_s!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_s!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_s!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_s!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_s!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_s!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_s!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_s",
+"refers_to": "=p_s!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_s",
+"refers_to": "=p_s!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_s!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_s!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_s!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_s!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_s!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_s!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_s!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_s!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_s!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_s!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_s!G18",
+"input": "=SUM(rng_p_s)"
+},
+{
+"op": "set",
+"cell": "p_s!G19",
+"input": "=SUM(rng2_p_s)"
+},
+{
+"op": "set",
+"cell": "p_s!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_s!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_s!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_s!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_s!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_s!G26",
+"input": "=SUM(T_p_s[X])"
+},
+{
+"op": "set",
+"cell": "p_s!G27",
+"input": "=SUM(T_p_s[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_s!G28",
+"input": "=SUM(T_p_s)"
+},
+{
+"op": "set",
+"cell": "p_s!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_s!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_s!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_s!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_s!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_s!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_s!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A5",
+"input": "=SUM(p_s!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B5",
+"input": "=SUM(p_s!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C5",
+"input": "=SUM(p_s!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D5",
+"input": "=SUM(p_s!A6)"
+},
+{
+"op": "table",
+"name": "T_p_s",
+"range": "p_s!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_s!A7",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "read",
+"range": "p_s!A1:D12"
+},
+{
+"op": "read",
+"range": "p_s!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A5:D5"
+},
+{
+"op": "setv",
+"cell": "p_e!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_e!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_e!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_e!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_e!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_e!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_e!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_e!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_e!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_e!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_e!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_e!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_e!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_e!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_e!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_e!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_e!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_e!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_e!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_e!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_e!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_e!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_e!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_e!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_e!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_e!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_e!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_e!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_e",
+"refers_to": "=p_e!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_e",
+"refers_to": "=p_e!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_e!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_e!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_e!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_e!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_e!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_e!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_e!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_e!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_e!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_e!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_e!G18",
+"input": "=SUM(rng_p_e)"
+},
+{
+"op": "set",
+"cell": "p_e!G19",
+"input": "=SUM(rng2_p_e)"
+},
+{
+"op": "set",
+"cell": "p_e!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_e!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_e!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_e!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_e!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_e!G26",
+"input": "=SUM(T_p_e[X])"
+},
+{
+"op": "set",
+"cell": "p_e!G27",
+"input": "=SUM(T_p_e[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_e!G28",
+"input": "=SUM(T_p_e)"
+},
+{
+"op": "set",
+"cell": "p_e!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_e!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_e!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_e!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_e!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_e!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_e!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A6",
+"input": "=SUM(p_e!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B6",
+"input": "=SUM(p_e!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C6",
+"input": "=SUM(p_e!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D6",
+"input": "=SUM(p_e!A6)"
+},
+{
+"op": "table",
+"name": "T_p_e",
+"range": "p_e!A1:C6"
+},
+{
+"op": "set",
+"cell": "p_e!A7",
+"input": "7"
+},
+{
+"op": "read",
+"range": "p_e!A1:D12"
+},
+{
+"op": "read",
+"range": "p_e!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A6:D6"
+},
+{
+"op": "setv",
+"cell": "p_f!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_f!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_f!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_f!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_f!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_f!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_f!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_f!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_f!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_f!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_f!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_f!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_f!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_f!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_f!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_f!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_f!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_f!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_f!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_f!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_f!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_f!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_f!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_f!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_f!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_f!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_f!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_f!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_f",
+"refers_to": "=p_f!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_f",
+"refers_to": "=p_f!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_f!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_f!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_f!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_f!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_f!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_f!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_f!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_f!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_f!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_f!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_f!G18",
+"input": "=SUM(rng_p_f)"
+},
+{
+"op": "set",
+"cell": "p_f!G19",
+"input": "=SUM(rng2_p_f)"
+},
+{
+"op": "set",
+"cell": "p_f!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_f!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_f!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_f!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_f!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_f!G26",
+"input": "=SUM(T_p_f[X])"
+},
+{
+"op": "set",
+"cell": "p_f!G27",
+"input": "=SUM(T_p_f[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_f!G28",
+"input": "=SUM(T_p_f)"
+},
+{
+"op": "set",
+"cell": "p_f!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_f!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_f!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_f!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_f!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_f!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_f!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A7",
+"input": "=SUM(p_f!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B7",
+"input": "=SUM(p_f!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C7",
+"input": "=SUM(p_f!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D7",
+"input": "=SUM(p_f!A6)"
+},
+{
+"op": "table",
+"name": "T_p_f",
+"range": "p_f!A1:C6"
+},
+{
+"op": "set",
+"cell": "p_f!A7",
+"input": "=1+1"
+},
+{
+"op": "read",
+"range": "p_f!A1:D12"
+},
+{
+"op": "read",
+"range": "p_f!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A7:D7"
+},
+{
+"op": "setv",
+"cell": "p_gap!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_gap!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_gap",
+"refers_to": "=p_gap!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_gap",
+"refers_to": "=p_gap!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_gap!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_gap!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_gap!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_gap!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_gap!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_gap!G18",
+"input": "=SUM(rng_p_gap)"
+},
+{
+"op": "set",
+"cell": "p_gap!G19",
+"input": "=SUM(rng2_p_gap)"
+},
+{
+"op": "set",
+"cell": "p_gap!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_gap!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_gap!G26",
+"input": "=SUM(T_p_gap[X])"
+},
+{
+"op": "set",
+"cell": "p_gap!G27",
+"input": "=SUM(T_p_gap[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_gap!G28",
+"input": "=SUM(T_p_gap)"
+},
+{
+"op": "set",
+"cell": "p_gap!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_gap!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_gap!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_gap!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A8",
+"input": "=SUM(p_gap!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B8",
+"input": "=SUM(p_gap!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C8",
+"input": "=SUM(p_gap!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D8",
+"input": "=SUM(p_gap!A6)"
+},
+{
+"op": "table",
+"name": "T_p_gap",
+"range": "p_gap!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_gap!A8",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "read",
+"range": "p_gap!A1:D12"
+},
+{
+"op": "read",
+"range": "p_gap!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A8:D8"
+},
+{
+"op": "setv",
+"cell": "p_two!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_two!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_two!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_two!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_two!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_two!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_two!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_two!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_two!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_two!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_two!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_two!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_two!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_two!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_two!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_two!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_two!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_two!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_two",
+"refers_to": "=p_two!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_two",
+"refers_to": "=p_two!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_two!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_two!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_two!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_two!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_two!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_two!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_two!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_two!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_two!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_two!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_two!G18",
+"input": "=SUM(rng_p_two)"
+},
+{
+"op": "set",
+"cell": "p_two!G19",
+"input": "=SUM(rng2_p_two)"
+},
+{
+"op": "set",
+"cell": "p_two!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_two!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_two!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_two!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_two!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_two!G26",
+"input": "=SUM(T_p_two[X])"
+},
+{
+"op": "set",
+"cell": "p_two!G27",
+"input": "=SUM(T_p_two[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_two!G28",
+"input": "=SUM(T_p_two)"
+},
+{
+"op": "set",
+"cell": "p_two!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_two!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_two!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_two!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_two!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_two!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_two!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A9",
+"input": "=SUM(p_two!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B9",
+"input": "=SUM(p_two!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C9",
+"input": "=SUM(p_two!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D9",
+"input": "=SUM(p_two!A6)"
+},
+{
+"op": "table",
+"name": "T_p_two",
+"range": "p_two!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_two!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "p_two!A8",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "read",
+"range": "p_two!A1:D12"
+},
+{
+"op": "read",
+"range": "p_two!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A9:D9"
+},
+{
+"op": "setv",
+"cell": "p_two_b!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_two_b",
+"refers_to": "=p_two_b!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_two_b",
+"refers_to": "=p_two_b!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_two_b!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G18",
+"input": "=SUM(rng_p_two_b)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G19",
+"input": "=SUM(rng2_p_two_b)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_two_b!G26",
+"input": "=SUM(T_p_two_b[X])"
+},
+{
+"op": "set",
+"cell": "p_two_b!G27",
+"input": "=SUM(T_p_two_b[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_two_b!G28",
+"input": "=SUM(T_p_two_b)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_two_b!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_two_b!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_two_b!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A10",
+"input": "=SUM(p_two_b!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B10",
+"input": "=SUM(p_two_b!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C10",
+"input": "=SUM(p_two_b!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D10",
+"input": "=SUM(p_two_b!A6)"
+},
+{
+"op": "table",
+"name": "T_p_two_b",
+"range": "p_two_b!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_two_b!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "p_two_b!B8",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "read",
+"range": "p_two_b!A1:D12"
+},
+{
+"op": "read",
+"range": "p_two_b!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A10:D10"
+},
+{
+"op": "setv",
+"cell": "p_none!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_none!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_none!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_none!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_none!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_none!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_none!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_none!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_none!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_none!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_none!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_none!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_none!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_none!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_none!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_none!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_none!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_none!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_none!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_none!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_none!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_none!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_none!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_none!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_none!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_none!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_none!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_none!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_none",
+"refers_to": "=p_none!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_none",
+"refers_to": "=p_none!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_none!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_none!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_none!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_none!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_none!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_none!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_none!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_none!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_none!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_none!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_none!G18",
+"input": "=SUM(rng_p_none)"
+},
+{
+"op": "set",
+"cell": "p_none!G19",
+"input": "=SUM(rng2_p_none)"
+},
+{
+"op": "set",
+"cell": "p_none!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_none!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_none!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_none!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_none!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_none!G26",
+"input": "=SUM(T_p_none[X])"
+},
+{
+"op": "set",
+"cell": "p_none!G27",
+"input": "=SUM(T_p_none[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_none!G28",
+"input": "=SUM(T_p_none)"
+},
+{
+"op": "set",
+"cell": "p_none!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_none!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_none!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_none!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_none!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_none!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_none!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A11",
+"input": "=SUM(p_none!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B11",
+"input": "=SUM(p_none!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C11",
+"input": "=SUM(p_none!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D11",
+"input": "=SUM(p_none!A6)"
+},
+{
+"op": "table",
+"name": "T_p_none",
+"range": "p_none!A1:C6"
+},
+{
+"op": "read",
+"range": "p_none!A1:D12"
+},
+{
+"op": "read",
+"range": "p_none!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A11:D11"
+},
+{
+"op": "setv",
+"cell": "p_d!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_d!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_d!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_d!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_d!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_d!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_d!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_d!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_d!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_d!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_d!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_d!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_d!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_d!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_d!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_d!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_d!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_d!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_d!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_d!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_d!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_d!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_d!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_d!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_d!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_d!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_d!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_d!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_d",
+"refers_to": "=p_d!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_d",
+"refers_to": "=p_d!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_d!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_d!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_d!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_d!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_d!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_d!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_d!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_d!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_d!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_d!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_d!G18",
+"input": "=SUM(rng_p_d)"
+},
+{
+"op": "set",
+"cell": "p_d!G19",
+"input": "=SUM(rng2_p_d)"
+},
+{
+"op": "set",
+"cell": "p_d!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_d!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_d!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_d!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_d!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_d!G26",
+"input": "=SUM(T_p_d[X])"
+},
+{
+"op": "set",
+"cell": "p_d!G27",
+"input": "=SUM(T_p_d[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_d!G28",
+"input": "=SUM(T_p_d)"
+},
+{
+"op": "set",
+"cell": "p_d!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_d!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_d!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_d!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_d!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_d!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_d!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A12",
+"input": "=SUM(p_d!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B12",
+"input": "=SUM(p_d!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C12",
+"input": "=SUM(p_d!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D12",
+"input": "=SUM(p_d!A6)"
+},
+{
+"op": "table",
+"name": "T_p_d",
+"range": "p_d!A1:C6"
+},
+{
+"op": "setv",
+"cell": "p_d!D7",
+"value": {
+"t": "n",
+"v": 9
+}
+},
+{
+"op": "read",
+"range": "p_d!A1:D12"
+},
+{
+"op": "read",
+"range": "p_d!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A12:D12"
+},
+{
+"op": "setv",
+"cell": "p_blank!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "p_blank!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_p_blank",
+"refers_to": "=p_blank!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_p_blank",
+"refers_to": "=p_blank!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "p_blank!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_blank!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "p_blank!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "p_blank!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "p_blank!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "p_blank!G18",
+"input": "=SUM(rng_p_blank)"
+},
+{
+"op": "set",
+"cell": "p_blank!G19",
+"input": "=SUM(rng2_p_blank)"
+},
+{
+"op": "set",
+"cell": "p_blank!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "p_blank!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "p_blank!G26",
+"input": "=SUM(T_p_blank[X])"
+},
+{
+"op": "set",
+"cell": "p_blank!G27",
+"input": "=SUM(T_p_blank[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "p_blank!G28",
+"input": "=SUM(T_p_blank)"
+},
+{
+"op": "set",
+"cell": "p_blank!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "p_blank!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "p_blank!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "p_blank!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A13",
+"input": "=SUM(p_blank!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B13",
+"input": "=SUM(p_blank!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C13",
+"input": "=SUM(p_blank!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D13",
+"input": "=SUM(p_blank!A6)"
+},
+{
+"op": "table",
+"name": "T_p_blank",
+"range": "p_blank!A1:C6"
+},
+{
+"op": "set",
+"cell": "p_blank!A7",
+"input": ""
+},
+{
+"op": "read",
+"range": "p_blank!A1:D12"
+},
+{
+"op": "read",
+"range": "p_blank!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A13:D13"
+},
+{
+"op": "setv",
+"cell": "t_a!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_a!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_a!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_a!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_a!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_a!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_a!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_a!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_a!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_a!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_a!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_a!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_a!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_a!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_a!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_a!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_a!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_a!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_a!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_a!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_a!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_a!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_a!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_a!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_a!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_a!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_a!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_a!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_a",
+"refers_to": "=t_a!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_a",
+"refers_to": "=t_a!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_a!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_a!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_a!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_a!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_a!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_a!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_a!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_a!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_a!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_a!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_a!G18",
+"input": "=SUM(rng_t_a)"
+},
+{
+"op": "set",
+"cell": "t_a!G19",
+"input": "=SUM(rng2_t_a)"
+},
+{
+"op": "set",
+"cell": "t_a!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_a!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_a!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_a!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_a!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_a!G26",
+"input": "=SUM(T_t_a[X])"
+},
+{
+"op": "set",
+"cell": "t_a!G27",
+"input": "=SUM(T_t_a[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_a!G28",
+"input": "=SUM(T_t_a)"
+},
+{
+"op": "set",
+"cell": "t_a!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_a!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_a!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_a!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_a!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_a!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_a!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A14",
+"input": "=SUM(t_a!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B14",
+"input": "=SUM(t_a!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C14",
+"input": "=SUM(t_a!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D14",
+"input": "=SUM(t_a!A6)"
+},
+{
+"op": "table",
+"name": "T_t_a",
+"range": "t_a!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_a!A8",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "read",
+"range": "t_a!A1:D12"
+},
+{
+"op": "read",
+"range": "t_a!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A14:D14"
+},
+{
+"op": "setv",
+"cell": "t_b!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_b!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_b!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_b!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_b!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_b!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_b!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_b!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_b!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_b!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_b!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_b!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_b!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_b!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_b!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_b!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_b!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_b!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_b!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_b!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_b!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_b!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_b!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_b!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_b!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_b!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_b!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_b!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_b",
+"refers_to": "=t_b!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_b",
+"refers_to": "=t_b!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_b!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_b!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_b!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_b!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_b!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_b!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_b!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_b!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_b!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_b!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_b!G18",
+"input": "=SUM(rng_t_b)"
+},
+{
+"op": "set",
+"cell": "t_b!G19",
+"input": "=SUM(rng2_t_b)"
+},
+{
+"op": "set",
+"cell": "t_b!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_b!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_b!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_b!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_b!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_b!G26",
+"input": "=SUM(T_t_b[X])"
+},
+{
+"op": "set",
+"cell": "t_b!G27",
+"input": "=SUM(T_t_b[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_b!G28",
+"input": "=SUM(T_t_b)"
+},
+{
+"op": "set",
+"cell": "t_b!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_b!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_b!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_b!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_b!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_b!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_b!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A15",
+"input": "=SUM(t_b!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B15",
+"input": "=SUM(t_b!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C15",
+"input": "=SUM(t_b!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D15",
+"input": "=SUM(t_b!A6)"
+},
+{
+"op": "table",
+"name": "T_t_b",
+"range": "t_b!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_b!B8",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "t_b!A1:D12"
+},
+{
+"op": "read",
+"range": "t_b!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A15:D15"
+},
+{
+"op": "setv",
+"cell": "t_s!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_s!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_s!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_s!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_s!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_s!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_s!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_s!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_s!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_s!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_s!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_s!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_s!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_s!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_s!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_s!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_s!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_s!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_s!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_s!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_s!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_s!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_s!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_s!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_s!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_s!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_s!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_s!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_s",
+"refers_to": "=t_s!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_s",
+"refers_to": "=t_s!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_s!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_s!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_s!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_s!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_s!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_s!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_s!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_s!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_s!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_s!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_s!G18",
+"input": "=SUM(rng_t_s)"
+},
+{
+"op": "set",
+"cell": "t_s!G19",
+"input": "=SUM(rng2_t_s)"
+},
+{
+"op": "set",
+"cell": "t_s!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_s!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_s!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_s!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_s!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_s!G26",
+"input": "=SUM(T_t_s[X])"
+},
+{
+"op": "set",
+"cell": "t_s!G27",
+"input": "=SUM(T_t_s[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_s!G28",
+"input": "=SUM(T_t_s)"
+},
+{
+"op": "set",
+"cell": "t_s!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_s!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_s!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_s!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_s!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_s!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_s!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A16",
+"input": "=SUM(t_s!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B16",
+"input": "=SUM(t_s!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C16",
+"input": "=SUM(t_s!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D16",
+"input": "=SUM(t_s!A6)"
+},
+{
+"op": "table",
+"name": "T_t_s",
+"range": "t_s!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_s!A8",
+"value": {
+"t": "s",
+"v": "x"
+}
+},
+{
+"op": "read",
+"range": "t_s!A1:D12"
+},
+{
+"op": "read",
+"range": "t_s!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A16:D16"
+},
+{
+"op": "setv",
+"cell": "t_e!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_e!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_e!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_e!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_e!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_e!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_e!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_e!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_e!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_e!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_e!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_e!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_e!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_e!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_e!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_e!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_e!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_e!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_e",
+"refers_to": "=t_e!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_e",
+"refers_to": "=t_e!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_e!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_e!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_e!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_e!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_e!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_e!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_e!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_e!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_e!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_e!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_e!G18",
+"input": "=SUM(rng_t_e)"
+},
+{
+"op": "set",
+"cell": "t_e!G19",
+"input": "=SUM(rng2_t_e)"
+},
+{
+"op": "set",
+"cell": "t_e!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_e!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_e!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_e!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_e!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_e!G26",
+"input": "=SUM(T_t_e[X])"
+},
+{
+"op": "set",
+"cell": "t_e!G27",
+"input": "=SUM(T_t_e[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_e!G28",
+"input": "=SUM(T_t_e)"
+},
+{
+"op": "set",
+"cell": "t_e!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_e!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_e!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_e!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_e!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_e!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_e!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A17",
+"input": "=SUM(t_e!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B17",
+"input": "=SUM(t_e!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C17",
+"input": "=SUM(t_e!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D17",
+"input": "=SUM(t_e!A6)"
+},
+{
+"op": "table",
+"name": "T_t_e",
+"range": "t_e!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_e!A8",
+"input": "7"
+},
+{
+"op": "read",
+"range": "t_e!A1:D12"
+},
+{
+"op": "read",
+"range": "t_e!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A17:D17"
+},
+{
+"op": "setv",
+"cell": "t_f!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_f!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_f!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_f!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_f!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_f!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_f!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_f!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_f!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_f!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_f!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_f!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_f!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_f!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_f!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_f!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_f!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_f!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_f!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_f!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_f!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_f!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_f!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_f!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_f!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_f!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_f!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_f!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_f",
+"refers_to": "=t_f!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_f",
+"refers_to": "=t_f!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_f!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_f!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_f!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_f!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_f!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_f!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_f!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_f!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_f!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_f!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_f!G18",
+"input": "=SUM(rng_t_f)"
+},
+{
+"op": "set",
+"cell": "t_f!G19",
+"input": "=SUM(rng2_t_f)"
+},
+{
+"op": "set",
+"cell": "t_f!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_f!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_f!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_f!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_f!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_f!G26",
+"input": "=SUM(T_t_f[X])"
+},
+{
+"op": "set",
+"cell": "t_f!G27",
+"input": "=SUM(T_t_f[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_f!G28",
+"input": "=SUM(T_t_f)"
+},
+{
+"op": "set",
+"cell": "t_f!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_f!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_f!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_f!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_f!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_f!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_f!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A18",
+"input": "=SUM(t_f!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B18",
+"input": "=SUM(t_f!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C18",
+"input": "=SUM(t_f!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D18",
+"input": "=SUM(t_f!A6)"
+},
+{
+"op": "table",
+"name": "T_t_f",
+"range": "t_f!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_f!A8",
+"input": "=1+1"
+},
+{
+"op": "read",
+"range": "t_f!A1:D12"
+},
+{
+"op": "read",
+"range": "t_f!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A18:D18"
+},
+{
+"op": "setv",
+"cell": "t_e2!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_e2!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_e2",
+"refers_to": "=t_e2!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_e2",
+"refers_to": "=t_e2!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_e2!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_e2!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_e2!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_e2!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_e2!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_e2!G18",
+"input": "=SUM(rng_t_e2)"
+},
+{
+"op": "set",
+"cell": "t_e2!G19",
+"input": "=SUM(rng2_t_e2)"
+},
+{
+"op": "set",
+"cell": "t_e2!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_e2!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_e2!G26",
+"input": "=SUM(T_t_e2[X])"
+},
+{
+"op": "set",
+"cell": "t_e2!G27",
+"input": "=SUM(T_t_e2[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_e2!G28",
+"input": "=SUM(T_t_e2)"
+},
+{
+"op": "set",
+"cell": "t_e2!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_e2!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_e2!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_e2!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A19",
+"input": "=SUM(t_e2!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B19",
+"input": "=SUM(t_e2!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C19",
+"input": "=SUM(t_e2!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D19",
+"input": "=SUM(t_e2!A6)"
+},
+{
+"op": "table",
+"name": "T_t_e2",
+"range": "t_e2!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_e2!A8",
+"input": "7.5"
+},
+{
+"op": "read",
+"range": "t_e2!A1:D12"
+},
+{
+"op": "read",
+"range": "t_e2!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A19:D19"
+},
+{
+"op": "setv",
+"cell": "t_d!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_d!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_d!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_d!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_d!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_d!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_d!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_d!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_d!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_d!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_d!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_d!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_d!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_d!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_d!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_d!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_d!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_d!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_d!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_d!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_d!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_d!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_d!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_d!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_d!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_d!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_d!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_d!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_d",
+"refers_to": "=t_d!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_d",
+"refers_to": "=t_d!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_d!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_d!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_d!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_d!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_d!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_d!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_d!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_d!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_d!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_d!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_d!G18",
+"input": "=SUM(rng_t_d)"
+},
+{
+"op": "set",
+"cell": "t_d!G19",
+"input": "=SUM(rng2_t_d)"
+},
+{
+"op": "set",
+"cell": "t_d!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_d!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_d!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_d!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_d!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_d!G26",
+"input": "=SUM(T_t_d[X])"
+},
+{
+"op": "set",
+"cell": "t_d!G27",
+"input": "=SUM(T_t_d[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_d!G28",
+"input": "=SUM(T_t_d)"
+},
+{
+"op": "set",
+"cell": "t_d!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_d!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_d!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_d!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_d!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_d!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_d!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A20",
+"input": "=SUM(t_d!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B20",
+"input": "=SUM(t_d!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C20",
+"input": "=SUM(t_d!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D20",
+"input": "=SUM(t_d!A6)"
+},
+{
+"op": "table",
+"name": "T_t_d",
+"range": "t_d!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_d!A8",
+"input": "1/2/2020"
+},
+{
+"op": "read",
+"range": "t_d!A1:D12"
+},
+{
+"op": "read",
+"range": "t_d!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A20:D20"
+},
+{
+"op": "setv",
+"cell": "t_p!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_p!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_p!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_p!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_p!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_p!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_p!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_p!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_p!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_p!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_p!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_p!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_p!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_p!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_p!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_p!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_p!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_p!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_p!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_p!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_p!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_p!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_p!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_p!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_p!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_p!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_p!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_p!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_p",
+"refers_to": "=t_p!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_p",
+"refers_to": "=t_p!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_p!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_p!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_p!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_p!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_p!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_p!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_p!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_p!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_p!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_p!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_p!G18",
+"input": "=SUM(rng_t_p)"
+},
+{
+"op": "set",
+"cell": "t_p!G19",
+"input": "=SUM(rng2_t_p)"
+},
+{
+"op": "set",
+"cell": "t_p!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_p!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_p!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_p!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_p!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_p!G26",
+"input": "=SUM(T_t_p[X])"
+},
+{
+"op": "set",
+"cell": "t_p!G27",
+"input": "=SUM(T_t_p[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_p!G28",
+"input": "=SUM(T_t_p)"
+},
+{
+"op": "set",
+"cell": "t_p!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_p!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_p!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_p!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_p!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_p!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_p!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A21",
+"input": "=SUM(t_p!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B21",
+"input": "=SUM(t_p!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C21",
+"input": "=SUM(t_p!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D21",
+"input": "=SUM(t_p!A6)"
+},
+{
+"op": "table",
+"name": "T_t_p",
+"range": "t_p!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_p!A8",
+"input": "50%"
+},
+{
+"op": "read",
+"range": "t_p!A1:D12"
+},
+{
+"op": "read",
+"range": "t_p!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A21:D21"
+},
+{
+"op": "setv",
+"cell": "t_bool!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_bool!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_bool",
+"refers_to": "=t_bool!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_bool",
+"refers_to": "=t_bool!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_bool!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_bool!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_bool!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_bool!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_bool!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_bool!G18",
+"input": "=SUM(rng_t_bool)"
+},
+{
+"op": "set",
+"cell": "t_bool!G19",
+"input": "=SUM(rng2_t_bool)"
+},
+{
+"op": "set",
+"cell": "t_bool!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_bool!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_bool!G26",
+"input": "=SUM(T_t_bool[X])"
+},
+{
+"op": "set",
+"cell": "t_bool!G27",
+"input": "=SUM(T_t_bool[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_bool!G28",
+"input": "=SUM(T_t_bool)"
+},
+{
+"op": "set",
+"cell": "t_bool!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_bool!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_bool!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_bool!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A22",
+"input": "=SUM(t_bool!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B22",
+"input": "=SUM(t_bool!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C22",
+"input": "=SUM(t_bool!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D22",
+"input": "=SUM(t_bool!A6)"
+},
+{
+"op": "table",
+"name": "T_t_bool",
+"range": "t_bool!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_bool!A8",
+"input": "TRUE"
+},
+{
+"op": "read",
+"range": "t_bool!A1:D12"
+},
+{
+"op": "read",
+"range": "t_bool!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A22:D22"
+},
+{
+"op": "setv",
+"cell": "t_gap!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_gap!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_gap",
+"refers_to": "=t_gap!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_gap",
+"refers_to": "=t_gap!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_gap!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_gap!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_gap!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_gap!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_gap!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_gap!G18",
+"input": "=SUM(rng_t_gap)"
+},
+{
+"op": "set",
+"cell": "t_gap!G19",
+"input": "=SUM(rng2_t_gap)"
+},
+{
+"op": "set",
+"cell": "t_gap!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_gap!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_gap!G26",
+"input": "=SUM(T_t_gap[X])"
+},
+{
+"op": "set",
+"cell": "t_gap!G27",
+"input": "=SUM(T_t_gap[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_gap!G28",
+"input": "=SUM(T_t_gap)"
+},
+{
+"op": "set",
+"cell": "t_gap!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_gap!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_gap!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_gap!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A23",
+"input": "=SUM(t_gap!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B23",
+"input": "=SUM(t_gap!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C23",
+"input": "=SUM(t_gap!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D23",
+"input": "=SUM(t_gap!A6)"
+},
+{
+"op": "table",
+"name": "T_t_gap",
+"range": "t_gap!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_gap!A9",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "read",
+"range": "t_gap!A1:D12"
+},
+{
+"op": "read",
+"range": "t_gap!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A23:D23"
+},
+{
+"op": "setv",
+"cell": "t_none!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_none!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_none!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_none!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_none!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_none!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_none!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_none!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_none!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_none!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_none!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_none!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_none!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_none!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_none!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_none!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_none!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_none!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_none!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_none!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_none!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_none!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_none!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_none!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_none!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_none!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_none!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_none!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_none",
+"refers_to": "=t_none!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_none",
+"refers_to": "=t_none!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_none!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_none!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_none!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_none!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_none!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_none!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_none!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_none!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_none!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_none!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_none!G18",
+"input": "=SUM(rng_t_none)"
+},
+{
+"op": "set",
+"cell": "t_none!G19",
+"input": "=SUM(rng2_t_none)"
+},
+{
+"op": "set",
+"cell": "t_none!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_none!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_none!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_none!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_none!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_none!G26",
+"input": "=SUM(T_t_none[X])"
+},
+{
+"op": "set",
+"cell": "t_none!G27",
+"input": "=SUM(T_t_none[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_none!G28",
+"input": "=SUM(T_t_none)"
+},
+{
+"op": "set",
+"cell": "t_none!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_none!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_none!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_none!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_none!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_none!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_none!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A24",
+"input": "=SUM(t_none!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B24",
+"input": "=SUM(t_none!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C24",
+"input": "=SUM(t_none!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D24",
+"input": "=SUM(t_none!A6)"
+},
+{
+"op": "table",
+"name": "T_t_none",
+"range": "t_none!A1:C6",
+"totals": true
+},
+{
+"op": "read",
+"range": "t_none!A1:D12"
+},
+{
+"op": "read",
+"range": "t_none!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A24:D24"
+},
+{
+"op": "setv",
+"cell": "t_in!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_in!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_in!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_in!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_in!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_in!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_in!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_in!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_in!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_in!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_in!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_in!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_in!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_in!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_in!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_in!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_in!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_in!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_in!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_in!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_in!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_in!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_in!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_in!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_in!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_in!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_in!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_in!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_in",
+"refers_to": "=t_in!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_in",
+"refers_to": "=t_in!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_in!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_in!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_in!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_in!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_in!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_in!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_in!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_in!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_in!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_in!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_in!G18",
+"input": "=SUM(rng_t_in)"
+},
+{
+"op": "set",
+"cell": "t_in!G19",
+"input": "=SUM(rng2_t_in)"
+},
+{
+"op": "set",
+"cell": "t_in!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_in!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_in!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_in!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_in!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_in!G26",
+"input": "=SUM(T_t_in[X])"
+},
+{
+"op": "set",
+"cell": "t_in!G27",
+"input": "=SUM(T_t_in[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_in!G28",
+"input": "=SUM(T_t_in)"
+},
+{
+"op": "set",
+"cell": "t_in!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_in!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_in!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_in!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_in!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_in!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_in!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A25",
+"input": "=SUM(t_in!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B25",
+"input": "=SUM(t_in!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C25",
+"input": "=SUM(t_in!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D25",
+"input": "=SUM(t_in!A6)"
+},
+{
+"op": "table",
+"name": "T_t_in",
+"range": "t_in!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_in!A7",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "read",
+"range": "t_in!A1:D12"
+},
+{
+"op": "read",
+"range": "t_in!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A25:D25"
+},
+{
+"op": "setv",
+"cell": "t_ab!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_ab",
+"refers_to": "=t_ab!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_ab",
+"refers_to": "=t_ab!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_ab!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_ab!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_ab!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_ab!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_ab!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_ab!G18",
+"input": "=SUM(rng_t_ab)"
+},
+{
+"op": "set",
+"cell": "t_ab!G19",
+"input": "=SUM(rng2_t_ab)"
+},
+{
+"op": "set",
+"cell": "t_ab!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_ab!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_ab!G26",
+"input": "=SUM(T_t_ab[X])"
+},
+{
+"op": "set",
+"cell": "t_ab!G27",
+"input": "=SUM(T_t_ab[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_ab!G28",
+"input": "=SUM(T_t_ab)"
+},
+{
+"op": "set",
+"cell": "t_ab!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_ab!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_ab!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_ab!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A26",
+"input": "=SUM(t_ab!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B26",
+"input": "=SUM(t_ab!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C26",
+"input": "=SUM(t_ab!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D26",
+"input": "=SUM(t_ab!A6)"
+},
+{
+"op": "table",
+"name": "T_t_ab",
+"range": "t_ab!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_ab!A8",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "t_ab!B8",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "read",
+"range": "t_ab!A1:D12"
+},
+{
+"op": "read",
+"range": "t_ab!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A26:D26"
+},
+{
+"op": "setv",
+"cell": "t_two!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_two!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_two!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_two!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_two!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_two!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_two!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_two!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_two!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_two!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_two!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_two!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_two!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_two!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_two!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_two!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_two!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_two!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_two!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_two!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_two!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_two!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_two!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_two!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_two!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_two!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_two!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_two!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_two",
+"refers_to": "=t_two!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_two",
+"refers_to": "=t_two!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_two!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_two!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_two!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_two!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_two!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_two!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_two!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_two!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_two!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_two!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_two!G18",
+"input": "=SUM(rng_t_two)"
+},
+{
+"op": "set",
+"cell": "t_two!G19",
+"input": "=SUM(rng2_t_two)"
+},
+{
+"op": "set",
+"cell": "t_two!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_two!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_two!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_two!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_two!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_two!G26",
+"input": "=SUM(T_t_two[X])"
+},
+{
+"op": "set",
+"cell": "t_two!G27",
+"input": "=SUM(T_t_two[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_two!G28",
+"input": "=SUM(T_t_two)"
+},
+{
+"op": "set",
+"cell": "t_two!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_two!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_two!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_two!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_two!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_two!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_two!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A27",
+"input": "=SUM(t_two!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B27",
+"input": "=SUM(t_two!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C27",
+"input": "=SUM(t_two!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D27",
+"input": "=SUM(t_two!A6)"
+},
+{
+"op": "table",
+"name": "T_t_two",
+"range": "t_two!A1:C6",
+"totals": true
+},
+{
+"op": "setv",
+"cell": "t_two!A8",
+"value": {
+"t": "n",
+"v": 7
+}
+},
+{
+"op": "setv",
+"cell": "t_two!A9",
+"value": {
+"t": "n",
+"v": 8
+}
+},
+{
+"op": "read",
+"range": "t_two!A1:D12"
+},
+{
+"op": "read",
+"range": "t_two!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A27:D27"
+},
+{
+"op": "setv",
+"cell": "t_str!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_str!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_str!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_str!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_str!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_str!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_str!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_str!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_str!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_str!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_str!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_str!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_str!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_str!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_str!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_str!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_str!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_str!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_str!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_str!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_str!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_str!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_str!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_str!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_str!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_str!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_str!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_str!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_str",
+"refers_to": "=t_str!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_str",
+"refers_to": "=t_str!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_str!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_str!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_str!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_str!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_str!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_str!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_str!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_str!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_str!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_str!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_str!G18",
+"input": "=SUM(rng_t_str)"
+},
+{
+"op": "set",
+"cell": "t_str!G19",
+"input": "=SUM(rng2_t_str)"
+},
+{
+"op": "set",
+"cell": "t_str!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_str!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_str!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_str!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_str!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_str!G26",
+"input": "=SUM(T_t_str[X])"
+},
+{
+"op": "set",
+"cell": "t_str!G27",
+"input": "=SUM(T_t_str[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_str!G28",
+"input": "=SUM(T_t_str)"
+},
+{
+"op": "set",
+"cell": "t_str!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_str!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_str!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_str!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_str!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_str!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_str!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A28",
+"input": "=SUM(t_str!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B28",
+"input": "=SUM(t_str!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C28",
+"input": "=SUM(t_str!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D28",
+"input": "=SUM(t_str!A6)"
+},
+{
+"op": "table",
+"name": "T_t_str",
+"range": "t_str!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_str!A8",
+"input": "'7"
+},
+{
+"op": "read",
+"range": "t_str!A1:D12"
+},
+{
+"op": "read",
+"range": "t_str!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A28:D28"
+},
+{
+"op": "setv",
+"cell": "t_neg!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_neg!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_neg",
+"refers_to": "=t_neg!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_neg",
+"refers_to": "=t_neg!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_neg!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_neg!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_neg!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_neg!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_neg!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_neg!G18",
+"input": "=SUM(rng_t_neg)"
+},
+{
+"op": "set",
+"cell": "t_neg!G19",
+"input": "=SUM(rng2_t_neg)"
+},
+{
+"op": "set",
+"cell": "t_neg!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_neg!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_neg!G26",
+"input": "=SUM(T_t_neg[X])"
+},
+{
+"op": "set",
+"cell": "t_neg!G27",
+"input": "=SUM(T_t_neg[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_neg!G28",
+"input": "=SUM(T_t_neg)"
+},
+{
+"op": "set",
+"cell": "t_neg!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_neg!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_neg!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_neg!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A29",
+"input": "=SUM(t_neg!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B29",
+"input": "=SUM(t_neg!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C29",
+"input": "=SUM(t_neg!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D29",
+"input": "=SUM(t_neg!A6)"
+},
+{
+"op": "table",
+"name": "T_t_neg",
+"range": "t_neg!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_neg!A8",
+"input": "-3"
+},
+{
+"op": "read",
+"range": "t_neg!A1:D12"
+},
+{
+"op": "read",
+"range": "t_neg!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A29:D29"
+},
+{
+"op": "setv",
+"cell": "t_ex!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_ex!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_ex",
+"refers_to": "=t_ex!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_ex",
+"refers_to": "=t_ex!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_ex!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_ex!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_ex!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_ex!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_ex!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_ex!G18",
+"input": "=SUM(rng_t_ex)"
+},
+{
+"op": "set",
+"cell": "t_ex!G19",
+"input": "=SUM(rng2_t_ex)"
+},
+{
+"op": "set",
+"cell": "t_ex!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_ex!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_ex!G26",
+"input": "=SUM(T_t_ex[X])"
+},
+{
+"op": "set",
+"cell": "t_ex!G27",
+"input": "=SUM(T_t_ex[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_ex!G28",
+"input": "=SUM(T_t_ex)"
+},
+{
+"op": "set",
+"cell": "t_ex!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_ex!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_ex!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_ex!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A30",
+"input": "=SUM(t_ex!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B30",
+"input": "=SUM(t_ex!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C30",
+"input": "=SUM(t_ex!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D30",
+"input": "=SUM(t_ex!A6)"
+},
+{
+"op": "table",
+"name": "T_t_ex",
+"range": "t_ex!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_ex!A8",
+"input": "1E+3"
+},
+{
+"op": "read",
+"range": "t_ex!A1:D12"
+},
+{
+"op": "read",
+"range": "t_ex!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A30:D30"
+},
+{
+"op": "setv",
+"cell": "t_eq!A1",
+"value": {
+"t": "s",
+"v": "X"
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!B1",
+"value": {
+"t": "s",
+"v": "Y"
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!C1",
+"value": {
+"t": "s",
+"v": "Z"
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!A2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!B2",
+"value": {
+"t": "n",
+"v": 20
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!C2",
+"value": {
+"t": "n",
+"v": 22
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!E2",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!F2",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!A3",
+"value": {
+"t": "n",
+"v": 3
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!B3",
+"value": {
+"t": "n",
+"v": 30
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!C3",
+"value": {
+"t": "n",
+"v": 33
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!E3",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!F3",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!A4",
+"value": {
+"t": "n",
+"v": 4
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!B4",
+"value": {
+"t": "n",
+"v": 40
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!C4",
+"value": {
+"t": "n",
+"v": 44
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!E4",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!F4",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!A5",
+"value": {
+"t": "n",
+"v": 5
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!B5",
+"value": {
+"t": "n",
+"v": 50
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!C5",
+"value": {
+"t": "n",
+"v": 55
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!E5",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!F5",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!A6",
+"value": {
+"t": "n",
+"v": 6
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!B6",
+"value": {
+"t": "n",
+"v": 60
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!C6",
+"value": {
+"t": "n",
+"v": 66
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!E6",
+"value": {
+"t": "n",
+"v": 1
+}
+},
+{
+"op": "setv",
+"cell": "t_eq!F6",
+"value": {
+"t": "n",
+"v": 2
+}
+},
+{
+"op": "name",
+"name": "rng_t_eq",
+"refers_to": "=t_eq!$A$2:$A$6"
+},
+{
+"op": "name",
+"name": "rng2_t_eq",
+"refers_to": "=t_eq!$B$2:$C$6"
+},
+{
+"op": "set",
+"cell": "t_eq!G1",
+"input": "=SUM(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G2",
+"input": "=SUM(A1:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G3",
+"input": "=SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_eq!G4",
+"input": "=SUM(A3:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G5",
+"input": "=SUM(A2:B6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G6",
+"input": "=SUM(A2:C6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G7",
+"input": "=SUM(B2:C6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G8",
+"input": "=SUM($A$2:$A$6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G9",
+"input": "=SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G10",
+"input": "=SUM(A6:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G11",
+"input": "=SUM(A2:A7)"
+},
+{
+"op": "set",
+"cell": "t_eq!G12",
+"input": "=SUM(A2:A100)"
+},
+{
+"op": "set",
+"cell": "t_eq!G13",
+"input": "=SUM(A:A)"
+},
+{
+"op": "set",
+"cell": "t_eq!G14",
+"input": "=SUM(A1:C6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G15",
+"input": "=COUNTA(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G16",
+"input": "=ROWS(A2:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G17",
+"input": "=SUM(A2:A6)+SUM(A2:A5)"
+},
+{
+"op": "set",
+"cell": "t_eq!G18",
+"input": "=SUM(rng_t_eq)"
+},
+{
+"op": "set",
+"cell": "t_eq!G19",
+"input": "=SUM(rng2_t_eq)"
+},
+{
+"op": "set",
+"cell": "t_eq!G20",
+"input": "=SUM(A2:A6,B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G21",
+"input": "=SUM(B6:B6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G22",
+"input": "=SUM(A5:A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G23",
+"input": "=SUM(A6:A5)"
+},
+{
+"op": "set",
+"cell": "t_eq!G24",
+"input": "=SUM(A2:A6 B2:B6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G25",
+"input": "=SUM((A2:A6))"
+},
+{
+"op": "set",
+"cell": "t_eq!G26",
+"input": "=SUM(T_t_eq[X])"
+},
+{
+"op": "set",
+"cell": "t_eq!G27",
+"input": "=SUM(T_t_eq[[#Data],[X]])"
+},
+{
+"op": "set",
+"cell": "t_eq!G28",
+"input": "=SUM(T_t_eq)"
+},
+{
+"op": "set",
+"cell": "t_eq!G29",
+"input": "=SUM(INDEX(A2:A6,0))"
+},
+{
+"op": "set",
+"cell": "t_eq!G30",
+"input": "=SUM(OFFSET(A2,0,0,5,1))"
+},
+{
+"op": "set",
+"cell": "t_eq!G31",
+"input": "=SUM(A1:A6)-SUM(A6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G32",
+"input": "=SUM(E2:E6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G33",
+"input": "=SUM(F1:F6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G34",
+"input": "=SUM(A2:D6)"
+},
+{
+"op": "set",
+"cell": "t_eq!G35",
+"input": "=SUM(A2:B7)"
+},
+{
+"op": "set",
+"cell": "Other!A31",
+"input": "=SUM(t_eq!A2:A6)"
+},
+{
+"op": "set",
+"cell": "Other!B31",
+"input": "=SUM(t_eq!A1:A6)"
+},
+{
+"op": "set",
+"cell": "Other!C31",
+"input": "=SUM(t_eq!A2:C6)"
+},
+{
+"op": "set",
+"cell": "Other!D31",
+"input": "=SUM(t_eq!A6)"
+},
+{
+"op": "table",
+"name": "T_t_eq",
+"range": "t_eq!A1:C6",
+"totals": true
+},
+{
+"op": "set",
+"cell": "t_eq!A8",
+"input": "=A2"
+},
+{
+"op": "read",
+"range": "t_eq!A1:D12"
+},
+{
+"op": "read",
+"range": "t_eq!G1:G37"
+},
+{
+"op": "read",
+"range": "Other!A31:D31"
+}
+]
+}

@@ -72,11 +72,10 @@ fn border_extra(top: BorderLine, bottom: BorderLine) -> u32 {
 
 fn line_px(l: BorderLine) -> u32 {
     match l {
-        BorderLine::None => 0,
+        BorderLine::None | BorderLine::Hair => 0,
         BorderLine::Thin
         | BorderLine::Dashed
         | BorderLine::Dotted
-        | BorderLine::Hair
         | BorderLine::DashDot
         | BorderLine::DashDotDot => 1,
         BorderLine::Medium
@@ -561,7 +560,6 @@ impl Workbook {
     }
 
     fn gap_fonts(&self, sheet: SheetId, row: Option<u32>) -> Vec<(u32, u32)> {
-        let cols = self.line_format_indices(sheet, false);
         let free = |c: u32| {
             row.is_none_or(|r| {
                 let a = CellAddr::new(sheet, r, c);
@@ -576,11 +574,22 @@ impl Workbook {
                 None => self.line_style(sheet, false, c),
             }
         };
+
+        let over = row.and_then(|r| {
+            [
+                self.cellfmt.rows.get(&(sheet, r)),
+                self.cellfmt.sheets.get(&sheet),
+            ]
+            .into_iter()
+            .flatten()
+            .max_by_key(|(seq, _)| *seq)
+        });
         let mut seen: Vec<*const Style> = Vec::new();
         let mut out: Vec<(u32, u32)> = Vec::new();
-        let mut take = |sty: &Style| {
+        let mut take = |sty: &Style, c: u32| {
             let p: *const Style = sty;
-            if !seen.contains(&p) {
+
+            if !seen.contains(&p) && free(c) {
                 seen.push(p);
                 let ad = font_ad(&sty.font);
                 if !out.contains(&ad) {
@@ -588,18 +597,17 @@ impl Workbook {
                 }
             }
         };
-        for &c in &cols {
-            if free(c) {
-                take(style_at(c));
+        let mut formatted = vec![false; MAX_COLS as usize];
+        for (&(_, c), (seq, own)) in self.cellfmt.cols.iter().filter(|(k, _)| k.0 == sheet) {
+            formatted[c as usize] = true;
+            match over {
+                Some((newer, st)) if newer > seq => take(st, c),
+                _ => take(own, c),
             }
         }
 
-        let mut c = 0;
-        while c < MAX_COLS && (cols.binary_search(&c).is_ok() || !free(c)) {
-            c += 1;
-        }
-        if c < MAX_COLS {
-            take(style_at(c));
+        if let Some(c) = (0..MAX_COLS).find(|&c| !formatted[c as usize] && free(c)) {
+            take(style_at(c), c);
         }
         out
     }
@@ -873,7 +881,8 @@ impl Workbook {
                 _ => None,
             };
             let plain_number = matches!(v, Value::Number(_))
-                && !crate::NumberFormat::parse(&sty.number_format).is_ok_and(|n| n.is_date());
+                && !crate::NumberFormat::parse_stored(&sty.number_format)
+                    .is_ok_and(|n| n.is_date());
             let turn_deg = match sty.alignment.rotation {
                 r @ 1..=90 => Some(u32::from(r)),
                 r @ 91..=180 => Some(u32::from(r) - 90),

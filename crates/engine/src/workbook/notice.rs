@@ -91,6 +91,8 @@ pub enum Command {
 
     CalculateSheet,
 
+    CalculateRange,
+
     Setting,
 
     AddSheet,
@@ -230,15 +232,17 @@ pub(crate) const fn rule(cmd: Command) -> Rule {
 
         Command::Atp => r(BeforeRecalc, Unlisted, false, true, Auto),
 
-        Command::Table | Command::Name | Command::Pivot | Command::Setting => {
+        Command::Name | Command::Pivot | Command::Setting => {
             r(BeforeRecalc, Direct, false, true, Auto)
         }
-        Command::TableResize => r(BeforeRecalc, Direct, true, true, Auto),
+
+        Command::Table | Command::TableResize => r(BeforeRecalc, Direct, true, true, Auto),
 
         Command::GoalSeek => r(BeforeRecalc, Menu(0xc6), false, true, Forced),
         Command::Calculate => r(BeforeRecalc, Menu(0x1f), false, true, Always),
 
         Command::CalculateSheet => r(BeforeRecalc, Menu(0xa7), false, true, Never),
+        Command::CalculateRange => r(BeforeRecalc, Menu(0x1f), false, true, Never),
         Command::AddSheet | Command::ActivateSheet => r(BeforeRecalc, Direct, false, false, Never),
 
         Command::CopySheet => r(AfterRecalc, Menu(0x11b), false, true, Auto),
@@ -284,6 +288,8 @@ pub(crate) struct Notes {
 
     slot: Vec<Notice>,
 
+    early: Vec<Notice>,
+
     pub(crate) passes: Vec<Pass>,
 
     partial: Vec<SheetId>,
@@ -295,6 +301,10 @@ pub(crate) struct Notes {
     pub(crate) no_after: bool,
 
     pub(crate) change_late: bool,
+
+    pub(crate) header_written: bool,
+
+    pub(crate) after_if_calculated: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -349,11 +359,14 @@ impl Notes {
 
     fn clear(&mut self) {
         self.slot.clear();
+        self.early.clear();
         self.passes.clear();
         self.partial.clear();
         self.active = None;
         self.no_after = false;
         self.change_late = false;
+        self.header_written = false;
+        self.after_if_calculated = false;
     }
 
     fn finish(
@@ -368,6 +381,7 @@ impl Notes {
         let mut slot = std::mem::take(&mut self.slot);
         if !ok {
             slot.clear();
+            self.early.clear();
         } else if !rule.change {
             slot.retain(|n| !matches!(n, Notice::Changed { .. }));
         }
@@ -405,9 +419,24 @@ impl Notes {
                 posted = false;
             }
         }
-        let after = after || (per_pass && ran && !posted);
+        let after = after || (per_pass && ran && !posted && !self.after_if_calculated);
         let after = (after && !self.no_after).then_some(Notice::AfterCalculate);
         let log = &mut self.log;
+        log.append(&mut self.early);
+        if ok && self.header_written && per_pass {
+            let tail = calc.split_off(last_start.min(calc.len()));
+            log.extend(calc);
+            if log.last() != Some(&Notice::AfterCalculate) {
+                log.push(Notice::AfterCalculate);
+            }
+            log.append(&mut slot);
+            log.extend(tail);
+            if !self.no_after && log.last() != Some(&Notice::AfterCalculate) {
+                log.push(Notice::AfterCalculate);
+            }
+            self.clear();
+            return;
+        }
         match rule.order {
             Order::CalcFirst => {
                 log.extend(calc);
@@ -609,10 +638,20 @@ impl Workbook {
     }
 
     pub fn note_changed(&mut self, sheet: SheetId, areas: &[Rect]) {
+        self.slicer_reload_cells(sheet, areas);
         if self.notes.depth == 1 && !areas.is_empty() {
             self.notes.slot.push(Notice::Changed {
                 sheet,
                 areas: areas.to_vec(),
+            });
+        }
+    }
+
+    pub(crate) fn note_changed_early(&mut self, sheet: SheetId, area: Rect) {
+        if self.notes.depth == 1 {
+            self.notes.early.push(Notice::Changed {
+                sheet,
+                areas: vec![area],
             });
         }
     }
@@ -856,6 +895,108 @@ mod tests {
         wb.take_notices();
         wb.add_table("T", s, rect(0, 12, 1, 12)).unwrap();
         assert_eq!(wb.take_notices(), []);
+    }
+
+    fn table_book() -> (Workbook, SheetId) {
+        let (mut wb, s) = book();
+        for (c, h) in [(10, "a"), (11, "b")] {
+            wb.set_input(at(s, 0, c), h).unwrap();
+            wb.set_value(at(s, 1, c), Value::Number(1.0));
+            wb.set_value(at(s, 2, c), Value::Number(2.0));
+        }
+        wb.add_table("T", s, rect(0, 10, 2, 11)).unwrap();
+        wb.take_notices();
+        (wb, s)
+    }
+
+    fn changes(n: Vec<Notice>) -> Vec<Rect> {
+        n.into_iter()
+            .filter_map(|n| match n {
+                Notice::Changed { areas, .. } => Some(areas[0]),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn table_totals_and_headers_change_what_they_write() {
+        let (mut wb, s) = table_book();
+        let row = rect(3, 10, 3, 11);
+        wb.set_table_totals("T", true).unwrap();
+        assert_eq!(
+            changes(wb.take_notices()),
+            [row, rect(3, 10, 3, 10), rect(3, 11, 3, 11)]
+        );
+
+        wb.set_table_totals_calc("T", 1, 1).unwrap();
+        wb.take_notices();
+        wb.set_table_totals_calc("T", 1, 1).unwrap();
+        assert_eq!(wb.take_notices(), []);
+
+        wb.set_table_totals_calc("T", 1, 0).unwrap();
+        assert_eq!(wb.take_notices(), [changed(s, &[rect(3, 11, 3, 11)])]);
+        wb.set_table_totals_calc("T", 1, 0).unwrap();
+        assert_eq!(wb.take_notices(), []);
+        wb.set_table_totals_calc("T", 0, 0).unwrap();
+        wb.take_notices();
+        wb.set_table_totals_calc("T", 0, 0).unwrap();
+        assert_eq!(wb.take_notices(), [changed(s, &[rect(3, 10, 3, 10)])]);
+        wb.set_table_totals("T", false).unwrap();
+        assert_eq!(changes(wb.take_notices()), [row]);
+
+        let header = rect(0, 10, 0, 11);
+        wb.set_table_headers("T", false).unwrap();
+        assert_eq!(changes(wb.take_notices()), [header]);
+
+        wb.set_table_headers("T", true).unwrap();
+        assert_eq!(changes(wb.take_notices()), [header]);
+
+        wb.set_table_headers("T", false).unwrap();
+        wb.set_input(at(s, 0, 10), "x").unwrap();
+        wb.take_notices();
+        wb.set_table_headers("T", true).unwrap();
+        let below = rect(1, 10, 1, 11);
+        assert_eq!(changes(wb.take_notices()), [below, below]);
+    }
+
+    fn uncalculated(mut n: Vec<Notice>) -> Vec<Notice> {
+        n.retain(|n| !matches!(n, Notice::Calculated { .. }));
+        n
+    }
+
+    #[test]
+    fn resize_enters_new_headers_first() {
+        let (mut wb, s) = table_book();
+        let m1 = rect(0, 12, 0, 12);
+        let wide = rect(0, 10, 2, 12);
+
+        wb.resize_table("T", wide).unwrap();
+        assert_eq!(
+            uncalculated(wb.take_notices()),
+            [
+                changed(s, &[m1]),
+                Notice::AfterCalculate,
+                changed(s, &[wide]),
+                Notice::AfterCalculate
+            ]
+        );
+        let narrow = rect(0, 10, 2, 11);
+        wb.resize_table("T", narrow).unwrap();
+        assert_eq!(
+            uncalculated(wb.take_notices()),
+            [
+                Notice::AfterCalculate,
+                changed(s, &[narrow]),
+                Notice::AfterCalculate
+            ]
+        );
+
+        wb.set_input(at(s, 0, 13), "n").unwrap();
+        wb.set_value(at(s, 0, 14), Value::Number(7.0));
+        wb.take_notices();
+        let wider = rect(0, 10, 2, 14);
+        wb.resize_table("T", wider).unwrap();
+        assert_eq!(changes(wb.take_notices()), [m1, rect(0, 14, 0, 14), wider]);
     }
 
     #[test]

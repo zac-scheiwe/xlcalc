@@ -29,7 +29,7 @@ impl WindowsBridge {
         self.objects
             .get(h as usize)
             .and_then(Option::as_ref)
-            .map(|s| &s.0)
+            .map(wb::Server::dispatch)
             .ok_or_else(|| VbaError::new(424))
     }
 }
@@ -68,44 +68,11 @@ impl ComBridge for WindowsBridge {
         kind: InvokeKind,
         args: &[Variant],
     ) -> Result<Variant, VbaError> {
-        let target = self.server(handle)?.clone();
-        let access = match kind {
-            InvokeKind::Get => wb::Access::Get,
-            InvokeKind::Put => wb::Access::Put,
-            InvokeKind::PutRef => wb::Access::PutRef,
-        };
-        let known = |id: xlcalc_variant::ObjectId| -> Option<IUnknown> {
-            self.objects
-                .get(id.0 as usize)
-                .and_then(Option::as_ref)
-                .map(|s| s.0.clone().into())
-        };
-        let next = self.objects.len() as u64;
-        let out = wb::invoke(&target, member, access, args, &known, next).map_err(error)?;
-        for unk in out.made {
-            if let Ok(d) = unk.cast::<IDispatch>() {
-                self.objects.push(Some(wb::Server(d)));
-            } else {
-                self.objects.push(None);
-            }
-        }
-        Ok(out.value)
+        wb::on_thread_stack(|| self.invoke_here(handle, member, kind, args))
     }
 
     fn extensibility(&mut self, handle: u64, call: ExtCall) -> Result<bool, VbaError> {
-        let target = self.server(handle)?.clone();
-        let (method, mode, app) = match call {
-            ExtCall::OnConnection { mode, .. } => (
-                wb::Extensibility::OnConnection,
-                mode,
-                self.application.clone(),
-            ),
-            ExtCall::OnDisconnection { mode } => (wb::Extensibility::OnDisconnection, mode, None),
-            ExtCall::OnAddInsUpdate => (wb::Extensibility::OnAddInsUpdate, 0, None),
-            ExtCall::OnStartupComplete => (wb::Extensibility::OnStartupComplete, 0, None),
-            ExtCall::OnBeginShutdown => (wb::Extensibility::OnBeginShutdown, 0, None),
-        };
-        wb::call_extensibility(&target, method, app.as_ref(), mode, None).map_err(error)
+        wb::on_thread_stack(|| self.extensibility_here(handle, call))
     }
 
     fn automation_servers(&mut self) -> Vec<AutomationServer> {
@@ -124,6 +91,71 @@ impl ComBridge for WindowsBridge {
     }
 
     fn call_function(
+        &mut self,
+        handle: u64,
+        name: &str,
+        args: &[Variant],
+        cb: &mut dyn crate::comaddin::ObjectCallback,
+    ) -> Result<Variant, crate::comaddin::CallFailure> {
+        wb::on_thread_stack(|| self.call_function_here(handle, name, args, cb))
+    }
+
+    fn release(&mut self, handle: u64) {
+        if let Some(slot) = self.objects.get_mut(handle as usize) {
+            *slot = None;
+        }
+    }
+}
+
+impl WindowsBridge {
+    fn invoke_here(
+        &mut self,
+        handle: u64,
+        member: &str,
+        kind: InvokeKind,
+        args: &[Variant],
+    ) -> Result<Variant, VbaError> {
+        let target = self.server(handle)?.clone();
+        let access = match kind {
+            InvokeKind::Get => wb::Access::Get,
+            InvokeKind::Put => wb::Access::Put,
+            InvokeKind::PutRef => wb::Access::PutRef,
+        };
+        let known = |id: xlcalc_variant::ObjectId| -> Option<IUnknown> {
+            self.objects
+                .get(id.0 as usize)
+                .and_then(Option::as_ref)
+                .map(|s| s.dispatch().clone().into())
+        };
+        let next = self.objects.len() as u64;
+        let out = wb::invoke(&target, member, access, args, &known, next).map_err(error)?;
+        for unk in out.made {
+            if let Ok(d) = unk.cast::<IDispatch>() {
+                self.objects.push(Some(wb::Server::new(d)));
+            } else {
+                self.objects.push(None);
+            }
+        }
+        Ok(out.value)
+    }
+
+    fn extensibility_here(&mut self, handle: u64, call: ExtCall) -> Result<bool, VbaError> {
+        let target = self.server(handle)?.clone();
+        let (method, mode, app) = match call {
+            ExtCall::OnConnection { mode, .. } => (
+                wb::Extensibility::OnConnection,
+                mode,
+                self.application.clone(),
+            ),
+            ExtCall::OnDisconnection { mode } => (wb::Extensibility::OnDisconnection, mode, None),
+            ExtCall::OnAddInsUpdate => (wb::Extensibility::OnAddInsUpdate, 0, None),
+            ExtCall::OnStartupComplete => (wb::Extensibility::OnStartupComplete, 0, None),
+            ExtCall::OnBeginShutdown => (wb::Extensibility::OnBeginShutdown, 0, None),
+        };
+        wb::call_extensibility(&target, method, app.as_ref(), mode, None).map_err(error)
+    }
+
+    fn call_function_here(
         &mut self,
         handle: u64,
         name: &str,
@@ -158,11 +190,5 @@ impl ComBridge for WindowsBridge {
                 CallFailure::Value
             }
         })
-    }
-
-    fn release(&mut self, handle: u64) {
-        if let Some(slot) = self.objects.get_mut(handle as usize) {
-            *slot = None;
-        }
     }
 }

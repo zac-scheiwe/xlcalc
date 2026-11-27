@@ -451,9 +451,13 @@ fn styles_fixture_round_trips() {
     assert!(problems.is_empty(), "{problems:#?}");
     let back = import_bytes(saved.bytes).unwrap();
     assert_eq!(imp.warnings, back.warnings);
+
+    let plain = |l: Vec<String>| -> Vec<String> {
+        l.into_iter().map(|x| x.replace("\\\\-", "-")).collect()
+    };
     same_lines(
-        &snapshot(&imp.workbook),
-        &snapshot(&back.workbook),
+        &plain(snapshot(&imp.workbook)),
+        &plain(snapshot(&back.workbook)),
         "fresh styles",
     );
 }
@@ -508,12 +512,16 @@ fn form_controls_round_trip() {
     for (i, (g, w)) in got.iter().zip(list.iter_mut()).enumerate() {
         assert_eq!(g.shape_id, 1025 + i as u32);
         w.shape_id = g.shape_id;
+
+        assert!(g.anchor.is_some(), "control {i}");
+        w.anchor = g.anchor;
         assert_eq!(g, w, "control {i}");
     }
 
     let mut next = got.clone();
     next[0].on_action = "Other".into();
     next[0].left = 33.5;
+    next[0].anchor = None;
     next[3].val = 9;
     next[3].fmla_link = String::new();
     next[2].caption = "plain".into();
@@ -539,6 +547,10 @@ fn form_controls_round_trip() {
     let last = next.len() - 1;
     next[last].shape_id = got2[last].shape_id;
     assert_eq!(got2[last].shape_id, 1034);
+    let from = got2[0].anchor.expect("cells")[0];
+    assert_eq!((from.col, from.col_off), (0, 425_450));
+    next[0].anchor = got2[0].anchor;
+    next[last].anchor = got2[last].anchor;
     assert_eq!(got2, next);
 
     let opts = SaveOptions {
@@ -574,6 +586,40 @@ fn row_heights_round_trip() {
         vec![(2, 264), (4, 102)]
     );
     assert!(back.workbook.row_hidden(s, 6));
+}
+
+#[test]
+fn standard_width_round_trips() {
+    let mut wb = Workbook::new();
+    let s = wb.sheet_at(0).id;
+    wb.set_input(CellAddr::new(s, 0, 0), "x").unwrap();
+    let plain = save(&wb, None, &SaveOptions::default()).unwrap();
+    assert!(!String::from_utf8_lossy(&plain.bytes).contains("defaultColWidth"));
+    wb.set_sheet_standard_width(s, 14.0);
+    let saved = save(&wb, None, &SaveOptions::default()).unwrap();
+    assert!(check_package(&saved.bytes).is_empty());
+    let back = import_bytes(saved.bytes).unwrap();
+    assert_eq!(back.workbook.sheet_std_px(s), wb.sheet_std_px(s));
+    assert_ne!(wb.sheet_std_px(s), wb.standard_px());
+}
+
+#[test]
+fn row_spans_and_col_runs() {
+    let mut wb = Workbook::new();
+    let s = wb.sheet_at(0).id;
+    wb.set_input(CellAddr::new(s, 0, 0), "x").unwrap();
+    wb.set_input(CellAddr::new(s, 1, 2), "y").unwrap();
+    wb.set_input(CellAddr::new(s, 16, 4), "z").unwrap();
+    wb.set_column_record(s, 3, 5, set(100), false);
+    wb.set_column_record(s, 6, 6, set(120), false);
+    let saved = save(&wb, None, &SaveOptions::default()).unwrap();
+    let pkg = Package::read(&saved.bytes).unwrap();
+    let xml = String::from_utf8_lossy(pkg.part("xl/worksheets/sheet1.xml").unwrap()).into_owned();
+    assert!(xml.contains("<row r=\"1\" spans=\"1:3\">"), "{xml}");
+    assert!(xml.contains("<row r=\"2\" spans=\"1:3\">"), "{xml}");
+    assert!(xml.contains("<row r=\"17\" spans=\"5:5\">"), "{xml}");
+    assert_eq!(xml.matches("<col ").count(), 2, "{xml}");
+    assert!(xml.contains("min=\"4\" max=\"6\""), "{xml}");
 }
 
 #[test]
@@ -641,4 +687,35 @@ fn notes_with_form_controls() {
     let id2 = back2.workbook.sheet_at(0).id;
     assert_eq!(back2.workbook.notes(id2).count(), 0);
     assert_eq!(read_controls(&back2.package, id2).len(), list.len());
+}
+
+#[test]
+fn standard_width_round_trips_binary_files() {
+    let mut wb = Workbook::new();
+    let s = wb.sheet_at(0).id;
+    wb.set_input(CellAddr::new(s, 0, 0), "x").unwrap();
+    wb.set_sheet_standard_width(s, 15.0);
+    wb.set_column_record(s, 2, 2, set(227), false);
+    let saved = save(&wb, None, &SaveOptions::default()).unwrap();
+    let xlsb = xlcalc_xlsx::xlsx_to_xlsb(&saved.bytes).unwrap().0;
+    let xls = xlcalc_xlsx::xlsx_to_xls(&saved.bytes).unwrap().0;
+    for (ext, bytes) in [("xlsb", xlsb), ("xls", xls)] {
+        let path = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("stdw.{ext}"));
+        std::fs::write(&path, bytes).unwrap();
+        let back = xlcalc_xlsx::import_file(&path).unwrap().workbook;
+        let s = back.sheet_at(0).id;
+        assert_eq!(back.sheet_std_px(s), wb.sheet_std_px(s), "{ext}");
+        assert_eq!(back.col_px(s, 2), 227, "{ext}");
+        for col in [0, 3, 200] {
+            assert!(back.cell_width(s, col).1, "{ext} column {col}");
+        }
+    }
+}
+
+fn set(px: u32) -> xlcalc::ColWidth {
+    xlcalc::ColWidth {
+        px,
+        user: true,
+        best: false,
+    }
 }

@@ -132,14 +132,7 @@ pub fn convert(ctx: &mut EvalCtx, ops: &[Operand], from: Radix, to: Radix) -> Op
 }
 
 pub fn base_fn(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
-    let ops: Vec<Operand> = ops
-        .iter()
-        .map(|o| match o {
-            Operand::Ref(r) if r.is_span() && r.single().is_none() => Operand::err(XlError::REF),
-            o => o.clone(),
-        })
-        .collect();
-    atp::call(ctx, &ops, "v", |ctx, a, _| base_vals(ctx, a))
+    atp::call(ctx, ops, "v", |ctx, a, _| base_vals(ctx, a))
 }
 
 fn base_vals(ctx: &mut EvalCtx, a: &[Option<Value>]) -> Value {
@@ -150,7 +143,7 @@ fn base_vals(ctx: &mut EvalCtx, a: &[Option<Value>]) -> Value {
         let radix = num(ctx, &get(1))?.trunc();
         let min_len = match a.get(2) {
             None | Some(None) => None,
-            Some(Some(v)) => Some(num(ctx, v)?.trunc()),
+            Some(Some(v)) => Some(num(ctx, v)?),
         };
         if n_raw < 0.0 {
             return Err(XlError::NUM);
@@ -158,11 +151,13 @@ fn base_vals(ctx: &mut EvalCtx, a: &[Option<Value>]) -> Value {
         if !(0.0..9_007_199_254_740_992.0).contains(&n) || !(2.0..=36.0).contains(&radix) {
             return Err(XlError::NUM);
         }
+
         if let Some(m) = min_len {
-            if !(0.0..=255.0).contains(&m) {
+            if !(0.0..256.0).contains(&m) {
                 return Err(XlError::NUM);
             }
         }
+        let min_len = min_len.map(f64::trunc);
         let mut s = if n == 0.0 {
             String::new()
         } else {
@@ -251,36 +246,44 @@ pub fn roman(ctx: &mut EvalCtx, a: &[Value]) -> Value {
 }
 
 fn roman_text(n: u32, mode: u32) -> String {
-    const CH: [char; 7] = ['M', 'D', 'C', 'L', 'X', 'V', 'I'];
-    const VAL: [u32; 7] = [1000, 500, 100, 50, 10, 5, 1];
-    const MAX: usize = 6;
+    type Row = (i32, i32, char, [u8; 5], usize);
+    const ROWS: [Row; 25] = [
+        (1000, 1000, 'M', [5, 4, 3, 2, 1], 0),
+        (999, -1, 'I', [4, 3, 2, 1, 1], 1),
+        (995, -5, 'V', [3, 2, 1, 1, 1], 2),
+        (990, -10, 'X', [2, 1, 1, 1, 1], 3),
+        (950, -50, 'L', [1, 1, 1, 1, 1], 4),
+        (900, -100, 'C', [1, 1, 1, 1, 1], 5),
+        (500, 500, 'D', [5, 4, 3, 2, 1], 0),
+        (499, -1, 'I', [4, 3, 2, 1, 1], 1),
+        (495, -5, 'V', [3, 2, 1, 1, 1], 2),
+        (490, -10, 'X', [2, 1, 1, 1, 1], 3),
+        (450, -50, 'L', [1, 1, 1, 1, 1], 4),
+        (400, -100, 'C', [1, 1, 1, 1, 1], 5),
+        (100, 100, 'C', [3, 2, 1, 1, 1], 0),
+        (99, -1, 'I', [2, 1, 1, 1, 1], 1),
+        (95, -5, 'V', [1, 1, 1, 1, 1], 2),
+        (90, -10, 'X', [1, 1, 1, 1, 1], 3),
+        (50, 50, 'L', [3, 2, 1, 1, 1], 0),
+        (49, -1, 'I', [2, 1, 1, 1, 1], 1),
+        (45, -5, 'V', [1, 1, 1, 1, 1], 2),
+        (40, -10, 'X', [1, 1, 1, 1, 1], 3),
+        (10, 10, 'X', [1, 1, 1, 1, 1], 0),
+        (9, -1, 'I', [1, 1, 1, 1, 1], 1),
+        (5, 5, 'V', [1, 1, 1, 1, 1], 0),
+        (4, -1, 'I', [1, 1, 1, 1, 1], 1),
+        (1, 1, 'I', [0, 0, 0, 0, 0], 0),
+    ];
     let mut out = String::new();
-    let mut v = n;
-    for i in 0..=MAX / 2 {
-        let mut idx = 2 * i;
-        let digit = v / VAL[idx];
-        if digit % 5 == 4 {
-            let idx2 = if digit == 4 { idx - 1 } else { idx - 2 };
-            let mut steps = 0;
-            while steps < mode && idx < MAX {
-                steps += 1;
-                if VAL[idx2] - VAL[idx + 1] <= v {
-                    idx += 1;
-                } else {
-                    steps = mode;
-                }
-            }
-            out.push(CH[idx]);
-            out.push(CH[idx2]);
-            v = v + VAL[idx] - VAL[idx2];
+    let (mut n, mut i) = (n as i32, 0usize);
+    while n > 0 {
+        let (threshold, amount, letter, next, back) = ROWS[i];
+        if n < threshold {
+            i += next[mode as usize] as usize;
         } else {
-            if digit > 4 {
-                out.push(CH[idx - 1]);
-            }
-            for _ in 0..digit % 5 {
-                out.push(CH[idx]);
-            }
-            v %= VAL[idx];
+            out.push(letter);
+            n -= amount;
+            i -= back;
         }
     }
     out

@@ -26,47 +26,6 @@ fn abs_text(r: Rect) -> String {
     )
 }
 
-fn hf_parts(text: &str) -> ([String; 3], Vec<char>) {
-    let chars: Vec<char> = text.chars().collect();
-    let marker = |i: usize, k: char| {
-        chars.get(i) == Some(&'&') && chars.get(i + 1).is_some_and(|c| c.eq_ignore_ascii_case(&k))
-    };
-    let at = |k: char| (0..chars.len()).find(|i| marker(*i, k));
-    let any = |i: usize| ['L', 'C', 'R'].iter().any(|k| marker(i, *k));
-    let mut parts = [String::new(), String::new(), String::new()];
-    let found = [at('L'), at('C'), at('R')];
-    for (slot, pos) in parts.iter_mut().zip(found) {
-        if let Some(p) = pos {
-            let start = p + 2;
-            let end = (start + 1..chars.len())
-                .find(|i| any(*i))
-                .unwrap_or(chars.len());
-            *slot = chars[start.min(chars.len())..end.max(start.min(chars.len()))]
-                .iter()
-                .collect();
-        }
-    }
-
-    let mut at = [(0, 'L'), (0, 'C'), (0, 'R')];
-    for (i, pos) in found.iter().enumerate() {
-        at[i].0 = pos.map_or(usize::MAX, |p| p + 1);
-    }
-    if found[1].is_none() {
-        let first = found.iter().flatten().min().copied().unwrap_or(chars.len());
-        parts[1] = chars[..first].iter().collect();
-        at[1].0 = 0;
-    }
-    at.sort();
-    let order = at
-        .iter()
-        .filter(|(pos, k)| {
-            *pos != usize::MAX && !parts[usize::from(*k != 'L') + usize::from(*k == 'R')].is_empty()
-        })
-        .map(|(_, k)| *k)
-        .collect();
-    (parts, order)
-}
-
 impl AppEnv<'_, '_> {
     fn hf_text(a: &A) -> Option<String> {
         match a {
@@ -78,33 +37,7 @@ impl AppEnv<'_, '_> {
     }
 
     fn put_hf(p: &mut PageSetup, footer: bool, text: &str) {
-        let ([l, c, r], new_order) = hf_parts(text);
-        let (order, raw, parts) = if footer {
-            (
-                &mut p.footer_order,
-                &mut p.footer_raw,
-                [
-                    &mut p.left_footer,
-                    &mut p.center_footer,
-                    &mut p.right_footer,
-                ],
-            )
-        } else {
-            (
-                &mut p.header_order,
-                &mut p.header_raw,
-                [
-                    &mut p.left_header,
-                    &mut p.center_header,
-                    &mut p.right_header,
-                ],
-            )
-        };
-        *raw = Some(text.to_string());
-        *order = new_order;
-        for (slot, new) in parts.into_iter().zip([l, c, r]) {
-            *slot = new;
-        }
+        *(if footer { &mut p.footer } else { &mut p.header }) = text.to_string();
     }
 
     fn page_setup_cmd(&mut self, args: &[Operand]) -> Result<Value, XlmError> {

@@ -77,6 +77,8 @@ pub enum Node {
     Spill(Box<Node>),
     Binary(BinOp, Box<Node>, Box<Node>),
     Paren(Box<Node>),
+
+    MemErr(XlError, Box<Node>),
     Func {
         id: FuncId,
         args: Vec<Node>,
@@ -152,6 +154,7 @@ impl Node {
             Node::Spill(x) => Node::Spill(x.clone()),
             Node::Binary(op, a, b) => Node::Binary(*op, a.clone(), b.clone()),
             Node::Paren(x) => Node::Paren(x.clone()),
+            Node::MemErr(e, x) => Node::MemErr(*e, x.clone()),
             Node::Func { id, args } => Node::Func {
                 id: *id,
                 args: args.clone(),
@@ -220,6 +223,32 @@ pub struct Formula {
     pub root: Node,
 
     pub volatile: bool,
+
+    pub dynamic: DynFlag,
+}
+
+#[derive(Debug, Default)]
+pub struct DynFlag(std::sync::atomic::AtomicU8);
+
+impl DynFlag {
+    pub(crate) fn get(&self) -> Option<bool> {
+        match self.0.load(std::sync::atomic::Ordering::Relaxed) {
+            0 => None,
+            v => Some(v == 2),
+        }
+    }
+    pub(crate) fn set(&self, v: bool) {
+        self.0
+            .store(if v { 2 } else { 1 }, std::sync::atomic::Ordering::Relaxed);
+    }
+}
+
+impl Clone for DynFlag {
+    fn clone(&self) -> Self {
+        Self(std::sync::atomic::AtomicU8::new(
+            self.0.load(std::sync::atomic::Ordering::Relaxed),
+        ))
+    }
 }
 
 pub trait SheetResolver {
@@ -304,6 +333,7 @@ pub fn compile(expr: &Expr, cx: &CompileCtx) -> Result<Formula, CompileError> {
     Ok(Formula {
         root,
         volatile: c.volatile,
+        dynamic: DynFlag::default(),
     })
 }
 
@@ -845,7 +875,7 @@ impl<'a> Compiler<'a> {
         let up = bare.to_uppercase();
         match up.as_str() {
             "LET" => {
-                if args.len() < 3 || args.len().is_multiple_of(2) {
+                if args.len() < 3 || args.len().is_multiple_of(2) || args.len() > 254 {
                     return Err(CompileError(
                         "LET needs name/value pairs and a calculation".into(),
                     ));
@@ -979,7 +1009,12 @@ impl<'a> Compiler<'a> {
         match functions::lookup(&up).filter(|_| !block_if && !shadowed) {
             Some(id) => {
                 let def = functions::def(id);
-                if args.len() < def.min_args as usize || args.len() > def.max_args as usize {
+
+                let count_ok = match crate::legacy_single::ftab(&stripped_up) {
+                    Some(f) if up != "IF" => crate::legacy_single::argc_ok(f, args.len()),
+                    _ => args.len() >= def.min_args as usize && args.len() <= def.max_args as usize,
+                };
+                if !count_ok {
                     return Err(CompileError(format!(
                         "{} takes {} argument(s)",
                         def.name,
@@ -1004,7 +1039,7 @@ impl<'a> Compiler<'a> {
                 if let Some(check) = def.check {
                     check(args).map_err(|m| CompileError(format!("{}: {m}", def.name)))?;
                 }
-                if def.volatile {
+                if def.volatile() {
                     self.volatile = true;
                 }
                 let mut nodes = self.nodes(args)?;
@@ -1076,6 +1111,20 @@ fn cell_name(row: u32, col: u32) -> String {
     format!("{}{}", crate::address::col_to_letters(col), row + 1)
 }
 
+pub fn name_ch_xls(c: char, first: bool) -> bool {
+    if c.is_ascii() {
+        c.is_ascii_alphabetic()
+            || matches!(c, '_' | '\\')
+            || (!first && (c.is_ascii_digit() || matches!(c, '.' | '?')))
+    } else if c as u32 > 0xFFFF || c.is_alphabetic() {
+        true
+    } else {
+        !first
+            && (crate::coerce::national_digit(c).is_some()
+                || (!c.is_numeric() && crate::parser::namech::name_char(c, false)))
+    }
+}
+
 fn relaxed_param_name(n: &str) -> bool {
     let mut chars = n.chars();
     let Some(first) = chars.next() else {
@@ -1130,6 +1179,7 @@ fn map_node_inner(node: &Node, f: &mut dyn FnMut(&Node) -> Option<Node>) -> Node
         Node::Percent(x) => Node::Percent(Box::new(m(x))),
         Node::Spill(x) => Node::Spill(Box::new(m(x))),
         Node::Paren(x) => Node::Paren(Box::new(m(x))),
+        Node::MemErr(e, x) => Node::MemErr(*e, Box::new(m(x))),
         Node::Binary(op, a, b) => Node::Binary(*op, Box::new(m(a)), Box::new(m(b))),
         Node::Func { id, args } => Node::Func {
             id: *id,
@@ -1174,6 +1224,29 @@ fn map_node_inner(node: &Node, f: &mut dyn FnMut(&Node) -> Option<Node>) -> Node
     }
 }
 
+pub(crate) fn wrap_mem_errors(root: &Node, errors: &[(usize, XlError)]) -> Node {
+    fn rec(node: &Node, seen: &mut usize, errors: &[(usize, XlError)]) -> Node {
+        map_node(node, &mut |n| {
+            let Node::Binary(op, a, b) = n else {
+                return None;
+            };
+            let a = rec(a, seen, errors);
+            let b = rec(b, seen, errors);
+            let out = Node::Binary(*op, Box::new(a), Box::new(b));
+            if !matches!(op, BinOp::Range | BinOp::Intersect | BinOp::Union) {
+                return Some(out);
+            }
+            let at = *seen;
+            *seen += 1;
+            Some(match errors.iter().find(|e| e.0 == at) {
+                Some(&(_, error)) => Node::MemErr(error, Box::new(out)),
+                None => out,
+            })
+        })
+    }
+    rec(root, &mut 0, errors)
+}
+
 pub fn walk<'n>(node: &'n Node, f: &mut dyn FnMut(&'n Node)) {
     crate::deep(|| walk_inner(node, f))
 }
@@ -1181,7 +1254,11 @@ pub fn walk<'n>(node: &'n Node, f: &mut dyn FnMut(&'n Node)) {
 fn walk_inner<'n>(node: &'n Node, f: &mut dyn FnMut(&'n Node)) {
     f(node);
     match node {
-        Node::Unary(_, x) | Node::Percent(x) | Node::Spill(x) | Node::Paren(x) => walk(x, f),
+        Node::Unary(_, x)
+        | Node::Percent(x)
+        | Node::Spill(x)
+        | Node::Paren(x)
+        | Node::MemErr(_, x) => walk(x, f),
         Node::Ws { node, .. } => walk(node, f),
         Node::Binary(_, a, b) => {
             walk(a, f);
@@ -1218,9 +1295,11 @@ impl Drop for Node {
                 todo.push(std::mem::replace(x, Node::Missing));
             }
             match n {
-                Node::Unary(_, x) | Node::Percent(x) | Node::Spill(x) | Node::Paren(x) => {
-                    take(todo, x)
-                }
+                Node::Unary(_, x)
+                | Node::Percent(x)
+                | Node::Spill(x)
+                | Node::Paren(x)
+                | Node::MemErr(_, x) => take(todo, x),
                 Node::Binary(_, a, b) => {
                     take(todo, a);
                     take(todo, b);
@@ -1258,5 +1337,19 @@ mod param_name_tests {
         assert!(!r1_style("rc") && !r1_style("r1c1") && !r1_style("R1C"));
         assert!(relaxed_param_name("C0") && relaxed_param_name("c"));
         assert!(!relaxed_param_name("R1"));
+    }
+}
+
+#[cfg(test)]
+mod name_ch_xls_tests {
+    use super::name_ch_xls;
+
+    #[test]
+    fn first_character_rules() {
+        assert!(name_ch_xls('a', true) && name_ch_xls('_', true) && name_ch_xls('\\', true));
+        assert!(name_ch_xls('é', true));
+        assert!(!name_ch_xls('1', true) && !name_ch_xls('.', true) && !name_ch_xls('?', true));
+        assert!(name_ch_xls('1', false) && name_ch_xls('.', false) && name_ch_xls('?', false));
+        assert!(!name_ch_xls('²', false) && !name_ch_xls(' ', false));
     }
 }

@@ -23,7 +23,7 @@ fn numbers_of(ctx: &mut EvalCtx, op: &Operand) -> R<Vec<f64>> {
         Operand::Val(Value::Array(a)) => a.data.iter().map(|v| element_number(ctx, v)).collect(),
         Operand::Val(v) => Ok(vec![ctx.to_number(v)?]),
         Operand::Ref(_) => {
-            let src = Src::from_operand_3d(op)?;
+            let src = Src::from_operand(op)?;
             let a = src.to_array(ctx)?;
             if a.len() == 1 {
                 return Ok(vec![ctx.to_number(&a.data[0])?]);
@@ -108,7 +108,7 @@ pub fn sort(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 fn sort_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
-        let src = Src::from_operand_3d(&ops[0])?;
+        let src = Src::from_operand(&ops[0])?;
         if matches!(&src, Src::Area(a) if a.rect.is_cell()) {
             if let Value::Error(e) = ctx.deref(ops[0].clone()) {
                 return Err(e);
@@ -269,7 +269,7 @@ pub fn sortby(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     let orders: Vec<usize> = (2..ops.len()).step_by(2).collect();
 
     let multi_key = ops.len() > 3
-        && Src::from_operand_3d(&ops[1])
+        && Src::from_operand(&ops[1])
             .and_then(|k| k.to_array(ctx))
             .is_ok_and(|k| k.len() > 1);
     let later = if multi_key {
@@ -285,7 +285,7 @@ pub fn sortby(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
 
 fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
-        let src = Src::from_operand_3d(&ops[0])?;
+        let src = Src::from_operand(&ops[0])?;
         let a = src.to_array(ctx)?;
 
         if let (Src::Area(_), 1, Value::Error(e)) = (&src, a.len(), &a.data[0]) {
@@ -295,7 +295,7 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
         let mut read: Vec<(Arc<Array>, f64)> = Vec::new();
         let mut i = 1;
         while i < ops.len() {
-            let by = Src::from_operand_3d(&ops[i])?.to_array(ctx)?;
+            let by = Src::from_operand(&ops[i])?.to_array(ctx)?;
 
             if let (Operand::Ref(_), 1, Value::Error(e)) = (&ops[i], by.len(), &by.data[0]) {
                 return Err(*e);
@@ -306,7 +306,7 @@ fn sortby_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
                 Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
                 Some(Operand::Val(v)) => ctx.to_number(v)?,
                 Some(op @ Operand::Ref(_)) => {
-                    let v = Src::from_operand_3d(op)?.to_array(ctx)?;
+                    let v = Src::from_operand(op)?.to_array(ctx)?;
                     if v.len() != 1 {
                         return Err(XlError::VALUE);
                     }
@@ -495,7 +495,7 @@ fn unique_refs(ctx: &mut EvalCtx, g: &crate::eval::RefGrid, ops: &[Operand]) -> 
 
 fn unique_one(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
-        let src = Src::from_operand_3d(&ops[0])?;
+        let src = Src::from_operand(&ops[0])?;
 
         if matches!(&src, Src::Area(a) if a.rect.is_cell()) {
             if let Value::Error(e) = ctx.deref(ops[0].clone()) {
@@ -764,7 +764,7 @@ pub fn choose_lines(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
                     let v = ctx.deref(op.clone());
                     Idx::One(ctx.to_number(&v)?)
                 }
-                Operand::Ref(_) => Idx::Many(Src::from_operand_3d(op)?.to_array(ctx)?),
+                Operand::Ref(_) => Idx::Many(Src::from_operand(op)?.to_array(ctx)?),
             });
         }
         let pick = |k: f64| -> R<u32> {
@@ -824,10 +824,9 @@ fn pad_value(ctx: &mut EvalCtx, op: Option<&Operand>, omitted: Value) -> R<Value
         Some(Operand::Val(Value::Array(_))) => return Err(XlError::VALUE),
         Some(Operand::Val(v)) => v.clone(),
 
-        Some(Operand::Ref(r)) if r.is_span() && r.single().is_none() => Value::Error(XlError::REF),
         Some(Operand::Ref(r)) if r.single().is_none() => Value::Error(XlError::VALUE),
         Some(op @ Operand::Ref(_)) => {
-            let a = Src::from_operand_3d(op)?.to_array(ctx)?;
+            let a = Src::from_operand(op)?.to_array(ctx)?;
             if a.len() != 1 {
                 return Err(XlError::VALUE);
             }
@@ -838,7 +837,7 @@ fn pad_value(ctx: &mut EvalCtx, op: Option<&Operand>, omitted: Value) -> R<Value
 
 pub fn expand(ctx: &mut EvalCtx, ops: &[Operand]) -> Operand {
     finish((|| {
-        let src = Src::from_operand_3d(&ops[0])?;
+        let src = Src::from_operand(&ops[0])?;
         let (sr, sc) = (src.rows(), src.cols());
         let dim = |ctx: &EvalCtx, i: usize, cur: u32| -> R<u64> {
             match opt_number(ctx, ops.get(i))? {
@@ -1000,7 +999,7 @@ pub fn wrap(ctx: &mut EvalCtx, ops: &[Operand], rows: bool) -> Operand {
             }
         }
         arg_error_typed(ctx, &ops[1..2], "n")?;
-        let src = Src::from_operand_3d(&ops[0])?;
+        let src = Src::from_operand(&ops[0])?;
         if src.rows() > 1 && src.cols() > 1 {
             return Err(XlError::VALUE);
         }

@@ -1,17 +1,17 @@
 use std::cmp::Ordering;
 
 use super::args::*;
-use super::{args, checked, lazy, scalar, FnDef, MANY, MANY254};
+use super::{args, lazy, scalar, FnDef, MANY, MANY254};
 use crate::coerce;
+use crate::eval::call::{hands_on, lifted_branch};
 use crate::eval::ops::compare;
 use crate::eval::{EvalCtx, Operand};
 use crate::formula::Node;
-use crate::parser::ast::Expr;
 use crate::value::{Array, Value, XlError};
 
 pub const DEFS: &[FnDef] = &[
     lazy("IF", 2, 3, if_fn),
-    checked(lazy("IFS", 2, MANY, ifs), ifs_pairs),
+    lazy("IFS", 2, MANY254, ifs),
     lazy("IFERROR", 2, 2, |c, a| iferror(c, a, |_| true)),
     lazy("IFNA", 2, 2, |c, a| iferror(c, a, |e| e == XlError::NA)),
     lazy("SWITCH", 3, MANY254, switch),
@@ -77,38 +77,34 @@ fn if_fn(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
             let any_false = a.data.iter().any(|v| coerce::to_bool(v) == Ok(false));
             let t = if any_true {
                 let o = branch(ctx, args, 1, Value::Bool(false));
-
-                if matches!(&o, Operand::Ref(r) if r.is_span()) {
-                    return Operand::err(XlError::VALUE);
-                }
-                o
+                lifted_branch(ctx, o)
             } else {
                 let o = branch(ctx, args, 1, Value::Blank);
                 match ctx.deref(o) {
-                    Value::Array(a) => Operand::Val(
-                        Array::new(a.rows, a.cols, vec![Value::Blank; a.data.len()]).into_value(),
-                    ),
-                    _ => Operand::Val(Value::Blank),
+                    Value::Array(a) => {
+                        Array::new(a.rows, a.cols, vec![Value::Blank; a.data.len()]).into_value()
+                    }
+                    _ => Value::Blank,
                 }
             };
-            let t = ctx.deref(t);
             let f = if any_false {
                 let o = branch(ctx, args, 2, Value::Bool(false));
-
-                if matches!(&o, Operand::Ref(r) if r.is_span()) {
-                    return Operand::err(XlError::VALUE);
-                }
-                o
+                lifted_branch(ctx, o)
             } else {
                 let o = branch(ctx, args, 2, Value::Blank);
                 match ctx.deref(o) {
-                    Value::Array(a) => Operand::Val(
-                        Array::new(a.rows, a.cols, vec![Value::Blank; a.data.len()]).into_value(),
-                    ),
-                    _ => Operand::Val(Value::Blank),
+                    Value::Array(a) => {
+                        Array::new(a.rows, a.cols, vec![Value::Blank; a.data.len()]).into_value()
+                    }
+                    _ => Value::Blank,
                 }
             };
-            let f = ctx.deref(f);
+            let shapes = [dims_of(&t), dims_of(&f)];
+            let rows = shapes.iter().fold(a.rows, |n, d| n.max(d.0));
+            let cols = shapes.iter().fold(a.cols, |n, d| n.max(d.1));
+            if ctx.shape_too_big(rows, cols) {
+                return Operand::err(XlError::NUM);
+            }
             Operand::Val(select3(&a, &t, &f))
         }
         v => match coerce::to_bool(&v) {
@@ -116,14 +112,6 @@ fn if_fn(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
             Ok(false) => branch_blank(ctx, args, 2),
             Err(e) => Operand::err(e),
         },
-    }
-}
-
-fn ifs_pairs(a: &[Expr]) -> Result<(), &'static str> {
-    if a.len().is_multiple_of(2) {
-        Ok(())
-    } else {
-        Err("needs condition/value pairs")
     }
 }
 
@@ -174,7 +162,7 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
                     if lifted.is_empty() {
                         return o;
                     }
-                    tail = Some(ctx.deref(o));
+                    tail = Some(lifted_branch(ctx, o));
                     stop = pi + 1;
                     break;
                 }
@@ -193,7 +181,7 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
             },
         }
         let v = branch(ctx, pair, 1, Value::Number(0.0));
-        let v = ctx.deref(v);
+        let v = lifted_branch(ctx, v);
         lifted.push((c, v));
     }
     if lifted.is_empty() {
@@ -219,6 +207,9 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
         rows = rows.max(r);
         cols = cols.max(k);
     }
+    if ctx.shape_too_big(rows, cols) {
+        return Operand::err(XlError::NUM);
+    }
     Operand::Val(
         Array::from_fn(rows, cols, |r, c| {
             for (cv, vv) in &lifted {
@@ -240,7 +231,15 @@ fn ifs(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
 
 fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Operand {
     let catches = |e: XlError| e != XlError::CIRC && catches(e);
+
+    let handed = args.first().is_some_and(hands_on);
+    let saved_ref = ctx.consumed_by_ref;
+    ctx.consumed_by_ref |= handed;
     let v = branch(ctx, args, 0, Value::Number(0.0));
+    ctx.consumed_by_ref = saved_ref;
+    if handed && matches!(&v, Operand::Ref(r) if r.is_span()) {
+        return v;
+    }
     let v = ctx.deref(v);
     match v {
         Value::Error(e) if catches(e) => {
@@ -249,8 +248,12 @@ fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Op
                 return alt;
             }
 
-            let at = ctx.legacy_form || ctx.at_call == Some(ctx.fn_depth);
+            let at = ctx.at_call == Some(ctx.fn_depth);
             if let (true, Operand::Ref(crate::eval::Reference::Area(_))) = (at, &alt) {
+                return alt;
+            }
+
+            if matches!(&alt, Operand::Ref(r) if r.is_span()) {
                 return alt;
             }
             let alt = ctx.deref(alt);
@@ -266,7 +269,7 @@ fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Op
                 ctx.observed.spill_masked = true;
             }
             let alt = branch(ctx, args, 1, Value::Number(0.0));
-            let alt = ctx.deref(alt);
+            let alt = lifted_branch(ctx, alt);
             let alt_get = |r: u32, c: u32| match &alt {
                 Value::Array(b) => match b.broadcast_get(r, c) {
                     Value::Blank => Value::Number(0.0),
@@ -279,6 +282,9 @@ fn iferror(ctx: &mut EvalCtx, args: &[Node], catches: fn(XlError) -> bool) -> Op
                 Value::Array(b) => (a.rows.max(b.rows), a.cols.max(b.cols)),
                 _ => (a.rows, a.cols),
             };
+            if ctx.shape_too_big(rows, cols) {
+                return Operand::err(XlError::NUM);
+            }
             Operand::Val(
                 Array::from_fn(rows, cols, |r, c| match a.broadcast_get(r, c) {
                     Value::Error(e) if catches(e) => alt_get(r, c),
@@ -339,13 +345,13 @@ fn switch(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
             if lifted.is_empty() {
                 return o;
             }
-            tail = Some(ctx.deref(o));
+            tail = Some(lifted_branch(ctx, o));
             matched = true;
             stop = i + 1;
             break;
         }
         let r = branch(ctx, rest, 2 * i + 1, Value::Number(0.0));
-        let r = ctx.deref(r);
+        let r = lifted_branch(ctx, r);
         lifted.push((v, r));
     }
     if !lifted.is_empty() {
@@ -368,7 +374,7 @@ fn switch(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
     }
     if !matched && has_default {
         let o = branch(ctx, rest, rest.len() - 1, Value::Number(0.0));
-        tail = Some(ctx.deref(o));
+        tail = Some(lifted_branch(ctx, o));
     }
     let (mut rows, mut cols) = dims_of(&target);
     for (c, v) in &lifted {
@@ -382,6 +388,9 @@ fn switch(ctx: &mut EvalCtx, args: &[Node]) -> Operand {
         let (r, k) = dims_of(t);
         rows = rows.max(r);
         cols = cols.max(k);
+    }
+    if ctx.shape_too_big(rows, cols) {
+        return Operand::err(XlError::NUM);
     }
     Operand::Val(
         Array::from_fn(rows, cols, |r, c| {
@@ -414,42 +423,52 @@ enum Fold {
     Xor,
 }
 
+#[derive(Clone, Copy, PartialEq)]
+enum Src {
+    Direct,
+    Array,
+    Cell,
+}
+
 fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
     let mut seen = false;
     let mut trues = 0usize;
     let mut falses = 0usize;
     let mut failure: Option<XlError> = None;
-    let mut take = |v: &Value, direct: bool, failure: &mut Option<XlError>| {
+
+    let mut long_na = false;
+
+    let mut take = |v: &Value, src: Src, decided: &mut bool, failure: &mut Option<XlError>| {
         if failure.is_some() {
             return;
         }
+        let mut count = |b: bool| {
+            seen = true;
+            if b {
+                trues += 1
+            } else {
+                falses += 1
+            }
+            *decided |= match fold {
+                Fold::And => !b,
+                Fold::Or => b,
+                Fold::Xor => false,
+            };
+        };
         match v {
-            Value::Bool(b) => {
-                seen = true;
-                if *b {
-                    trues += 1
-                } else {
-                    falses += 1
-                }
-            }
-            Value::Number(n) => {
-                seen = true;
-                if *n != 0.0 {
-                    trues += 1
-                } else {
-                    falses += 1
-                }
-            }
+            Value::Bool(b) => count(*b),
+            Value::Number(n) => count(*n != 0.0),
             Value::Error(e) => *failure = Some(*e),
 
-            Value::Text(s) if direct => {
+            Value::Text(_) if src != Src::Cell && is_long_text(v) => {
+                if !*decided {
+                    long_na = true;
+                }
+            }
+
+            Value::Text(s) if src == Src::Direct => {
                 if let Ok(b) = coerce::to_bool(&Value::Text(s.clone())) {
-                    seen = true;
-                    if b {
-                        trues += 1
-                    } else {
-                        falses += 1
-                    }
+                    count(b);
                 }
             }
             _ => {}
@@ -462,17 +481,20 @@ fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
         }
     }
     for op in ops {
+        let mut decided = false;
         match op {
-            Operand::Missing => take(&Value::Bool(false), true, &mut failure),
+            Operand::Missing => take(&Value::Bool(false), Src::Direct, &mut decided, &mut failure),
             Operand::Val(Value::Array(a)) => {
                 for v in &a.data {
-                    take(v, false, &mut failure);
+                    take(v, Src::Array, &mut decided, &mut failure);
                 }
             }
-            Operand::Val(v) => take(v, true, &mut failure),
+            Operand::Val(v) => take(v, Src::Direct, &mut decided, &mut failure),
             Operand::Ref(r) => {
                 for area in r.areas() {
-                    ctx.visit_area(area, |_, _, v| take(v, false, &mut failure));
+                    ctx.visit_area(area, |_, _, v| {
+                        take(v, Src::Cell, &mut decided, &mut failure)
+                    });
                 }
             }
         }
@@ -482,6 +504,9 @@ fn logical_fold(ctx: &mut EvalCtx, ops: &[Operand], fold: Fold) -> Operand {
     }
     if let Some(e) = failure {
         return Operand::err(e);
+    }
+    if long_na {
+        return Operand::err(XlError::NA);
     }
     if !seen {
         return Operand::err(XlError::VALUE);

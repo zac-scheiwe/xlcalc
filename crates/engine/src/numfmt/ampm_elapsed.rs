@@ -85,11 +85,15 @@ fn decode(b: &[u8], marked: bool) -> Option<String> {
                 out.push('"');
             }
 
-            0x22 if p + n <= b.len() => out.push_str(if (arg(1), arg(2)) == (Some(1), Some(1)) {
-                "a/p"
-            } else {
-                "am/pm"
-            }),
+            0x22 if p + n <= b.len() => {
+                let text = |from: usize, len: usize| -> String {
+                    (from..from + len)
+                        .filter_map(|k| arg(3 + 2 * k).map(char::from))
+                        .collect()
+                };
+                let (a, z) = (usize::from(arg(1)?), usize::from(arg(2)?));
+                out.push_str(&format!("{}/{}", text(0, a), text(a, z)));
+            }
 
             0x2c if b.len() - p == 3 => {
                 out.push_str("[0]");
@@ -164,7 +168,9 @@ fn build(sec: &str) -> Option<Suns> {
                 .eq_ignore_ascii_case("am/pm")
         {
             let mut b = vec![0x22, 2, 2];
-            b.extend([b'a', 0, b'm', 0, b'p', 0, b'm', 0]);
+            for k in [i, i + 1, i + 3, i + 4] {
+                b.extend([cs[k] as u8, 0]);
+            }
             s.add(0x22, 0, 5, &b);
             i += 5;
             continue;
@@ -416,7 +422,7 @@ fn emit(s: &Suns, rank: Option<u16>) -> Vec<u8> {
 }
 
 pub(super) fn garble_section(sec: &str, marked: bool) -> Option<String> {
-    if !sec.contains("am/pm") || !sec.contains('[') {
+    if !sec.to_ascii_lowercase().contains("am/pm") || !sec.contains('[') {
         return None;
     }
     let mut s = build(sec)?;
@@ -455,7 +461,7 @@ pub(super) fn resolve_items(items: &mut [Item]) -> Option<()> {
             DateTok::ElapsedH(n) => (0x30, 0x300 | w(n)),
             DateTok::ElapsedM(n) => (0x31, 0x700 | w(n)),
             DateTok::ElapsedS(n) => (0x32, 0xb00 | w(n)),
-            DateTok::AmPm | DateTok::AmPmCjk => (0x22, 0),
+            DateTok::AmPm(_) | DateTok::AmPmCjk => (0x22, 0),
             DateTok::EYear(_) | DateTok::Era(_) => (0x38, 0),
             DateTok::Buddhist(_) => (0x1b, 0),
             _ => continue,

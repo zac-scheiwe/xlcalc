@@ -1,7 +1,7 @@
 use crate::rawxml::escape_attr;
 use crate::xml::Node;
 use std::collections::BTreeMap;
-use xlcalc::slicer::{Slicer, SlicerCache};
+use xlcalc::slicer::{Slicer, SlicerCache, DEFAULT_ROW_HEIGHT};
 use xlcalc::{SheetId, Workbook};
 
 pub(crate) const NS: &str = "http://schemas.microsoft.com/office/spreadsheetml/2009/9/main";
@@ -16,8 +16,6 @@ pub(crate) const REL_CACHE: &str =
     "http://schemas.microsoft.com/office/2007/relationships/slicerCache";
 pub(crate) const REL_SLICER: &str = "http://schemas.microsoft.com/office/2007/relationships/slicer";
 pub(crate) const NS_SLE: &str = "http://schemas.microsoft.com/office/drawing/2010/slicer";
-
-const EMU_PT: f64 = 12700.0;
 
 pub(crate) const URI_TL_SHEET: &str = "{7E03D99C-DC04-49d9-9315-930204A7B6E9}";
 pub(crate) const URI_TL_BOOK: &str = "{D0CA8CA8-9F24-4464-BF8E-62219DCF47F9}";
@@ -119,13 +117,10 @@ pub(crate) fn sheet_part(wb: &Workbook, sheet: SheetId) -> Option<String> {
         if !sl.style.is_empty() && sl.style != "SlicerStyleLight1" {
             s.push_str(&format!(" style=\"{}\"", escape_attr(&sl.style)));
         }
-        if !sl.locked {
-            s.push_str(" lockedPosition=\"0\"");
+        if sl.position_locked {
+            s.push_str(" lockedPosition=\"1\"");
         }
-        s.push_str(&format!(
-            " rowHeight=\"{}\"/>",
-            (sl.row_h * EMU_PT).round() as i64
-        ));
+        s.push_str(&format!(" rowHeight=\"{}\"/>", sl.row_h));
     }
     s.push_str("</slicers>");
     Some(s)
@@ -238,8 +233,9 @@ pub(crate) fn cache_part(wb: &Workbook, i: usize, ids: &Ids) -> String {
             ));
             let items = fi.map_or(&[][..], |f| &cache.fields[f].items[..]);
             s.push_str(&format!("<items count=\"{}\">", items.len()));
-            for (k, it) in items.iter().enumerate() {
-                if c.off.iter().any(|o| o.eq_ignore_ascii_case(&it.label)) {
+            for k in 0..items.len() {
+                let name = fi.map(|f| wb.slicer_item_label(c, &cache.fields[f], k));
+                if name.is_some_and(|n| c.off.iter().any(|o| o.eq_ignore_ascii_case(&n))) {
                     s.push_str(&format!("<i x=\"{k}\"/>"));
                 } else {
                     s.push_str(&format!("<i x=\"{k}\" s=\"1\"/>"));
@@ -398,8 +394,25 @@ pub(crate) fn names(wb: &Workbook, old: Option<String>) -> Option<String> {
     (!inner.is_empty()).then(|| format!("<definedNames>{inner}</definedNames>"))
 }
 
-pub(crate) fn frame(name: &str, cnv: &str, x: i64, y: i64, w: i64, h: i64) -> String {
-    frame_of(false, name, cnv, x, y, w, h)
+pub(crate) fn frame(
+    name: &str,
+    cnv: &str,
+    x: i64,
+    y: i64,
+    w: i64,
+    h: i64,
+    position_locked: bool,
+) -> String {
+    let xml = frame_of(false, name, cnv, x, y, w, h);
+    if position_locked {
+        xml.replacen(
+            "<xdr:cNvGraphicFramePr/>",
+            "<xdr:cNvGraphicFramePr><a:graphicFrameLocks noMove=\"1\" noResize=\"1\"/></xdr:cNvGraphicFramePr>",
+            1,
+        )
+    } else {
+        xml
+    }
 }
 
 pub(crate) fn timeline_frame(name: &str, cnv: &str, x: i64, y: i64, w: i64, h: i64) -> String {
@@ -559,9 +572,8 @@ pub(crate) fn read_timelines(root: &Node, sheet: SheetId) -> Vec<(String, Slicer
                         .unwrap_or("TimeSlicerStyleLight1")
                         .to_string(),
                     header: true,
-                    locked: true,
-                    col_w: 130.5,
-                    row_h: 19.833_307_086_614_173,
+                    position_locked: false,
+                    row_h: DEFAULT_ROW_HEIGHT,
                     tv: xlcalc::slicer::TimelineView {
                         level: n.attr("level").and_then(|x| x.parse().ok()).unwrap_or(2),
                         header: flag("showHeader"),
@@ -591,15 +603,15 @@ pub(crate) fn read_slicers(root: &Node, sheet: SheetId) -> Vec<(String, Slicer)>
                     columns: n
                         .attr("columnCount")
                         .and_then(|x| x.parse().ok())
+                        .filter(|c| *c >= 1)
                         .unwrap_or(1),
                     style: n.attr("style").unwrap_or("SlicerStyleLight1").to_string(),
                     header: n.attr("showCaption") != Some("0"),
-                    locked: n.attr("lockedPosition") != Some("0"),
-                    col_w: 130.5,
+                    position_locked: matches!(n.attr("lockedPosition"), Some("1" | "true")),
                     row_h: n
                         .attr("rowHeight")
-                        .and_then(|x| x.parse::<f64>().ok())
-                        .map_or(19.833_307_086_614_173, |e| e / EMU_PT),
+                        .and_then(|x| x.parse::<u32>().ok())
+                        .map_or(DEFAULT_ROW_HEIGHT, i64::from),
                     tv: Default::default(),
                 },
             ))
@@ -614,11 +626,7 @@ pub(crate) fn adopt(
     slicers: &[(usize, Node)],
     table_ids: &[(u32, String)],
     pivots: &[crate::pivot::PivotDef],
-    filters: &[TableValues],
 ) {
-    for (table, col, vals) in filters {
-        wb.table_values_set(table, *col, vals);
-    }
     let mut made: Vec<(String, usize)> = Vec::new();
     for d in defs {
         if let (Some(range), Some(table)) = (d.timeline, &d.pivot) {
@@ -672,11 +680,10 @@ pub(crate) fn adopt(
                         d.off_idx
                             .iter()
                             .filter_map(|x| {
-                                shared
-                                    .kids
-                                    .get(*x)
-                                    .and_then(|k| k.attr("v"))
-                                    .map(str::to_string)
+                                shared.kids.get(*x).and_then(|k| match k.name.as_str() {
+                                    "m" => Some("(blank)".to_string()),
+                                    _ => k.attr("v").map(str::to_string),
+                                })
                             })
                             .collect::<Vec<_>>(),
                     )
@@ -722,26 +729,4 @@ pub(crate) fn adopt(
             }
         }
     }
-}
-
-pub(crate) type TableValues = (String, u32, Vec<Option<String>>);
-
-pub(crate) fn table_values(t: &Node, name: &str) -> Vec<TableValues> {
-    let Some(af) = t.child("autoFilter") else {
-        return Vec::new();
-    };
-    af.children("filterColumn")
-        .filter_map(|fc| {
-            let col = fc.attr("colId")?.parse().ok()?;
-            let f = fc.child("filters")?;
-            let mut vals: Vec<Option<String>> = f
-                .children("filter")
-                .filter_map(|x| x.attr("val").map(|v| Some(v.to_string())))
-                .collect();
-            if f.attr("blank") == Some("1") {
-                vals.push(None);
-            }
-            Some((name.to_string(), col, vals))
-        })
-        .collect()
 }

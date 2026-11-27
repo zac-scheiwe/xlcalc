@@ -1,12 +1,13 @@
 use crate::sheetprot::ProtObject;
-use std::collections::HashMap;
+use std::sync::Arc;
 
 use xlcalc::hyperlink::{normalize_address, split_fragment, Hyperlink};
+use xlcalc::rich::{RichText, Run, RunValue};
 use xlcalc::{CellAddr, Rect, Selection, SheetId, Value};
 use xlcalc_variant::Variant;
 
 use crate::addr::parse_range_text;
-use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef};
+use crate::app::{unsupported, Application, BookId, Mode, Object, RangeRef, Track};
 use crate::conv::Args;
 use crate::error::{OmError, DISP_E_TYPEMISMATCH};
 use crate::objects::edit_error;
@@ -27,37 +28,136 @@ impl CharSpan {
         len: None,
     };
 
-    fn bounds(self, n: usize) -> (usize, usize) {
+    fn bounds(self, text: &[u16]) -> (usize, usize) {
+        let n = text.len();
         let from = usize::try_from(self.start.unwrap_or(1).max(1) - 1).unwrap_or(0);
         let to = self
             .len
             .filter(|l| *l > 0)
             .map_or(n, |l| from + usize::try_from(l).unwrap_or(0))
             .min(n);
-        (from, to)
+        (snap(text, from.min(n)), snap(text, to))
     }
 }
 
-type Run = (usize, usize, Vec<(&'static str, Variant)>);
+fn snap(text: &[u16], i: usize) -> usize {
+    let inside = i > 0
+        && matches!(text.get(i - 1), Some(0xD800..=0xDBFF))
+        && matches!(text.get(i), Some(0xDC00..=0xDFFF));
+    i - usize::from(inside)
+}
 
-type CellKey = (BookId, SheetId, u32, u32);
+fn run_value(runs: &[Run], i: usize, name: &str) -> Option<Variant> {
+    runs.iter()
+        .rev()
+        .filter(|run| run.from <= i && i < run.to)
+        .find_map(|run| run.parts.iter().rev().find(|(k, _)| *k == name))
+        .map(|(_, v)| match v {
+            RunValue::Bool(b) => Variant::Bool(*b),
+            RunValue::Int(n) => Variant::I4(*n),
+            RunValue::Num(n) => Variant::R8(*n),
+            RunValue::Text(t) => Variant::Bstr(t.to_string()),
+        })
+}
 
-type CellRuns = (String, Vec<Run>);
+fn kept_value(v: &Variant) -> Option<RunValue> {
+    Some(match v {
+        Variant::Bool(b) => RunValue::Bool(*b),
+        Variant::I2(n) => RunValue::Int(i32::from(*n)),
+        Variant::I4(n) => RunValue::Int(*n),
+        Variant::R8(n) => RunValue::Num(*n),
+        Variant::Bstr(t) => RunValue::Text(t.to_string().into()),
+        _ => return None,
+    })
+}
 
-#[derive(Default)]
-pub(crate) struct CharRuns(HashMap<CellKey, CellRuns>);
+fn part_names(member: &'static str) -> Vec<&'static str> {
+    match member {
+        "FontStyle" => vec!["Bold", "Italic"],
+        "ColorIndex" | "ThemeColor" => vec!["Color"],
+
+        "Superscript" | "Subscript" => vec!["Superscript", "Subscript"],
+        _ => vec![member],
+    }
+}
 
 impl Application<'_> {
-    fn live_runs(&self, r: &RangeRef) -> Option<(String, Vec<Run>)> {
-        let key = self.cell_key(r)?;
-        let (text, runs) = self.char_runs.0.get(&key)?;
-        (self.characters_source(r).ok()?.as_deref() == Some(text.as_str()))
-            .then(|| (text.clone(), runs.clone()))
+    fn cell_at(&self, r: &RangeRef) -> Option<CellAddr> {
+        let (sheet, rect) = self.resolve(r).ok()?;
+        rect.is_cell()
+            .then(|| CellAddr::new(sheet, rect.r0, rect.c0))
     }
 
-    fn cell_key(&self, r: &RangeRef) -> Option<(BookId, SheetId, u32, u32)> {
-        let (sheet, rect) = self.resolve(r).ok()?;
-        rect.is_cell().then_some((r.book, sheet, rect.r0, rect.c0))
+    fn live_runs(&self, r: &RangeRef) -> Option<(Arc<str>, Vec<Run>)> {
+        let at = self.cell_at(r)?;
+        let rich = self.book(r.book).ok()?.wb.rich_text(at)?;
+
+        (!rich.runs.is_empty()).then(|| (rich.text.clone(), rich.runs.clone()))
+    }
+
+    fn unset_runs(&mut self, r: &RangeRef, member: &'static str) {
+        let Some(at) = self.cell_at(r) else {
+            return;
+        };
+        if let Ok(bk) = self.book_mut(r.book) {
+            let mut names = part_names(member);
+            names.push(member);
+            bk.wb.rich_unset(at, &names);
+        }
+    }
+
+    fn run_cells(&self, areas: &[RangeRef]) -> Vec<RangeRef> {
+        let mut out = Vec::new();
+        for r in areas {
+            let Ok((sheet, rect)) = self.resolve(r) else {
+                continue;
+            };
+            let Ok(bk) = self.book(r.book) else {
+                continue;
+            };
+            out.extend(
+                bk.wb
+                    .rich_cells(sheet, rect)
+                    .into_iter()
+                    .map(|(row, col)| RangeRef {
+                        track: Track::Fixed(sheet, Rect::cell(row, col)),
+                        ..*r
+                    }),
+            );
+        }
+        out
+    }
+
+    pub(crate) fn range_font_member(
+        &mut self,
+        owner: &StyleOwner,
+        areas: &[RangeRef],
+        m: &'static Member,
+        a: &Args,
+    ) -> Result<Variant, OmError> {
+        let cells = self.run_cells(areas);
+        if matches!(m.kind, InvokeKind::Put | InvokeKind::PutRef) {
+            let result = self.font_member(owner, m, a)?;
+            for c in &cells {
+                self.unset_runs(c, m.name);
+            }
+            return Ok(result);
+        }
+        let base = self.font_member(owner, m, a)?;
+        if base == Variant::Null {
+            return Ok(base);
+        }
+        let names = part_names(m.name);
+        for c in cells {
+            let touched = self.live_runs(&c).is_some_and(|(_, runs)| {
+                runs.iter()
+                    .any(|run| run.parts.iter().any(|(n, _)| names.contains(n)))
+            });
+            if touched && self.char_font_member(&c, CharSpan::WHOLE, m, a)? != base {
+                return Ok(Variant::Null);
+            }
+        }
+        Ok(base)
     }
 
     pub(crate) fn char_font_member(
@@ -76,15 +176,10 @@ impl Application<'_> {
                 self.characters_source(r)?
             };
             let text_cell = text.is_some();
-            let (Some(text), Some(member), Some(v), Some(key)) =
-                (text, member, a.put.clone(), self.cell_key(r))
+            let (Some(text), Some(member), Some(v), Some(at)) =
+                (text, member, a.put.clone(), self.cell_at(r))
             else {
-                if let Some((_, runs)) = self.cell_key(r).and_then(|k| self.char_runs.0.get_mut(&k))
-                {
-                    for run in runs.iter_mut() {
-                        run.2.retain(|(n, _)| *n != m.name);
-                    }
-                }
+                self.unset_runs(r, m.name);
 
                 let keep =
                     if span.start.is_some_and(|s| s > 1) && !text_cell && !self.is_blank_cell(r)? {
@@ -109,7 +204,8 @@ impl Application<'_> {
                 }
                 return put;
             };
-            let (from, to) = span.bounds(text.chars().count());
+            let units: Vec<u16> = xlcalc::wide::units(&text).collect();
+            let (from, to) = span.bounds(&units);
             let mut runs = self.live_runs(r).map(|x| x.1).unwrap_or_default();
 
             let parts: Vec<(&'static str, Variant)> = match member {
@@ -133,15 +229,50 @@ impl Application<'_> {
                 }
 
                 "Size" => match v {
+                    Variant::I2(n) => vec![(member, Variant::R8(f64::from(n)))],
                     Variant::I4(n) => vec![(member, Variant::R8(f64::from(n)))],
                     v => vec![(member, v)],
                 },
                 _ => vec![(member, v)],
             };
+            let n = xlcalc::wide::units(&text).count();
             if from < to {
-                runs.push((from, to, parts));
+                let parts = parts
+                    .iter()
+                    .filter_map(|(k, v)| kept_value(v).map(|v| (*k, v)))
+                    .collect();
+                runs.push(Run {
+                    from,
+                    to,
+                    parts,
+                    file: None,
+                });
             }
-            self.char_runs.0.insert(key, (text, runs));
+
+            let whole = !parts.is_empty()
+                && parts.iter().all(|(name, v)| {
+                    (0..n).all(|i| run_value(&runs, i, name).is_some_and(|x| x == *v))
+                });
+            if whole {
+                self.chars_font_put = true;
+                let put = self.font_member(&owner, m, a);
+                self.chars_font_put = false;
+                put?;
+                for run in &mut runs {
+                    run.parts.retain(|(k, _)| !parts.iter().any(|p| p.0 == *k));
+                }
+            }
+            let text = Arc::from(text.as_str());
+            let wb = &mut self.book_mut(r.book)?.wb;
+            let phonetic = wb.rich_text(at).and_then(|x| x.phonetic.clone());
+            wb.rich_set(
+                at,
+                RichText {
+                    text,
+                    runs,
+                    phonetic,
+                },
+            );
             return Ok(Variant::Empty);
         }
 
@@ -168,44 +299,46 @@ impl Application<'_> {
             }
             _ => None,
         };
-        let names: &[&str] = match m.name {
-            "FontStyle" => &["Bold", "Italic"],
-            "ColorIndex" => &["Color"],
-
-            "Superscript" | "Subscript" => &["Superscript", "Subscript"],
-            _ => &[m.name],
-        };
+        let names = part_names(m.name);
         let color_index = m.name == "ColorIndex";
+        let theme = self.book(r.book)?.wb.style_table().theme.clone();
         let base_index = match &base {
             Variant::I4(-4105) => 1,
             Variant::I4(n) => *n,
             _ => 1,
         };
-        let (from, to) = span.bounds(text.chars().count());
+        let units: Vec<u16> = xlcalc::wide::units(&text).collect();
+        let (mut from, mut to) = span.bounds(&units);
         if from >= to {
-            return Ok(base);
+            if units.is_empty() {
+                return Ok(base);
+            }
+
+            from = if from < units.len() {
+                from.saturating_sub(1)
+            } else {
+                0
+            };
+            to = from + 1;
         }
 
         let at = |i: usize| -> Vec<Variant> {
+            let i = i + usize::from(i + 1 < units.len() && snap(&units, i + 1) == i);
             names
                 .iter()
                 .map(|nm| {
-                    let over = runs
-                        .iter()
-                        .rev()
-                        .filter(|run| run.0 <= i && i < run.1)
-                        .find_map(|run| run.2.iter().rev().find(|(k, _)| k == nm).map(|p| &p.1));
+                    let over = run_value(&runs, i, nm);
                     match (over, style_base) {
                         (Some(Variant::R8(c)), _) if color_index => {
-                            let bgr = *c as u32;
+                            let bgr = c as u32;
                             let rgb = ((bgr & 0xFF) << 16) | (bgr & 0xFF00) | ((bgr >> 16) & 0xFF);
-                            Variant::I4(i32::from(xlcalc::style::nearest_color_index(rgb)))
+                            Variant::I4(theme.color_index(rgb))
                         }
                         (None, _) if color_index => Variant::I4(base_index),
                         (None, _) if matches!(*nm, "Superscript" | "Subscript") => {
                             Variant::Bool(false)
                         }
-                        (Some(v), _) => v.clone(),
+                        (Some(v), _) => v,
                         (None, Some((bold, _))) if *nm == "Bold" => Variant::Bool(bold),
                         (None, Some((_, italic))) => Variant::Bool(italic),
                         (None, None) => base.clone(),
@@ -235,6 +368,14 @@ impl Application<'_> {
     }
 
     fn run_color(&mut self, r: &RangeRef, m: &'static Member, a: &Args) -> Result<u32, OmError> {
+        if let (Some(Variant::I4(i)), "ColorIndex") = (a.put.as_ref(), m.name) {
+            if let Some(&rgb) = usize::try_from(i - 1)
+                .ok()
+                .and_then(|k| xlcalc::style::PALETTE.get(k))
+            {
+                return Ok(((rgb & 0xFF) << 16) | (rgb & 0xFF00) | ((rgb >> 16) & 0xFF));
+            }
+        }
         let (sheet, rect) = self.resolve(r)?;
         let at = CellAddr::new(sheet, rect.r0, rect.c0);
         let saved = self.book(r.book)?.wb.cell_style(at).clone();
@@ -334,7 +475,79 @@ impl Application<'_> {
         }
     }
 
+    pub(crate) fn host_text(v: &Variant) -> Variant {
+        match v {
+            Variant::Bool(b) => Variant::Bstr(if *b { "True" } else { "False" }.to_string()),
+            Variant::Date(d) if d.fract() == 0.0 && *d >= 61.0 => {
+                let z = *d as i64 - 25569 + 719_468;
+                let era = z.div_euclid(146_097);
+                let doe = z.rem_euclid(146_097);
+                let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
+                let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+                let mp = (5 * doy + 2) / 153;
+                let day = doy - (153 * mp + 2) / 5 + 1;
+                let month = if mp < 10 { mp + 3 } else { mp - 9 };
+                let year = yoe + era * 400 + i64::from(month <= 2);
+                Variant::Bstr(format!("{day}/{month:02}/{year}"))
+            }
+            v => v.clone(),
+        }
+    }
+
+    fn hyperlink_text_args(a: &Args) -> Result<(), OmError> {
+        for i in 2..=4 {
+            match a.get(i) {
+                None | Some(Variant::Bstr(_) | Variant::BstrNull) => {}
+                Some(v) if crate::conv::is_missing(v) => {}
+                Some(_) => return Err(OmError::exception(0x8007_0057_u32 as i32, None)),
+            }
+        }
+        Ok(())
+    }
+
     fn hyperlinks_add(&mut self, book: BookId, a: &Args) -> Result<Variant, OmError> {
+        Self::hyperlink_text_args(a)?;
+
+        let ranged;
+        let a = match a.get(1) {
+            Some(v @ Variant::Dispatch(Some(_))) => {
+                let (rs, r) = self
+                    .range_arg(Some(v))
+                    .map_err(|_| OmError::arg(DISP_E_TYPEMISMATCH, 0))?;
+                let text = match self.book(book)?.wb.value(CellAddr::new(rs, r.r0, r.c0)) {
+                    Value::Text(t) => t.to_string(),
+                    Value::Number(n) => a.variant_string(&Variant::R8(n))?.unwrap_or_default(),
+                    Value::Blank => String::new(),
+                    _ => return Err(OmError::arg(DISP_E_TYPEMISMATCH, 0)),
+                };
+                let mut values = a.values.clone();
+                values[1] = Some(Variant::Bstr(text));
+                ranged = Args {
+                    values,
+                    put: a.put.clone(),
+                    lcid: a.lcid,
+                };
+                &ranged
+            }
+            _ => a,
+        };
+        if a.get(1).is_none() && matches!(a.get(0), Some(Variant::Dispatch(_))) {
+            return Err(OmError::hresult(crate::error::DISP_E_BADPARAMCOUNT));
+        }
+        let host_args = Args {
+            values: a
+                .values
+                .iter()
+                .enumerate()
+                .map(|(i, v)| match v {
+                    Some(v) if i > 0 => Some(Self::host_text(v)),
+                    v => v.clone(),
+                })
+                .collect(),
+            put: a.put.clone(),
+            lcid: crate::conv::HOST_LCID,
+        };
+        let a = &host_args;
         let shape = match a.get(0) {
             Some(Variant::Dispatch(Some(id))) => match self.arena.get(*id) {
                 Some(Object::Draw(d)) if d.kind == crate::shapes::DrawKind::Shape => {
@@ -345,6 +558,7 @@ impl Application<'_> {
             _ => None,
         };
         if let Some((sb, ss, sid)) = shape {
+            Self::hyperlink_text_args(a)?;
             let raw = a.string(1)?.unwrap_or_default();
             let (mut address, hashed) = normalize_address(&raw);
             let mut sub = a.string(2)?.unwrap_or_default();
@@ -381,11 +595,20 @@ impl Application<'_> {
             return Err(OmError::arg(DISP_E_TYPEMISMATCH, last));
         };
 
+        Self::hyperlink_text_args(a)?;
         let (anchor_book, sheet, rects) = self.range_areas(a.get(0))?;
         for rect in &rects {
             self.object_guard(anchor_book, sheet, ProtObject::Hyperlink, Some(*rect))?;
         }
         let raw = a.string(1)?.unwrap_or_default();
+        if xlcalc::hyperlink::add_refused(
+            &raw,
+            &a.string(2)?.unwrap_or_default(),
+            &a.string(3)?.unwrap_or_default(),
+            &a.string(4)?.unwrap_or_default(),
+        ) {
+            return Err(OmError::exception(0x800A_03EC_u32 as i32, None));
+        }
         let (mut address, hashed) = normalize_address(&raw);
         let mut sub = a.string(2)?.unwrap_or_default();
         if hashed {
@@ -503,6 +726,21 @@ impl Application<'_> {
         a: &Args,
     ) -> Result<Variant, OmError> {
         use InvokeKind::*;
+
+        let host_args;
+        let a = if m.kind == Put {
+            if a.put.as_ref().is_some_and(crate::conv::is_missing) {
+                return Err(OmError::hresult(crate::error::DISP_E_PARAMNOTOPTIONAL));
+            }
+            host_args = Args {
+                values: a.values.clone(),
+                put: a.put.as_ref().map(Self::host_text),
+                lcid: crate::conv::HOST_LCID,
+            };
+            &host_args
+        } else {
+            a
+        };
         let link = self
             .book(book)?
             .wb
@@ -521,7 +759,7 @@ impl Application<'_> {
         let e_fail = || OmError::exception(0x8000_4005_u32 as i32, None);
 
         let too_long = |t: &str| {
-            (t.encode_utf16().count() > 254)
+            (xlcalc::wide::units(t).count() > 254)
                 .then(|| OmError::exception(0x8007_000E_u32 as i32, None))
         };
         let edit = |this: &mut Application, f: &dyn Fn(&mut Hyperlink)| -> Result<(), OmError> {
@@ -593,22 +831,30 @@ impl Application<'_> {
                 })
             }
             ("TextToDisplay", Put) => {
-                if matches!(a.put, None | Some(Variant::Null | Variant::Empty)) {
+                if matches!(a.put, None | Some(Variant::Null)) {
                     return Ok(Variant::Empty);
                 }
-                let mut v = self.put_string(a)?;
-                if v.is_empty() {
-                    v = if link.address.is_empty() {
-                        link.sub_address.clone()
-                    } else {
-                        link.address.clone()
-                    };
+
+                if matches!(a.put, Some(Variant::Empty)) {
+                    let wb = &mut self.book_mut(book)?.wb;
+                    let constant = wb.formula_text(at).is_none();
+                    let again = matches!(wb.value(at), Value::Text(_) | Value::Bool(_));
+                    if let Some(t) = link.display_name().filter(|_| constant && again) {
+                        crate::range::enter_text(wb, at, &t, false, a.lcid)?;
+                    }
+                    return Ok(Variant::Empty);
                 }
-                if v.encode_utf16().count() > 32767 {
-                    return Err(OmError::exception(
-                        0x8007_0057_u32 as i32,
-                        Some("Value does not fall within the expected range."),
-                    ));
+                let mut v = self.put_string_alpha(a)?;
+
+                if v.is_empty() {
+                    if !link.address.is_empty() {
+                        return Ok(Variant::Empty);
+                    }
+                    v = link.sub_address.clone();
+                }
+
+                if xlcalc::wide::units(&v).count() > 0x824 {
+                    return Err(OmError::exception(0x8007_0057_u32 as i32, None));
                 }
                 edit(self, &|h| h.name = Some(v.clone()))?;
 
@@ -711,14 +957,15 @@ impl Application<'_> {
             let Some(s) = &source else {
                 return String::new();
             };
+            let units: Vec<u16> = xlcalc::wide::units(s).collect();
             let from = usize::try_from(span.start.unwrap_or(1).max(1) - 1).unwrap_or(0);
-            let rest = s.chars().skip(from);
-            match span.len {
-                None => rest.collect(),
 
-                Some(n) if n < 0 => rest.collect(),
-                Some(n) => rest.take(usize::try_from(n).unwrap_or(0)).collect(),
-            }
+            let len = span
+                .len
+                .map_or(usize::MAX, |n| usize::try_from(n).unwrap_or(usize::MAX));
+            let to = snap(&units, from.saturating_add(len).min(units.len()));
+            let from = snap(&units, from.min(units.len()));
+            xlcalc::wide::from_units(&units[from..to.max(from)])
         };
         match (m.name, m.kind) {
             ("Text" | "Caption", Get) if !usable => Err(fail(&format!(
@@ -737,13 +984,18 @@ impl Application<'_> {
                     _ => self.put_string(a)?,
                 };
 
-                if t.chars().count() > 255 {
+                if xlcalc::wide::units(&t).count() > 255 {
                     return Err(fail(&format!(
                         "Unable to set the {} property of the Characters class",
                         m.name
                     )));
                 }
-                self.characters_replace(r, span, source.as_deref().unwrap_or(""), &t)?;
+
+                let old = source.as_deref().unwrap_or("");
+                if xlcalc::wide::units(&characters_spliced(old, span, &t)).count() > 255 {
+                    return Ok(Variant::Empty);
+                }
+                self.characters_replace(r, span, old, &t)?;
                 Ok(Variant::Empty)
             }
             ("Insert", Func) => {
@@ -755,16 +1007,29 @@ impl Application<'_> {
                 self.characters_replace(r, span, source.as_deref().unwrap_or(""), "")?;
                 Ok(Variant::Null)
             }
-            ("Text" | "Caption", Get) => Ok(Variant::Bstr(text())),
 
-            ("Count", Get) => Ok(match (span.start, span.len, &source) {
-                (Some(start), Some(len), _) if len != 0 => Variant::I4(start),
-                (_, _, Some(s)) => {
-                    Variant::I4(i32::try_from(s.chars().count()).unwrap_or(i32::MAX))
+            ("Text" | "Caption", Get) => {
+                let t = text();
+                if xlcalc::wide::units(&t).count() > 256 {
+                    return Err(fail(&format!(
+                        "Unable to get the {} property of the Characters class",
+                        m.name
+                    )));
                 }
-                _ if self.is_blank_cell(r)? => Variant::I4(0),
-                _ => Variant::Empty,
-            }),
+                Ok(Variant::Bstr(t))
+            }
+
+            ("Count", Get) => match (span.start, span.len, &source) {
+                (Some(start), Some(len), _) if len > 0 => Ok(Variant::I4(start)),
+                (_, len, _) if !usable && len.is_none_or(|n| n <= 0) => Err(fail(
+                    "Unable to get the Count property of the Characters class",
+                )),
+                (_, _, Some(s)) => Ok(Variant::I4(
+                    i32::try_from(xlcalc::wide::units(s).count()).unwrap_or(i32::MAX),
+                )),
+                _ if self.is_blank_cell(r)? => Ok(Variant::I4(0)),
+                _ => Ok(Variant::Empty),
+            },
 
             ("PhoneticCharacters", Get) => Ok(Variant::BstrNull),
             ("PhoneticCharacters", Put | PutRef) => Ok(Variant::Empty),
@@ -784,17 +1049,7 @@ impl Application<'_> {
         new: &str,
     ) -> Result<(), OmError> {
         let (sheet, rect) = self.resolve(r)?;
-        let chars: Vec<char> = old.chars().collect();
-        let from = usize::try_from(span.start.unwrap_or(1).max(1) - 1)
-            .unwrap_or(0)
-            .min(chars.len());
-        let to = match span.len {
-            None => chars.len(),
-            Some(n) => (from + usize::try_from(n).unwrap_or(0)).min(chars.len()),
-        };
-        let mut out: String = chars[..from].iter().collect();
-        out.push_str(new);
-        out.extend(&chars[to..]);
+        let out = characters_spliced(old, span, new);
         let at = CellAddr::new(sheet, rect.r0, rect.c0);
         self.book_mut(r.book)?
             .wb
@@ -838,3 +1093,18 @@ const FONT_PARTS: [&str; 14] = [
     "Subscript",
     "Color",
 ];
+
+fn characters_spliced(old: &str, span: CharSpan, new: &str) -> String {
+    let mut out: Vec<u16> = xlcalc::wide::units(old).collect();
+    let n = out.len();
+    let from = usize::try_from(span.start.unwrap_or(1).max(1) - 1)
+        .unwrap_or(0)
+        .min(n);
+    let to = match span.len {
+        None => n,
+        Some(len) => (from + usize::try_from(len).unwrap_or(0)).min(n),
+    };
+    let (from, to) = (snap(&out, from), snap(&out, to));
+    out.splice(from..to, xlcalc::wide::units(new));
+    xlcalc::wide::from_units(&out)
+}

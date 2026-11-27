@@ -1,4 +1,4 @@
-use xlcalc::{Rect, SheetId, TrackId, Workbook};
+use xlcalc::{ColumnId, Rect, SheetId, TableId, TrackId, Workbook};
 use xlcalc_variant::{HResult, ObjectId, Variant};
 
 pub(crate) const INDEX_MISMATCH: &str = "index";
@@ -59,6 +59,8 @@ pub(crate) struct Book<'v> {
 
     pub next_macro: (u32, u32),
 
+    pub next_legacy: (u32, u32),
+
     pub threads: Vec<((SheetId, u32, u32), crate::notesobj::Thread)>,
 
     pub window: crate::window::WindowState,
@@ -98,6 +100,10 @@ pub(crate) struct Book<'v> {
     pub no_remote_refs: bool,
 
     pub ro_recommended: bool,
+
+    pub baselines_valid: std::collections::HashSet<xlcalc::SheetId>,
+
+    pub write_reserved: bool,
 
     pub draw_objects: i32,
 }
@@ -206,20 +212,23 @@ pub(crate) enum Object {
     Areas(Vec<RangeRef>),
     Names(BookId, Option<SheetId>),
 
-    Name(BookId, Option<SheetId>, String),
+    Name(BookId, Option<SheetId>, String, u32),
     ListObjects(BookId, SheetId),
 
-    Table(BookId, String),
-    ListColumns(BookId, String),
-    ListColumn(BookId, String, usize),
+    Table(BookId, TableId, bool),
+    ListColumns(BookId, TableId),
+
+    ListColumn(BookId, TableId, ColumnId, bool),
 
     TableStyle(String),
-    ListRows(BookId, String),
-    ListRow(BookId, String, usize),
+    ListRows(BookId, TableId),
+    ListRow(BookId, TableId, usize),
 
     Enumerator(Vec<Variant>, usize),
 
     Sort(SortOwner),
+
+    TableFilterSort(BookId, TableId),
     SortFields(SortOwner),
 
     SortField(SortOwner, usize),
@@ -228,9 +237,11 @@ pub(crate) enum Object {
 
     AutoFilter(BookId, SheetId, Option<String>),
 
-    Filters(BookId, SheetId),
+    Filters(BookId, SheetId, Option<String>),
 
-    Filter(BookId, SheetId, usize),
+    FilterColor(BookId, SheetId, Option<String>, usize, bool),
+
+    Filter(BookId, SheetId, Option<String>, usize),
 
     WorksheetFunction,
 
@@ -290,7 +301,9 @@ pub(crate) enum Object {
 
     FormatConditions(RangeRef),
 
-    FormatCondition(BookId, SheetId, u32, crate::cfv::CfIface, Rect),
+    FormatConditionsMulti(Vec<RangeRef>),
+
+    FormatCondition(BookId, SheetId, u32, crate::cfv::CfIface, Vec<Rect>),
 
     ScaleCriteria(BookId, SheetId, u32),
 
@@ -338,7 +351,7 @@ pub(crate) enum Object {
 
     AllowEditRanges(BookId, SheetId),
 
-    AllowEditRange(BookId, SheetId, usize),
+    AllowEditRange(BookId, SheetId, i32),
 
     PageSetup(BookId, SheetId),
 
@@ -356,16 +369,7 @@ pub(crate) enum SortOwner {
     Sheet(BookId, SheetId),
 
     Filter(BookId, SheetId),
-    Table(BookId, String),
-}
-
-impl SortOwner {
-    pub(crate) fn key(&self) -> SortOwner {
-        match self {
-            SortOwner::Table(b, n) => SortOwner::Table(*b, n.to_lowercase()),
-            other => other.clone(),
-        }
-    }
+    Table(BookId, TableId),
 }
 
 #[derive(Clone, Debug)]
@@ -458,13 +462,15 @@ impl Object {
             Object::ListRows(..) => "ListRows",
             Object::ListRow(..) => "ListRow",
             Object::Enumerator(..) => "IEnumVARIANT",
-            Object::Sort(_) => "Sort",
+            Object::Sort(_) | Object::TableFilterSort(..) => "Sort",
             Object::SortFields(_) => "SortFields",
             Object::SortField(..) => "SortField",
             Object::SortOnValue(_, _, true) => "Font",
             Object::SortOnValue(_, _, false) => "Interior",
             Object::AutoFilter(..) => "AutoFilter",
             Object::Filters(..) => "Filters",
+            Object::FilterColor(.., true) => "Font",
+            Object::FilterColor(.., false) => "Interior",
             Object::Filter(..) => "Filter",
             Object::WorksheetFunction => "WorksheetFunction",
             Object::MultiThreadedCalculation => "MultiThreadedCalculation",
@@ -500,7 +506,7 @@ impl Object {
             Object::ComAddIns => "COMAddIns",
             Object::ComAddIn(_) => "COMAddIn",
             Object::Draw(d) => d.kind.interface_name(),
-            Object::FormatConditions(_) => "FormatConditions",
+            Object::FormatConditions(_) | Object::FormatConditionsMulti(_) => "FormatConditions",
             Object::FormatCondition(_, _, _, i, _) => i.interface_name(),
             Object::ScaleCriteria(..) => "ColorScaleCriteria",
             Object::ScaleCriterion(..) => "ColorScaleCriterion",
@@ -546,6 +552,8 @@ pub struct Application<'v> {
 
     pub(crate) chars_font_put: bool,
 
+    pub(crate) command_format_put: bool,
+
     pub(crate) emptied: std::collections::HashSet<(BookId, SheetId, u32, u32)>,
 
     pub(crate) find: crate::rangefind::FindState,
@@ -559,6 +567,8 @@ pub struct Application<'v> {
     pub(crate) template_counts: std::collections::HashMap<String, u32>,
 
     pub(crate) shape_ranges: Vec<Vec<u32>>,
+
+    pub(crate) mixed_ranges: Vec<Vec<crate::shapes::RangeItem>>,
 
     pub(crate) custom_props:
         std::collections::HashMap<(BookId, SheetId), Vec<crate::customprops::CustomProp>>,
@@ -587,6 +597,10 @@ pub struct Application<'v> {
 
     pub(crate) wins: Vec<(BookId, u32)>,
 
+    pub(crate) no_top_window: Option<BookId>,
+
+    pub(crate) call_handle: Option<ObjectId>,
+
     pub(crate) cur_win: Vec<(BookId, u32)>,
 
     pub(crate) event_win: Option<(BookId, u32)>,
@@ -600,11 +614,13 @@ pub struct Application<'v> {
     pub(crate) comment_shapes:
         std::collections::HashMap<(BookId, SheetId, u32), crate::commentshape::CShape>,
 
-    pub(crate) char_runs: crate::rangeparts::CharRuns,
     pub(crate) mixed_style_color: std::collections::HashSet<(BookId, std::sync::Arc<str>)>,
 
     pub(crate) style_numfmt_local: std::collections::HashSet<(BookId, std::sync::Arc<str>)>,
+
     pub(crate) style_edge_touched: std::collections::HashSet<(BookId, std::sync::Arc<str>)>,
+
+    pub(crate) cf_edge_touched: std::collections::HashSet<(BookId, SheetId, u32, i32)>,
     pub(crate) display_alerts: bool,
 
     pub(crate) solver_last: Option<crate::solver_solve::LastSolve>,
@@ -623,6 +639,10 @@ pub struct Application<'v> {
 
     pub(crate) clip_more: (Vec<Rect>, bool),
 
+    pub(crate) text_delims: crate::datacmds::TextDelims,
+
+    pub(crate) no_delimiter: bool,
+
     pub(crate) shape_clip: Option<crate::shapes::ShapeClip>,
 
     pub(crate) paste_chain: std::collections::HashMap<(BookId, SheetId, i64, i64), (i64, i64)>,
@@ -630,6 +650,8 @@ pub struct Application<'v> {
     pub(crate) paste_source: Option<(BookId, SheetId, u32)>,
 
     pub(crate) sorts: std::collections::HashMap<SortOwner, SortState>,
+
+    pub(crate) identity: crate::identity::Identity,
     root: ObjectId,
 
     pub(crate) view: Option<crate::vba::ViewState>,
@@ -666,6 +688,8 @@ pub struct Application<'v> {
     pub(crate) rtd: Option<crate::rtdhost::RtdHost>,
 
     pub(crate) ticks: i32,
+
+    pub(crate) vifmt: xlcalc::LastFormat,
 }
 
 impl Default for Application<'_> {
@@ -686,6 +710,7 @@ impl<'v> Application<'v> {
             reserved_numbers: Vec::new(),
             widen_kept: Vec::new(),
             chars_font_put: false,
+            command_format_put: false,
             emptied: Default::default(),
             find: crate::rangefind::FindState::default(),
             moving_group: false,
@@ -693,6 +718,7 @@ impl<'v> Application<'v> {
             expr_call: false,
             template_counts: std::collections::HashMap::new(),
             shape_ranges: Vec::new(),
+            mixed_ranges: Vec::new(),
             custom_props: std::collections::HashMap::new(),
             next_custom: 0,
             range_ids: std::collections::HashMap::new(),
@@ -709,15 +735,17 @@ impl<'v> Application<'v> {
             user_lists: Vec::new(),
             active: None,
             wins: Vec::new(),
+            no_top_window: None,
+            call_handle: None,
             cur_win: Vec::new(),
             event_win: None,
             hold_activation: false,
             chart_add_failed: false,
             fc_poisoned: false,
             comment_shapes: std::collections::HashMap::new(),
-            char_runs: Default::default(),
             mixed_style_color: std::collections::HashSet::new(),
             style_edge_touched: std::collections::HashSet::new(),
+            cf_edge_touched: std::collections::HashSet::new(),
             style_numfmt_local: std::collections::HashSet::new(),
             display_alerts: true,
             solver_last: None,
@@ -730,10 +758,13 @@ impl<'v> Application<'v> {
             clip: None,
             clip_cut: false,
             clip_more: (Vec::new(), true),
+            text_delims: Default::default(),
+            no_delimiter: false,
             shape_clip: None,
             paste_chain: std::collections::HashMap::new(),
             paste_source: None,
             sorts: std::collections::HashMap::new(),
+            identity: Default::default(),
             root,
             view: None,
             running: None,
@@ -754,6 +785,7 @@ impl<'v> Application<'v> {
             #[cfg(windows)]
             rtd: None,
             ticks: 1_000_000,
+            vifmt: Default::default(),
         }
     }
 
@@ -770,6 +802,14 @@ impl<'v> Application<'v> {
         self.push_book_wb(BookWb::Own(Box::new(wb)), name, path)
     }
 
+    pub(crate) fn share_custom_lists(&mut self) {
+        for b in &mut self.books {
+            if let BookWb::Own(wb) = &mut b.wb {
+                wb.set_custom_lists(self.user_lists.clone());
+            }
+        }
+    }
+
     pub(crate) fn push_book_wb(
         &mut self,
         mut wb: BookWb<'v>,
@@ -778,10 +818,17 @@ impl<'v> Application<'v> {
     ) -> BookId {
         if let BookWb::Own(w) = &mut wb {
             w.set_book_name(&name);
+
+            w.share_last_format(&self.vifmt);
         }
         #[cfg(windows)]
         if let (Some(h), BookWb::Own(w)) = (&self.rtd, &mut wb) {
             w.set_rtd_source(Some(std::sync::Arc::new(h.clone())));
+        }
+
+        if let BookWb::Own(w) = &mut wb {
+            w.set_custom_lists(self.user_lists.clone());
+            w.slicer_reload_all();
         }
         let id = BookId(self.next_book);
         self.next_book += 1;
@@ -800,6 +847,7 @@ impl<'v> Application<'v> {
             next_sheet,
             next_chart: 1,
             next_macro: (1, 1),
+            next_legacy: (1, 1),
             threads: Vec::new(),
             window: Default::default(),
             consolidate: Default::default(),
@@ -815,6 +863,8 @@ impl<'v> Application<'v> {
             no_link_values: false,
             no_remote_refs: false,
             ro_recommended: false,
+            baselines_valid: std::collections::HashSet::new(),
+            write_reserved: false,
             draw_objects: -4104,
             package: None,
             read_only: false,
@@ -834,6 +884,8 @@ impl<'v> Application<'v> {
             .map(|b| &mut b.wb)
         {
             std::mem::swap(&mut **own, wb);
+
+            own.adopt_last_format(&self.vifmt);
         }
     }
 
@@ -953,6 +1005,7 @@ impl<'v> Application<'v> {
         if id == self.root {
             return;
         }
+        self.identity.forget(id);
         if let Some(pin) = self.pins.remove(&id) {
             if !self.pins.values().any(|p| *p == pin) {
                 if let Ok(b) = self.book_mut(pin.0) {
@@ -1078,16 +1131,6 @@ impl<'v> Application<'v> {
                     while matches!(values.last(), Some(None)) {
                         values.pop();
                     }
-                    let needed = m
-                        .params
-                        .iter()
-                        .rposition(|p| matches!(p.opt, Opt::Required))
-                        .map_or(0, |i| i + 1);
-                    if values.len() < needed {
-                        let mut e = OmError::app_defined_with("Invalid number of arguments.");
-                        e.error_info = true;
-                        return Err(e);
-                    }
                     for v in &mut values {
                         v.get_or_insert(Variant::Empty);
                     }
@@ -1110,6 +1153,34 @@ impl<'v> Application<'v> {
     }
 
     pub fn invoke_dispid(
+        &mut self,
+        handle: ObjectId,
+        dispid: i32,
+        call: Call,
+        positional: &[Variant],
+        named: &[(i32, Variant)],
+    ) -> Result<Variant, OmError> {
+        let member = self.interface_of(handle).ok().and_then(|(_, iface)| {
+            iface
+                .members
+                .iter()
+                .find(|m| m.dispid == dispid)
+                .map(|m| m.name)
+        });
+        let get = call.flags & (flags::PUT | flags::PUTREF) == 0;
+        if member == Some("Parent") && get && positional.is_empty() && named.is_empty() {
+            if let Some(owner) = self.part_parent(handle) {
+                return Ok(owner);
+            }
+        }
+        let result = self.dispatch_dispid(handle, dispid, call, positional, named)?;
+        if let Some(member) = member {
+            self.note_part(handle, member, &result);
+        }
+        Ok(result)
+    }
+
+    fn dispatch_dispid(
         &mut self,
         handle: ObjectId,
         dispid: i32,
@@ -1162,6 +1233,20 @@ impl<'v> Application<'v> {
         {
             return Err(OmError::unable_to_set(candidates[0].name, "Workbook"));
         }
+
+        if call.flags & (flags::PUT | flags::PUTREF) != 0
+            && iface.name == "Style"
+            && candidates[0].name == "NameLocal"
+        {
+            return Err(OmError::app_defined());
+        }
+
+        if call.flags & (flags::PUT | flags::PUTREF) != 0
+            && candidates[0].name == "Gradient"
+            && matches!(&obj, Object::Interior(crate::style::StyleOwner::Cond(..)))
+        {
+            return Err(OmError::hresult(DISP_E_MEMBERNOTFOUND));
+        }
         let m = pick_member(&candidates, call.flags, has_args);
         let m = match (m, &obj) {
             (Err(_), Object::Validation(r))
@@ -1190,9 +1275,22 @@ impl<'v> Application<'v> {
         } else {
             (positional, None)
         };
+
+        let command = (is_put && pos.is_empty())
+            .then(|| crate::cmdargs::PutCommand::of(&obj, m))
+            .flatten();
+
+        let value = match value {
+            Some(Variant::Dispatch(Some(id))) if is_put && command.is_none() => Some(
+                self.direct_put_value(iface.name, m.name, id, call.lcid)
+                    .unwrap_or(Ok(Variant::Dispatch(Some(id))))?,
+            ),
+            v => v,
+        };
         let value = match value {
             Some(v)
                 if is_put
+                    && command.is_none()
                     && !(iface.name == "_Chart" && m.name == "Visible")
                     && !(iface.name == "AutoCorrect" && m.name == "ReplaceText")
                     && !matches!(
@@ -1246,6 +1344,8 @@ impl<'v> Application<'v> {
                     )
                     .map_err(|_| OmError::arg(crate::error::DISP_E_TYPEMISMATCH, 0))?;
                     Some(v)
+                } else if iface.name == "Hyperlink" && matches!(v, Variant::Date(_)) {
+                    Some(v)
                 } else {
                     Some(coerce_put(m, v, call.lcid)?)
                 }
@@ -1253,7 +1353,19 @@ impl<'v> Application<'v> {
             v => v,
         };
         let nparams = m.params.len() - usize::from(is_put);
-        let follows = !is_put && nparams == 0 && matches!(m.ret, Ty::Object(_) | Ty::Dispatch);
+
+        let follows = !is_put
+            && nparams == 0
+            && matches!(m.ret, Ty::Object(_) | Ty::Dispatch)
+            && !(iface.name == "FormatConditions"
+                && matches!(
+                    m.name,
+                    "AddDatabar"
+                        | "AddIconSetCondition"
+                        | "AddTop10"
+                        | "AddUniqueValues"
+                        | "AddAboveAverage"
+                ));
         if pos.len() + named.len() > nparams && !follows {
             if (m.name == "Count" && matches!(iface.name, "Sheets" | "Workbooks"))
                 || (m.name == "Value2" && iface.name == "Range")
@@ -1300,10 +1412,15 @@ impl<'v> Application<'v> {
             self.rows_stale_begin(&obj, m.name).into_iter().collect()
         };
         self.widen_kept.clear();
-        let result = self.member(&obj, m, &args, call);
+        self.call_handle = Some(handle);
+        let result = match (command, &put_arg) {
+            (Some(command), Some(v)) => self.put_command(&obj, m, command, v, &args, call),
+            _ => self.member(&obj, m, &args, call),
+        };
         self.after_call();
         self.xlm_info_settle();
-        if result.is_ok() {
+
+        if result.is_ok() || command.is_some() {
             let mut refit = Vec::new();
             for st in stale {
                 let (book, sheet) = (st.book, st.sheet);
@@ -1353,6 +1470,7 @@ impl<'v> Application<'v> {
                             | "AutoFilter"
                             | "Sort"
                             | "PasteSpecial"
+                            | "Subtotal"
                     ) =>
             {
                 Err(OmError::app_defined_with(&format!(
@@ -1540,28 +1658,54 @@ fn bind(
                 | "AutoFill"
                 | "AutoFilter"
                 | "PasteSpecial"
+                | "Subtotal"
+                | "TextToColumns"
+                | "DataSeries"
+                | "SpecialCells"
                 | "CentimetersToPoints"
                 | "InchesToPoints"
                 | "ConvertFormula"
                 | "Resize"
-        );
+        ) || (iface == "Workbooks"
+            && matches!(m.name, "Open" | "_Open" | "OpenText"));
 
         let by_value =
             iface == "WorksheetFunction" && matches!(values[i], Some(Variant::Dispatch(_)));
+
+        let own_check = own_check
+            || (iface == "Windows" && m.name == "Arrange" && p.name == "ArrangeStyle")
+            || (iface == "Hyperlinks"
+                && m.name == "Add"
+                && p.name == "Address"
+                && matches!(values[i], Some(Variant::Dispatch(_))))
+            || (iface == "Styles"
+                && m.name == "Add"
+                && p.name == "Name"
+                && matches!(&values[i], Some(Variant::Array(sa)) if !sa.data.is_empty()));
         if let (Some(v), Some(vt), false) = (&values[i], scalar_vt(p.ty), own_check || by_value) {
-            if i < pos.len()
-                && xlcalc_variant::change_type(v, vt, crate::conv::variant_locale(lcid), 0).is_err()
-            {
-                return Err(OmError::arg(
-                    DISP_E_TYPEMISMATCH,
-                    (pos.len() - 1 - i) as u32,
-                ));
+            if i < pos.len() {
+                if let Err(h) =
+                    xlcalc_variant::change_type(v, vt, crate::conv::variant_locale(lcid), 0)
+                {
+                    if h == HResult::DISP_E_OVERFLOW {
+                        return Err(OmError::hresult(h));
+                    }
+                    return Err(OmError::arg(
+                        DISP_E_TYPEMISMATCH,
+                        (pos.len() - 1 - i) as u32,
+                    ));
+                }
             }
         }
         if values[i].is_some() {
             continue;
         }
         match p.opt {
+            Opt::Required
+                if i < pos.len()
+                    && iface == "Workbooks"
+                    && matches!(m.name, "Open" | "_Open" | "OpenText") => {}
+
             Opt::Required
                 if m.name == "Add"
                     && m.params.get(1).is_some_and(|q| q.name == "LinkToContent") =>
@@ -1578,6 +1722,9 @@ fn bind(
                 }
             }
 
+            Opt::Required
+                if i >= pos.len() && iface == "Hyperlinks" && m.name == "Add" && i == 1 => {}
+
             Opt::Required if i == 0 && i < pos.len() && m.name == "Item" && iface == "Range" => {}
 
             Opt::Required
@@ -1587,6 +1734,8 @@ fn bind(
 
             Opt::Required
                 if i < pos.len() && m.name == "Add" && p.name == "Name" && m.params.len() == 2 => {}
+
+            Opt::Required if i < pos.len() && iface == "Styles" && m.name == "Merge" => {}
             Opt::Required
                 if matches!(
                     m.name,
@@ -1624,6 +1773,8 @@ fn bind(
                             | ("InchesToPoints", "Inches")
                             | ("GetCustomListNum", "ListArray")
                     ) => {}
+
+            Opt::Required if i >= pos.len() && iface == "WorksheetFunction" => {}
             Opt::Required if i >= pos.len() => {
                 return Err(OmError::hresult(DISP_E_BADPARAMCOUNT));
             }
@@ -1632,6 +1783,8 @@ fn bind(
             }
             Opt::Required => return Err(OmError::type_mismatch()),
             Opt::Optional => {}
+
+            Opt::Default(_) if m.name == "TextToColumns" => {}
             Opt::Default(d) => {
                 values[i] = Some(match d {
                     DefaultValue::I2(n) => Variant::I2(n),
@@ -1658,7 +1811,7 @@ fn scalar_vt(ty: Ty) -> Option<xlcalc_variant::VarType> {
 }
 
 impl Application<'_> {
-    fn member(
+    pub(crate) fn member(
         &mut self,
         obj: &Object,
         m: &'static Member,
@@ -1686,9 +1839,21 @@ impl Application<'_> {
             Object::Workbooks => self.workbooks_member(m, a),
             Object::Windows => self.windows_member(m, a),
             Object::BookWindows(b) => self.book_windows_member(*b, m, a),
-            Object::Window(b, n) => self.window_member(*b, *n, m, a),
-            Object::Panes(b, n) => self.panes_member(*b, *n, m, a),
-            Object::Pane(b, n, i) => self.pane_member(*b, *n, *i, m, a),
+
+            Object::Window(b, n) | Object::Panes(b, n) | Object::Pane(b, n, _) => {
+                let (b, n) = (*b, *n);
+                self.focus_window((b, n));
+                let r = match obj {
+                    Object::Window(..) => self.window_member(b, n, m, a),
+                    Object::Panes(..) => self.panes_member(b, n, m, a),
+                    Object::Pane(_, _, i) => self.pane_member(b, n, *i, m, a),
+                    _ => unreachable!(),
+                };
+                if let Some(cur) = self.current_window().filter(|(x, _)| *x == b) {
+                    self.focus_window(cur);
+                }
+                r
+            }
             Object::Workbook(b) => self.workbook_member(*b, m, a),
             Object::Sheets(b, k) => self.sheets_member(*b, *k, m, a),
             Object::Worksheet(b, s) => self.worksheet_member(*b, *s, m, a),
@@ -1698,16 +1863,17 @@ impl Application<'_> {
             Object::Multi(rs) => self.multi_member(rs, m, a),
             Object::Areas(rs) => self.areas_member(rs, m, a),
             Object::Names(b, s) => self.names_member(*b, *s, m, a),
-            Object::Name(b, s, k) => self.name_member(*b, *s, k, m, a),
+            Object::Name(b, s, k, _) => self.name_member(*b, *s, k, m, a),
             Object::ListObjects(b, s) => self.list_objects_member(*b, *s, m, a),
-            Object::Table(b, n) => self.list_object_member(*b, n, m, a),
-            Object::ListColumns(b, n) => self.list_columns_member(*b, n, m, a),
-            Object::ListColumn(b, n, i) => self.list_column_member(*b, n, *i, m, a),
+            Object::Table(b, t, _) => self.list_object_member(*b, *t, m, a),
+            Object::ListColumns(b, t) => self.list_columns_member(*b, *t, m, a),
+            Object::ListColumn(b, t, c, _) => self.list_column_member(*b, *t, *c, m, a),
             Object::TableStyle(n) => self.table_style_member(n, m, a),
-            Object::ListRows(b, n) => self.list_rows_member(*b, n, m, a),
-            Object::ListRow(b, n, i) => self.list_row_member(*b, n, *i, m),
+            Object::ListRows(b, t) => self.list_rows_member(*b, *t, m, a),
+            Object::ListRow(b, t, i) => self.list_row_member(*b, *t, *i, m),
             Object::Enumerator(..) => Err(OmError::hresult(DISP_E_MEMBERNOTFOUND)),
             Object::Sort(o) => self.sort_member(o, m, a),
+            Object::TableFilterSort(b, t) => self.table_filter_sort_member(*b, *t, m, a),
             Object::SortFields(o) => self.sort_fields_member(o, m, a),
             Object::SortField(o, i) => self.sort_field_member(o, *i, m, a),
             Object::SortOnValue(o, i, _) => self.sort_on_value_member(o, *i, m, a),
@@ -1715,12 +1881,22 @@ impl Application<'_> {
                 let t = t.clone();
                 self.autofilter_member(*b, *s, t.as_deref(), m)
             }
-            Object::Filters(b, s) => self.autofilter_cols_member(*b, *s, m, a),
-            Object::Filter(b, s, i) => self.autofilter_col_member(*b, *s, *i, m),
+            Object::Filters(b, s, t) => self.autofilter_cols_member(*b, *s, t.as_deref(), m, a),
+            Object::FilterColor(b, s, t, i, _) => {
+                self.filter_color_member(*b, *s, t.as_deref(), *i, m)
+            }
+            Object::Filter(b, s, t, i) => self.autofilter_col_member(*b, *s, t.as_deref(), *i, m),
             Object::WorksheetFunction => self.worksheet_function(m, a, true),
             Object::MultiThreadedCalculation => self.multi_threaded_member(m, a),
-            Object::Font(crate::style::StyleOwner::Range(r)) => {
-                self.char_font_member(r, crate::rangeparts::CharSpan::WHOLE, m, a)
+            Object::Font(o @ crate::style::StyleOwner::Range(r)) => {
+                if self.resolve(r).is_ok_and(|(_, rect)| rect.is_cell()) {
+                    self.char_font_member(r, crate::rangeparts::CharSpan::WHOLE, m, a)
+                } else {
+                    self.range_font_member(o, std::slice::from_ref(r), m, a)
+                }
+            }
+            Object::Font(o @ crate::style::StyleOwner::Areas(rs)) => {
+                self.range_font_member(o, rs, m, a)
             }
             Object::Font(o) => self.font_member(o, m, a),
             Object::Interior(o) => self.interior_member(o, m, a),
@@ -1751,9 +1927,12 @@ impl Application<'_> {
             Object::AddIn(k) => self.addin_member(k, m, a),
             Object::ComAddIns => self.com_addins_member(m, a),
             Object::ComAddIn(k) => self.com_addin_member(k, m, a),
-            Object::FormatConditions(r) => self.format_conditions_member(r, m, a),
+            Object::FormatConditions(r) => self.format_conditions_member(r, &[], m, a),
+            Object::FormatConditionsMulti(rs) => {
+                self.format_conditions_member(&rs[0], &rs[1..], m, a)
+            }
             Object::FormatCondition(b, s, i, _, sc) => {
-                self.format_condition_member(*b, *s, *i, *sc, m, a)
+                self.format_condition_member(*b, *s, *i, sc, m, a)
             }
             Object::ScaleCriteria(b, s, i) => self.scale_criteria_member(*b, *s, *i, m, a),
             Object::ScaleCriterion(b, s, i, k) => self.scale_criterion_member(*b, *s, *i, *k, m, a),
@@ -1793,10 +1972,40 @@ impl Application<'_> {
                     data,
                 })))
             }
-            Object::Stub(name) => match self.bag_member(crate::bag::Store::App, name, name, m, a) {
-                Some(res) => res,
-                None => Err(unsupported("object", m)),
-            },
+
+            Object::Stub("TableStyles")
+                if matches!(m.name, "_Default" | "Item")
+                    && matches!(a.get(0), Some(Variant::Bstr(_))) =>
+            {
+                let found = match a.get(0) {
+                    Some(Variant::Bstr(n)) => crate::tables::structured_style(n),
+                    _ => None,
+                };
+                match found {
+                    Some((style, _)) => Ok(self.alloc(Object::TableStyle(style))),
+                    None => Err(OmError::bad_index()),
+                }
+            }
+            Object::Stub(name) => {
+                if *name == "AutoCorrect"
+                    && m.name == "AutoFillFormulasInLists"
+                    && m.kind == InvokeKind::Put
+                {
+                    let on = !matches!(
+                        a.put,
+                        Some(Variant::Bool(false) | Variant::I2(0) | Variant::I4(0))
+                    );
+                    for b in &mut self.books {
+                        if let BookWb::Own(wb) = &mut b.wb {
+                            wb.set_auto_fill_lists(on);
+                        }
+                    }
+                }
+                match self.bag_member(crate::bag::Store::App, name, name, m, a) {
+                    Some(res) => res,
+                    None => Err(unsupported("object", m)),
+                }
+            }
             Object::DocProps(b, custom) => self.doc_props_member(*b, *custom, m, a),
             Object::Outline(b, s) => self.outline_member(*b, *s, m, a),
             Object::Tab(b, s) => self.tab_member(*b, *s, m, a),
@@ -1895,14 +2104,17 @@ impl Application<'_> {
             | Object::Dialog(b, _)
             | Object::Names(b, _)
             | Object::ListObjects(b, _)
-            | Object::Table(b, _)
+            | Object::Table(b, ..)
             | Object::AutoFilter(b, ..)
+            | Object::TableFilterSort(b, _)
             | Object::Sort(SortOwner::Table(b, _))
             | Object::Sort(SortOwner::Sheet(b, _))
             | Object::Sort(SortOwner::Filter(b, _))
             | Object::Name(b, ..) => Some(*b),
             Object::Range(r) => Some(r.book),
-            Object::Multi(rs) | Object::Areas(rs) => rs.first().map(|r| r.book),
+            Object::Multi(rs) | Object::Areas(rs) | Object::FormatConditionsMulti(rs) => {
+                rs.first().map(|r| r.book)
+            }
             Object::Style(b, _) | Object::Styles(b) => Some(*b),
             Object::Scenarios(b, _)
             | Object::OleObjects(b)
@@ -1992,8 +2204,6 @@ enum StaleKind {
 
     Entry,
 
-    Format,
-
     Xf,
 
     Border,
@@ -2041,7 +2251,7 @@ impl Application<'_> {
                 StaleKind::Entry
             }
             "Hidden" | "RowHeight" | "Height" | "Width" => return None,
-            _ => StaleKind::Format,
+            _ => StaleKind::Xf,
         };
         let (sheet, rect) = self.resolve(r).ok()?;
         let snap = if !matches!(kind, StaleKind::Width | StaleKind::Entry) {
@@ -2049,7 +2259,7 @@ impl Application<'_> {
         } else {
             self.book(r.book).ok()?.wb.auto_snapshot(sheet)
         };
-        let fmt = if matches!(kind, StaleKind::Xf | StaleKind::Format | StaleKind::Border) {
+        let fmt = if matches!(kind, StaleKind::Xf | StaleKind::Border) {
             Some(self.book(r.book).ok()?.wb.format_snapshot(sheet, rect))
         } else {
             None
@@ -2063,7 +2273,6 @@ impl Application<'_> {
             snap,
             fmt,
             test: match kind {
-                StaleKind::Format => xlcalc::refit::RefitTest::AnyChange,
                 StaleKind::Border => xlcalc::refit::RefitTest::HorizontalBorder,
                 _ => xlcalc::refit::RefitTest::Xf {
                     font_put: matches!(obj, Object::Font(_)),
@@ -2080,8 +2289,6 @@ impl Application<'_> {
         let constant = !matches!(arg, Some(Variant::Bstr(t)) if t.starts_with('='));
         let refit = match st.kind {
             StaleKind::Width => false,
-
-            StaleKind::Format => st.member != "NumberFormat",
             StaleKind::Border | StaleKind::Xf => false,
             StaleKind::Scan => {
                 wb.post_scan_refit(st.sheet, st.rect.r0, st.rect.r1);
@@ -2104,16 +2311,22 @@ impl Application<'_> {
                     wb.auto_refit(st.sheet, r, r);
                 }
 
-                if st.member == "IndentLevel" && !xf_rows.is_empty() {
+                if matches!(
+                    st.member.as_str(),
+                    "IndentLevel"
+                        | "HorizontalAlignment"
+                        | "VerticalAlignment"
+                        | "WrapText"
+                        | "ShrinkToFit"
+                        | "Orientation"
+                ) && !wb.merges(st.sheet).is_empty()
+                {
                     wb.post_scan_refit(st.sheet, st.rect.r0, st.rect.r1);
                 }
             }
         }
         let refit = refit || !xf_rows.is_empty();
-        if refit
-            && matches!(st.kind, StaleKind::Format | StaleKind::Entry)
-            && st.member != "NumberFormat"
-        {
+        if refit && st.kind == StaleKind::Entry && st.member != "NumberFormat" {
             wb.auto_refit(st.sheet, st.rect.r0, st.rect.r1);
         }
         let keep: Vec<(u32, u32)> = st

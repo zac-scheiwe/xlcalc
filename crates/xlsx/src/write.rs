@@ -1,13 +1,16 @@
+use crate::lines;
 use crate::package::{dir_of, parse_rels, relative, rels_name, resolve, write_rels, Package, Rel};
 use crate::rawxml::{self, escape_attr, escape_text, xstring, Tag};
 use crate::richerr::RichErrors;
 use crate::scenarios;
 use crate::styles::StyleWriter;
+use crate::ui::{self, SheetUi, ViewWrite};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::io::Write;
+use std::sync::Arc;
 use xlcalc::{
-    col_to_letters, CalcMode, CellAddr, FileFormulaKind, Rect, SheetId, SheetKind, SheetState,
-    Value, Workbook,
+    col_to_letters, CalcMode, CellAddr, ExtName, FileFormulaKind, NumberFormat, Rect, SheetId,
+    SheetKind, SheetState, StrictDate, Value, Workbook,
 };
 
 const NEW_CHARTSHEET: &str = concat!(
@@ -51,7 +54,13 @@ pub struct SaveOptions {
 
     pub read_only_recommended: bool,
 
+    pub ui: Vec<(SheetId, SheetUi)>,
+
+    pub properties: Option<[String; 5]>,
+
     pub protection: Option<Protection>,
+
+    pub compat: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -118,13 +127,9 @@ const SHEET_ORDER: &[&str] = &[
 ];
 
 const POSITIONAL: &[&str] = &[
-    "autoFilter",
     "sortState",
     "conditionalFormatting",
-    "rowBreaks",
-    "colBreaks",
     "ignoredErrors",
-    "cols",
     "drawing",
     "legacyDrawing",
     "protectedRanges",
@@ -221,11 +226,10 @@ pub(crate) fn rect_text(r: &Rect) -> String {
 }
 
 fn formula_xml(text: &str) -> String {
-    escape_text(
-        &text
-            .replace(crate::ftext::ALIAS, "[0]!")
-            .replace(crate::ftext::BARE_TABLE, ""),
-    )
+    let text = text
+        .replace(crate::ftext::ALIAS, "[0]!")
+        .replace(crate::ftext::BARE_TABLE, "");
+    escape_text(&xlcalc::stored_formula_text(&text))
 }
 
 struct Out {
@@ -388,6 +392,82 @@ fn write_notes(
     }
 }
 
+fn part_text(out: &Out, src: &Package, path: &str) -> Option<String> {
+    out.parts
+        .get(path)
+        .map(|b| String::from_utf8_lossy(b).into_owned())
+        .or_else(|| {
+            src.part(path)
+                .map(|b| String::from_utf8_lossy(b).into_owned())
+        })
+}
+
+fn strict_note_shapes(
+    out: &mut Out,
+    src: &Package,
+    part: &str,
+    rp: &str,
+    (split, sheet_rels, used): (&mut rawxml::Split, &mut Vec<Rel>, &mut BTreeSet<String>),
+) {
+    let dir = dir_of(part);
+    let target = |kind: &str, rels: &[Rel]| {
+        rels.iter()
+            .find(|r| r.kind() == kind && !r.external)
+            .map(|r| resolve(dir, &r.target))
+    };
+    let (Some(cpart), Some(vpart)) = (
+        target("comments", sheet_rels),
+        target("vmlDrawing", sheet_rels),
+    ) else {
+        return;
+    };
+    let (Some(comments), Some(vml)) = (part_text(out, src, &cpart), part_text(out, src, &vpart))
+    else {
+        return;
+    };
+    let dpart = target("drawing", sheet_rels);
+    let existing = dpart.as_ref().and_then(|p| part_text(out, src, p));
+    if dpart.is_some() && existing.is_none() {
+        return;
+    }
+    let Some(built) = crate::strict_notes::build(&comments, &vml, existing.is_some()) else {
+        return;
+    };
+    out.put(
+        &cpart,
+        built.comments.into_bytes(),
+        Some(&format!("{CT}comments+xml")),
+    );
+    match (dpart, existing) {
+        (Some(p), Some(text)) => {
+            let text = crate::strict_notes::strip_shapes(&text);
+            if let Some(t) = crate::strict_notes::add_shapes(&text, &built.shapes) {
+                out.put(&p, t.into_bytes(), Some(crate::drawings::CT_DRAWING));
+            }
+        }
+        _ => {
+            let p = fresh_part(out, src, "xl/drawings/drawing#.xml");
+            out.put(
+                &p,
+                crate::strict_notes::fresh_drawing(&built.shapes).into_bytes(),
+                Some(crate::drawings::CT_DRAWING),
+            );
+            let rid = fresh_id(used);
+            sheet_rels.push(Rel {
+                id: rid.clone(),
+                ty: format!("{REL}drawing"),
+                target: relative(dir, &p),
+                external: false,
+            });
+            split.put(
+                "drawing",
+                Some(format!("<drawing {rp}:id=\"{}\"/>", escape_attr(&rid))),
+                SHEET_ORDER,
+            );
+        }
+    }
+}
+
 fn fresh_part(out: &Out, src: &Package, pattern: &str) -> String {
     let mut i = 1;
     loop {
@@ -399,47 +479,113 @@ fn fresh_part(out: &Out, src: &Package, pattern: &str) -> String {
     }
 }
 
-fn col_state_xml(wb: &Workbook, sheet: SheetId) -> Option<String> {
-    let state = wb.column_state(sheet);
-    if state.is_empty() {
-        return None;
+fn default_col_width_fmt(
+    wb: &Workbook,
+    sheet: SheetId,
+    src: Option<&str>,
+) -> Result<Option<String>, String> {
+    let px = wb.sheet_std_px(sheet);
+    let custom = px != wb.standard_px();
+    let height = wb.standard_height(sheet);
+    let mut tag = match src {
+        Some(raw) => Tag::parse(raw)?,
+        None if custom || (height - 15.0).abs() > 0.05 => {
+            let mut t = Tag::new("sheetFormatPr");
+            t.empty = true;
+            t.set("defaultRowHeight", Some("15"));
+            t
+        }
+        None => return Ok(None),
+    };
+    let mut changed = false;
+    let have_h = tag
+        .get("defaultRowHeight")
+        .and_then(|h| h.parse::<f64>().ok());
+    if have_h.is_none_or(|h| (h - height).abs() > 0.05) {
+        tag.set("defaultRowHeight", Some(&height.to_string()));
+        changed = true;
     }
-    let mut out = String::from("<cols>");
-    for (c, px, hand, hidden) in state {
-        out.push_str(&format!(
-            "<col min=\"{n}\" max=\"{n}\" width=\"{}\"{}{}/>",
-            xlcalc::px_to_file_width(px),
-            if hidden { " hidden=\"1\"" } else { "" },
-            if hand || px != wb.standard_px() {
-                " customWidth=\"1\""
-            } else {
-                ""
-            },
-            n = c + 1,
-        ));
+    let have = tag
+        .get("defaultColWidth")
+        .and_then(|w| w.parse::<f64>().ok())
+        .map(xlcalc::file_width_to_px);
+    let want = custom.then_some(px);
+    if have.filter(|&p| p != wb.standard_px()) != want {
+        let text = want.map(|p| xlcalc::px_to_file_width(p).to_string());
+        tag.set("defaultColWidth", text.as_deref());
+        changed = true;
     }
-    out.push_str("</cols>");
-    Some(out)
+
+    if tag.get("baseColWidth").is_some_and(|w| w != "8") {
+        tag.set("baseColWidth", None);
+        changed = true;
+    }
+
+    let rest = src
+        .filter(|_| !tag.empty)
+        .and_then(|raw| raw.find('>').map(|i| &raw[i + 1..]))
+        .unwrap_or("");
+    Ok(changed.then(|| format!("{}{rest}", tag.write())))
 }
 
-fn map_col_styles(raw: &str, styles: &mut StyleWriter) -> Result<String, String> {
-    let sp = rawxml::split(raw.as_bytes())?;
-    let mut out = sp.root.open();
-    for k in &sp.kids {
-        let n = rawxml::head_len(&k.raw).unwrap_or(k.raw.len());
-        let mut t = Tag::parse(&k.raw[..n])?;
-        match t.get("style").and_then(|v| v.parse::<u32>().ok()) {
-            Some(i) => {
-                let x = styles.map_source(i).to_string();
-                t.set("style", Some(&x));
-                out.push_str(&t.write());
-                out.push_str(&k.raw[n..]);
-            }
-            None => out.push_str(&k.raw),
-        }
+fn refers(text: &str, what: &str) -> bool {
+    if what == "phoneticPr" {
+        return text.contains("<phoneticPr");
     }
-    out.push_str(&format!("</{}>", sp.root.name));
-    Ok(out)
+    let rules = text
+        .match_indices("cfRule ")
+        .filter(|(i, _)| {
+            let tail = &text[*i..];
+            tail[..tail.find('>').unwrap_or(tail.len())].contains("dxfId=\"")
+        })
+        .count();
+    text.contains("DxfId=\"") || text.matches("dxfId=\"").count() > rules
+}
+
+fn src_refers(src: &Package, what: &str) -> bool {
+    src.part_names().any(|name| {
+        src.part(name)
+            .and_then(|b| std::str::from_utf8(b).ok())
+            .is_some_and(|x| refers(x, what))
+    })
+}
+
+fn renumber(
+    xml: &[u8],
+    elements: &[&str],
+    attr: &str,
+    mut new: impl FnMut(usize) -> usize,
+) -> Vec<u8> {
+    let Ok(text) = std::str::from_utf8(xml) else {
+        return xml.to_vec();
+    };
+    let attr = format!(" {attr}=\"");
+    let mut out = String::with_capacity(text.len());
+    let mut rest = text;
+    while let Some(i) = rest.find('<') {
+        let (head, tail) = rest.split_at(i);
+        out.push_str(head);
+        let end = tail.find('>').map_or(tail.len(), |e| e + 1);
+        let tag = &tail[..end];
+        let name = tag[1..].split([' ', '/', '>']).next().unwrap_or("");
+        let name = name.rsplit(':').next().unwrap_or(name);
+        let found = elements.contains(&name).then(|| {
+            let from = tag.find(&attr)? + attr.len();
+            let to = from + tag[from..].find('"')?;
+            Some((from, to, tag[from..to].parse().ok()?))
+        });
+        match found.flatten() {
+            Some((from, to, old)) => {
+                out.push_str(&tag[..from]);
+                out.push_str(&new(old).to_string());
+                out.push_str(&tag[to..]);
+            }
+            None => out.push_str(tag),
+        }
+        rest = &tail[end..];
+    }
+    out.push_str(rest);
+    out.into_bytes()
 }
 
 #[derive(Default)]
@@ -476,7 +622,8 @@ fn source_cells(sheet_data: &str) -> SourceCells {
                     let k = a.key.as_ref().to_string();
                     match k.as_str() {
                         "r" => r = a.value.parse::<u32>().ok(),
-                        "spans" | "hidden" | "ht" | "customHeight" => {}
+                        "spans" | "hidden" | "ht" | "customHeight" | "outlineLevel"
+                        | "collapsed" => {}
                         _ => attrs.push((k, a.value.to_string())),
                     }
                 }
@@ -510,8 +657,20 @@ fn source_cells(sheet_data: &str) -> SourceCells {
 
 struct Strings {
     index: HashMap<String, u32>,
+
+    rich: HashMap<String, u32>,
     items: Vec<String>,
     source: HashMap<String, String>,
+}
+
+pub(crate) fn string_t(s: &str) -> String {
+    let space =
+        s.starts_with(char::is_whitespace) || s.ends_with(char::is_whitespace) || s.contains('\n');
+    format!(
+        "<t{}>{}</t>",
+        if space { " xml:space=\"preserve\"" } else { "" },
+        escape_text(&xstring(s))
+    )
 }
 
 impl Strings {
@@ -520,54 +679,62 @@ impl Strings {
         if let Some(split) = src.and_then(|b| rawxml::split(b).ok()) {
             for k in split.kids.iter().filter(|k| k.name == "si") {
                 if let Ok(n) = crate::xml::parse(k.raw.as_bytes()) {
-                    source
-                        .entry(crate::si_text(&n))
-                        .or_insert_with(|| k.raw.clone());
+                    if n.child("r").is_none() && crate::rst::phonetic_of(&n).is_none() {
+                        source
+                            .entry(crate::si_text(&n))
+                            .or_insert_with(|| k.raw.clone());
+                    }
                 }
             }
         }
         Strings {
             index: HashMap::new(),
+            rich: HashMap::new(),
             items: Vec::new(),
             source,
         }
     }
 
-    fn add_inline(&mut self, sheet: &[u8]) {
-        let Ok(t) = std::str::from_utf8(sheet) else {
-            return;
-        };
-        let mut at = 0;
-        while let Some(i) = t[at..].find("<is>") {
-            let start = at + i;
-            let Some(j) = t[start..].find("</is>") else {
-                break;
-            };
-            let inner = &t[start + 4..start + j];
-            if inner.contains("<r>") || inner.contains("<r ") {
-                let raw = format!("<si>{inner}</si>");
-                if let Ok(n) = crate::xml::parse(raw.as_bytes()) {
-                    self.source.entry(crate::si_text(&n)).or_insert(raw);
+    fn get_rich(
+        &mut self,
+        text: &str,
+        pieces: Option<&[(String, Option<xlcalc::rich::RunFont>)]>,
+        phonetic: &str,
+    ) -> u32 {
+        let mut raw = String::from("<si>");
+        match pieces {
+            Some(pieces) => {
+                for (text, font) in pieces {
+                    raw.push_str("<r>");
+                    if let Some(f) = font {
+                        raw.push_str(&crate::styles::run_properties_xml(f));
+                    }
+                    raw.push_str(&string_t(text));
+                    raw.push_str("</r>");
                 }
             }
-            at = start + j + 5;
+            None => raw.push_str(&string_t(text)),
         }
+        raw.push_str(phonetic);
+        raw.push_str("</si>");
+        if let Some(&i) = self.rich.get(&raw) {
+            return i;
+        }
+        let i = self.items.len() as u32;
+        self.items.push(raw.clone());
+        self.rich.insert(raw, i);
+        i
     }
 
     fn get(&mut self, s: &str) -> u32 {
         if let Some(&i) = self.index.get(s) {
             return i;
         }
-        let raw = self.source.get(s).cloned().unwrap_or_else(|| {
-            let space = s.starts_with(char::is_whitespace)
-                || s.ends_with(char::is_whitespace)
-                || s.contains('\n');
-            format!(
-                "<si><t{}>{}</t></si>",
-                if space { " xml:space=\"preserve\"" } else { "" },
-                escape_text(&xstring(s))
-            )
-        });
+        let raw = self
+            .source
+            .get(s)
+            .cloned()
+            .unwrap_or_else(|| format!("<si>{}</si>", string_t(s)));
         let i = self.items.len() as u32;
         self.items.push(raw);
         self.index.insert(s.to_string(), i);
@@ -721,12 +888,14 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
         wb,
         opts.fresh_styles,
     )?;
-    let mut strings = Strings::new(src_part("sharedStrings").and_then(|p| src.part(&p)));
-    for sh in &src.sheets {
-        if let Some(b) = src.part(&sh.part) {
-            strings.add_inline(b);
-        }
+
+    for (style, quote) in wb.cell_formats_in_table_order() {
+        styles.add_xf(style, quote, None);
     }
+    styles.stamp_source_dxfs(wb);
+
+    let mut sheet_parts: Vec<String> = Vec::new();
+    let mut strings = Strings::new(src_part("sharedStrings").and_then(|p| src.part(&p)));
     let dyn_cm = 1u32;
     let mut rich = RichErrors::default();
 
@@ -903,28 +1072,37 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
             .kid("sheetData")
             .map(|k| source_cells(&k.raw))
             .unwrap_or_default();
-
-        if let Some(cols) = split.kid("cols").map(|k| k.raw.clone()) {
-            split.put(
-                "cols",
-                Some(map_col_styles(&cols, &mut styles)?),
-                SHEET_ORDER,
-            );
-        } else if let Some(cols) = col_state_xml(wb, id) {
-            split.put("cols", Some(cols), SHEET_ORDER);
+        let cols = lines::cols_xml(wb, id, split.kid("cols").map(|k| &*k.raw), &mut styles)?;
+        split.put("cols", cols, SHEET_ORDER);
+        if let Some(raw) =
+            default_col_width_fmt(wb, id, split.kid("sheetFormatPr").map(|k| &*k.raw))?
+        {
+            split.put("sheetFormatPr", Some(raw), SHEET_ORDER);
         }
-        if let Some(name) = opts
+        if let Some(raw) =
+            lines::outline_depths(wb, id, split.kid("sheetFormatPr").map(|k| &*k.raw))?
+        {
+            split.put("sheetFormatPr", Some(raw), SHEET_ORDER);
+        }
+        let code_name = opts
             .vba
             .as_ref()
-            .and_then(|v| v.sheet_code_names.get(sheet_pos))
-        {
-            let raw = split.kid("sheetPr").map(|k| k.raw.clone());
+            .and_then(|v| v.sheet_code_names.get(sheet_pos));
+        let filter_mode = wb.filter_mode_to_save(id);
+        let raw = split.kid("sheetPr").map(|k| k.raw.clone());
+        let had_mode = raw.as_deref().is_some_and(|r| r.contains("filterMode"));
+        if code_name.is_some() || filter_mode || had_mode {
+            let name = code_name.map(String::as_str);
             split.put(
                 "sheetPr",
-                Some(sheet_pr(raw.as_deref(), name)?),
+                Some(sheet_pr(raw.as_deref(), name, filter_mode)?),
                 SHEET_ORDER,
             );
         }
+        let filter = wb
+            .range_filter_file(id)
+            .map(|f| crate::afilter::write(&f, &mut styles));
+        split.put("autoFilter", filter, SHEET_ORDER);
         let rp = match r_prefix(&split.root) {
             Some(p) if !p.is_empty() => p,
             _ => {
@@ -978,7 +1156,7 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
                 }
             };
             table_id_of.insert(t.name.to_lowercase(), tid);
-            let bytes = table_xml(wb, t, tid, base)?;
+            let bytes = table_xml(wb, t, tid, base, &mut styles)?;
             out.put(&tpart, bytes, Some(&format!("{CT}table+xml")));
             sheet_rels.push(Rel {
                 id: trel.clone(),
@@ -1174,12 +1352,7 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
                 ));
             }
         }
-        if wb.has_line_formats(id) {
-            out.warnings.push(format!(
-                "{}: whole-row, whole-column and sheet styles are not written",
-                sheet.name
-            ));
-        }
+        write_sheet_state(wb, id, &mut split, src, opts)?;
         apply_drawing(
             wb,
             id,
@@ -1194,12 +1367,22 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
                 split: &mut split,
             },
         );
+        if !wb.date_compat() {
+            strict_note_shapes(
+                &mut out,
+                src,
+                &part,
+                &rp,
+                (&mut split, &mut sheet_rels, &mut sheet_used),
+            );
+        }
         let ct = match macro_kind {
             1 => "application/vnd.ms-excel.macrosheet+xml".to_string(),
             2 => "application/vnd.ms-excel.intlmacrosheet+xml".to_string(),
             _ => format!("{CT}worksheet+xml"),
         };
         out.put(&part, split.write(), Some(&ct));
+        sheet_parts.push(part.clone());
         if !sheet_rels.is_empty() {
             out.put(&rels_name(&part), write_rels(&sheet_rels), None);
         }
@@ -1265,6 +1448,41 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
             "sharedStrings",
             &sst_part,
         ));
+    }
+    let others = src_refers(src, "dxfId")
+        || out
+            .parts
+            .values()
+            .any(|x| std::str::from_utf8(x).is_ok_and(|x| refers(x, "dxfId")));
+    if !others {
+        let mut used = BTreeSet::new();
+        for x in sheet_parts.iter().filter_map(|p| out.parts.get(p)) {
+            renumber(x, &["cfRule"], "dxfId", |old| {
+                used.insert(old);
+                old
+            });
+        }
+        let map = styles.order_dxfs(&used);
+        for p in &sheet_parts {
+            if let Some(x) = out.parts.get_mut(p) {
+                *x = renumber(x, &["cfRule"], "dxfId", |old| {
+                    map.get(old).copied().unwrap_or(old)
+                });
+            }
+        }
+    }
+    let phonetic = strings.items.iter().any(|s| s.contains("phoneticPr"));
+
+    let notes = out.parts.keys().any(|p| p.contains("comments"));
+    let map = styles.compact(phonetic || notes || src_refers(src, "phoneticPr"));
+    if map.iter().enumerate().any(|(i, &n)| i != n as usize) {
+        for p in &sheet_parts {
+            if let Some(x) = out.parts.get_mut(p) {
+                let new = |old: usize| map.get(old).map_or(old, |&n| n as usize);
+                let cells = renumber(x, &["c", "row"], "s", new);
+                *x = renumber(&cells, &["col"], "style", new);
+            }
+        }
     }
     let styles_part = src_part("styles").unwrap_or("xl/styles.xml".into());
     out.put(
@@ -1375,7 +1593,7 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
             let lp = crate::ext_out::link_part(
                 link,
                 &wb.ext_data_read(*li),
-                &wb.ext_names(*li),
+                &writer_link_names(wb.ext_names(*li)),
                 &opts.dir,
             );
             out.put(&part, lp.xml, Some(&format!("{CT}externalLink+xml")));
@@ -1406,6 +1624,8 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
         opts.vba.as_ref().map(|v| v.workbook_code_name.as_str()),
     )?;
     book.put("workbookPr", Some(pr), BOOK_ORDER);
+    book.root
+        .set("conformance", (!wb.date_compat()).then_some("strict"));
     if let Some(bv) = book.kid("bookViews").map(|k| k.raw.clone()) {
         book.put("bookViews", Some(book_views(wb, src, &bv)?), BOOK_ORDER);
     }
@@ -1418,21 +1638,43 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
     let names = crate::slicers_xml::names(wb, names);
     book.put("definedNames", names, BOOK_ORDER);
     let (e14, e15, e_tl) = crate::slicers_xml::book_exts(wb, &slicer_rids, &rp);
+
+    let source_book = crate::xml::parse(src.part(book_part).unwrap_or(NEW_BOOK.as_bytes()))?;
+    let version = crate::calcprops::file_version(
+        &source_book,
+        book.kid("fileVersion").map(|k| k.raw.as_str()),
+    )?;
+    book.put("fileVersion", Some(version), BOOK_ORDER);
+    let pending = wb.load_pending();
+    let features = (pending.is_none() && crate::calcprops::needs_calc(&source_book))
+        .then(|| crate::calcprops::features_ext(&source_book));
+    let ask_full = match book.kids.iter().find(|k| k.name == "definedNames") {
+        Some(k) if opts.compat => crate::calcprops::compat_full_calc(&k.raw)?,
+        _ => false,
+    };
     let old_book_ext = book.kid("extLst").map(|k| k.raw.clone());
+    let mut replaced = vec![
+        crate::slicers_xml::URI_BOOK14,
+        crate::slicers_xml::URI_BOOK15,
+        crate::slicers_xml::URI_TL_BOOK,
+    ];
+    if features.is_some() || pending == Some(0) {
+        replaced.push(crate::calcprops::URI_FEATURES);
+    }
     book.put(
         "extLst",
         crate::sparks::merge_uris(
             old_book_ext.as_deref(),
-            &[
-                crate::slicers_xml::URI_BOOK14,
-                crate::slicers_xml::URI_BOOK15,
-                crate::slicers_xml::URI_TL_BOOK,
-            ],
-            e14.into_iter().chain(e15).chain(e_tl).collect(),
+            &replaced,
+            e14.into_iter()
+                .chain(e15)
+                .chain(e_tl)
+                .chain(features)
+                .collect(),
         ),
         BOOK_ORDER,
     );
-    let calc = calc_pr(wb, book.kid("calcPr").map(|k| k.raw.as_str()))?;
+    let calc = calc_pr(wb, book.kid("calcPr").map(|k| k.raw.as_str()), ask_full)?;
     book.put("calcPr", Some(calc), BOOK_ORDER);
     let main = match kind {
         FileKind::Xlsx => format!("{CT}sheet.main+xml"),
@@ -1474,6 +1716,23 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
         );
     }
     out.put("_rels/.rels", write_rels(&root_rels), None);
+    if let Some(values) = &opts.properties {
+        let core = "docProps/core.xml";
+        let had = out
+            .parts
+            .get(core)
+            .map(|b| b.to_vec())
+            .or_else(|| src.part(core).map(<[u8]>::to_vec));
+        if let Some(had) = had {
+            if let Some(new) = ui::core_xml(&had, values)? {
+                out.put(
+                    core,
+                    new,
+                    Some("application/vnd.openxmlformats-package.core-properties+xml"),
+                );
+            }
+        }
+    }
     if new_book || src.part("docProps/app.xml").is_some() {
         out.put(
             "docProps/app.xml",
@@ -1492,6 +1751,19 @@ pub fn save(wb: &Workbook, pkg: Option<&Package>, opts: &SaveOptions) -> Result<
         }
     }
     collect_garbage(&mut out);
+
+    if !wb.date_compat() {
+        let names: Vec<String> = out.parts.keys().cloned().collect();
+        for n in names {
+            let ty = out
+                .types
+                .get(&n)
+                .map(String::as_str)
+                .or_else(|| src.content_type(&n));
+            let b = crate::strict::to_strict(&n, ty, &out.parts[&n]);
+            out.parts.insert(n, b);
+        }
+    }
 
     let ct = content_types(&out, src);
     out.parts.remove("[Content_Types].xml");
@@ -1728,6 +2000,25 @@ fn part_order(out: &Out, src: &Package) -> Vec<String> {
     order
 }
 
+fn strict_date(
+    wb: &Workbook,
+    addr: CellAddr,
+    x: f64,
+    kinds: &mut HashMap<Arc<str>, Option<StrictDate>>,
+) -> Option<String> {
+    if wb.date_compat() {
+        return None;
+    }
+    let code = &wb.cell_style(addr).number_format;
+    let kind = *kinds.entry(code.clone()).or_insert_with(|| {
+        NumberFormat::parse_stored(code)
+            .ok()
+            .and_then(|f| f.strict_date())
+    });
+    let d1904 = matches!(wb.settings().date_system, xlcalc::DateSystem::D1904);
+    crate::strict::iso_cell(x, kind?, d1904)
+}
+
 fn sheet_data(
     wb: &Workbook,
     id: SheetId,
@@ -1806,22 +2097,23 @@ fn sheet_data(
         let mut tag = Tag::new("f");
         tag.set("t", Some("dataTable"))
             .set("ref", Some(&rect_text(&i)));
-        match (row_in.is_empty(), col_in.is_empty()) {
-            (false, false) => {
-                tag.set("dt2D", Some("1"))
-                    .set("dtr", Some("1"))
-                    .set("r1", Some(row_in))
-                    .set("r2", Some(col_in));
+        let two = !row_in.is_empty() && !col_in.is_empty();
+        let (r1, r2) = match row_in.is_empty() {
+            true => (col_in, ""),
+            false => (row_in, col_in),
+        };
+        tag.set("dt2D", Some(if two { "1" } else { "0" }))
+            .set("dtr", Some(if row_in.is_empty() { "0" } else { "1" }));
+
+        let inputs = [("del1", "r1", r1), ("del2", "r2", r2)];
+        for (del, _, a) in inputs {
+            if a == "#REF!" {
+                tag.set(del, Some("1"));
             }
-            (false, true) => {
-                tag.set("dt2D", Some("0"))
-                    .set("dtr", Some("1"))
-                    .set("r1", Some(row_in));
-            }
-            _ => {
-                tag.set("dt2D", Some("0"))
-                    .set("dtr", Some("0"))
-                    .set("r1", Some(col_in));
+        }
+        for (_, r, a) in inputs {
+            if !a.is_empty() {
+                tag.set(r, Some(if a == "#REF!" { "XFD65536" } else { a }));
             }
         }
         formulas.insert((i.r0, i.c0), tag.empty());
@@ -1834,31 +2126,55 @@ fn sheet_data(
     for (r, c) in wb.formatted_cells(id) {
         cells.entry((r, c)).or_insert(false);
     }
+    for at in wb.row_column_crossings(id) {
+        cells.entry(at).or_insert(false);
+    }
+    let row_formats = wb.row_formats(id);
     for &(r, c) in src.style.keys() {
         cells.entry((r, c)).or_insert(false);
     }
+    let mut date_kinds: HashMap<Arc<str>, Option<StrictDate>> = HashMap::new();
     let hidden: BTreeSet<u32> = wb.hidden_rows(id).into_iter().collect();
     let mut rows: BTreeSet<u32> = cells.keys().map(|k| k.0).collect();
     rows.extend(&hidden);
-    rows.extend(src.rows.keys());
+
+    let kept: BTreeMap<u32, &Vec<(String, String)>> = wb
+        .line_origins(id, true)
+        .into_iter()
+        .filter_map(|(r, o)| src.rows.get(&o).map(|a| (r, a)))
+        .collect();
+    rows.extend(kept.keys());
+    let levels: BTreeMap<u32, u32> = wb.outlined_lines(id, true).into_iter().collect();
+    let collapsed: BTreeSet<u32> = wb.collapsed_lines(id, true).into_iter().collect();
+    rows.extend(levels.keys());
+    rows.extend(&collapsed);
     let heights: std::collections::BTreeMap<u32, u32> =
         wb.row_custom_heights(id).into_iter().collect();
     rows.extend(heights.keys());
+    rows.extend(row_formats.keys());
 
     let default_h8 = wb.row_h8(id, 1_048_574);
     let mut s = String::from("<sheetData>");
     let mut bounds: Option<Rect> = None;
     let mut it = cells.iter().peekable();
+    let mut out_rows: Vec<(u32, Tag, String)> = Vec::new();
+    let mut block_spans: std::collections::BTreeMap<u32, (u32, u32)> = Default::default();
     for r in rows {
         let mut tag = Tag::new("row");
         tag.set("r", Some(&(r + 1).to_string()));
-        if let Some(a) = src.rows.get(&r) {
-            for (k, v) in a {
-                let v = match (k.as_str(), v.parse::<u32>()) {
-                    ("s", Ok(i)) => styles.map_source(i).to_string(),
-                    _ => v.clone(),
-                };
-                tag.attrs.push((k.clone(), v));
+        let source = kept.get(&r).map_or(&[][..], |a| a.as_slice());
+
+        if let Some(style) = row_formats.get(&r) {
+            let hint = source.iter().find(|(k, _)| k == "s");
+            let xf = styles.xf(style, false, hint.and_then(|(_, v)| v.parse().ok()));
+            if xf != 0 {
+                tag.set("s", Some(&xf.to_string()));
+            }
+            tag.set("customFormat", Some("1"));
+        }
+        for (k, v) in source {
+            if k != "s" && k != "customFormat" {
+                tag.attrs.push((k.clone(), v.clone()));
             }
         }
         if let Some(h8) = heights.get(&r) {
@@ -1873,7 +2189,24 @@ fn sheet_data(
         if hidden.contains(&r) {
             tag.set("hidden", Some("1"));
         }
+        let mut outline = Vec::new();
+        if let Some(l) = levels.get(&r) {
+            outline.push(("outlineLevel".to_string(), (l - 1).to_string()));
+        }
+        if collapsed.contains(&r) {
+            outline.push(("collapsed".to_string(), "1".to_string()));
+        }
+
+        let at = tag
+            .attrs
+            .iter()
+            .position(|(k, _)| {
+                matches!(k.as_str(), "thickTop" | "thickBot" | "ph") || k.contains(':')
+            })
+            .unwrap_or(tag.attrs.len());
+        tag.attrs.splice(at..at, outline);
         let mut body = String::new();
+        let mut span: Option<(u32, u32)> = None;
         while let Some(&(&(cr, cc), &is_const)) = it.peek() {
             if cr != r {
                 break;
@@ -1887,19 +2220,43 @@ fn sheet_data(
             );
             let value = wb.value(addr);
             let f = formulas.get(&(cr, cc));
-            if f.is_none() && matches!(value, Value::Blank) && xf == 0 {
+
+            if f.is_none() && matches!(value, Value::Blank) && xf == 0 && !wb.line_formatted(addr) {
                 continue;
             }
             let b = Rect::new(cr, cc, cr, cc);
             bounds = Some(bounds.map_or(b, |x| x.union_bounds(&b)));
+            span = Some(span.map_or((cc, cc), |(lo, hi)| (lo.min(cc), hi.max(cc))));
             body.push_str(&format!("<c r=\"{}\"", a1(cr, cc)));
             if xf != 0 {
                 body.push_str(&format!(" s=\"{xf}\""));
             }
             let mut vm = None;
             let (t, v) = match &value {
-                Value::Number(n) => (None, Some(number_text(*n))),
-                Value::Text(x) if is_const => (Some("s"), Some(strings.get(x).to_string())),
+                Value::Number(n) => match strict_date(wb, addr, *n, &mut date_kinds) {
+                    Some(iso) => (Some("d"), Some(iso)),
+                    None => (None, Some(number_text(*n))),
+                },
+                Value::Text(x) if is_const => {
+                    let pieces = wb.rich_segments(addr);
+                    let phonetic = wb.rich_text(addr).and_then(|r| r.phonetic.clone());
+                    let phonetic = phonetic.map_or_else(String::new, |p| {
+                        let font_id = styles.font_id(&p.font, p.font_id);
+                        let ph = crate::rst::PhRef {
+                            runs: p.runs.clone(),
+                            font_id,
+                            kind: p.kind,
+                            align: p.align,
+                        };
+                        ph.xml()
+                    });
+                    let i = if pieces.is_none() && phonetic.is_empty() {
+                        strings.get(x)
+                    } else {
+                        strings.get_rich(x, pieces.as_deref(), &phonetic)
+                    };
+                    (Some("s"), Some(i.to_string()))
+                }
                 Value::Text(x) => (Some("str"), Some(escape_text(&xstring(x)))),
                 Value::Bool(b) => (Some("b"), Some(if *b { "1" } else { "0" }.to_string())),
                 Value::Error(e) => match rich.vm(*e) {
@@ -1939,6 +2296,18 @@ fn sheet_data(
         if body.is_empty() && tag.attrs.len() == 1 {
             continue;
         }
+        if let Some((lo, hi)) = span {
+            let e = block_spans.entry(r / 16).or_insert((lo, hi));
+            *e = (e.0.min(lo), e.1.max(hi));
+        }
+        out_rows.push((r, tag, body));
+    }
+
+    for (r, mut tag, body) in out_rows {
+        if let Some((lo, hi)) = block_spans.get(&(r / 16)) {
+            tag.attrs
+                .insert(1, ("spans".to_string(), format!("{}:{}", lo + 1, hi + 1)));
+        }
         if body.is_empty() {
             s.push_str(&tag.empty());
         } else {
@@ -1956,34 +2325,8 @@ fn table_xml(
     t: &xlcalc::Table,
     id: u32,
     base: Option<&[u8]>,
+    styles: &mut StyleWriter,
 ) -> Result<Vec<u8>, String> {
-    let values = wb.table_values(&t.name);
-    let mut owned_cols: Vec<u32> = values.iter().map(|(c, _)| *c).collect();
-    for c in wb
-        .slicer_caches()
-        .iter()
-        .filter(|c| !c.pivot && c.table.eq_ignore_ascii_case(&t.name))
-    {
-        if let Some(p) = t
-            .columns
-            .iter()
-            .position(|x| x.eq_ignore_ascii_case(&c.field))
-        {
-            owned_cols.push(p as u32);
-        }
-    }
-    let mut fcs = String::new();
-    for (col, vals) in &values {
-        fcs.push_str(&format!("<filterColumn colId=\"{col}\"><filters"));
-        if vals.iter().any(Option::is_none) {
-            fcs.push_str(" blank=\"1\"");
-        }
-        fcs.push('>');
-        for v in vals.iter().flatten() {
-            fcs.push_str(&format!("<filter val=\"{}\"/>", escape_attr(v)));
-        }
-        fcs.push_str("</filters></filterColumn>");
-    }
     let rect = rect_text(&t.rect);
     let mut split = match base {
         Some(b) => rawxml::split(b)?,
@@ -2011,11 +2354,23 @@ fn table_xml(
                 .collect()
         })
         .unwrap_or_default();
+
+    let filter = wb.table_filter_file(&t.name);
+    let had = base
+        .map(crate::xml::parse)
+        .transpose()?
+        .and_then(|n| crate::afilter::read(&n, &styles.dxf_elements()));
+    let colour = filter.as_ref().is_some_and(|f| {
+        f.columns
+            .iter()
+            .any(|c| matches!(c.crit, Some(xlcalc::FileCrit::Color { .. })))
+    });
+    let same_filter = !colour && had == filter;
     let header = if t.headers { None } else { Some("0") };
     let totals = if t.totals { Some("1") } else { None };
     let display = display_name(&t.name);
     let unchanged = base.is_some()
-        && owned_cols.is_empty()
+        && same_filter
         && split.root.get("ref") == Some(rect.as_str())
         && split.root.get("headerRowCount") == header
         && split.root.get("totalsRowCount") == totals
@@ -2035,44 +2390,10 @@ fn table_xml(
     if !t.totals && split.root.get("totalsRowShown").is_none() {
         split.root.set("totalsRowShown", Some("0"));
     }
-    let mut filter_rect = t.rect;
-    if t.totals {
-        filter_rect.r1 -= 1;
+    if !same_filter {
+        let af = filter.map(|f| crate::afilter::write(&f, styles));
+        split.put("autoFilter", af, TABLE_ORDER);
     }
-    let af = if t.headers {
-        Some(match split.kid("autoFilter") {
-            Some(k) => {
-                let mut kk = rawxml::split(k.raw.as_bytes())?;
-                kk.root.set("ref", Some(&rect_text(&filter_rect)));
-                let kept: String = kk
-                    .kids
-                    .iter()
-                    .filter(|x| {
-                        !(x.name == "filterColumn"
-                            && Tag::parse(&x.raw)
-                                .ok()
-                                .and_then(|g| g.get("colId").and_then(|c| c.parse::<u32>().ok()))
-                                .is_some_and(|c| owned_cols.contains(&c)))
-                    })
-                    .map(|x| x.raw.as_str())
-                    .collect();
-                let body = format!("{fcs}{kept}");
-                if body.is_empty() {
-                    kk.root.empty()
-                } else {
-                    format!("{}{body}</{}>", kk.root.open(), kk.root.name)
-                }
-            }
-            None if fcs.is_empty() => format!("<autoFilter ref=\"{}\"/>", rect_text(&filter_rect)),
-            None => format!(
-                "<autoFilter ref=\"{}\">{fcs}</autoFilter>",
-                rect_text(&filter_rect)
-            ),
-        })
-    } else {
-        None
-    };
-    split.put("autoFilter", af, TABLE_ORDER);
 
     let look = {
         let mut si = Tag::new("tableStyleInfo");
@@ -2173,8 +2494,10 @@ fn totals_column(
             .and_then(|r| r.split_once(','))
             .and_then(|(n, rest)| {
                 let code = n.trim().parse::<u32>().ok()?;
-                let arg = rest.trim_end_matches(')');
+
+                let arg = rest.strip_suffix(')')?;
                 let simple = arg.starts_with(&format!("{}[", display_name(&t.name)))
+                    && arg.ends_with(']')
                     && arg.matches('[').count() == 1;
                 let name = match code {
                     101 => "average",
@@ -2206,7 +2529,11 @@ fn totals_column(
     }
 }
 
-fn sheet_pr(raw: Option<&str>, code_name: &str) -> Result<String, String> {
+fn sheet_pr(
+    raw: Option<&str>,
+    code_name: Option<&str>,
+    filter_mode: bool,
+) -> Result<String, String> {
     let (mut tag, rest) = match raw {
         Some(r) => {
             let s = rawxml::split(r.as_bytes())?;
@@ -2215,7 +2542,10 @@ fn sheet_pr(raw: Option<&str>, code_name: &str) -> Result<String, String> {
         }
         None => (Tag::new("sheetPr"), String::new()),
     };
-    tag.set("codeName", Some(code_name));
+    if code_name.is_some() {
+        tag.set("codeName", code_name);
+    }
+    tag.set("filterMode", filter_mode.then_some("1"));
     Ok(if rest.is_empty() {
         tag.empty()
     } else {
@@ -2238,6 +2568,10 @@ fn workbook_pr(
     };
     let d1904 = matches!(wb.settings().date_system, xlcalc::DateSystem::D1904);
     tag.set("date1904", d1904.then_some("1"));
+
+    if !wb.date_compat() {
+        tag.set("dateCompatibility", Some("0"));
+    }
     if code_name.is_some() {
         tag.set("codeName", code_name);
     }
@@ -2251,11 +2585,7 @@ fn workbook_pr(
 fn book_views(wb: &Workbook, src: &Package, raw: &str) -> Result<String, String> {
     let mut s = rawxml::split(raw.as_bytes())?;
 
-    let tab = src.active_sheet(wb.active_sheet());
-    let tab = match wb.sheet_state(tab) {
-        Some(SheetState::Visible) => tab,
-        _ => wb.active_sheet(),
-    };
+    let tab = active_tab(wb, src);
     let active = wb.sheet_position(tab).unwrap_or(0);
     let n = wb.sheet_count();
     let mut out = s.root.open();
@@ -2283,6 +2613,65 @@ fn book_views(wb: &Workbook, src: &Package, raw: &str) -> Result<String, String>
     }
     out.push_str(&format!("</{}>", s.root.name));
     Ok(out)
+}
+
+fn active_tab(wb: &Workbook, src: &Package) -> SheetId {
+    let tab = src.active_sheet(wb.active_sheet());
+    match wb.sheet_state(tab) {
+        Some(SheetState::Visible) => tab,
+        _ => wb.active_sheet(),
+    }
+}
+
+fn write_sheet_state(
+    wb: &Workbook,
+    id: SheetId,
+    split: &mut rawxml::Split,
+    src: &Package,
+    opts: &SaveOptions,
+) -> Result<(), String> {
+    let was = ui::read_split(split);
+    let now = opts.ui.iter().find(|u| u.0 == id).map(|u| &u.1);
+    lines::write_breaks(wb, id, split, SHEET_ORDER)?;
+    lines::write_outline_pr(wb, id, split, SHEET_ORDER)?;
+    if let Some(now) = now {
+        ui::write_tab(split, SHEET_ORDER, now, &was)?;
+        ui::write_page(split, SHEET_ORDER, now, &was)?;
+    }
+
+    let tab = active_tab(wb, src);
+    let grouped = || {
+        src.source_sheet(tab)
+            .and_then(|s| src.part(&s.part))
+            .is_some_and(|p| String::from_utf8_lossy(p).contains("tabSelected=\"1\""))
+    };
+    let selected = if id == tab {
+        Some(true)
+    } else if grouped() {
+        None
+    } else {
+        Some(false)
+    };
+    let selection = lines::changed_selection(wb, id, split);
+    ui::write_view(
+        split,
+        SHEET_ORDER,
+        ViewWrite {
+            ui: now.map(|n| (n, &was)),
+            selected,
+            selection,
+        },
+    )
+}
+
+fn is_print_name(name: &str) -> bool {
+    name.eq_ignore_ascii_case("print_area") || name.eq_ignore_ascii_case("print_titles")
+}
+
+fn is_filter_name(name: &str) -> bool {
+    ["_FilterDatabase", "Criteria", "Extract"]
+        .iter()
+        .any(|n| name.eq_ignore_ascii_case(n))
 }
 
 fn defined_names(
@@ -2349,7 +2738,7 @@ fn defined_names(
         let auto = matches!(
             d.name.to_lowercase().as_str(),
             "auto_open" | "auto_close" | "auto_activate" | "auto_deactivate"
-        );
+        ) || d.scope.is_some() && (is_print_name(&d.name) || is_filter_name(&d.name));
         let file_name = if auto {
             format!("_xlnm.{}", d.name)
         } else {
@@ -2378,7 +2767,11 @@ fn defined_names(
         ));
     }
     for (n, scope, tag, text) in &source {
-        if !n.starts_with("_xlnm.") || items.iter().any(|(m, ..)| m == n && scope.is_none()) {
+        if !n.starts_with("_xlnm.")
+            || n.strip_prefix("_xlnm.").is_some_and(is_print_name)
+            || scope.is_some() && n.strip_prefix("_xlnm.").is_some_and(is_filter_name)
+            || items.iter().any(|(m, ..)| m == n && scope.is_none())
+        {
             continue;
         }
         if scope.is_some() && local(*scope).is_none() {
@@ -2405,7 +2798,7 @@ fn defined_names(
     )))
 }
 
-fn calc_pr(wb: &Workbook, raw: Option<&str>) -> Result<String, String> {
+fn calc_pr(wb: &Workbook, raw: Option<&str>, ask_full: bool) -> Result<String, String> {
     let mut t = match raw {
         Some(r) => rawxml::split(r.as_bytes())?.root,
         None => Tag::new("calcPr"),
@@ -2422,7 +2815,7 @@ fn calc_pr(wb: &Workbook, raw: Option<&str>) -> Result<String, String> {
     let delta = number_text(s.max_change);
     t.set("calcId", Some(CALC_ID))
         .set("calcMode", mode)
-        .set("fullCalcOnLoad", None)
+        .set("fullCalcOnLoad", ask_full.then_some("1"))
         .set("iterate", s.iteration.then_some("1"))
         .set(
             "iterateCount",
@@ -2432,7 +2825,12 @@ fn calc_pr(wb: &Workbook, raw: Option<&str>) -> Result<String, String> {
             "iterateDelta",
             (s.max_change != 0.001).then_some(delta.as_str()),
         )
-        .set("fullPrecision", wb.precision_as_displayed().then_some("0"));
+        .set("fullPrecision", wb.precision_as_displayed().then_some("0"))
+        .set("calcCompleted", wb.load_pending().map(|_| "0"))
+        .set("calcOnSave", (!s.calc_on_save).then_some("0"));
+    if let Some(id) = wb.load_pending() {
+        t.set("calcId", Some(&id.to_string()));
+    }
     Ok(t.empty())
 }
 
@@ -2518,9 +2916,35 @@ fn core_xml(created: Option<&str>) -> Vec<u8> {
     s.into_bytes()
 }
 
+fn writer_link_names(names: Vec<ExtName>) -> Vec<ExtName> {
+    names.into_iter().filter(|n| n.scope.is_none()).collect()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::number_text;
+    use super::{number_text, writer_link_names};
+    use xlcalc::{ExtLink, ExtName, ExtSheetData};
+
+    #[test]
+    fn sheet_local_name_is_not_written_to_dependent_link() {
+        let link = ExtLink {
+            path: "src.xlsx".into(),
+            ..Default::default()
+        };
+        let mut local = ExtName::parse("loc", "='A1.x'!$A$1").unwrap();
+        local.scope = Some("A1.x".into());
+        let global = ExtName::parse("gn", "='Data'!$A$2").unwrap();
+        let sheets = vec![ExtSheetData {
+            name: "Data".into(),
+            cells: Vec::new(),
+        }];
+        let names = writer_link_names(vec![local, global.clone()]);
+        assert_eq!(names, vec![global]);
+        let xml =
+            String::from_utf8(crate::ext_out::link_part(&link, &sheets, &names, "").xml).unwrap();
+        assert!(!xml.contains("name=\"loc\""), "{xml}");
+        assert!(xml.contains("name=\"gn\""), "{xml}");
+    }
 
     #[test]
     fn numbers() {

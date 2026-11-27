@@ -9,6 +9,7 @@ use xlcalc_variant::{ObjectId, Variant};
 use xlcalc::xlm::{Area, Operand};
 
 mod fmt;
+mod info;
 mod print;
 mod win;
 
@@ -29,9 +30,9 @@ fn xlm_info_const(name: &str, ty: i32) -> Option<Value> {
     let n = Value::Number;
     if name == "GET.DOCUMENT" {
         return Some(match ty {
-            5 | 8 | 23..=26 | 28 | 29 | 32 | 35 | 40 | 47 | 66 | 85 | 86 => b(false),
-            33 | 67 | 69 => b(true),
-            27 | 31 => n(9.0),
+            5 | 8 | 32 | 40 => b(false),
+            33 | 67 => b(true),
+            31 => n(9.0),
             90 => n(1.0),
             45 | 91 => n(0.0),
             46 => Value::Text("".into()),
@@ -40,6 +41,9 @@ fn xlm_info_const(name: &str, ty: i32) -> Option<Value> {
             92..=1000 => Value::Error(XlError::VALUE),
             _ => return None,
         });
+    }
+    if name != "GET.WORKBOOK" {
+        return None;
     }
     Some(match ty {
         5 | 14 | 15 | 18 | 21 => b(false),
@@ -70,32 +74,6 @@ fn first_value(wb: &Workbook, op: &Operand) -> Value {
             wb.value(CellAddr::new(a.sheet, a.rect.r0, a.rect.c0))
         }),
     }
-}
-
-fn intersect_value(wb: &Workbook, op: &Operand, at: CellAddr) -> Value {
-    let Operand::Ref(r) = op else {
-        return first_value(wb, op);
-    };
-    let [a] = r.areas() else {
-        return Value::Error(XlError::VALUE);
-    };
-    let x = a.rect;
-    let cell = if x.is_cell() {
-        Some((x.r0, x.c0))
-    } else if x.c0 == x.c1 && (x.r0..=x.r1).contains(&at.row) {
-        Some((at.row, x.c0))
-    } else if x.r0 == x.r1 && (x.c0..=x.c1).contains(&at.col) {
-        Some((x.r0, at.col))
-    } else {
-        None
-    };
-
-    cell.map_or(Value::Error(XlError::VALUE), |(r, c)| {
-        match wb.value(CellAddr::new(a.sheet, r, c)) {
-            Value::Blank => Value::Number(0.0),
-            v => v,
-        }
-    })
 }
 
 impl AppEnv<'_, '_> {
@@ -714,12 +692,16 @@ impl AppEnv<'_, '_> {
             Some(Value::Number(n)) => n as i32,
             _ => 0,
         };
+        match name {
+            "GET.WORKSPACE" => return self.get_workspace(args),
+            "GET.FORMULA" => return Ok(self.get_formula(args)),
+            "GET.NOTE" => return Ok(self.get_note(args)),
+            _ => {}
+        }
         let book = self.active_book_obj()?;
         let book_name = self.get_text(book, "Name").unwrap_or_default();
         let text = |s: String| Ok(Value::Text(s.into()));
         match (name, ty) {
-            ("GET.WORKSPACE", 1) => text("Windows (64-bit) NT 10.00".into()),
-            ("GET.WORKSPACE", 2) => text("16.0".into()),
             ("GET.DOCUMENT", 1 | 76) => {
                 let sheet = match args.get(1) {
                     Some(_) => {
@@ -787,8 +769,9 @@ impl AppEnv<'_, '_> {
             ("GET.DOCUMENT", 78) => Ok(Value::Number(600.0)),
             ("GET.DOCUMENT", 42) => {
                 let active = self.wbr().active_sheet();
-                if let Some(n) = self.wbr().notes(active).map(|(_, n)| n.shape_no).min() {
-                    return Ok(Value::Text(format!("Comment {}", n.max(1)).into()));
+                if let Some(spid) = self.wbr().notes(active).map(|(_, n)| n.spid).min() {
+                    let n = self.wbr().legacy_shape_number(active, spid);
+                    return Ok(Value::Text(format!("Comment {n}").into()));
                 }
                 let s = Self::dispatch(self.inv(root, "ActiveSheet", Call::GET, &[], &[])?)?;
                 let shapes = Self::dispatch(self.inv(s, "Shapes", Call::GET, &[], &[])?)?;
@@ -921,6 +904,9 @@ impl AppEnv<'_, '_> {
                 let num = |n: f64| Ok(Value::Number(n));
                 match ty {
                     64 | 65 => {
+                        if let Ok(bk) = self.app.book_mut(b) {
+                            bk.baselines_valid.insert(sheet);
+                        }
                         let parts = self.app.print_area_parts(b, sheet);
                         let wb = self.wbr();
                         let win = self.app.break_window(b, sheet);
@@ -1091,72 +1077,77 @@ impl AppEnv<'_, '_> {
                 }
                 Ok(variant_value(&v).unwrap_or(na))
             }
-
-            ("GET.WORKSPACE", 3) => {
-                let fixed = self.inv(root, "FixedDecimal", Call::GET, &[], &[])?;
-                if fixed == Variant::Bool(true) {
-                    let v = self.inv(root, "FixedDecimalPlaces", Call::GET, &[], &[])?;
-                    Ok(variant_value(&v).unwrap_or(na))
-                } else {
-                    Ok(Value::Number(0.0))
-                }
-            }
-            ("GET.WORKSPACE", 4) => Ok(Value::Bool(
-                self.inv(root, "ReferenceStyle", Call::GET, &[], &[])? == Variant::I4(-4150),
-            )),
-            ("GET.WORKSPACE", 8) => Ok(Value::Bool(
-                self.inv(root, "IgnoreRemoteRequests", Call::GET, &[], &[])?
-                    == Variant::Bool(false),
-            )),
-            ("GET.WORKSPACE", 5..=7 | 26 | 36 | 40 | 46 | 54 | 55 | 58 | 64 | 65 | 66 | 70)
-            | ("GET.DOCUMENT", 33) => {
-                let member = match (name, ty) {
-                    (_, 5) => "DisplayScrollBars",
-                    (_, 6) => "DisplayStatusBar",
-                    (_, 7) => "DisplayFormulaBar",
-                    (_, 26) => "UserName",
-                    (_, 36) => "CellDragAndDrop",
-                    (_, 40) => "ScreenUpdating",
-                    (_, 46) => "MoveAfterReturn",
-                    (_, 54) => "EditDirectlyInCell",
-                    (_, 55) => "AlertBeforeOverwriting",
-                    (_, 58) => "DisplayRecentFiles",
-                    (_, 64) => "AskToUpdateLinks",
-                    (_, 65) => "CopyObjectsWithCells",
-                    (_, 66) => "SheetsInNewWorkbook",
-                    ("GET.DOCUMENT", 33) => "CalculateBeforeSave",
-                    _ => "PromptForSummaryInfo",
-                };
-                let v = self.inv(root, member, Call::GET, &[], &[])?;
+            ("GET.DOCUMENT", 33) => {
+                let v = self.inv(root, "CalculateBeforeSave", Call::GET, &[], &[])?;
                 Ok(variant_value(&v).unwrap_or(na))
             }
 
-            ("GET.DOCUMENT", 23..=26) => {
+            ("GET.DOCUMENT", 28 | 29) if self.wbr().style_table().get("Normal").is_some() => {
+                let f = self
+                    .wbr()
+                    .style_table()
+                    .get("Normal")
+                    .map(|s| s.style.font.clone());
+                let f = f.ok_or_else(|| XlmError::Failed("Normal".into()))?;
+                Ok(Value::Bool(if ty == 28 { f.outline } else { f.shadow }))
+            }
+            ("GET.DOCUMENT", 23..=29) => {
                 let styles = Self::dispatch(self.inv(book, "Styles", Call::GET, &[], &[])?)?;
                 let key = [Variant::Bstr("Normal".into())];
                 let normal = Self::dispatch(self.inv(styles, "Item", Call::GET, &key, &[])?)?;
                 let font = Self::dispatch(self.inv(normal, "Font", Call::GET, &[], &[])?)?;
-                let member = ["Bold", "Italic", "Underline", "Strikethrough"][(ty - 23) as usize];
+                let member = [
+                    "Bold",
+                    "Italic",
+                    "Underline",
+                    "Strikethrough",
+                    "ColorIndex",
+                    "OutlineFont",
+                    "Shadow",
+                ][(ty - 23) as usize];
                 let v = self.inv(font, member, Call::GET, &[], &[])?;
                 Ok(match v {
+                    Variant::I4(-4105) if ty == 27 => Value::Number(9.0),
+                    Variant::I4(n) if ty == 27 => Value::Number(f64::from(n) + 8.0),
                     Variant::I4(n) => Value::Bool(n != -4142),
                     other => variant_value(&other).unwrap_or(na),
                 })
+            }
+
+            ("GET.DOCUMENT", 69) => {
+                let sheet = match self.doc_sheet(args) {
+                    Ok(s) => s,
+                    Err(v) => return Ok(v),
+                };
+                let valid = self
+                    .app
+                    .book(self.book)
+                    .is_ok_and(|bk| bk.baselines_valid.contains(&sheet));
+                Ok(Value::Bool(valid))
+            }
+
+            ("GET.DOCUMENT", 47 | 66 | 85 | 86 | 35) => {
+                let (obj, member) = if ty == 35 {
+                    (book, "WriteReserved")
+                } else {
+                    let sheet =
+                        Self::dispatch(self.inv(root, "ActiveSheet", Call::GET, &[], &[])?)?;
+                    let m = match ty {
+                        47 => "TransitionExpEval",
+                        66 => "TransitionFormEntry",
+                        85 => "FilterMode",
+                        _ => "AutoFilterMode",
+                    };
+                    (sheet, m)
+                };
+                let v = self.inv(obj, member, Call::GET, &[], &[])?;
+                Ok(variant_value(&v).unwrap_or(na))
             }
 
             ("GET.WORKBOOK", 14) => {
                 let v = self.inv(book, "ProtectStructure", Call::GET, &[], &[])?;
                 Ok(variant_value(&v).unwrap_or(na))
             }
-            ("GET.FORMULA", _) => {
-                let Some(a) = args.first().and_then(Self::reference) else {
-                    return Ok(Value::Error(XlError::REF));
-                };
-                let a = *a;
-                let addr = CellAddr::new(a.sheet, a.rect.r0, a.rect.c0);
-                Ok(Value::Text(self.wbr().xlm_get_formula(addr).into()))
-            }
-            ("GET.NOTE", _) => text(String::new()),
             _ => xlm_info_const(name, ty)
                 .ok_or_else(|| XlmError::Unsupported(format!("{name}({ty})"))),
         }
@@ -1285,52 +1276,22 @@ impl XlmEnv for AppEnv<'_, '_> {
         }
     }
 
+    fn write_values(&mut self, cells: Vec<(CellAddr, Value)>) {
+        if let Ok(b) = self.app.book_mut(self.book) {
+            let mut plain = false;
+            for (addr, v) in cells {
+                plain |= b.wb.xlm_write_value(addr, v);
+            }
+            if plain {
+                b.wb.note_number_format(None);
+            }
+        }
+    }
+
     fn command(&mut self, name: &str, args: &[Operand], at: CellAddr) -> Result<Value, XlmError> {
         let yes = Ok(Value::Bool(true));
         match name {
-            "SET.VALUE" => {
-                let (Some(area), Some(val)) = (Self::reference(&args[0]), args.get(1)) else {
-                    return Ok(Value::Error(XlError::VALUE));
-                };
-                let v = intersect_value(self.wbr(), val, at);
-
-                let at = CellAddr::new(area.sheet, area.rect.r0, area.rect.c0);
-                let wb = self.wbr();
-                if area.rect.is_cell()
-                    && wb.sheet(area.sheet).is_some_and(|s| s.kind.is_macro())
-                    && wb.formula_text(at).is_some()
-                {
-                    self.store(at, first_element(v));
-                    return yes;
-                }
-
-                if !wb.sheet(area.sheet).is_some_and(|s| s.kind.is_macro()) {
-                    return yes;
-                }
-
-                let (r0, c0) = (area.rect.r0, area.rect.c0);
-                let at_cell = |r: u32, c: u32| match &v {
-                    Value::Array(a) => {
-                        let (i, j) = (r - r0, c - c0);
-                        let i = if a.rows == 1 { 0 } else { i };
-                        let j = if a.cols == 1 { 0 } else { j };
-                        if i < a.rows && j < a.cols {
-                            a.data[(i * a.cols + j) as usize].clone()
-                        } else {
-                            Value::Error(XlError::NA)
-                        }
-                    }
-                    v => v.clone(),
-                };
-                if let Ok(b) = self.app.book_mut(self.book) {
-                    for r in r0..=area.rect.r1 {
-                        for c in c0..=area.rect.c1 {
-                            b.wb.set_value(CellAddr::new(area.sheet, r, c), at_cell(r, c));
-                        }
-                    }
-                }
-                yes
-            }
+            "SET.VALUE" => Ok(xlcalc::xlm::set_value_command(self, args, at)),
 
             "FORMULA.ARRAY" => {
                 let text = match args.first().map(|op| first_value(self.wbr(), op)) {
@@ -1381,6 +1342,10 @@ impl XlmEnv for AppEnv<'_, '_> {
                 let Some(area) = area else {
                     return Ok(Value::Bool(false));
                 };
+
+                if let Ok(b) = self.app.book_mut(self.book) {
+                    b.wb.note_number_format(None);
+                }
 
                 if let Value::Text(t) = &text {
                     if t.starts_with('=') && xlm_formula_a1(t, area.rect.r0, area.rect.c0).is_none()

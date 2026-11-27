@@ -11,7 +11,7 @@ rustc-hash.workspace = true
 smallvec.workspace = true
 rstar.workspace = true
 chrono.workspace = true
-stacker = "0.1"
+xlcalc-stack.workspace = true
 rayon = "1.10"
 
 [features]

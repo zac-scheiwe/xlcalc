@@ -545,11 +545,16 @@ impl Workbook {
         };
         self.subtotal_guard(rect)?;
         let cols = rect.cols();
-        if spec.group < 1
-            || spec.group > cols
-            || spec.totals.is_empty()
-            || spec.totals.iter().any(|&t| t < 1 || t > cols)
-        {
+
+        let spec = &SubtotalSpec {
+            totals: if spec.totals.is_empty() {
+                vec![cols]
+            } else {
+                spec.totals.clone()
+            },
+            ..spec.clone()
+        };
+        if spec.group < 1 || spec.group > cols || spec.totals.iter().any(|&t| t < 1 || t > cols) {
             return Err(generic_error());
         }
         for (_, b) in self.array_blocks(sheet) {
@@ -968,11 +973,16 @@ impl Workbook {
                 .collect(),
         };
         let mut added = 0;
-        for (&p, &n) in at.iter() {
+
+        let held = std::mem::replace(&mut self.insert_format_below, !spec.below);
+        let inserted = at.iter().try_for_each(|(&p, &n)| {
             let rep = self.insert_rows_raw(sheet, p + added, n)?;
             report.changed.extend(rep.changed);
             added += n;
-        }
+            Ok::<(), EditError>(())
+        });
+        self.insert_format_below = held;
+        inserted?;
         if let Some(v) = self.views.get_mut(&sheet) {
             for k in reach {
                 if let Some(f) = v.filters.get_mut(k) {

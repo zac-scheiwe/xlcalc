@@ -4,6 +4,8 @@ use std::sync::OnceLock;
 
 pub(crate) const MASK_OPERATOR: u32 = 7;
 
+pub(crate) const MASK_NAME: u32 = 0x4f;
+
 pub(crate) const MASK_RANGE: u32 = 8;
 
 pub(crate) const MASK_REF_ARRAY: u32 = 0x48;
@@ -45,6 +47,14 @@ pub(crate) fn arg_mask(f: Option<&Ftab>, i: usize) -> u32 {
     }
 }
 
+pub(crate) fn takes_span(f: Option<&Ftab>) -> bool {
+    f.is_some_and(|f| f.word8 & 0x8000_0000 != 0)
+}
+
+pub(crate) fn takes_long_text(f: Option<&Ftab>) -> bool {
+    f.is_some_and(|f| f.word8 & 0x4000_0000 != 0)
+}
+
 fn keeps_ref(kind: Kind, mask: u32) -> bool {
     mask & 8 != 0
         && match kind {
@@ -63,6 +73,7 @@ fn allowed(kind: Kind, mask: u32, array_entry: bool) -> bool {
     array_entry
         || mask & 7 == 0
         || match kind {
+            Kind::Call(Some(f)) if matches!(f.ifunc, 639 | 640) => false,
             Kind::Call(Some(f)) => {
                 if f.ifunc < 0x25b {
                     f.flags == 0x40
@@ -140,5 +151,25 @@ impl Anc {
             walks: walks(kind, mask),
             mask,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn record_bits() {
+        let f = ftab_of_name;
+        for n in ["SUM", "COUNT", "MODE", "NOT", "VSTACK", "TEXTJOIN", "RANK"] {
+            assert!(takes_span(f(n)), "{n}");
+        }
+        for n in [
+            "N", "ROWS", "ISREF", "SUBTOTAL", "INDEX", "IF", "FILTER", "MMULT",
+        ] {
+            assert!(!takes_span(f(n)), "{n}");
+        }
+        assert!(takes_long_text(f("LEN")) && takes_long_text(f("TEXT")));
+        assert!(!takes_long_text(f("CODE")) && !takes_long_text(f("MATCH")));
     }
 }

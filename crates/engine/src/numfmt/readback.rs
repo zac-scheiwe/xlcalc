@@ -1,4 +1,4 @@
-enum Tok {
+pub(super) enum Tok {
     Bracket(String),
 
     Raw(String),
@@ -45,7 +45,7 @@ fn tokens(fmt: &str) -> Vec<Tok> {
     out
 }
 
-fn sections_of(fmt: &str) -> Vec<Vec<Tok>> {
+pub(super) fn sections_of(fmt: &str) -> Vec<Vec<Tok>> {
     let mut sections: Vec<Vec<Tok>> = vec![Vec::new()];
     for t in tokens(fmt) {
         if matches!(t, Tok::Ch(';')) {
@@ -135,26 +135,37 @@ fn format_lcid(first: &[Tok]) -> Option<String> {
     })
 }
 
-pub(crate) fn readback_spelling(fmt: &str) -> String {
-    spell(fmt, true, false)
+pub(crate) type Designators = Option<(&'static str, &'static str)>;
+
+pub(crate) fn designators(lcid: u32) -> Designators {
+    let names = super::locales::names_for((lcid != 0).then_some(lcid));
+    Some((names.am, names.pm))
 }
 
-pub(crate) fn compiled_spelling(fmt: &str) -> String {
-    spell(fmt, false, true)
+pub(crate) fn readback_spelling(fmt: &str, ampm: Designators) -> String {
+    spell(fmt, true, false, ampm)
+}
+
+pub(crate) fn compiled_spelling(fmt: &str, ampm: Designators) -> String {
+    spell(fmt, false, true, ampm)
 }
 
 pub(crate) fn spelled_for_parse(fmt: &str) -> String {
-    spell(fmt, false, false)
+    spell(fmt, false, false, designators(0))
 }
 
-fn spell(fmt: &str, for_display: bool, compiled: bool) -> String {
+pub(crate) fn spelled_stored(fmt: &str) -> String {
+    spell(fmt, false, false, None)
+}
+
+fn spell(fmt: &str, for_display: bool, compiled: bool, ampm: Designators) -> String {
     let sections = sections_of(fmt);
     let lcid = format_lcid(&sections[0]);
     let mut texts: Vec<String> = sections
         .into_iter()
         .enumerate()
         .map(|(i, s)| {
-            let text = canon_section(s, i == 0, lcid.as_deref(), for_display);
+            let text = canon_section(s, i == 0, lcid.as_deref(), for_display, ampm);
             if for_display || compiled {
                 super::ampm_elapsed::garble_section(&text, compiled).unwrap_or(text)
             } else {
@@ -185,17 +196,6 @@ fn spell(fmt: &str, for_display: bool, compiled: bool) -> String {
         }
     }
     texts.join(";")
-}
-
-pub(crate) fn format_key(spelled: &str) -> String {
-    let mut parts: Vec<&str> = spelled.split(';').collect();
-    if (parts.len() == 3 || (parts.len() == 4 && parts[3].contains('@')))
-        && parts[2] == parts[0]
-        && !parts[0].is_empty()
-    {
-        parts.remove(2);
-    }
-    parts.join(";")
 }
 
 fn tag_rank(b: &str) -> Option<u8> {
@@ -369,8 +369,7 @@ fn comma_role(toks: &[Tok], i: usize) -> CommaRole {
     }
 }
 
-fn place_scaling_commas(toks: Vec<Tok>) -> Vec<Tok> {
-    let sci = toks.iter().any(|t| matches!(t, Tok::Ch('E' | 'e')));
+fn place_scaling_commas(toks: Vec<Tok>, typed: bool) -> Vec<Tok> {
     let fraction = toks.iter().any(|t| matches!(t, Tok::Ch('/')));
     if fraction {
         return toks;
@@ -379,7 +378,14 @@ fn place_scaling_commas(toks: Vec<Tok>) -> Vec<Tok> {
     let mut scale = 0;
     for (i, t) in toks.iter().enumerate() {
         if matches!(t, Tok::Ch(',')) {
-            match comma_role(&toks, i) {
+            let after = toks[i..].iter().find(|t| !matches!(t, Tok::Ch(',')));
+            let role = match comma_role(&toks, i) {
+                CommaRole::Dropped if !typed && matches!(after, Some(Tok::Ch('E' | 'e'))) => {
+                    CommaRole::Scale
+                }
+                role => role,
+            };
+            match role {
                 CommaRole::Scale => scale += 1,
                 CommaRole::Dropped => {}
                 CommaRole::Kept | CommaRole::Group => out.push(copy_tok(t)),
@@ -394,8 +400,13 @@ fn place_scaling_commas(toks: Vec<Tok>) -> Vec<Tok> {
             out.push(copy_tok(t));
         }
     }
-    if scale > 0 && !sci {
-        let at = out.iter().rposition(is_placeholder).map_or(0, |k| k + 1);
+    if scale > 0 {
+        let exp = out.iter().position(|t| matches!(t, Tok::Ch('E' | 'e')));
+        let mantissa = &out[..exp.unwrap_or(out.len())];
+        let at = mantissa
+            .iter()
+            .rposition(is_placeholder)
+            .map_or(0, |k| k + 1);
         for k in 0..scale {
             out.insert(at + k, Tok::Ch(','));
         }
@@ -403,20 +414,43 @@ fn place_scaling_commas(toks: Vec<Tok>) -> Vec<Tok> {
     out
 }
 
-fn regroup_thousands(toks: Vec<Tok>) -> Vec<Tok> {
-    let toks = place_scaling_commas(toks);
+fn regroup_thousands(toks: Vec<Tok>, typed: bool) -> Vec<Tok> {
+    let toks = place_scaling_commas(toks, typed);
     let end = toks
         .iter()
         .position(|t| matches!(t, Tok::Ch('.' | 'E' | 'e')))
         .unwrap_or(toks.len());
     let run_char = |t: &Tok| matches!(t, Tok::Ch('0' | '#' | '?' | ','));
+    let digit = |t: &Tok| matches!(t, Tok::Ch('0' | '#' | '?'));
+    let bridge = |t: &Tok| match t {
+        Tok::Raw(_) | Tok::Esc(_) => true,
+        Tok::Ch(c) => matches!(c, ' ' | '-' | '+' | '(' | ')'),
+        Tok::Bracket(_) => false,
+    };
     let mut out: Vec<Tok> = Vec::with_capacity(toks.len());
     let mut i = 0;
     while i < toks.len() {
         if i < end && run_char(&toks[i]) {
             let mut j = i;
-            while j < end && run_char(&toks[j]) {
-                j += 1;
+            loop {
+                while j < end && run_char(&toks[j]) {
+                    j += 1;
+                }
+
+                let mut k = j;
+                while k < end && bridge(&toks[k]) {
+                    k += 1;
+                }
+
+                if k > j
+                    && k < end
+                    && run_char(&toks[k])
+                    && !toks[k..].iter().any(|t| matches!(t, Tok::Ch('/')))
+                {
+                    j = k;
+                } else {
+                    break;
+                }
             }
             let run = &toks[i..j];
             let first = run.iter().position(is_placeholder);
@@ -431,21 +465,27 @@ fn regroup_thousands(toks: Vec<Tok>) -> Vec<Tok> {
                     continue;
                 }
             };
-            let mut ph: Vec<char> = run[f..=l]
+            let body: Vec<&Tok> = run[f..=l]
                 .iter()
-                .filter_map(|t| match t {
-                    Tok::Ch(c) if *c != ',' => Some(*c),
-                    _ => None,
-                })
+                .filter(|t| !matches!(t, Tok::Ch(',')))
                 .collect();
-            while ph.len() < 4 {
-                ph.insert(0, '#');
-            }
+            let places = body.iter().filter(|t| digit(t)).count();
             out.extend(run[..f].iter().map(copy_tok));
-            for (k, c) in ph.iter().enumerate() {
-                out.push(Tok::Ch(*c));
-                if k + 1 < ph.len() && (ph.len() - k - 1).is_multiple_of(3) {
+            let mut left = places.max(4);
+            for _ in places..left.max(places) {
+                out.push(Tok::Ch('#'));
+                left -= 1;
+                if left > 0 && left.is_multiple_of(3) {
                     out.push(Tok::Ch(','));
+                }
+            }
+            for t in body {
+                out.push(copy_tok(t));
+                if digit(t) {
+                    left -= 1;
+                    if left > 0 && left.is_multiple_of(3) {
+                        out.push(Tok::Ch(','));
+                    }
                 }
             }
             out.extend(run[l + 1..].iter().map(copy_tok));
@@ -547,7 +587,13 @@ fn elapsed_fields(toks: Vec<Tok>) -> Vec<Tok> {
     res
 }
 
-fn canon_section(mut toks: Vec<Tok>, first: bool, lcid: Option<&str>, for_display: bool) -> String {
+fn canon_section(
+    mut toks: Vec<Tok>,
+    first: bool,
+    lcid: Option<&str>,
+    for_display: bool,
+    ampm: Designators,
+) -> String {
     let text = is_text_section(&toks);
 
     if let Some(p) = toks
@@ -603,9 +649,23 @@ fn canon_section(mut toks: Vec<Tok>, first: bool, lcid: Option<&str>, for_displa
                 out.extend(std::iter::repeat_with(|| Tok::Ch('m')).take(k));
                 i = j;
             }
+
             Tok::Ch(_) if matches_word(&toks, i, "am/pm") => {
-                out.extend("am/pm".chars().map(Tok::Ch));
+                match ampm {
+                    Some((am, pm)) => {
+                        let plain = am.eq_ignore_ascii_case("am") && pm.eq_ignore_ascii_case("pm");
+                        let (am, pm) = if plain { (am, pm) } else { ("AM", "PM") };
+                        out.extend(format!("{am}/{pm}").chars().map(Tok::Ch));
+                    }
+                    None => out.extend(toks[i..i + 5].iter().map(copy_tok)),
+                }
                 i += 5;
+            }
+            Tok::Ch(_)
+                if ampm.is_none_or(|d| d == ("AM", "PM")) && matches_word(&toks, i, "a/p") =>
+            {
+                out.extend(toks[i..i + 3].iter().map(copy_tok));
+                i += 3;
             }
             Tok::Ch(_) if matches_word(&toks, i, "general") => {
                 out.extend("General".chars().map(Tok::Ch));
@@ -625,8 +685,10 @@ fn canon_section(mut toks: Vec<Tok>, first: bool, lcid: Option<&str>, for_displa
                 while matches!(toks.get(j), Some(Tok::Ch(b)) if b.eq_ignore_ascii_case(a)) {
                     j += 1;
                 }
-                if j - i >= 3 {
-                    out.extend(std::iter::repeat_with(|| Tok::Ch('a')).take(j - i));
+
+                let run = (j - i) & 0xff;
+                if run >= 3 {
+                    out.extend(std::iter::repeat_with(|| Tok::Ch('a')).take(run.min(4)));
                     i = j;
                 } else {
                     out.push(Tok::Esc(*a));
@@ -663,11 +725,11 @@ fn canon_section(mut toks: Vec<Tok>, first: bool, lcid: Option<&str>, for_displa
         }
     }
     let mut all = lead;
-    all.extend(regroup_thousands(if for_display {
-        elapsed_fields(out)
+    all.extend(if for_display {
+        regroup_thousands(elapsed_fields(out), true)
     } else {
-        out
-    }));
+        regroup_thousands(out, false)
+    });
     let mut s = String::new();
     for t in &mut all {
         if let Tok::Bracket(b) = t {
@@ -771,12 +833,50 @@ mod tests {
             (r"\,0", ",0"),
             ("#,#", "#,###"),
             ("0,0", "#,#00"),
+            ("# ?,?", "#,# ??"),
             ("[s]h", "s[h]"),
             ("[ss]s", "[ss][s]"),
             ("0;-0;0;General", "0;-0;0"),
             (";@", ";;;@"),
         ] {
-            assert_eq!(readback_spelling(given), back, "{given}");
+            assert_eq!(readback_spelling(given, designators(0)), back, "{given}");
+        }
+    }
+
+    #[test]
+    fn ampm_takes_the_compiling_locales_strings() {
+        for (lcid, given, back) in [
+            (0x0409, "h am/pm", "h AM/PM"),
+            (0x0409, "d aM/Pm h", "d AM/PM h"),
+            (0x0409, "h A/P", "h A/P"),
+            (0, "hh AM/PM", "hh am/pm"),
+            (0, "h A/P", r"h \A/P"),
+            (0x0809, "m h am/pm", "m h AM/PM"),
+        ] {
+            let got = readback_spelling(given, designators(lcid));
+            assert_eq!(got, back, "{lcid:#x} {given}");
+            assert_eq!(readback_spelling(&got, None), back, "stored {given}");
+        }
+    }
+
+    #[test]
+    fn stored_codes_show_their_own_ampm() {
+        use crate::numfmt::NumberFormat;
+        let loc = crate::locale::Locale::default();
+        let show = |f: NumberFormat| {
+            f.format_number(0.75, &loc, Default::default())
+                .unwrap()
+                .text
+        };
+        for (code, stored, typed) in [
+            ("h AM/PM", "6 PM", "6 pm"),
+            ("h a/P", "6 P", ""),
+            ("h:mm AM/PM", "6:00 pm", "6:00 pm"),
+        ] {
+            assert_eq!(show(NumberFormat::parse_stored(code).unwrap()), stored);
+            if !typed.is_empty() {
+                assert_eq!(show(NumberFormat::parse(code).unwrap()), typed);
+            }
         }
     }
 
@@ -795,16 +895,15 @@ mod tests {
             ("0%,.0", "0%,.0"),
             ("0,\"x\".0", "0\"x\".0"),
             ("0,.0E+00", "0.0E+00"),
+            ("0.00E+0,", "0.00,E+0"),
+            ("0.00,E+0", "0.00E+0"),
+            ("0.0E+0,,", "0.0,,E+0"),
             ("$0,.0", "$0.0,"),
             ("0,.0.0", "0.0.0,"),
         ] {
-            assert_eq!(readback_spelling(given), back, "{given}");
+            assert_eq!(readback_spelling(given, designators(0)), back, "{given}");
         }
-    }
 
-    #[test]
-    fn equivalent_keys() {
-        assert_eq!(format_key("0;-0;0"), format_key("0;-0"));
-        assert_ne!(format_key("0;-0;0.0"), format_key("0;-0"));
+        assert_eq!(spelled_stored("0.00,E+0"), "0.00,E+0");
     }
 }
